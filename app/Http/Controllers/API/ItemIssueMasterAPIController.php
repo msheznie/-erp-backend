@@ -19,6 +19,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
@@ -2129,7 +2130,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'item' => $item,
             'employess' => $employess,
             'segments' => $segments,
-            'assets' => FixedAssetMaster::whereHas('allocatToExpense')->select(['faCode','faID','assetDescription'])->get()
+            'assets' => FixedAssetMaster::whereHas('allocatToExpense')->with('allocatToExpense')->where('companySystemID',$selectedCompanyId)->select(['faCode','faID','assetDescription'])->get()
         );
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
@@ -2494,206 +2495,12 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->input();
 
-
-        $details = $this->getMIRReportData($input);
-        $companyName = $details['companyName'];
-        $startDate = $details['startDate'];
-        $endDate = $details['endDate'];
-        $items =  $details['items'];
-        $employee = $details['employee'];
-        $employeeCondition = $details['employeeCondition'];
-        $employeeSubQuery = $details['employeeSubQuery'];
-        $assetsConditon = $details['assetsConditon'];
-        $assetsSubQuery = $details['assetsSubQuery'];
-        $company = Company::find($input['companySystemID']);
-        $segments = $details['segments'];
-        $segmentConditon = $details['segmentConditon'];
-        $segmentSubQuery = $details['segmentSubQuery'];
-        $data = array();
-
-        if($input['reportType'] == 1){
-            $title = 'Employee expense register';
-
-            $query = "SELECT 
-                    erp_itemissuedetails.itemPrimaryCode,
-                    erp_itemissuedetails.itemIssueDetailID,
-                    erp_itemissuemaster.itemIssueCode,
-                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
-                    erp_itemissuedetails.itemDescription,
-                    units.UnitShortCode AS unit,
-                    erp_itemissuedetails.qtyIssued,
-                    erp_itemissuedetails.issueCostLocal,
-                    erp_itemissuedetails.issueCostLocalTotal,
-                    employees.employeeSystemID,
-                    employees.empID,
-                    employees.empName,
-                    expense_employee_allocation.assignedQty,
-                    expense_employee_allocation.amount,
-                    (expense_employee_allocation.assignedQty * expense_employee_allocation.amount) AS calculatedAmount,
-                    erp_request.RequestCode
-                FROM 
-                    erp_itemissuemaster
-                JOIN 
-                    erp_itemissuedetails 
-                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
-                LEFT JOIN 
-                    erp_request 
-                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
-                JOIN 
-                    units 
-                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
-                LEFT JOIN 
-                    expense_employee_allocation 
-                    ON expense_employee_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                LEFT JOIN 
-                    employees 
-                    ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
-                WHERE 
-                    erp_itemissuedetails.itemCodeSystem IN ($items)
-                    AND erp_itemissuemaster.approved = -1
-                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
-                    $employeeCondition
-                ORDER BY 
-                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
-
-                ";
-            $output = \DB::select($query);
-
-        }
-        else if($input['reportType'] == 2) {
-            $title = 'Asset expense register';
-
-            $query = "SELECT 
-                    erp_itemissuedetails.itemPrimaryCode,
-                    erp_itemissuedetails.itemIssueDetailID,
-                    erp_itemissuemaster.itemIssueCode,
-                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
-                    erp_itemissuedetails.itemDescription,
-                    units.UnitShortCode AS unit,
-                    erp_itemissuedetails.qtyIssued,
-                    erp_itemissuedetails.issueCostLocal,
-                    erp_itemissuedetails.issueCostLocalTotal,
-                    erp_fa_asset_master.faID,
-                    erp_fa_asset_master.faCode,
-                    erp_fa_asset_master.assetDescription,
-                    expense_asset_allocation.allocation_qty,
-                    expense_asset_allocation.amount,
-                    (expense_asset_allocation.allocation_qty * expense_asset_allocation.amount) AS calculatedAmount,
-                    erp_request.RequestCode
-                FROM 
-                    erp_itemissuemaster
-                JOIN 
-                    erp_itemissuedetails 
-                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
-                LEFT JOIN 
-                    erp_request 
-                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
-                JOIN 
-                    units 
-                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
-                LEFT JOIN 
-                    expense_asset_allocation 
-                    ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                LEFT JOIN 
-                    erp_fa_asset_master 
-                    ON expense_asset_allocation.assetID = erp_fa_asset_master.faID
-                WHERE 
-                    erp_itemissuedetails.itemCodeSystem IN ($items)
-                    AND erp_itemissuemaster.approved = -1
-                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
-                    $assetsConditon
-                ORDER BY 
-                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
-
-                ";
-            $output = \DB::select($query);
-        }else {
-            $title = 'Segment expense register';
-
-            $query = "SELECT 
-                    erp_itemissuedetails.itemPrimaryCode,
-                    erp_itemissuedetails.itemIssueDetailID,
-                    erp_itemissuemaster.itemIssueCode,
-                    DATE(erp_itemissuemaster.issueDate) AS issueDate,
-                    erp_itemissuedetails.itemDescription,
-                    units.UnitShortCode AS unit,
-                    erp_itemissuedetails.qtyIssued,
-                    erp_itemissuedetails.issueCostLocal,
-                    erp_itemissuedetails.issueCostLocalTotal,
-                    serviceline.serviceLineSystemID,
-                    serviceline.ServiceLineCode,
-                    serviceline.ServiceLineDes,
-                    erp_itemissuedetails.qtyIssued,
-                    erp_itemissuedetails.issueCostLocal AS amount,
-                    (erp_itemissuedetails.qtyIssued * erp_itemissuedetails.issueCostLocal) AS calculatedAmount,
-                    erp_request.RequestCode
-                FROM 
-                    erp_itemissuemaster
-                JOIN 
-                    erp_itemissuedetails 
-                    ON erp_itemissuemaster.itemIssueAutoID = erp_itemissuedetails.itemIssueAutoID
-                LEFT JOIN 
-                    erp_request 
-                    ON erp_itemissuemaster.reqDocID = erp_request.RequestID
-                JOIN 
-                    units 
-                    ON erp_itemissuedetails.unitOfMeasureIssued = units.UnitID
-                LEFT JOIN 
-                    serviceline 
-                    ON serviceline.serviceLineSystemID = erp_itemissuemaster.serviceLineSystemID
-                WHERE 
-                    erp_itemissuedetails.itemCodeSystem IN ($items)
-                    AND erp_itemissuemaster.approved = -1
-                    AND DATE(erp_itemissuemaster.issueDate) BETWEEN '$startDate' AND '$endDate'
-                    $segmentConditon
-                ORDER BY 
-                    erp_itemissuedetails.itemPrimaryCode, erp_itemissuedetails.itemIssueDetailID
-
-                ";
-            $output = \DB::select($query);
+        if(isset($input['reportType']) && is_array($input['reportType']))
+        {
+            $input['reportType'] = $input['reportType'][0];
         }
 
-
-
-        if(empty($data)) {
-            $mirReportHeaderObj = new MaterialIssueRegister();
-            array_push($data,collect($mirReportHeaderObj->getHeader($input['reportType'] ?? 1))->toArray());
-        }        
-
-
-         foreach ($output as $val) {
-             $mirReportObj = new MaterialIssueRegister();
-
-             $mirReportObj->setIssueCode($val->itemIssueCode);
-             $mirReportObj->setIssueDate($val->issueDate);
-             $mirReportObj->setRequestNo($val->RequestCode);
-             $mirReportObj->setItemCode($val->itemPrimaryCode);
-             $mirReportObj->setItemDescription($val->itemDescription);
-             $mirReportObj->setUom($val->unit);
-             $mirReportObj->setIssuedQty($val->qtyIssued);
-             if($input['reportType'] == 1)
-             {
-                 $mirReportObj->setEmpID($val->empID);
-                 $mirReportObj->setEmpName($val->empName);
-                 $mirReportObj->setQty($val->assignedQty);
-             }else if($input['reportType'] == 2) {
-                 $mirReportObj->setEmpID($val->faCode);
-                 $mirReportObj->setEmpName($val->assetDescription);
-                 $mirReportObj->setQty($val->allocation_qty);
-             }else {
-                 $mirReportObj->setEmpID($val->ServiceLineCode);
-                 $mirReportObj->setEmpName($val->ServiceLineDes);
-                 $mirReportObj->setQty($val->qtyIssued);
-             }
-
-             $mirReportObj->setCost($val->amount);
-             $mirReportObj->setAmount($val->calculatedAmount);
-             array_push($data,collect($mirReportObj)->toArray());
-         }
- 
-
-
-        $requestCurrency = null;
+        $data = json_decode($this->generateMIRReport($request)->getContent())->data;
         $excelColumnFormat = [
             'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -2703,32 +2510,65 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         ];
 
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+        $groupBy = $request->groupByAsset;
        
         $path = 'inventory/report/material_issue_register/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
         $fileName = 'material_issue_register';
 
-        $exportToExcel = $exportReportToExcelService
-        ->setTitle($title)
-        ->setFileName($fileName)
-        ->setPath($path)
-        ->setCompanyCode($companyCode)
-        ->setCompanyName($companyName)
-        ->setFromDate($startDate)
-        ->setToDate($endDate)
-        ->setData($data)
-        ->setReportType(1)
-        ->setType('xls')
-        ->setExcelFormat($excelColumnFormat)
-        ->setCurrency($requestCurrency)
-        ->setDateType(2)
-        ->setDetails()
-        ->generateExcel();
 
-    if(!$exportToExcel['success'])
-        return $this->sendError('Unable to export excel');
+        $selectedAssets  = $request->assets;
+        if(!empty($selectedAssets))
+        {
+            $selectedAssets = collect($selectedAssets)->map(function ($item) {
+                $parts = explode('|', $item['itemName'] ?? '');
+                return isset($parts[1]) ? trim($parts[1]) : '';
+            })->filter()
+            ->implode(',');
 
-    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+        }
+
+        $selectedSegments = $request->segments;
+        if(!empty($selectedSegments))
+        {
+            $selectedSegments = collect($selectedSegments)->map(function ($item) {
+                $itemName = $item['itemName'] ?? '';
+                $parts = explode('|', $itemName);
+                return isset($parts[1]) ? trim($parts[1]) : '';
+            })->filter() 
+            ->implode(',');
+
+        }
+        $templateName = "export_report.inventory.material_issue_register";
+
+        $reportData = [
+            'reportData' => $data,
+            'Title' => 'Supplier Ledger',
+            'companyName' => $data->companyName,
+            'reportType' => $input['reportType'],
+            'groupByAsset' => $input['groupByAsset'],
+            'companyCode' => $companyCode,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'groupBy' => $groupBy,
+            'selectedAssets' => $selectedAssets,
+            'selectedSegments' => $selectedSegments,
+            'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
+        ];
+
+        $fileName = 'Supplier Ledger';
+        $path = 'accounts-payable/report/supplier_ledger/excel/';
+        $type = "xls";
+        $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
+
+        if ($basePath == '') {
+            return $this->sendError('Unable to export excel');
+        } else {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
     }
 
 
