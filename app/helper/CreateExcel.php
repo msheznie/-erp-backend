@@ -659,6 +659,6 @@ class CreateExcel
                 $basePath = \Helper::getFileUrlFromS3($path);
             }
         }
-        return $basePath;
+        return $path;
     }
 }
