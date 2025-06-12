@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\DocumentAttachments;
+use App\Models\DocumentMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,6 +27,7 @@ use App\helper\TaxService;
 use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
 use App\Models\BookInvSuppDet;
+use Illuminate\Support\Facades\Storage;
 
 
 class DeliveryAppointmentInvoice implements ShouldQueue
@@ -158,6 +161,11 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $invoice = $bookInvSuppMasterRepository->create($detail);
 
                     $invoice_id = $invoice->bookingSuppMasInvAutoID;
+                    if($invoice_id)
+                    {
+                        $this->addAttachmentList($invoice_id, $this->data['companySystemID'], $this->data['attachmentsList']);
+                    }
+
                     $grv_Details = GRVMaster::where('deliveryAppoinmentID',$this->data['id'])->select('grvAutoID')->first();
 
                     $details = UnbilledGrvGroupBy::where('grvAutoID',$grv_Details->grvAutoID)->select('purchaseOrderID','companySystemID')->get();
@@ -204,7 +212,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
    
                  
                                $item = $bookInvSuppDetRepo->create($prDetail_arr);
-           
+
                                $updatePRMaster = UnbilledGrvGroupBy::find($new->unbilledgrvAutoID)
                                    ->update([
                                        'selectedForBooking' => -1
@@ -256,6 +264,42 @@ class DeliveryAppointmentInvoice implements ShouldQueue
     public function failed($exception)
     {
         return $exception->getMessage();
+    }
+
+    public function addAttachmentList($invoiceID, $companySystemID, $attachmentsList )
+    {
+        $company = Company::getComanyCode($companySystemID);
+        $documentCode = DocumentMaster::getDocumentData(11);
+
+        if (!empty($attachmentsList) && is_array($attachmentsList)) {
+            foreach ($attachmentsList as $attachment) {
+                if (!empty($attachment) && isset($attachment['file'])) {
+                    $extension = $attachment['fileType'];
+                    $file = $attachment['file'];
+                    $decodeFile = base64_decode($file);
+                    $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
+                    $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
+                    Storage::disk('s3')->put($path, $decodeFile);
+
+                    $att = [
+                        'companySystemID' => $companySystemID,
+                        'companyID' => $company->CompanyID,
+                        'documentSystemID' => $documentCode->documentSystemID,
+                        'documentID' => $documentCode->documentID,
+                        'documentSystemCode' => $invoiceID,
+                        'attachmentDescription' => $attachment['attachmentDescription'] ?? '',
+                        'path' => $path,
+                        'originalFileName' => $attachment['originalFileName'],
+                        'myFileName' => $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension,
+                        'attachmentType' => 11,
+                        'sizeInKbs' => $attachment['sizeInKbs'],
+                        'isUploaded' => 1
+                    ];
+
+                    DocumentAttachments::create($att);
+                }
+            }
+        }
     }
 
     public function getUnbilledGRVDetailsForSI($company_id,$po_id,$grv_id,$invoice_id)

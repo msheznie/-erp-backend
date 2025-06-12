@@ -5,6 +5,7 @@ namespace App\Services;
 use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\API\DocumentAttachmentsAPIController;
+use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
@@ -534,6 +535,7 @@ class SRMService
     {
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
+        $companyId = $request->input('extra.slotCompanyId');
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $appointment = Appointment::select('id')
@@ -569,6 +571,7 @@ class SRMService
             ->where('created_by', $supplierID)
             ->get();
         $arr['data'] = $data;
+        $arr['attachmentPolicyEnabled'] = Helper::checkPolicy($companyId, 104);
         return [
             'success' => true,
             'message' => 'Calander appointment deliveries get',
@@ -5542,6 +5545,45 @@ class SRMService
 
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
+        $data['attachmentsList'] = $request->input('extra.attachments');
+
+        $maxFileSize = 2 * 1024 * 1024;
+        $allowedExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+        $attachments = $data['attachmentsList'] ?? [];
+
+        $attachmentPolicyEnabled = Helper::checkPolicy($data['companySystemID'], 104);
+        if (!$attachmentPolicyEnabled && empty($attachments)) {
+            return [
+                'success' => false,
+                'message' => 'At least one document attachment should be mandatory',
+                'data' => []
+            ];
+        }
+
+        foreach ($attachments as $attachment) {
+            if (empty($attachment['file'] ?? null)) {
+                continue;
+            }
+
+            $extension = strtolower($attachment['fileType'] ?? '');
+            $fileSize = $attachment['size'] ?? 0;
+
+            if (!in_array($extension, $allowedExtensions)) {
+                return [
+                    'success' => false,
+                    'message' => 'This file type is not allowed to upload.',
+                    'data' => []
+                ];
+            }
+
+            if ($fileSize > $maxFileSize) {
+                return [
+                    'success' => false,
+                    'message' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
+                    'data' => []
+                ];
+            }
+        }
 
         $acc_d = DeliveryAppointmentInvoice::dispatch($data);
         return [
