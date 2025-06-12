@@ -211,4 +211,9 @@ class ItemAssigned extends Model
     public function item_category_type(){
         return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
     }
+
+    public function pr_detail(){
+        return $this->hasMany('App\Models\PurchaseRequestDetails','itemCode','itemCodeSystem');
+    }
+
 }
