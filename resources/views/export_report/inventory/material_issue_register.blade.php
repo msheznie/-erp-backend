@@ -5,7 +5,13 @@
         <tr></tr>
         <tr>
             <td colspan="2"></td>
-            <td><h1>Asset Expense Report</h1></td>
+            @if($reportType == 1)
+                <h1>Employee expense register</h1>
+            @elseif($reportType == 2)
+                <h1>Assets expense register</h1>
+            @else
+                <h1>Segment expense register</h1>
+            @endif
         </tr>
         <tr></tr>
         <tr style="font-weight: bold">
@@ -95,7 +101,7 @@
                       <td>{{$item->itemDescription}}</td>
                       <td>{{$item->unit}}</td>
                       <td>{{$item->qtyIssued}}</td>
-                      <td>{{$item->expenseAllocations[0]->empID ?? NULL}}</td>
+                      <td>{{$item->expenseAllocations[0]->empName ?? NULL}}</td>
                       @if($reportType == 1 || $reportType == 2)
                       <td>{{$item->expenseAllocations[0]->empName ?? NULL}}</td>
                       @endif
