@@ -442,6 +442,7 @@ Route::group([],function (){
 	Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster')->name('Update segment master');
 	
 	Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany')->name('Get serviceline by company');
+	Route::get('getServiceLineByparent', 'ServiceLineAPIController@getServiceLineByparent')->name('Get serviceline parent');
 	Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData')->name('Get segment master form data');
 	Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure')->name('Get organization structure');
 
