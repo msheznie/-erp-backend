@@ -298,9 +298,18 @@ class ServiceLineAPIController extends AppBaseController
 
     public function getServiceLineByparent(Request $request) {
         $companyID = $request->companyID;
-        $serviceline = ServiceLine::where('companySystemID', $companyID)->where('isActive',1)
-            ->where('isFinalLevel',0)
-            ->where('isDeleted',0)->get();
+        $parentOnly = $request->parentOnly;
+
+        $query = ServiceLine::where('companySystemID', $companyID)
+            ->where('isActive',1)
+            ->where('isDeleted',0);
+
+        if(isset($parentOnly) && !is_null($parentOnly)) {
+            $query->where('isFinalLevel', 0);
+        }
+
+        $serviceline = $query->get();
+
         return $this->sendResponse($serviceline, 'Segment retrieved successfully');
     }
 }
