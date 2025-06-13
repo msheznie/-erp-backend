@@ -2144,10 +2144,12 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'Items' => 'required',
-                    'reportType' => 'required|not_in:0',
+                    'reportType' => 'required',
+                    'reportType.*' => 'required|not_in:0',
                 ], [
+                    'reportType.*.required' => 'The report type field is required.',
                     'reportType.required' => 'The report type field is required.',
-                    'reportType.not_in' => 'The report type field is required.',
+                    'reportType.*.not_in' => 'The report type field is required.',
                 ]);
 
                 if ($validator->fails()) {
@@ -2514,7 +2516,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         $toDate = (new Carbon($request->toDate))->format('Y-m-d');
         $groupBy = $request->groupByAsset;
        
-        $path = 'inventory/report/material_issue_register/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
 
@@ -2558,7 +2559,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         ];
 
         $fileName = 'material_issue_register';
-        $path = 'accounts-payable/report/supplier_ledger/excel/';
+        $path = 'inventory/report/material_issue_register/excel/';
         $type = "xls";
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
 
