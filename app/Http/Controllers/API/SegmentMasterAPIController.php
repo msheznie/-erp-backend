@@ -651,6 +651,9 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
+        $segmentId = $input['serviceLineSystemID'];
+        $isActive = $input['isActive'];
+        $approvalStatus = $input['approved_yn'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -663,6 +666,22 @@ class SegmentMasterAPIController extends AppBaseController
         $segmentMasters = SegmentMaster::withoutGlobalScope('final_level')
                                 ->whereIn('companySystemID',$childCompanies)
                                 ->with(['company']);
+
+        if(isset($segmentId) && !is_null($segmentId)) {
+            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        }
+
+        if(isset($isActive) && !is_null($isActive)) {
+            $segmentMasters->where('isActive', $isActive);
+        }
+
+        if(isset($approvalStatus) && !is_null($approvalStatus)) {
+            if ($approvalStatus == 2) {
+                $segmentMasters->where('approved_yn', 1);
+            } else {
+                $segmentMasters->where('confirmed_yn', $approvalStatus);
+            }
+        }
 
         $search = $request->input('search.value');
         if($search){
