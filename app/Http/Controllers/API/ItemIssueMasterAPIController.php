@@ -2399,7 +2399,6 @@ class ItemIssueMasterAPIController extends AppBaseController
                     ']'
                 ) AS items
             ";
-
             $query = "
                 SELECT 
                     $selectField,
@@ -2671,16 +2670,14 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
         if (!empty($segments)) {
-            $segmentConditon = "AND erp_itemissuemaster.serviceLineSystemID IN ($segments)";
+            $segmentConditon = "erp_itemissuemaster.serviceLineSystemID IN ($segments)";
 
             $segmentSubQuery = "AND (
                                             SELECT 
                                                 COUNT(*) 
                                             FROM 
-                                                expense_asset_allocation 
-                                            WHERE 
-                                                expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-                                                $segmentConditon
+                                                erp_itemissuedetails 
+                                            WHERE $segmentConditon
                                         ) > 0";
         }
 
