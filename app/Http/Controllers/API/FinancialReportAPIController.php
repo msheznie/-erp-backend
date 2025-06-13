@@ -4140,6 +4140,36 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
                                 $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
                             }
+                            if (in_array(30, $selectedColumns)) {
+                                if($request->reportViewID == 1) {
+                                    $data[$x]['VAT %'] = $val->VATPercentageALL;
+                                }else {
+                                    $data[$x]['VAT %'] = $val->VATPercentage;
+                                }
+                            };
+
+                            $dueAmount = 0;
+                            if ($request->reportViewID == 1) {
+                                $data[$x]['Value'] = number_format($val->bookingAmountTrans, $val->DecimalPlaces);
+                                $data[$x]['Discount'] = number_format($val->discountAmount, $val->DecimalPlaces);
+                                $data[$x]['Net Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount, $val->DecimalPlaces);
+                                $data[$x]['VAT'] = number_format($val->taxTotalAmount, $val->DecimalPlaces);
+                                if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exemptVATPortionALL ?? 0;
+                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = number_format($val->retentionAmount, $val->DecimalPlaces);
+                                if($request->tempType == 2 || $request->tempType == 1)
+                                {
+                                    if($request->tempType == 1)
+                                    {
+                                        $taxAmount = $val->rcmActivated ? 0 : $val->taxTotalAmount;
+                                    }else {
+                                        $taxAmount = $val->taxTotalAmount;
+                                    }
+                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0), $val->DecimalPlaces);
+                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0);
+                                }else {
+                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
+                                    $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
+                                }
 
                             } elseif ($request->reportViewID == 2) {
                                 $data[$x]['Value'] = number_format($val->value, $val->DecimalPlaces);
