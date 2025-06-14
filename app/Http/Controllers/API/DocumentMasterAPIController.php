@@ -146,7 +146,7 @@ class DocumentMasterAPIController extends AppBaseController
     {
         $document = DocumentMaster::select('*')
                                   ->whereIn('departmentSystemID', [1, 3, 4, 11, 5, 9, 10, 6, 29,66])
-                                  ->whereIn('documentSystemID', [1, 2, 3, 4, 11, 15, 19, 20, 21, 67, 68, 17, 23, 22, 41, 103, 46, 65, 102, 8, 9, 12,24, 7, 13, 10, 97, 71, 87, 62, 64, 66, 96, 56,57,58,59,117,118,107,108,113,119])
+                                  ->whereIn('documentSystemID', [1, 2, 3, 4, 11, 15, 19, 20, 21, 67, 68, 17, 23, 22, 41, 103, 46, 65, 102, 8, 9, 12,24, 7, 13, 10, 97, 71, 87, 62, 64, 66, 96, 56,57,58,59,117,118,107,108,113,119, 132])
                                   ->get()
                                   ->toArray();
         return $this->sendResponse($document, 'record retrieved successfully');

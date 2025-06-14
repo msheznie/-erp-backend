@@ -93,7 +93,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
                 Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
-
+                Route::resource('segment_assigneds', 'SegmentAssignedAPIController');
 
                 Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
