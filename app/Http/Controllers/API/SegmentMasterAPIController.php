@@ -15,6 +15,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CreateExcel;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -38,6 +39,7 @@ use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\GeneralLedger;
@@ -140,8 +142,10 @@ class SegmentMasterAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $empId;
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
+        $input['documentSystemID'] =  132;
 
         $segmentMasters = $this->segmentMasterRepository->create($input);
 
@@ -168,7 +172,9 @@ class SegmentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->withcount(['sub_levels'])->find($id);
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')
+            ->with('approved_by_emp')
+            ->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -863,8 +869,10 @@ class SegmentMasterAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['documentSystemID'] =  132;
 
-        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
+        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1 && $input['RollLevForApp_curr'] < 2) {
             $params = array('autoID' => $input['serviceLineSystemID'], 'company' => $companySystemId, 'document' => 132);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -980,5 +988,217 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully with deleted segments');
+    }
+
+    public function getAllSegmentForApproval(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $empID = \Helper::getEmployeeSystemID();
+        $values = implode(',', array_map(function($value)
+        {
+            return trim($value, ',');
+        }, $companyID));
+
+        $search = $request->input('search.value');
+        $filter='';
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $filter = " AND (( serviceline.ServiceLineCode LIKE '%{$search}%') OR ( serviceline.ServiceLineDes LIKE '%{$search}%'))";
+        }
+
+        $sql = "
+                SELECT 
+                    serviceline.*, 
+                    parentSegment.ServiceLineCode AS parentSegmentCode,
+                    employeesdepartments.approvalDeligated, 
+                    erp_documentapproved.documentApprovedID, 
+                    rollLevelOrder, 
+                    approvalLevelID, 
+                    documentSystemCode 
+                FROM erp_documentapproved
+                INNER JOIN employeesdepartments 
+                    ON erp_documentapproved.approvalGroupID = employeesdepartments.employeeGroupID 
+                    AND erp_documentapproved.documentSystemID = employeesdepartments.documentSystemID
+                    AND erp_documentapproved.companySystemID = employeesdepartments.companySystemID
+                INNER JOIN serviceline 
+                    ON serviceline.serviceLineSystemID = erp_documentapproved.documentSystemCode 
+                    AND erp_documentapproved.rollLevelOrder = serviceline.RollLevForApp_curr
+                LEFT JOIN serviceline AS parentSegment 
+                    ON serviceline.masterID = parentSegment.serviceLineSystemID
+                WHERE serviceline.approved_yn = 0 
+                    {$filter}
+                    AND serviceline.confirmed_yn = 1
+                    AND employeesdepartments.documentSystemID = 132 
+                    AND erp_documentapproved.approvedYN = 0
+                    AND erp_documentapproved.rejectedYN = 0
+                    AND erp_documentapproved.documentSystemID = 132
+                    AND employeesdepartments.isActive = 1
+                    AND employeesdepartments.employeeSystemID = $empID
+                    AND employeesdepartments.removedYN = 0
+                    AND employeesdepartments.companySystemID IN ($values)
+                GROUP BY serviceline.serviceLineSystemID 
+                ORDER BY documentApprovedID";
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        $segments = DB::select($sql);
+        if ($isEmployeeDischarched == 'true') {
+            $segments = [];
+        }
+
+        return \DataTables::of($segments)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getSegmentMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $segmentMaster = $this->segmentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 132);
+            }])
+            ->findWithoutFail($id);
+
+        if (empty($segmentMaster)) {
+            return $this->sendError('Segment Master not found');
+        }
+
+        return $this->sendResponse($segmentMaster->toArray(), 'Segment Master retrieved successfully');
+    }
+
+    public function rejectSegmentMaster(Request $request)
+    {
+        $reject = Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function assignedCompaniesBySegment(Request $request)
+    {
+        $segmentId = $request->segmentId;
+        $assignedCompanies = SegmentAssigned::with('company')
+            ->where('serviceLineSystemID', $segmentId)
+            ->get();
+
+        return $this->sendResponse($assignedCompanies, 'Segment assigned companies retrieved successfully.');
+    }
+
+    public function exportSegmentMaster(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('companyId'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $segmentId = $input['serviceLineSystemID'];
+        $isActive = $input['isActive'];
+        $approvalStatus = $input['approved_yn'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $segmentMasters = SegmentMaster::withoutGlobalScope('final_level')
+            ->whereIn('companySystemID',$childCompanies)
+            ->with(['company']);
+
+        if(isset($segmentId) && !is_null($segmentId)) {
+            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        }
+
+        if(isset($isActive) && !is_null($isActive)) {
+            $segmentMasters->where('isActive', $isActive);
+        }
+
+        if(isset($approvalStatus) && !is_null($approvalStatus)) {
+            if ($approvalStatus == 2) {
+                $segmentMasters->where('approved_yn', 1);
+            } else {
+                $segmentMasters->where('confirmed_yn', $approvalStatus);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $segmentMasters =   $segmentMasters->where(function ($query) use($search) {
+                $query->where('ServiceLineCode','LIKE',"%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $segmentMasters = $segmentMasters->orderBy('serviceLineSystemID','desc')->get();
+
+        $data = array();
+        $x = 0;
+        foreach ($segmentMasters as $val) {
+            $x++;
+            $data[$x]['Segment Code'] = $val->ServiceLineCode;
+            $data[$x]['Segment Description'] = $val->ServiceLineDes;
+            $data[$x]['Active Status'] = ($val->isActive == 1) ? 'Yes' : 'No';
+            $data[$x]['Type'] = ($val->isFinalLevel == 1) ? 'Final' : 'Parent';
+            $data[$x]['Is Public'] = ($val->isPublic == 1) ? 'Yes' : 'No';
+
+            if ($val->confirmed_yn == 1 && $val->approved_yn == 1) {
+                $data[$x]['status'] = 'Fully Approved';
+            } elseif ($val->confirmed_yn == 1 && $val->approved_yn == 0) {
+                $data[$x]['status'] = 'Not Approved';
+            } elseif ($val->confirmed_yn == 0 && $val->isActive == 1) {
+                $data[$x]['status'] = 'Active only';
+            } else {
+                $data[$x]['status'] = 'Not Active';
+            }
+        }
+
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = $companyMaster->CompanyID ?? 'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+
+        $fileName = 'segment_master';
+        $path = 'system/segment_master/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 }

@@ -131,6 +131,7 @@ use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
 use ExchangeSetupConfig;
+use App\Services\AssignedServices\SegmentAssignedService;
 
 class Helper
 {
@@ -3197,7 +3198,13 @@ class Helper
             }
 
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
-            $masterRec = $namespacedModel::find($params["autoID"]);
+
+            if ($params["document"] == 132) {
+                $masterRec = $namespacedModel::withoutGlobalScope('final_level')->find($params["autoID"]);
+            } else {
+                $masterRec = $namespacedModel::find($params["autoID"]);
+            }
+
             if ($masterRec) {
                 if (in_array($params["document"], [20, 71])) {
                     $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
@@ -4561,6 +4568,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
+            case 132:
+                $docInforArr["tableName"] = 'serviceline';
+                $docInforArr["modelName"] = 'SegmentMaster';
+                $docInforArr["primarykey"] = 'serviceLineSystemID';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBySystemID"] = 'approved_emp_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4592,7 +4611,13 @@ class Helper
                 }
 
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
-                $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
+
+                if ($input["documentSystemID"] == 132) {
+                    $isConfirmed = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"]);
+                } else {
+                    $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
+                }
+
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
@@ -5021,8 +5046,11 @@ class Helper
 
                             }
 
-
-                            $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                            if ($input["documentSystemID"] == 132) { // Segment
+                                $finalupdate = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                            } else {
+                                $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                            }
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
@@ -5046,6 +5074,14 @@ class Helper
                                 if (!$supplierAssignRes['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => "Error occured while assign customer"];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 132) { //Auto assign segment
+                                $supplierAssignRes = SegmentAssignedService::assignSegment($input["documentSystemCode"], $docApproved->companySystemID);
+                                if (!$supplierAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => "Error occured while assign segment"];
                                 }
                             }
 
@@ -5472,6 +5508,9 @@ class Helper
                             elseif ($input['documentSystemID'] == 103){
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['current_level_no' => $input["rollLevelOrder"] + 1]);
                             }
+                            elseif($input['documentSystemID'] == 132) {
+                                $rollLevelUpdate = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+                            }
                             else {
                                 $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                             }
@@ -5484,7 +5523,12 @@ class Helper
                         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         }
                         else{
-                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            if($input["documentSystemID"] == 132) {
+                                $sourceModel = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"]);
+                            } else {
+                                $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            }
+
                             $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
                             $emails = array();
                             $pushNotificationUserIds = [];
@@ -6295,6 +6339,13 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = "approved_emp_system_id";
                     break;
+                case 132:
+                    $docInforArr["tableName"] = 'serviceline';
+                    $docInforArr["modelName"] = 'SegmentMaster';
+                    $docInforArr["primarykey"] = 'serviceLineSystemID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -6388,7 +6439,7 @@ class Helper
                             ]);
                         }
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119, 127])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119, 127, 132])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
