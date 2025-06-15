@@ -294,6 +294,33 @@ class CustomerInvoiceAPIService extends AppBaseController
             ];
         }
 
+        $details = $request['details'] ?? null;
+
+        if (isset($details)) {
+            if (is_array($details)) {
+                $detailsCollection = collect($details);
+
+                if(empty($detailsCollection->count())) {
+                    $errorData[] = [
+                        'field' => "details",
+                        'message' => ["details cannot be less than one"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "details",
+                    'message' => ["details format invalid"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "details",
+                'message' => ["details field is required"]
+            ];
+        }
+
         if (empty($errorData) && empty($fieldErrors)) {
             $returnDataset = [
                 'status' => true,
@@ -3498,10 +3525,6 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                 $invoice['company_id'] = $data['company_id'];
 
-                //Get Invoice Details to new variable and remove it from Master Data
-                $invoiceDetails = $invoice['details'] ?? null;
-                unset($invoice['details']);
-
                 //Validate Master Data
                 $datasetMaster = self::validateMasterData($invoice);
 
@@ -3513,6 +3536,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                 }
 
                 $detailIndex = 0;
+                $invoiceDetails = $invoice['details'] ?? [];
+
                 foreach ($invoiceDetails as $detail) {
 
                     //Validate Details Data
