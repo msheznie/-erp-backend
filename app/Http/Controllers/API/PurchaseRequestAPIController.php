@@ -2741,17 +2741,11 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
 
-        return \DataTables::eloquent($purchaseRequests)
+        $purchaseRequests = collect($purchaseRequests);
+        return \DataTables::collection($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
              ->filter(function ($instance) {  
              })
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
-                    }
-                }
-            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
@@ -2794,7 +2788,6 @@ class PurchaseRequestAPIController extends AppBaseController
         $type = $input['type'];
         $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
 
-        $purchaseRequests = $purchaseRequests->get();
 
         $data = array();
         foreach ($purchaseRequests as $val) {
@@ -3489,7 +3482,6 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('approved', -1)
             ->where('manuallyClosed', 0)
             ->where('cancelledYN', 0)
-            ->where('selectedForPO', 0)
             ->where('prClosedYN', 0)
             ->with(['created_by', 'priority', 'location', 'segment'])
             ->orderBy('purchaseRequestID', $sort);
@@ -3540,6 +3532,9 @@ class PurchaseRequestAPIController extends AppBaseController
             });
 
             $purchaseRequests = $purchaseRequests->with(['details' => function ($query) use ($items, $search) {
+                           $query->with(['podetail' => function ($q) {
+                                $q->with(['order']);
+                            }]);
                         if (!empty($items)) {
                             $query->whereIn('itemCode', $items);
                         }
@@ -3554,7 +3549,11 @@ class PurchaseRequestAPIController extends AppBaseController
                     }]);
         } else {
               $search = str_replace("\\", "\\\\", $search);
-           $purchaseRequests = $purchaseRequests->with('details')
+           $purchaseRequests = $purchaseRequests->with(['details' => function ($query) use ($items, $search) {
+                           $query->with(['podetail' => function ($q) {
+                                $q->with(['order']);
+                            }]);
+                    }])
                     ->when(!empty($search), function ($query) use ($search) {
                         $query->where(function ($q) use ($search) {
                             $q->where('purchaseRequestCode', 'like', "%{$search}%")
@@ -3595,7 +3594,7 @@ class PurchaseRequestAPIController extends AppBaseController
            }
        }
 
-       return $purchaseRequests = $purchaseRequests->select(
+        $purchaseRequests = $purchaseRequests->select(
             ['erp_purchaserequest.purchaseRequestID',
                 'erp_purchaserequest.purchaseRequestCode',
                 'erp_purchaserequest.createdDateTime',
@@ -3614,5 +3613,49 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.PRConfirmedDate',
                 'erp_purchaserequest.approvedDate',
             ]);
+
+          
+            $purchaseRequests=  $purchaseRequests->get();
+            
+            $result = $this->filterPurchaseRequest($purchaseRequests);
+       
+
+            return $result;
+    }
+
+    public function filterPurchaseRequest($purchaseRequests)
+    {
+        foreach ($purchaseRequests as $prIndex => $pr) {
+            $newDetails = [];
+
+            foreach ($pr->details as $index=>$key) {
+                $poQtySum = 0;
+                $balance = 0;
+                if (!empty($key['podetail'])) {
+                    foreach ($key['podetail'] as $poDetail) {
+                        if (
+                            !empty($poDetail['order']) &&
+                            isset($poDetail['order']['approved']) &&
+                            $poDetail['order']['approved'] == -1
+                        ) {
+                            $poQtySum += floatval($poDetail['noQty']);
+                        }
+                    }
+                }
+
+                $balance = floatval($key['quantityRequested']) - $poQtySum;
+                $pr->details[$index]['quantityRequested'] = $balance;
+            
+
+                if ($balance != 0) {
+                    $key['quantityRequested'] = $balance;
+                    $newDetails[] = $key;
+                }
+
+            }
+                $pr->setRelation('details', collect($newDetails));
+            }
+
+            return $purchaseRequests;
     }
 }
