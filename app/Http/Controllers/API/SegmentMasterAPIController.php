@@ -894,7 +894,7 @@ class SegmentMasterAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         $input['documentSystemID'] =  132;
 
-        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1 && $input['RollLevForApp_curr'] < 2) {
+        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1 && (isset($input['approved_yn']) && $input['approved_yn'] != 1)) {
             $params = array('autoID' => $input['serviceLineSystemID'], 'company' => $companySystemId, 'document' => 132);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
