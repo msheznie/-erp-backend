@@ -148,6 +148,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
             $input['documentSystemID'] =  132;
+            $input['masterID'] = $input['masterID'] == 0 ? null : $input['masterID'];
 
             $segmentMasters = $this->segmentMasterRepository->create($input);
 
