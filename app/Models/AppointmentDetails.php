@@ -96,7 +96,7 @@ class AppointmentDetails extends Model
         'id' => 'integer',
         'item_id' => 'integer',
         'po_master_id' => 'integer',
-        'qty' => 'integer',
+        'qty' => 'float',
         'po_detail_id' => 'integer'
 
     ];
