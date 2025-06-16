@@ -303,7 +303,6 @@ class ServiceLineAPIController extends AppBaseController
         $parentOnly = $request->parentOnly;
 
         $query = ServiceLine::where('companySystemID', $companyID)
-            ->where('isActive',1)
             ->where('isDeleted',0);
 
         if(isset($parentOnly) && !is_null($parentOnly)) {
