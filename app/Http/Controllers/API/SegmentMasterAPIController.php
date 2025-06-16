@@ -108,56 +108,77 @@ class SegmentMasterAPIController extends AppBaseController
      */
     public function store(CreateSegmentMasterAPIRequest $request)
     {
-        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
 
-        if(isset($input['companySystemID']))
-        {
-            $input['companyID'] = $this->getCompanyById($input['companySystemID']);
-        }
-
-        if (isset($input['isPublic']) && $input['isPublic']){
-            $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
-                                                ->where('isPublic', 1)
-                                                ->where('isDeleted',0)
-                                                ->first();
-
-            if ($companyPublicCheck) {
-                return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+            if(isset($input['companySystemID']))
+            {
+                $input['companyID'] = $this->getCompanyById($input['companySystemID']);
             }
 
-        }
-        
-        $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
-                                         ->where('ServiceLineCode', $input['ServiceLineCode'])
-                                         ->where('isDeleted',0)
-                                         ->first();
+            if (isset($input['isPublic']) && $input['isPublic']){
+                $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
+                                                    ->where('isPublic', 1)
+                                                    ->where('isDeleted',0)
+                                                    ->first();
 
-        if ($segmentCodeCheck) {
-           return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
-        }
+                if ($companyPublicCheck) {
+                    return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+                }
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-        $empId = $user->employee['empID'];
-        $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $empId;
-        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
-
-        $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
-        $input['documentSystemID'] =  132;
-
-        $segmentMasters = $this->segmentMasterRepository->create($input);
-
-        if(isset($input['confirmed_yn'])) {
-            $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
-            $confirm = \Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"], 500);
             }
-        }
+            
+            $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
+                                            ->where('ServiceLineCode', $input['ServiceLineCode'])
+                                            ->where('isDeleted',0)
+                                            ->first();
 
-        return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
+            if ($segmentCodeCheck) {
+            return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
+            }
+
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+            $empId = $user->employee['empID'];
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $empId;
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+
+            $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
+            $input['documentSystemID'] =  132;
+
+            $segmentMasters = $this->segmentMasterRepository->create($input);
+
+            if(isset($input['confirmed_yn'])) {
+                $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500);
+                }
+
+                $data['modifiedPc'] = gethostname();
+                $data['modifiedUser'] = $empId;
+                $data['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+
+
+                $data['confirmed_by_emp_system_id'] = $user && $user->employee ? $user->employee['employeeSystemID'] : null;
+                $data['confirmed_by_emp_id'] = $empId;
+                $data['confirmed_by_name'] = $user && $user->employee ? $user->employee['empName'] : null;
+                $data['confirmed_date'] = now();
+                $data['confirmed_yn'] = 1;
+
+                $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
+                                        ->where('serviceLineSystemID', $segmentMasters->serviceLineSystemID)
+                                        ->update($data);
+            }
+            DB::commit();
+            return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
+        } catch (\Exception $e) {
+        DB::rollBack(); 
+        return $this->sendError($e->getMessage(), 500);
+    }
     }
 
     /**
