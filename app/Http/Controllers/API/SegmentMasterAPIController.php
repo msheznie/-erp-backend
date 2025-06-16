@@ -1085,6 +1085,10 @@ class SegmentMasterAPIController extends AppBaseController
             $segments = [];
         }
 
+        $data['search']['value'] = '';
+        $request->merge($data);
+        $request->request->remove('search.value');
+
         return \DataTables::of($segments)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
