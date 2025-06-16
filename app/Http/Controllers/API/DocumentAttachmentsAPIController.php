@@ -107,7 +107,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 : Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
 
             if (Storage::disk($disk)->exists($documentAttachments->path)) {
-                return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
+                $sanitizedFileName = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $documentAttachments->myFileName);
+                return Storage::disk($disk)->download($documentAttachments->path, $sanitizedFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
