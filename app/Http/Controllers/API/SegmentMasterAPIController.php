@@ -706,7 +706,13 @@ class SegmentMasterAPIController extends AppBaseController
         if(isset($approvalStatus) && !is_null($approvalStatus)) {
             if ($approvalStatus == 2) {
                 $segmentMasters->where('approved_yn', 1);
-            } else {
+            } 
+            else if ($approvalStatus == 1)
+            {
+                $segmentMasters->where('confirmed_yn', $approvalStatus)->where('approved_yn', 0);
+            }
+            else
+            {
                 $segmentMasters->where('confirmed_yn', $approvalStatus);
             }
         }
