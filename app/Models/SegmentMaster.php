@@ -83,7 +83,9 @@ class SegmentMaster extends Model
         'RollLevForApp_curr',
         'approved_emp_system_id',
         'approved_by_emp_id',
-        'approved_by_emp_name'
+        'approved_by_emp_name',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
