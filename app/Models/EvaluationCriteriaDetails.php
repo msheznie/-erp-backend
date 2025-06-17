@@ -205,7 +205,7 @@ class EvaluationCriteriaDetails extends Model
     {
         return $this->belongsTo('App\Models\TenderMaster', 'tender_id', 'id');
     }
-
+    
     public static function getEvaluationCriteriaDetails($tenderId, $level, $criteriaType)
     {
         return EvaluationCriteriaDetails::where('tender_id', $tenderId)
