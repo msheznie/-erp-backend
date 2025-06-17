@@ -6440,8 +6440,13 @@ class Helper
                         }
 
                         if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119, 127, 132])) {
-                            $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
-                            $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
+                            if ($input["documentSystemID"] == 132) {
+                                $timesReferredUpdate = $namespacedModel::withoutGlobalScope('final_level')->find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
+                                $refferedBackYNUpdate = $namespacedModel::withoutGlobalScope('final_level')->find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
+                            } else {
+                                $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
+                            }
                         }
                         else if($input["documentSystemID"] == 118)
                         {
