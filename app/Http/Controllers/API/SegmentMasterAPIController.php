@@ -250,7 +250,7 @@ class SegmentMasterAPIController extends AppBaseController
         
         /** @var SegmentMaster $segmentMaster */
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($id);
-        $previousValue = $segmentMaster->toArray();
+        $previousValue = $segmentMaster ? $segmentMaster->toArray() : [];
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
