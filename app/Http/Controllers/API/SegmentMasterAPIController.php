@@ -149,6 +149,9 @@ class SegmentMasterAPIController extends AppBaseController
             $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
             $input['documentSystemID'] =  132;
             $input['masterID'] = $input['masterID'] == 0 ? null : $input['masterID'];
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = $empId;
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
             $segmentMasters = $this->segmentMasterRepository->create($input);
 
@@ -158,11 +161,6 @@ class SegmentMasterAPIController extends AppBaseController
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
-
-                $data['modifiedPc'] = gethostname();
-                $data['modifiedUser'] = $empId;
-                $data['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
-
 
                 $data['confirmed_by_emp_system_id'] = $user && $user->employee ? $user->employee['employeeSystemID'] : null;
                 $data['confirmed_by_emp_id'] = $empId;
@@ -1105,11 +1103,11 @@ class SegmentMasterAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $segmentMaster = $this->segmentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 132);
             }])
-            ->findWithoutFail($id);
+            ->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
