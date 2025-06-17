@@ -34,6 +34,8 @@ class SegmentMasterRepository extends BaseRepository
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
+        'createdUserSystemID',
+        'modifiedUserSystemID',
         'createdDateTime',
         'timeStamp'
     ];

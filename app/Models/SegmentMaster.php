@@ -70,6 +70,8 @@ class SegmentMaster extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'createdUserSystemID',
+        'modifiedUserSystemID',
         'timeStamp',
         'consoleCode',
         'isFinalLevel',
