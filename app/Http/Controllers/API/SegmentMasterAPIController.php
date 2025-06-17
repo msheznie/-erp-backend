@@ -52,6 +52,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
+use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpItemLedger;
@@ -793,7 +794,15 @@ class SegmentMasterAPIController extends AppBaseController
         $companySystemId = $input['companySystemID'];
 
         if (!$segmentMaster) {
-            return $this->sendError("Segment not found", 500);
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    'status' => false,
+                    'message' => 'Segment not found'
+                ];
+            }
+            else {
+                return $this->sendError("Segment not found", 500);
+            }
         }
 
         $previousValue = $segmentMaster->toArray();
@@ -819,7 +828,15 @@ class SegmentMasterAPIController extends AppBaseController
                                                                ->where('isDeleted', 0)
                                                                ->first();
         if ($checkForDuplicateCode) {
-            return $this->sendError("Segment code already exists", 500);
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    'status' => false,
+                    'message' => 'Segment code already exists'
+                ];
+            }
+            else {
+                return $this->sendError("Segment code already exists", 500);
+            }
         }
 
 
@@ -859,7 +876,15 @@ class SegmentMasterAPIController extends AppBaseController
 
 
             if ($segmentUsed) {
-                return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                    return [
+                        'status' => false,
+                        'message' => 'This segment is used in some documents. Therefore, Final level status cannot be changed'
+                    ];
+                }
+                else {
+                    return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+                }
             }
         }
 
@@ -871,7 +896,15 @@ class SegmentMasterAPIController extends AppBaseController
 
             if ($companyPublicCheck) {
                 if($companyPublicCheck->serviceLineSystemID != $input['serviceLineSystemID']){
-                    return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            'status' => false,
+                            'message' => "Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "
+                        ];
+                    }
+                    else {
+                        return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                    }
                 }
             }
 
@@ -890,30 +923,60 @@ class SegmentMasterAPIController extends AppBaseController
             unset($input['db']);
         }
 
-        $userId = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $empId = $user->employee['empID'];
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $empInfo = UserTypeService::getSystemEmployee();
+            $input['modifiedUser'] = $empInfo->empID;
+            $input['modifiedUserSystemID'] = $empInfo->employeeSystemID;
+        }
+        else {
+            $userId = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+            $empId = $user->employee['empID'];
+            $input['modifiedUser'] = $empId;
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        }
+
         $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $empId;
-        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         $input['documentSystemID'] =  132;
 
         $input['timeStamp'] = now();
 
         if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1 && ($segmentMaster->confirmed_yn != $input['confirmed_yn']) && (isset($input['approved_yn']) && $input['approved_yn'] != 1)) {
-            $params = array('autoID' => $input['serviceLineSystemID'], 'company' => $companySystemId, 'document' => 132);
+            $params = array(
+                'autoID' => $input['serviceLineSystemID'],
+                'company' => $companySystemId,
+                'document' => 132,
+                'isAutoCreateDocument' => isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']
+            );
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"], 500);
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                    return [
+                        'status' => false,
+                        'message' => $confirm["message"]
+                    ];
+                }
+                else {
+                    return $this->sendError($confirm["message"], 500);
+                }
             }
 
-            $input['confirmed_by_emp_system_id'] = $user->employee['employeeSystemID'];
-            $input['confirmed_by_emp_id'] = $empId;
-            $input['confirmed_by_name'] = $user->employee['empName'];
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                $empInfo = UserTypeService::getSystemEmployee();
+                $input['confirmed_by_emp_id'] = $empInfo->empID;
+                $input['confirmed_by_emp_system_id'] = $empInfo->employeeSystemID;
+                $input['confirmed_by_name'] = $empInfo->empName;
+            }
+            else {
+                $input['confirmed_by_emp_system_id'] = $user->employee['employeeSystemID'];
+                $input['confirmed_by_emp_id'] = $empId;
+                $input['confirmed_by_name'] = $user->employee['empName'];
+            }
+
             $input['confirmed_date'] = $input['timeStamp'];
         }
 
-        $data = array_except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count']);
+        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
 
         $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
@@ -921,7 +984,12 @@ class SegmentMasterAPIController extends AppBaseController
 
         $this->auditLog($db, $input['serviceLineSystemID'],$uuid, "serviceline", "Segment master ".$input['ServiceLineDes']." has been updated", "U", $data, $previousValue);
 
-        return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            return ['status' => true];
+        }
+        else {
+            return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
+        }
     }
 
     public function getOrganizationStructure(Request $request)
