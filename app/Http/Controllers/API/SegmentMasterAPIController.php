@@ -156,7 +156,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             $segmentMasters = $this->segmentMasterRepository->create($input);
 
-            if(isset($input['confirmed_yn'])) {
+            if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
                 $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
