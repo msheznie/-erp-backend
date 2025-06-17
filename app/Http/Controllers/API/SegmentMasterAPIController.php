@@ -194,7 +194,7 @@ class SegmentMasterAPIController extends AppBaseController
     {
         /** @var SegmentMaster $segmentMaster */
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')
-            ->with(['approved_by_emp','company'])
+            ->with(['approved_by_emp','company','parent'])
             ->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
