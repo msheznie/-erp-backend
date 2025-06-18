@@ -99,6 +99,7 @@ class ApprovePendingSegments implements ShouldQueue
             
             if ($tempData['confirmed_yn'] == 0) {
                 $tempData['confirmed_yn'] = 1;
+                $tempData['db'] = $db;
                 // Confirm & Approve
                 $controller = app(SegmentMasterAPIController::class);
                 $dataset = new Request();
