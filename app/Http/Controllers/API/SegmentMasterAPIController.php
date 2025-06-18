@@ -708,7 +708,9 @@ class SegmentMasterAPIController extends AppBaseController
             } 
             else if ($approvalStatus == 1)
             {
-                $segmentMasters->where('confirmed_yn', $approvalStatus)->where('approved_yn', 0);
+                $segmentMasters->where('confirmed_yn', $approvalStatus)
+                    ->where('approved_yn', 0)
+                    ->where('refferedBackYN', 0);
             }
             else
             {
@@ -885,6 +887,10 @@ class SegmentMasterAPIController extends AppBaseController
                 else {
                     return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
                 }
+            }
+
+            if($input['sub_levels_count'] > 0) {
+                return $this->sendError("Parent type cannot be changed, as it has sub levels", 500);
             }
         }
 
