@@ -3252,7 +3252,11 @@ class Helper
                     $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
                     if ($document) {
                         //check document is already confirmed
-                        $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+                        if ($params["document"] == 132) {
+                            $isConfirm = $namespacedModel::withoutGlobalScope('final_level')->where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+                        } else {
+                            $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+                        }
 
                         if (!$isConfirm) {
                             // get current employee detail.
@@ -6366,7 +6370,12 @@ class Helper
 
                 $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
-                $docModal = $namespacedModel::find($input["documentSystemCode"]);
+
+                if ($input["documentSystemID"] == 132) {
+                    $docModal = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"]);
+                } else {
+                    $docModal = $namespacedModel::find($input["documentSystemCode"]);
+                }
 
                 $policyConfirmedUserToApprove = '';
 
@@ -6457,7 +6466,12 @@ class Helper
                         $confirmedUser = 0;
                         $emails = array();
 
-                        $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                        if ($input["documentSystemID"] == 132) {
+                            $sourceModel = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"]);
+                        } else {
+                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                        }
+
                         if (!empty($sourceModel)) {
 
                             $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
