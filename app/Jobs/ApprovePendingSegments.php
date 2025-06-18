@@ -62,7 +62,7 @@ class ApprovePendingSegments implements ShouldQueue
                     // Confirm & Approve
                     $controller = app(SegmentMasterAPIController::class);
                     $dataset = new Request();
-                    $dataset->merge($db);
+                    $dataset->merge($tempData);
                     $response = $controller->updateSegmentMaster($dataset);
                     if ($response['status']) {
                         $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $db);
