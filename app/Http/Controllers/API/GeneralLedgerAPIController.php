@@ -1693,7 +1693,13 @@ class GeneralLedgerAPIController extends AppBaseController
             return  "tenant list is empty";
         }
 
-        ApprovePendingSegments::dispatch($tenants);
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            ApprovePendingSegments::dispatch($tenantDb);
+        }
 
         return $this->sendResponse([], 'Segments fully approved successfully');
     }
