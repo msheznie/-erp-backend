@@ -52,28 +52,89 @@ class ApprovePendingSegments implements ShouldQueue
     {
         CommonJobService::db_switch($this->tenantDb);
 
-        DB::table('serviceline')->where('approved_yn', '!=', 1)->where('isDeleted', '!=' , 1)->orderBy('serviceLineSystemID')->chunk(50, function ($segments) use ($db) {
-            foreach ($segments as $segment) {
-                $tempData = (array) $segment;
-                $tempData = is_array($tempData) ? $tempData : $tempData->toArray();
-                $tempData['isAutoCreateDocument'] = true;
-                if ($tempData['confirmed_yn'] == 0) {
-                    $tempData['confirmed_yn'] = 1;
-                    // Confirm & Approve
-                    $controller = app(SegmentMasterAPIController::class);
-                    $dataset = new Request();
-                    $dataset->merge($tempData);
-                    $response = $controller->updateSegmentMaster($dataset);
-                    if ($response['status']) {
-                        $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $db);
+        try {
+            // Use chunkById instead of chunk to avoid issues with orderBy during data modification
+            // This ensures we don't miss records when they are updated during processing
+            DB::table('serviceline')
+                ->where('approved_yn', '!=', 1)
+                ->where('isDeleted', '!=', 1)
+                ->orderBy('serviceLineSystemID')
+                ->chunkById(50, function ($segments) use ($db) {
+                    foreach ($segments as $segment) {
+                        try {
+                            $this->processSegment($segment, $db);
+                        } catch (\Exception $e) {
+                            // Log the error but continue processing other segments
+                            Log::error("Error processing segment {$segment->serviceLineSystemID}: " . $e->getMessage(), [
+                                'segment_id' => $segment->serviceLineSystemID,
+                                'document_id' => $segment->documentSystemID ?? null,
+                                'tenant_db' => $db,
+                                'exception' => $e
+                            ]);
+                        }
                     }
+                }, 'serviceLineSystemID'); // Specify the column for chunkById
+        } catch (\Exception $e) {
+            Log::error("Error in ApprovePendingSegments job: " . $e->getMessage(), [
+                'tenant_db' => $db,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Process individual segment with proper transaction handling
+     */
+    private function processSegment($segment, $db)
+    {
+        DB::beginTransaction();
+        
+        try {
+            $tempData = (array) $segment;
+            $tempData = is_array($tempData) ? $tempData : $tempData->toArray();
+            $tempData['isAutoCreateDocument'] = true;
+            
+            if ($tempData['confirmed_yn'] == 0) {
+                $tempData['confirmed_yn'] = 1;
+                // Confirm & Approve
+                $controller = app(SegmentMasterAPIController::class);
+                $dataset = new Request();
+                $dataset->merge($tempData);
+                $response = $controller->updateSegmentMaster($dataset);
+                
+                if ($response['status']) {
+                    $approvalResult = $this->approvePendingSegments(
+                        $tempData['documentSystemID'],
+                        $tempData['serviceLineSystemID'], 
+                        $db
+                    );
+                    
+                    if (!$approvalResult['success']) {
+                        throw new \Exception("Approval failed: " . $approvalResult['message']);
+                    }
+                } else {
+                    throw new \Exception("Update segment master failed");
                 }
-                else {
-                    // Approve
-                    $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
+            } else {
+                // Approve only
+                $approvalResult = $this->approvePendingSegments(
+                    $tempData['documentSystemID'],
+                    $tempData['serviceLineSystemID'], 
+                    $db
+                );
+                
+                if (!$approvalResult['success']) {
+                    throw new \Exception("Approval failed: " . $approvalResult['message']);
                 }
             }
-        });
+            
+            DB::commit();
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function approvePendingSegments($documentSystemID, $serviceLineSystemID, $db) {
