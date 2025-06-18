@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\helper\CommonJobService;
 use App\helper\Helper;
 use App\Http\Controllers\API\SegmentMasterAPIController;
-use App\Models\SegmentMaster;
 use App\Services\DocumentAutoApproveService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Http\Request;
@@ -14,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ApprovePendingSegments implements ShouldQueue
 {
@@ -52,19 +52,41 @@ class ApprovePendingSegments implements ShouldQueue
     {
         CommonJobService::db_switch($this->tenantDb);
 
-        DB::table('serviceline')->where('approved_yn', '!=', 1)->orderBy('serviceLineSystemID')->chunk(50, function ($segments) use ($tenantDb) {
-            foreach ($segments as $segment) {
-                $tempData = $segment->toArray();
-                $tempData['isAutoCreateDocument'] = true;
-                if ($tempData['confirmed_yn'] == 0) {
-                    $tempData['confirmed_yn'] = 1;
-                    // Confirm & Approve
-                    $controller = app(SegmentMasterAPIController::class);
-                    $dataset = new Request();
-                    $dataset->merge($tempData);
-                    $response = $controller->updateSegmentMaster($dataset);
-                    if ($response['status']) {
-                        $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
+        foreach ($this->tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            Log::useFiles(storage_path() . '/logs/approve_pending_segments.log');
+
+            DB::table('serviceline')->where('approved_yn', '!=', 1)->where('isDeleted', '!=' , 1)->orderBy('serviceLineSystemID')->chunk(50, function ($segments) use ($tenantDb) {
+                foreach ($segments as $segment) {
+                    $tempData = (array) $segment;
+                    $tempData = is_array($tempData) ? $tempData : $tempData->toArray();
+                    $tempData['isAutoCreateDocument'] = true;
+                    if ($tempData['confirmed_yn'] == 0) {
+                        $tempData['confirmed_yn'] = 1;
+                        // Confirm & Approve
+                        $controller = app(SegmentMasterAPIController::class);
+                        $dataset = new Request();
+                        $dataset->merge($tempData);
+                        $response = $controller->updateSegmentMaster($dataset);
+                        if ($response['status']) {
+                            $data = $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
+                            if (!$data['success']) {
+                                Log::warning("Approve Error:- (" . $tempData['serviceLineSystemID'] . "/" . $tempData['companyID'] . ") - " . $data['message']);
+                            }
+                        }
+                        else {
+                            Log::warning("Confirm Error:- (" . $tempData['serviceLineSystemID'] . "/" . $tempData['companyID'] . ") - " . $response['message']);
+                        }
+                    }
+                    else {
+                        // Approve
+                        $data = $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
+                        if (!$data['success']) {
+                            Log::warning("Direct Approve Error:- (" . $tempData['serviceLineSystemID'] . "/" . $tempData['companyID'] . ") - " . $data['message']);
+                        }
                     }
                 }
                 else {
