@@ -19,7 +19,7 @@ class ApprovePendingSegments implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tenants;
+    private $tenantDb;
 
     /**
      * Create a new job instance.
