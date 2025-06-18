@@ -534,7 +534,7 @@ class email
                         }
 
                     case 132:
-                        $segment = SegmentMaster::where('serviceLineSystemID', $data['docSystemCode'])->first();
+                        $segment = SegmentMaster::withoutGlobalScope('final_level')->where('serviceLineSystemID', $data['docSystemCode'])->first();
                         if (!empty($segment)) {
                             $data['docApprovedYN'] = $segment->approved_yn;
                             $data['docCode'] = $segment->serviceLineCode;
