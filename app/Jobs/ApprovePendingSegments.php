@@ -58,8 +58,9 @@ class ApprovePendingSegments implements ShouldQueue
             DB::table('serviceline')
                 ->where('approved_yn', '!=', 1)
                 ->where('isDeleted', '!=', 1)
+                ->where('serviceLineSystemID', '!=', 24)
                 ->orderBy('serviceLineSystemID')
-                ->chunkById(50, function ($segments) use ($db) {
+                ->chunkById(100, function ($segments) use ($db) {
                     foreach ($segments as $segment) {
                         try {
                             $this->processSegment($segment, $db);
@@ -114,7 +115,7 @@ class ApprovePendingSegments implements ShouldQueue
                         throw new \Exception("Approval failed: " . $approvalResult['message']);
                     }
                 } else {
-                    throw new \Exception("Update segment master failed");
+                    throw new \Exception("Update segment master failed - ".(isset($response['message']) ? $response['message'] : ""));
                 }
             } else {
                 // Approve only
