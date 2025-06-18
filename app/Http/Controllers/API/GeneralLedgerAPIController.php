@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
+use App\Jobs\ApprovePendingSegments;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
@@ -1692,41 +1693,8 @@ class GeneralLedgerAPIController extends AppBaseController
             return  "tenant list is empty";
         }
 
-        foreach ($tenants as $tenant){
-            $tenantDb = $tenant->database;
-
-            CommonJobService::db_switch($tenantDb);
-
-            $data = SegmentMaster::where('approved_yn', '!=', 1)->get();
-
-            foreach ($data as $dt) {
-                $tempData = $dt->toArray();
-                $tempData['isAutoCreateDocument'] = true;
-                if ($tempData['confirmed_yn'] == 0) {
-                    $tempData['confirmed_yn'] = 1;
-                    // Confirm & Approve
-                    $controller = app(SegmentMasterAPIController::class);
-                    $dataset = new Request();
-                    $dataset->merge($tempData);
-                    $response = $controller->updateSegmentMaster($dataset);
-                    if ($response['status']) {
-                        $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
-                    }
-                }
-                else {
-                    // Approve
-                    $this->approvePendingSegments($tempData['documentSystemID'],$tempData['serviceLineSystemID'], $tenantDb);
-                }
-            }
-        }
+        ApprovePendingSegments::dispatch($tenants);
 
         return $this->sendResponse([], 'Segments fully approved successfully');
-    }
-
-    public function approvePendingSegments($documentSystemID, $serviceLineSystemID, $db) {
-        $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($documentSystemID,$serviceLineSystemID);
-        $autoApproveParams['db'] = $db;
-
-        return Helper::approveDocument($autoApproveParams);
     }
 }
