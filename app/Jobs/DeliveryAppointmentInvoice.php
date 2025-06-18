@@ -278,19 +278,19 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $file = $attachment['file'];
                     $decodeFile = base64_decode($file);
                     $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
-                    $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
+                    $path = $company . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
                     Storage::disk('s3')->put($path, $decodeFile);
 
                     $att = [
                         'companySystemID' => $companySystemID,
-                        'companyID' => $company->CompanyID,
+                        'companyID' => $company,
                         'documentSystemID' => $documentCode->documentSystemID,
                         'documentID' => $documentCode->documentID,
                         'documentSystemCode' => $invoiceID,
                         'attachmentDescription' => $attachment['attachmentDescription'] ?? '',
                         'path' => $path,
                         'originalFileName' => $attachment['originalFileName'],
-                        'myFileName' => $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension,
+                        'myFileName' => $company . '_' . time() . '_Supplier_Invoice.' . $extension,
                         'attachmentType' => 11,
                         'sizeInKbs' => $attachment['sizeInKbs'],
                         'isUploaded' => 1
