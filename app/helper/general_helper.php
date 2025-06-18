@@ -3422,7 +3422,11 @@ class Helper
 
                             if ($output) {
                                 /** get source document master record*/
-                                $sorceDocument = $namespacedModel::find($params["autoID"]);
+                                if ($params["document"] == 132) {
+                                     $sorceDocument = $namespacedModel::withoutGlobalScope('final_level')->find($params["autoID"]);
+                                } else {
+                                     $sorceDocument = $namespacedModel::find($params["autoID"]);
+                                }
                                 $unverifiedEmails = null;
                                 //confirm the document
                                 if (isset($params['email'])) {
