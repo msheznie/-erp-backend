@@ -57,6 +57,7 @@ class ApprovePendingSegments implements ShouldQueue
             // This ensures we don't miss records when they are updated during processing
             DB::table('serviceline')
                 ->where('approved_yn', '!=', 1)
+                ->where('confirmed_yn', '!=', 1)
                 ->where('isDeleted', '!=', 1)
                 ->where('serviceLineSystemID', '!=', 24)
                 ->orderBy('serviceLineSystemID')
