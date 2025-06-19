@@ -50,7 +50,8 @@ class ApprovePendingSegments implements ShouldQueue
      */
     public function handle()
     {
-        CommonJobService::db_switch($this->tenantDb);
+        $db = $this->tenantDb;
+        CommonJobService::db_switch($db);
 
         try {
             // Use chunkById instead of chunk to avoid issues with orderBy during data modification
