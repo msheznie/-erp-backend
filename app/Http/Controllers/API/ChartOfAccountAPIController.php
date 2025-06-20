@@ -989,9 +989,15 @@ class ChartOfAccountAPIController extends AppBaseController
             }
         }
 
-        if (isset($input['templateMasterID'])) {
-            $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+
+        if(isset($input['isCashFlowReport']) && $input['isCashFlowReport']){ 
+            $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
             $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+        } else { 
+            if (isset($input['templateMasterID'])) {
+                $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+            }
         }
 
         $items = $items->get();
