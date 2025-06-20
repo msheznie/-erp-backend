@@ -5540,6 +5540,38 @@ class SRMService
         ];
     }
 
+    public function validateInvoiceAttachment(Request $request)
+    {
+        $maxFileSize = 2 * 1024 * 1024;
+        $allowedExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+        $attachment = $request->input('extra.attachments') ?? null;
+
+        $extension = strtolower($attachment['fileType'] ?? '');
+        $fileSize = $attachment['sizeInKbs'] ?? 0;
+
+        if (!in_array($extension, $allowedExtensions)) {
+            return [
+                'success' => false,
+                'message' => 'This file type is not allowed to upload.',
+                'data' => []
+            ];
+        }
+
+        if ($fileSize > $maxFileSize) {
+            return [
+                'success' => false,
+                'message' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
+                'data' => []
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Invoice attachment validation successfully',
+            'data' => []
+        ];
+    }
+
     public function createInvoice(Request $request)
     {
 
