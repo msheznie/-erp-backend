@@ -101,6 +101,9 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::get('user/companies', 'UserAPIController@userCompanies');
                 Route::get('checkUser', 'UserAPIController@checkUser');
+                
+                // Vizzly Dashboard Integration
+                Route::post('vizzly/identity','VizzlyController@generateTokens');
 
                 Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
 
