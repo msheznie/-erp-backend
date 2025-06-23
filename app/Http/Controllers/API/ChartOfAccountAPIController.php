@@ -966,7 +966,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $reportTypeId = 0;
             if (isset($input['templateMasterID'])) {
                 $template = ReportTemplate::find($input['templateMasterID']);
-                $reportTypeId = $template->reportID;
+                $reportTypeId = $template ? $template->reportID : 0;
             }
     
             $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->when(isset($reportTypeId) && $reportTypeId == 4, function ($query) {
