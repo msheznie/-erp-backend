@@ -3727,9 +3727,9 @@ class BudgetConsumptionService
                 if ($value->chartOfAccountSystemID != "") {
 
 					$controlAccounts = ChartOfAccount::find($value->chartOfAccountSystemID)->controlAccounts;
-					if($controlAccounts == "PLI"){
+					if($controlAccounts == "PLE"){
 						$amount = $value->debitAmount + ($value->creditAmount * -1);
-					}else if($controlAccounts == "PLE"){
+					}else if($controlAccounts == "PLI"){
 						$amount = $value->creditAmount + ($value->debitAmount * -1);
 					} else {
 						$amount = $value->debitAmount + ($value->creditAmount * -1);
