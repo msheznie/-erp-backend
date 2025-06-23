@@ -92,25 +92,28 @@
                     @endif
                 </tr>
 
-                @foreach($groupedData as $item)
+                @foreach($groupedData as $expenseAllocations)
+                    @if(isset($expenseAllocations->expenseAllocations))
+                    @foreach($expenseAllocations->expenseAllocations as $item)
                   <tr>
-                      <td>{{$item->itemIssueCode}}</td>
-                      <td>{{$item->issueDate}}</td>
-                      <td>{{$item->RequestCode}}</td>
-                      <td>{{$item->itemPrimaryCode}}</td>
-                      <td>{{$item->itemDescription}}</td>
-                      <td>{{$item->unit}}</td>
-                      <td>{{$item->qtyIssued}}</td>
-                      <td>{{$item->expenseAllocations[0]->empName ?? NULL}}</td>
+                      <td>{{$expenseAllocations->itemIssueCode}}</td>
+                      <td>{{$expenseAllocations->issueDate}}</td>
+                      <td>{{$expenseAllocations->RequestCode}}</td>
+                      <td>{{$expenseAllocations->itemPrimaryCode}}</td>
+                      <td>{{$expenseAllocations->itemDescription}}</td>
+                      <td>{{$expenseAllocations->unit}}</td>
+                      <td>{{$expenseAllocations->qtyIssued}}</td>
+                      <td>{{$item->empName ?? NULL}}</td>
                       @if($reportType == 1 || $reportType == 2)
-                      <td>{{$item->expenseAllocations[0]->empName ?? NULL}}</td>
+                         <td>{{$item->empName ?? NULL}}</td>
                       @endif
-                      <td>{{optional($item->expenseAllocations[0])->assignedQty}}</td>
-                      <td>{{optional($item->expenseAllocations[0])->amount}}</td>
-                      <td>{{optional($item->expenseAllocations[0])->assignedQty * optional($item->expenseAllocations[0])->amount}}</td>
+                      <td>{{optional($item)->assignedQty}}</td>
+                      <td>{{optional($expenseAllocations)->issueCostLocal}}</td>
+                      <td>{{optional($item)->assignedQty * optional($expenseAllocations)->issueCostLocal}}</td>
                   </tr>
+                    @endforeach
+                    @endif
                 @endforeach
-
                 <tr>
                     <td colspan="11"></td>
                 </tr>
