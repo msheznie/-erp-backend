@@ -1767,4 +1767,29 @@ class TaxService
 
         return ['supplierInvoiceVAT' => $supplierInvoiceVAT, 'supplierInvoiceVATLocal' => $supplierInvoiceVATLocal, 'supplierInvoiceVATRpt' => $supplierInvoiceVATRpt];
     }
+
+    public static function processGrvBasedSupllierInvoiceVAT($bookingSuppMasInvAutoID)
+    {
+
+        $vatData = [
+            'totalVAT' => 0,
+            'totalVATLocal' => 0,
+            'totalVATRpt' => 0
+        ];
+
+       $exemptPotianteData = SupplierInvoiceItemDetail::selectRaw("VATAmount,VATAmountLocal ,VATAmountRpt ,bookingSuppMasInvAutoID, vatSubCategoryID, exempt_vat_portion")
+                              ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                              ->whereHas('vat_sub_category', function($query) {
+                                $query->where('subCatgeoryType', '!=',3);
+                              })
+                              ->get();
+
+        foreach ($exemptPotianteData as $key => $value) {
+            $vatData['totalVAT'] += ($value->VATAmount);
+            $vatData['totalVATLocal'] += ($value->VATAmountLocal );
+            $vatData['totalVATRpt'] += ($value->VATAmountRpt);
+        }
+
+        return $vatData;
+    }
 }
