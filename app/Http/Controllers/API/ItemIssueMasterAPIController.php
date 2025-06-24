@@ -2273,14 +2273,20 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if(!empty($input['groupByAsset']))
             {
-
-                $assets = collect($input['assets'])->pluck('id')->toArray();
-                $assets = implode(',', $assets);
                 $assetsConditon = '';
-                if(!empty($assets))
+
+
+                if(isset($input['assets']))
                 {
-                    $assetsConditon = " AND ep.assetID IN ($assets)";
+                    $assets = collect($input['assets'])->pluck('id')->toArray();
+                    $assets = implode(',', $assets);
+                    if(!empty($assets))
+                    {
+                        $assetsConditon = " AND ep.assetID IN ($assets)";
+                    }
                 }
+
+
                 $query = "
                    select 
                         ei2.issueDate ,
