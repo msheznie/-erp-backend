@@ -2629,8 +2629,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             'fromDate' => $fromDate,
             'toDate' => $toDate,
             'groupBy' => $groupBy,
-            'selectedAssets' => $selectedAssets,
-            'selectedSegments' => $selectedSegments,
+            'selectedAssets' => empty($selectedAssets) ? null  : $selectedAssets,
+            'selectedSegments' => empty($selectedSegments) ? null : $selectedSegments,
             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
         ];
 
