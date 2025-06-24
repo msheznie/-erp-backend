@@ -1269,7 +1269,21 @@ class BudgetMasterAPIController extends AppBaseController
                     $temp['documentSystemCode'] = $value->master->jvMasterAutoId;
                     $temp['documentSystemID'] = $value->master->documentSystemID;
 
-                    $amount = $value->debitAmount + $value->creditAmount * -1;
+                    $chartOfAccounts = ChartOfAccount::where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->select('controlAccounts')->first();
+
+                    if ($chartOfAccounts->controlAccounts == 'PLI'){
+                        if($value->creditAmount > 0 && $value->debitAmount == 0) {
+                            $amount = $value->creditAmount;
+                        } else {
+                            $amount = $value->debitAmount * -1;
+                        }
+                    } else {
+                        if($value->debitAmount > 0 && $value->creditAmount == 0) {
+                            $amount = $value->debitAmount;
+                        } else {
+                            $amount = $value->creditAmount * -1;
+                        }
+                    }
 
                     $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
