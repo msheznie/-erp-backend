@@ -2274,6 +2274,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             if(!empty($input['groupByAsset']))
             {
 
+                $assets = collect($input['assets'])->pluck('id')->toArray();
+                $assets = implode(',', $assets);
+                $assetsConditon = '';
+                if(!empty($assets))
+                {
+                    $assetsConditon = " AND ep.assetID IN ($assets)";
+                }
                 $query = "
                    select 
                         ei2.issueDate ,
@@ -2298,7 +2305,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                     WHERE  ei.itemCodeSystem IN ($items)
                     AND ei2.approved = -1
                     AND DATE(ei2.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $assetsConditon
                 ";
+
 
                 $output = \DB::select($query);
 
