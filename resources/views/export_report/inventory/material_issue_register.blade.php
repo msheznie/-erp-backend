@@ -94,24 +94,42 @@
 
                 @foreach($groupedData as $expenseAllocations)
                     @if(isset($expenseAllocations->expenseAllocations))
-                    @foreach($expenseAllocations->expenseAllocations as $item)
-                  <tr>
-                      <td>{{$expenseAllocations->itemIssueCode}}</td>
-                      <td>{{$expenseAllocations->issueDate}}</td>
-                      <td>{{$expenseAllocations->RequestCode}}</td>
-                      <td>{{$expenseAllocations->itemPrimaryCode}}</td>
-                      <td>{{$expenseAllocations->itemDescription}}</td>
-                      <td>{{$expenseAllocations->unit}}</td>
-                      <td>{{$expenseAllocations->qtyIssued}}</td>
-                      <td>{{$item->empName ?? NULL}}</td>
-                      @if($reportType == 1 || $reportType == 2)
-                         <td>{{$item->empName ?? NULL}}</td>
-                      @endif
-                      <td>{{optional($item)->assignedQty}}</td>
-                      <td>{{optional($expenseAllocations)->issueCostLocal}}</td>
-                      <td>{{optional($item)->assignedQty * optional($expenseAllocations)->issueCostLocal}}</td>
-                  </tr>
-                    @endforeach
+                        @foreach($expenseAllocations->expenseAllocations as $item)
+                          <tr>
+                              <td>{{$expenseAllocations->itemIssueCode}}</td>
+                              <td>{{$expenseAllocations->issueDate}}</td>
+                              <td>{{$expenseAllocations->RequestCode}}</td>
+                              <td>{{$expenseAllocations->itemPrimaryCode}}</td>
+                              <td>{{$expenseAllocations->itemDescription}}</td>
+                              <td>{{$expenseAllocations->unit}}</td>
+                              <td>{{$expenseAllocations->qtyIssued}}</td>
+                              <td>{{$item->empID ?? NULL}}</td>
+                              @if($reportType == 1 || $reportType == 2)
+                                 <td>{{$item->empName ?? NULL}}</td>
+                              @endif
+                              <td>{{optional($item)->assignedQty}}</td>
+                              <td>{{optional($expenseAllocations)->issueCostLocal}}</td>
+                              <td>{{optional($item)->assignedQty * optional($expenseAllocations)->issueCostLocal}}</td>
+                          </tr>
+                        @endforeach
+
+                    @else
+                        <tr>
+                            <td>{{$expenseAllocations->itemIssueCode}}</td>
+                            <td>{{$expenseAllocations->issueDate}}</td>
+                            <td>{{$expenseAllocations->RequestCode}}</td>
+                            <td>{{$expenseAllocations->itemPrimaryCode}}</td>
+                            <td>{{$expenseAllocations->itemDescription}}</td>
+                            <td>{{$expenseAllocations->unit}}</td>
+                            <td>{{$expenseAllocations->qtyIssued}}</td>
+                            <td>-</td>
+                            @if($reportType == 1 || $reportType == 2)
+                                <td>-</td>
+                            @endif
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
                     @endif
                 @endforeach
                 <tr>
