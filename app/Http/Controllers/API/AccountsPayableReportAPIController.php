@@ -153,21 +153,38 @@ class AccountsPayableReportAPIController extends AppBaseController
                                             ->get();
 
             $employeeMaster = DB::table('employees')
-                ->select('employees.*')
-                ->leftJoin('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')
-                ->leftJoin('erp_paysupplierinvoicemaster', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID', '=', 'employees.employeeSystemID')
-                ->leftJoin('erp_debitnote', 'erp_debitnote.empID', '=', 'employees.employeeSystemID')
-                ->whereIn('employees.empCompanySystemID', $companiesByGroup)
-                ->groupBy('employees.employeeSystemID')
-                ->where(function($query) {
-                    $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
-                        ->where('erp_bookinvsuppmaster.approved', -1)
-                        ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
-                        ->where('erp_paysupplierinvoicemaster.approved', -1)
-                        ->orWhereNotNull('erp_debitnote.empID')
-                        ->where('erp_debitnote.approved', -1);
-                })
-                ->get();
+                                ->select('employees.*')
+                                ->where('discharegedYN','<>', 2)
+                                ->where('empActive', 1)
+                                ->leftJoin('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')
+                                ->leftJoin('erp_paysupplierinvoicemaster', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID', '=', 'employees.employeeSystemID')
+                                ->leftJoin('erp_debitnote', 'erp_debitnote.empID', '=', 'employees.employeeSystemID')
+                                ->where(function($query) use ($companiesByGroup) {
+                                    $query->whereIn('employees.empCompanySystemID', $companiesByGroup)
+                                        ->orWhere(function($subQuery) use ($companiesByGroup) {
+                                            $subQuery->whereNotIn('employees.empCompanySystemID', $companiesByGroup)
+                                                    ->where(function($inner) use ($companiesByGroup) {
+                                                        $inner->where(function($q1) use ($companiesByGroup) {
+                                                                    $q1->whereNotNull('erp_bookinvsuppmaster.employeeID')
+                                                                    ->where('erp_bookinvsuppmaster.approved', -1)
+                                                                    ->whereIn('erp_bookinvsuppmaster.companySystemID', $companiesByGroup);
+                                                                })
+                                                                ->orWhere(function($q2) use ($companiesByGroup) {
+                                                                    $q2->whereNotNull('erp_debitnote.empID')
+                                                                    ->where('erp_debitnote.approved', -1)
+                                                                    ->whereIn('erp_debitnote.companySystemID', $companiesByGroup);
+                                                                })
+                                                                ->orWhere(function($q2) use ($companiesByGroup) {
+                                                                    $q2->whereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                                                                    ->where('erp_paysupplierinvoicemaster.approved', -1)
+                                                                    ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $companiesByGroup);
+                                                                });
+                                                    });
+                                        });
+                                })
+                                ->groupBy('employees.employeeSystemID')
+                                ->get();
+
         }
 
 
