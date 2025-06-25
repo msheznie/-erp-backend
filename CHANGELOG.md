@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [10.73.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.1...v10.73.2) (2025-06-25)
+
+
+### Bug Fixes
+
+* **srm:** After Saving the Delievery Appointment System not showing the correct delivery item quantity [GSUP-3369] ([21c8513](https://github.com/pbsgears/Gears_BackEnd/commit/21c8513b77b1cded95f6c121fa0ec6a54fd0b033))
+* **srm:** After Saving the Delievery Appointment System not showing the correct delivery item quantity [GSUP-3369] ([#8296](https://github.com/pbsgears/Gears_BackEnd/issues/8296)) ([4672cd2](https://github.com/pbsgears/Gears_BackEnd/commit/4672cd226eb081ac0418725986533831d6d25939))
+
 ## [10.73.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.0...v10.73.1) (2025-06-12)
 
 
