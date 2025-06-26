@@ -92,7 +92,7 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
 
         $rcmActivated = TaxService::isGRVRCMActivation($bookInvSuppDetail->grvAutoID);
 
-        if ($groupMaster->logisticYN) {
+        if (isset($groupMaster) && $groupMaster->logisticYN) {
             $pulledQry = DB::table('erp_bookinvsupp_item_det')
                                 ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, logisticID")
                                 ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', '!=', $bookingSupInvoiceDetAutoID)

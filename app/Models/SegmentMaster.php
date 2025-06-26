@@ -70,12 +70,22 @@ class SegmentMaster extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'createdUserSystemID',
+        'modifiedUserSystemID',
         'timeStamp',
         'consoleCode',
         'isFinalLevel',
         'masterID',
         'consoleDescription',
-        'isDelegation'
+        'isDelegation',
+        'approved_yn',
+        'approved_date',
+        'RollLevForApp_curr',
+        'approved_emp_system_id',
+        'approved_by_emp_id',
+        'approved_by_emp_name',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -105,7 +115,11 @@ class SegmentMaster extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'consoleCode' => 'string',
-        'consoleDescription' => 'string'
+        'consoleDescription' => 'string',
+        'createdUserSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'documentSystemID' => 'integer',
+        'modifiedUserSystemID' => 'integer'
     ];
 
     /**
@@ -203,5 +217,29 @@ class SegmentMaster extends Model
         $segment = SegmentMaster::find($serviceLineSystemID);
 
         return ($segment) ? $segment->ServiceLineCode : null;
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmed_by_emp_system_id', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','serviceLineSystemID');
+    }
+
+    public function approved_by_emp()
+    {
+        return $this->belongsTo('App\Models\Employee','approved_emp_system_id','employeeSystemID');
     }
 }

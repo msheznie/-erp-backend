@@ -2893,6 +2893,57 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
+	serviceline.ServiceLineDes AS comments,
+	'-' as internalNotes,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+    '' AS SupplierOrCustomer,
+	0 AS DecimalPlaces ,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	employeesdepartments.approvalDeligated,
+	erp_documentapproved.approvedYN,
+	0 AS documentType,
+	'' as srmValue
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN serviceline ON erp_documentapproved.documentSystemCode = serviceline.serviceLineSystemID AND erp_documentapproved.rollLevelOrder = serviceline.RollLevForApp_curr
+WHERE
+	erp_documentapproved.approvedYN = 0
+	AND erp_documentapproved.rejectedYN = 0
+	AND erp_documentapproved.approvalGroupID > 0
+	AND serviceline.approved_yn = 0
+	AND serviceline.confirmed_yn = 1
+    $filter
+	AND erp_documentapproved.documentSystemID IN ( 132 )
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS pendingSegmentMasterApprovals UNION ALL
+	SELECT
+	*
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
 	'' AS narration,
 	'-' as internalNotes,
 	erp_documentapproved.docConfirmedDate,

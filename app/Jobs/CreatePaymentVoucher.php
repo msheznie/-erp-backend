@@ -8,8 +8,11 @@ use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChequeRegister;
+use App\Models\ChequeRegisterDetail;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
@@ -49,13 +52,15 @@ class CreatePaymentVoucher implements ShouldQueue
      */
     public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization)
     {
-        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
-            if(env('IS_MULTI_TENANCY',false)){
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
                 self::onConnection('database_main');
-            }else{
+            }
+            else {
                 self::onConnection('database');
             }
-        }else{
+        }
+        else {
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
@@ -77,8 +82,8 @@ class CreatePaymentVoucher implements ShouldQueue
 
         CommonJobService::db_switch($this->db);
 
-        $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];
-        $headerData = $detailData = ['status' => false , 'errors' => []];
+        $fieldErrors = $masterDatasets = $detailsDataSets = $pdcChequeDetailsDataSets = $errorDocuments = $successDocuments = [];
+        $headerData = $detailData = $pdcChequeData = ['status' => false , 'errors' => []];
 
         $masterIndex = 0;
         $paymentVouchers = $this->input['payment_vouchers'];
@@ -117,8 +122,36 @@ class CreatePaymentVoucher implements ShouldQueue
                 }
             }
 
-            if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
-                $masterDatasets[] = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+            $pdcChequeDetailIndex = 0;
+            $pdcChequeDetails = $paymentVoucher['pdc_cheque_details'] ?? null;
+
+            if (!is_null($pdcChequeDetails)) {
+                $validationData = $datasetMaster['validationData'] ?? null;
+                foreach ($pdcChequeDetails as $pdcChequeDetail) {
+
+                    $datasetPDCChequeDetails = self::validatePDCChequeDetailsData($paymentVoucher,$pdcChequeDetail,$validationData);
+
+                    if ($datasetPDCChequeDetails['status']) {
+                        $pdcChequeDetailsDataSets[$masterIndex][] = $datasetPDCChequeDetails['data'];
+                    }
+                    else {
+                        $pdcChequeData['errors'][] = [
+                            'index' => $pdcChequeDetailIndex + 1,
+                            'error' => $datasetPDCChequeDetails['data']
+                        ];
+                        unset($pdcChequeDetailsDataSets[$masterIndex]);
+                    }
+
+                    $pdcChequeDetailIndex++;
+                }
+            }
+
+            if (empty($headerData['errors']) && empty($detailData['errors']) && empty($pdcChequeData['errors']) && empty($fieldErrors)) {
+                $finalArray = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                if (!is_null($pdcChequeDetails)) {
+                    $finalArray = array_add($finalArray,'pdcChequeDetails',$pdcChequeDetailsDataSets[$masterIndex]);
+                }
+                $masterDatasets[] = $finalArray;
             }
             else {
                 if (empty($headerData['errors'])) {
@@ -129,16 +162,22 @@ class CreatePaymentVoucher implements ShouldQueue
                     $detailData['status'] = true;
                 }
 
+                if (empty($pdcChequeData['errors'])) {
+                    $pdcChequeData['status'] = true;
+                }
+
                 $errorDocuments[] = self::createErrorResponseDataArray(
                     $paymentVoucher['narration'] ?? "",
                     $masterIndex,
                     $fieldErrors,
                     $headerData,
-                    $detailData
+                    $detailData,
+                     !is_null($pdcChequeDetails),
+                    $pdcChequeData
                 );
 
                 $fieldErrors = [];
-                $headerData = $detailData = ['status' => false , 'errors' => []];
+                $headerData = $detailData = $pdcChequeData = ['status' => false , 'errors' => []];
             }
 
             $masterIndex++;
@@ -147,13 +186,22 @@ class CreatePaymentVoucher implements ShouldQueue
         if(!empty($masterDatasets)) {
             DB::beginTransaction();
 
-            $headerData = $detailData = ['status' => true , 'errors' => []];
+            $headerData = $detailData = $pdcDetailData = ['status' => true , 'errors' => []];
 
             foreach ($masterDatasets as $masterDataset) {
-                $documentStatus = true;
+                $documentDetailsStatus = true;
+                $documentPDCChequeDetailsStatus = true;
+
+                $isPDCAvailable = isset($masterDataset['pdcChequeYN']) && $masterDataset['pdcChequeYN'];
+
                 try {
                     $detailsData = $masterDataset['details'];
                     unset($masterDataset['details']);
+                    $pdcDetailsData = [];
+                    if (isset($masterDataset['pdcChequeDetails'])) {
+                        $pdcDetailsData = $masterDataset['pdcChequeDetails'];
+                        unset($masterDataset['pdcChequeDetails']);
+                    }
 
                     $masterInsert = PaymentVoucherServices::createPaymentVoucher($masterDataset);
 
@@ -166,22 +214,89 @@ class CreatePaymentVoucher implements ShouldQueue
                             $detailInsert = PaymentVoucherServices::storeDirectPaymentDetails($pvDetail);
 
                             if (!$detailInsert['status']) {
-                                $documentStatus = false;
+                                $documentDetailsStatus = false;
                                 DB::rollBack();
-                                $error = self::createErrorResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error = self::createErrorResponseDataArray(
+                                    $masterDataset['BPVNarration'],
+                                    $masterDataset['initialIndex'],
+                                    [],
+                                    $headerData,
+                                    $detailData,
+                                    $isPDCAvailable,
+                                    $pdcDetailData
+                                );
                                 $error['headerData'] = $detailInsert['message'];
                                 $errorDocuments[] = $error;
                                 break 2;
                             }
                         }
 
-                        if($documentStatus) {
+                        if ($documentDetailsStatus && ($masterInsert['data']['payment_mode'] == 2) && ($masterInsert['data']['pdcChequeYN'] == 1)) {
+
+                            $tempData = [
+                                'PayMasterAutoId' => $pvMasterAutoId,
+                                'noOfCheques' => $masterDataset['noOfCheques'],
+                                'totalAmount' => $masterDataset['totalAmount'],
+                                'documentSystemID' => $masterDataset['documentSystemID'],
+                                'isAutoCreateDocument' => true
+                            ];
+                            $pdcChequeGenerateStatus = PaymentVoucherServices::generatePdcForPv($tempData);
+
+                            if ($pdcChequeGenerateStatus['status']) {
+                                $pdcChequeIndex = 0;
+                                foreach ($pdcDetailsData as $pdcDetail) {
+                                    $id = $pdcChequeGenerateStatus['data'][$pdcChequeIndex]['id'];
+                                    $pdcDetail['documentmasterAutoID'] = $pvMasterAutoId;
+
+                                    $pdcInsert = PaymentVoucherServices::updatePDCCheque($id,$pdcDetail);
+
+                                    if (!$pdcInsert['status']) {
+                                        $documentPDCChequeDetailsStatus = false;
+                                        DB::rollBack();
+                                        $error = self::createErrorResponseDataArray(
+                                            $masterDataset['BPVNarration'],
+                                            $masterDataset['initialIndex'],
+                                            [],
+                                            $headerData,
+                                            $detailData,
+                                            $isPDCAvailable,
+                                            $pdcDetailData
+                                        );
+                                        $error['headerData'] = $pdcInsert['message'];
+                                        $errorDocuments[] = $error;
+                                        break 2;
+                                    }
+
+                                    $pdcChequeIndex++;
+                                }
+                            }
+                            else {
+                                $documentPDCChequeDetailsStatus = false;
+                                DB::rollBack();
+                                $error = self::createErrorResponseDataArray(
+                                    $masterDataset['BPVNarration'],
+                                    $masterDataset['initialIndex'],
+                                    [],
+                                    $headerData,
+                                    $detailData,
+                                    $isPDCAvailable,
+                                    $pdcDetailData
+                                );
+                                $error['headerData'] = $pdcChequeGenerateStatus['message'];
+                                $errorDocuments[] = $error;
+                            }
+                        }
+
+                        if($documentDetailsStatus && $documentPDCChequeDetailsStatus) {
                             $confirmDataSet = PaySupplierInvoiceMaster::find($pvMasterAutoId)->toArray();
                             $confirmDataSet['confirmedYN'] = 1;
                             $confirmDataSet['payeeType'] = $masterDataset['payeeType'];
                             $confirmDataSet['paymentMode'] = $masterDataset['paymentMode'];
                             $confirmDataSet['isSupplierBlocked'] = true;
                             $confirmDataSet['isAutoCreateDocument'] = true;
+                            if ($masterInsert['data']['payment_mode'] == 2) {
+                                $confirmDataSet['BPVchequeNoDropdown'] = $masterDataset['BPVchequeNoDropdown'];
+                            }
 
                             $pvUpdateData = PaymentVoucherServices::updatePaymentVoucher($confirmDataSet['PayMasterAutoId'],$confirmDataSet);
 
@@ -203,14 +318,30 @@ class CreatePaymentVoucher implements ShouldQueue
                                 }
                                 else {
                                     DB::rollBack();
-                                    $error = self::createErrorResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                    $error = self::createErrorResponseDataArray(
+                                        $masterDataset['BPVNarration'],
+                                        $masterDataset['initialIndex'],
+                                        [],
+                                        $headerData,
+                                        $detailData,
+                                        $isPDCAvailable,
+                                        $pdcDetailData
+                                    );
                                     $error['headerData'] = $approveDocument['message'];
                                     $errorDocuments[] = $error;
                                 }
                             }
                             else {
                                 DB::rollBack();
-                                $error = self::createErrorResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error = self::createErrorResponseDataArray(
+                                    $masterDataset['BPVNarration'],
+                                    $masterDataset['initialIndex'],
+                                    [],
+                                    $headerData,
+                                    $detailData,
+                                    $isPDCAvailable,
+                                    $pdcDetailData
+                                );
                                 $error['headerData'] = $pvUpdateData['message'];
                                 $errorDocuments[] = $error;
                             }
@@ -218,7 +349,15 @@ class CreatePaymentVoucher implements ShouldQueue
                     }
                     else {
                         DB::rollBack();
-                        $error = self::createErrorResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                        $error = self::createErrorResponseDataArray(
+                            $masterDataset['BPVNarration'],
+                            $masterDataset['initialIndex'],
+                            [],
+                            $headerData,
+                            $detailData,
+                            $isPDCAvailable,
+                            $pdcDetailData
+                        );
                         $error['headerData'][] = [
                             'field' => "",
                             'message' => [$masterInsert['message']]
@@ -228,7 +367,15 @@ class CreatePaymentVoucher implements ShouldQueue
                 }
                 catch (\Exception $e) {
                     DB::rollBack();
-                    $error = self::createErrorResponseDataArray($masterDataset['BPVNarration'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                    $error = self::createErrorResponseDataArray(
+                        $masterDataset['BPVNarration'],
+                        $masterDataset['initialIndex'],
+                        [],
+                        $headerData,
+                        $detailData,
+                        $isPDCAvailable,
+                        $pdcDetailData
+                    );
                     $error['headerData'][] = [
                         'field' => "",
                         'message' => [$e->getMessage()]
@@ -340,11 +487,9 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
         }
 
-        $dateValidation = false;
         if (isset($request['pay_invoice_date'])) {
             $data = self::validateAPIDate($request['pay_invoice_date']);
             if ($data) {
-                $dateValidation = true;
                 $payInvoiceDate = Carbon::parse($request['pay_invoice_date']);
 
                 if ($payInvoiceDate->lessThanOrEqualTo(Carbon::today())) {
@@ -554,9 +699,10 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
         }
 
+        $paymentMode = null;
         if (isset($request['payment_mode'])) {
             if (is_int($request['payment_mode'])) {
-                if (in_array($request['payment_mode'],[1,2,3])) {
+                if (in_array($request['payment_mode'],[1,2,3,4])) {
                     switch ($request['payment_mode']) {
                         case 1:
                             $paymentMode = 1;
@@ -566,6 +712,9 @@ class CreatePaymentVoucher implements ShouldQueue
                             break;
                         case 3:
                             $paymentMode = 4;
+                            break;
+                        case 4:
+                            $paymentMode = 2;
                             break;
                     }
                 }
@@ -590,10 +739,246 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
         }
 
+        $isAvailableChequeDate = false;
+        $isAvailableChequeData = false;
+        $isPdcCheque = false;
+        $numberOfCheque = null;
+
         if (isset($request['currency'])) {
             $request['currency'] = strtoupper($request['currency']);
             $currency = CurrencyMaster::where('CurrencyCode', $request['currency'])->first();
-            if (!$currency) {
+            if ($currency) {
+                if (isset($request['bank'])) {
+                    $bank = BankAssign::where('companySystemID', $request['company_id'])
+                        ->where('bankShortCode',$request['bank'])
+                        ->first();
+
+                    if ($bank) {
+                        if ($bank->isActive == 1) {
+                            if ($bank->isAssigned == -1) {
+
+                                if (isset($request['account'])) {
+                                    $bankAccount = BankAccount::where('companySystemID', $companyId)
+                                        ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                        ->where('AccountNo', $request['account'])
+                                        ->first();
+
+                                    if ($bankAccount) {
+                                        if ($bankAccount->isAccountActive == 1) {
+                                            if ($bankAccount->approvedYN == 1) {
+                                                // Process Check Payment Data
+                                                if (!is_null($paymentMode) && $paymentMode == 2) {
+
+                                                    if (isset($request['is_pdc_cheque'])) {
+                                                        if (is_int($request['is_pdc_cheque'])) {
+                                                            if (in_array($request['is_pdc_cheque'], [1,2])) {
+                                                                if ($request['is_pdc_cheque'] == 1) {
+                                                                    $isPdcCheque = true;
+                                                                    if (isset($request['no_of_cheques'])) {
+                                                                        if (is_int($request['no_of_cheques'])) {
+                                                                            $numberOfCheque = $request['no_of_cheques'];
+                                                                        }
+                                                                        else {
+                                                                            $errorData[] = [
+                                                                                'field' => "no_of_cheques",
+                                                                                'message' => ["no_of_cheques must be an integer"]
+                                                                            ];
+                                                                        }
+                                                                    }
+                                                                    else {
+                                                                        $errorData[] = [
+                                                                            'field' => "no_of_cheques",
+                                                                            'message' => ["no_of_cheques field is required"]
+                                                                        ];
+                                                                    }
+                                                                }
+                                                                else {
+
+                                                                    $companyCurrency = Helper::companyCurrency($companyId);
+                                                                    $localCurrency = null;
+                                                                    if ($companyCurrency) {
+                                                                        $localCurrency = $companyCurrency->localcurrency->currencyID;
+                                                                    }
+
+                                                                    if (($currency->currencyID == $localCurrency) && ($localCurrency == $bankAccount->accountCurrencyID)) {
+                                                                        if (isset($request['cheque_number'])) {
+                                                                            if (is_string($request['cheque_number'])) {
+                                                                                $isExistPolicyGCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
+                                                                                    ->where('companyPolicyCategoryID', 35)
+                                                                                    ->where('isYesNO', 1)
+                                                                                    ->exists();
+
+                                                                                $isAvailableChequeData = true;
+                                                                                if ($isExistPolicyGCNFCR) {
+                                                                                    $chequeRegister = ChequeRegister::where('company_id', $companyId)
+                                                                                        ->where('bank_id',$bank->bankmasterAutoID)
+                                                                                        ->where('bank_account_id',$bankAccount->bankAccountAutoID)
+                                                                                        ->get();
+
+                                                                                    if (count($chequeRegister) > 0) {
+                                                                                        $activeChequeRegister = $chequeRegister->where('isActive',1)->first();
+                                                                                        if (!is_null($activeChequeRegister)) {
+                                                                                            $chequeRegisterDetails = ChequeRegisterDetail::where('company_id',$companyId)->where('cheque_register_master_id', $activeChequeRegister->id)->where('status', 0)->get();
+
+                                                                                            if (count($chequeRegisterDetails) > 0) {
+                                                                                                $selectedChequeData = $chequeRegisterDetails->where('cheque_no', $request['cheque_number'])->first();
+                                                                                                if (!is_null($selectedChequeData)) {
+                                                                                                    $chequeID = $selectedChequeData->id;
+                                                                                                }
+                                                                                                else {
+                                                                                                    $errorData[] = [
+                                                                                                        'field' => "cheque_number",
+                                                                                                        'message' => ["Entered cheque number does not match the available cheques in the register."]
+                                                                                                    ];
+                                                                                                }
+                                                                                            }
+                                                                                            else {
+                                                                                                $errorData[] = [
+                                                                                                    'field' => "cheque_number",
+                                                                                                    'message' => ["No unused cheques available in the cheque register for the selected bank account."]
+                                                                                                ];
+                                                                                            }
+                                                                                        }
+                                                                                        else {
+                                                                                            $errorData[] = [
+                                                                                                'field' => "cheque_number",
+                                                                                                'message' => ["The cheque register for the selected bank account is inactive."]
+                                                                                            ];
+                                                                                        }
+                                                                                    }
+                                                                                    else {
+                                                                                        $errorData[] = [
+                                                                                            'field' => "cheque_number",
+                                                                                            'message' => ["Cheque register not found for the selected bank account."]
+                                                                                        ];
+                                                                                    }
+                                                                                }
+                                                                                else {
+                                                                                    $chequeID = $request['cheque_number'];
+                                                                                }
+                                                                            }
+                                                                            else {
+                                                                                $errorData[] = [
+                                                                                    'field' => "cheque_number",
+                                                                                    'message' => ["cheque_number should be a text"]
+                                                                                ];
+                                                                            }
+                                                                        }
+                                                                        else {
+                                                                            $errorData[] = [
+                                                                                'field' => "cheque_number",
+                                                                                'message' => ["cheque_number field is required"]
+                                                                            ];
+                                                                        }
+                                                                    }
+                                                                    else {
+                                                                        $errorData[] = [
+                                                                            'field' => "payment_mode",
+                                                                            'message' => ["Cheque payment mode cannot be selected as the transaction currency and bank account currency is different."]
+                                                                        ];
+                                                                    }
+
+                                                                    if (isset($request['cheque_date'])) {
+                                                                        $data = self::validateAPIDate($request['cheque_date']);
+                                                                        if ($data) {
+                                                                            $chequeDate = Carbon::parse($request['cheque_date']);
+                                                                            $isAvailableChequeDate = true;
+                                                                        }
+                                                                        else {
+                                                                            $errorData[] = [
+                                                                                'field' => "cheque_date",
+                                                                                'message' => ["cheque_date format is invalid"]
+                                                                            ];
+                                                                        }
+                                                                    }
+                                                                    else {
+                                                                        $errorData[] = [
+                                                                            'field' => "cheque_date",
+                                                                            'message' => ["cheque_date field is required"]
+                                                                        ];
+                                                                    }
+
+                                                                }
+                                                            }
+                                                            else {
+                                                                $errorData[] = [
+                                                                    'field' => "is_pdc_cheque",
+                                                                    'message' => ["Invalid is_pdc_cheque selected. Please choose the correct type."]
+                                                                ];
+                                                            }
+                                                        }
+                                                        else {
+                                                            $errorData[] = [
+                                                                'field' => "is_pdc_cheque",
+                                                                'message' => ["is_pdc_cheque must be an integer"]
+                                                            ];
+                                                        }
+                                                    }
+                                                    else {
+                                                        $errorData[] = [
+                                                            'field' => "is_pdc_cheque",
+                                                            'message' => ["is_pdc_cheque field is required"]
+                                                        ];
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                $errorData[] = [
+                                                    'field' => "account",
+                                                    'message' => ["Selected bank account is not approved in the system."]
+                                                ];
+                                            }
+                                        }
+                                        else {
+                                            $errorData[] = [
+                                                'field' => "account",
+                                                'message' => ["Selected bank account is not active in the system."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "account",
+                                            'message' => ["Selected bank account is not available in the system."]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "account",
+                                        'message' => ["account field is required"]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "bank",
+                                    'message' => ["Selected bank is not assigned/active to the company"]
+                                ];
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "bank",
+                                'message' => ["Selected bank is not active."]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "bank",
+                            'message' => ["Selected bank is not available in the system."]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "bank",
+                        'message' => ["bank field is required"]
+                    ];
+                }
+            }
+            else {
                 $errorData[] = [
                     'field' => "currency",
                     'message' => ["Selected currency is not available in the system."]
@@ -604,79 +989,6 @@ class CreatePaymentVoucher implements ShouldQueue
             $errorData[] = [
                 'field' => "currency",
                 'message' => ["currency field is required"]
-            ];
-        }
-
-        if (isset($request['bank'])) {
-            $bank = BankAssign::where('companySystemID', $request['company_id'])
-                ->where('bankShortCode',$request['bank'])
-                ->first();
-
-            if ($bank) {
-                if ($bank->isActive == 1) {
-                    if ($bank->isAssigned == -1) {
-
-                        if (isset($request['account'])) {
-                            $bankAccount = BankAccount::where('companySystemID', $companyId)
-                                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                                ->where('AccountNo', $request['account'])
-                                ->first();
-
-                            if ($bankAccount) {
-                                if ($bankAccount->isAccountActive == 1) {
-                                    if ($bankAccount->approvedYN != 1) {
-                                        $errorData[] = [
-                                            'field' => "account",
-                                            'message' => ["Selected bank account is not approved in the system."]
-                                        ];
-                                    }
-                                }
-                                else {
-                                    $errorData[] = [
-                                        'field' => "account",
-                                        'message' => ["Selected bank account is not active in the system."]
-                                    ];
-                                }
-                            }
-                            else {
-                                $errorData[] = [
-                                    'field' => "account",
-                                    'message' => ["Selected bank account is not available in the system."]
-                                ];
-                            }
-                        }
-                        else {
-                            $errorData[] = [
-                                'field' => "account",
-                                'message' => ["account field is required"]
-                            ];
-                        }
-                    }
-                    else {
-                        $errorData[] = [
-                            'field' => "bank",
-                            'message' => ["Selected bank is not assigned/active to the company"]
-                        ];
-                    }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "bank",
-                        'message' => ["Selected bank is not active."]
-                    ];
-                }
-            }
-            else {
-                $errorData[] = [
-                    'field' => "bank",
-                    'message' => ["Selected bank is not available in the system."]
-                ];
-            }
-        }
-        else {
-            $errorData[] = [
-                'field' => "bank",
-                'message' => ["bank field is required"]
             ];
         }
 
@@ -731,11 +1043,15 @@ class CreatePaymentVoucher implements ShouldQueue
 
         $details = $request['details'] ?? null;
 
+        $totalAmount = 0;
         if (isset($details)) {
             if (is_array($details)) {
                 $detailsCollection = collect($details);
 
-                if($detailsCollection->count() < 1) {
+                if($detailsCollection->count() > 0) {
+                    $totalAmount = $detailsCollection->sum('amount');
+                }
+                else {
                     $errorData[] = [
                         'field' => "details",
                         'message' => ["details cannot be less than one"]
@@ -756,6 +1072,43 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
         }
 
+        if ($paymentMode == 2 && $isPdcCheque && (!is_null($numberOfCheque) && $numberOfCheque > 0)) {
+            $pdcChequeDetails = $request['pdc_cheque_details'] ?? null;
+
+            if (isset($pdcChequeDetails)) {
+                if (is_array($pdcChequeDetails)) {
+                    $pdcChequeDetailsCount = collect($pdcChequeDetails)->count();
+
+                    if($pdcChequeDetailsCount >= 1) {
+                        if($pdcChequeDetailsCount != $numberOfCheque) {
+                            $errorData[] = [
+                                'field' => "pdc_cheque_details",
+                                'message' => ["pdc_cheque_details count and no_of_cheques must be same"]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "pdc_cheque_details",
+                            'message' => ["pdc_cheque_details cannot be less than one"]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "pdc_cheque_details",
+                        'message' => ["pdc_cheque_details format invalid"]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "pdc_cheque_details",
+                    'message' => ["pdc_cheque_details field is required"]
+                ];
+            }
+        }
+
         if (empty($errorData) && empty($fieldErrors)) {
             $returnDataset = [
                 'status' => true,
@@ -771,13 +1124,34 @@ class CreatePaymentVoucher implements ShouldQueue
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'companyFinancePeriodID' => $financePeriodAP->companyFinancePeriodID,
                     'rcmActivated' => $reverseChargeMechanism,
-                    'BPVchequeDate' => Carbon::today()->startOfDay()->format('Y-m-d'),
                     'companySystemID' => $companyId,
                     'documentSystemID' => 4,
                     'isAutoCreateDocument' => true,
                     'initialIndex' => $index
                 ]
             ];
+
+            if ($isAvailableChequeDate) {
+                $returnDataset['data']['BPVchequeDate'] = $chequeDate->format('Y-m-d');
+            }
+            else {
+                $returnDataset['data']['BPVchequeDate'] = Carbon::today()->startOfDay()->format('Y-m-d');
+            }
+
+            if (!is_null($paymentMode) && $paymentMode == 2) {
+                $returnDataset['data']['pdcChequeYN'] = $isPdcCheque;
+                $returnDataset['data']['BPVchequeNoDropdown'] = $isAvailableChequeData ? $chequeID : [];
+                if ($isPdcCheque) {
+                    $returnDataset['data']['noOfCheques'] = $numberOfCheque;
+                    $returnDataset['data']['totalAmount'] = $totalAmount;
+
+                    $returnDataset['validationData'] = [
+                        'currency' => $currency,
+                        'bank' => $bank,
+                        'account' => $bankAccount
+                    ];
+                }
+            }
 
             switch ($request['payee_type']) {
                 case 1:
@@ -797,6 +1171,14 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $errorData,
                 'fieldErrors' => $fieldErrors
             ];
+
+            if (!is_null($paymentMode) && $paymentMode == 2 && $isPdcCheque) {
+                $returnDataset['validationData'] = [
+                    'currency' => $currency ?? null,
+                    'bank' => $bank ?? null,
+                    'account' => $bankAccount ?? null
+                ];
+            }
         }
 
         return $returnDataset;
@@ -1054,8 +1436,157 @@ class CreatePaymentVoucher implements ShouldQueue
         return $returnData;
     }
 
-    public static function createErrorResponseDataArray($narration,$masterIndex,$fieldErrors, $headerData, $detailData): array {
-        return [
+    public static function validatePDCChequeDetailsData($masterData, $pdcChequeDetails, $validationData): array {
+        $errorData = [];
+
+        $companyId = $masterData['company_id'] ?? null;
+
+        if (isset($pdcChequeDetails['cheque_number'])) {
+            if (is_string($pdcChequeDetails['cheque_number'])) {
+                $companyCurrency = Helper::companyCurrency($companyId);
+                $localCurrency = null;
+                if ($companyCurrency) {
+                    $localCurrency = $companyCurrency->localcurrency->currencyID;
+                }
+
+                $chequeNumber = null;
+                $chequeNumberID = null;
+                if (!is_null($validationData)) {
+                    if ((isset($validationData['currency']) && $validationData['currency']['currencyID'] == $localCurrency) && (isset($validationData['account']) && $validationData['account']['accountCurrencyID'] == $localCurrency)) {
+                        $isExistPolicyGCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
+                            ->where('companyPolicyCategoryID', 35)
+                            ->where('isYesNO', 1)
+                            ->exists();
+
+                        if ($isExistPolicyGCNFCR && isset($validationData['bank'])) {
+                            $chequeRegister = ChequeRegister::where('company_id', $companyId)
+                                ->where('bank_id',$validationData['bank']['bankmasterAutoID'])
+                                ->where('bank_account_id',$validationData['account']['bankAccountAutoID'])
+                                ->get();
+
+                            if (count($chequeRegister) > 0) {
+                                $activeChequeRegister = $chequeRegister->where('isActive',1)->first();
+                                if (!is_null($activeChequeRegister)) {
+                                    $chequeRegisterDetails = ChequeRegisterDetail::where('company_id',$companyId)->where('cheque_register_master_id', $activeChequeRegister->id)->where('status', 0)->get();
+
+                                    if (count($chequeRegisterDetails) > 0) {
+                                        $selectedChequeData = $chequeRegisterDetails->where('cheque_no', $pdcChequeDetails['cheque_number'])->first();
+                                        if (!is_null($selectedChequeData)) {
+                                            $chequeNumber = $pdcChequeDetails['cheque_number'];
+                                            $chequeNumberID = $selectedChequeData->id;
+                                        }
+                                        else {
+                                            $errorData[] = [
+                                                'field' => "cheque_number",
+                                                'message' => ["Entered cheque number does not match the available cheques in the register."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "cheque_number",
+                                            'message' => ["No unused cheques available in the cheque register for the selected bank account."]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "cheque_number",
+                                        'message' => ["The cheque register for the selected bank account is inactive."]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "cheque_number",
+                                    'message' => ["Cheque register not found for the selected bank account."]
+                                ];
+                            }
+                        }
+                        else {
+                            $chequeNumber = $pdcChequeDetails['cheque_number'];
+                        }
+                    }
+                    else {
+                        $chequeNumber = $pdcChequeDetails['cheque_number'];
+                    }
+                }
+                else {
+                    $chequeNumber = $pdcChequeDetails['cheque_number'];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "cheque_number",
+                    'message' => ["cheque_number should be a text"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "cheque_number",
+                'message' => ["cheque_number field is required."]
+            ];
+        }
+
+        if (isset($pdcChequeDetails['cheque_date'])) {
+            $data = self::validateAPIDate($pdcChequeDetails['cheque_date']);
+            if ($data) {
+                $chequeDate = Carbon::parse($pdcChequeDetails['cheque_date']);
+            }
+            else {
+                $errorData[] = [
+                    'field' => "cheque_date",
+                    'message' => ["cheque_date format is invalid"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "cheque_date",
+                'message' => ["cheque_date field is required"]
+            ];
+        }
+
+        if (isset($pdcChequeDetails['amount'])) {
+            if (gettype($pdcChequeDetails['amount']) == 'string') {
+                $errorData[] = [
+                    'field' => "amount",
+                    'message' => ["amount must be a numeric"]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "amount",
+                'message' => ["amount field is required"]
+            ];
+        }
+
+        if (empty($errorData)) {
+            $returnData = [
+                "status" => true,
+                "data" => [
+                    'chequeNo' => $chequeNumber,
+                    'chequeRegisterAutoID' => $chequeNumberID,
+                    'chequeDate' => $chequeDate->format('Y-m-d'),
+                    'comments' => $pdcChequeDetails['comments'] ?? null,
+                    'amount' => $pdcChequeDetails['amount']
+                ]
+            ];
+        }
+        else{
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
+            ];
+        }
+
+        return $returnData;
+    }
+
+    public static function createErrorResponseDataArray($narration,$masterIndex,$fieldErrors, $headerData, $detailData, $isPDCCheque, $pdcChequeData): array {
+        $data = [
             'identifier' => [
                 'unique-key' => $narration,
                 'index' => $masterIndex + 1
@@ -1064,6 +1595,12 @@ class CreatePaymentVoucher implements ShouldQueue
             'headerData' => [$headerData],
             'detailData' => [$detailData]
         ];
+
+        if ($isPDCCheque) {
+            $data['pdcChequeData'] = [$pdcChequeData];
+        }
+
+        return $data;
     }
 
     public static function createSuccessResponseDataArray($narration,$masterIndex,$code): array {

@@ -93,7 +93,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
                 Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
-
+                Route::resource('segment_assigneds', 'SegmentAssignedAPIController');
 
                 Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -1034,7 +1034,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('updateNotPostedFAGLEntries', 'GeneralLedgerAPIController@updateNotPostedFAGLEntries');
         Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
         Route::get('updateNotPostedBSIGLEntries', 'GeneralLedgerAPIController@updateNotPostedBSIGLEntries');
-
+        Route::get('updateNotApprovedSegments', 'GeneralLedgerAPIController@updateNotApprovedSegments');
     }
 
 

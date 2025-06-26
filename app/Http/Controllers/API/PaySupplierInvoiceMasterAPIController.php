@@ -330,10 +330,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError('Pay Supplier Invoice Master not found');
         }
 
-        $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode;
-        $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode;
+        $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['BPVbankCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['BPVbankCurrency'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['companyRptCurrencyID'])->first()->CurrencyCode ?? null;
+        $paySupplierInvoiceMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['localCurrencyID'])->first()->CurrencyCode ?? null;
         $paySupplierInvoiceMaster['BPVchequeNoID'] = null;
 
         if($paySupplierInvoiceMaster['payment_mode'] == 2 && $paySupplierInvoiceMaster['pdcChequeYN'] == 0 && !empty($paySupplierInvoiceMaster['BPVchequeNo'])) {
@@ -344,12 +344,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
                 ->first();
 
-            $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
-                ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
-                ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
-                ->first();
+            if ($chequeRegisterData) {
+                $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                    ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                    ->first();
 
-            $paySupplierInvoiceMaster['BPVchequeNoID'] = $checkRegisterDetails->id;
+                $paySupplierInvoiceMaster['BPVchequeNoID'] = $checkRegisterDetails->id;
+            }
         }
 
         return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
@@ -1506,94 +1508,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
-
-        if (empty($paySupplierInvoiceMaster)) {
-                return $this->sendError('Pay Supplier Invoice Master not found');
+        $data = PaymentVoucherServices::generatePdcForPv($input);
+        if ($data['status']) {
+            return $this->sendResponse($data['data'], $data['message']);
+        }
+        else {
+            return $this->sendError(
+                $data['message'],
+                $data['code'] ?? 404
+            );
         }
 
-        DB::beginTransaction();
-        try {
-
-            $deleteAllPDC = $this->deleteAllPDC($paySupplierInvoiceMaster->documentSystemID, $input['PayMasterAutoId']);
-
-            $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
-
-            if (!$bankAccount) {
-                return $this->sendError('Bank Account not selected');
-            }
-    
-            $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
-
-            for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
-                $chequeRegisterAutoID = null;
-                $nextChequeNo = null;
-                $chequeGenrated = false;
-                if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
-                    $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
-
-                    if (!$res['status']) {
-                        return $this->sendError($res['message'], 500);
-                    }
-
-                    $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
-                    $nextChequeNo = $res['nextChequeNo'];
-                    $chequeGenrated = $res['chequeGenrated'];
-                } 
-
-                $pdcLogData = [
-                    'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
-                    'documentmasterAutoID' => $input['PayMasterAutoId'],
-                    'paymentBankID' => $bankAccount->bankmasterAutoID,
-                    'companySystemID' => $paySupplierInvoiceMaster->companySystemID,
-                    'currencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
-                    'chequeRegisterAutoID' => $chequeRegisterAutoID,
-                    'chequeNo' => $nextChequeNo,
-                    'chequeStatus' => 0,
-                    'amount' => $amount,
-                ];
-
-                $resPdc = PdcLog::create($pdcLogData);
-            }
-
-            DB::commit();
-            return $this->sendResponse(['chequeGenrated' => $chequeGenrated], "PDC cheques generated successfully");
-        } catch
-        (\Exception $exception) {
-            DB::rollBack();
-            return $this->sendError($exception->getMessage());
-        }
-
-    }
-
-
-    public function deleteAllPDC($documentSystemID, $documentAutoID)
-    {
-        $cheques = PdcLog::where('documentSystemID', $documentSystemID)
-                         ->where('documentmasterAutoID', $documentAutoID)
-                         ->get();
-
-        if (count($cheques) > 0) {
-            $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
-
-
-            if (count($chequeRegisterAutoIDs) > 0) {
-                $update_array = [
-                    'document_id' => null,
-                    'document_master_id' => null,
-                    'status' => 0,
-                ];
-
-                ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
-            }
-
-            $chequesDelete = PdcLog::where('documentSystemID', $documentSystemID)
-                             ->where('documentmasterAutoID', $documentAutoID)
-                             ->delete();
-
-        }
-        
-        return ['status' => true];
     }
 
     /**
@@ -3978,12 +3903,14 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                     ->where('ended_cheque_no', '>=' ,$paySupplierInvoiceMaster['BPVchequeNo'])
                     ->first();
 
-                $checkRegisterDetailsOldRecord = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
-                    ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
-                    ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
-                    ->first();
+                if ($chequeRegisterData) {
+                    $checkRegisterDetailsOldRecord = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData->id)
+                        ->where('company_id',$paySupplierInvoiceMaster['companySystemID'])
+                        ->where('cheque_no',$paySupplierInvoiceMaster['BPVchequeNo'])
+                        ->first();
 
-                $checkRegisterDetails->push($checkRegisterDetailsOldRecord);
+                    $checkRegisterDetails->push($checkRegisterDetailsOldRecord);
+                }
 
                 $sorted = $checkRegisterDetails->sortBy('cheque_no');
                 $checkRegisterDetails = $sorted->values()->all();

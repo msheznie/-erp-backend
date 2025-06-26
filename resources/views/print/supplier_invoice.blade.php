@@ -177,7 +177,6 @@
     </style>
 </head>
 <body>
-
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
     <table style="width: 100%" class="table_height">
@@ -502,6 +501,7 @@
             </table>
         </div>
     @endif
+ 
     @if($masterdata->documentType == 3)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
@@ -556,6 +556,7 @@
                 </tbody>
             </table>
         </div>
+        
     @endif
     @if($masterdata->documentType == 1 || $masterdata->documentType == 4)
         <div style="margin-top: 30px">
@@ -684,10 +685,6 @@
             </table>
         </div>
     @endif
-
-
-
-
     <div class="{{ $masterdata->documentType == 0 && count($masterdata->directdetail) > 0? 'wrap' : '' }}">                   
     @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         <div style="margin-top: 30px">
@@ -815,7 +812,6 @@
         </div>
     @endif                    
     </div>
-
     @if($masterdata->documentType == 3)
      <div class="row" style="margin-top: 30px">
             <table style="width:100%;" class="table table-bordered">
@@ -899,11 +895,9 @@
             </table>
         </div>
     @endif 
-
 </div>
-
 <div class="" style="margin-top: 30px;">
-        <table style="width:100%;">
+    <table style="width:100%;">
         <tr>
             <td width="40%"><span
                         class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
@@ -941,7 +935,6 @@
         </tr>
     </table>
 </div>
-
 <div class="footer">
     <table style="width:100%;">
         <tr>

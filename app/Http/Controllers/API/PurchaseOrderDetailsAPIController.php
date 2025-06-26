@@ -1447,16 +1447,18 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
 
-        if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
-        {
-            $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
-
-        }else {
-            if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
+        if (isset($input['poDiscountPercentageToTooltip'])) {
+            if( strlen((string) $input['poDiscountPercentage'] ) > strlen((string)$input['poDiscountPercentageToTooltip']))
             {
                 $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+
             }else {
-                $poDiscountPercenrtageToUpdate = $input['poDiscountPercentageToTooltip'];
+                if(round($input['poDiscountPercentageToTooltip'],2) != $input['poDiscountPercentage'])
+                {
+                    $poDiscountPercenrtageToUpdate = $input['poDiscountPercentage'];
+                }else {
+                    $poDiscountPercenrtageToUpdate = $input['poDiscountPercentageToTooltip'];
+                }
             }
         }
 

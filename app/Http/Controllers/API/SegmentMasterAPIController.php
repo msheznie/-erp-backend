@@ -15,6 +15,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CreateExcel;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -38,6 +39,7 @@ use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\GeneralLedger;
@@ -50,6 +52,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
+use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpItemLedger;
@@ -106,46 +109,76 @@ class SegmentMasterAPIController extends AppBaseController
      */
     public function store(CreateSegmentMasterAPIRequest $request)
     {
-        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
 
-        if(isset($input['companySystemID']))
-        {
-            $input['companyID'] = $this->getCompanyById($input['companySystemID']);
-        }
-
-        if (isset($input['isPublic']) && $input['isPublic']){
-            $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
-                                                ->where('isPublic', 1)
-                                                ->where('isDeleted',0)
-                                                ->first();
-
-            if ($companyPublicCheck) {
-                return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+            if(isset($input['companySystemID']))
+            {
+                $input['companyID'] = $this->getCompanyById($input['companySystemID']);
             }
 
-        }
-        
-        $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
-                                         ->where('ServiceLineCode', $input['ServiceLineCode'])
-                                         ->where('isDeleted',0)
-                                         ->first();
+            if (isset($input['isPublic']) && $input['isPublic']){
+                $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
+                                                    ->where('isPublic', 1)
+                                                    ->where('isDeleted',0)
+                                                    ->first();
 
-        if ($segmentCodeCheck) {
-           return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
-        }
+                if ($companyPublicCheck) {
+                    return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+                }
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+            }
+            
+            $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
+                                            ->where('ServiceLineCode', $input['ServiceLineCode'])
+                                            ->where('isDeleted',0)
+                                            ->first();
 
-        $empId = $user->employee['empID'];
-        $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $empId;
+            if ($segmentCodeCheck) {
+            return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
+            }
 
-        $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $segmentMasters = $this->segmentMasterRepository->create($input);
+            $empId = $user->employee['empID'];
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $empId;
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
-        return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
+            $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
+            $input['documentSystemID'] =  132;
+            $input['masterID'] = $input['masterID'] == 0 ? null : $input['masterID'];
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = $empId;
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+
+            $segmentMasters = $this->segmentMasterRepository->create($input);
+
+            if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
+                $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500);
+                }
+
+                $data['confirmed_by_emp_system_id'] = $user && $user->employee ? $user->employee['employeeSystemID'] : null;
+                $data['confirmed_by_emp_id'] = $empId;
+                $data['confirmed_by_name'] = $user && $user->employee ? $user->employee['empName'] : null;
+                $data['confirmed_date'] = now();
+                $data['confirmed_yn'] = 1;
+
+                $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
+                                        ->where('serviceLineSystemID', $segmentMasters->serviceLineSystemID)
+                                        ->update($data);
+            }
+            DB::commit();
+            return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
+        } catch (\Exception $e) {
+        DB::rollBack(); 
+        return $this->sendError($e->getMessage(), 500);
+    }
     }
 
     /**
@@ -160,7 +193,9 @@ class SegmentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->withcount(['sub_levels'])->find($id);
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')
+            ->with(['approved_by_emp','company','parent'])
+            ->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -214,7 +249,7 @@ class SegmentMasterAPIController extends AppBaseController
         
         /** @var SegmentMaster $segmentMaster */
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($id);
-        $previousValue = $segmentMaster->toArray();
+        $previousValue = $segmentMaster ? $segmentMaster->toArray() : [];
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -643,6 +678,9 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
+        $segmentId = $input['serviceLineSystemID'];
+        $isActive = $input['isActive'];
+        $approvalStatus = $input['approved_yn'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -652,8 +690,33 @@ class SegmentMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $segmentMasters = SegmentMaster::whereIn('companySystemID',$childCompanies)
+        $segmentMasters = SegmentMaster::withoutGlobalScope('final_level')
+                                ->whereIn('companySystemID',$childCompanies)
                                 ->with(['company']);
+
+        if(isset($segmentId) && !is_null($segmentId)) {
+            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        }
+
+        if(isset($isActive) && !is_null($isActive)) {
+            $segmentMasters->where('isActive', $isActive);
+        }
+
+        if(isset($approvalStatus) && !is_null($approvalStatus)) {
+            if ($approvalStatus == 2) {
+                $segmentMasters->where('approved_yn', 1);
+            } 
+            else if ($approvalStatus == 1)
+            {
+                $segmentMasters->where('confirmed_yn', $approvalStatus)
+                    ->where('approved_yn', 0)
+                    ->where('refferedBackYN', 0);
+            }
+            else
+            {
+                $segmentMasters->where('confirmed_yn', $approvalStatus);
+            }
+        }
 
         $search = $request->input('search.value');
         if($search){
@@ -728,11 +791,20 @@ class SegmentMasterAPIController extends AppBaseController
     public function updateSegmentMaster(Request $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->find($input['serviceLineSystemID']);
+        $companySystemId = $input['companySystemID'];
 
         if (!$segmentMaster) {
-            return $this->sendError("Segment not found", 500);
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    'status' => false,
+                    'message' => 'Segment not found'
+                ];
+            }
+            else {
+                return $this->sendError("Segment not found", 500);
+            }
         }
 
         $previousValue = $segmentMaster->toArray();
@@ -758,7 +830,15 @@ class SegmentMasterAPIController extends AppBaseController
                                                                ->where('isDeleted', 0)
                                                                ->first();
         if ($checkForDuplicateCode) {
-            return $this->sendError("Segment code already exists", 500);
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                return [
+                    'status' => false,
+                    'message' => 'Segment code already exists'
+                ];
+            }
+            else {
+                return $this->sendError("Segment code already exists", 500);
+            }
         }
 
 
@@ -798,7 +878,19 @@ class SegmentMasterAPIController extends AppBaseController
 
 
             if ($segmentUsed) {
-                return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                    return [
+                        'status' => false,
+                        'message' => 'This segment is used in some documents. Therefore, Final level status cannot be changed'
+                    ];
+                }
+                else {
+                    return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+                }
+            }
+
+            if($input['sub_levels_count'] > 0) {
+                return $this->sendError("Parent type cannot be changed, as it has sub levels", 500);
             }
         }
 
@@ -810,7 +902,15 @@ class SegmentMasterAPIController extends AppBaseController
 
             if ($companyPublicCheck) {
                 if($companyPublicCheck->serviceLineSystemID != $input['serviceLineSystemID']){
-                    return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            'status' => false,
+                            'message' => "Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "
+                        ];
+                    }
+                    else {
+                        return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                    }
                 }
             }
 
@@ -829,13 +929,60 @@ class SegmentMasterAPIController extends AppBaseController
             unset($input['db']);
         }
 
-        $userId = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $empId = $user->employee['empID'];
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $empId;
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $empInfo = UserTypeService::getSystemEmployee();
+            $input['modifiedUser'] = $empInfo->empID;
+            $input['modifiedUserSystemID'] = $empInfo->employeeSystemID;
+        }
+        else {
+            $userId = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+            $empId = $user->employee['empID'];
+            $input['modifiedUser'] = $empId;
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        }
 
-        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count']);
+        $input['modifiedPc'] = gethostname();
+        $input['documentSystemID'] =  132;
+
+        $input['timeStamp'] = now();
+
+        if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1 && ($segmentMaster->confirmed_yn != $input['confirmed_yn']) && (isset($input['approved_yn']) && $input['approved_yn'] != 1)) {
+            $params = array(
+                'autoID' => $input['serviceLineSystemID'],
+                'company' => $companySystemId,
+                'document' => 132,
+                'isAutoCreateDocument' => isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                    return [
+                        'status' => false,
+                        'message' => $confirm["message"]
+                    ];
+                }
+                else {
+                    return $this->sendError($confirm["message"], 500);
+                }
+            }
+
+            if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                $empInfo = UserTypeService::getSystemEmployee();
+                $input['confirmed_by_emp_id'] = $empInfo->empID;
+                $input['confirmed_by_emp_system_id'] = $empInfo->employeeSystemID;
+                $input['confirmed_by_name'] = $empInfo->empName;
+            }
+            else {
+                $input['confirmed_by_emp_system_id'] = $user->employee['employeeSystemID'];
+                $input['confirmed_by_emp_id'] = $empId;
+                $input['confirmed_by_name'] = $user->employee['empName'];
+            }
+
+            $input['confirmed_date'] = $input['timeStamp'];
+        }
+
+        $data = array_except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
 
         $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
@@ -843,7 +990,12 @@ class SegmentMasterAPIController extends AppBaseController
 
         $this->auditLog($db, $input['serviceLineSystemID'],$uuid, "serviceline", "Segment master ".$input['ServiceLineDes']." has been updated", "U", $data, $previousValue);
 
-        return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            return ['status' => true];
+        }
+        else {
+            return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
+        }
     }
 
     public function getOrganizationStructure(Request $request)
@@ -938,5 +1090,221 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully with deleted segments');
+    }
+
+    public function getAllSegmentForApproval(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $empID = \Helper::getEmployeeSystemID();
+        $values = implode(',', array_map(function($value)
+        {
+            return trim($value, ',');
+        }, $companyID));
+
+        $search = $request->input('search.value');
+        $filter='';
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $filter = " AND (( serviceline.ServiceLineCode LIKE '%{$search}%') OR ( serviceline.ServiceLineDes LIKE '%{$search}%'))";
+        }
+
+        $sql = "
+                SELECT 
+                    serviceline.*, 
+                    parentSegment.ServiceLineCode AS parentSegmentCode,
+                    employeesdepartments.approvalDeligated, 
+                    erp_documentapproved.documentApprovedID, 
+                    rollLevelOrder, 
+                    approvalLevelID, 
+                    documentSystemCode 
+                FROM erp_documentapproved
+                INNER JOIN employeesdepartments 
+                    ON erp_documentapproved.approvalGroupID = employeesdepartments.employeeGroupID 
+                    AND erp_documentapproved.documentSystemID = employeesdepartments.documentSystemID
+                    AND erp_documentapproved.companySystemID = employeesdepartments.companySystemID
+                INNER JOIN serviceline 
+                    ON serviceline.serviceLineSystemID = erp_documentapproved.documentSystemCode 
+                    AND erp_documentapproved.rollLevelOrder = serviceline.RollLevForApp_curr
+                LEFT JOIN serviceline AS parentSegment 
+                    ON serviceline.masterID = parentSegment.serviceLineSystemID
+                WHERE serviceline.approved_yn = 0 
+                    {$filter}
+                    AND serviceline.confirmed_yn = 1
+                    AND employeesdepartments.documentSystemID = 132 
+                    AND erp_documentapproved.approvedYN = 0
+                    AND erp_documentapproved.rejectedYN = 0
+                    AND erp_documentapproved.documentSystemID = 132
+                    AND employeesdepartments.isActive = 1
+                    AND employeesdepartments.employeeSystemID = $empID
+                    AND employeesdepartments.removedYN = 0
+                    AND employeesdepartments.companySystemID IN ($values)
+                GROUP BY serviceline.serviceLineSystemID 
+                ORDER BY documentApprovedID";
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        $segments = DB::select($sql);
+        if ($isEmployeeDischarched == 'true') {
+            $segments = [];
+        }
+
+        $data['search']['value'] = '';
+        $request->merge($data);
+        $request->request->remove('search.value');
+
+        return \DataTables::of($segments)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getSegmentMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 132);
+            }])
+            ->find($id);
+
+        if (empty($segmentMaster)) {
+            return $this->sendError('Segment Master not found');
+        }
+
+        return $this->sendResponse($segmentMaster->toArray(), 'Segment Master retrieved successfully');
+    }
+
+    public function rejectSegmentMaster(Request $request)
+    {
+        $reject = Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function assignedCompaniesBySegment(Request $request)
+    {
+        $segmentId = $request->segmentId;
+        $assignedCompanies = SegmentAssigned::with('company')
+            ->where('serviceLineSystemID', $segmentId)
+            ->get();
+
+        return $this->sendResponse($assignedCompanies, 'Segment assigned companies retrieved successfully.');
+    }
+
+    public function exportSegmentMaster(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('companyId'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $segmentId = $input['serviceLineSystemID'];
+        $isActive = $input['isActive'];
+        $approvalStatus = $input['approved_yn'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $segmentMasters = SegmentMaster::withoutGlobalScope('final_level')
+            ->whereIn('companySystemID',$childCompanies)
+            ->with(['company']);
+
+        if(isset($segmentId) && !is_null($segmentId)) {
+            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        }
+
+        if(isset($isActive) && !is_null($isActive)) {
+            $segmentMasters->where('isActive', $isActive);
+        }
+
+        if(isset($approvalStatus) && !is_null($approvalStatus)) {
+            if ($approvalStatus == 2) {
+                $segmentMasters->where('approved_yn', 1);
+            } else {
+                $segmentMasters->where('confirmed_yn', $approvalStatus);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $segmentMasters =   $segmentMasters->where(function ($query) use($search) {
+                $query->where('ServiceLineCode','LIKE',"%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $segmentMasters = $segmentMasters->orderBy('serviceLineSystemID','desc')->get();
+
+        $data = array();
+        $x = 0;
+        foreach ($segmentMasters as $val) {
+            $x++;
+            $data[$x]['Segment Code'] = $val->ServiceLineCode;
+            $data[$x]['Segment Description'] = $val->ServiceLineDes;
+            $data[$x]['Active Status'] = ($val->isActive == 1) ? 'Yes' : 'No';
+            $data[$x]['Type'] = ($val->isFinalLevel == 1) ? 'Final' : 'Parent';
+            $data[$x]['Is Public'] = ($val->isPublic == 1) ? 'Yes' : 'No';
+
+            if ($val->confirmed_yn == 1 && $val->approved_yn == 1) {
+                $data[$x]['status'] = 'Fully Approved';
+            } elseif ($val->confirmed_yn == 1 && $val->approved_yn == 0) {
+                $data[$x]['status'] = 'Not Approved';
+            } elseif ($val->confirmed_yn == 0 && $val->isActive == 1) {
+                $data[$x]['status'] = 'Active only';
+            } else {
+                $data[$x]['status'] = 'Not Active';
+            }
+        }
+
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = $companyMaster->CompanyID ?? 'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+
+        $fileName = 'segment_master';
+        $path = 'system/segment_master/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 }

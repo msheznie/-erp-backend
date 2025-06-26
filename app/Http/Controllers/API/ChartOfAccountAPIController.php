@@ -960,15 +960,20 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $input = $request->all();
         //$companyID = $input['companyID'];
-        $reportTypeId = 0;
-        if (isset($input['templateMasterID'])) {
-            $template = ReportTemplate::find($input['templateMasterID']);
-            $reportTypeId = $template->reportID;
+        if(isset($input['isCashFlowReport']) && $input['isCashFlowReport']){ 
+            $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1);
+        } else {
+            $reportTypeId = 0;
+            if (isset($input['templateMasterID'])) {
+                $template = ReportTemplate::find($input['templateMasterID']);
+                $reportTypeId = $template->reportID;
+            }
+    
+            $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->when(isset($reportTypeId) && $reportTypeId == 4, function ($query) {
+                return $query->whereIn('controlAccountsSystemID', [3, 4, 5]);
+            });
         }
 
-        $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->when(isset($reportTypeId) && $reportTypeId == 4, function ($query) {
-            return $query->whereIn('controlAccountsSystemID', [3, 4, 5]);
-        });
 
         if (isset($input['controllAccountYN'])) {
             $items = $items->where('controllAccountYN', $input['controllAccountYN']);
@@ -984,9 +989,15 @@ class ChartOfAccountAPIController extends AppBaseController
             }
         }
 
-        if (isset($input['templateMasterID'])) {
-            $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+
+        if(isset($input['isCashFlowReport']) && $input['isCashFlowReport']){ 
+            $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
             $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+        } else { 
+            if (isset($input['templateMasterID'])) {
+                $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+            }
         }
 
         $items = $items->get();

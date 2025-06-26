@@ -1000,4 +1000,9 @@ class FixedAssetMaster extends Model
         ->addSelect($as.".financeCatDescription as ".$columnAs);
     }
 
+    public function allocatToExpense()
+    {
+        return $this->belongsTo('App\Models\ExpenseAssetAllocation', 'faID','assetID');
+    }
+
 }

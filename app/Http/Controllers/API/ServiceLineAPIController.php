@@ -21,6 +21,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\Company;
+
 
 /**
  * Class ServiceLineController
@@ -293,6 +295,30 @@ class ServiceLineAPIController extends AppBaseController
     {
         $companyID = $request->companyID;
         $serviceline = ServiceLine::where('companySystemID', $companyID)->where('isActive',1)->where('isFinalLevel',1)->where('isDeleted',0)->get();
+        return $this->sendResponse($serviceline, 'Segment retrieved successfully');
+    }
+
+    public function getServiceLineByparent(Request $request) {
+        $companyID = $request->companyID;
+        $parentOnly = $request->parentOnly;
+
+        $query = ServiceLine::where('companySystemID', $companyID)
+            ->where('isDeleted',0);
+
+        if(isset($parentOnly) && !is_null($parentOnly)) {
+            $query->where('isFinalLevel', 0);
+        }
+
+        $serviceline = $query->get();
+
+        $company = Company::find($companyID);
+        $companyAsService = [
+            'serviceLineSystemID' => 0,
+            'ServiceLineCode' => $company->CompanyID ?? '',
+            'ServiceLineDes' => $company->CompanyName ?? '',
+        ];
+        $serviceline->prepend((object) $companyAsService);
+
         return $this->sendResponse($serviceline, 'Segment retrieved successfully');
     }
 }

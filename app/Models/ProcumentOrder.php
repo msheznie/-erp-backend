@@ -755,4 +755,32 @@ class ProcumentOrder extends Model
     public function grv_details(){
         return $this->hasMany('\App\Models\GRVDetails','purchaseOrderMastertID','purchaseOrderID');
     }
+
+    public function addon_details() {
+        return $this->hasMany('\App\Models\PoAddons', 'poId', 'purchaseOrderID');
+    }
+
+    public function advance_summary()
+    {
+        return $this->hasOne('\App\Models\PoAdvancePayment', 'poID', 'purchaseOrderID')
+            ->where('isAdvancePaymentYN', 0)
+            ->selectRaw('poID, COALESCE(SUM(reqAmount), 0) as advanceSum')
+            ->groupBy('poID');
+    }
+
+    public function po_logistics_details()
+    {
+        return $this->hasMany('\App\Models\PoAdvancePayment', 'poID', 'purchaseOrderID')
+            ->where('poTermID', 0)
+            ->where('confirmedYN', 1)
+            ->where('isAdvancePaymentYN', 1)
+            ->where('approvedYN', -1)
+            ->with([
+                'category_by',
+                'vat_sub_category',
+                'grv_by',
+                'currency',
+                'supplier_by',
+            ]);
+    }
 }

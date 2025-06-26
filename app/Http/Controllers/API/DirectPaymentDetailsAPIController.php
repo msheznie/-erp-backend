@@ -755,8 +755,25 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     public function getBankAccountDetails(request $request)
     {     
         $input = $request->all();
+
+        if (!isset($input['type'])) {
+            return $this->sendError('Type parameter required');
+        }
+
+        if (!isset($input['invoice'])) {
+            return $this->sendError('Invoice parameter required.');
+        }
+
+        
+        $type = $input['type'];
+        $invoice = $input['invoice'];
+
         $account = BankAccount::where('chartOfAccountSystemID', $input['bankGLId'])->where('companySystemID', $input['company_id'])->first();
-        return $this->sendResponse($account, 'Account details retrieved successfully');
+        if (empty($account) && $type == 15 && $invoice == 3) {
+            return $this->sendError('The selected GL is not linked to a bank account.');
+        } else {
+            return $this->sendResponse($account, 'Account details retrieved successfully.');
+        }
 
     }
 }

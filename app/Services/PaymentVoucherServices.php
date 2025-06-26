@@ -41,6 +41,7 @@ use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\Tax;
 use App\Models\Taxdetail;
 use App\Models\TaxVatCategories;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -344,7 +345,7 @@ class PaymentVoucherServices
         }
 
         $input['payment_mode'] = $input['paymentMode'];
-        unset($input['paymentMode']);
+        unset($input['paymentMode'], $input['noOfCheques'], $input['totalAmount']);
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);
 
@@ -2162,6 +2163,18 @@ class PaymentVoucherServices
             ];
         }
 
+        if(!(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) && $payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3)
+        {
+            $bankAccountLink = BankAccount::isActive()->IsApprove()->where('companySystemID',$payMaster->companySystemID)->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])->first();
+
+            if (empty($bankAccountLink)) {
+                return [
+                    'status' => false,
+                    'message' => 'The selected GL is not linked to a bank account.'
+                ];
+            }
+        }
+
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
             return [
@@ -2668,6 +2681,163 @@ class PaymentVoucherServices
             'data' => $directPaymentDetails->refresh()->toArray(),
             'message' => 'DirectPaymentDetails updated successfully'
         ];
+    }
+
+    public static function generatePdcForPv($input): array {
+        $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['PayMasterAutoId']);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return [
+                'status' => false,
+                'message' => 'Pay Supplier Invoice Master not found'
+            ];
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $deleteAllPDC = self::deleteAllPDC($paySupplierInvoiceMaster->documentSystemID, $input['PayMasterAutoId']);
+
+            $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
+
+            if (!$bankAccount) {
+                return [
+                    'status' => false,
+                    'message' => 'Bank Account not selected'
+                ];
+            }
+
+            $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
+
+            for ($i=0; $i < floatval($input['noOfCheques']); $i++) {
+                $chequeRegisterAutoID = null;
+                $nextChequeNo = null;
+                $chequeGenrated = false;
+                if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
+                    $res =  app(PaySupplierInvoiceMasterRepository::class)->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
+
+                    if (!$res['status']) {
+                        return [
+                            'status' => false,
+                            'code' => 500,
+                            'message' => $res['message']
+                        ];
+                    }
+
+                    $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
+                    $nextChequeNo = $res['nextChequeNo'];
+                    $chequeGenrated = $res['chequeGenrated'];
+                }
+
+                $pdcLogData = [
+                    'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
+                    'documentmasterAutoID' => $input['PayMasterAutoId'],
+                    'paymentBankID' => $bankAccount->bankmasterAutoID,
+                    'companySystemID' => $paySupplierInvoiceMaster->companySystemID,
+                    'currencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+                    'chequeRegisterAutoID' => $chequeRegisterAutoID,
+                    'chequeNo' => $nextChequeNo,
+                    'chequeStatus' => 0,
+                    'amount' => $amount,
+                ];
+
+                $resPdc = PdcLog::create($pdcLogData);
+            }
+
+            DB::commit();
+
+            if (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
+                $cheques = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                    ->get();
+
+                return [
+                    'status' => true,
+                    'data' => $cheques,
+                    'message' => "PDC cheques generated successfully"
+                ];
+            }
+            else {
+                return [
+                    'status' => true,
+                    'data' => ['chequeGenrated' => $chequeGenrated],
+                    'message' => "PDC cheques generated successfully"
+                ];
+            }
+        } catch
+        (\Exception $exception) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => $exception->getMessage()
+            ];
+        }
+    }
+
+    public static function deleteAllPDC($documentSystemID, $documentAutoID): array {
+        $cheques = PdcLog::where('documentSystemID', $documentSystemID)
+            ->where('documentmasterAutoID', $documentAutoID)
+            ->get();
+
+        if (count($cheques) > 0) {
+            $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
+
+
+            if (count($chequeRegisterAutoIDs) > 0) {
+                $update_array = [
+                    'document_id' => null,
+                    'document_master_id' => null,
+                    'status' => 0,
+                ];
+
+                ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
+            }
+
+            $chequesDelete = PdcLog::where('documentSystemID', $documentSystemID)
+                ->where('documentmasterAutoID', $documentAutoID)
+                ->delete();
+
+        }
+
+        return ['status' => true];
+    }
+
+    public static function updatePDCCheque($id,$input): array {
+        $pdcLog = PdcLog::find($id);
+
+        if (empty($pdcLog)) {
+            return [
+                'status' => false,
+                'message' => 'Pdc Log not found'
+            ];
+        }
+
+        $checkPdcChequeDuplicate = PdcLog::where('documentmasterAutoID', $input['documentmasterAutoID'])
+            ->where('id','!=', $id)
+            ->where('chequeNo', $input['chequeNo'])
+            ->whereNotNull('chequeNo')
+            ->first();
+
+        if ($checkPdcChequeDuplicate) {
+            return [
+                'status' => false,
+                'code' => 500,
+                'message' => 'Cheque no cannot be duplicated'
+            ];
+        }
+
+        if (isset($input['chequeDate'])) {
+            $input['chequeDate'] = Carbon::parse($input['chequeDate']);
+        }
+
+        $pdcLog->update($input);
+
+        return [
+            'status' => true,
+            'data' => $pdcLog->refresh()->toArray(),
+            'message' => 'Pdc Log updated successfully'
+        ];
+
     }
 
 }

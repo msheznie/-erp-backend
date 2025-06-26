@@ -117,7 +117,7 @@ class AssetCostAuditService
                 $modifiedData[] = ['amended_field' => "last_physical_verified_date", 'previous_value' => ($auditData['previosValue']['lastVerifiedDate']) ? $previousLastVerifiedDate: '', 'new_value' => ($auditData['newValue']['lastVerifiedDate']) ? $newLastVerifiedDate : ''];
             }
 
-            if($auditData['previosValue']['AUDITCATOGARY'] != $auditData['newValue']['AUDITCATOGARY']) {  
+            if(isset($auditData['newValue']['AUDITCATOGARY']) && ($auditData['previosValue']['AUDITCATOGARY'] != $auditData['newValue']['AUDITCATOGARY'])) {
                 $oldAuditCategory = AssetFinanceCategory::where('faFinanceCatID',$auditData['previosValue']['AUDITCATOGARY'] )->first();
                 $newAuditCategory = AssetFinanceCategory::where('faFinanceCatID',$auditData['newValue']['AUDITCATOGARY'] )->first();
                 

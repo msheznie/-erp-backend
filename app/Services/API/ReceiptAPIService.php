@@ -23,8 +23,12 @@ use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
+use App\Models\PdcLog;
 use App\Models\SegmentMaster;
+use App\Models\SystemGlCodeScenario;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\Taxdetail;
+use App\Services\PaymentVoucherServices;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 
@@ -39,6 +43,7 @@ class ReceiptAPIService
 
     public $arrayObj = array();
     public $detailsArrayObj = array();
+    public $pdcArrayObj = array();
 
 
     public function storeReceiptVoucherData($receipts,$db) {
@@ -47,7 +52,6 @@ class ReceiptAPIService
 
         $structuredError = [];
         if($this->isError) {
-//            dd($this->validationErrorArray);
             return ['status'=>'fail', "code" => 422,'data' => $this->validationErrorArray];
         }
 
@@ -63,6 +67,31 @@ class ReceiptAPIService
                         array_push($errorDetails,$detail['invoiceCode']);
                     }
                 }
+
+                if(!empty($receipt->pdcChequeData) && $saveReceipt->pdcChequeYN)
+                {
+                    $pdcChequeMapedData = collect($receipt->pdcChequeData)->map(function($pdcChque) use ($saveReceipt) {
+                        return [
+                            "documentSystemID" => $saveReceipt->documentSystemID,
+                            "documentmasterAutoID" => $saveReceipt->custReceivePaymentAutoID,
+                            "paymentBankID" => $saveReceipt->bankID,
+                            "companySystemID" => $saveReceipt->companySystemID,
+                            "currencyID" => $saveReceipt->custTransactionCurrencyID,
+                            "chequeNo" => $pdcChque['chequeNo'],
+                            "chequeDate" => $pdcChque['chequeDate'],
+                            "chequeStatus" => 0,
+                            "amount" => $pdcChque['amount'],
+                            "timestamp" => "2025-06-05 10:37:12",
+                            "comments" => $pdcChque['comment'] ?? null,
+                            "chequePrinted" => 0
+                        ];
+                    })->toArray();
+
+                  $savePdcCheque =   PdcLog::insert($pdcChequeMapedData);;
+
+                }
+
+
 
                 $params = array('autoID' => $saveReceipt->custReceivePaymentAutoID,
                     'company' => $saveReceipt->companySystemID,
@@ -126,6 +155,7 @@ class ReceiptAPIService
             {
                 $this->validationErrorArray[$dt['narration']] = [];
                 $receipt->details = $dt['details'];
+                $receipt->pdcChequeData = $dt['pdcChequeData'] ?? [];
                 $receipt->payeeTypeID = $dt['payeeType'];
                 $receipt->payment_type_id = $dt['paymentMode'];
 
@@ -148,12 +178,12 @@ class ReceiptAPIService
 
                     $receipt = self::setEmployeeDetails($dt['employee'], $receipt);
                 }
-                
+
                 if(($receipt->documentType == 14 && $receipt->payeeTypeID == 3))
                 {
                     $receipt = self::setOtherDetails($dt['other'],$receipt);
                 }
-                
+
                 $receipt = self::setCurrency($dt['currency'],$receipt);
                 $receipt = self::setBankAccount($dt['account'],$receipt,$receiptValidationService);
                 $receipt = self::setBankCurrency($dt['bankCurrency'],$receipt);
@@ -161,6 +191,19 @@ class ReceiptAPIService
                 $receipt = self::setFinanicalPeriod($dt['documentDate'],$receipt);
                 $receipt = self::setCurrencyDetails($receipt);
                 $receipt = self::setLocalAndReportingAmounts($receipt);
+
+                if($dt['paymentMode'] == 2)
+                {
+                    $receipt = self::validateCheckDuplicaiton($dt,$receipt);
+                    $receipt = self::checkPDCAccountAvailable($dt,$receipt);
+                    $receipt = self::setPDCChequeData($dt,$receipt);
+                }
+
+                if($dt['paymentMode'] == 2 && $dt['isPDCCheque'] == 1)
+                {
+                    $receipt = self::setPaymentDetails($dt,$receipt);
+                }
+
                 $receipt = self::setConfirmedDetails($dt,$receipt);
                 $receipt = self::setApprovedDetails($dt,$receipt);
 
@@ -176,7 +219,10 @@ class ReceiptAPIService
 
                 $errorArray = array();
 
+                $errorArrayPDC = array();
+
                 $detailsArray = [];
+                $pdcArray = [];
 
                 foreach ($receipt['details'] as $keyDetails=>$details) {
                     $this->detailsArrayObj = [];
@@ -207,6 +253,30 @@ class ReceiptAPIService
 
                 }
 
+                if(isset($data['isPDCCheque']) && $data['isPDCCheque'] == 1)
+                {
+                    foreach($dt['pdcChequeData'] as $keyPDC => $pdcChequeData)
+                    {
+                        $this->pdcArrayObj = [];
+
+                        self::validatePDCAmount($pdcChequeData,$receipt);
+//                        self::validateChequeDate($pdcChequeData,$receipt);
+
+                        $errorArrayPDC["index"] = $keyDetails+1;
+                        $errorArrayPDC["error"] =  $this->pdcArrayObj;
+                        array_push($pdcArray,$errorArrayPDC);
+                    }
+                }
+
+                if(!collect($pdcArray)->pluck('error')->flatten()->isEmpty())
+                {
+                    $validation->setPDCData($pdcArray);
+
+                }else {
+                    $validation->setPDCData($pdcArray);
+                }
+
+
                 if(!collect($detailsArray)->pluck('error')->flatten()->isEmpty())
                 {
                     $validation->setDetailData($detailsArray);
@@ -228,6 +298,69 @@ class ReceiptAPIService
         return $receipts;
     }
 
+
+    public function checkPDCAccountAvailable($data,$receipt):CustomerReceivePayment {
+
+
+        $slug = "pdc-receivable-account";
+
+        $systemGlCodeScenario = SystemGlCodeScenario::with('company_scenario')->where('slug',$slug)->first();
+
+        $systemGlCodeScenarioDetails = SystemGlCodeScenarioDetail::where('companySystemID', $receipt->companySystemID)
+                                        ->where('systemGlScenarioID', $systemGlCodeScenario->id)
+                                        ->where('chartOfAccountSystemID', '!=', 0)
+                                        ->whereNotNull('chartOfAccountSystemID')
+                                        ->exists();
+        if(!$systemGlCodeScenarioDetails)
+        {
+            $this->isError = true;
+            $headerError = new Error('pdcChequeData','PDC receivable  account is not assigned in the COA configuration');
+            array_push($this->arrayObj,$headerError);
+        }
+        return $receipt;
+    }
+
+    public function setPDCChequeData($data,$receipt) : CustomerReceivePayment {
+
+        if($data['paymentMode'] == 2 && (isset($data['isPDCCheque']) && $data['isPDCCheque'] == 1))
+        {
+            $receipt->pdcChequeYN = true;
+        }
+
+        if($data['paymentMode'] == 2 && (isset($data['isPDCCheque']) && $data['isPDCCheque'] == 2))
+        {
+            $receipt->custChequeNo = $data['chequeNo'];
+            $receipt->custChequeDate = Carbon::parse($data['chequeDate']);
+            $receipt->custChequeBank = $receipt->bankID;
+            $receipt->pdcChequeYN = false;
+
+        }
+
+        return $receipt;
+    }
+    public function setPaymentDetails($data,$receipt) : CustomerReceivePayment {
+
+
+        if(isset($receipt->netAmount))
+        {
+           $pdcChequeTotalAmount = collect($data['pdcChequeData'])->sum('amount');
+
+           $customerTranscationCurency = CurrencyMaster::find($receipt->custTransactionCurrencyID);
+
+           if(number_format($receipt->netAmount,$customerTranscationCurency->DecimalPlaces) != number_format($pdcChequeTotalAmount,$customerTranscationCurency->DecimalPlaces))
+           {
+               $this->isError = true;
+               $headerError = new Error('pdcChequeData','PDC cheque total amount is not matching with receipt total amount');
+               array_push($this->arrayObj,$headerError);
+           }
+        }else {
+            $this->isError = true;
+            $headerError = new Error($receipt->narration,'Net amount not found');
+            array_push($this->arrayObj,$headerError);
+        }
+
+        return $receipt;
+    }
     private function validateVatAmount($details,$receipt) {
         $customerDetails = CustomerMaster::where('customerCodeSystem',$receipt->customerID)->first();
 
@@ -413,7 +546,7 @@ class ReceiptAPIService
                 $detailsError = new Error('invoiceCode','Invoice data not found');
                 array_push($this->detailsArrayObj,$detailsError);
             }else {
-                $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->first();
+                $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->where('documentSystemID',20)->first();
                 if($accountReceivableLedgerDetails) {
                     $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$accountReceivableLedgerDetails->arAutoID)->sum('receiveAmountTrans');
                     $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
@@ -422,8 +555,11 @@ class ReceiptAPIService
                         $detailsError = new Error('receiptAmount','Total received amount cannot be greater the invoice amount');
                         array_push($this->detailsArrayObj,$detailsError);
 
-
                     }
+                }else {
+                    $this->isError = true;
+                    $detailsError = new Error('invoiceCode','Receivable ledger posting is in progress. Please try again in a while');
+                    array_push($this->detailsArrayObj,$detailsError);
                 }
             }
 
@@ -477,8 +613,9 @@ class ReceiptAPIService
 
         if($input['paymentMode'] <= 0 || $input['paymentMode'] > 4) {
             $this->isError = true;
-            $headerError = new Error('paymentMode','Payment mode not found');
+            $headerError = new Error('paymentMode','The invalid the payment mode selected');
             array_push($this->arrayObj,$headerError);
+
         }
 
         if($input['payeeType'] <= 0 || $input['payeeType'] > 3) {
@@ -1032,6 +1169,67 @@ class ReceiptAPIService
             $this->isError = true;
             $headerError = new Error('employee', $errorMessage);
             array_push($this->arrayObj, $headerError);
+        }
+
+        return $receipt;
+    }
+
+    private function validatePDCAmount($detail,$receipt)
+    {
+        $currency = CurrencyMaster::find($receipt->custTransactionCurrencyID);
+        $countDecimals = strlen(substr(strrchr($detail['amount'], "."), 1));
+
+        if($countDecimals > $currency->DecimalPlaces) {
+            $this->isError = true;
+            $detailsError = new Error('amount','Decimal places cannot be greater than '.$currency->DecimalPlaces);
+            array_push($this->pdcArrayObj,$detailsError);
+        }
+    }
+
+
+    private function validateChequeDate($detail,$receipt)
+    {
+        if(Carbon::parse($detail['chequeDate']) <= $receipt->postedDate)
+        {
+            $this->isError = true;
+            $detailsError = new Error('chequeDate','Cheque date cannot less than or equal to document date');
+            array_push($this->pdcArrayObj,$detailsError);
+        }
+    }
+
+    public function validateCheckDuplicaiton($data,$receipt):CustomerReceivePayment
+    {
+
+        if(isset($data['pdcChequeData']))
+        {
+            $pdcChequeData = collect($data['pdcChequeData']);
+
+            if($pdcChequeData->isNotEmpty())
+            {
+                $counts = [];
+                foreach ($pdcChequeData as $item) {
+                    $chequeNo = $item['chequeNo'];
+                    if (isset($counts[$chequeNo])) {
+                        $counts[$chequeNo]++;
+                    } else {
+                        $counts[$chequeNo] = 1;
+                    }
+                }
+
+                $duplicateChequeNos = [];
+                foreach ($counts as $chequeNo => $count) {
+                    if ($count > 1) {
+                        $duplicateChequeNos[] = $chequeNo;
+                    }
+                }
+
+                if(!empty($duplicateChequeNos))
+                {
+                    $this->isError = true;
+                    $headerError = new Error('pdcChequeData','Cheque Number cannot be duplicate ('.implode(',',$duplicateChequeNos).')');
+                    array_push($this->arrayObj,$headerError);
+                }
+            }
         }
 
         return $receipt;

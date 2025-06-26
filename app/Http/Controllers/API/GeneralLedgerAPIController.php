@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
+use App\Jobs\ApprovePendingSegments;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
@@ -46,6 +47,7 @@ use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use App\Models\SegmentMaster;
 use App\Repositories\GeneralLedgerRepository;
+use App\Services\DocumentAutoApproveService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1677,5 +1679,28 @@ class GeneralLedgerAPIController extends AppBaseController
           $sum += $data[$i][$index][$column];
         }
         return $sum;
+    }
+
+    public function updateNotApprovedSegments(Request $request)
+    {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
+        
+        $input = $request->all();
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0) {
+            return  "tenant list is empty";
+        }
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            ApprovePendingSegments::dispatch($tenantDb);
+        }
+
+        return $this->sendResponse([], 'Segments fully approved successfully');
     }
 }

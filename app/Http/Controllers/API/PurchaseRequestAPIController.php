@@ -98,6 +98,8 @@ use App\Models\DocumentModifyRequest;
 use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\DocumentCodeConfigurationService;
+use App\Jobs\ExportDetailedORList;
+
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -2702,7 +2704,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year','financeCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year','financeCategory','reportType'));
 
 
         $serviceLineSystemID = $request['serviceLineSystemID'];
@@ -2723,89 +2725,27 @@ class PurchaseRequestAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $messages = ['toDate.after_or_equal' => 'To Date must be greater than or equal to From Date.'];
+        $validator = \Validator::make($request->all(), [
+            'fromDate' => 'nullable|date',
+            'toDate' => 'nullable|date|after_or_equal:fromDate',
+        ], $messages);
 
 
-        $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
-            ->where('approved', -1)
-            ->where('manuallyClosed', 0)
-            ->where('cancelledYN', 0)
-            ->where('selectedForPO', 0)
-            ->where('prClosedYN', 0)
-            ->with(['created_by', 'priority', 'location', 'segment']);
+        $fromDate = !empty($input['fromDate']) ? Carbon::parse($input['fromDate'])->format('Y-m-d') : null;
+        $toDate = !empty($input['toDate']) ? Carbon::parse($input['toDate'])->format('Y-m-d') : null;
 
-        if (array_key_exists('selectedForPO', $input)) {
-            if ($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
-                if ($input['selectedForPO'] == 1) {
-                    $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
-                } elseif ($input['selectedForPO'] == 2) {
-                    $purchaseRequests = $purchaseRequests->whereHas('po_details', function ($q) {
-                    });
-                }
-            }
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(),422);
         }
 
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
-            }
-        }
+        $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
 
-    
-        if (array_key_exists('financeCategory', $input)) {
-            if(is_array($input['financeCategory']))
-            {
-              $fin_cat = $input['financeCategory'][0];
-            }
-            else
-            {
-               $fin_cat = $input['financeCategory'];
-            }
-       
-           if ($fin_cat && !is_null($fin_cat)) {
-          
-               $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
-           }
-       }
-
-        $purchaseRequests = $purchaseRequests->select(
-            ['erp_purchaserequest.purchaseRequestID',
-                'erp_purchaserequest.purchaseRequestCode',
-                'erp_purchaserequest.createdDateTime',
-                'erp_purchaserequest.createdUserSystemID',
-                'erp_purchaserequest.comments',
-                'erp_purchaserequest.location',
-                'erp_purchaserequest.priority',
-                'erp_purchaserequest.cancelledYN',
-                'erp_purchaserequest.PRConfirmedYN',
-                'erp_purchaserequest.approved',
-                'erp_purchaserequest.timesReferred',
-                'erp_purchaserequest.serviceLineSystemID',
-                'erp_purchaserequest.financeCategory',
-                'erp_purchaserequest.documentSystemID',
-                'erp_purchaserequest.manuallyClosed',
-                'erp_purchaserequest.PRConfirmedDate',
-                'erp_purchaserequest.approvedDate',
-            ]);
-
-        $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
-                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
-            });
-        }
-
-        return \DataTables::eloquent($purchaseRequests)
+        $purchaseRequests = collect($purchaseRequests);
+        return \DataTables::collection($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
-                    }
-                }
-            })
+             ->filter(function ($instance) {  
+             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
@@ -2824,7 +2764,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'selectedForPO'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'selectedForPO','reportType'));
         $serviceLineSystemID = $request['serviceLineSystemID'];
         $serviceLineSystemID = (array)$serviceLineSystemID;
         $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
@@ -2843,81 +2783,11 @@ class PurchaseRequestAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-
+        $fromDate = !empty($input['fromDate']) ? Carbon::parse($input['fromDate'])->format('Y-m-d') : null;
+        $toDate = !empty($input['toDate']) ? Carbon::parse($input['toDate'])->format('Y-m-d') : null;
         $type = $input['type'];
-        $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
-            ->where('approved', -1)
-            ->where('manuallyClosed', 0)
-            ->where('cancelledYN', 0)
-            ->where('selectedForPO', 0)
-            ->where('prClosedYN', 0)
-            ->with(['created_by', 'priority_pdf', 'location_pdf', 'segment']);
+        $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
 
-        if (array_key_exists('selectedForPO', $input)) {
-            if ($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
-                if ($input['selectedForPO'] == 1) {
-                    $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
-                } elseif ($input['selectedForPO'] == 2) {
-                    $purchaseRequests = $purchaseRequests->whereHas('po_details', function ($q) {
-                    });
-                }
-            }
-        }
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
-            }
-        }
-
-        if (array_key_exists('financeCategory', $input)) {
-             if(is_array($input['financeCategory']))
-             {
-               $fin_cat = $input['financeCategory'][0];
-             }
-             else
-             {
-                $fin_cat = $input['financeCategory'];
-             }
-        
-            if ($fin_cat && !is_null($fin_cat)) {
-           
-                $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
-            }
-        }
-
-
-        $purchaseRequests = $purchaseRequests->select(
-            ['erp_purchaserequest.purchaseRequestID',
-                'erp_purchaserequest.purchaseRequestCode',
-                'erp_purchaserequest.createdDateTime',
-                'erp_purchaserequest.createdUserSystemID',
-                'erp_purchaserequest.comments',
-                'erp_purchaserequest.location',
-                'erp_purchaserequest.priority',
-                'erp_purchaserequest.cancelledYN',
-                'erp_purchaserequest.PRConfirmedYN',
-                'erp_purchaserequest.approved',
-                'erp_purchaserequest.timesReferred',
-                'erp_purchaserequest.serviceLineSystemID',
-                'erp_purchaserequest.financeCategory',
-                'erp_purchaserequest.documentSystemID',
-                'erp_purchaserequest.manuallyClosed',
-                'erp_purchaserequest.PRConfirmedDate',
-                'erp_purchaserequest.approvedDate',
-            ])->orderBy('purchaseRequestID', 'asc');
-
-        $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
-                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
-            });
-        }
-
-        $purchaseRequests = $purchaseRequests->get();
 
         $data = array();
         foreach ($purchaseRequests as $val) {
@@ -2943,11 +2813,33 @@ class PurchaseRequestAPIController extends AppBaseController
                 $serviceLineDes = $val->segment->ServiceLineDes;
             }
 
-
+            if($input['reportType'] == 1)
+            {
+                $data[] = array(
+                    'PR Number' => $val->purchaseRequestCode,
+                    'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
+                    'Department' => $serviceLineDes,
+                    'Narration' => $val->comments,
+                    'Location' => $location,
+                    'Priority' => $priority,
+                    'Created By' => $createdBy,
+                    'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
+                    'Approved Date' => \Helper::dateFormat($val->approvedDate),
+                );
+            }
+            else
+            {
             $data[] = array(
                 'PR Number' => $val->purchaseRequestCode,
                 'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
                 'Department' => $serviceLineDes,
+
+                'Item Code' => '',
+                'Part No' => '',
+                'Item Description' => '',
+                'Req Qty' => '',
+
+
                 'Narration' => $val->comments,
                 'Location' => $location,
                 'Priority' => $priority,
@@ -2955,20 +2847,21 @@ class PurchaseRequestAPIController extends AppBaseController
                 'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
                 'Approved Date' => \Helper::dateFormat($val->approvedDate),
             );
+
+            if (!empty($val->details)) {
+                foreach ($val->details as $detail) {
+                    $data[count($data)-1]['details'][] = [
+                        'Item Code' => $detail['itemPrimaryCode'],
+                        'Part No / Ref.Number' => $detail['partNumber'],
+                        'Item Description' => $detail['itemDescription'],
+                        'Req Qty' => $detail['quantityRequested']
+                    ];
+                }
+            }
+
+    
+            }
         }
-
-        //  \Excel::create('open_requests', function ($excel) use ($data) {
-        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
-        //         $sheet->fromArray($data, null, 'A1', true);
-        //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-        //         $sheet->setAutoSize(true);
-        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-        //     });
-        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
-        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        // })->download($type);
-        // return $this->sendResponse(array(), 'successfully export');
-
 
         $companyMaster = Company::find(isset($request['companySystemID'][0])?$request['companySystemID'][0]:null);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
@@ -2977,6 +2870,16 @@ class PurchaseRequestAPIController extends AppBaseController
         );
         $doc_name = 'open_requests';
         $path = 'procurement/open_requests/excel/';
+
+
+        if(isset($input['reportType']) && $input['reportType'] == 2) {
+
+               $db = $input['db'] ?? "";
+               $userId = Helper::getEmployeeSystemID();
+               ExportDetailedORList::dispatch($db, $data,$companyCode, $userId);
+               return $this->sendResponse('', 'Open Request Detailed report Export in progress, you will be notified once ready !!');
+        }
+
         $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
@@ -3542,5 +3445,217 @@ class PurchaseRequestAPIController extends AppBaseController
         $units = Unit::all();
 
         return $this->sendResponse($units->toArray(), 'Data retrieved successfully');
+    }
+
+
+    public function getItemsForOpenRequest(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $category = $input['category'] ?? null;
+
+        $items = ItemAssigned::where('companySystemID', $companyId)
+        ->where('isActive', 1)
+        ->where('isAssigned', -1)
+        ->whereHas('pr_detail', function ($query) {
+            $query->whereHas('purchase_request', function ($query) {
+                $query->where('approved', -1)
+                ->where('manuallyClosed', 0)
+                ->where('cancelledYN', 0)
+                ->where('selectedForPO', 0)
+                ->where('prClosedYN', 0);
+            });
+        })
+        ->when($category, function ($query) use ($category) {
+            return $query->where('financeCategoryMaster', $category);
+        })
+        ->groupBy('itemCodeSystem')->get();
+
+        return $this->sendResponse($items, 'Data retrieved successfully');
+    }
+
+
+    public function getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort)
+    {
+        $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
+            ->where('approved', -1)
+            ->where('manuallyClosed', 0)
+            ->where('cancelledYN', 0)
+            ->where('prClosedYN', 0)
+            ->with(['created_by', 'priority', 'location', 'segment'])
+            ->orderBy('purchaseRequestID', $sort);
+
+        if (array_key_exists('selectedForPO', $input)) {
+            if ($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
+                if ($input['selectedForPO'] == 1) {
+                    $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
+                } elseif ($input['selectedForPO'] == 2) {
+                    $purchaseRequests = $purchaseRequests->whereHas('po_details');
+                }
+            }
+        }
+
+        $search = $request->input('search.value');
+        $items = [];
+
+        $items = [];
+        if (array_key_exists('item', $input)) {
+            $items = collect((array)$input['item'])->pluck('id')->toArray();
+        }
+   
+
+
+        if ($input['reportType'] == 2 ) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where(function ($query) use ($items, $search) {
+                if (!empty($search)) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('purchaseRequestCode', 'like', "%{$search}%")
+                        ->orWhere('comments', 'like', "%{$search}%");
+                    });
+                }
+
+                $query->orWhereHas('details', function ($q) use ($items, $search) {
+                    if (!empty($items)) {
+                        $q->whereIn('itemCode', $items);
+                    }
+
+                    if (!empty($search)) {
+                        $q->where(function ($sq) use ($search) {
+                            $sq->where('itemPrimaryCode', 'like', "%{$search}%")
+                            ->orWhere('itemDescription', 'like', "%{$search}%")
+                            ->orWhere('partNumber', 'like', "%{$search}%");
+                        });
+                    }
+                });
+            });
+
+            $purchaseRequests = $purchaseRequests->with(['details' => function ($query) use ($items, $search) {
+                           $query->with(['podetail' => function ($q) {
+                                $q->with(['order']);
+                            }]);
+                        if (!empty($items)) {
+                            $query->whereIn('itemCode', $items);
+                        }
+
+                        if (!empty($search)) {
+                            $query->where(function ($q) use ($search) {
+                                $q->where('itemPrimaryCode', 'like', "%{$search}%")
+                                ->orWhere('itemDescription', 'like', "%{$search}%")
+                                ->orWhere('partNumber', 'like', "%{$search}%");
+                            });
+                        }
+                    }]);
+        } else {
+              $search = str_replace("\\", "\\\\", $search);
+           $purchaseRequests = $purchaseRequests->with(['details' => function ($query) use ($items, $search) {
+                           $query->with(['podetail' => function ($q) {
+                                $q->with(['order']);
+                            }]);
+                    }])
+                    ->when(!empty($search), function ($query) use ($search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('purchaseRequestCode', 'like', "%{$search}%")
+                            ->orWhere('comments', 'like', "%{$search}%");
+                        });
+                    });
+
+        }
+  
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
+            }
+        }
+
+        if ($fromDate && $toDate) {
+            $purchaseRequests = $purchaseRequests->whereDate('createdDateTime', '>=', $fromDate)->whereDate('createdDateTime', '<=', $toDate);;
+        } elseif ($fromDate) {
+            $purchaseRequests = $purchaseRequests->whereDate('createdDateTime', '>=', $fromDate);
+        } elseif ($toDate) {
+            $purchaseRequests = $purchaseRequests->whereDate('createdDateTime', '<=', $toDate);
+        }
+
+    
+        if (array_key_exists('financeCategory', $input)) {
+            if(is_array($input['financeCategory']))
+            {
+              $fin_cat = $input['financeCategory'][0];
+            }
+            else
+            {
+               $fin_cat = $input['financeCategory'];
+            }
+       
+           if ($fin_cat && !is_null($fin_cat)) {
+          
+               $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
+           }
+       }
+
+        $purchaseRequests = $purchaseRequests->select(
+            ['erp_purchaserequest.purchaseRequestID',
+                'erp_purchaserequest.purchaseRequestCode',
+                'erp_purchaserequest.createdDateTime',
+                'erp_purchaserequest.createdUserSystemID',
+                'erp_purchaserequest.comments',
+                'erp_purchaserequest.location',
+                'erp_purchaserequest.priority',
+                'erp_purchaserequest.cancelledYN',
+                'erp_purchaserequest.PRConfirmedYN',
+                'erp_purchaserequest.approved',
+                'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.serviceLineSystemID',
+                'erp_purchaserequest.financeCategory',
+                'erp_purchaserequest.documentSystemID',
+                'erp_purchaserequest.manuallyClosed',
+                'erp_purchaserequest.PRConfirmedDate',
+                'erp_purchaserequest.approvedDate',
+            ]);
+
+          
+            $purchaseRequests=  $purchaseRequests->get();
+            
+            $result = $this->filterPurchaseRequest($purchaseRequests);
+       
+
+            return $result;
+    }
+
+    public function filterPurchaseRequest($purchaseRequests)
+    {
+        foreach ($purchaseRequests as $prIndex => $pr) {
+            $newDetails = [];
+
+            foreach ($pr->details as $index=>$key) {
+                $poQtySum = 0;
+                $balance = 0;
+                if (!empty($key['podetail'])) {
+                    foreach ($key['podetail'] as $poDetail) {
+                        if (
+                            !empty($poDetail['order']) &&
+                            isset($poDetail['order']['approved']) &&
+                            $poDetail['order']['approved'] == -1
+                        ) {
+                            $poQtySum += floatval($poDetail['noQty']);
+                        }
+                    }
+                }
+
+                $balance = floatval($key['quantityRequested']) - $poQtySum;
+                $pr->details[$index]['quantityRequested'] = $balance;
+            
+
+                if ($balance != 0) {
+                    $key['quantityRequested'] = $balance;
+                    $newDetails[] = $key;
+                }
+
+            }
+                $pr->setRelation('details', collect($newDetails));
+            }
+
+            return $purchaseRequests;
     }
 }

@@ -79,6 +79,8 @@ Route::group([], function() {
     Route::get('item-specification-portal/{id}', 'ItemSpecificationController@show');
     Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+    Route::get('getItemsForOpenRequest', 'PurchaseRequestAPIController@getItemsForOpenRequest')->name('Get items for open request');
+
 });
 
 //Report Open Requests
