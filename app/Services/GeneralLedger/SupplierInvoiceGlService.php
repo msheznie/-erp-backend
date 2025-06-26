@@ -735,17 +735,21 @@ class SupplierInvoiceGlService
                     }
                 }
             }
-
+            
             //VAT entries
             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
             $totalVATAmount = $vatDetails['totalVAT'];
             $totalExemptVAT = $vatDetails['exemptVAT'];
             $totalVATAmountLocal = $vatDetails['totalVATLocal'];
             $totalVATAmountRpt = $vatDetails['totalVATRpt'];
+            
+            $grvVatDetails = TaxService::processGrvBasedSupllierInvoiceVAT($masterModel["autoID"]);
+            $totalDetVATAmount = $grvVatDetails['totalVAT'];
+            $totalDetVATAmountLocal = $grvVatDetails['totalVATLocal'];
+            $totalDetVATAmountRpt = $grvVatDetails['totalVATRpt'];
+            if (($masterData->documentType == 0 || $masterData->documentType == 2) && $masterData->detail && count($masterData->detail) > 0 && ($totalDetVATAmount > 0)) {
 
-            if (($masterData->documentType == 0 || $masterData->documentType == 2) && $masterData->detail && count($masterData->detail) > 0 && ($totalVATAmount > 0 || $vatDetails['exemptVAT'] > 0)) {
-
-                if ($totalVATAmount > 0) {
+                if ($totalDetVATAmount > 0) {
                     // Input VAT control
                     $taxConfigData = TaxService::getInputVATGLAccount($masterModel["companySystemID"]);
                     if (!empty($taxConfigData)) {
@@ -758,9 +762,9 @@ class SupplierInvoiceGlService
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($totalVATAmount));
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($totalVATAmountLocal));
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($totalVATAmountRpt));
+                            $data['documentTransAmount'] = \Helper::roundValue(ABS($totalDetVATAmount));
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($totalDetVATAmountLocal));
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($totalDetVATAmountRpt));
 
                             if ($retentionPercentage > 0 && $masterData->documentType != 4) {
                                 $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage / 100));
@@ -795,9 +799,9 @@ class SupplierInvoiceGlService
                             $data['glCode'] = $chartOfAccountData->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($totalVATAmount)) * -1;
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($totalVATAmountLocal)) * -1;
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($totalVATAmountRpt)) * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue(ABS($totalDetVATAmount)) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($totalDetVATAmountLocal)) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($totalDetVATAmountRpt)) * -1;
 
 
                             if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
@@ -820,7 +824,7 @@ class SupplierInvoiceGlService
                         Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
-
+                
                 if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"]) && $totalVATAmount > 0) {
                     // output vat transfer entry
                     $taxOutputVATTransfer = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
