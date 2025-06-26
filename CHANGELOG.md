@@ -1,6 +1,42 @@
 # Changelog
 
 
+## [10.74.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.2...v10.74.0) (2025-06-26)
+
+
+### Features
+
+* **accounts payable:** Inter bank transfer proper error message [GCP-7804] ([#8133](https://github.com/pbsgears/Gears_BackEnd/issues/8133)) ([058b8ba](https://github.com/pbsgears/Gears_BackEnd/commit/058b8baf7c7e32b143aa78e26850b857653be952))
+* **accounts payable:** payment voucher API cheque payment changes [GCP-7805] ([#8159](https://github.com/pbsgears/Gears_BackEnd/issues/8159)) ([857cd00](https://github.com/pbsgears/Gears_BackEnd/commit/857cd00263023355788d4adbf9662da9cdad2c17))
+* **asset management:** Validate acc dep date greater than end date [GCP-7876] ([#8173](https://github.com/pbsgears/Gears_BackEnd/issues/8173)) ([42c2773](https://github.com/pbsgears/Gears_BackEnd/commit/42c27731a38e18ffc622c4aa63c10450748f928f))
+* **general ledger:** Receipt voucher API other payment mode implementation [GCP-7815] ([#8180](https://github.com/pbsgears/Gears_BackEnd/issues/8180)) ([d1aa742](https://github.com/pbsgears/Gears_BackEnd/commit/d1aa7428aba36b00e73bb4f76213cb6248b30be4))
+* **general ledger:** tax details report details level report [GCP-7941] ([#8161](https://github.com/pbsgears/Gears_BackEnd/issues/8161)) ([656c232](https://github.com/pbsgears/Gears_BackEnd/commit/656c2326ac6cc337056c697381007097cd70c9a7))
+* **inventory:** Add Material Issue Segment report type [GCP-7803] ([#8213](https://github.com/pbsgears/Gears_BackEnd/issues/8213)) ([7c8f366](https://github.com/pbsgears/Gears_BackEnd/commit/7c8f366a3a0c94b8537fe62c393a0bc765f35800))
+* **inventory:** Material Issue Print Preview for Segment [GCP-7791] ([#8134](https://github.com/pbsgears/Gears_BackEnd/issues/8134)) ([41381c3](https://github.com/pbsgears/Gears_BackEnd/commit/41381c3649d7f5ff3c0ae80cd729bf12ffc79c8e))
+* **inventory:** material issue register report asset type interduced [GCP-7795] ([#8194](https://github.com/pbsgears/Gears_BackEnd/issues/8194)) ([8405f95](https://github.com/pbsgears/Gears_BackEnd/commit/8405f956e3d6701d723fc4016b9efb62b1a5fd9a))
+* **procurement:** Excel export detail & summary [GCP-7790] ([#8154](https://github.com/pbsgears/Gears_BackEnd/issues/8154)) ([3aaa6f1](https://github.com/pbsgears/Gears_BackEnd/commit/3aaa6f1461ef8d21ffb80a9c332a69d15f83f8d9))
+* **procurement:** Open Request Pending Items [GCP-7802] ([#8215](https://github.com/pbsgears/Gears_BackEnd/issues/8215)) ([c5c5d7c](https://github.com/pbsgears/Gears_BackEnd/commit/c5c5d7cc7b466bae6917f5df37e4ddac50bad448))
+* **system admin:** Approval for Segment 1 [GCP-5844] ([#8153](https://github.com/pbsgears/Gears_BackEnd/issues/8153)) ([2a7374c](https://github.com/pbsgears/Gears_BackEnd/commit/2a7374ce05a4e2107af5fc179328a037af020d0f))
+* **system admin:** Segment master implementation [GCP-7899] ([#8232](https://github.com/pbsgears/Gears_BackEnd/issues/8232)) ([893aef5](https://github.com/pbsgears/Gears_BackEnd/commit/893aef5837a66c5cf7111d1b3386b03b41ed84d1))
+* **system admin:** segment UI changes & functionalities [GCP-7898] ([#8222](https://github.com/pbsgears/Gears_BackEnd/issues/8222)) ([e8cd1a3](https://github.com/pbsgears/Gears_BackEnd/commit/e8cd1a339b473efaa3e21b89ce900fb577d077dc))
+
+
+### Bug Fixes
+
+* **accounts payable:** gRV supplier invoice edit grv details issue changes [GCP-8270] ([#8210](https://github.com/pbsgears/Gears_BackEnd/issues/8210)) ([6563f5a](https://github.com/pbsgears/Gears_BackEnd/commit/6563f5a7c5f8201c32d0f860acc4dddc4bb54fb5))
+* **accounts payable:** Payment voucher edit view changes [GCP-8224] ([#8199](https://github.com/pbsgears/Gears_BackEnd/issues/8199)) ([386f70b](https://github.com/pbsgears/Gears_BackEnd/commit/386f70b67668681168dd60ec75cba7b3bb783234))
+* **accounts receivable:** customer invoice API details validation changes [GCP-7935] ([#8200](https://github.com/pbsgears/Gears_BackEnd/issues/8200)) ([1193401](https://github.com/pbsgears/Gears_BackEnd/commit/1193401793f5520cec2bf61f98e98539a92c6900))
+* **accounts receivable:** customer invoice API details validation changes [GCP-7935] ([#8234](https://github.com/pbsgears/Gears_BackEnd/issues/8234)) ([c9fe11b](https://github.com/pbsgears/Gears_BackEnd/commit/c9fe11baf4ab9b55a9dedb009d2662f197cae0f5))
+* **accounts receivable:** VAT Percentage issue while printing the Customer Invoice [GCP-7830] ([#8178](https://github.com/pbsgears/Gears_BackEnd/issues/8178)) ([405889d](https://github.com/pbsgears/Gears_BackEnd/commit/405889d0b65e4dd4852f52919ae65dcd8e22e19b))
+* **asset management:** asset costing audit log issue changes [GCP-8271] ([#8208](https://github.com/pbsgears/Gears_BackEnd/issues/8208)) ([a544332](https://github.com/pbsgears/Gears_BackEnd/commit/a544332fe8f6f2938c5c010beb203339995c151c))
+* **budget:** Showing correct consumption value in budget summary report [GCP-7219] ([#8211](https://github.com/pbsgears/Gears_BackEnd/issues/8211)) ([16637f1](https://github.com/pbsgears/Gears_BackEnd/commit/16637f129a531c2fbd3baeaad2f1e3b09d1a00b7))
+* **configuration:** Cashflow statement |GL loading issue [GCP-8380] ([#8236](https://github.com/pbsgears/Gears_BackEnd/issues/8236)) ([27cec9c](https://github.com/pbsgears/Gears_BackEnd/commit/27cec9c0b7253b96e25f5cc3a58ddb8df7cf68f7))
+* **general ledger:** Tax detail report division by zero issue [GCP-8053] ([#8175](https://github.com/pbsgears/Gears_BackEnd/issues/8175)) ([57d44cb](https://github.com/pbsgears/Gears_BackEnd/commit/57d44cb135b496798d0b64c9da9cfab56cb82f66))
+* **general ledger:** tax details report logistic retention changes [GCP-8154] ([#8189](https://github.com/pbsgears/Gears_BackEnd/issues/8189)) ([b00c1de](https://github.com/pbsgears/Gears_BackEnd/commit/b00c1dea954881e7255c84f3db010d504473d4d1))
+* **inventory:** Itemmaster group company assaignment dropdown [GCP-7916] ([#8160](https://github.com/pbsgears/Gears_BackEnd/issues/8160)) ([421a53a](https://github.com/pbsgears/Gears_BackEnd/commit/421a53aa11dd8b59722a17513840a59b1b1f8682))
+* **procurement:** purchase order update total discount issue update [GCP-8274] ([#8204](https://github.com/pbsgears/Gears_BackEnd/issues/8204)) ([b8e4df5](https://github.com/pbsgears/Gears_BackEnd/commit/b8e4df56c62c23e108a4a0a4ec5b6bc4549cfd25))
+* **system admin:** Issue with amending Omanization [GCP-7819] ([#8120](https://github.com/pbsgears/Gears_BackEnd/issues/8120)) ([f1a1bfa](https://github.com/pbsgears/Gears_BackEnd/commit/f1a1bfac62a44bfaf74220205c3cb18a4a617eb0))
+
 ## [10.73.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.1...v10.73.2) (2025-06-25)
 
 
