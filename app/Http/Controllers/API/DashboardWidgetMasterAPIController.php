@@ -435,7 +435,6 @@ END AS sortDashboard')
             $categoryBLorPL = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 2 : 1;
             $companyCurrency = \Helper::companyCurrency($companyID);
             $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
-            $companyFinanceYearId = $currentFinancialYear->companyFinanceYearID;
 
             $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyID)
                                     ->where('catogaryBLorPLID', $categoryBLorPL)
@@ -444,6 +443,8 @@ END AS sortDashboard')
             if(!$currentFinancialYear) {
                 return $this->sendError('Company finance period not assigned !!');
             }
+
+            $companyFinanceYearId = $currentFinancialYear->companyFinanceYearID;
 
             $chartofAccountType = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 
                         ['PLI', 'PLE'] : ['BSA', 'BSL', 'BSE'];
