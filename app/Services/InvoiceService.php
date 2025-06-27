@@ -78,7 +78,7 @@ class InvoiceService
                 );
             }])
             ->where('supplierID', $supplierID)
-            ->where('approved', -1)
+            ->where('confirmedYN', 1)
             ->where('cancelYN', 0)
             ->whereIn('documentType', [0,1,2,3])
             ->orderBy('bookingSuppMasInvAutoID', 'desc');
