@@ -4258,7 +4258,6 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
         BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId,[$bidMasterId]);
 
         $validator = Validator::make($detail, [
@@ -4296,6 +4295,7 @@ class SRMService
                     $att['updated_at'] = Carbon::now();
                     $att['updated_by'] = $supplierRegId;
                     $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->update($att);
+                    BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
                 }
             } else {
                 $att['created_at'] = Carbon::now();
