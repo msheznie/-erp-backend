@@ -7682,7 +7682,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
                                                  sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
                     ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
-                    //->where('addedDocumentSystemID', 11)
+                    ->where('addedDocumentSystemID', 11)
                     ->where('matchingDocID', 0)
                     ->with(['payment_master' => function ($query) {
                         $query->with(['transactioncurrency']);
@@ -7693,7 +7693,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $paymentsInvoiceMatch = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
                                                  sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
                     ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
-                    //->where('addedDocumentSystemID', 11)
+                    ->where('addedDocumentSystemID', 11)
                     ->where('matchingDocID', '>', 0)
                     ->with(['matching_master' => function ($query) {
                         $query->with(['transactioncurrency']);
