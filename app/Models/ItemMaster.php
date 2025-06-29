@@ -288,6 +288,11 @@ class ItemMaster extends Model
         return $this->belongsTo('App\Models\DeliveryOrderDetail', 'itemCodeSystem', 'itemCodeSystem');
     }
 
+    public function quotationDetails()
+    {
+        return $this->hasMany('App\Models\QuotationDetails', 'itemAutoID', 'itemCodeSystem');
+    }
+
     public function item_category_type() {
         return $this->hasMany('App\Models\ItemMasterCategoryType','itemCodeSystem','itemCodeSystem');
     }

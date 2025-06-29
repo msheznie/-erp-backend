@@ -94,6 +94,7 @@ class TenantEnforce
             'api/v1/chequeRegisterDetailCancellation',
             'api/v1/supplierInvoiceDetailsAddAllItems',
             'api/v1/exportProcumentOrderMaster',
+            'api/v1/quotation/add-multiple-items',
             'api/v1/exportReportOpenRequest'
         ];
 
