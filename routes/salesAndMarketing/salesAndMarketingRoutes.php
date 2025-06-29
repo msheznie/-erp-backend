@@ -179,5 +179,8 @@ Route::group([], function () {
     Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
     Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory')->name("Get SQ details history");
     Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate')->name("Download quotation item upload template");
+    Route::post('quotation/validate-item', 'QuotationDetailsAPIController@validateItem')->name("Validate quotation item");
+    Route::post('quotation/add-multiple-items', 'QuotationDetailsAPIController@addMultipleItems')->name("Add multiple items to quotation");
 
 });
+

@@ -1851,6 +1851,14 @@ class ItemMasterAPIController extends AppBaseController
                     $query->where('bookingSuppMasInvAutoID', $input['supplierInvoiceId']);
                 });
                 $query->where('financeCategoryMaster', '!=' ,3);
+        })->when((isset($input['quotationId']) && $input['quotationId'] > 0), function($query) use ($input) {
+                $query->whereHas('item_category_type', function ($query) {
+                    $query->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems());
+                });
+                $query->whereDoesntHave('quotationDetails', function($query) use ($input) {
+                    $query->where('quotationMasterID', $input['quotationId']);
+                });
+                $query->where('financeCategoryMaster', '!=' ,3);
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {

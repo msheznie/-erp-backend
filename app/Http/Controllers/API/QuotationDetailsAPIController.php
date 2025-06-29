@@ -24,6 +24,7 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\Unit;
 use App\Models\Company;
 use App\Models\ItemMaster;
+use App\Models\ItemCategoryTypeMaster;
 use App\Repositories\QuotationDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -32,6 +33,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
 use Response;
+use App\Services\Sales\QuotationService;
 
 /**
  * Class QuotationDetailsController
@@ -1002,5 +1004,282 @@ WHERE
 
     }
 
-    
+    /**
+     * Validate item before adding to quotation
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function validateItem(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMaster = QuotationMaster::find($input['quotationId']);
+        if (empty($quotationMaster)) {
+            return $this->sendError('Quotation not found');
+        }
+
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        // Check if item is already added to this quotation
+        $itemExist = QuotationDetails::where('itemAutoID', $input['itemCodeSystem'])
+            ->where('quotationMasterID', $input['quotationId'])
+            ->first();
+
+        if (!empty($itemExist)) {
+            return $this->sendError('Selected item is already added. Please check again.');
+        }
+
+        // Check if item has sales category type
+        $hasSalesCategory = $item->item_category_type()
+            ->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems())
+            ->exists();
+
+        if (!$hasSalesCategory) {
+            return $this->sendError('This item is not configured for sales.');
+        }
+
+        // Check if fixed asset (category 3) - not allowed in quotations
+        if ($item->financeCategoryMaster == 3) {
+            return $this->sendError('Fixed assets cannot be added to quotations.');
+        }
+
+        // Check finance category assignment
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+            ->where('mainItemCategoryID', $item->financeCategoryMaster)
+            ->where('itemCategorySubID', $item->financeCategorySub)
+            ->first();
+
+        if (empty($financeItemCategorySubAssigned)) {
+            return $this->sendError('Finance category not assigned for the selected item.');
+        }
+
+        return $this->sendResponse(['status' => true], 'Item validation successful');
+    }
+
+    /**
+     * Add multiple items to quotation
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function addMultipleItems(Request $request)
+    {
+        $input = $request->all();
+        $empID = \Helper::getEmployeeID();
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+
+        // Handle addAllItems scenario
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = isset($input['db']) ? $input['db'] : "";
+
+            $quotationMaster = QuotationMaster::where('quotationMasterID', $input['quotationId'])
+                ->first();
+
+            if (empty($quotationMaster)) {
+                return $this->sendError('Quotation not found', 500);
+            }
+
+            $data['isBulkItemJobRun'] = 1;
+            QuotationMaster::where('quotationMasterID', $input['quotationId'])->update($data);
+            
+            // Add required parameters for job
+            $input['empID'] = $empID;
+            $input['employeeSystemID'] = $employeeSystemID;
+            
+            // Dispatch job for bulk item addition
+            \App\Jobs\QuotationAddMultipleItemsJob::dispatch($db, $input);
+
+            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+        }
+
+        // Handle individual items
+        $quotationMaster = QuotationMaster::find($input['quotationId']);
+        if (empty($quotationMaster)) {
+            return $this->sendError('Quotation not found');
+        }
+
+        if (!isset($input['itemArray']) || empty($input['itemArray'])) {
+            return $this->sendError('No items provided');
+        }
+
+        $successItems = [];
+        $errorItems = [];
+
+        foreach ($input['itemArray'] as $itemData) {
+            try {
+                // Validate each item first
+                $validateResult = $this->validateSingleItem($itemData['itemCodeSystem'], $input['companySystemID'], $input['quotationId']);
+                
+                if (!$validateResult['status']) {
+                    $errorItems[] = [
+                        'itemCode' => $itemData['itemCodeSystem'],
+                        'message' => $validateResult['message']
+                    ];
+                    continue;
+                }
+
+                // Add the item if validation passes
+                $this->addSingleItem($itemData['itemCodeSystem'], $input['companySystemID'], $input['quotationId'], $empID, $employeeSystemID);
+                $successItems[] = $itemData['itemCodeSystem'];
+
+            } catch (\Exception $e) {
+                $errorItems[] = [
+                    'itemCode' => $itemData['itemCodeSystem'],
+                    'message' => 'Failed to add item: ' . $e->getMessage()
+                ];
+            }
+        }
+
+        $response = [
+            'successCount' => count($successItems),
+            'errorCount' => count($errorItems),
+            'successItems' => $successItems,
+            'errorItems' => $errorItems
+        ];
+
+        if (count($errorItems) > 0 && count($successItems) == 0) {
+            return $this->sendError('Failed to add any items', 500, $response);
+        }
+
+        return $this->sendResponse($response, 'Items processed successfully');
+    }
+
+    /**
+     * Validate single item for quotation
+     */
+    private function validateSingleItem($itemCodeSystem, $companySystemID, $quotationId)
+    {
+        $item = ItemAssigned::where('itemCodeSystem', $itemCodeSystem)
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return ['status' => false, 'message' => 'Item not found'];
+        }
+
+        // Check if item is already added to this quotation
+        $itemExist = QuotationDetails::where('itemAutoID', $itemCodeSystem)
+            ->where('quotationMasterID', $quotationId)
+            ->first();
+
+        if (!empty($itemExist)) {
+            return ['status' => false, 'message' => 'Item already exists in quotation'];
+        }
+
+        // Check if fixed asset
+        if ($item->financeCategoryMaster == 3) {
+            return ['status' => false, 'message' => 'Fixed assets cannot be added to quotations'];
+        }
+
+        // Check sales category type
+        $hasSalesCategory = $item->item_category_type()
+            ->whereIn('categoryTypeID', ItemCategoryTypeMaster::salesItems())
+            ->exists();
+
+        if (!$hasSalesCategory) {
+            return ['status' => false, 'message' => 'Item not configured for sales'];
+        }
+
+        return ['status' => true];
+    }
+
+    /**
+     * Add single item to quotation
+     */
+    private function addSingleItem($itemCodeSystem, $companySystemID, $quotationId, $empID, $employeeSystemID)
+    {
+        $item = ItemAssigned::where('itemCodeSystem', $itemCodeSystem)
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        $quotationMaster = QuotationMaster::find($quotationId);
+        $employee = \Helper::getEmployeeInfo();
+
+        // Get unit data
+        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
+        $unitOfMeasure = $unitMasterData ? $unitMasterData->UnitShortCode : null;
+
+        // Get company data
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        // Calculate currency conversions
+        $wacValueLocal = $item->wacValueLocal ?? 0;
+        $unittransactionAmount = 0;
+        if ($quotationMaster->documentSystemID == 68) {
+            $unittransactionAmount = round(\Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->companyLocalCurrencyID, $quotationMaster->transactionCurrencyID, $wacValueLocal)['documentAmount'], $quotationMaster->transactionCurrencyDecimalPlaces ?? 2);
+        }
+
+        // Get VAT details if applicable
+        $vatPercentage = 0;
+        $vatAmount = 0;
+        $vatAmountLocal = 0;
+        $vatAmountRpt = 0;
+        $vatApplicableOn = null;
+        $vatMasterCategoryID = null;
+        $vatSubCategoryID = null;
+
+        if ($quotationMaster->isVatEligible) {
+            $vatDetails = TaxService::getVATDetailsByItem($quotationMaster->companySystemID, $itemCodeSystem, $quotationMaster->customerSystemCode, 0);
+            $vatPercentage = $vatDetails['percentage'];
+            $vatApplicableOn = $vatDetails['applicableOn'];
+            $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+            $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+            
+            if ($unittransactionAmount > 0) {
+                $vatAmount = (($unittransactionAmount / 100) * $vatPercentage);
+            }
+            
+            $currencyConversionVAT = \Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->transactionCurrencyID, $quotationMaster->transactionCurrencyID, $vatAmount);
+            $vatAmountLocal = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $vatAmountRpt = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
+
+        $itemData = [
+            'quotationMasterID' => $quotationId,
+            'itemAutoID' => $item->itemCodeSystem,
+            'itemSystemCode' => $item->itemPrimaryCode,
+            'itemDescription' => $item->itemDescription,
+            'itemCategory' => $item->financeCategoryMaster,
+            'itemReferenceNo' => $item->secondaryItemCode,
+            'itemFinanceCategoryID' => $item->financeCategoryMaster,
+            'itemFinanceCategorySubID' => $item->financeCategorySub,
+            'unitOfMeasureID' => $item->itemUnitOfMeasure,
+            'unitOfMeasure' => $unitOfMeasure,
+            'requestedQty' => 0,
+            'unittransactionAmount' => $unittransactionAmount,
+            'discountPercentage' => 0,
+            'discountAmount' => 0,
+            'transactionAmount' => 0,
+            'companyLocalAmount' => 0,
+            'companyReportingAmount' => 0,
+            'customerAmount' => 0,
+            'wacValueLocal' => $wacValueLocal,
+            'wacValueReporting' => $item->wacValueReporting ?? 0,
+            'VATPercentage' => $vatPercentage,
+            'VATAmount' => $vatAmount,
+            'VATAmountLocal' => $vatAmountLocal,
+            'VATAmountRpt' => $vatAmountRpt,
+            'VATApplicableOn' => $vatApplicableOn,
+            'vatMasterCategoryID' => $vatMasterCategoryID,
+            'vatSubCategoryID' => $vatSubCategoryID,
+            'companySystemID' => $companySystemID,
+            'companyID' => $company ? $company->CompanyID : null,
+            'serviceLineSystemID' => $quotationMaster->serviceLineSystemID,
+            'serviceLineCode' => $quotationMaster->serviceLine,
+            'createdPCID' => gethostname(),
+            'createdUserID' => $empID,
+            'createdUserSystemID' => $employeeSystemID,
+            'createdUserName' => $employee ? $employee->empName : null,
+            'documentSystemID' => $quotationMaster->documentSystemID
+        ];
+
+        QuotationDetails::create($itemData);
+    }
 }
