@@ -390,4 +390,40 @@ class BankStatementMasterAPIController extends AppBaseController
 
         return $this->sendResponse([], 'Workbook validation success.');
     }
+
+    public function getWorkBookHeaderData(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required',
+            'companyId' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $companySystemID = $input['companyId'];
+
+        $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookHeaderDetails($statementId, $companySystemID);
+        return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+    }
+
+    public function getUnmatchedDetails(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required',
+            'companyId' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $companySystemID = $input['companyId'];
+
+        $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookDetails($statementId, $companySystemID);
+        return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+    }
 }

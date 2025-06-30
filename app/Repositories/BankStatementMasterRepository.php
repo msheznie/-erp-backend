@@ -2,6 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\BankLedger;
+use App\Models\BankReconciliation;
+use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -87,5 +90,63 @@ class BankStatementMasterRepository extends BaseRepository
         }
 
         return $bankstatementMaster;
+    }
+
+    public function getBankWorkbookHeaderDetails($statementId, $companySystemID)
+    {
+        $data = [];
+        $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first()->toArray();
+        $bankAccountId = $data['details']['bankAccountAutoID'];
+
+        $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
+            ->where('companySystemID', $companySystemID)
+            ->where("bankAccountID", $bankAccountId)
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", -1)
+            ->groupBy('companySystemID', 'bankAccountID')
+            ->first();
+
+        if (!empty($openingBalance)) {
+            $data['systemOpeningBalance'] = $openingBalance->opening;
+        } else {
+            $data['systemOpeningBalance'] = 0;
+        }
+        $closingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as closing')
+            ->where('companySystemID', $companySystemID)
+            ->where("bankAccountID", $bankAccountId)
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", -1)
+            ->groupBy('companySystemID', 'bankAccountID')
+            ->first();
+
+        if (!empty($closingBalance)) {
+            $data['systemClosingBalance'] = $closingBalance->closing;
+        } else {
+            $data['systemClosingBalance'] = 0;
+        }
+
+        $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+            ->orderBy('bankRecAsOf', 'desc')
+            ->first();
+
+        $data['lastBankRecAmount'] = $lastRec ? $lastRec->closingBalance : 0;
+
+        return $data;
+    }
+
+    function getBankWorkbookDetails($statementId, $companySystemID)
+    {
+        $statementDetails = BankStatementMaster::where('statementId', $statementId)->first();
+
+        $data['bankLedger'] = BankLedger::where("bankAccountID", $statementDetails->bankAccountAutoID)
+            ->where("trsClearedYN", -1)
+            ->whereDate("postedDate", '<=', $statementDetails->statementEndDate)
+            ->where("bankClearedYN", 0)
+            ->where("companySystemID", $companySystemID)
+            ->get()->toArray();
+
+        $data['bankStatement'] = BankStatementDetail::where('statementId', $statementId)->get()->toArray();
+
+        return $data;
     }
 }
