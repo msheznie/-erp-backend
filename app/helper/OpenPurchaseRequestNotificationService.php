@@ -49,24 +49,45 @@ class OpenPurchaseRequestNotificationService
             return;
         }
 
-        // Send emails to configured users
-        foreach ($notificationUserSettings['email'] as $key => $notificationUserVal) {
-            $emailContent = $this->getEmailContent($openPRs, $notificationUserVal[$key]['empName']);
-            $subject = 'Open Purchase Requests - Month End Report';
-            
-            $sendEmail = NotificationService::emailNotification(
-                $this->companyID, 
-                $subject, 
-                $notificationUserVal[$key]['empEmail'], 
-                $emailContent
-            );
+                // Send emails to configured users
+        foreach ($notificationUserSettings['email'] as $notificationUserVal) {
+            foreach ($notificationUserVal as $userInfo) {
+                // Get employee email and name from the processed notification settings
+                $empEmail = $userInfo['empEmail'] ?? null;
+                $empName = $userInfo['empName'] ?? null;
 
-            if (!$sendEmail["success"]) {
-                Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
-            } 
-            // else {
-                // Log::info("Successfully sent Open PR notification email to: " . $notificationUserVal[$key]['empEmail']);
-            // }
+                if (empty($empEmail)) {
+                    Log::warning("Email is missing for employee {$empName}");
+                    continue;
+                }
+
+                // Additional validation - fetch employee to ensure they are still active
+                $employee = Employee::selectRaw('empEmail,empName,empFullName,employeeSystemID')
+                    ->where('isEmailVerified', 1)
+                    ->where('empActive', 1)
+                    ->where('discharegedYN', 0)
+                    ->where('empEmail', $empEmail)
+                    ->first();
+
+                if (empty($employee)) {
+                    Log::error("Employee not found or not valid for Open PR notification. Employee email: {$empEmail}");
+                    continue;
+                }
+
+                $emailContent = $this->getEmailContent($openPRs, $empName);
+                $subject = 'Open Purchase Requests - Month End Report';
+                
+                $sendEmail = NotificationService::emailNotification(
+                    $this->companyID, 
+                    $subject, 
+                    $empEmail, 
+                    $emailContent
+                );
+
+                if (!$sendEmail["success"]) {
+                    Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
+                } 
+            }
         }
     }
 
