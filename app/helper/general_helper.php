@@ -6356,7 +6356,7 @@ class Helper
                     $docInforArr["modelName"] = 'SegmentMaster';
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
-                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
