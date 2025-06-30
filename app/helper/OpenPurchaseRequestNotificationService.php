@@ -25,27 +25,27 @@ class OpenPurchaseRequestNotificationService
 
         // Check if today is the last day of the month
         if (!$this->isLastDayOfMonth()) {
-            Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
+            // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
-        Log::info("Processing Open Purchase Request notification for company ID: {$this->companyID}");
+        // Log::info("Processing Open Purchase Request notification for company ID: {$this->companyID}");
 
         // Get open purchase requests
         $openPRs = $this->getOpenPurchaseRequests();
 
         if (count($openPRs) == 0) {
-            Log::info("No open Purchase Requests found for company ID: {$this->companyID}");
+            // Log::info("No open Purchase Requests found for company ID: {$this->companyID}");
             return;
         }
 
-        Log::info("Found " . count($openPRs) . " open Purchase Requests for company ID: {$this->companyID}");
+        // Log::info("Found " . count($openPRs) . " open Purchase Requests for company ID: {$this->companyID}");
 
         // Get notification users
         $notificationUserSettings = NotificationService::notificationUserSettings($this->notificationDaySetup->id);
         
         if (count($notificationUserSettings['email']) == 0) {
-            Log::info("No email notification users configured for Open PR notification");
+            // Log::info("No email notification users configured for Open PR notification");
             return;
         }
 
@@ -63,9 +63,10 @@ class OpenPurchaseRequestNotificationService
 
             if (!$sendEmail["success"]) {
                 Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
-            } else {
-                Log::info("Successfully sent Open PR notification email to: " . $notificationUserVal[$key]['empEmail']);
-            }
+            } 
+            // else {
+                // Log::info("Successfully sent Open PR notification email to: " . $notificationUserVal[$key]['empEmail']);
+            // }
         }
     }
 
