@@ -140,6 +140,12 @@ class NotificationService
                         $details = [];
                         break;
 
+                    case 49:
+                        $openPR = new OpenPurchaseRequestNotificationService($companyID, $notDaySetup);
+                        $openPR->proceed();
+                        $details = [];
+                        break;
+
                     default:
                         Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
 
