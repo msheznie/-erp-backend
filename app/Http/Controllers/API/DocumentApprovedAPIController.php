@@ -384,7 +384,11 @@ SELECT
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
+	CASE 
+		WHEN erp_paysupplierinvoicemaster.invoiceType = 3 AND erp_paysupplierinvoicemaster.rcmActivated = 1 
+		THEN erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.retentionVatAmount
+		ELSE erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount
+	END AS DocumentValue,
 	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
@@ -1020,7 +1024,11 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
+	CASE 
+		WHEN erp_paysupplierinvoicemaster.invoiceType = 3 AND erp_paysupplierinvoicemaster.rcmActivated = 1 
+		THEN erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.retentionVatAmount
+		ELSE erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount
+	END AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	employeesdepartments.approvalDeligated,
