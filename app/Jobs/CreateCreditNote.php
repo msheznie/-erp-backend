@@ -827,7 +827,7 @@ class CreateCreditNote implements ShouldQueue
             if (gettype($request['amount']) != 'string') {
                 if ($request['amount'] > 0) {
                     $amountValidation = true;
-                    if($masterData['vat_applicable'] == 1){
+                    if(isset($masterData['vat_applicable']) && $masterData['vat_applicable'] == 1){
                         $isCompanyVATEligible = Company::where('companySystemID', $companyId)
                             ->where('vatRegisteredYN', 1)
                             ->exists();
