@@ -154,8 +154,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             $employeeMaster = DB::table('employees')
                                 ->select('employees.*')
-                                ->where('discharegedYN','<>', 2)
-                                ->where('empActive', 1)
                                 ->leftJoin('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.employeeID', '=', 'employees.employeeSystemID')
                                 ->leftJoin('erp_paysupplierinvoicemaster', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID', '=', 'employees.employeeSystemID')
                                 ->leftJoin('erp_debitnote', 'erp_debitnote.empID', '=', 'employees.employeeSystemID')
