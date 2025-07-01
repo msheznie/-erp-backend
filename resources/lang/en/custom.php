@@ -579,4 +579,5 @@ return [
     "inventory_allocation_details" => "Inventory Allocation Details",
     "address" => "Address",
     'failed_export' => 'Unable to export excel',
+    "estimated_unit_cost" => "Estimated Unit Cost",
 ];
