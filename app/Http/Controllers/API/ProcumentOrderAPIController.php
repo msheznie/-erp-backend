@@ -1827,6 +1827,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $hasEEOSSPolicy = false;
         if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+            if (empty($purchaseOrder)) {
+                return $this->sendError('Purchase order not found.');
+            }
+            
             $sup = SupplierMaster::find($purchaseOrder->supplierID);
             if ($sup) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
