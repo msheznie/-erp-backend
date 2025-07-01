@@ -3,6 +3,7 @@
 namespace App\helper;
 
 use App\Models\Employee;
+use App\Models\Company;
 use App\Models\PurchaseRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,7 @@ class OpenPurchaseRequestNotificationService
 {
     private $companyID;
     private $notificationDaySetup;
+    private $companyName;
 
     public function __construct($companyID, $notificationDaySetup)
     {
@@ -24,10 +26,10 @@ class OpenPurchaseRequestNotificationService
         Log::useFiles($log_file);
 
         // Check if today is the last day of the month
-        if (!$this->isLastDayOfMonth()) {
-            // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
-            return;
-        }
+        // if (!$this->isLastDayOfMonth()) {
+        //     // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
+        //     return;
+        // }
 
         // Log::info("Processing Open Purchase Request notification for company ID: {$this->companyID}");
 
@@ -48,6 +50,9 @@ class OpenPurchaseRequestNotificationService
             // Log::info("No email notification users configured for Open PR notification");
             return;
         }
+
+        $company = Company::find($this->companyID);
+        $this->companyName = $company ? $company->CompanyName : "";
 
                 // Send emails to configured users
         foreach ($notificationUserSettings['email'] as $notificationUserVal) {
@@ -190,7 +195,7 @@ class OpenPurchaseRequestNotificationService
         
         $emailContent .= "<br/><p>Best regards,<br/>";
         $emailContent .= "System Administrator,<br/>";
-        $emailContent .= "OSOS Training.</p>";
+        $emailContent .= $this->companyName.".</p>";
         
         return $emailContent;
     }
