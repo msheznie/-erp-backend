@@ -12,7 +12,7 @@
  */
 namespace App\Models;
 
-use Eloquent as Model;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @SWG\Definition(
@@ -308,6 +308,19 @@ use Eloquent as Model;
  *          type="string"
  *      )
  * )
+ * @property string $companyID
+ * @property integer $companySystemID
+ * @property string $matchingDocdate
+ * @property string $narration
+ * @property integer $matchingType
+ * @property string $externalRef
+ * @property integer $PayMasterAutoId
+ * @property integer $documentSystemID
+ * @property integer $serviceLineSystemID
+ * @property integer $tableType
+ * @property integer $BPVsupplierID
+ * @property integer $supplierTransCurrencyID
+ * @property string $BPVcode
  */
 class MatchDocumentMaster extends Model
 {
