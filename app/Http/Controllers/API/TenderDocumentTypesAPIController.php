@@ -284,62 +284,19 @@ class TenderDocumentTypesAPIController extends AppBaseController
     public function getTenderAttachmentType(Request $request)
     {
         $input = $request->all();
-        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
-
-        if (in_array(3, $assignDocumentTypes))
-        {
-            return TenderDocumentTypes::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
-                ->with(['attachments' => function($query) use($input){
-                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
-                    ->where('documentSystemCode', $input['tenderMasterId'])
-                    ->where('companySystemID', $input['companySystemID']);
-                if(isset($input['rfx']) && $input['rfx']){
-                    $query->where('documentSystemID', '113');
-                } else{
-                    $query->where('documentSystemID', '108');
-                }
-            }])->where('company_id',$input['companySystemID'])
-            ->whereIn('id',$assignDocumentTypes)->orWhere('system_generated', 1)
-            ->orderBy('sort_order')->get();
-        }
-        else
-        {
-            return TenderDocumentTypes::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
-                ->with(['attachments' => function($query) use($input){
-                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
-                    ->where('documentSystemCode', $input['tenderMasterId'])
-                    ->where('companySystemID', $input['companySystemID']);
-                if(isset($input['rfx']) && $input['rfx']){
-                    $query->where('documentSystemID', '113');
-                } else {
-                    $query->where('documentSystemID', '108');
-                }
-        }])->where('company_id',$input['companySystemID'])
-        ->whereIn('id',$assignDocumentTypes)->orWhere('system_generated', 1)
-        ->where('id', '!=', 3)->orderBy('sort_order')->get();
-        }
+        return $this->tenderDocumentTypesRepository->getTenderAttachmentTypes($input);
     }
 
     public function assignDocumentTypes(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
         try {
-            if (isset($input['document_types'])) {
-                if (count($input['document_types']) > 0) {
-                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                    foreach ($input['document_types'] as $vl) {
-                        $docTypeAssign['tender_id'] = $input['id'];
-                        $docTypeAssign['document_type_id'] = $vl['id'];
-                        $docTypeAssign['company_id'] = $input['company_id'];
-                        $docTypeAssign['created_by'] = $employee->employeeSystemID;
-                        TenderDocumentTypeAssign::create($docTypeAssign);
-                    }
-                } else {
-                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                }
+            $response = $this->tenderDocumentTypesRepository->assignTenderDocumentType($input);
+            if(!$response['success']){
+                return ['success' => false, 'message' => $response['message']];
+            } else {
+                return ['success' => true, 'message' => $response['message']];
             }
-            return ['success' => true, 'message' => 'Successfully updated'];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e];
         }
@@ -349,16 +306,11 @@ class TenderDocumentTypesAPIController extends AppBaseController
     {
         $input = $request->all();
         try {
-            if (isset($input['doc_type_id'])) {
-                $docType = TenderDocumentTypeAssign::where('tender_id', $input['tender_id'])->where('document_type_id', $input['doc_type_id'])->where('company_id', $input['company_id'])->first();
-                $result = TenderDocumentTypeAssign::find($docType->id);
-                $result->delete();
-
-                if($result){
-                    return ['success' => true, 'message' => 'Successfully deleted'];
-                } else {
-                    return ['success' => false, 'message' => 'Tender document type not found'];
-                }
+            $response = $this->tenderDocumentTypesRepository->deleteAssignDocumentTypes($input);
+            if(!$response['success']){
+                return ['success' => false, 'message' => $response['message']];
+            } else {
+                return ['success' => true, 'message' => $response['message']];
             }
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e];

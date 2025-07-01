@@ -5,18 +5,21 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TenderDetails;
 use App\Models\CircularAmendments;
+use App\Models\CircularAmendmentsEditLog;
 use App\Models\CircularSuppliers;
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
 use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
 use App\Mail\EmailForQueuing;
+use App\Models\CircularSuppliersEditLog;
 use App\Models\Company;
 use App\Models\DocumentAttachments;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderCirculars;
+use App\Models\TenderCircularsEditLog;
 use App\Models\TenderMaster;
 use App\Models\TenderSupplierAssignee;
-use App\Repositories\TenderCircularsRepository;
+use App\Models\TenderSupplierAssigneeEditLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -24,8 +27,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Repositories\TenderCircularsRepository;
 use Response;
 use App\helper\email;
 /**
@@ -297,94 +302,31 @@ class TenderCircularsAPIController extends AppBaseController
 
     public function getTenderCircularList(Request $request)
     {
-        $input = $request->all();
-
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-
-        $companyId = $request['companyId'];
-        $tender_id = $input['tender_id'];
-
-
-
-        $tenderMaster = TenderCirculars::with(['document_attachments'])->where('tender_id', $tender_id)->where('company_id', $companyId);
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
-                $query->orWhere('circular_name', 'LIKE', "%{$search}%");
-                $query->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-
-        return \DataTables::eloquent($tenderMaster)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', 'asc');
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
+        return $this->tenderCircularsRepository->getCircularList($request);
     }
 
     public function getAttachmentDropCircular(Request $request)
     {
-        $input = $request->all();
-        $documentSystemID = $input['documentSystemID'] ?? 0;
-        $attachment = CircularAmendments::where('tender_id',$input['tenderMasterId'])->get();
-        $attchArray = array();
-        if(count($attachment) > 0){
-            $attchArray = $attachment->pluck('amendment_id');
-            $attchArray = $attchArray->filter();
-        }
-
-        $attachmentDrop = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
-            ->where('documentSystemID', $documentSystemID)
-            ->where('attachmentType',3)
-            ->where('parent_id', null)
-            ->where('documentSystemCode',$input['tenderMasterId'])->orderBy('attachmentID', 'asc')->get()->toArray();
-
-        $i = 0;
-        foreach  ($attachmentDrop as $row){
-            $attachmentDrop[$i]['menu'] =   $row['attachmentDescription'] . '_' . $row['order_number'];
-            $i++;
-        }
-
-        $data['attachmentDrop'] = $attachmentDrop;
-
-        if(isset($input['circularId']) && $input['circularId'] > 0){
-           $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
-           if(sizeof($circular) > 0){
-               $attachmentAmended = DocumentAttachments::whereIn('attachmentID',$circular)->get();
-
-               $i = 0;
-               foreach  ($attachmentAmended as $r){
-                   $attachmentAmended[$i]['menu'] =   $r['attachmentDescription'] . '_' . $r['order_number'];
-                   $i++;
-               }
-               $data['amended'] = $attachmentAmended;
-           }
-        }
-
-        return $data;
+        return $this->tenderCircularsRepository->getAttachmentDropCircular($request);
     }
 
     public function addCircular(Request $request)
     {
         $input = $request->all();
+        $tenderMasterID = $input['tenderMasterId'] ?? 0;
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $requestType = $input['requestType'] ?? '';
+        $companySystemID = $input['companySystemID'] ?? 0;
+        $id = $input['id'] ?? 0;
+        $amd_id = $input['amd_id'] ?? 0;
+        $supplierList = $input['supplier_id'] ?? [];
 
         $tenderMaster = TenderMaster::select('id','tender_type_id','document_system_id')
             ->where('id',$input['tenderMasterId'])
             ->first();
 
-        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+        if($editOrAmend && $requestType == 'Amend')
         {        
             if(!isset($input['attachment_id'])){
                 return ['success' => false, 'message' => 'Amendment is required'];
@@ -400,7 +342,6 @@ class TenderCircularsAPIController extends AppBaseController
                 if(sizeof($input['supplier_id' ]) == 0){
                     return ['success' => false, 'message' => 'Supplier is required'];
                 }
-                $supplierList = $input['supplier_id' ];
             } else {
                 return ['success' => false, 'message' => 'Supplier is required'];
             }
@@ -413,21 +354,25 @@ class TenderCircularsAPIController extends AppBaseController
             return ['success' => false, 'message' => 'Description or Amendment is required'];
         }
 
-        if(isset($input['id'])) {
-            $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('circular_name', $input['circular_name'])->where('company_id', $input['companySystemID'])->first();
+        if($id > 0 || $amd_id > 0) {
+            $exist = $editOrAmend ?
+                TenderCircularsEditLog::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID, $versionID, $id, $amd_id) :
+                TenderCirculars::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID, $id);
 
             if(!empty($exist)){
                 return ['success' => false, 'message' => 'Circular name can not be duplicated'];
             }
         }else{
-            $exist = TenderCirculars::where('circular_name', $input['circular_name'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
+            $exist = $editOrAmend ?
+                TenderCircularsEditLog::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID, $versionID) :
+                TenderCirculars::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID);
 
             if(!empty($exist)){
                 return ['success' => false, 'message' => 'Circular name can not be duplicated'];
             }
         }
 
-        if(isset($input['attachment_id'])){
+        /*if(isset($input['attachment_id'])){
             if(isset($input['id'])) {
                 $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
 
@@ -441,68 +386,89 @@ class TenderCircularsAPIController extends AppBaseController
                     return ['success' => false, 'message' => 'Selected Attachment has been used in a different circular'];
                 }
             }
-        }
+        }*/
 
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
-            $data['tender_id']=$input['tenderMasterId'];
-            $data['circular_name']=$input['circular_name'];
+            $data['tender_id'] = $tenderMasterID;
+            $data['circular_name'] = $input['circular_name'];
             if(isset($input['description'])){
-                $data['description']=$input['description'];
+                $data['description'] = $input['description'];
             }else{
-                $data['description']=null;
+                $data['description'] = null;
             }
-            /*if(isset($input['attachment_id'])){
-                $data['attachment_id']=$input['attachment_id'];
-            }else{
-                $data['attachment_id']=null;
-            }*/
-            $data['company_id']=$input['companySystemID'];
 
-            if(isset($input['id'])){
-                $circulatAmends =  CircularAmendments::where('circular_id', $input['id'])->select('id')->count();
-                if ($circulatAmends == 0) {
-                    if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
-                    {
-                        return ['success' => false, 'message' => 'Amendment is required'];
-                    }
-                    
+            $data['company_id']= $input['companySystemID'];
+
+            if($id > 0 || $amd_id > 0){
+                $circulatAmends =  $editOrAmend ?
+                    CircularAmendmentsEditLog::getCircularAmendmentByID($amd_id, $versionID) :
+                    CircularAmendments::getCircularAmendmentByID($id);
+                if (count($circulatAmends) == 0 && $editOrAmend && $input['requestType'] == 'Amend') {
+                    return ['success' => false, 'message' => 'Amendment is required'];
                 }
 
 
                 $data['updated_by'] = $employee->employeeSystemID;
                 $data['updated_at'] = Carbon::now();
-                $tenderCircular = TenderCirculars::find($input['id']);
+                if($editOrAmend) {
+                    $tenderCircular = TenderCircularsEditLog::find($amd_id);
+                } else {
+                    $tenderCircular = TenderCirculars::find($id);
+                }
                 $result = $tenderCircular->update($data);
                 if($result){
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
                 }
             }else{
+                $data['status'] = 0;
                 $data['created_by'] = $employee->employeeSystemID;
                 $data['created_at'] = Carbon::now();
-                $result = TenderCirculars::create($data);
+                if($editOrAmend) {
+                    $data['id'] = null;
+                    $data['level_no'] = 1;
+                    $data['vesion_id'] = $versionID;
+                    $result = TenderCircularsEditLog::create($data);
+                } else {
+                    $result = TenderCirculars::create($data);
+                }
+
                 if($result){
                     if(isset($attachmentList)){
                         foreach ($attachmentList as $attachment){
                             $dataAttachment['tender_id'] = $input['tenderMasterId'];
-                            $dataAttachment['circular_id'] = $result->id;
+                            $dataAttachment['circular_id'] = $editOrAmend ? $result->amd_id : $result->id;
                             $dataAttachment['amendment_id'] = $attachment['id'];
                             $dataAttachment['status'] = null;
                             $dataAttachment['created_by'] = $employee->employeeSystemID;
                             $dataAttachment['created_at'] = Carbon::now();
-                            CircularAmendments::create($dataAttachment);
+                            if($editOrAmend){
+                                $dataAttachment['id'] = null;
+                                $dataAttachment['level_no'] = 1;
+                                $dataAttachment['vesion_id'] = $versionID;
+                                CircularAmendmentsEditLog::create($dataAttachment);
+                            } else {
+                                CircularAmendments::create($dataAttachment);
+                            }
                         }
                     }
 
                     if(isset($supplierList)){
-                        foreach ($supplierList as $supplier){
-                            $dataSupplier['circular_id'] = $result->id;
-                            $dataSupplier['supplier_id'] = $supplier['id'];
+                        foreach ($supplierList as $key => $value){
+                            $dataSupplier['circular_id'] = $editOrAmend ? $result->amd_id : $result->id;
+                            $dataSupplier['supplier_id'] = $value['id'];
                             $dataSupplier['created_by'] = $employee->employeeSystemID;
                             $dataSupplier['created_at'] = Carbon::now();
-                            CircularSuppliers::create($dataSupplier);
+                            if($editOrAmend){
+                                $dataSupplier['id'] = null;
+                                $dataSupplier['level_no'] = 1;
+                                $dataSupplier['version_id'] = $versionID;
+                                CircularSuppliersEditLog::create($dataSupplier);
+                            } else {
+                                CircularSuppliers::create($dataSupplier);
+                            }
                         }
                     }
 
@@ -512,42 +478,26 @@ class TenderCircularsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
     public function getCircularMaster(Request $request)
     {
         $input = $request->all();
-        return TenderCirculars::where('id',$input['id'])->first();
+        $editOrAmend = $input['enableChangeRequest'] ?? false;
+
+        return $editOrAmend ? TenderCircularsEditLog::find($input['id']) : TenderCirculars::find($input['id']);
     }
 
     public function deleteTenderCircular(Request $request)
     {
-        $input = $request->all();
-        DB::beginTransaction();
-        try {
-            $tenderCircular =  TenderCirculars::find($input['id']);
-            $result = $tenderCircular->delete();
-            
-            if($result){
-                
-                $circular = $this->deleteCircularAmend($input['id']);
-
-                if (!$circular['success']) {
-                    return $this->sendError($circular['message'], 500);
-                }       
-
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
-            }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+        try{
+            $input = $request->all();
+            return $this->tenderCircularsRepository->deleteTenderCircular($input);
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
         }
-
     }
 
     public function tenderCircularPublish(Request $request)
@@ -615,20 +565,26 @@ class TenderCircularsAPIController extends AppBaseController
     public function getTenderPurchasedSupplierList(Request $request)
     {
         $input = $request->all();
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $input['enableChangeRequest'] ?? false;
+
         $purchased = SupplierRegistrationLink::selectRaw('*')
             ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
             ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
             ->get();
 
         if ($purchased->isEmpty()) {
-            $assignSupplier = TenderSupplierAssignee::getAssignSupplier($input['companySystemID'],$input['tenderMasterId']);
+            $assignSupplier = $editOrAmend ?
+                TenderSupplierAssigneeEditLog::getAssignSupplier($input['companySystemID'],$input['tenderMasterId'], $versionID) :
+                TenderSupplierAssignee::getAssignSupplier($input['companySystemID'],$input['tenderMasterId']);
 
             $purchased = $assignSupplier->map(function ($assignee) {
                 $link = $assignee->supplierAssigned->supplierRegistrationLink ?? null;
+                $name = $link && !empty($link->name) ? $link->name : $assignee->supplierAssigned->supplierName ;
 
                 return $link ? [
                     'purchased_by' => $link->purchased_by,
-                    'name' => $link->name,
+                    'name' => $name,
                 ] : null;
             })->filter()->values();
         }
@@ -636,36 +592,6 @@ class TenderCircularsAPIController extends AppBaseController
         return response()->json([
             'purchased' => $purchased,
         ]);
-
-        if(isset($input['circularId']) && $input['circularId'] > 0){
-            $dataAssigned = SupplierRegistrationLink::selectRaw('*')
-                ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
-                ->where('srm_circular_suppliers.circular_id', $input['circularId'])
-                ->get();
-
-            $data['dataAssigned'] = $dataAssigned;
-
-            $dataAssignedArr = SupplierRegistrationLink::selectRaw('supplier_id')
-                ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
-                ->where('srm_circular_suppliers.circular_id', $input['circularId'])
-                ->get()->toArray();
-
-            if(sizeof($dataAssignedArr) > 0){
-                $i = 0;
-                foreach ($dataAssignedArr as $assigned){
-                    $supplier[$i] = $assigned['supplier_id'];
-                    $i++;
-                }
-
-                $purchased = SupplierRegistrationLink::selectRaw('*')
-                    ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
-                    ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
-                    ->whereNotIn('srm_tender_master_supplier.purchased_by', $supplier)
-                    ->get();
-
-                $data['purchased'] = $purchased;
-            }
-        }
 
         return $data;
     }
@@ -692,13 +618,30 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $output = CircularAmendments::where('amendment_id',$input['attachmentID'])
-                ->where('tender_id', $input['tenderMasterId'])
-                ->where('circular_id', $input['circularId'])
-                ->first();
+            $editOrAmend = $input['enableChangeRequest'] ?? false;
+            $versionID = $input['versionID'] ?? 0;
+            $attachmentID = $input['attachmentID'] ?? 0;
+            $tenderMasterId = $input['tenderMasterId'] ?? 0;
+            $circularId = (int) $input['circularId'] ?? 0;
 
-            $model = CircularAmendments::find($output->id);
-            $result = $model->delete();
+            $checkExist = $editOrAmend ?
+                CircularAmendmentsEditLog::getAmendmentAttachment($attachmentID, $circularId, $tenderMasterId , $versionID) :
+                CircularAmendments::getAmendmentAttachment($attachmentID, $circularId, $tenderMasterId);
+
+            if(empty($checkExist)){
+                return ['success' => false, 'message' => 'Attachment not found.'];
+            }
+            $id = $editOrAmend && $versionID > 0 ? $checkExist->amd_id : $checkExist->id;
+            $model = $editOrAmend ?
+                CircularAmendmentsEditLog::find($id) :
+                CircularAmendments::find($id);
+
+            if($editOrAmend){
+                $model->is_deleted = 1;
+                $result = $model->save();
+            } else {
+                $result = $model->delete();
+            }
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
@@ -738,6 +681,9 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $input['enableChangeRequest'] ?? false;
+
         DB::beginTransaction();
         try {
             $dataAttachment['tender_id'] = $input['tenderMasterId'];
@@ -746,7 +692,13 @@ class TenderCircularsAPIController extends AppBaseController
             $dataAttachment['status'] = null;
             $dataAttachment['created_by'] = $employee->employeeSystemID;
             $dataAttachment['created_at'] = Carbon::now();
-            $result = CircularAmendments::create($dataAttachment);
+            if($editOrAmend && $versionID > 0){
+                $dataAttachment['vesion_id'] = $versionID;
+                $dataAttachment['level_no'] = 1;
+                $result = CircularAmendmentsEditLog::create($dataAttachment);
+            } else {
+                $result = CircularAmendments::create($dataAttachment);
+            }
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
@@ -762,23 +714,27 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         try{
-            $count = CircularAmendments::where('amendment_id',  $input['amendmentId'])->where('tender_id', $input['tenderMasterId'])->get()->count();
-            if($count === 1){
-                if($input['action'] == 'U'){
-                    return ['success' => true, 'message' => 'This amendment is assigned to a circular, you cannot update.', 'data' => $count];
-                } elseif ($input['action'] == 'D'){
-                    return ['success' => true, 'message' => 'This amendment is assigned to a circular, you cannot delete.', 'data' => $count];
-                }
-            } else {
-                return ['success' => true, 'message' => '', 'data' => $count];
+            $validator = Validator::make($input, [
+                'amendmentId' => 'required',
+                'tenderMasterId' => 'required',
+            ], [
+                'amendmentId.required' => 'Attachment ID is required',
+                'tenderMasterId.required' => 'Tender Master ID is required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError(implode(', ', $validator->errors()->all()));
             }
 
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($e);
-            return ['success' => false, 'message' => $e];
-        }
+            $amendmentResponse = $this->tenderCircularsRepository->checkAmendmentIsUsedInCircular($input);
+            if(!$amendmentResponse['success']){
+                return $this->sendError($amendmentResponse['message']);
+            }
+            return $this->sendResponse([], 'This document attachment can be deleted.');
 
+        } catch (\Exception $e) {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
     }
 
     public function deleteCircularAmend($id)

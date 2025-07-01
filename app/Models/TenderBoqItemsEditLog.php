@@ -129,13 +129,15 @@ class TenderBoqItemsEditLog extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $primaryKey = 'amd_id';
 
     public $fillable = [
+        'id',
         'company_id',
         'description',
         'item_name',
         'main_work_id',
+        'amd_main_work_id',
         'master_id',
         'modify_type',
         'qty',
@@ -144,7 +146,13 @@ class TenderBoqItemsEditLog extends Model
         'tender_ranking_line_item',
         'uom',
         'ref_log_id',
-        'updated_by'
+        'updated_by',
+        'created_by',
+        'level_no',
+        'is_deleted',
+        'purchase_request_id',
+        'item_primary_code',
+        'origin'
     ];
 
     /**
@@ -153,18 +161,25 @@ class TenderBoqItemsEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'company_id' => 'integer',
         'description' => 'string',
         'id' => 'integer',
         'item_name' => 'string',
         'main_work_id' => 'integer',
+        'amd_main_work_id' => 'integer',
         'master_id' => 'integer',
         'modify_type' => 'integer',
         'qty' => 'float',
         'tender_edit_version_id' => 'integer',
         'tender_id' => 'integer',
         'tender_ranking_line_item' => 'integer',
-        'uom' => 'integer'
+        'uom' => 'integer',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer',
+        'item_primary_code' => 'string',
+        'origin' => 'integer',
+        'purchase_request_id' => 'string',
     ];
 
     /**
@@ -176,5 +191,42 @@ class TenderBoqItemsEditLog extends Model
         
     ];
 
-    
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+    public static function checkExistsBoqItem($scheduleDetailAmdID, $versionID){
+        return self::where('amd_main_work_id', $scheduleDetailAmdID)->where('tender_edit_version_id', $versionID)->where('is_deleted', 0)->exists();
+    }
+    public static function getTenderBoqItemList($main_work_id, $versionID){
+        return self::where('amd_main_work_id', $main_work_id)->where('tender_edit_version_id', $versionID)->where('is_deleted', 0)->get();
+    }
+    public static function getAmendRecords($tenderID, $versionID, $amd_mainWorkID, $onlyNullRecords){
+        return self::where('tender_id', $tenderID)
+            ->where('amd_main_work_id', $amd_mainWorkID)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })->get();
+    }
+
+    public static function checkItemNameExists($itemName, $amd_mainWorkID, $id = 0){
+        return self::where('item_name',$itemName)
+            ->when($id > 0, function ($q) use ($id) {
+                $q->where('amd_id', '!=', $id);
+                $q->whereNull('id');
+            })
+            ->where('is_deleted', 0)
+            ->where('amd_main_work_id', $amd_mainWorkID)->first();
+    }
+    public static function checkPRAlreadyAdded($tender_id, $purchaseRequestIDToCheck, $main_work_id, $versionID){
+        return self::where('tender_id', $tender_id)
+            ->whereRaw("FIND_IN_SET('$purchaseRequestIDToCheck', purchase_request_id) > 0")
+            ->where('amd_main_work_id', $main_work_id)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->first();
+    }
 }

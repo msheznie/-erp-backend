@@ -115,5 +115,11 @@ class SrmDepartmentMaster extends Model
         
     ];
 
+    public static function getDepartmentMaster($company_id){
+        return self::select('id','description')
+            ->where('company_id', $company_id)
+            ->where('is_active', 0)
+            ->get();
+    }
     
 }

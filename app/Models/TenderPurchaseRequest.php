@@ -29,4 +29,17 @@ class TenderPurchaseRequest extends Model
     {
         return $this->belongsTo(TenderMaster::class, 'tender_id', 'id');
     }
+
+    public static function getTenderPurchaseRequestForAmd($tenderID){
+        return self::where('tender_id', $tenderID)->get();
+    }
+    public static function getTenderPurchaseForEdit($tenderMasterID){
+        return self::select(
+            'purchase_request_id as id',
+            'erp_purchaserequest.purchaseRequestCode as itemName'
+        )
+            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'purchase_request_id')
+            ->where('tender_id', $tenderMasterID)
+            ->get();
+    }
 }

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+
 /**
  * @OA\Schema(
  *      schema="PricingScheduleDetail",
@@ -218,5 +220,98 @@ class PricingScheduleDetail extends Model
     public function tender_bid_format_detail()
     {
         return $this->hasOne('App\Models\TenderBidFormatDetail', 'id', 'bid_format_detail_id');
+    }
+    public static function getPricingScheduleDetailForAmd($tender_id, $pricingScheduleMasterID = 0){
+        return self::where('tender_id', $tender_id)
+            ->when($pricingScheduleMasterID > 0, function ($q) use ($pricingScheduleMasterID) {
+                $q->where('pricing_schedule_master_id', $pricingScheduleMasterID);
+            })
+            ->get();
+    }
+    public static function getPricingScheduleDetails($schedule_id, $price_bid_format_id, $editOrAmend = false)
+    {
+        $tableDetail = $editOrAmend ? 'srm_pricing_schedule_detail_edit_log' : 'srm_pricing_schedule_detail';
+        $tableFormat = $editOrAmend ? 'srm_schedule_bid_format_details_edit_log' : 'srm_schedule_bid_format_details';
+        $idField     = $editOrAmend ? 'amd_id' : 'id';
+        $masterField = $editOrAmend ? 'amd_pricing_schedule_master_id' : 'schedule_id';
+        $otherMasterField = $editOrAmend ? 'amd_pricing_schedule_master_id' : 'pricing_schedule_master_id';
+        $biFormatDetailID = $editOrAmend ? 'amd_bid_format_detail_id' : 'bid_format_detail_id';
+
+        $isDeletedCondition = $editOrAmend ? "AND $tableDetail.is_deleted = 0" : "";
+        $isDeletedConditionForBid = $editOrAmend ? "AND $tableFormat.is_deleted = 0" : "";
+
+        $val1 = DB::select("
+        SELECT
+            $tableDetail.$idField AS id,
+            $tableDetail.tender_id,
+            $tableDetail.label,
+            $tableDetail.boq_applicable,
+            $tableDetail.is_disabled,
+            tender_field_type.type,
+            tender_field_type.id as typeId,
+            $tableFormat.value
+        FROM $tableDetail
+        INNER JOIN tender_field_type 
+            ON tender_field_type.id = $tableDetail.field_type
+        LEFT JOIN $tableFormat 
+            ON $tableFormat.$biFormatDetailID = $tableDetail.$idField
+            AND $tableFormat.$masterField = ? 
+            $isDeletedConditionForBid
+        WHERE
+            $tableDetail.bid_format_id = ?
+            AND $tableDetail.$otherMasterField = ?
+            AND $tableDetail.deleted_at IS NULL
+            $isDeletedCondition
+            AND $tableDetail.field_type != 4
+        ORDER BY $tableDetail.$idField ASC
+    ", [$schedule_id, $price_bid_format_id, $schedule_id]);
+
+        $val2 = DB::select("
+        SELECT
+            $tableDetail.$idField AS id,
+            $tableDetail.tender_id,
+            $tableDetail.label,
+            $tableDetail.boq_applicable,
+            $tableDetail.is_disabled,
+            tender_field_type.type,
+            tender_field_type.id as typeId
+        FROM $tableDetail
+        INNER JOIN tender_field_type 
+            ON tender_field_type.id = $tableDetail.field_type
+        WHERE
+            $tableDetail.bid_format_id = ?
+            AND $tableDetail.$otherMasterField = ?
+            AND $tableDetail.deleted_at IS NULL
+            $isDeletedCondition
+            AND $tableDetail.field_type = 4
+        ORDER BY $tableDetail.$idField ASC
+    ", [$price_bid_format_id, $schedule_id]);
+
+        return [$val1, $val2];
+    }
+    public static function getPricingScheduleDetailList($tender_id, $schedule_id, $companyId){
+        return self::with(['tender_boq_items'])
+            ->where('tender_id', $tender_id)
+            ->where('pricing_schedule_master_id', $schedule_id)
+            ->where('company_id', $companyId)
+            ->where(function($query){
+                $query->where('boq_applicable',true);
+                $query->orWhere('is_disabled',false);
+            })->where('field_type','!=',4);
+    }
+    public static function getTenderPricingSchedule($tenderID, $scheduleID){
+        return self::where('tender_id', $tenderID)->where('pricing_schedule_master_id', $scheduleID)->where('is_disabled', true);
+    }
+    public static function getPricingScheduleMainWork($tenderMasterID, $scheduleID){
+        return self::with(['tender_boq_items'])
+            ->where('tender_id', $tenderMasterID)
+            ->where('deleted_at', null)
+            ->where('boq_applicable', true)
+            ->where('pricing_schedule_master_id', $scheduleID);
+    }
+    public static function getPricingScheduleByID($id){
+        return self::where('id', $id)
+            ->select('id','tender_id','pricing_schedule_master_id')
+            ->first();
     }
 }

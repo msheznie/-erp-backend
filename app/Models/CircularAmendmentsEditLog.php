@@ -102,14 +102,14 @@ class CircularAmendmentsEditLog extends Model
 {
 
     public $table = 'srm_circular_amendments_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $primaryKey = 'amd_id';
 
     public $fillable = [
+        'id',
         'amendment_id',
         'circular_id',
         'master_id',
@@ -118,7 +118,10 @@ class CircularAmendmentsEditLog extends Model
         'status',
         'tender_id',
         'vesion_id',
-        'updated_by'
+        'updated_by',
+        'created_by',
+        'level_no',
+        'is_deleted'
     ];
 
     /**
@@ -135,7 +138,9 @@ class CircularAmendmentsEditLog extends Model
         'ref_log_id' => 'integer',
         'status' => 'integer',
         'tender_id' => 'integer',
-        'vesion_id' => 'integer'
+        'vesion_id' => 'integer',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**
@@ -144,8 +149,43 @@ class CircularAmendmentsEditLog extends Model
      * @var array
      */
     public static $rules = [
-        
-    ];
 
-    
+    ];
+    public function document_attachments()
+    {
+        return $this->hasOne('App\Models\DocumentAttachmentsEditLog', 'amd_id', 'amendment_id');
+    }
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+    public static function getCircularAmendment($tenderMasterId, $versionID){
+        return self::where('tender_id', $tenderMasterId)->where('vesion_id', $versionID)->where('is_deleted', 0)->get();
+    }
+    public static function getCircularAmendmentByID($circularID, $versionID){
+        return self::select('amendment_id')->where('circular_id', $circularID)
+            ->where('vesion_id', $versionID)->where('is_deleted', 0)->get()->toArray();
+    }
+    public static function getAmendmentAttachment($amendmentID, $circularID, $tenderMasterId, $versionID)
+    {
+        return self::where('amendment_id', $amendmentID)
+            ->where('tender_id', $tenderMasterId)
+            ->where('circular_id', $circularID)
+            ->where('vesion_id', $versionID)
+            ->where('is_deleted', 0)
+            ->first();
+    }
+    public static function getAllCircularAmendments($circularID, $versionID){
+        return self::where('circular_id', $circularID)->where('vesion_id', $versionID)->where('is_deleted', 0)->get();
+    }
+    public static function getAmendRecords($circularID,  $versionID, $onlyNullRecords)
+    {
+        return self::where('circular_id', $circularID)->where('vesion_id', $versionID)->when($onlyNullRecords, function ($q) {
+            $q->whereNull('id');
+        })->when(!$onlyNullRecords, function ($q) {
+            $q->whereNotNull('id');
+        })->get();
+    }
+    public static function checkAmendmentIsUsedInCircular($amendmentID, $tenderMasterId){
+        return self::where('amendment_id',  $amendmentID)->where('tender_id', $tenderMasterId)->count();
+    }
 }

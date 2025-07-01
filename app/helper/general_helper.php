@@ -51,6 +51,9 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentRestrictionAssign;
 use App\Models\EmployeeNavigation;
 use App\Models\GRVDetails;
+use App\Models\TenderCircularsEditLog;
+use App\Models\CircularAmendmentsEditLog;
+use App\Models\CircularSuppliersEditLog;
 use App\Models\PaymentTermConfig;
 use App\Models\PaymentTermTemplate;
 use App\Models\PaymentTermTemplateAssigned;
@@ -4764,7 +4767,8 @@ class Helper
                             }
                         }
 
-                        if ($input['documentSystemID'] == 107 || $input['documentSystemID'] == 127) {
+
+                        if ($input['documentSystemID'] == 107 || $input['documentSystemID'] == 127 || $input['documentSystemID'] == 117 || $input['documentSystemID'] == 118) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
@@ -5420,8 +5424,8 @@ class Helper
                             if ($input["documentSystemID"] == 118) {
 
                                 $tenderObj = TenderDetails::getTenderMasterData($input['id']);
-                                $documentModify = DocumentModifyRequest::select('id','type','requested_document_master_id')->where('id',$tenderObj->tender_edit_version_id)->first();
-                                $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->where('status',0)->get();
+                                $documentModify = DocumentModifyRequest::getDocumentModifyData($tenderObj->tender_edit_version_id);
+                                $circulars = TenderCircularsEditLog::versionWiseCirculars($documentModify['id']);
 
                                 if ($circulars && isset($documentModify)) {
                                     $companyName = "";
@@ -5436,16 +5440,16 @@ class Helper
                                             'status' => 1
                                         ];
 
-                                        $result = TenderCirculars::where('id', $circular['id'])->update($updateData);
+                                        $result = TenderCircularsEditLog::where('amd_id', $circular['amd_id'])->update($updateData);
                                         if ($result) {
                                             if($tenderObj->document_system_id == 113 ||
                                                 ($tenderObj->document_system_id == 108 && $tenderObj->tender_type_id!=1)){
 
-                                                $supplierList = self::getTenderCircularSupplierList($tenderObj, $circular['id'], $input['id'], $docApproved->companySystemID);
+                                                $supplierList = self::getTenderCircularSupplierList($tenderObj, $circular['amd_id'], $input['id'], $docApproved->companySystemID);
 
-                                                $amendmentsList = CircularAmendments::select('id','amendment_id')
+                                                $amendmentsList = CircularAmendmentsEditLog::select('id','amendment_id')
                                                     ->with('document_attachments')
-                                                    ->where('circular_id', $circular['id'])
+                                                    ->where('circular_id', $circular['amd_id'])
                                                     ->get();
 
                                                 $circularAttachments = self::getCircularAttachments($amendmentsList);
@@ -9871,9 +9875,10 @@ class Helper
         if (($tenderObj->tender_type_id ?? null) == 2) {
             return self::tenderSupplierAssignedList($id, $companySystemID);
         } else {
-            return CircularSuppliers::select('id','supplier_id','circular_id','status')
+            return CircularSuppliersEditLog::select('amd_id', 'id','supplier_id','circular_id','status')
                 ->with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])
                 ->where('circular_id', $circularId)
+                ->where('is_deleted', 0)
                 ->get();
         }
     }

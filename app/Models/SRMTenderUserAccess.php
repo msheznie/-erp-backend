@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Schema(
@@ -70,7 +71,7 @@ class SRMTenderUserAccess extends Model
 {
 
     public $table = 'srm_tender_user_access';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -121,5 +122,19 @@ class SRMTenderUserAccess extends Model
             ->where('module_id', $moduleID)
             ->get();
     }
-    
+
+    public static function getTenderUserAccessForAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
+
+    public static function getTenderUserAccessDetails($tenderId, $companyId){
+        return self::select('id','tender_id','user_id','company_id','module_id')
+            ->with(['employee' => function ($q){
+                $q->select('employeeSystemID',DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
+            }])
+            ->where('tender_id',$tenderId)
+            ->where('company_id',$companyId)
+            ->get();
+    }
+
 }

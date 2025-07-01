@@ -2,7 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -32,11 +34,38 @@ class SrmTenderBidEmployeeDetailsEditLogRepository extends BaseRepository
         'tender_id'
     ];
 
+    public function getFieldsSearchable()
+    {
+        return $this->fieldSearchable;
+    }
+
     /**
      * Configure the Model
      **/
     public function model()
     {
         return SrmTenderBidEmployeeDetailsEditLog::class;
+    }
+
+    public function saveTenderBidEmployeeDetailHistory($tenderID, $version_id=null){
+        try {
+            return DB::transaction(function () use ($tenderID, $version_id) {
+                $tenderBidEmpData = SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderID);
+                if(!empty($tenderBidEmpData)){
+                    foreach($tenderBidEmpData as $record){
+                        $levelNo = $this->model->getLevelNo($record['id']);
+                        $recordData = $record->toArray();
+                        $recordData['level_no'] = $levelNo;
+                        $recordData['id'] = $record['id'];
+                        $recordData['tender_edit_version_id'] = $version_id;
+                        $recordData['modify_type'] = null;
+                        $this->model->create($recordData);
+                    }
+                }
+                return ['success' => false, 'message' => 'Success'];
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 }

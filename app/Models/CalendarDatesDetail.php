@@ -75,11 +75,12 @@ class CalendarDatesDetail extends Model
 {
 
     public $table = 'srm_calendar_dates_detail';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     public $timestamps = false;
+    protected $primaryKey = 'id';
 
     protected $appends = array(
         'from_time',
@@ -120,14 +121,14 @@ class CalendarDatesDetail extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function calendarDates(){ 
+    public function calendarDates(){
         return $this->hasOne('App\Models\CalendarDates', 'id', 'calendar_date_id');
     }
 
-    
+
     public function getFromTimeAttribute() {
         if($this->from_date) {
             $time = new Carbon($this->from_date);
@@ -141,9 +142,9 @@ class CalendarDatesDetail extends Model
     public function getToTimeAttribute() {
         if($this->to_date) {
             $time = new Carbon($this->to_date);
-            return $time->format('Y-m-d H:i:s'); 
+            return $time->format('Y-m-d H:i:s');
         }else {
-             return null;
+            return null;
         }
 
     }
@@ -163,5 +164,32 @@ class CalendarDatesDetail extends Model
             ->where('calendar_date_id', $calendarDateId)
             ->first();
     }
-    
+
+    public static function getTenderCalendarDateDetailsAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
+    public static function getCalenderDateDetailEdit($tenderMasterId, $companySystemID = 0, $calendarDateID = 0)
+    {
+        $record = self::select('id', 'tender_id', 'calendar_date_id', 'from_date', 'to_date')
+            ->when($companySystemID > 0, function ($q) use ($companySystemID) {
+                $q->where('company_id', $companySystemID);
+            })
+            ->where('tender_id', $tenderMasterId)
+            ->when($calendarDateID > 0, function ($q) use ($calendarDateID) {
+                $q->where('calendar_date_id', $calendarDateID);
+            });
+
+        if($calendarDateID > 0) {
+            return $record->count();
+        }
+        return $record->get();
+    }
+    public static function getCalendarDateDetailsRecord($id){
+        return self::where('tender_id', $id)
+            ->whereHas('calendarDates', function ($query) {
+                $query->where('is_default', 0);
+            })
+            ->get()
+            ->toArray();
+    }
 }

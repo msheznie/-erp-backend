@@ -17,6 +17,7 @@ use App\Models\DocumentMaster;
 use App\Models\Company;
 use App\Models\TenderMaster;
 use Carbon\Carbon;
+use App\Services\SrmDocumentModifyService;
 /**
  * Class DocumentModifyRequestController
  * @package App\Http\Controllers\API
@@ -26,10 +27,14 @@ class DocumentModifyRequestAPIController extends AppBaseController
 {
     /** @var  DocumentModifyRequestRepository */
     private $documentModifyRequestRepository;
+    private $documentModifyRequestService;
 
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo)
-    {
+    public function __construct(
+        DocumentModifyRequestRepository $documentModifyRequestRepo,
+        SrmDocumentModifyService $documentModifyRequestService
+    ){
         $this->documentModifyRequestRepository = $documentModifyRequestRepo;
+        $this->documentModifyRequestService = $documentModifyRequestService;
     }
 
     /**
@@ -303,67 +308,11 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
     public function createEditRequest(Request $request)
     {
-        DB::beginTransaction();
         try {
-                $input = $request->all();
-                $tenderMaster = TenderMaster::find($input['documentSystemCode']);
-                $version = 1;
-                $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['documentSystemCode'])->latest('id')->first();
-                if(isset($is_vsersion_exit))
-                {
-                    $version = $is_vsersion_exit->version + 1;
-                }
-                $document_master_id = $input['document_master_id'];
-                $namespacedModel = 'App\Models\\' . $input["modelName"]; 
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                $documentMaster = DocumentMaster::where('documentSystemID', $document_master_id)->first();
-                $lastSerial = DocumentModifyRequest::where('companySystemID', $input['companySystemID'])
-                ->orderBy('id', 'desc')
-                ->first();
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serial_number) + 1;
-                }
-        
-                $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-
-                $input['version'] = $version;
-                $input['requested_employeeSystemID'] =\Helper::getEmployeeSystemID();
-                $input['requested_date'] = now();
-                $input['RollLevForApp_curr'] = 1;
-                $input['code'] = $code;
-                $input['serial_number'] = $lastSerialNumber;
-                $input['modify_type'] = 1;
-                
-                $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
-
-                $tender_data['tender_edit_version_id'] = $documentModifyRequest['id'];
-                $result = $namespacedModel::where('id', $input['documentSystemCode'])->update($tender_data);
-                
-                $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"],'document_type' => $tenderMaster->document_type,'amount' => $tenderMaster->estimated_value,'tenderTypeId' => $tenderMaster->tender_type_id);
-                $confirm = \Helper::confirmDocument($params);
-
-                $titles = [
-                    108 => 'Tender',
-                    113 => 'RFX',
-                ];
-                $title = $titles[$tenderMaster['document_system_id']] ?? null;
-
-
-                if (!$confirm["success"]) {
-                    DB::rollBack();
-                    return ['success' => false, 'message' => $confirm["message"]];
-                }
-
-                DB::commit();
-
-                return ['success' => true, 'message' => $title. ' modify request sent successfully'];
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                Log::error($this->failed($e));
-                return ['success' => false, 'message' => $e];
-            }
+            return $this->documentModifyRequestRepository->createEditAmendRequest($request);
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e];
+        }
     }
 
 
@@ -374,35 +323,15 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
     public function approveEditDocument(Request $request)
     {
-        $input = $request->all();
-        if(isset($input['reference_document_id']) && $input['reference_document_id'])
-        {
-            $currentDate = Carbon::now()->format('Y-m-d H:i:s');
-            $openingDate = Carbon::createFromFormat('Y-m-d H:i:s', $input['bid_submission_closing_date']);
-
-            $result = $openingDate->gt($currentDate);
-    
-            if(!$result)
-            {
-                return $this->sendError('Unable to approve this document. Bid submission closing date has already passed');
+        try {
+            $response =  $this->documentModifyRequestRepository->approveDocumentEditAmendRequest($request);
+            if($response['success']){
+                return $this->sendResponse([], $response['message']);
+            } else {
+                return $this->sendError($response['message'], 500);
             }
-
-            $approve = \Helper::approveDocument($request);
-
-            if ($input['document_system_id'] == 117 && $approve['success']) {
-                TenderMaster::where('id', $input['id'])->update([
-                    'confirmed_by_emp_system_id' => null,
-                    'confirmed_by_name' => null,
-                    'confirmed_date' => null,
-                ]);
-            }
-
-            if (!$approve["success"]) {
-                return $this->sendError($approve["message"]);
-            }
-
-            return $this->sendResponse(array(), $approve["message"]);
-        } 
-
+        } catch (\Exception $e) {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage(), 500);
+        }
     }
 }

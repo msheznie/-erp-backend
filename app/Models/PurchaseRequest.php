@@ -435,9 +435,68 @@ class PurchaseRequest extends Model
     public function tender_purchase_request(){
         return $this->hasOne(TenderPurchaseRequest::class,'purchase_request_id','purchaseRequestID');
     }
+    public function tender_purchase_request_log(){
+        return $this->hasOne(TenderPurchaseRequestEditLog::class,'purchase_request_id','purchaseRequestID');
+    }
 
     public function requestedby(){
         return $this->belongsTo('App\Models\Employee','requested_by','employeeSystemID');
     }
 
+    public static function getPurchaseRequestData($companySystemID, $tenderMasterID, $document_type){
+        $purchaseRequest = self::select('purchaseRequestID as id', 'purchaseRequestCode')
+            ->with(['tender_purchase_request','details.podetail'])
+            ->where('approved', '-1')
+            ->where('companySystemID', $companySystemID);
+
+        if($document_type == 0){
+            $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterID) {
+                $query->where(function ($subQuery) use ($tenderMasterID) {
+                    $subQuery->where('tender_id', '!=', $tenderMasterID)
+                        ->whereHas('tender', function ($subSubQuery) {
+                            $subSubQuery->where('document_type', 0);
+                        });
+                });
+            });
+        } elseif ($document_type != 0){
+            $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterID) {
+                $query->where(function ($subQuery) use ($tenderMasterID) {
+                    $subQuery->where('tender_id', '!=', $tenderMasterID)
+                        ->whereHas('tender', function ($subSubQuery) {
+                            $subSubQuery->where('document_type', '!=', 0);
+                        });
+                });
+            });
+        }
+
+        return $purchaseRequest->whereDoesntHave('details.podetail')
+            ->get();
+
+    }
+    public static function getPurchaseRequestForTender($tenderId, $companyId, $versionID, $editOrAmend)
+    {
+        return self::select('purchaseRequestID', 'companyID', 'purchaseRequestCode')
+            ->when($editOrAmend, function ($q) use ($tenderId, $versionID) {
+                $q->with(['tender_purchase_request_log' => function ($query) use ($tenderId, $versionID) {
+                    $query->where('tender_id', $tenderId)
+                        ->where('version_id', $versionID)
+                        ->where('is_deleted', 0);
+                }])
+                    ->whereHas('tender_purchase_request_log', function ($query) use ($tenderId, $versionID) {
+                        $query->where('tender_id', $tenderId)
+                            ->where('version_id', $versionID)
+                            ->where('is_deleted', 0);
+                    });
+            })
+            ->when(!$editOrAmend, function ($q) use ($tenderId) {
+                $q->with(['tender_purchase_request' => function ($query) use ($tenderId) {
+                    $query->where('tender_id', $tenderId);
+                }])
+                    ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
+                        $query->where('tender_id', $tenderId);
+                    });
+            })
+            ->where('companySystemID', $companyId)
+            ->get();
+    }
 }

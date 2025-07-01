@@ -7,7 +7,10 @@ use App\Http\Requests\API\CreateTenderBoqItemsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBoqItemsAPIRequest;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
+use App\Models\PricingScheduleDetailEditLog;
+use App\Models\PricingScheduleMasterEditLog;
 use App\Models\TenderBoqItems;
+use App\Models\TenderBoqItemsEditLog;
 use App\Models\Unit;
 use App\Repositories\TenderBoqItemsRepository;
 use Illuminate\Http\Request;
@@ -21,6 +24,7 @@ use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
+use App\Services\SrmDocumentModifyService;
 
 /**
  * Class TenderBoqItemsController
@@ -31,10 +35,15 @@ class TenderBoqItemsAPIController extends AppBaseController
 {
     /** @var  TenderBoqItemsRepository */
     private $tenderBoqItemsRepository;
+    private $srmDocumentModifyService;
 
-    public function __construct(TenderBoqItemsRepository $tenderBoqItemsRepo)
+    public function __construct(
+        TenderBoqItemsRepository $tenderBoqItemsRepo,
+        SrmDocumentModifyService $documentModifyService
+    )
     {
         $this->tenderBoqItemsRepository = $tenderBoqItemsRepo;
+        $this->srmDocumentModifyService = $documentModifyService;
     }
 
     /**
@@ -291,61 +300,35 @@ class TenderBoqItemsAPIController extends AppBaseController
 
     public function loadTenderBoqItems(Request $request)
     {
-        $input = $request->all();
-
-        $data['detail'] = TenderBoqItems::where('main_work_id',$input['main_work_id'])->get();
-        $data['uomDrop'] = Unit::get();
-        $itemDrop = ItemAssigned::with(['item_master'])->where('companySystemID',$input['companySystemID'])->get();
-
-        $items =array();
-        foreach($itemDrop as $key => $val){
-            $items[$key]['id'] = $val['itemCodeSystem'];
-            $items[$key]['label'] = $val['item_master']['itemShortDescription'];
-        }
-        $data['itemDrop'] = $items;
-
-        return $data;
+        return $this->tenderBoqItemsRepository->getTenderBoqItems($request);
     }
 
     public function addTenderBoqItems(Request $request)
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $validator = $this->tenderBoqItemsRepository->checkValidBoqItemRequestParams($input);
+        if(!$validator['success']){
+            return $this->sendError($validator['message']);
+        }
+
+        $employee = Helper::getEmployeeInfo();
         $is_disabled = 0;
-        if(!isset($input['item_name']) || empty($input['item_name'])){
-            return ['success' => false, 'message' => 'Item is required'];
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($input['tender_id']);
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $versionID = $requestData['versionID'] ?? 0;
+        $main_work_id = $input['main_work_id'];
+
+        if($input['qty'] <=0 ){
+            return $this->sendError('QTY cannot be less than or equal to zero');
         }
 
-        if(!isset($input['uom']) || empty($input['uom'])){
-            return ['success' => false, 'message' => 'UOM is required'];
+        $exist = $this->tenderBoqItemsRepository->checkBoqItemsExists($input, $editOrAmend, $input['item_name'], $main_work_id);
+        if(!$exist['success']){
+            return $exist;
         }
+        $d['purchase_request_id'] = $exist['data'];
 
-        if(!isset($input['qty']) || empty($input['qty'])){
-            return ['success' => false, 'message' => 'QTY is required'];
-        }else{
-            if($input['qty'] <=0 ){
-                return ['success' => false, 'message' => 'QTY cannot be less than or equal to zero'];
-            }
-        }
-
-        $exist = TenderBoqItems::where('item_name',$input['item_name'])
-            ->where('main_work_id',$input['main_work_id'])->first();
-
-        $d['purchase_request_id'] = '';
-        if(!empty($exist)){
-            if( isset($input['origin']) && ($input['origin'] == 1 || $input['origin'] == 2)){
-                $input['qty'] = $input['qty'] + $exist->qty;
-                $d['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] . ',' . $exist->purchase_request_id : $exist->purchase_request_id;
-                $exist->delete();
-            } else {
-                return ['success' => false, 'message' => 'Item already exist'];
-            }
-        }
-
-
-
-            
         DB::beginTransaction();
         try {
             $data['main_work_id']=$input['main_work_id'];
@@ -366,43 +349,55 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['item_primary_code'] = isset($input['itemPrimaryCode']) ? $input['itemPrimaryCode'] : '';
             $data['origin'] = isset($input['origin']) ? $input['origin'] : '';
 
-            $result = TenderBoqItems::create($data);
-         
+            if($editOrAmend){
+                $data['id'] = null;
+                $data['level_no'] = 1;
+                $data['main_work_id'] = $main_work_id;
+                $data['amd_main_work_id'] = $main_work_id;
+                $data['tender_edit_version_id'] = $versionID;
+                $result = TenderBoqItemsEditLog::create($data);
+            } else {
+                $result = TenderBoqItems::create($data);
+            }
             if($result){
 
-                $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->first();
+                $mainwork = $editOrAmend ?
+                    PricingScheduleDetailEditLog::find($main_work_id) :
+                    PricingScheduleDetail::find($main_work_id);
 
-                $mainwork_items = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+                $mainwork_items = $editOrAmend ?
+                    PricingScheduleDetailEditLog::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->amd_pricing_schedule_master_id, $versionID) :
+                    PricingScheduleDetail::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->pricing_schedule_master_id);
+
                 $is_main_works_complete = true;
+
                 if($mainwork_items->count() > 0)
                 {
                     $details = $mainwork_items->get();
                     foreach($details as $main)
                     {
                         if(count($main->tender_boq_items) == 0)
-                        {   
+                        {
                             $is_main_works_complete = false;
                             break;
                         }
-                       
                     }
-                   
                 }
-          
                 if($is_main_works_complete)
                 {
                     $master['boq_status']= 1;
-                    PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+                    $editOrAmend ?
+                        PricingScheduleMasterEditLog::where('amd_id', $mainwork->amd_pricing_schedule_master_id)->update($master) :
+                        PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
                 }
 
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully saved'];
             }
-
+            return ['success' => false, 'message' => 'Unable to create'];
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -426,9 +421,14 @@ class TenderBoqItemsAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'QTY cannot be less than or equal to zero'];
             }
         }
+        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $versionID = $input['versionID'] ?? 0;
+        $id = $editOrAmend && $versionID > 0 ? $input['amd_id'] : $input['id'];
+        $mainWorkID = $editOrAmend && $versionID > 0 ? $input['amd_main_work_id'] : $input['main_work_id'];
 
-        $exist = TenderBoqItems::where('item_name',$input['item_name'])->where('id','!=',$input['id'])
-            ->where('main_work_id',$input['main_work_id'])->first();
+        $exist = $editOrAmend ?
+            TenderBoqItemsEditLog::checkItemNameExists($input['item_name'], $mainWorkID, $id) :
+            TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID);
 
         if(!empty($exist)){
             return ['success' => false, 'message' => 'Item already exist'];
@@ -437,7 +437,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $model = TenderBoqItems::find($input['id']);
+            $model = $editOrAmend ? TenderBoqItemsEditLog::find($id) : TenderBoqItems::find($id);
             $data['item_name']=$input['item_name'];
             $data['description']=$input['description'];
             $data['uom']=$input['uom'];
@@ -458,16 +458,25 @@ class TenderBoqItemsAPIController extends AppBaseController
 
     public function deleteTenderBoqItem(Request $request)
     {
-
-        
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $tenderBoqItems = TenderBoqItems::find($input['id']);
-            $result = $tenderBoqItems->delete();
+            $editOrAmend = $input['enableChangeRequest'] ?? false;
+            $versionID = $input['versionID'] ?? 0;
+            $id = $editOrAmend && $versionID > 0 ? $input['amd_id'] : $input['id'];
+            $mainWorkID = $editOrAmend && $versionID > 0 ? $input['amd_main_work_id'] : $input['main_work_id'];
+
+            $tenderBoqItems = $editOrAmend ? TenderBoqItemsEditLog::find($id) : TenderBoqItems::find($input['id']);
+            if($editOrAmend){
+                $tenderBoqItems->is_deleted = 1;
+                $result = $tenderBoqItems->save();
+            } else {
+                $result = $tenderBoqItems->delete();
+            }
+
             if($result){
-                $mainwork = $this->getMainwork($input['main_work_id']); 
-                $mainworkItems = $this->getMainworkItems($mainwork); 
+                $mainwork = $this->getMainwork($mainWorkID, $editOrAmend);
+                $mainworkItems = $this->getMainworkItems($mainwork, $editOrAmend, $versionID);
                 $isMainWorksComplete = true;
                 if($mainworkItems->count() > 0)
                 {
@@ -483,8 +492,9 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                    
                 }
-                
+
                 $master['boq_status'] = ($isMainWorksComplete) ? 1 : 0;
+                $editOrAmend ? PricingScheduleMasterEditLog::where('amd_id', $mainwork->amd_pricing_schedule_master_id)->update($master) :
                 PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
             
                 DB::commit();
@@ -517,6 +527,11 @@ class TenderBoqItemsAPIController extends AppBaseController
             $excelUpload = $input['itemExcelUpload'];
             $input = array_except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
+
+            $validation = $this->tenderBoqItemsRepository->checkValidUploadRequestParams($input);
+            if(!$validation['success']) {
+                return $this->sendError($validation['message']);
+            }
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
             $originalFileName = $excelUpload[0]['filename'];
@@ -592,8 +607,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                 $skipRecords = [];
                 $employee = \Helper::getEmployeeInfo();
                 foreach ($excelUploadDataN as $vl){
-                    $exist = TenderBoqItems::where('item_name',$vl['item'])
-                        ->where('main_work_id',$input['main_work_id'])->first();
+                    $exist = $this->tenderBoqItemsRepository->checkItemExistsForUpload($input, $vl['item']);
 
                     if(empty($exist)){
                         $units = Unit::where('UnitShortCode',$vl['uom'])->first();
@@ -612,7 +626,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                         $data['qty']=$vl['qty'];
                         $data['company_id']=$input['companySystemID'];
                         $data['created_by'] = $employee->employeeSystemID;
-                        $result = TenderBoqItems::create($data);
+                        $this->tenderBoqItemsRepository->saveBoqItemsUpload($data, $input);
                         $success +=1;
                     }else{
                         array_push($duplicateEntries,$vl);
@@ -653,20 +667,19 @@ class TenderBoqItemsAPIController extends AppBaseController
     }
 
 
-    public function getMainwork($id)
+    public function getMainwork($id, $editOrAmend)
     {
-        $output =  PricingScheduleDetail::where('id', $id)
-                                ->select('id','tender_id','pricing_schedule_master_id')
-                                ->first();
+        $output = $editOrAmend ?
+            PricingScheduleDetailEditLog::getPricingScheduleByID($id) :
+            PricingScheduleDetail::getPricingScheduleByID($id);
         return $output;
     }
 
-    public function getMainworkItems($mainwork)
+    public function getMainworkItems($mainwork, $editOrAmend, $versionID)
     {
-        $output = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)
-                                        ->where('deleted_at',null)
-                                        ->where('boq_applicable', true)
-                                        ->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+        $output = $editOrAmend ?
+            PricingScheduleDetailEditLog::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->amd_pricing_schedule_master_id, $versionID) :
+            PricingScheduleDetail::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->pricing_schedule_master_id);
 
          return $output;                               
     }

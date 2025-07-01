@@ -3,7 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\CalendarDatesDetailEditLog;
+use Illuminate\Contracts\Foundation\Application;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\CalendarDatesDetailRepository;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class CalendarDatesDetailEditLogRepository
@@ -30,6 +33,16 @@ class CalendarDatesDetailEditLogRepository extends BaseRepository
         'to_date',
         'version_id'
     ];
+    protected $calendarDateDetailRepo;
+    public function __construct(CalendarDatesDetailRepository $calendarDatesDetailsRepository, Application $app)
+    {
+        parent::__construct($app);
+        $this->calendarDateDetailRepo = $calendarDatesDetailsRepository;
+    }
+    public function getFieldsSearchable()
+    {
+        return $this->fieldSearchable;
+    }
 
     /**
      * Configure the Model
@@ -37,5 +50,26 @@ class CalendarDatesDetailEditLogRepository extends BaseRepository
     public function model()
     {
         return CalendarDatesDetailEditLog::class;
+    }
+
+    public function saveCalendarDateDetailHistory($tender_id, $version_id = null){
+        try {
+            return DB::transaction(function () use ($tender_id, $version_id) {
+                $calendarDates = $this->calendarDateDetailRepo->getCalendarDateDetailForAmd($tender_id);
+                if(!empty($calendarDates)){
+                    foreach($calendarDates as $record){
+                        $level_no = $this->model->getLevelNo($record['id']);
+                        $recordData = $record->toArray();
+                        $recordData['id'] = $record['id'];
+                        $recordData['level_no'] = $level_no;
+                        $recordData['version_id'] = $version_id;
+                        $this->model->create($recordData);
+                    }
+                }
+                return ['success' => false, 'message' => 'Success'];
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 }

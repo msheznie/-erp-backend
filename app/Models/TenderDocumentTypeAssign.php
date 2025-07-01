@@ -110,4 +110,18 @@ class TenderDocumentTypeAssign extends Model
     {
         return $this->hasOne('App\Models\TenderDocumentTypes', 'id', 'document_type_id');
     }
+
+    public static function getTenderDocumentTypeForAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
+
+    public static function getTenderDocumentTypeAssign($tenderMasterID){
+        return self::with(['document_type'])->where('tender_id', $tenderMasterID)->get();
+    }
+    public static function getTenderDocumentTypeAssigned($tender_id, $doc_type_id, $company_id){
+        return self::where('tender_id', $tender_id)
+            ->where('document_type_id', $doc_type_id)
+            ->where('company_id', $company_id)
+            ->first();
+    }
 }

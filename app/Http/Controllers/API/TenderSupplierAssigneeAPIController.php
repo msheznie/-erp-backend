@@ -13,6 +13,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use Carbon\Carbon;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use mysql_xdevapi\Exception;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
@@ -295,49 +296,28 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->findWithoutFail($id);
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
-        if (empty($tenderSupplierAssignee)) {
-            return $this->sendError('Not Found');
+        $response = $this->tenderSupplierAssigneeRepository->deleteAssignedUsers($id, $versionID, $editOrAmend);
+        if(!$response['success']){
+            return $this->sendError($response['message']);
         }
-        $tenderSupplierAssignee->delete();
-        return $this->sendResponse($id, 'File Deleted');
+        return $this->sendResponse([], 'File Deleted');
     }
     public function supplierAssignCRUD(Request $request)
     {
         $input = $request->all();
-        $name = $input['name'];
-        $email = $input['email'];
-        $regNo = $input['regNo'];
-        $tenderId = $input['tenderId'];
-        $companySystemID = $input['companySystemID'];
-        $employee = \Helper::getEmployeeInfo();
-
-        $validateFileds = $this->validateFileds($input);
-
-        if(!$validateFileds['status']){
-            return $this->sendError($validateFileds['message'], $validateFileds['code']);
-        }
-
-
-
-        DB::beginTransaction();
-        try {
-            $data['tender_master_id'] = $tenderId;
-            $data['supplier_name'] = $name;
-            $data['supplier_email'] = $email;
-            $data['registration_number'] = $regNo;
-            $data['created_by'] = $employee->employeeSystemID;
-            $data['company_id'] = $companySystemID;
-            $result = TenderSupplierAssignee::create($data);
-            if ($result) {
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+        try{
+            $response = $this->tenderSupplierAssigneeRepository->supplierAssignCRUD($input);
+            if(!$response['success']){
+                $code = $response['code'] ?? 500;
+                return $this->sendError($response['message'], $code);
+            } else {
+                return ['success' => false, 'message' => $response['message']];
             }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+        } catch(\Exception $exception){
+            return $this->sendError($exception->getMessage(), 500);
         }
     }
     public function sendSupplierInvitation(Request $request)
@@ -597,49 +577,17 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
     public function deleteSelectedSuppliers(Request $request)
     {
-        $input = $request->all();
-        $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->deleteAllSelectedSuppliers($input);
-
-        if (empty($tenderSupplierAssignee)) {
-            return $this->sendError('Not Found');
+        try{
+            $input = $request->all();
+            $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->deleteAllSelectedSuppliers($input);
+            if(!$tenderSupplierAssignee['success']){
+                return $this->sendError($tenderSupplierAssignee['message']);
+            } else {
+                return $this->sendResponse([], $tenderSupplierAssignee['message']);
+            }
+        } catch (\Exception $exception){
+            return $this->sendError($exception->getMessage());
         }
-
-        return $this->sendResponse(0, 'File Deleted');
     }
 
-    public function validateFileds($input){
-        $validator = \Validator::make($input, [
-            'email' => 'required|email|max:255',
-            'name' => 'required|max:255',
-            'regNo' => 'required|max:255',
-        ]);
-        if ($validator->fails()) {
-            return ['status' => false, 'message' => $validator->messages(), 'code' => 422];
-        }
-
-
-        $email = $input['email'];
-        $regNo = $input['regNo'];
-        $companyId =$input['companySystemID'];
-
-        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
-            ->where('company_id',$companyId)
-            ->where('STATUS',1)
-            ->get();
-
-        $emails = $supplierRegLink->pluck('email')->toArray();
-        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
-
-        if (in_array($email, $emails)) {
-            return ['status' => false, 'message' => 'Email already exists','code' => 402];
-        }
-
-        if (in_array($regNo, $registrationNumbers)) {
-            return ['status' => false, 'message' => 'Registration number already exists','code' => 402];
-        }
-
-
-        return ['status' => true, 'message' => 'success'];
-
-    }
 }

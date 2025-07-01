@@ -85,7 +85,7 @@ class PricingScheduleMaster extends Model
 {
 
     public $table = 'srm_pricing_schedule_master';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -130,7 +130,7 @@ class PricingScheduleMaster extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function tender_master()
@@ -168,6 +168,47 @@ class PricingScheduleMaster extends Model
         return $this->hasMany('App\Models\BidSchedule', 'schedule_id', 'id');
     }
 
-    
+    public static function checkScheduleNameExists($id, $tenderMasterId, $scheduler_name, $companySystemID){
+        return self::when($id > 0, function ($q) use($id) {
+            $q->where('id','!=', $id);
+        })->where('tender_id', $tenderMasterId)
+            ->where('scheduler_name', $scheduler_name)
+            ->where('company_id', $companySystemID)
+            ->first();
+    }
 
+    public static function getPricingScheduleMasterForAmd($tenderMasterID){
+        return self::where('tender_id', $tenderMasterID)->get();
+    }
+    public static function getPricingScheduleMasterListQry($tender_id, $companyId)
+    {
+        return self::with([
+            'tender_master' => function ($q) {
+                $q->with(['envelop_type']);
+            }, 'tender_bid_format_master',
+            'pricing_shedule_details' => function ($q) {
+                $q->where('boq_applicable',true);
+            }, 'pricing_shedule_details1' => function ($q) {
+                $q->where('is_disabled',true);
+            }
+        ])->where('tender_id', $tender_id)->where('company_id', $companyId);
+    }
+
+    public static function getScheduleMasterData($id){
+        return self::with(['tender_bid_format_master'])->where('id', $id)->first();
+    }
+    public static function getTenderScheduleMaster($tenderMasterID, $type = 'get'){
+        $query = self::where('tender_id', $tenderMasterID);
+
+        switch ($type) {
+            case 'get':
+                return $query->get();
+            case 'first':
+                return $query->first();
+            case 'count':
+                return $query->count();
+            default:
+                return null;
+        }
+    }
 }

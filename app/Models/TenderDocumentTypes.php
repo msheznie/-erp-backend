@@ -67,6 +67,8 @@ class TenderDocumentTypes extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['attachments'];
+
     public $fillable = [
         'document_type',
         'srm_action',
@@ -108,6 +110,10 @@ class TenderDocumentTypes extends Model
     {
         return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
     }
+    public function attachment_logs()
+    {
+        return $this->hasMany('App\Models\DocumentAttachmentsEditLog', 'attachmentType', 'id');
+    }
 
     public function tender_document_type_assign(){ 
         return $this->hasOne('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
@@ -138,5 +144,64 @@ class TenderDocumentTypes extends Model
                 $q2->select('id', 'document_type_id');
             }])->orderBy('sort_order', 'asc');
     }
-    
+    public function getAttachmentsAttribute()
+    {
+        if ($this->relationLoaded('attachment_logs')) {
+            return $this->attachment_logs;
+        }
+
+        return $this->attachments()->get(); // fallback, if needed
+    }
+    // In TenderDocumentTypes.php
+
+    public static function getFilteredDocumentTypes(array $notInArray, $employeeCompanyID, $tenderPublished, $isRequestForEdit, $requestConfirmed)
+    {
+        $query = self::whereNotIn('id', $notInArray);
+
+        if ($tenderPublished) {
+            if ($isRequestForEdit && !$requestConfirmed) {
+                return $query->get();
+            }
+
+            if (!$isRequestForEdit || $requestConfirmed) {
+                return $query->where('id', 3)->get();
+            }
+        }
+        return $query->where('company_id', $employeeCompanyID)->get();
+    }
+    public static function getTenderAttachmentTypes($tenderMasterId, $companySystemID, $assignDocumentTypes, $isRfx, $editOrAmend, $versionID)
+    {
+        $documentSystemID = $isRfx ? 113 : 108;
+
+        return self::select('id', 'document_type', 'system_generated', 'srm_action', 'sort_order', 'company_id')
+            ->when(!$editOrAmend, function ($q) use ($tenderMasterId, $companySystemID, $documentSystemID){
+                $q->with(['attachments' => function ($query) use ($tenderMasterId, $companySystemID, $documentSystemID) {
+                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
+                        ->where('documentSystemCode', $tenderMasterId)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('documentSystemID', $documentSystemID);
+                }]);
+            })
+            ->when($editOrAmend, function ($q) use ($tenderMasterId, $companySystemID, $documentSystemID, $versionID){
+                $q->with(['attachment_logs' => function ($query) use ($tenderMasterId, $companySystemID, $documentSystemID, $versionID) {
+                    $query->select('attachmentType','documentSystemID', 'documentSystemCode','companySystemID')
+                        ->where('documentSystemCode', $tenderMasterId)
+                        ->where('version_id', $versionID)
+                        ->where('is_deleted', 0)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('documentSystemID', $documentSystemID);
+                }]);
+            })
+            ->where(function ($query) use ($assignDocumentTypes, $companySystemID) {
+                $query->whereIn('id', $assignDocumentTypes)
+                    ->where('company_id', $companySystemID);
+            })
+            ->orWhere('system_generated', 1)
+            ->when(!in_array(3, $assignDocumentTypes), function ($query) {
+                $query->where('id', '!=', 3);
+            })
+            ->orderBy('sort_order')
+            ->get();
+    }
+
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePricingScheduleMasterAPIRequest;
 use App\Http\Requests\API\UpdatePricingScheduleMasterAPIRequest;
 use App\Models\PricingScheduleMaster;
+use App\Models\PricingScheduleMasterEditLog;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderBidFormatDetail;
 use App\Models\TenderBidFormatMaster;
@@ -14,11 +15,13 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\TenderBoqItems;
+use App\Services\SrmDocumentModifyService;
 
 /**
  * Class PricingScheduleMasterController
@@ -29,10 +32,15 @@ class PricingScheduleMasterAPIController extends AppBaseController
 {
     /** @var  PricingScheduleMasterRepository */
     private $pricingScheduleMasterRepository;
+    private $srmDocumentModifyService;
 
-    public function __construct(PricingScheduleMasterRepository $pricingScheduleMasterRepo)
+    public function __construct(
+        PricingScheduleMasterRepository $pricingScheduleMasterRepo,
+        SrmDocumentModifyService $srmDocumentModifyService
+    )
     {
         $this->pricingScheduleMasterRepository = $pricingScheduleMasterRepo;
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
     }
 
     /**
@@ -289,49 +297,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
     public function getPricingScheduleList(Request $request)
     {
-        $input = $request->all();
-
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-
-        $companyId = $request['companyId'];
-        $tender_id = $input['tender_id'];
-
-
-
-        $tenderMaster = PricingScheduleMaster::with(['tender_master' => function($q){
-            $q->with(['envelop_type']);
-        },'tender_bid_format_master','pricing_shedule_details'=>function($q){
-            $q->where('boq_applicable',true);
-        },'pricing_shedule_details1'=>function($q){
-            $q->where('is_disabled',true);
-        }])->where('tender_id', $tender_id)->where('company_id', $companyId);
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
-                $query->orWhereHas('tender_bid_format_master', function ($query1) use ($search) {
-                    $query1->where('tender_name', 'LIKE', "%{$search}%");
-                });
-                $query->orWhere('scheduler_name', 'LIKE', "%{$search}%");
-            });
-        }
-
-
-        return \DataTables::eloquent($tenderMaster)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
+        return $this->pricingScheduleMasterRepository->getPricingScheduleList($request);
     }
 
     public function getPricingScheduleDropDowns(Request $request)
@@ -348,6 +314,9 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('price_bid_format_id'));
         $schedule_mandatory = 0;
         $items_mandatory = 0;
+        $tenderMasterId = $input['tenderMasterId'];
+        $scheduler_name = $input['scheduler_name'];
+        $companySystemID = $input['companySystemID'];
         if(isset($input['schedule_mandatory'])){
             if($input['schedule_mandatory']){
                 $schedule_mandatory = 1;
@@ -359,37 +328,31 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 $items_mandatory = 1;
             }
         }
-        if(isset($input['id'])) {
-            $exist = PricingScheduleMaster::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('scheduler_name', $input['scheduler_name'])->where('company_id', $input['companySystemID'])->first();
+        $id = $input['id'] ?? 0;
+        $amdID = $input['amd_id'] ?? 0;
 
-            if(!empty($exist)){
-                return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
-            }
-        }else{
-            $exist = PricingScheduleMaster::where('scheduler_name', $input['scheduler_name'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $exist = $this->pricingScheduleMasterRepository->checkScheduleNameValidation(
+            $id, $amdID, $tenderMasterId, $scheduler_name, $companySystemID, $editOrAmend, $requestData['versionID']
+        );
 
-            if(!empty($exist)){
-                return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
-            }
+        if(!$exist['success']){
+            return $exist;
         }
 
-
-        
         //check if formula is empty or not
-
-
-        if(TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('finalTotalYn', 0)->where('formula_string',"")->count() > 0)
-        {
-            return ['success' => false, 'message' => 'Pricing Bid format should have a defined formula'];
-        }
-        else if(TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('finalTotalYn', 1)->where('formula_string',"")->count() > 0)
-        {
-            return ['success' => false, 'message' => 'Formula is required for the “Final Total” total line'];
+        $formulaExists = $this->pricingScheduleMasterRepository->checkTenderBidFormatFormulaExists($input['price_bid_format_id']);
+        if(!$formulaExists['success']){
+            return $formulaExists;
         }
 
-
-        if(isset($input['id'])) {
-            $schedule = PricingScheduleMaster::where('id', $input['id'])->first();
+        if($id > 0 || $amdID > 0) {
+            $scheduleResp = $this->pricingScheduleMasterRepository->getPricingScheduleMasterRecord($id, $amdID, $editOrAmend);
+            if(!$scheduleResp['success']){
+                return $scheduleResp;
+            }
+            $schedule = $scheduleResp['data'];
         }
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
@@ -401,10 +364,14 @@ class PricingScheduleMasterAPIController extends AppBaseController
             $data['items_mandatory']=$items_mandatory;
             $data['company_id']=$input['companySystemID'];
 
-            if(isset($input['id'])){
+            if($id > 0 || $amdID > 0){
                 $data['updated_by'] = $employee->employeeSystemID;
-                $pricingSheduleMaster = PricingScheduleMaster::find($input['id']);
-                $result = $pricingSheduleMaster->update($data);
+                $update = $this->pricingScheduleMasterRepository->updatePricingScheduleMaster($data, $id, $editOrAmend, $amdID);
+                if(!$update['success']){
+                    DB::rollback();
+                    return $update;
+                }
+                $result = $update['data'];
                 if($result){
                     if($schedule['price_bid_format_id'] != $input['price_bid_format_id']){
                         $master['status']=0;
@@ -426,59 +393,23 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 }
             }else{
 
-              
+
                 $data['created_by'] = $employee->employeeSystemID;
-                $result = PricingScheduleMaster::create($data);
+                if($editOrAmend){
+                    $data['level_no'] = 1;
+                    $data['id'] = null;
+                    $data['tender_edit_version_id'] = $requestData['versionID'];
+                }
+                $result = $editOrAmend ? PricingScheduleMasterEditLog::create($data) : PricingScheduleMaster::create($data);
                 if($result){
-                    // $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->where('is_disabled',0)->get();
-                    // foreach ($priceBid as $bid){
-                    //     $dataBid['tender_id']=$input['tenderMasterId'];
-                    //     $dataBid['schedule_id']=$result['id'];
-                    //     $dataBid['bid_format_detail_id']=$bid['id'];
-                    //     $dataBid['item']=$bid['label'];
-                    //     $dataBid['company_id']=$input['companySystemID'];
-                    //     $dataBid['created_by']=$employee->employeeSystemID;
-                    //     TenderMainWorks::create($dataBid);
 
-
-                    // }
-               
-                    $priceBidShe = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->select('id','field_type','tender_id','label','is_disabled','boq_applicable','formula_string')->get();
-
-                    $status_updated['status'] = true;
-                    $status_updated['boq_status'] = true;
-
-                    foreach ($priceBidShe as $bid){
-
-                        if(($bid->is_disabled == 1) && $bid->field_type != 4)
-                        {
-                            $status_updated['status'] = false;
-                        }
-
-                        
-                        if(($bid->boq_applicable == 1) && $bid->field_type != 4)
-                        {
-                            $status_updated['boq_status'] = false;
-                        }
-                        
-                        $dataBidShed['tender_id']=$input['tenderMasterId'];
-                        $dataBidShed['bid_format_id']=$bid['tender_id'];
-                        $dataBidShed['bid_format_detail_id']=$bid['id'];
-                        $dataBidShed['label']=$bid['label'];
-                        $dataBidShed['field_type']=$bid['field_type'];
-                        $dataBidShed['is_disabled']=$bid['is_disabled'];
-                        $dataBidShed['boq_applicable']=$bid['boq_applicable'];
-                        $dataBidShed['pricing_schedule_master_id']=$result['id'];
-                        $dataBidShed['company_id']=$input['companySystemID'];
-                        $dataBidShed['formula_string']=$bid['formula_string'];
-                        $dataBidShed['created_by']=$employee->employeeSystemID;
-                        PricingScheduleDetail::create($dataBidShed);
-
+                    $detailUpdate = $this->pricingScheduleMasterRepository->updateTenderPricingScheduleDetail(
+                        $input['price_bid_format_id'], $tenderMasterId, $result, $companySystemID, $employee, $editOrAmend, $requestData['versionID']
+                    );
+                    if(!$detailUpdate['success']){
+                        DB::rollback();
+                        return ['success' => false, 'message' => $detailUpdate['message']];
                     }
-              
-
-                    PricingScheduleMaster::where('id',$result['id'])->update($status_updated);
-
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
                 }
@@ -493,40 +424,31 @@ class PricingScheduleMasterAPIController extends AppBaseController
     public function getPricingScheduleMaster(Request $request)
     {
         $input = $request->all();
-        return PricingScheduleMaster::with(['tender_bid_format_master'])->where('id',$input['id'])->first();
-
+        $response = $this->pricingScheduleMasterRepository->getPricingScheduleMasterEditData($input);
+        return $this->sendResponse($response, 'Pricing Schedule Master record retrieved successfully');
     }
 
     public function deletePricingSchedule(Request $request)
     {
-        $input = $request->all();
-        DB::beginTransaction();
-        try {
-            $sheduleMaster = PricingScheduleMaster::find($input['id']);
-            $result = $sheduleMaster->delete();
-            if($result){
-                //TenderMainWorks::where('schedule_id',$input['id'])->delete();
-        
-                $sheduleDetails = $this->deleteSheduleDetails($input['id']);
-                if (!$sheduleDetails['success']) {
-                    return $this->sendError($sheduleDetails['message'], 500);
-                }
-                $boqItems = PricingScheduleDetail::select('id')->where('pricing_schedule_master_id',$input['id'])->where('boq_applicable',1)->get();
-                PricingScheduleDetail::where('pricing_schedule_master_id',$input['id'])->delete();
+        try{
+            $validator = Validator::make($request->all(), [
+                'tender_id' => 'required'
+            ],[
+                'tender_id.required' => 'Tender Master ID is required',
+            ]);
 
-                $boqDetails = $this->deleteBoqItems($boqItems);
-                if (!$boqDetails['success']) {
-                    return $this->sendError($boqDetails['message'], 500);
-                }
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            if ($validator->fails()) {
+                return $this->sendError($validator->errors()->first('tender_id'));
             }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
-        }
 
+            $data = $this->pricingScheduleMasterRepository->deletePricingSchedule($request);
+            if(!$data['success']){
+                return $this->sendError($data['message'], 500);
+            }
+            return $this->sendResponse([], $data['message']);
+        } catch (\Exception $exception){
+            return $this->sendError($exception->getMessage(), 500);
+        }
     }
 
     public function getPriceBidFormatDetails(Request $request)
@@ -535,154 +457,20 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         $price_bid_format_id=$input['price_bid_format_id'];
         $schedule_id=$input['schedule_id'];
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
-    //     return DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$price_bid_format_id)->where('pricing_schedule_master_id',$schedule_id) 
-    //     ->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
-    //     ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
-    //     ->leftJoin('srm_bid_main_work', 'srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id')  
-    //    ->select('srm_pricing_schedule_detail.id as id','srm_pricing_schedule_detail.tender_id','srm_pricing_schedule_detail.label','srm_pricing_schedule_detail.is_disabled','tender_field_type.type','srm_pricing_schedule_detail.field_type as typeId','srm_pricing_schedule_detail.formula_string','srm_pricing_schedule_detail.bid_format_detail_id'
-    //             ,'srm_pricing_schedule_detail.bid_format_id','srm_pricing_schedule_detail.pricing_schedule_master_id','srm_pricing_schedule_detail.boq_applicable',
-    //            DB::raw('(CASE WHEN srm_pricing_schedule_detail.field_type = 4 THEN srm_schedule_bid_format_details.value 
-    //                           WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
-    //                           WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
-    //                           END) AS value'))  
-    //    ->get();
-
-
-
-       $val1 =  DB::select("SELECT
-       srm_pricing_schedule_detail.id,
-       tender_id,
-       srm_pricing_schedule_detail.label,
-       srm_pricing_schedule_detail.boq_applicable,
-       is_disabled,
-       tender_field_type.type,
-       tender_field_type.id as typeId,
-       srm_schedule_bid_format_details.`value` 
-        FROM
-       srm_pricing_schedule_detail
-       INNER JOIN tender_field_type ON tender_field_type.id = srm_pricing_schedule_detail.field_type
-       LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = srm_pricing_schedule_detail.id 
-       AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
-        WHERE
-            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id AND deleted_at IS NULL AND field_type != 4
-        ORDER BY
-            id ASC");
-
-
-        $val2 =  DB::select("SELECT
-        srm_pricing_schedule_detail.id,
-        tender_id,
-        srm_pricing_schedule_detail.label,
-        srm_pricing_schedule_detail.boq_applicable,
-        is_disabled,
-        tender_field_type.type,
-        tender_field_type.id as typeId 
-        FROM
-        srm_pricing_schedule_detail
-        INNER JOIN tender_field_type ON tender_field_type.id = srm_pricing_schedule_detail.field_type
-        WHERE
-            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id AND deleted_at IS NULL AND field_type = 4
-        ORDER BY
-            id ASC");
-
-
-    return array_merge($val1,$val2); 
-
-
-
+        list($val1, $val2) = $this->pricingScheduleMasterRepository->getPricingScheduleDetails($schedule_id, $price_bid_format_id, $editOrAmend);
+        return array_merge($val1,$val2);
     }
 
     public function addPriceBidDetails(Request $request)
     {
         $input = $request->all();
-        
-        $masterData = $input['masterData'];
-        $employee = \Helper::getEmployeeInfo();
-        DB::beginTransaction();
-        try {
-
-            
-
-            ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->delete();
-            
-            if(isset($input['priceBidFormat'])){
-                if(count($input['priceBidFormat'])>0){
-                    $result = false;
-                    $isComplete = true;
-                    $isBoqComplete = true;
-                    foreach ($input['priceBidFormat'] as $val){
-
-                        if($val['boq_applicable'] == 1 && $val['typeId'] != 4)
-                        {
-                            $id = $val['id'];
-                            $result1 = TenderBoqItems::where('main_work_id',$id)->count();
-                            if(($result1) == 0)
-                            {
-                                $isBoqComplete = false;
-                            }
-                        }
-
-
-                        if($val['is_disabled'] == 1 && $val['typeId'] != 4)
-                        {
-                            if(empty($val['value']) || $val['value'] == null)
-                            {
-                                $isComplete = false;
-                            }
-                        }
-                     
-                        
-                        if($val['typeId'] != 4)
-                            {
-                                if(!empty($val['value']) || $val['value'] == "0")
-                                
-                                {
-                                $data['bid_format_detail_id'] = $val['id'];
-                                $data['schedule_id'] = $masterData['schedule_id'];
-                                $data['value'] = $val['value'];
-                                $data['created_by'] = $employee->employeeSystemID;
-                                $data['company_id'] = $masterData['companySystemID'];
-                                $result = ScheduleBidFormatDetails::create($data);
-                                
-                               }
-                            
-                           }
-                        
-                    }
-                    
-                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->select('id')->first();
-
-                        
-                    if($result){
-
-                       
-                        $master['status'] = ($isComplete) ? 1 : 0;
-                  
-                        $master['boq_status'] = ($isBoqComplete) ? 1 : 0;
-
-                        PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
-                        DB::commit();
-                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
-                    }else{
-                        if(empty($exist)){
-                            $master['status']=0;
-                            PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
-                        }
-                        DB::commit();
-                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
-                    }
-                }else{
-                    return ['success' => false, 'message' => 'Price bid format does not exist'];
-                }
-            }else{
-                return ['success' => false, 'message' => 'Price bid format does not exist'];
-            }
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+        try{
+            return $this->pricingScheduleMasterRepository->addPricingScheduleDetails($input);
+        } catch(\Exception $ex){
+            return ['success' => false, 'message' => $ex];
         }
 
     }
@@ -692,12 +480,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $input = $request->all();
         $priceSchedule = PricingScheduleMaster::where('id',$input['schedule_id'])->first();
         return $mainWorks = PricingScheduleDetail::where('pricing_schedule_master_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])
-        ->where(function($query){
-            $query->where('boq_applicable',true);
-            $query->orWhere('is_disabled',false);
-        })->where('field_type','!=',4)
-        ->get();
-        
+            ->where(function($query){
+                $query->where('boq_applicable',true);
+                $query->orWhere('is_disabled',false);
+            })->where('field_type','!=',4)
+            ->get();
+
         // $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
 
         // return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->where('is_disabled',0)->whereNotIn('id', $bidDetailId)->get();
@@ -729,15 +517,15 @@ class PricingScheduleMasterAPIController extends AppBaseController
         try {
 
             foreach($items as $item)
-            {   
-               $boqItems =  TenderBoqItems::select('id')->where('main_work_id',$item->id)->get();
-               foreach($boqItems as $boqItem)
-               {
-                $boqItem = TenderBoqItems::find($boqItem->id);
-                $boqItem->delete();
-               }
+            {
+                $boqItems =  TenderBoqItems::select('id')->where('main_work_id',$item->id)->get();
+                foreach($boqItems as $boqItem)
+                {
+                    $boqItem = TenderBoqItems::find($boqItem->id);
+                    $boqItem->delete();
+                }
 
-      
+
 
             }
             DB::commit();
@@ -746,5 +534,5 @@ class PricingScheduleMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
-    
+
 }

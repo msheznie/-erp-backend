@@ -146,5 +146,23 @@ class TenderBoqItems extends Model
         return $this->hasOne('App\Models\CommercialBidRankingItems', 'id', 'tender_ranking_line_item');
     }
 
-    
+    public static function getTenderBoqItemsAmd($tender_id, $mainWorkID){
+        return self::where('tender_id', $tender_id)->where('main_work_id', $mainWorkID)->get();
+    }
+    public static function checkExistsBoqItem($scheduleDetailID){
+        return self::where('main_work_id', $scheduleDetailID)->exists();
+    }
+    public static function getTenderBoqItemList($main_work_id){
+        return self::where('main_work_id', $main_work_id)->get();
+    }
+    public static function checkItemNameExists($itemName, $amd_mainWorkID){
+        return self::where('item_name',$itemName)
+            ->where('main_work_id', $amd_mainWorkID)->first();
+    }
+    public static function checkPRAlreadyAdded($tender_id, $purchaseRequestIDToCheck, $main_work_id){
+        return self::where('tender_id', $tender_id)
+            ->whereRaw("FIND_IN_SET('$purchaseRequestIDToCheck', purchase_request_id) > 0")
+            ->where('main_work_id', $main_work_id)
+            ->first();
+    }
 }

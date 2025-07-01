@@ -42,6 +42,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\BidDocumentVerification;
 use App\Models\BidSubmissionMaster;
 use App\Models\TenderMaster;
+use App\Repositories\DocumentAttachmentsEditLogRepository;
+use App\Services\SrmDocumentModifyService;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -50,10 +52,17 @@ class DocumentAttachmentsAPIController extends AppBaseController
 {
     /** @var  DocumentAttachmentsRepository */
     private $documentAttachmentsRepository;
+    private $documentAttachmentsEditLogRepository;
+    private $srmDocumentModifyService;
 
-    public function __construct(DocumentAttachmentsRepository $documentAttachmentsRepo)
-    {
+    public function __construct(
+        DocumentAttachmentsRepository $documentAttachmentsRepo,
+        DocumentAttachmentsEditLogRepository $documentAttachmentsEditLogRepo,
+        SrmDocumentModifyService $srmDocumentModifyService
+    ){
         $this->documentAttachmentsRepository = $documentAttachmentsRepo;
+        $this->documentAttachmentsEditLogRepository = $documentAttachmentsEditLogRepo;
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
     }
 
     /**
@@ -64,18 +73,24 @@ class DocumentAttachmentsAPIController extends AppBaseController
      * @return Response
      */
     public function index(Request $request)
-    {   
-        $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
-        $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
-        $documentAttachments = $this->documentAttachmentsRepository->all();
+    {
+        $isFromSrmAmend = filter_var($request['isFromSrmAmend'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if(!$isFromSrmAmend){
+
+            $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
+            $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
+            $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
+            $documentAttachments = $this->documentAttachmentsRepository->all();
+        } else {
+            $documentAttachments = $this->documentAttachmentsEditLogRepository->getDocumentAttachmentEditLogData($request);
+        }
 
         foreach ($documentAttachments as $value) {
             $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
             $value->url = $url;
         }
 
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully');
+        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully '. $isFromSrmAmend);
     }
 
     /**
@@ -242,9 +257,21 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $companyID = $companyMaster->CompanyID;
                 }
             }
+            $tenderDocumentSystemID = [108, 113];
+            $requestData = null;
+            if(in_array($input['documentSystemID'], $tenderDocumentSystemID)){
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($input['documentSystemCode']);
+                if($requestData['enableRequestChange']){
+                    $historyData = $this->documentAttachmentsEditLogRepository->prepareNewAttachmentRecord($requestData['versionID'], $input);
+                    $documentAttachments = $this->documentAttachmentsEditLogRepository->create($historyData);
+                    $documentAttachments['attachmentID'] = $documentAttachments->amd_id;
 
-
-            $documentAttachments = $this->documentAttachmentsRepository->create($input);
+                } else {
+                    $documentAttachments = $this->documentAttachmentsRepository->create($input);
+                }
+            } else {
+                $documentAttachments = $this->documentAttachmentsRepository->create($input);
+            }
 
             $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
@@ -273,8 +300,15 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 $input['isAutoCreateDocument'] = 1;
             }
+            if(in_array($input['documentSystemID'], $tenderDocumentSystemID) && $requestData['enableRequestChange']){
+                $documentAttachments = $this->documentAttachmentsEditLogRepository->update(
+                    $input, $documentAttachments->amd_id
+                );
 
-            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            } else {
+                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            }
+
 
             DB::commit();
 
@@ -296,7 +330,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendError('Unable to upload the attachment', 500);
+                return $this->sendError('Unable to upload the attachment' . $exception->getLine(), 500);
             }
         }
     }
@@ -338,17 +372,29 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
+        $masterID             = $input['id'] ?? 0;
 
-        //Update check
-        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
-            ->where('attachmentID', '!=', $id)
-            ->where('documentSystemID',$documentSystemID)
-            ->where('attachmentType',$attachmentType)
-            ->where('documentSystemCode',$documentSystemCode)
-            ->where('attachmentDescription',$attachmentDescription)
-            ->count();
+        $tenderDocumentSystemIDs = [108, 113];
+        $editOrAmend = false;
+        $requestData = null;
 
-        if($isExist >= 1){
+        if (in_array($documentSystemID, $tenderDocumentSystemIDs)) {
+            $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($documentSystemCode);
+            $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        }
+
+        $isExist = $this->documentAttachmentsRepository->documentExistsValidation(
+            $attachmentType,
+            $attachmentDescription,
+            $companySystemID,
+            $documentSystemID,
+            $documentSystemCode,
+            $editOrAmend ? $requestData : null,
+            $id ?? null,
+            $editOrAmend ? $masterID : 0
+        );
+
+        if(!$isExist['success']){
             return $this->sendError('Description already exists', 400);
         } else {
             if (isset($input['docExpirtyDate'])) {
@@ -360,13 +406,17 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $input = $this->convertArrayToValue($input);
 
             /** @var DocumentAttachments $documentAttachments */
-            $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
+            $documentAttachments = $editOrAmend ?
+                $this->documentAttachmentsEditLogRepository->findWithoutFail($id) :
+                $this->documentAttachmentsRepository->findWithoutFail($id);
 
             if (empty($documentAttachments)) {
                 return $this->sendError('Document Attachments not found');
             }
 
-            $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
+            $documentAttachments = $editOrAmend ?
+                $this->documentAttachmentsEditLogRepository->update($input, $id) :
+                $this->documentAttachmentsRepository->update($input, $id);
 
             return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
         }
@@ -1099,30 +1149,23 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
 
-        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
-        ->where('documentSystemID',$documentSystemID)
-        ->where('attachmentType',$attachmentType)
-        ->where('documentSystemCode',$documentSystemCode)
-        ->where('attachmentDescription',$attachmentDescription)
-        ->count(); 
-        if($isExist >= 1){ 
-           return ['status' => false, 'message' => 'Description already exists'];  
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($documentSystemCode);
+        $isExist = $this->documentAttachmentsRepository->documentExistsValidation(
+            $attachmentType, $attachmentDescription, $companySystemID, $documentSystemID, $documentSystemCode, $requestData
+        );
+
+        if(!$isExist['success']){
+           return $isExist;
         }else {
             $i = 1;
             if($attachmentType == 3){
-               $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
-                    ->where('documentSystemID',$documentSystemID)
-                    ->where('attachmentType',$attachmentType)
-                    ->where('documentSystemCode',$documentSystemCode)
-                    ->orderBy('attachmentID', 'asc')
-                    ->get();
+               $exitingAmendmentRecords = $this->documentAttachmentsRepository->getExistingDocumentAttachmentRecords(
+                   $attachmentType, $companySystemID, $documentSystemID, $documentSystemCode, $requestData
+               );
 
-               foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
-                   $request['order_number'] = $i;
-                   DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
-                   $i++;
-               }
-                $request['order_number'] = $i;
+                $request['order_number'] = $this->documentAttachmentsRepository->updateExistAttachmentOrderNumber(
+                    $exitingAmendmentRecords, $requestData['enableRequestChange']
+                );
                 return self::store($request);
             } else {
                 return self::store($request);

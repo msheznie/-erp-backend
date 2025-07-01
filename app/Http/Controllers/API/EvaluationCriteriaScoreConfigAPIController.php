@@ -330,95 +330,21 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
     public function addEvaluationCriteriaConfig(Request $request)
     {
         $input = $request->all();
-        $fromTender = $input['fromTender'] ?? false;
-        $employee = \Helper::getEmployeeInfo();
-        $min_value = 0;
-        $max_value = 0;
-        $x=1;
-        $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
-        DB::beginTransaction();
         try {
-            $drop['criteria_detail_id'] = $input['criteria_detail_id'];
-            $drop['label'] = $input['label'];
-            $drop['score'] = $input['score'];
-            $drop['fromTender'] = $fromTender;
-            $drop['created_by'] = $employee->employeeSystemID;
-            $result = EvaluationCriteriaScoreConfig::create($drop);
-            if($result){
-
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
-                    ->where('criteria_detail_id',$input['criteria_detail_id'])->get();
-
-                foreach ($criteriaConfig as $val){
-                    if($x==1){
-                        $min_value = $val['score'];
-                    }
-
-                    if($val['score']>$max_value){
-                        $max_value = $val['score'];
-                    }
-
-                    if($val['score']<$min_value){
-                        $min_value = $val['score'];
-                    }
-
-                    $ans['max_value'] = $max_value;
-                    $ans['min_value'] = $min_value;
-
-                    $model::where('id',$input['criteria_detail_id'])->update($ans);
-
-                    $x++;
-                }
-
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
-            }
+            return $this->evaluationCriteriaScoreConfigRepository->addEvaluationCriteriaConfig($input);
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
     public function updateCriteriaScore(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
-        $ScoreConfig = EvaluationCriteriaScoreConfig::where('id',$input['id'])->first();
 
-        DB::beginTransaction();
         try {
-            $data['score']=$input['score'];
-            $data['updated_by'] = $employee->employeeSystemID;
-            $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->update($data);
-            if($result){
-                $x=1;
-                $min_value = 0;
-                $max_value = 0;
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$ScoreConfig['criteria_detail_id'])->get();
-                foreach ($criteriaConfig as $val){
-                    if($x==1){
-                        $min_value = $val['score'];
-                    }
-                    if($val['score']>$max_value){
-                        $max_value = $val['score'];
-                    }
-                    if($val['score']<$min_value){
-                        $min_value = $val['score'];
-                    }
-                    $ans['max_value'] = $max_value;
-                    $ans['min_value'] = $min_value;
-                    EvaluationCriteriaMasterDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
-                    $x++;
-                }
-
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
-            }
+            return $this->evaluationCriteriaScoreConfigRepository->updateCriteriaScore($input);
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 }

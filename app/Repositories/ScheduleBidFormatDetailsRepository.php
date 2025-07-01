@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -34,5 +35,11 @@ class ScheduleBidFormatDetailsRepository extends BaseRepository
     public function model()
     {
         return ScheduleBidFormatDetails::class;
+    }
+
+    public function getScheduleBidFormatForAmd($tender_id){
+        $schedules = PricingScheduleDetail::getPricingScheduleDetailForAmd($tender_id);
+        $pluckIds = collect($schedules)->pluck('id')->toArray();
+        return $this->model->getScheduleBidFormatForAmd($pluckIds);
     }
 }

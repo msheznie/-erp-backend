@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderDocumentTypeAssignLog;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -34,5 +35,25 @@ class TenderDocumentTypeAssignLogRepository extends BaseRepository
     public function model()
     {
         return TenderDocumentTypeAssignLog::class;
+    }
+
+    public function saveTenderDocumentTypeAssign($tenderID, $versionID = null){
+        try{
+            $documentAssignData = TenderDocumentTypeAssign::getTenderDocumentTypeForAmd($tenderID);
+            if(!empty($documentAssignData)){
+                foreach($documentAssignData as $record){
+                    $levelNo = $this->model->getLevelNo($record['id']);
+                    $recordData = $record->toArray();
+                    $recordData['level_no'] = $levelNo;
+                    $recordData['id'] = $record['id'];
+                    $recordData['version_id'] = $versionID;
+                    $recordData['modify_type'] = null;
+                    $this->model->create($recordData);
+                }
+            }
+            return ['success' => false, 'message' => 'Success'];
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 }

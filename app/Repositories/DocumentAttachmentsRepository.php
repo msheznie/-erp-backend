@@ -3,7 +3,12 @@
 namespace App\Repositories;
 
 use App\Models\DocumentAttachments;
+use App\Models\DocumentAttachmentsEditLog;
+use Illuminate\Container\Container as Application;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Services\SrmDocumentModifyService;
 
 /**
  * Class DocumentAttachmentsRepository
@@ -34,11 +39,50 @@ class DocumentAttachmentsRepository extends BaseRepository
         'timeStamp'
     ];
 
+    protected $srmDocumentModifyService;
+    public function __construct(Application $app, SrmDocumentModifyService $srmDocumentModifyService)
+    {
+        parent::__construct($app);
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
+    }
+
     /**
      * Configure the Model
      **/
     public function model()
     {
         return DocumentAttachments::class;
+    }
+
+    public static function getTenderDocumentForAmd($documentSystemCode, $documentSystemID){
+        return DocumentAttachments::getTenderAttachments($documentSystemCode, $documentSystemID);
+    }
+    public function documentExistsValidation(
+        $attachmentType, $attachmentDescription, $companySystemID, $documentSystemID, $documentSystemCode, $requestData, $id = 0, $masterID = 0
+    ){
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $isExist = $editOrAmend ?
+            DocumentAttachmentsEditLog::checkDocumentExists($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode, $attachmentDescription, $requestData['versionID'], $id, $masterID) :
+            DocumentAttachments::checkDocumentExists($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode, $attachmentDescription, $id);
+        if($isExist){
+            return ['success' => false, 'message' => 'Description already exists'];
+        } else {
+            return ['success' => true, 'message' => 'Validation checked successfully'];
+        }
+    }
+    public function getExistingDocumentAttachmentRecords($attachmentType, $companySystemID, $documentSystemID, $documentSystemCode, $requestData){
+        return $requestData['enableRequestChange'] ?
+            DocumentAttachmentsEditLog::getAttachmentDocumentTypeBase($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode, $requestData['versionID']) :
+            DocumentAttachments::getAttachmentDocumentTypeBase($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode);
+    }
+    public function updateExistAttachmentOrderNumber($exitingAmendmentRecords, $editOrAmend){
+        $orderNumber = 1 ;
+        foreach($exitingAmendmentRecords as $record){
+            if($editOrAmend){
+                DocumentAttachmentsEditLog::where('amd_id', $record['amd_id'])->update(['order_number' => $orderNumber]);
+                $orderNumber++;
+            }
+        }
+        return $orderNumber;
     }
 }

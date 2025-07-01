@@ -289,44 +289,8 @@ class TenderMainWorksAPIController extends AppBaseController
     public function getMainWorksList(Request $request)
     {
         $input = $request->all();
+        return $this->tenderMainWorksRepository->getMainWorkList($request);
 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-
-        $companyId = $request['companyId'];
-        $tender_id = $input['tender_id'];
-        $schedule_id = $input['schedule_id'];
-
-        //$mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
-
-        $mainWorks = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('pricing_schedule_master_id', $schedule_id)->where('company_id', $companyId)->where(function($query){
-            $query->where('boq_applicable',true);
-            $query->orWhere('is_disabled',false);
-        })->where('field_type','!=',4);
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $mainWorks = $mainWorks->where(function ($query) use ($search) {
-                $query->orWhere('item', 'LIKE', "%{$search}%");
-                $query->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-        return \DataTables::eloquent($mainWorks)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->rawColumns(['description'])
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
     }
 
     public function addMainWorks(Request $request)
@@ -507,7 +471,13 @@ class TenderMainWorksAPIController extends AppBaseController
 
     public function updateWorkOrderDescription(Request $request)
     {
+
         $input = $request->all();
+        try{
+            return $this->tenderMainWorksRepository->updateWorkOrderDescription($input);
+        } catch(\Exception $ex) {
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+        }
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {

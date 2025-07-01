@@ -67,7 +67,7 @@ class ScheduleBidFormatDetails extends Model
 {
 
     public $table = 'srm_schedule_bid_format_details';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -105,8 +105,20 @@ class ScheduleBidFormatDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
+    public static function getScheduleBidFormatForAmd($scheduleId, $bid_format_detail_id){
+        return self::where('schedule_id', $scheduleId)->where('bid_format_detail_id', $bid_format_detail_id)->get();
+    }
+    public static function checkScheduleBidFormatExists($scheduleID, $bidFormatDetailId = 0){
+        return self::where('schedule_id', $scheduleID)->when($bidFormatDetailId > 0, function ($q) use ($bidFormatDetailId) {
+            $q->where('bid_format_detail_id', $bidFormatDetailId);
+        })->first();
+    }
+
+    public static function getScheduleBidFormat($scheduleID){
+        return self::where('schedule_id', $scheduleID)->get();
+    }
 
 }

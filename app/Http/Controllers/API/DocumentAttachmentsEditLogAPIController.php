@@ -290,9 +290,13 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
         if (empty($documentAttachmentsEditLog)) {
             return $this->sendError('Document Attachments Edit Log not found');
         }
+        $deleteResp = $this->documentAttachmentsEditLogRepository->deleteAttachment($documentAttachmentsEditLog);
+        if(!$deleteResp['success']){
+            return $this->sendError($deleteResp['message']);
+        }
 
-        $documentAttachmentsEditLog->delete();
-
-        return $this->sendSuccess('Document Attachments Edit Log deleted successfully');
+        return $this->sendResponse([], 'Document Attachments deleted successfully');
     }
+
+
 }

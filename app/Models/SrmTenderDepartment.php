@@ -24,4 +24,15 @@ class SrmTenderDepartment extends Model
     {
         return $this->belongsTo(SrmDepartmentMaster::class, 'department_id', 'id');
     }
+
+    public static function getTenderDepartmentEditLog($tenderID){
+        return self::where('tender_id', $tenderID)->get();
+    }
+
+    public static function getTenderDepartmentList($tenderMasterId){
+        return self::select('department_id as id', 'srm_department_master.description as itemName')
+            ->leftJoin('srm_department_master', 'srm_department_master.id', '=', 'srm_tender_department.department_id')
+            ->where('tender_id', $tenderMasterId)
+            ->get();
+    }
 }

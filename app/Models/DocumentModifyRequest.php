@@ -162,7 +162,7 @@ class DocumentModifyRequest extends Model
 {
 
     public $table = 'document_modify_request';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -243,13 +243,32 @@ class DocumentModifyRequest extends Model
         'type' => 'required'
     ];
 
-    public function documentAttachments(){ 
+    public function documentAttachments(){
         return $this->hasMany('App\Models\DocumentAttachments','documentSystemCode','documentSystemCode');
     }
 
-    public function tenderMaster(){ 
+    public function tenderMaster(){
         return $this->hasOne('App\Models\TenderMaster','id','documentSystemCode');
     }
 
-    
+    public static function getTenderModifyRequest($tender_id){
+        return self::select('id', 'companySystemID', 'documentSystemCode', 'version', 'type', 'status', 'approved',
+            'confirmation_approved', 'modify_type')
+            ->where('documentSystemCode', $tender_id)
+            ->orderBy('id', 'desc')->first();
+    }
+    public static function getLatestTenderDocumentRequest($tenderID){
+        return self::where('documentSystemCode', $tenderID)->latest('id')->first();
+    }
+    public static function getNewSerialNumber($companySystemID){
+        $lastSerialNumber = self::where('companySystemID', $companySystemID)
+            ->orderByDesc('id')
+            ->value('serial_number');
+
+        return $lastSerialNumber ? ((int) $lastSerialNumber + 1) : 1;
+    }
+    public static function getDocumentModifyData($versionID){
+        return self::select('id','type','requested_document_master_id')->where('id', $versionID)->first();
+    }
+
 }

@@ -4,9 +4,14 @@ namespace App\Repositories;
 
 use App\helper\Helper;
 use App\Helpers\General;
+use App\Models\BankMaster;
+use App\Http\Controllers\API\TenderBidEmployeeDetails;
 use App\Models\BidSubmissionDetail;
 use App\Models\CalendarDates;
 use App\Models\CalendarDatesDetail;
+use App\Models\CalendarDatesDetailEditLog;
+use App\Models\CircularAmendments;
+use App\Models\CircularAmendmentsEditLog;
 use App\Models\CodeConfigurations;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -24,32 +29,69 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
+use App\Models\DocumentModifyRequest;
 use App\Models\EnvelopType;
 use App\Models\EvaluationCriteriaDetails;
+use App\Models\EvaluationCriteriaDetailsEditLog;
+use App\Models\EvaluationType;
+use App\Models\PricingScheduleDetail;
+use App\Models\PricingScheduleDetailEditLog;
+use App\Models\PricingScheduleMaster;
+use App\Models\PricingScheduleMasterEditLog;
+use App\Models\ProcumentActivity;
+use App\Models\ProcumentActivityEditLog;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\ScheduleBidFormatDetails;
+use App\Models\ScheduleBidFormatDetailsLog;
+use App\Models\SrmBudgetItem;
+use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SrmTenderBidEmployeeDetailsEditLog;
+use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
+use App\Models\SrmTenderDepartment;
+use App\Models\SrmTenderMasterEditLog;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SupplierAssigned;
 use App\Models\TenderBoqItems;
+use App\Models\TenderBoqItemsEditLog;
+use App\Models\TenderBudgetItemEditLog;
+use App\Models\TenderCirculars;
+use App\Models\TenderCircularsEditLog;
+use App\Models\TenderDepartmentEditLog;
+use App\Models\TenderDocumentTypeAssign;
+use App\Models\TenderDocumentTypeAssignLog;
+use App\Models\TenderDocumentTypes;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderProcurementCategory;
+use App\Models\TenderPurchaseRequest;
+use App\Models\TenderPurchaseRequestEditLog;
+use App\Models\TenderSiteVisitDateEditLog;
+use App\Models\TenderSiteVisitDates;
 use App\Models\TenderSupplierAssignee;
+use App\Models\TenderSupplierAssigneeEditLog;
 use App\Models\TenderType;
+use App\Models\YesNoSelection;
 use App\Services\GeneralService;
 use App\Services\SRMService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
+use Illuminate\Container\Container as Application;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use App\Services\SrmDocumentModifyService;
+use mysql_xdevapi\Exception;
+
 /**
  * Class TenderMasterRepository
  * @package App\Repositories
@@ -103,6 +145,15 @@ class TenderMasterRepository extends BaseRepository
         'negotiation_published'
 
     ];
+
+    protected $srmDocumentModifyService;
+    public function __construct(
+        Application $app,
+        SrmDocumentModifyService $srmDocumentModifyService
+    ){
+        parent::__construct($app);
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
+    }
 
     /**
      * Configure the Model
@@ -205,17 +256,11 @@ class TenderMasterRepository extends BaseRepository
         $tenderId = $input['tenderId'];
         $companyId = $input['companyId'];
 
-        $data = PurchaseRequest::select('purchaseRequestID','companyID','purchaseRequestCode')
-            ->with(['tender_purchase_request' => function ($query) use ($tenderId) {
-                $query->where('tender_id', $tenderId);
-            }])
-            ->where('companySystemID',$companyId)
-            ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
-                $query->where('tender_id', $tenderId);
-            })
-            ->get();
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderId);
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $versionID = $requestData['versionID'];
 
-        return $data;
+        return PurchaseRequest::getPurchaseRequestForTender($tenderId, $companyId, $versionID, $editOrAmend);
 
     }
 
@@ -226,11 +271,13 @@ class TenderMasterRepository extends BaseRepository
         $main_work_id = $request->input('main_work_id');
 
         $purchaseRequestIDToCheck = $purchaseRequestID;
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tender_id);
+        $editOrEnable = $requestData['enableRequestChange'] ?? false;
+        $versionID = $requestData['versionID'] ?? 0;
 
-        $result = TenderBoqItems::where('tender_id', $tender_id)
-            ->whereRaw("FIND_IN_SET('$purchaseRequestIDToCheck', purchase_request_id) > 0")
-            ->where('main_work_id', $main_work_id)
-            ->first();
+        $result = $editOrEnable ?
+            TenderBoqItemsEditLog::checkPRAlreadyAdded($tender_id, $purchaseRequestIDToCheck, $main_work_id, $versionID) :
+            TenderBoqItems::checkPRAlreadyAdded($tender_id, $purchaseRequestIDToCheck, $main_work_id);
 
         if ($result) {
             return [
@@ -1389,20 +1436,28 @@ class TenderMasterRepository extends BaseRepository
 
     }
 
-    public function checkAssignSuppliers($companyId, $id, $rfq)
+    public function checkAssignSuppliers($companyId, $id, $rfq, $checkRecordExist, $editOrAmend, $versionID)
     {
+        $assignSupplier =  $editOrAmend ?
+            TenderSupplierAssigneeEditLog::getAssignSupplierCount($companyId, $id, $versionID) :
+            TenderSupplierAssignee::getAssignSupplierCount($companyId, $id);
 
-        $assignSupplier =  TenderSupplierAssignee::getAssignSupplierCount($companyId, $id);
-        $type = $rfq ? 'RFX' : 'Tender';
-
-
-        if ($assignSupplier != 1) {
-            return [
-                'success' => false,
-                'message' => 'Single Sourcing ' .$type. ' allows only one supplier. Please remove
-                                     additional suppliers before confirming'];
+        if($checkRecordExist) {
+            if($assignSupplier == 0){
+                return [
+                    'success' => false,
+                    'message' => 'At least one supplier should be added'
+                ];
+            }
+        } else {
+            $type = $rfq ? 'RFX' : 'Tender';
+            if ($assignSupplier != 1) {
+                return [
+                    'success' => false,
+                    'message' => 'Single Sourcing ' .$type. ' allows only one supplier. Please remove
+                                         additional suppliers before confirming'];
+            }
         }
-
         return ['success' => true];
     }
 
@@ -1423,7 +1478,11 @@ class TenderMasterRepository extends BaseRepository
 
     public function validateTechnicalEvaluationCriteria($tenderId, $level, $criteriaType)
     {
-        $criteriaDetails = EvaluationCriteriaDetails::getEvaluationCriteriaDetails($tenderId, $level, $criteriaType);
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderId);
+
+        $criteriaDetails = $requestData['enableRequestChange']
+            ? EvaluationCriteriaDetailsEditLog::getEvaluationCriteriaDetailsLog($tenderId, $level, $criteriaType, $requestData['versionID'])
+            : EvaluationCriteriaDetails::getEvaluationCriteriaDetails($tenderId, $level, $criteriaType);
 
         if ($criteriaDetails->exists()) {
             $totalWeightage = $criteriaDetails->sum('weightage');
@@ -1438,4 +1497,933 @@ class TenderMasterRepository extends BaseRepository
         return ['success' => true];
     }
 
+    public function loadTenderSubActivity($input){
+        $tenderMasterID = $input['tenderMasterId'];
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterID);
+        $editOrAmend =  $requestData['enableRequestChange'];
+        $tenderHistoryData = $requestData['tenderMasterHistory'];
+        $companySystemID = $input['companySystemID'];
+
+        $tenderMaster = $editOrAmend ? $tenderHistoryData : TenderMaster::getTenderMasterData($tenderMasterID);
+        $data['procurementSubCategory'] = [];
+        if ($input['procument_cat_id'] > 0) {
+            $data['procurementSubCategory'] = TenderProcurementCategory::getTenderProcurementCat($input['procument_cat_id']);
+        }
+
+
+        $activity = $editOrAmend ? ProcumentActivityEditLog::getTenderProcurements($tenderMasterID, $companySystemID, $requestData['versionID']) :
+            ProcumentActivity::getProcumentActivityForAmd($input['tenderMasterId']);
+
+        if ($tenderMaster['confirmed_yn'] == 1 && count($activity) > 0) {
+            foreach ($activity as $vl) {
+                $category = TenderProcurementCategory::getTenderProcurementCatDrop($vl['category_id']);
+                if ($category['is_active'] == 0) {
+                    $data['procurementSubCategory'][] = $category;
+                }
+            }
+        }
+        return $data;
+    }
+    public function getBudgetItemTotalAmount($input){
+        $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
+        // Get the budget amount for each item in the idList
+        return collect($input['idList'])->map(function($itemId) use ($tenderMasterId, $companySystemID, $requestData) {
+            $existingItem = $requestData['enableRequestChange'] ?
+                TenderBudgetItemEditLog::getExistingBudgetItem($itemId, $tenderMasterId, $requestData['versionID']) :
+                SrmTenderBudgetItem::getExistingBudgetItem($itemId, $tenderMasterId);
+
+            if ($existingItem) {
+                return $existingItem->budget_amount;
+            } else {
+                $budgetItem = SrmBudgetItem::getSrmBudgetItem($itemId, $companySystemID);
+                return $budgetItem ? $budgetItem->budget_amount : 0;
+            }
+        })->sum();
+    }
+    public function getTenderMasterData($input){
+        $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
+        $isTender = isset ($input['isTender']) && $input['isTender'] ? 108 : 113;
+        $editOrAmendRequest = false;
+
+        $tenderMaster = TenderMaster::getEditTenderMasterData($tenderMasterId, $companySystemID, $isTender);
+        $data['master'] = $tenderMaster;
+
+        $checkHasTenderRequest = DocumentModifyRequest::getTenderModifyRequest($tenderMasterId);
+        $checkEditAmendCondition = [];
+        if ($data['master']['published_yn'] == 1) {
+            $checkEditAmendCondition = $this->srmDocumentModifyService->checkConditions($tenderMasterId, $data['master']);
+        }
+
+        $hasOpeningOrClosingCheck = ($checkEditAmendCondition['checkOpeningDate'] ?? false) || ($checkEditAmendCondition['checkClosingDate'] ?? false);
+        $hasValidTenderRequest = !empty($checkHasTenderRequest)
+            && $checkHasTenderRequest->status == 1
+            && $checkHasTenderRequest->approved != 0
+            && $checkHasTenderRequest->confirmation_approved != -1;
+
+        if ($hasOpeningOrClosingCheck && $hasValidTenderRequest) {
+            $data['master'] = SrmTenderMasterEditLog::getEditTenderMasterData($tenderMasterId, $companySystemID, $isTender);
+            $editOrAmendRequest = true;
+        }
+
+        $versionID = $data['master']['version_id'] ?? 0;
+        $data['version_id'] = $versionID;
+
+        $activity = $editOrAmendRequest ?
+            ProcumentActivityEditLog::getTenderProcurements($tenderMasterId, $companySystemID, $versionID) :
+            ProcumentActivity::getTenderProcurements($tenderMasterId, $companySystemID);
+
+        $act = array();
+        if (!empty($activity)) {
+            foreach ($activity as $vl) {
+                $dt['id'] = $vl['tender_procurement_category']['id'];
+                $dt['itemName'] = $vl['tender_procurement_category']['code'] . ' | ' . $vl['tender_procurement_category']['description'];
+                array_push($act, $dt);
+            }
+        }
+
+        $data['master']['comment'] = SRMTenderCalendarLog::getNarration($input['tenderMasterId'], $companySystemID);
+
+        $showEditIcon = false;
+        if ($data['master']['commercial_ranking_line_item_status'] == 0  && $data['master']['is_negotiation_started'] == 0 && $data['master']['approved'] == -1) {
+            $showEditIcon = true;
+        }
+
+        $data['master']['canEdit'] = $showEditIcon;
+        $data['activity'] = $act;
+
+        $qryAll = CalendarDates::getCalendarDateDatesQry($editOrAmendRequest, $tenderMasterId, $companySystemID, $versionID);
+
+        if ($data['master']['published_yn'] == 1) {
+            $serviceResp = $this->srmDocumentModifyService->getDocumentModifyRequestForms($tenderMasterId, $tenderMaster);
+            $data = array_merge($data, $serviceResp);
+        } else {
+            $data['conditions'] = null;
+            $data['changesRequestStatus'] = null;
+            $data['requestType'] = null;
+            $data['editable'] = false;
+            $data['amendment'] = false;
+            $data['enableChangeRequest'] = false;
+            $data['requestedToEditAmend'] = false;
+            $data['confirmedEditRequest'] = false;
+        }
+
+        if($data['enableChangeRequest']){
+            unset($data['master']['confirmed_by']);
+            $data['master']['confirmed_date'] = null;
+        }
+
+        $calenderDataDetails = $editOrAmendRequest ?
+            CalendarDatesDetailEditLog::getCalenderDateDetailEdit($tenderMasterId, $versionID, $companySystemID) :
+            CalendarDatesDetail::getCalenderDateDetailEdit($tenderMasterId, $companySystemID);
+
+        $dataArray = array();
+        $i = 0;
+
+        foreach ($calenderDataDetails as $calenderDataDetail) {
+
+            $fromDate = $calenderDataDetail->from_date;
+            $toDate = $calenderDataDetail->to_date;
+            $calenderDate = CalendarDates::find($calenderDataDetail->calendar_date_id);
+
+            $dataArray[$i]['id'] = $calenderDate->id;
+            $dataArray[$i]['calendar_date'] = $calenderDate->calendar_date;
+            $dataArray[$i]['is_default'] = $calenderDate->is_default;
+            $dataArray[$i]['company_id'] = $calenderDataDetail->company_id;
+            $dataArray[$i]['from_date'] = $fromDate->format('Y-m-d H:i:s');
+            $dataArray[$i]['to_date'] = isset($toDate) ? $toDate->format('Y-m-d H:i:s') : null;
+            $dataArray[$i]['from_time'] = $calenderDataDetail->from_time;
+            $dataArray[$i]['to_time'] = isset($toDate) ? $calenderDataDetail->to_time : null;
+            $i++;
+        }
+
+        $data['calendarDates'] = collect($dataArray);
+        $data['calendarDatesAll'] =  DB::select($qryAll);
+
+
+        $documentTypes = $editOrAmendRequest ?
+            TenderDocumentTypeAssignLog::getTenderDocumentTypeAssign($tenderMasterId, $versionID) :
+            TenderDocumentTypeAssign::getTenderDocumentTypeAssign($tenderMasterId);
+
+        $docTypeArr = array();
+        if (!empty($documentTypes)) {
+            foreach ($documentTypes as $vl) {
+                $dt['id'] = $vl['document_type']['id'];
+                $dt['itemName'] = $vl['document_type']['document_type'];
+                array_push($docTypeArr, $dt);
+            }
+        }
+        $data['documentTypes'] = $docTypeArr;
+
+        // Get Purchase Request Data
+        $data['purchaseRequest'] = PurchaseRequest::getPurchaseRequestData($companySystemID, $tenderMasterId, $data['master']['document_type']);
+
+
+        // Get Tender Purchase Request Data
+        $tenderPurchaseRequestList = $editOrAmendRequest ?
+            TenderPurchaseRequestEditLog::getTenderPurchaseForEdit($tenderMasterId, $versionID) :
+            TenderPurchaseRequest::getTenderPurchaseForEdit($tenderMasterId);
+
+        $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
+
+        // Get the data from srm_tender_budget_items if it exists, otherwise from srm_budget_items
+        $tableName = $editOrAmendRequest
+            ? 'srm_tender_budget_items_edit_log'
+            : 'srm_tender_budget_items';
+
+        $data['srmBudgetItem'] = SrmTenderBudgetItem::getTenderBudgetItems($tableName, $tenderMasterId, $companySystemID, $editOrAmendRequest, $versionID);
+
+        $srmBudgetItemList = SrmBudgetItem::getSrmBudgetItemList($tenderMasterId, $companySystemID, $editOrAmendRequest, $versionID);
+
+        $data['srmBudgetItemList'] = $srmBudgetItemList;
+
+        // Get Department Master Data
+        $departmentMaster = SrmDepartmentMaster::where('company_id', $companySystemID)->where('is_active', 1)->get();
+        $data['departmentMaster'] = $departmentMaster;
+
+        // Get Tender Department
+        $tenderdepartment = $editOrAmendRequest ?
+            TenderDepartmentEditLog::getTenderDepartmentLogList($tenderMasterId, $versionID) :
+            SrmTenderDepartment::getTenderDepartmentList($tenderMasterId);
+
+        $data['tenderdepartment'] = $tenderdepartment;
+
+
+        //check prebid Clarification Added
+        $prebidclarificationDateId = CalendarDates::getDefaultCalendarDate(1);
+        $prebidclarificationDateCount = $editOrAmendRequest ?
+            CalendarDatesDetailEditLog::getCalenderDateDetailEdit($tenderMasterId, $versionID, $companySystemID, $prebidclarificationDateId->id) :
+            CalendarDatesDetail::getCalenderDateDetailEdit($tenderMasterId, $companySystemID, $prebidclarificationDateId->id);
+
+        //check Site Visit Date Added
+        $siteVisitDateId = CalendarDates::getDefaultCalendarDate(2);
+        $siteVisitDateCount =$editOrAmendRequest ?
+            CalendarDatesDetailEditLog::getCalenderDateDetailEdit($tenderMasterId, $versionID, $companySystemID, $siteVisitDateId->id) :
+            CalendarDatesDetail::getCalenderDateDetailEdit($tenderMasterId, $companySystemID, $siteVisitDateId->id);
+
+
+        $data['hasPreBidClarifications'] = $prebidclarificationDateCount;
+        $data['prebidclarificationDateId'] = $prebidclarificationDateId->id;
+        $data['hasSiteVisitDate'] = $siteVisitDateCount;
+        $data['siteVisitDateId'] = $siteVisitDateId->id;
+        return $data;
+    }
+    public function removeCalendarDates(Request $request){
+        return DB::transaction(function () use ($request)
+        {
+
+            $is_default = $request->input('is_default') ?? 0;
+            $calenderDateTypeId = $request->input('calenderDateTypeId') ?? 0;
+            $tenderMasterId = $request->input('tenderMasterId') ?? 0;
+            $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
+            $amdID = $requestData['enableRequestChange'] && !empty($requestData['tenderMasterHistory']) ?
+                $requestData['tenderMasterHistory']['amd_id'] : 0;
+
+            if($is_default != 0){
+                $calendarDates = CalendarDates::getDefaultCalendarDate($is_default);
+                $calenderDateTypeId = $calendarDates->id;
+
+                $tenderMaster = $requestData['enableRequestChange'] ?
+                    SrmTenderMasterEditLog::find($amdID) : TenderMaster::find($tenderMasterId);
+
+                if($is_default == 1){
+                    $tenderMaster->pre_bid_clarification_start_date = null;
+                    $tenderMaster->pre_bid_clarification_end_date = null;
+                    $tenderMaster->save();
+                }
+
+                if($is_default == 2){
+                    $tenderMaster->site_visit_date = null;
+                    $tenderMaster->site_visit_end_date = null;
+                    $tenderMaster->save();
+                }
+            }
+            $companyID = $tenderMaster->company_id;
+            $calendarDatesDetail = $requestData['enableRequestChange'] ?
+                CalendarDatesDetailEditLog::getCalenderDateDetailEdit($tenderMasterId, $requestData['versionID'], $companyID, $calenderDateTypeId) :
+                CalendarDatesDetail::getCalenderDateDetailEdit($tenderMasterId, $companyID, $calenderDateTypeId);
+
+            if (empty($calendarDatesDetail)) {
+                return [
+                    'success' => false,
+                    'message' => 'Calendar Date Type not found'
+                ];
+            }
+            $calendarDateDetail = $requestData['enableRequestChange'] ?
+                CalendarDatesDetailEditLog::getCalendarDateDetailForAmd($tenderMasterId, $companyID, $calenderDateTypeId, $requestData['versionID']) :
+                CalendarDatesDetail::getCalendarDateDetail($tenderMasterId, $companyID, $calenderDateTypeId);
+
+            if($requestData['enableRequestChange']){
+                $calendarDateDetail->is_deleted = 1;
+                $calendarDateDetail->save();
+            } else {
+                $calendarDateDetail->delete();
+            }
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        });
+    }
+    public function deleteCalenderDetails($id, $company_id, $requestData)
+    {
+        try {
+            return DB::transaction(function () use ($id, $company_id, $requestData){
+                $details = $requestData['enableRequestChange'] ?
+                    CalendarDatesDetailEditLog::getCalenderDateDetailEdit($id, $requestData['versionID'], $company_id, 0) :
+                    CalendarDatesDetail::getCalenderDateDetailEdit($id, $company_id, 0);
+
+                foreach ($details as $val) {
+                    $calender = $requestData['enableRequestChange'] ?
+                        CalendarDatesDetailEditLog::find($val->amd_id) :
+                        CalendarDatesDetail::find($val->id);
+                    if($calender){
+                        if($requestData['enableRequestChange']){
+                            $calender->is_deleted = 1;
+                            $calender->save();
+                        } else {
+                            $calender->delete();
+                        }
+                    }
+                }
+                return ['success' => true, 'message' => 'Successfully Deleted'];
+            });
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+    public function checkTenderBidEmployeesAdded($tenderMasterID, $editOrAmend, $amdID, $versionID){
+        $tenderMaster = $editOrAmend ? SrmTenderMasterEditLog::find($amdID) : TenderMaster::find($tenderMasterID);
+        if(empty($tenderMaster)) {
+            return ['success' => false, 'message' => "Tender not found"];
+        }
+        $tenderBidEmployee = $editOrAmend ?
+            SrmTenderBidEmployeeDetailsEditLog::getTenderBidEmployeesAmd($tenderMasterID, $versionID) :
+            SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderMasterID);
+        if(count($tenderBidEmployee) < $tenderMaster->min_approval_bid_opening){
+            return ['success' => false, 'message' => "Atleast " . $tenderMaster->min_approval_bid_opening . " employee should selected"];
+        }
+        return ['success' => true, 'message' => "Success"];
+    }
+
+    public function getTenderExistData($tenderID, $editOrAmend, $versionID){
+        return $editOrAmend ? SrmTenderMasterEditLog::tenderMasterHistory($tenderID, $versionID) :
+            TenderMaster::getTenderMasterData($tenderID);
+    }
+    public function updateTenderMaster($updateData, $tenderMasterID, $editOrAmend, $versionID){
+        try{
+            return DB::transaction( function () use ($updateData, $tenderMasterID, $editOrAmend, $versionID) {
+                if($editOrAmend){
+                    SrmTenderMasterEditLog::where('id', $tenderMasterID)->where('version_id', $versionID)->update($updateData);
+                } else {
+                    TenderMaster::where('id', $tenderMasterID)->update($updateData);
+                }
+                return ['success' => true, 'message' => 'Updated successfully'];
+            });
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function updateProcurementActivity($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID){
+        try{
+            return DB::transaction( function () use ($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID){
+                if(!empty($procurementActivity) && count($procurementActivity) > 0){
+                    $deleteExistData = self::deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID);
+                    if(!$deleteExistData['success']){
+                        return $deleteExistData;
+                    }
+                    foreach ($procurementActivity as $vl) {
+                        $activity['tender_id'] = $tenderID;
+                        $activity['category_id'] = $vl['id'];
+                        $activity['company_id'] = $companyID;
+                        $activity['created_at'] = Carbon::now();
+                        if($editOrAmend){
+                            $activity['id'] = null;
+                            $activity['version_id'] = $versionID;
+                            $activity['level_no'] = 1;
+                            ProcumentActivityEditLog::create($activity);
+                        } else {
+                            $activity['created_by'] = $employee->employeeSystemID;
+                            ProcumentActivity::create($activity);
+                        }
+                    }
+                    return ['success' => true, 'message' => 'Procurement Activity created successfully'];
+                } else {
+                    return self::deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID);
+                }
+            });
+        } catch(\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID)
+    {
+        try {
+            return DB::transaction( function () use ($tenderID, $companyID, $editOrAmend, $versionID){
+                $proActivity = $editOrAmend ?
+                    ProcumentActivityEditLog::getTenderProcurements($tenderID, $companyID, $versionID) :
+                    ProcumentActivity::getTenderProcurements($tenderID, $companyID);
+
+                $proActivity->each(function($record) use($editOrAmend, $versionID){
+                    if($editOrAmend){
+                        $record->is_deleted = 1;
+                        $record->save();
+                    } else {
+                        $record->delete();
+                    }
+                });
+                return ['success' => true, 'message' => 'Successfully Deleted'];
+            });
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+    public function addTenderSiteVisitDate($tenderMasterID, $companyID, $site_visit_date, $employee, $versionID, $editOrAmend){
+        try{
+            return DB::transaction(function () use ($tenderMasterID, $companyID, $site_visit_date, $employee, $versionID, $editOrAmend) {
+                $site = [
+                    'tender_id' => $tenderMasterID,
+                    'date' => $site_visit_date,
+                    'company_id' => $companyID,
+                    'created_by' => $employee->employeeSystemID
+                ];
+
+                if($editOrAmend){
+                    $site['id'] = null;
+                    $site['version_id'] = $versionID;
+                    $site['level_no'] = 1;
+                    TenderSiteVisitDateEditLog::create($site);
+                } else {
+                    TenderSiteVisitDates::create($site);
+                }
+                return ['success' => true, 'message' => 'Site visit date created successfully'];
+            });
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function tenderPurchaseRequestUpdate($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID){
+        try{
+            return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
+                if ($editOrAmend) {
+                    TenderPurchaseRequestEditLog::where('tender_id', $tenderID)
+                        ->where('version_id', $versionID)
+                        ->where('is_deleted', 0)
+                        ->update(['is_deleted' => 1]);
+                } else {
+                    TenderPurchaseRequest::where('tender_id', $tenderID)->delete();
+                }
+                foreach ($tenderPurchaseRequestData as $pr) {
+
+                    $data = [
+                        'tender_id' => $tenderID,
+                        'purchase_request_id' => $pr['id'],
+                        'company_id' => $companyID,
+                    ];
+                    if($editOrAmend){
+                        $data['id'] = null;
+                        $data['version_id'] = $versionID;
+                        $data['level_no'] = 1;
+                        TenderPurchaseRequestEditLog::create($data);
+                    } else{
+                        TenderPurchaseRequest::create($data);
+                    }
+                }
+                return ['success' => true, 'message' => 'Tender purchase created successfully'];
+            });
+        } catch(\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function updateTenderBudgetItems($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID){
+        try{
+            return DB::transaction(function () use ($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID) {
+                if(!empty($budgetItemList)){
+                    $existingItems = $editOrAmend ?
+                        TenderBudgetItemEditLog::getExistingTenderBudgetItemList($tenderID, $versionID)->pluck('item_id')->toArray() :
+                        SrmTenderBudgetItem::getTenderBudgetItemForAmd($tenderID)->pluck('item_id')->toArray();
+                    $itemsToDelete = array_diff($existingItems, array_column($budgetItemList, 'id'));
+
+                    $editOrAmend ?
+                        TenderBudgetItemEditLog::where('tender_id', $tenderID)->where('version_id', $versionID)->where('is_deleted', 0)->whereIn('item_id', $itemsToDelete)->update(['is_deleted' => 1]) :
+                        SrmTenderBudgetItem::where('tender_id', $tenderID)->whereIn('item_id', $itemsToDelete)->delete();
+
+                    foreach ($budgetItemList as $pr) {
+                        $existingBudgetItem = $editOrAmend ?
+                            TenderBudgetItemEditLog::getExistingBudgetItem($pr['id'], $tenderID, $versionID) :
+                            SrmTenderBudgetItem::getExistingBudgetItem($pr['id'], $tenderID);
+
+                        if ($existingBudgetItem) {
+                            $budget_amount = $existingBudgetItem->budget_amount;
+                        } else {
+                            $srmBudgetItem = SrmBudgetItem::getSrmBudgetItem($pr['id'], $companyID);
+                            $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
+                        }
+
+                        $data = [
+                            'item_id' => $pr['id'],
+                            'tender_id' => $tenderID,
+                            'budget_amount' => $budget_amount,
+                            'created_at' => now()
+                        ];
+                        if($editOrAmend){
+                            $data['id'] = null;
+                            $data['version_id'] = $versionID;
+                            $data['level_no'] = 1;
+                            TenderBudgetItemEditLog::updateOrCreate(
+                                [
+                                    'item_id' => $pr['id'],
+                                    'tender_id' => $tenderID,
+                                    'version_id' => $versionID,
+                                    'is_deleted' => 0
+                                ], $data);
+
+                        } else {
+                            SrmTenderBudgetItem::updateOrCreate(['item_id' => $pr['id'], 'tender_id' => $tenderID], $data);
+                        }
+                    }
+                }
+                return ['success' => true, 'message' => 'Tender budget item created successfully'];
+            });
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function updateTenderDepartments($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID){
+        try{
+            return DB::transaction(function () use ($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID) {
+                $getInactiveDepartments = SrmDepartmentMaster::getDepartmentMaster($company_id);
+
+                $convertedArray = [];
+                foreach ($getInactiveDepartments as $item) {
+                    $convertedArray[] = [
+                        'id' => $item['id'],
+                        'itemName' => $item['description'],
+                    ];
+                }
+
+                $id1 = array_column($departmentMaster, 'id');
+                $id2 = array_column($convertedArray, 'id');
+                $commonIds = array_intersect($id1, $id2);
+
+                if (!empty($commonIds)) {
+                    return ['success' => false, 'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'];
+                } else {
+                    $existDepartmentMaster = $editOrAmend ?
+                        TenderDepartmentEditLog::getTenderDepartmentEditLog($tenderID, $versionID) :
+                        SrmTenderDepartment::getTenderDepartmentEditLog($tenderID);
+                    $departmentMasterCount = count($existDepartmentMaster);
+
+                    if ($departmentMasterCount > 0 && count($departmentMaster) > 0){
+                        $editOrAmend ?
+                            TenderDepartmentEditLog::where('tender_id', $tenderID)->where('version_id', $versionID)->where('is_deleted', 0)->update(['is_deleted' => 1]) :
+                            SrmTenderDepartment::where('tender_id', $tenderID)->delete();
+                    }
+                    foreach ($departmentMaster as $dm) {
+                        $data = [
+                            'tender_id' => $tenderID,
+                            'department_id' => $dm['id'],
+                            'company_id' => $company_id,
+                        ];
+                        if($editOrAmend){
+                            $data['id'] = null;
+                            $data['version_id'] = $versionID;
+                            $data['level_no'] = 1;
+                            TenderDepartmentEditLog::create($data);
+                        } else {
+                            SrmTenderDepartment::create($data);
+                        }
+                    }
+                }
+                return ['success' => true, 'message' => 'Tender department created successfully'];
+            });
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function getCalendarDateDetailsData($tenderID, $editOrAmend, $versionID){
+        return $editOrAmend ?
+            CalendarDatesDetailEditLog::getCalendarDateDetailsRecord($tenderID, $versionID) :
+            CalendarDatesDetail::getCalendarDateDetailsRecord($tenderID);
+    }
+
+    public function getTenderDropdowns($input){
+        $isRequestForEdit = false;
+        $requestConfirmed = false;
+        $versionID = 0;
+        $tenderMasterID = $input['tenderMasterId'] ?? 0;
+
+        if($tenderMasterID > 0) {
+            $requestData = DocumentModifyRequest::getTenderModifyRequest($input['tenderMasterId']);
+            if(!empty($requestData)){
+                if($requestData->status == 1 && $requestData->approved != 0 && $requestData->confirmation_approved != -1){
+                    $isRequestForEdit = true;
+                }
+                if($requestData->modify_type == 2 && $requestData->confirmation_approved != -1){
+                    $requestConfirmed = true;
+                }
+            }
+
+            $tenderMaster = self::getTenderExistData($tenderMasterID, $isRequestForEdit, 0);
+            $versionID = $tenderMaster['version_id'] ?? 0;
+            $category['is_active'] = 1;
+            if(!empty($tenderMaster['procument_cat_id'])){
+                $category = TenderProcurementCategory::getTenderProcurementCatDrop($tenderMaster['procument_cat_id']);
+            }
+        }
+        $employee = Helper::getEmployeeInfo();
+        $company = Helper::companyCurrency($employee->empCompanySystemID);
+        $data['tenderType'] = TenderType::get();
+        $data['yesNoSelection'] = YesNoSelection::all();
+        $data['envelopType'] = EnvelopType::get();
+        $data['currency'] = CurrencyMaster::get();
+        $data['evaluationTypes'] = EvaluationType::get();
+        $data['bank'] = BankMaster::get();
+        $data['currentDate'] = now();
+        $data['defaultCurrency'] = $company;
+        $data['procurementCategory'] = TenderProcurementCategory::getAllProcurementCategory();
+
+        if($tenderMasterID > 0){
+            $assignedDocsArray = $isRequestForEdit
+                ? TenderDocumentTypeAssignLog::getAssignedDocs($tenderMasterID, $versionID)->pluck('document_type_id')->toArray()
+                : TenderDocumentTypeAssign::getTenderDocumentTypeAssign($tenderMasterID)->pluck('document_type_id')->toArray();
+
+            $notInArray = array_merge([1, 2], $assignedDocsArray);
+            $data['documentTypes'] = TenderDocumentTypes::getFilteredDocumentTypes(
+                $notInArray,
+                $employee->empCompanySystemID,
+                $tenderMaster['published_yn'] === 1,
+                $isRequestForEdit,
+                $requestConfirmed
+            );
+
+            if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
+                $data['procurementCategory'][] = $category;
+            }
+        }
+        return $data;
+    }
+    public function updateTenderStrategy($input){
+        try{
+            return DB::transaction(function () use ($input) {
+                $tenderMasterID = $input['id'];
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterID);
+                $employee = Helper::getEmployeeInfo();
+
+                $tenderBidEmployee = $requestData['enableRequestChange'] ?
+                    SrmTenderBidEmployeeDetailsEditLog::getTenderBidEmployeesAmd($tenderMasterID, $requestData['versionID']) :
+                    SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderMasterID);
+
+                if (($input['min_approval_bid_opening'] != 0)) {
+                    if (count($tenderBidEmployee) < $input['min_approval_bid_opening']) {
+                        return ['status' => false, 'message' => "Atleast " . $input['min_approval_bid_opening'] . " employee should selected"];
+                    }
+                }
+
+                $data['tender_type_id'] = $input['tender_type_id'];
+                $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
+                $data['evaluation_type_id'] = $input['evaluation_type_id'];
+                $data['stage'] = $input['stage'];
+                $data['no_of_alternative_solutions'] = $input['no_of_alternative_solutions'];
+                $data['commercial_weightage'] = $input['commercial_weightage'];
+                $data['technical_weightage'] = $input['technical_weightage'];
+                $data['is_active_go_no_go'] = $input['is_active_go_no_go'] ?? 0;
+                $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
+                $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
+                $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
+                $updateTender = self::updateTenderMaster($data, $tenderMasterID, $requestData['enableRequestChange'], $requestData['versionID']);
+
+                if ($updateTender['success'] && !$requestData['enableRequestChange']) {
+                    if (isset($input['document_types'])) {
+                        if (count($input['document_types']) > 0) {
+                            TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                            foreach ($input['document_types'] as $vl) {
+                                $docTypeAssign['tender_id'] = $input['id'];
+                                $docTypeAssign['document_type_id'] = $vl['id'];
+                                $docTypeAssign['company_id'] = $input['company_id'];
+                                $docTypeAssign['created_by'] = $employee->employeeSystemID;
+                                TenderDocumentTypeAssign::create($docTypeAssign);
+                            }
+                        } else {
+                            TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        }
+                    }
+                }
+                return ['success' => true, 'message' => 'Updated successfully'];
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+        }
+    }
+    public function saveSupplierAssigned($input){
+        try{
+            return DB::transaction(function () use ($input) {
+                $companySystemId = $input['companySystemID'];
+                $pullList = $input['pullList'];
+                $removedSuppliersId = $input['removedSuppliersId'];
+                $selectAll = $input['selectAll'];
+                $tenderId = $input['tenderId'];
+                $employee = Helper::getEmployeeInfo();
+                $data = [];
+                $insertSupplierAssignee = false;
+
+                $validation = self::checkTenderSupplierAssigneeValid($input);
+                if(!$validation['success']){
+                    return $validation;
+                }
+
+                $tenderMaster = TenderMaster::find($tenderId);
+                if(empty($tenderMaster)){
+                    return ['success' => false, 'message' => 'Tender not found'];
+                }
+
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderId);
+                $editOrAmend = $requestData['enableRequestChange'] ?? false;
+                $versionID = $requestData['versionID'] ?? 0;
+
+                if (!empty($pullList)) {
+                    if ($tenderMaster['tender_type_id'] != 3 && $selectAll == true) {
+                        $deleteData = self::deleteTenderSupplierAssignee($tenderId, $editOrAmend, $versionID);
+                        if(!$deleteData['success']){
+                            return $deleteData;
+                        }
+
+                        $pullList = SupplierAssigned::tenderAssignSuppliersForCreation(
+                            $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID
+                        );
+                    }
+
+                    foreach ($pullList as $key => $val) {
+                        $data[$key] = [
+                            'tender_master_id' => $tenderId,
+                            'supplier_assigned_id' => $val,
+                            'created_by' => $employee->employeeSystemID,
+                            'company_id' => $companySystemId,
+                            'created_at' => Helper::currentDateTime()
+                        ];
+                        if($editOrAmend){
+                            $data[$key]['id'] = null;
+                            $data[$key]['version_id'] = $versionID;
+                            $data[$key]['level_no'] = 1;
+                        }
+                    }
+
+                    $insertSupplierAssignee = $editOrAmend ?
+                        TenderSupplierAssigneeEditLog::insert($data) :
+                        TenderSupplierAssignee::insert($data);
+                }
+                if ($insertSupplierAssignee) {
+                    return ['success' => true, 'message' => 'New supplier(s) added'];
+                } else {
+                    return ['success' => false, 'message' => 'Insertion failed', 'code' => 422];
+                }
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
+    }
+    private function deleteTenderSupplierAssignee($tenderID, $editOrAmend, $versionID){
+        try {
+            return DB::transaction(function () use ($tenderID, $editOrAmend, $versionID) {
+                if($editOrAmend){
+                    TenderSupplierAssigneeEditLog::where('version_id', $versionID)
+                        ->where('is_deleted', 0)
+                        ->where('tender_master_id', $tenderID)
+                        ->whereNotNull('supplier_assigned_id')
+                        ->where('mail_sent', 0)
+                        ->update(['is_deleted' => 1]);
+
+                } else {
+                    TenderSupplierAssignee::where('tender_master_id', $tenderID)
+                        ->whereNotNull('supplier_assigned_id')->where('mail_sent', 0)
+                        ->delete();
+                }
+                return ['success' => true, 'message' => 'Record(s) deleted successfully.'];
+            });
+        } catch(\Exception $exception){
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    private function checkTenderSupplierAssigneeValid($input){
+        $messages = array(
+            'pullList.required'   => 'Please select the supplier(s).',
+        );
+
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'pullList' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return ['success' => false, 'message' => $validator->messages(), 'code' => 422];
+        }
+        return ['success' => true, 'message' => 'Validation check done successfully'];
+    }
+    public function getSupplierAssignedList(Request $request){
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyId = $input['companyId'];
+        $tenderMasterId =  $input['tenderMasterId'];
+
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
+        $versionID = $requestData['versionID'] ?? 0;
+        $enableRequestChange = $versionID > 0;
+
+        $qry = $enableRequestChange ?
+            TenderSupplierAssigneeEditLog::getSupplierAssignedListQry($companyId, $tenderMasterId, $requestData['versionID']) :
+            TenderSupplierAssignee::getSupplierAssignedListQry($companyId, $tenderMasterId);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $qry = $qry->where(function ($query) use ($search) {
+                $query->where('supplier_name', 'LIKE', "%{$search}%");
+                $query->orWhere('supplier_email', 'LIKE', "%{$search}%");
+                $query->orWhere('registration_number', 'LIKE', "%{$search}%");
+                $query->orWhereHas('supplierAssigned', function ($query1) use ($search) {
+                    $query1->where('primarySupplierCode', 'LIKE', "%{$search}%");
+                    $query1->orWhere('registrationNumber', 'LIKE', "%{$search}%");
+                    $query1->orWhere('supEmail', 'LIKE', "%{$search}%");
+                    $query1->orWhere('supplierName', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+        return \DataTables::eloquent($qry)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    public function getSupplierList(Request $request){
+        $input = $request->all();
+        $selectedCategoryIds = array();
+        $selectedCompanyId = $input['companyId'];
+        $tenderMasterId = $input['tenderMasterId'];
+        $selectedCategories = $input['selectedCategories'];
+
+        foreach ($selectedCategories as $selectedCategory) {
+            $selectedCategoryIds[] = $selectedCategory['id'];
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
+        $qry = SupplierAssigned::getTenderAssignedSupplierQry(
+            $selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $requestData['enableRequestChange'], $requestData['versionID']
+        );
+
+        if(sizeof($selectedCategoryIds) != 0) {
+            $qry = $qry->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
+                $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+            });
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $qry = $qry->where(function ($query) use ($search) {
+                $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                    ->orWhere('registrationNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('supEmail', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($qry)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    public function checkPricingScheduleMasterValidation($tenderID, $editOrAmend, $versionID){
+        $schedule = $editOrAmend ?
+            PricingScheduleMasterEditLog::getTenderScheduleMaster($tenderID, $versionID, 'first') :
+            PricingScheduleMaster::getTenderScheduleMaster($tenderID, 'first');
+
+        if (empty($schedule)) {
+            return ['success' => false, 'message' => 'At least one work schedule should be added'];
+        }
+        $scheduleAll = $editOrAmend ?
+            PricingScheduleMasterEditLog::getTenderScheduleMaster($tenderID, $versionID, 'get') :
+            PricingScheduleMaster::getTenderScheduleMaster($tenderID, 'get');
+
+        foreach ($scheduleAll as $val) {
+            $scheduleDetail = $editOrAmend ?
+                PricingScheduleDetailEditLog::getTenderPricingSchedule($tenderID, $val['amd_id'], $versionID) :
+                PricingScheduleDetail::getTenderPricingSchedule($tenderID, $val['id']);
+
+            if ($scheduleDetail->count() > 0) {
+                $scheduleDetails = $scheduleDetail->get();
+                foreach ($scheduleDetails as $shed) {
+                    $scheduleDetailInfo = $editOrAmend ?
+                        ScheduleBidFormatDetailsLog::checkScheduleBidFormatDetailExists($val['amd_id'], $shed['amd_id'], $versionID) :
+                        ScheduleBidFormatDetails::checkScheduleBidFormatExists($val['id'], $shed['id']);
+
+                    if (empty($scheduleDetailInfo)) {
+                        return ['success' => false, 'message' => 'All work schedules should be completed'];
+                    }
+                }
+            }
+            $mainwork = $editOrAmend ?
+                PricingScheduleDetailEditLog::getPricingScheduleMainWork($tenderID, $val['amd_id'], $versionID) :
+                PricingScheduleDetail::getPricingScheduleMainWork($tenderID, $val['id']);
+
+            if ($mainwork->count() > 0) {
+                $mainworks = $mainwork->get();
+                foreach ($mainworks as $main) {
+                    if (count($main->tender_boq_items) == 0) {
+                        return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
+                    }
+                }
+            }
+        }
+        return ['success' => true, 'message' => 'Pricing Schedule Valid'];
+    }
+    public function checkTenderCircularValidation($tenderMasterID, $versionID){
+
+        $tenderCircular = TenderCircularsEditLog::getTenderCirculars($tenderMasterID, $versionID);
+        if(count($tenderCircular) == 0)
+        {
+            return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
+        }
+        $circularIDs = $tenderCircular->pluck('amd_id');
+        foreach($circularIDs as $id)
+        {
+            $circularAmends = CircularAmendmentsEditLog::getAllCircularAmendments($id, $versionID);
+            if (count($circularAmends) == 0) {
+                return ['success' => false, 'message' => 'Please attach at least one amendment to a circular'];
+            }
+        }
+        return ['success' => true, 'message' => 'Valid Circular'];
+    }
+    public function checkEvaluationCriteriaValid($tenderMasterID, $versionID, $editOrAmend, $is_active_go_no_go){
+        $parentsWithoutSubLevels = EvaluationCriteriaDetails::getCriteriaWithoutChildren($tenderMasterID, $versionID, $editOrAmend, true);
+        $subLevelsWithoutFurtherSubLevels = EvaluationCriteriaDetails::getCriteriaWithoutChildren($tenderMasterID, $versionID, $editOrAmend, false);
+
+
+        if (!$parentsWithoutSubLevels->isEmpty()) {
+            return ['success' => false, 'message' => 'If there is no child Technical Evaluation criteria, parent Technical Evaluation criteria should be marked as Final'];
+        }
+        if (!$subLevelsWithoutFurtherSubLevels->isEmpty()) {
+            return ['success' => false, 'message' => 'At least one Criteria should be marked as Final under a parent Technical Evaluation Criteria'];
+        }
+
+        if (($is_active_go_no_go == 1) || $is_active_go_no_go == true) {
+            $goNoGo = $editOrAmend ?
+                EvaluationCriteriaDetailsEditLog::where('tender_id', $tenderMasterID)->where('critera_type_id', 1)->where('tender_version_id', $versionID)->where('is_deleted', 0)->first():
+                EvaluationCriteriaDetails::where('tender_id', $tenderMasterID)->where('critera_type_id', 1)->first();
+            if (empty($goNoGo)) {
+                return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
+            }
+        }
+        return ['success' => true, 'message' => 'Valid Go No Go and Technical Evaluation'];
+    }
 }

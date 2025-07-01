@@ -468,4 +468,39 @@ class DocumentAttachments extends Model
 
         return $originalFileName;
     }
+
+    public static function getTenderAttachments($documentSystemCode, $documentSystemID){
+        return self::where('documentSystemID', $documentSystemID)->where('documentSystemCode', $documentSystemCode)->get();
+    }
+    public static function checkDocumentExists($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode, $attachmentDescription, $id){
+        return self::where('companySystemID',$companySystemID)
+            ->when($id > 0, function ($q) use ($id) {
+                $q->where('attachmentID', '!=', $id);
+        })
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->where('attachmentDescription',$attachmentDescription)
+            ->exists();
+    }
+    public static function getAttachmentDocumentTypeBase($companySystemID, $documentSystemID,$attachmentType, $documentSystemCode){
+        return self::where('companySystemID',$companySystemID)
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->orderBy('attachmentID', 'asc')
+            ->get();
+    }
+
+    public static function getAttachmentForCirculars($attachmentArray, $documentSystemID, $tenderMasterId)
+    {
+        return self::whereNotIn('attachmentID', $attachmentArray)
+            ->where('documentSystemID', $documentSystemID)
+            ->where('attachmentType',3)
+            ->where('parent_id', null)
+            ->where('documentSystemCode', $tenderMasterId)->orderBy('attachmentID', 'asc')->get()->toArray();
+    }
+    public static function getNotUsedAttachmentForCirculars($circularAttachmentIDs){
+        return self::whereIn('attachmentID', $circularAttachmentIDs)->get();
+    }
 }

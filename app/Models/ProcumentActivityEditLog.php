@@ -98,10 +98,11 @@ class ProcumentActivityEditLog extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $primaryKey = 'amd_id';
 
 
     public $fillable = [
+        'id',
         'tender_id',
         'category_id',
         'company_id',
@@ -109,7 +110,9 @@ class ProcumentActivityEditLog extends Model
         'modify_type',
         'master_id',
         'ref_log_id',
-        'updated_by'
+        'updated_by',
+        'level_no',
+        'is_deleted'
     ];
 
     /**
@@ -118,6 +121,7 @@ class ProcumentActivityEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'id' => 'integer',
         'tender_id' => 'integer',
         'category_id' => 'integer',
@@ -125,7 +129,9 @@ class ProcumentActivityEditLog extends Model
         'version_id' => 'integer',
         'modify_type' => 'integer',
         'master_id' => 'integer',
-        'ref_log_id' => 'integer'
+        'ref_log_id' => 'integer',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**
@@ -136,6 +142,39 @@ class ProcumentActivityEditLog extends Model
     public static $rules = [
         
     ];
+    public function tender_procurement_category()
+    {
+        return $this->hasOne('App\Models\TenderProcurementCategory', 'id', 'category_id');
+    }
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+    public static function getDefaultID($tenderMasterID, $versionID){
+        $defaultID = self::where('tender_id', $tenderMasterID)
+                ->where('version_id', $versionID)
+                ->where('level_no', 1)
+                ->max('ref_log_id') + 1;
 
-    
+        return  max(1, $defaultID);
+    }
+    public static function getTenderProcurements($tenderMasterId, $companySystemID, $versionID){
+        return self::with([ 'tender_procurement_category' ])->where('version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('tender_id', $tenderMasterId)
+            ->where('company_id', $companySystemID)
+            ->get();
+    }
+
+    public static function getAmendRecords($versionID, $tenderMasterID, $onlyNullRecords){
+        return self::where('version_id', $versionID)
+            ->where('tender_id', $tenderMasterID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })
+            ->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })
+            ->get();
+    }
 }

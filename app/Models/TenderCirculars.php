@@ -90,7 +90,7 @@ class TenderCirculars extends Model
 {
 
     public $table = 'srm_tender_circulars';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -134,7 +134,7 @@ class TenderCirculars extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function document_attachments()
@@ -152,5 +152,20 @@ class TenderCirculars extends Model
         return $this->hasMany('App\Models\CircularSuppliers', 'circular_id', 'id');
     }
 
-    
+    public static function getTenderCircularForAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
+
+    public static function getCircularList($tender_id, $companyId)
+    {
+        return self::with(['document_attachments'])->where('tender_id', $tender_id)->where('company_id', $companyId);
+    }
+    public static function checkCircularNameExists($name, $tenderID, $companyID, $id=0){
+        return self::where('circular_name', $name)
+            ->when($id > 0,function ($q) use ($id) {
+                $q->where('id', '!=', $id);
+            })
+            ->where('tender_id', $tenderID)
+            ->where('company_id', $companyID)->first();
+    }
 }

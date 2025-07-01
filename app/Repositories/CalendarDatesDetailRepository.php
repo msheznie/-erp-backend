@@ -38,4 +38,8 @@ class CalendarDatesDetailRepository extends BaseRepository
     {
         return CalendarDatesDetail::class;
     }
+
+    public function getCalendarDateDetailForAmd($tender_id){
+        return $this->model->getTenderCalendarDateDetailsAmd($tender_id);
+    }
 }

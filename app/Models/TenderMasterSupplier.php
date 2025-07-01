@@ -125,4 +125,8 @@ class TenderMasterSupplier extends Model
     public static function getSupplierTender($tenderID, $supplier_id){
         return self::where('tender_master_id', $tenderID)->where('purchased_by', $supplier_id)->exists();
     }
+
+    public static function checkTenderPurchased($tender_id){
+        return self::where('tender_master_id', $tender_id)->exists();
+    }
 }

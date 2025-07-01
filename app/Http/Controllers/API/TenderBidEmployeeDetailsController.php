@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SRMTenderUserAccess;
+use App\Models\SrmTenderUserAccessEditLog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\SrmTenderBidEmployeeDetails;
@@ -13,19 +15,22 @@ use App\Helper\Helper;
 use App\Http\Requests\API\CreateTenderBidEmployeeDetailsAPIRequest;
 use App\Http\Requests\API\UserAccessEmployeeRequest;
 use App\Services\TenderBidEmployeeService;
+use App\Services\SrmDocumentModifyService;
 
 class TenderBidEmployeeDetailsController extends AppBaseController
 {
     protected $tenderBidEmployeeService;
+    protected $srmDocumentModifyService;
 
-    public function __construct(TenderBidEmployeeService $tenderBidEmployeeService)
+    public function __construct(TenderBidEmployeeService $tenderBidEmployeeService, SrmDocumentModifyService $srmDocumentModifyService)
     {
         $this->tenderBidEmployeeService = $tenderBidEmployeeService;
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
     }
     public function store(CreateTenderBidEmployeeDetailsAPIRequest $request) {
         $input = $request->all();
         $tenderBidEmpCreate = $this->tenderBidEmployeeService->storeTenderBidEmployees($input);
-        if($tenderBidEmpCreate['status']){
+        if($tenderBidEmpCreate['success']){
             return $this->sendResponse([], $tenderBidEmpCreate['message']);
         } else {
             return $this->sendError($tenderBidEmpCreate['message'], $tenderBidEmpCreate['code']);
@@ -33,23 +38,21 @@ class TenderBidEmployeeDetailsController extends AppBaseController
     }
 
     public function getEmployees(Request $request) {
-        
-        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->with('employee')->get();
+        $data = $this->tenderBidEmployeeService->getEmployees($request);
         return $this->sendResponse($data, 'Employee reterived successfully');
-
-
     }
 
     public function deleteEmp(Request $request) {
-        $tenderEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->first();
-        $result = SrmTenderBidEmployeeDetails::find($tenderEmployeeDetails->id);
-
-        if (empty($result)) {
-            return $this->sendError('Employee Details not found');
+        try{
+            $response = $this->tenderBidEmployeeService->deleteTenderBidEmployees($request);
+            if(!$response['success']){
+                return $this->sendError($response['message']);
+            } else {
+                return $this->sendResponse([], $response['message']);
+            }
+        } catch(\Exception $exception){
+            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
         }
-        $result->delete();
-
-        return $this->sendResponse($tenderEmployeeDetails, 'Employee deleted successfully');
     }
 
     public function getEmployeesApproval(Request $request) {
@@ -75,14 +78,13 @@ class TenderBidEmployeeDetailsController extends AppBaseController
 
     public function removeTenderUserAccess(Request $request) {
         $input = $request->all();
-        $id = $input['id'];
         try {
-            $tenderUser = SRMTenderUserAccess::find($id);
-            if (empty($tenderUser)){
-                return $this->sendError('User access details not found');
+            $response = $this->tenderBidEmployeeService->removeTenderUserAccess($input);
+            if(!$response['success']){
+                return $this->sendError($response['message']);
+            } else {
+                return $this->sendResponse([], 'User access details deleted successfully');
             }
-            $tenderUser->delete();
-            return $this->sendResponse([], 'User access details deleted successfully');
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage());
         }

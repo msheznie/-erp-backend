@@ -114,19 +114,24 @@ class ScheduleBidFormatDetailsLog extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $primaryKey = 'amd_id';
 
     public $fillable = [
+        'id',
         'bid_format_detail_id',
+        'amd_bid_format_detail_id',
         'bid_master_id',
         'company_id',
         'master_id',
         'modify_type',
         'red_log_id',
         'schedule_id',
+        'amd_pricing_schedule_master_id',
         'tender_edit_version_id',
         'value',
-        'updated_by'
+        'updated_by',
+        'level_no',
+        'is_deleted'
     ];
 
     /**
@@ -135,7 +140,9 @@ class ScheduleBidFormatDetailsLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'bid_format_detail_id' => 'integer',
+        'amd_bid_format_detail_id' => 'integer',
         'bid_master_id' => 'integer',
         'company_id' => 'integer',
         'id' => 'integer',
@@ -143,8 +150,11 @@ class ScheduleBidFormatDetailsLog extends Model
         'modify_type' => 'integer',
         'red_log_id' => 'integer',
         'schedule_id' => 'integer',
+        'amd_pricing_schedule_master_id' => 'integer',
         'tender_edit_version_id' => 'integer',
-        'value' => 'string'
+        'value' => 'string',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**
@@ -156,5 +166,36 @@ class ScheduleBidFormatDetailsLog extends Model
         
     ];
 
-    
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+    public static function checkScheduleBidFormatExists($scheduleID){
+        return self::where('amd_pricing_schedule_master_id', $scheduleID)->select('id')->first();
+    }
+    public static function checkScheduleBidFormatDetailExists($scheduleID, $bidFormatDetailId, $versionID){
+        return self::where('amd_pricing_schedule_master_id', $scheduleID)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('amd_bid_format_detail_id', $bidFormatDetailId)
+            ->first();
+    }
+    public static function getAmendRecords($versionID, $amdScheduleID, $amdScheduleDetailID, $onlyNullRecords){
+        return self::where('tender_edit_version_id', $versionID)
+            ->where('amd_pricing_schedule_master_id', $amdScheduleID)
+            ->where('amd_bid_format_detail_id', $amdScheduleDetailID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })
+            ->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })
+            ->get();
+    }
+    public static function getScheduleBidFormat($scheduleID, $versionID){
+        return self::where('amd_pricing_schedule_master_id', $scheduleID)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->get();
+    }
 }

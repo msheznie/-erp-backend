@@ -190,4 +190,12 @@ class EvaluationCriteriaMasterDetails extends Model
     {
         return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
     }
+    public static function getEvaluationDetailById($evaluationId){
+        return self::with(['evaluation_criteria_master','evaluation_criteria_score_config' => function ($q) {
+            $q->where('fromTender', 0);
+        }
+        ])
+            ->where('id', $evaluationId)
+            ->first();
+    }
 }

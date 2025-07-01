@@ -56,4 +56,9 @@ class CircularSuppliers extends Model
     {
         return $this->belongsTo('App\Models\CircularAmendments', 'circular_id', 'circular_id');
     }
+
+    public static function getCircularSuppliers($circularID)
+    {
+        return self::where('circular_id', $circularID)->get();
+    }
 }
