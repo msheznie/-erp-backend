@@ -17,14 +17,6 @@ class ReceiptMatchingAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : "";
 
         // Check for duplicate externalRef in erp_matchdocumentmaster
-        $exists = DB::table('erp_matchdocumentmaster')->where('externalRef', $externalRef)->exists();
-        if ($exists) {
-            return response()->json([
-                'externalRef' => $externalRef,
-                'status' => 'failed',
-                'message' => 'Duplicate externalRef. This reference has already been processed.'
-            ], 409);
-        }
 
         // Dispatch background job
         $apiExternalKey = $request->api_external_key;
