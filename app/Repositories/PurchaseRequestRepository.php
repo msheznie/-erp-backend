@@ -17,6 +17,7 @@ use App\helper\StatusService;
 */
 class PurchaseRequestRepository extends BaseRepository
 {
+    protected $data = [];
     /**
      * @var array
      */
@@ -123,7 +124,9 @@ class PurchaseRequestRepository extends BaseRepository
         }
 
 
-        $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
+        $purchaseRequests = $purchaseRequests->with(['details' => function($query){
+            $query->with(['uom']);
+        },'created_by' => function ($query) {
         }, 'priority' => function ($query) {
 
         }, 'location' => function ($query) {
@@ -248,5 +251,88 @@ class PurchaseRequestRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function setExportExcelDataDetail($dataSet) {
+
+        $this->data = [];
+        $dataSet = $dataSet->get();
+        foreach ($dataSet as $val) {
+
+            $this->mainHeader();
+            $this->headerDetails($val);
+            $this->data[] = [];
+            $this->detailDetails($val->details);
+            $this->data[] = [];
+
+        }
+        
+        return $this->data;
+    }
+
+    private function mainHeader() {
+        $this->data[] = [
+            'PR Code' => 'PR Code',
+            'Category' => 'Category',
+            'Segment' => 'Segment',
+            'Location' => 'Location',
+            'Priority' => 'Priority',
+            'Buyer' => 'Buyer',
+            'Budget Year' => 'Budget Year',
+            'Comments' => 'Comments',
+            'Internal Note' => 'Internal Note',
+            'Created By' => 'Created By',
+            'Created At' => 'Created At',
+            'Status' => 'Status',
+        ];
+    }
+
+    private function headerDetails($val) {
+        $this->data[] = [
+            'PR Code' => $val->purchaseRequestCode,
+            'Category' => $val->finance_category ? $val->finance_category : '',
+            'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
+            'Location' => $val->location_pdf ? $val->location_pdf->locationName : '',
+            'Priority' => $val->priority_pdf ? $val->priority_pdf->priorityDescription : '',
+            'Buyer' => $val->buyerEmpName,
+            'Budget Year' => $val->budgetYear,
+            'Comments' => $val->comments,
+            'Internal Note' => $val->internalNotes,
+            'Created By' => $val->created_by? $val->created_by->empName : '',
+            'Created At' =>\Helper::dateFormat($val->createdDateTime),
+            'Status' => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN),
+        ];
+    }
+
+    private function detailDetails($val) {
+         if (!empty($val) && count($val) > 0) {
+            $headerOne ['Details'] = 'Details';
+
+            $this->data[] = $headerOne;
+            $header = [];
+            $header['item Code'] = 'Item Code';
+            $header['Description'] = 'Item Description';
+            $header['UOM'] = 'UOM';
+            $header['Qty Requested'] = 'Qty Requested';
+            $header['Estimated Unit Cost'] = 'Estimated Unit Cost';
+            $header['Total'] = 'Total';
+            $header['Qty On Order'] = 'Qty On Order';
+            $header['Qty On Hand'] = 'Qty On Hand';
+            $this->data[] = $header;
+
+            foreach ($val as $detail) {
+                $row = [];
+                $row['item Code'] = $detail->itemPrimaryCode ?? '';
+                $row['Description'] = $detail->itemDescription ?? '';
+                $row['UOM'] = $detail->uom->UnitDes ?? '';
+                $row['Qty Requested'] = $detail->quantityRequested ?? '';
+                $row['Estimated Unit Cost'] = $detail->estimatedCost ?? '';
+                $row['Total'] = $detail->totalCost ?? '';
+                $row['Qty On Order'] = $detail->quantityOnOrder ?? '';
+                $row['Qty On Hand'] = $detail->quantityInHand ?? '';
+                $this->data[] = $row;
+            }
+            $this->data[] = [];
+         }
     }
 }

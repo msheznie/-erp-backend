@@ -41,6 +41,8 @@ use App\Repositories\FixedAssetMasterRepository;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use App\Repositories\PdcLogRepository;
 use App\helper\CreateExcel;
+use App\Jobs\ExportDetailedPRList;
+
 class TransactionsExportExcel extends AppBaseController
 {
     private $gRVMasterRepository;
@@ -166,7 +168,7 @@ class TransactionsExportExcel extends AppBaseController
                 $buyerEmpSystemId = collect((array) $request['buyerEmpSystemID'])->pluck('id');
                 $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery(
                     $request, $input, $search, $serviceLineSystemID, $buyerEmpSystemId);
-                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
+                $data = isset($input['stat']) && $input['stat'] ? $this->purchaseRequestRepository->setExportExcelDataDetail($dataQry) : $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
             case '3':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
@@ -516,6 +518,15 @@ class TransactionsExportExcel extends AppBaseController
 
         $doc_name = $input['docName'].'/';
         $path = 'procurement/'.$doc_name.'excel/';
+
+        if(isset($input['stat']) && $input['stat'] && $input['documentId'] == 1) {
+            $db = $input['db'] ?? "";
+            $userId = \Helper::getEmployeeSystemID();
+            ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode);
+
+            return $this->sendResponse('', 'PR Detailed report Export in progress, you will be notified once ready !!');
+        }
+
         $basePath = CreateExcel::process($data,$type,$input['docName'],$path, $detail_array);
 
         if($basePath == '')
