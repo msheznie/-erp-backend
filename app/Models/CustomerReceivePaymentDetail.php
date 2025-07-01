@@ -12,7 +12,7 @@
  */
 namespace App\Models;
 
-use Eloquent as Model;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @SWG\Definition(
@@ -171,6 +171,14 @@ use Eloquent as Model;
  *          format="float"
  *      )
  * )
+ * @property integer $matchingDocID
+ * @property integer $arAutoID
+ * @property integer $companySystemID
+ * @property string $companyID
+ * @property string $bookingInvCode
+ * @property float $receiveAmountTrans
+ * @property integer $bookingInvCodeSystem
+ * @property integer $addedDocumentSystemID
  */
 class CustomerReceivePaymentDetail extends Model
 {

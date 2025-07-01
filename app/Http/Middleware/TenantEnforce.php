@@ -90,6 +90,7 @@ class TenantEnforce
             'api/v1/uploadBankStatement',
             'api/v1/payment-voucher',
             'api/v1/credit-note',
+            'api/v1/receipt-matching',
             'api/v1/chequeRegisterDetailSwitch',
             'api/v1/chequeRegisterDetailCancellation',
             'api/v1/supplierInvoiceDetailsAddAllItems',

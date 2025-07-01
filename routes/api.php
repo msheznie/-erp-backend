@@ -54,6 +54,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
             Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
             Route::post('credit-note','CreditNoteAPIController@createCreditNoteAPI');
+            Route::post('receipt-matching', 'ReceiptMatchingAPIController@createReceiptMatchingAPI');
             Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
             Route::post('supplier_invoice_create','BookInvSuppMasterAPIController@createSupplierInvoices');
             Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
