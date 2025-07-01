@@ -1626,6 +1626,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $objSupplierAgingDetail = new SupplierAgingSummaryAdvanceReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
+
+                    if ($typeAging == 2) {
+                        foreach ($data as $index => $item) {
+                            if (array_key_exists('supplierGroupName', $item) && is_null($item['supplierGroupName'])) {
+                                unset($data[$index]['supplierGroupName']);
+                            }
+
+                        }
+                    }
+
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
                     $cur = NULL;
                     $path = 'accounts-payable/report/supplier_aging/excel/';
