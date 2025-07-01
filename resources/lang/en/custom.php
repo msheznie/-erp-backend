@@ -578,4 +578,5 @@ return [
     "emp_signature" => "Emp Signature",
     "inventory_allocation_details" => "Inventory Allocation Details",
     "address" => "Address",
+    'failed_export' => 'Unable to export excel',
 ];
