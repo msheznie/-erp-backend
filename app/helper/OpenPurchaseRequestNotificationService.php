@@ -54,45 +54,51 @@ class OpenPurchaseRequestNotificationService
         $company = Company::find($this->companyID);
         $this->companyName = $company ? $company->CompanyName : "";
 
-                // Send emails to configured users
-        foreach ($notificationUserSettings['email'] as $notificationUserVal) {
-            foreach ($notificationUserVal as $userInfo) {
-                // Get employee email and name from the processed notification settings
-                $empEmail = $userInfo['empEmail'] ?? null;
-                $empName = $userInfo['empName'] ?? null;
+        // Get unique users from the nested notification structure
+        $uniqueUsers = $this->getUniqueNotificationUsers($notificationUserSettings['email']);
+        
+        if (empty($uniqueUsers)) {
+            Log::warning("No unique users found for Open PR notification");
+            return;
+        }
 
-                if (empty($empEmail)) {
-                    Log::warning("Email is missing for employee {$empName}");
-                    continue;
-                }
+        // Send emails to unique users
+        foreach ($uniqueUsers as $userInfo) {
+            // Get employee email and name from the processed notification settings
+            $empEmail = $userInfo['empEmail'] ?? null;
+            $empName = $userInfo['empName'] ?? null;
 
-                // Additional validation - fetch employee to ensure they are still active
-                $employee = Employee::selectRaw('empEmail,empName,empFullName,employeeSystemID')
-                    ->where('isEmailVerified', 1)
-                    ->where('empActive', 1)
-                    ->where('discharegedYN', 0)
-                    ->where('empEmail', $empEmail)
-                    ->first();
-
-                if (empty($employee)) {
-                    Log::error("Employee not found or not valid for Open PR notification. Employee email: {$empEmail}");
-                    continue;
-                }
-
-                $emailContent = $this->getEmailContent($openPRs, $empName);
-                $subject = 'Open Purchase Requests - Month End Report';
-                
-                $sendEmail = NotificationService::emailNotification(
-                    $this->companyID, 
-                    $subject, 
-                    $empEmail, 
-                    $emailContent
-                );
-
-                if (!$sendEmail["success"]) {
-                    Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
-                } 
+            if (empty($empEmail)) {
+                Log::warning("Email is missing for employee {$empName}");
+                continue;
             }
+
+            // Additional validation - fetch employee to ensure they are still active
+            $employee = Employee::selectRaw('empEmail,empName,empFullName,employeeSystemID')
+                ->where('isEmailVerified', 1)
+                ->where('empActive', 1)
+                ->where('discharegedYN', 0)
+                ->where('empEmail', $empEmail)
+                ->first();
+
+            if (empty($employee)) {
+                Log::error("Employee not found or not valid for Open PR notification. Employee email: {$empEmail}");
+                continue;
+            }
+
+            $emailContent = $this->getEmailContent($openPRs, $empName);
+            $subject = 'Open Purchase Requests - Month End Report';
+            
+            $sendEmail = NotificationService::emailNotification(
+                $this->companyID, 
+                $subject, 
+                $empEmail, 
+                $emailContent
+            );
+
+            if (!$sendEmail["success"]) {
+                Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
+            } 
         }
     }
 
@@ -156,6 +162,29 @@ class OpenPurchaseRequestNotificationService
         });
 
         return $filteredPRs->values();
+    }
+
+    /**
+     * Extract unique users from the nested notification structure
+     * The NotificationService returns nested arrays with duplicates, this method flattens and deduplicates
+     */
+    private function getUniqueNotificationUsers($emailNotificationSettings)
+    {
+        $uniqueUsers = [];
+        $seenEmails = [];
+
+        foreach ($emailNotificationSettings as $notificationUserArray) {
+            if (is_array($notificationUserArray)) {
+                foreach ($notificationUserArray as $userInfo) {
+                    if (isset($userInfo['empEmail']) && !in_array($userInfo['empEmail'], $seenEmails)) {
+                        $uniqueUsers[] = $userInfo;
+                        $seenEmails[] = $userInfo['empEmail'];
+                    }
+                }
+            }
+        }
+
+        return $uniqueUsers;
     }
 
     private function getEmailContent($openPRs, $recipientName)
