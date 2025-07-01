@@ -572,7 +572,6 @@ class ReceiptMatchingAPIService extends AppBaseController
 
 
 
-
     public static function updateReceiptMatching($input,$isAutoCreateDocument = false)
     {
 
