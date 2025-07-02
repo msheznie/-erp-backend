@@ -13,23 +13,15 @@ class ReceiptMatchingAPIController extends AppBaseController
     public function createReceiptMatchingAPI(Request $request)
     {
         $input = $request->all();
-        $externalRef = $input['externalRef'] ?? Str::uuid()->toString();
         $db = isset($request->db) ? $request->db : "";
 
-        // Check for duplicate externalRef in erp_matchdocumentmaster
-
-        // Dispatch background job
-        $apiExternalKey = $request->api_external_key;
-        $apiExternalUrl = $request->api_external_url;
         $authorization = $request->header('Authorization');
+        $externalReference = $request->get('external_reference');
+        $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
 
-        CreateReceiptMatching::dispatch($input, $db, $apiExternalKey, $apiExternalUrl, $authorization, $externalRef);
+        CreateReceiptMatching::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
 
-        // Initial response
-        return response()->json([
-            'externalRef' => $externalRef,
-            'status' => 'processing',
-            'message' => 'Receipt matching request has been queued for processing.'
-        ], 202);
+        return $this->sendResponse(['external_reference' => $externalReference], "Receipt matching request has been successfully queued for processing!");
+        
     }
 } 

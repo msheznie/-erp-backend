@@ -16,6 +16,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\MatchDocumentMaster;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Jobs\InitiateWebhook;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoice;
 use App\Services\API\ReceiptMatchingAPIService;
@@ -33,15 +34,15 @@ class CreateReceiptMatching implements ShouldQueue
     public $apiExternalKey;
     public $apiExternalUrl;
     public $authorization;
-    protected $externalRef;
-
+    public $externalReference;
+    public $tenantUuid;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization, $externalRef)
+    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization, $externalReference, $tenantUuid)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -57,8 +58,9 @@ class CreateReceiptMatching implements ShouldQueue
         $this->db = $db;
         $this->apiExternalKey = $apiExternalKey;
         $this->apiExternalUrl = $apiExternalUrl;
-        $this->externalRef = $externalRef;
         $this->authorization = $authorization;
+        $this->externalReference = $externalReference;
+        $this->tenantUuid = $tenantUuid;
     }
 
     public function handle()
@@ -66,7 +68,7 @@ class CreateReceiptMatching implements ShouldQueue
         \Log::useFiles(storage_path() . '/logs/create_receipt_matching.log');
 
         $input = $this->input;
-        $externalRef = $this->externalRef;
+        $externalReference = $this->externalReference;
         $matchings = $input['matchings'] ?? [];
         $results = [];
         $successCount = 0;
@@ -108,7 +110,7 @@ class CreateReceiptMatching implements ShouldQueue
 
             // Simulate creation of erp_matchdocumentmaster and details
             try {
-                $erpRef = $this->createReceiptMatching($header, $details, $externalRef, $companyId, $companySystemId, $validationData);
+                $erpRef = $this->createReceiptMatching($header, $details, $externalReference, $companyId, $companySystemId, $validationData);
                 $successCount++;
                 $results[] = [
                     'index' => $index,
@@ -130,7 +132,7 @@ class CreateReceiptMatching implements ShouldQueue
         $status = ($successCount === $total) ? 'completed' : (($successCount > 0) ? 'partial_success' : 'failed');
 
         $response = [
-            'externalRef' => $externalRef,
+            'externalReference ' => $externalReference,
             'status' => $status,
             'summary' => [
                 'total' => $total,
@@ -143,26 +145,19 @@ class CreateReceiptMatching implements ShouldQueue
         // Log the response
         \Log::error($response);
 
-        $apiExternalKey = $this->apiExternalKey;
-        $apiExternalUrl = $this->apiExternalUrl;
-        if($apiExternalKey != null && $apiExternalUrl != null) {
-            try {
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'Authorization' => 'ERP '.$apiExternalKey
-                ];
-                $res = $client->request('POST', $apiExternalUrl . '/receipt-matching/webhook', [
-                    'headers' => $headers,
-                    'json' => [
-                        'data' => $response
-                    ]
-                ]);
-                $json = $res->getBody();
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-        }
+        // Dispatch webhook job
+        $webhookPayload = ['data' => $response];
+        InitiateWebhook::dispatch(
+            $this->db,
+            $this->apiExternalKey,
+            $this->apiExternalUrl,
+            $this->input['webhook_url'],
+            $webhookPayload,
+            $this->externalReference,
+            $this->tenantUuid,
+            $this->input['company_id'],
+            $this->input['log_id']
+        );
     }
 
     private function validateHeader($header, $companyId, $companySystemId)
@@ -695,9 +690,9 @@ class CreateReceiptMatching implements ShouldQueue
     }
 
     // Stub for creating receipt matching
-    private function createReceiptMatching($header, $details, $externalRef, $companyId, $companySystemId, $validationData)
+    private function createReceiptMatching($header, $details, $externalReference, $companyId, $companySystemId, $validationData)
     {
-        return DB::transaction(function () use ($header, $details, $externalRef, $companyId, $companySystemId, $validationData) {
+        return DB::transaction(function () use ($header, $details, $externalReference, $companyId, $companySystemId, $validationData) {
             $input = [];
             $input['companySystemID'] = $companySystemId;
             $input['custReceivePaymentAutoID'] = $validationData['matchDocument']->masterAutoID;
