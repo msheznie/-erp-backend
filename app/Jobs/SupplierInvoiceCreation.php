@@ -944,7 +944,8 @@ class SupplierInvoiceCreation implements ShouldQueue
                 $webhookPayload,
                 $this->externalReference,
                 $this->tenantUuid,
-                $this->input['company_id']
+                $this->input['company_id'],
+                $this->input['log_id']
             );
 
         } catch (\Exception $exception) {

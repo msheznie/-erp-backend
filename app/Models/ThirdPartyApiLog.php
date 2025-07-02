@@ -17,6 +17,7 @@ class ThirdPartyApiLog extends Model
         'third_party_integration_key_id',
         'tenant_uuid',
         'endpoint',
+        'log_id',
         'method',
         'execution_time_ms'
     ];

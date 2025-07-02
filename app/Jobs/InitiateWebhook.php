@@ -25,13 +25,14 @@ class InitiateWebhook implements ShouldQueue
     public $externalReference;
     public $tenantUuid;
     public $companyId;
+    public $logId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $apiExternalKey, $apiExternalUrl, $webhookEndpoint, $webhookPayload, $externalReference = null, $tenantUuid = null, $companyId = null)
+    public function __construct($db, $apiExternalKey, $apiExternalUrl, $webhookEndpoint, $webhookPayload, $externalReference = null, $tenantUuid = null, $companyId = null, $logId = null)
     {
         if (env('QUEUE_DRIVER_CHANGE', 'database') == 'database') {
             if (env('IS_MULTI_TENANCY', false)) {
@@ -51,6 +52,7 @@ class InitiateWebhook implements ShouldQueue
         $this->externalReference = $externalReference;
         $this->tenantUuid = $tenantUuid;
         $this->companyId = $companyId;
+        $this->logId = $logId;
     }
 
     /**
@@ -175,7 +177,7 @@ class InitiateWebhook implements ShouldQueue
                 $this->db,
                 null,
                 $this->tenantUuid ?: env('TENANT_UUID', 'local'),
-                ltrim($this->webhookEndpoint, '/'),
+                $this->webhookEndpoint,
                 'POST',
                 $requestPayload,
                 $responseData,
@@ -185,7 +187,8 @@ class InitiateWebhook implements ShouldQueue
                 $this->externalReference,
                 1,
                 $isFailed,
-                $errorMessage
+                $errorMessage,
+                $this->logId
             );
         }
     }

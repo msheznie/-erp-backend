@@ -31,6 +31,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
     protected $isWebhook;
     protected $errorMessage;
     protected $isFailed;
+    protected $logId;
 
     /**
      * Create a new job instance.
@@ -51,7 +52,8 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
         $externalReference = null,
         $isWebhook = 0,
         $isFailed = 0,
-        $errorMessage = null
+        $errorMessage = null,
+        $logId = null
     ) {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -77,6 +79,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
         $this->isWebhook = $isWebhook;
         $this->errorMessage = $errorMessage;
         $this->isFailed = $isFailed;
+        $this->logId = $logId;
     }
 
     /**
@@ -103,6 +106,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
                     'tenant_uuid' => $this->tenant_uuid,
                     'endpoint' => $this->endpoint,
                     'method' => $this->method,
+                    'log_id' => $this->logId,
                     'execution_time_ms' => $this->executionTime
                 ]);
             }
@@ -144,6 +148,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             'is_failed' => (string) $this->isFailed,
             'is_webhook' => (string) $isWebhook,
             'endpoint' => $this->endpoint,
+            'log_id' => $this->logId,
             'tenant_uuid' => $this->tenant_uuid,
             'method' => $this->method,
             'user_name' => $this->user,
