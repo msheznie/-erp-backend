@@ -10090,11 +10090,20 @@ class Helper
                 $percentage = $invmaster->supplier->tax->whtPercentage;
             }
 
-            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
-            if( $invmaster->supplier->whtApplicableYN == 1)
+            if(isset($invmaster->supplier))
             {
-                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+                if($isWHTApplicableSupplier)
+                {
+                    $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                }
             }
+            else
+            {
+                $isWHTApplicableSupplier = false;
+            }
+
+          
 
             $whtTotalAmountDirect = 0;
 
