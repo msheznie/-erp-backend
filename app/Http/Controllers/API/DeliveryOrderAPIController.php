@@ -508,6 +508,10 @@ class DeliveryOrderAPIController extends AppBaseController
             }
 
 
+            if ($deliveryOrderDetails == 0) {
+                return $this->sendError('Every order should have at least one item', 500);
+            }
+
             $messages = [
                 'transactionCurrencyID.required' => 'Currency field is required',
                 'customerID.required' => 'Customer field is required',
