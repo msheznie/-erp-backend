@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ThirdPartyApiLogger
 {
@@ -62,9 +63,12 @@ class ThirdPartyApiLogger
         // Generate external reference from request payload
         $externalReference = $request->get('external_reference') ?? ThirdPartyApiLog::generateExternalReference();
 
+        $logId = Str::random(32);
+
         if ($checkApi && $checkApi->webhook_enabled) {
             // Add tracking parameters to request for use in controllers BEFORE calling controller
             $request->request->add(['external_reference' => $externalReference]);
+            $request->request->add(['log_id' => $logId]);
             $request->request->add(['tenant_uuid' => $tenantUuid]);
             $request->request->add(['webhook_url' => $checkApi->webhook_endpoint]);
         }
@@ -106,7 +110,11 @@ class ThirdPartyApiLogger
                 $response->getStatusCode(),
                 $user,
                 $executionTime,
-                $externalReference
+                $externalReference,
+                0,
+                0,
+                null,
+                $logId
             );
         }
 
