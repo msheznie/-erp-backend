@@ -141,7 +141,7 @@ class NotificationService
                         break;
 
                     case 49:
-                        $openPR = new OpenPurchaseRequestNotificationService($companyID, $notDaySetup);
+                        $openPR = new OpenPurchaseRequestNotificationService($companyID);
                         $openPR->proceed();
                         $details = [];
                         break;
