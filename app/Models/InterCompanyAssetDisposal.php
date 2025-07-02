@@ -60,7 +60,8 @@ class InterCompanyAssetDisposal extends Model
     public $fillable = [
         'assetDisposalID',
         'customerInvoiceID',
-        'grvID'
+        'grvID',
+        'supplierInvoiceID'
     ];
 
     /**
@@ -72,7 +73,8 @@ class InterCompanyAssetDisposal extends Model
         'id' => 'integer',
         'assetDisposalID' => 'integer',
         'customerInvoiceID' => 'integer',
-        'grvID' => 'integer'
+        'grvID' => 'integer',
+        'supplierInvoiceID' => 'integer'
     ];
 
     /**

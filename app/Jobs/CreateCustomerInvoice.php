@@ -273,7 +273,16 @@ class CreateCustomerInvoice implements ShouldQueue
                     }
 
                     $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
-                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
+
+                    $consoleJVData = [
+                        'data' => [
+                            'docData' => InterCompanyAssetDisposal::where('assetDisposalID', $dpMaster->assetdisposalMasterAutoID)->first(),
+                            'from' => "AFTER_CUSTOMER_INVOICE",
+                        ],
+                        'type' => "INTER_ASSET_DISPOSAL"
+                    ];
+
+                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase, $consoleJVData);
 
                     $resVat =  CustomerInvoiceAPIService::updateTotalVAT($customerInvoice->custInvoiceDirectAutoID);
 

@@ -5491,7 +5491,10 @@ class Helper
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
                                         $consoleJVData = [
-                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'data' => [
+                                                'docData' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                                'from' => "AFTER_GRV_VOUCHER",
+                                            ],
                                             'type' => "INTER_ASSET_DISPOSAL"
                                         ];
 
@@ -5509,6 +5512,23 @@ class Helper
 
                                         CreateConsoleJV::dispatch($receiptData);
                                     }
+                                }
+
+                                if ($input["documentSystemID"] == 4 || $input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    $consoleJVData = [
+                                        'data' => [
+                                            'docData' => $sourceData,
+                                            'from' => $input["documentSystemID"] == 4 ? "AFTER_PAYMENT_VOUCHER" : "AFTER_RECEIPT_VOUCHER",
+                                        ],
+                                        'type' => "STOCK_TRANSFER"
+                                    ];
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
+
+                                    $consoleJVData['type'] = "INTER_ASSET_DISPOSAL";
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
                                 }
                             }
 

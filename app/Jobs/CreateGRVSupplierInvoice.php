@@ -7,6 +7,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\SupplierInvoiceItemDetail;
 use App\Repositories\BookInvSuppDetRepository;
 use App\Repositories\BookInvSuppMasterRepository;
@@ -223,6 +224,13 @@ class CreateGRVSupplierInvoice implements ShouldQueue
 
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];
                     $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
+
+                    $assetDisposal = InterCompanyAssetDisposal::where('grvID', $this->grvMasterAutoID)->first();
+
+                    if ($assetDisposal) {
+                        $assetDisposal->supplierInvoiceID = $bookInvSuppMaster->bookingSuppMasInvAutoID;
+                        $assetDisposal->save();
+                    }
                 }
             }
             DB::commit();

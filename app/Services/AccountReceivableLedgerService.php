@@ -2,15 +2,17 @@
 
 namespace App\Services;
 
+use App\Jobs\CreateConsoleJV;
 use App\Services\AccountReceivableLedger\CreditNoteARLedgerService;
 use App\Services\AccountReceivableLedger\CustomerInvoiceARLedgerService;
 use App\Services\AccountReceivableLedger\ReceiptVoucherARLedgerService;
 use App\Services\AccountReceivableLedger\SalesReturnARLedgerService;
 use App\Models\AccountsReceivableLedger;
+use Illuminate\Support\Facades\Log;
 
 class AccountReceivableLedgerService
 {
-	public static function postLedgerEntry($masterModel)
+	public static function postLedgerEntry($masterModel, $otherData = null)
     {
          switch ($masterModel["documentSystemID"]) {
             case 19: // Credit Note
@@ -40,8 +42,22 @@ class AccountReceivableLedgerService
             {
                 AccountsReceivableLedger::create($data);
             }
+
+            self::processDataRelatedWithAccountReceivableLedger($masterModel, $otherData);
         }
 
         return ['status' => true];
 	}
+
+    public static function processDataRelatedWithAccountReceivableLedger($masterModel, $otherData) {
+        if (!is_null($otherData)) {
+            switch ($masterModel["documentSystemID"]) {
+                case 20: // Customer Invoice
+                    CreateConsoleJV::dispatch($otherData);
+                    break;
+                default:
+                    Log::warning('Document ID not found ' . date('H:i:s'));
+            }
+        }
+    }
 }
