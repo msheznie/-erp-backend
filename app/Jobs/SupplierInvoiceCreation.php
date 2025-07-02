@@ -43,6 +43,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\DocumentSystemMappingTrait;
+use App\Jobs\InitiateWebhook;
 use Carbon\Carbon;
 
 class SupplierInvoiceCreation implements ShouldQueue
@@ -55,13 +56,15 @@ class SupplierInvoiceCreation implements ShouldQueue
     public $apiExternalKey;
     public $apiExternalUrl;
     public $authorization;
+    public $externalReference;
+    public $tenantUuid;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization)
+    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization, $externalReference = null, $tenantUuid = null)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -74,6 +77,8 @@ class SupplierInvoiceCreation implements ShouldQueue
         $this->apiExternalKey = $apiExternalKey;
         $this->apiExternalUrl = $apiExternalUrl;
         $this->authorization = $authorization;
+        $this->externalReference = $externalReference;
+        $this->tenantUuid = $tenantUuid;
     }
 
     /**
@@ -928,22 +933,19 @@ class SupplierInvoiceCreation implements ShouldQueue
             }
 
             Log::error($responseData);
-            $apiExternalKey = $this->apiExternalKey;
-            $apiExternalUrl = $this->apiExternalUrl;
-            if($apiExternalKey != null && $apiExternalUrl != null) {
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'Authorization' => 'ERP '.$apiExternalKey
-                ];
-                $res = $client->request('POST', $apiExternalUrl . '/supplier_invoice_create_log', [
-                    'headers' => $headers,
-                    'json' => [
-                        'data' => $responseData
-                    ]
-                ]);
-                $json = $res->getBody();
-            }
+            
+            // Dispatch webhook job
+            $webhookPayload = ['data' => $responseData];
+            InitiateWebhook::dispatch(
+                $this->db,
+                $this->apiExternalKey,
+                $this->apiExternalUrl,
+                $this->input['webhook_url'],
+                $webhookPayload,
+                $this->externalReference,
+                $this->tenantUuid,
+                $this->input['company_id']
+            );
 
         } catch (\Exception $exception) {
             Log::error('Error');

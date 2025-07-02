@@ -3110,8 +3110,7 @@ IF (
 	erp_paysupplierinvoicedetail.matchingDocID = 0,
 	erp_paysupplierinvoicemaster.BPVNarration,
 	"Matching"
-) AS docNarration,
- erp_paysupplierinvoicedetail.addedDocumentID,
+) AS docNarration, erp_paysupplierinvoicedetail.addedDocumentID,
  erp_paysupplierinvoicedetail.bookingInvSystemCode,
  erp_paysupplierinvoicedetail.bookingInvDocCode,
  erp_paysupplierinvoicedetail.bookingInvoiceDate,
@@ -3549,7 +3548,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $input = $request->all();
         $db = isset($request->db) ? $request->db : "";
         $authorization = $request->header('Authorization');
-        SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+        
+        // Get tracking parameters from ThirdPartyApiLogger middleware
+        $externalReference = $request->get('external_reference');
+        $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
+        
+        SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
         return $this->sendResponse(array(),"Supplier invoice creation is sent to queue!");
     }
 

@@ -2216,7 +2216,19 @@ HAVING
                 return $this->sendError("Company details not found", 404);
             }
 
-            CreateJournalVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            // Get tracking parameters from ThirdPartyApiLogger middleware
+            $externalReference = $request->get('external_reference');
+            $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
+
+            CreateJournalVoucher::dispatch(
+                $input, 
+                $db, 
+                $request->api_external_key, 
+                $request->api_external_url, 
+                $authorization,
+                $externalReference,
+                $tenantUuid
+            );
             return $this->sendResponse([],"Journal voucher request has been successfully queued for processing!");
         }
         else {
