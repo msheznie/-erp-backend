@@ -4022,182 +4022,47 @@ class FinancialReportAPIController extends AppBaseController
                 $data = array();
 
                 $selectedColumns = collect($request->selectedColumn)->pluck(['id'])->toArray();
-
-                    if ($output) {
-                        $x = 0;
-                        $reporingCurrencyCode = $output[0]->rptCurrencyCode;
-                        foreach ($output as $val) {
-                            if(in_array(1, $selectedColumns))
-                                $data[$x]['Company ID'] = $val->companyID;
-
-                            if(in_array(2, $selectedColumns))
-                                $data[$x]['Document Code'] = $val->DocumentCode;
-
-                            if(in_array(3, $selectedColumns))
-                                $data[$x]['Document Date'] = $val->DocumentDate;
-
-                            if(in_array(34, $selectedColumns))
-                                $data[$x]['Document Type'] = $val->documentType;
-
-                            if(in_array(15, $selectedColumns))
-                                $data[$x]['Reverse Charge Mechanism'] = ($val->rcmActivated) ? "YES" : "NO";
-
-                            if(in_array(4, $selectedColumns))
-                                $data[$x]['Invoice No'] = $val->invoiceNo;
-
-                            if(in_array(5, $selectedColumns))
-                                $data[$x]['Invoice Date'] = $val->invoiceDate;
-
-                            if(in_array(11, $selectedColumns))
-                                $data[$x]['Posted Date'] = $val->postedDate;
-
-                            if(in_array(6, $selectedColumns))
-                                $data[$x]['Narration'] = $val->comments;
-
-                            if(in_array(7, $selectedColumns))
-                                $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-
-                            if(in_array(8, $selectedColumns))
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-
-                            if(in_array(33, $selectedColumns))
-                                $data[$x]['Party Code'] = $val->primarySupplierCode;
-
-                            if(in_array(32, $selectedColumns))
-                                $data[$x]['Party Name'] = $val->supplierName;
-
-                            if(in_array(12, $selectedColumns))
-                                $data[$x]['Customer Code'] = $val->CutomerCode;
-
-                            if(in_array(13, $selectedColumns))
-                                $data[$x]['Customer Short Code'] = $val->customerShortCode;
-
-                            if(in_array(14, $selectedColumns))
-                                $data[$x]['Customer Name'] = $val->CustomerName;
-
-                            if(in_array(16, $selectedColumns))
-                                $data[$x]['VATIN'] = $val->vatNumber;
-
-                            if (in_array(17, $selectedColumns)) $data[$x]['Country Name'] = $val->countryName;
-                            if (in_array(26, $selectedColumns)) $data[$x]['Free Zone'] = "";
-                            if (in_array(28, $selectedColumns)) $data[$x]['Transaction'] = $val->transcation;
-                            if (in_array(27, $selectedColumns)) $data[$x]['Good/Service'] = $val->goodORService;
-                            if (in_array(9, $selectedColumns)) $data[$x]['Currency'] = $val->CurrencyCode;
-                            if (in_array(29, $selectedColumns)) $data[$x]['VAT Type'] = $val->vatCategory;
-
-                            if (in_array(21, $selectedColumns)) {
-                                if($request->reportViewID == 1) {
-                                    $data[$x]['Line Item Number'] = $val->lineItemNumberALL;
-                                }
-                                elseif ($request->reportViewID == 2)  {
-                                    if(isset($val->itemPrimaryCode))
-                                    {
-                                        $data[$x]['Line Item Number'] = $val->itemPrimaryCode;
-                                    }else {
-                                        if(isset($val->lineItemNumber))
-                                        {
-                                            $data[$x]['Line Item Number'] = $val->lineItemNumber;
-                                        }else {
-                                            if(isset($val->glCode))
-                                            {
-                                                $data[$x]['Line Item Number'] =  $val->glCode;
-                                            }
-                                        }
-                                    }
-                                }
-
-                            }
-                            if (in_array(23, $selectedColumns)) {
-                                if($request->reportViewID == 1) {
-                                    $data[$x]['VAT Category'] = $val->subCategoryDescriptionALL;
-                                }
-                                else {
-                                    $data[$x]['VAT Category'] = $val->subCategoryDescription;
-                                }
-                            }
-                            if (in_array(30, $selectedColumns)) {
-                                if($request->reportViewID == 1) {
-                                    $data[$x]['VAT %'] = $val->VATPercentageALL;
-                                }else {
-                                    $data[$x]['VAT %'] = $val->VATPercentage;
-                                }
-                            };
-
-                            $dueAmount = 0;
-                            if ($request->reportViewID == 1) {
-                                $data[$x]['Value'] = number_format($val->bookingAmountTrans, $val->DecimalPlaces);
-                                $data[$x]['Discount'] = number_format($val->discountAmount, $val->DecimalPlaces);
-                                $data[$x]['Net Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount, $val->DecimalPlaces);
-                                $data[$x]['VAT'] = number_format($val->taxTotalAmount, $val->DecimalPlaces);
-                                if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exemptVATPortionALL ?? 0;
-                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = number_format($val->retentionAmount, $val->DecimalPlaces);
-                                if($request->tempType == 2 || $request->tempType == 1)
-                                {
-                                    if($request->tempType == 1)
-                                    {
-                                        $taxAmount = $val->rcmActivated ? 0 : $val->taxTotalAmount;
-                                    }else {
-                                        $taxAmount = $val->taxTotalAmount;
-                                    }
-                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0), $val->DecimalPlaces);
-                                    $dueAmount = $val->bookingAmountTrans - $val->discountAmount + $taxAmount - ($val->retentionAmount ?? 0);
-                                }else {
-                                    $data[$x]['Due Amount'] = number_format($val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount, $val->DecimalPlaces);
-                                    $dueAmount = $val->bookingAmountTrans+ $val->discountAmount + $val->taxTotalAmount;
-                                }
-
-                            } elseif ($request->reportViewID == 2) {
-                                $data[$x]['Value'] = number_format($val->value, $val->DecimalPlaces);
-                                $data[$x]['Discount'] = number_format($val->discount, $val->DecimalPlaces);
-                                $data[$x]['Net Amount'] = number_format($val->value - $val->discount, $val->DecimalPlaces);
-                                $data[$x]['VAT'] = number_format($val->VATAmount, $val->DecimalPlaces);
-                                if (in_array(24, $selectedColumns)) $data[$x]['Exempt VAT'] = $val->exempt_vat_portion ?? 0;
-                                if (in_array(31, $selectedColumns)) $data[$x]['Retention Amount'] = $val->retentionAmount;
-                                if($request->tempType == 2 || $request->tempType == 1)
-                                {
-                                    $taxAmountLine = $val->rcmActivated ? 0 : $val->VATAmount;
-                                    $data[$x]['Due Amount'] = number_format($val->value - $val->discount + $taxAmountLine, $val->DecimalPlaces);
-                                    $dueAmount = $val->value - $val->discount + $val->VATAmount;
-                                }else {
-                                    $data[$x]['Due Amount'] = number_format($val->value + $val->discount + $val->VATAmount, $val->DecimalPlaces);
-                                    $dueAmount = $val->value + $val->discount + $val->VATAmount;
-                                }
-                            }
-
-
-                            if (in_array(20, $selectedColumns))
-                            {
-                                if (!empty($val->companyReportingER) && $val->companyReportingER != 0)
-                                {
-                                    $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount / $val->companyReportingER, $val->rptDecimalPlaces);
-                                } else {
-                                    $data[$x]['Amount in reporting currency '.'('.$reporingCurrencyCode.')'] = number_format($dueAmount, $val->rptDecimalPlaces);
-                                }
-                            }
-                            if (in_array(19, $selectedColumns)) $data[$x]['Exchange Rate'] = $val->companyReportingER;
-                            $x++;
-                        }
-                    }
-
+                $reporingCurrencyCode = ($output[0]) ? $output[0]->rptCurrencyCode : null;
 
                 $cur = null;
                 $title = 'Tax Details';
                 $company_name = $companyCurrency->CompanyName;
                 $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
-                $to_date = \Helper::dateFormat($request->toDate);
-                $from_date = \Helper::dateFormat($request->fromDate);
+                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                $toDate = (new Carbon($request->toDate))->format('Y-m-d');
                 $detail_array = array(  'type' => 1,
-                                        'from_date'=>$from_date,
-                                        'to_date'=>$to_date,
+                                        'fromDate'=>$fromDate,
+                                        'toDate'=>$toDate,
                                         'company_name'=>$company_name,
                                         'company_code'=>$companyID,
                                         'cur'=>$cur,
-                                        'title'=>$title);
+                                        'tempType' => $request->tempType,
+                                        'reportViewID' => $request->reportViewID,
+                                        'reportData' => $output,
+                                        'selectedColumns' => $selectedColumns,
+                                        'reporingCurrencyCode' => $reporingCurrencyCode
+                );
 
+
+                $templateName = "export_report.generalLedger.taxdetails";
                 $fileName = 'tax_details';
                 $path = 'general-ledger/report/tax_details/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                $type = "xls";
+                $excelColumnFormat = [
+                    'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AC' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AD' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AE' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                ];
 
+                $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
 
                 if($basePath == '')
                 {
@@ -5355,7 +5220,7 @@ class FinancialReportAPIController extends AppBaseController
         $serviceLines = join(',', array_map(function ($sl) {
             return $sl['serviceLineSystemID'];
         }, $request->selectedServicelines));
-   
+
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -5735,11 +5600,11 @@ class FinancialReportAPIController extends AppBaseController
                             ELSE 3
                           END,
                           glCode;';
-        $output1 = \DB::select($query1);               
+        $output1 = \DB::select($query1);
         $i = 0;
-                          
+
         foreach ($output as $item) {
-       
+
             if($item->glAccountTypeID == 1) {
                 $output[$i]->openingBalLocal = $output1[$i]->openingBalLocal;
                 $output[$i]->openingBalRpt = $output1[$i]->openingBalRpt;
@@ -6472,7 +6337,7 @@ class FinancialReportAPIController extends AppBaseController
                 ->first();
         array_push($serviceLineId, 24);
         $chartOfAccountIdRetained = $chartOfAccountIdRetainedVal ? $chartOfAccountIdRetainedVal['chartOfAccountSystemID'] : 0;
-       
+
         $chartOfAccountIdCount = count($chartOfAccountId);
 
         if($chartOfAccountIdRetained != 0 && count($chartOfAccountId) > 1)
@@ -7106,7 +6971,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         $isCurrencyColumnEmpty = collect($request->selectedColumn)->where('id',9)->isEmpty();
-        
+
         $reportViewID = ($request->reportViewID) ?? 1;
 
 
@@ -7509,7 +7374,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 CONCAT(details.glCode," | ",details.glCodeDes) AS lineItemNumber,
                 (details.DIAmount) AS value,
                 (details.comRptAmount + details.VATAmountRpt) AS valueRpt,
-                (details.VATAmount) AS VATAmount,
+                (details.VATAmount - IF(details.exempt_vat_portion IS NULL, 0,details.exempt_vat_portion) * (details.VATAmount / 100) - ((details.VATAmount)/100*invoiceMaster.retentionPercentage)) AS VATAmount,
                 0 AS discount,
                 0 AS discountAmount,
                 (SUM(details.DIAmount)) AS bookingAmountTrans,
@@ -7520,13 +7385,14 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                     ELSE
                         (SUM(details.VATAmount) 
                          - SUM(IFNULL((details.exempt_vat_portion), 0) / 100 * (details.VATAmount))
-                         - IFNULL(invoiceMaster.retentionVatAmount, 0))
+                         - IFNULL(SUM(details.VATAmount) /100 * invoiceMaster.retentionPercentage, 0))
                 END AS taxTotalAmount,
                 CASE 
                     WHEN invoiceMaster.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
-                        IFNULL(invoiceMaster.retentionAmount, 0)
+                        IFNULL(SUM(details.DIAmount) / 100 * invoiceMaster.retentionPercentage, 0)
                     ELSE
-                        IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount), 0)
+                        IFNULL((SUM(details.DIAmount + details.VATAmount) / 100 * invoiceMaster.retentionPercentage - (SUM(details.VATAmount) 
+                         - SUM(IFNULL((details.exempt_vat_portion), 0) / 100 * (details.VATAmount))) / 100 * invoiceMaster.retentionPercentage), 0)
                 END AS retentionAmount,
                 details.vatSubCategoryID,
                 (IF(details.exempt_vat_portion IS NULL, NULL,details.exempt_vat_portion) * (details.VATAmount / 100)) AS exempt_vat_portion,
@@ -7555,7 +7421,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
                 GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(details.glCode SEPARATOR ",") AS lineItemNumberALL,
-                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL
+                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL,
+                invoiceMaster.documentType as documentTypeID,
+                invoiceMaster.retentionPercentage
             FROM
                 erp_bookinvsuppmaster AS invoiceMaster
             LEFT JOIN erp_directinvoicedetails details ON invoiceMaster.bookingSuppMasInvAutoID = details.directInvoiceAutoID
@@ -7600,13 +7468,13 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 CONCAT(details.itemPrimaryCode," | ",details.itemDescription) AS lineItemNumber,
                 IFNULL((details.noQty * details.unitCost),0) AS value,
                 IFNULL(((details.costPerUnitComRptCur * details.noQty) + (details.VATAmountRpt * details.noQty )),0) AS valueRpt,
-                IFNULL((details.VATAmount * details.noQty ),0) AS VATAmount,
+                IFNULL((details.VATAmount * details.noQty ) - (IF(details.exempt_vat_portion IS NULL, 0,details.exempt_vat_portion) * (details.VATAmount / 100) * details.noQty) - ((details.VATAmount * details.noQty )/100 * invoiceMaster.retentionPercentage),0) AS VATAmount,
                 (details.discountAmount * details.noQty) AS discount,
                 SUM(details.discountAmount * details.noQty) AS discountAmount,
                 IFNULL((SUM(details.noQty * details.unitCost)),0) AS bookingAmountTrans,
                 IFNULL((invoiceMaster.bookingAmountRpt),0) AS bookingAmountRpt,
                 (SUM(details.VATAmount * details.noQty) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.VATAmount * details.noQty)) - IFNULL(invoiceMaster.retentionVatAmount,0)) AS taxTotalAmount,
-                IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount),0) AS retentionAmount,
+                (((SUM(details.noQty * details.unitCost) - SUM(details.noQty * details.discountAmount))/100 * invoiceMaster.retentionPercentage)) AS retentionAmount,
                 details.vatSubCategoryID,
                 (IF(details.exempt_vat_portion IS NULL, NULL,details.exempt_vat_portion) * (details.VATAmount / 100) * details.noQty) AS exempt_vat_portion,
                 (
@@ -7634,7 +7502,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
                 GROUP_CONCAT(DISTINCT CASE WHEN details.VATPercentage != 0 THEN ROUND(details.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(details.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
-                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) * details.noQty SEPARATOR ",") AS exemptVATPortionALL
+                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100),curm.DecimalPlaces) * details.noQty SEPARATOR ",") AS exemptVATPortionALL,
+                invoiceMaster.documentType as documentTypeID,
+                invoiceMaster.retentionPercentage
             FROM
                 erp_bookinvsuppmaster AS invoiceMaster
             LEFT JOIN supplier_invoice_items details ON invoiceMaster.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
@@ -7678,28 +7548,68 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 ctm.countryName,
                 CONCAT(ep.itemPrimaryCode," | ",ep.itemDescription) AS lineItemNumber,
 
-                IFNULL((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost, 0) AS value,
+                IFNULL((details.supplierInvoAmount - (((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) )), 0)  AS value,
 
                 CASE
                     WHEN details.balanceAmount = 0 THEN IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
                     ELSE IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0)
                 END AS valueRpt,
-                ((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount) * ep.VATAmount)) - invoiceMaster.retentionVatAmount) AS VATAmount,
+                CASE 
+                     WHEN pom.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
+                         ((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) 
+                    ELSE
+                     CASE
+                            WHEN 
+                                (
+                                 SELECT subCatgeoryType 
+                                FROM erp_tax_vat_sub_categories 
+                                WHERE taxVatSubCategoriesAutoID = details.vatSubCategoryID
+                                ) = 3
+                            THEN
+                                ((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) 
+                            ELSE
+                                ((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - (((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) 
+                        END
+                END AS VATAmount,
                 (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
                 SUM(((details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))/(100-ep.discountPercentage))*ep.discountPercentage) AS discountAmount,
-                IFNULL(SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)), 0) AS bookingAmountTrans,
+                IFNULL(SUM(details.supplierInvoAmount - (((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) )), 0) AS bookingAmountTrans,
                 IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
                 CASE 
                     WHEN pom.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
                          (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) 
                     ELSE
-                         (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - ((SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) 
+                     CASE
+                            WHEN 
+                                (
+                                 SELECT subCatgeoryType 
+                                FROM erp_tax_vat_sub_categories 
+                                WHERE taxVatSubCategoriesAutoID = details.vatSubCategoryID
+                                ) = 3
+                            THEN
+                                SUM((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage))) 
+                            ELSE
+                                SUM((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - (((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) 
+                        END
                 END AS taxTotalAmount,
                 CASE 
-                    WHEN pom.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0 THEN
+                    WHEN (pom.rcmActivated = 1 AND invoiceMaster.retentionPercentage > 0) THEN
                        IFNULL((SUM(details.supplierInvoAmount)/100*invoiceMaster.retentionPercentage),0)
                     ELSE
-                        IFNULL((SUM(details.supplierInvoAmount)/100*invoiceMaster.retentionPercentage) - (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage,0)
+                        IFNULL((SUM(details.supplierInvoAmount)/100*invoiceMaster.retentionPercentage) - 
+                        CASE
+                            WHEN 
+                                (
+                                 SELECT subCatgeoryType 
+                                FROM erp_tax_vat_sub_categories 
+                                WHERE taxVatSubCategoriesAutoID = details.vatSubCategoryID
+                                ) = 3
+                            THEN
+                            0
+                            ELSE
+                            (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage
+                        END
+                        ,0)
                 END AS retentionAmount,    
                 ep.vatSubCategoryID,
                 (IF(ep.exempt_vat_portion IS NULL, NULL,ep.exempt_vat_portion) * (ep.VATAmount / 100) * ep.noQty) AS exempt_vat_portion,
@@ -7731,7 +7641,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
                 GROUP_CONCAT(DISTINCT CASE WHEN ep.VATPercentage != 0 THEN ROUND(ep.VATPercentage,4) ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(ep.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
-                GROUP_CONCAT(ROUND(IFNULL(ep.exempt_vat_portion,0) * (ep.VATAmount / 100) * ep.noQty,curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL
+                GROUP_CONCAT(ROUND(IFNULL(ep.exempt_vat_portion,0) * (ep.VATAmount / 100) * ep.noQty,curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL,
+                invoiceMaster.documentType as documentTypeID,
+                invoiceMaster.retentionPercentage
             FROM
                 erp_bookinvsuppmaster AS invoiceMaster
             LEFT JOIN erp_bookinvsupp_item_det details ON invoiceMaster.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
@@ -7779,15 +7691,15 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 invoiceMaster.rcmActivated AS rcmActivated,
                 ctm.countryName,
                 CONCAT(ep.itemPrimaryCode," | ",ep.itemDescription) AS lineItemNumber,
-                IFNULL((details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount)) * ep.unitCost, 0) AS value,
+                IFNULL((details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)), 0) AS value,
                 IFNULL(((ep.GRVcostPerUnitComRptCur * ep.noQty) + (ep.VATAmountRpt * ep.noQty)), 0) AS valueRpt,
-                IFNULL((ep.VATAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))), 0) AS VATAmount,
+                ((details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - (IF(details.exempt_vat_portion IS NULL, 0,details.exempt_vat_portion) * (details.VATAmount / 100) * details.grvRecivedQty)) AS VATAmount,
                 (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discount,
                 (ep.discountAmount * (details.supplierInvoAmount/(ep.unitCost - ep.discountAmount + ep.VATAmount))) AS discountAmount,
                 IFNULL(SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)), 0) AS bookingAmountTrans,
                 IFNULL((invoiceMaster.bookingAmountRpt), 0) AS bookingAmountRpt,
-                (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - ((SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) AS taxTotalAmount,
-                IFNULL((invoiceMaster.retentionAmount - invoiceMaster.retentionVatAmount),0) AS retentionAmount,      
+                (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage) - SUM(IFNULL((details.exempt_vat_portion)/100,0) * (details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) - ((SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage)) AS taxTotalAmount,       
+                IFNULL((SUM(details.supplierInvoAmount)/100*invoiceMaster.retentionPercentage) - (SUM(details.supplierInvoAmount/(100+ep.VATPercentage) * ep.VATPercentage)) / 100 * invoiceMaster.retentionPercentage,0) AS retentionAmount,
                 details.vatSubCategoryID,
                 (IF(details.exempt_vat_portion IS NULL, NULL,details.exempt_vat_portion) * (details.VATAmount / 100) * details.grvRecivedQty) AS exempt_vat_portion,
                 (
@@ -7815,7 +7727,9 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
                 GROUP_CONCAT(DISTINCT etvsc1.subCategoryDescription SEPARATOR ",") AS subCategoryDescriptionALL,
                 GROUP_CONCAT(DISTINCT CASE WHEN ep.VATPercentage != 0 THEN ep.VATPercentage ELSE NULL END SEPARATOR ",") AS VATPercentageALL,
                 GROUP_CONCAT(ep.itemPrimaryCode SEPARATOR ",") AS lineItemNumberALL,
-                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100) * details.grvRecivedQty,curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL
+                GROUP_CONCAT(ROUND(IFNULL(details.exempt_vat_portion,0) * (details.VATAmount / 100) * details.grvRecivedQty,curm.DecimalPlaces) SEPARATOR ",") AS exemptVATPortionALL,
+                invoiceMaster.documentType as documentTypeID,
+                invoiceMaster.retentionPercentage
             FROM
                 erp_bookinvsuppmaster AS invoiceMaster
             LEFT JOIN erp_bookinvsupp_item_det details ON invoiceMaster.bookingSuppMasInvAutoID = details.bookingSuppMasInvAutoID
@@ -7880,15 +7794,15 @@ SELECT
                    "Supplier PO Invoice - Logistics" AS documentType,
                    0 AS discountAmount,
                         (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AS rcmActivated,
-    0 AS grvDetailsID,
-    0 AS exempt_vat_portion,
-	SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage))  as bookingAmountTrans,
+                    0 AS grvDetailsID,
+                    0 AS exempt_vat_portion,
+                    SUM(details.supplierInvoAmount - (details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage))  as bookingAmountTrans,
 	                CASE 
                     WHEN pom.rcmActivated = 1 AND eb.retentionPercentage > 0 THEN
                         (SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)) 
                     ELSE
 	                    (SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage) -  (SUM(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)/100*eb.retentionPercentage)) 
-                END AS taxTotalAmount,
+                     END AS taxTotalAmount,
                 CASE 
                     WHEN pom.rcmActivated = 1 AND eb.retentionPercentage > 0 THEN
                         IFNULL((SUM(details.supplierInvoAmount)/100*eb.retentionPercentage) ,0) 
@@ -7917,7 +7831,9 @@ SELECT
                         ON ssa.supSubCategoryID = scs.supCategorySubID
                         AND scs.supMasterCategoryID = sbca.supCategoryMasterID
                     WHERE sbca.supplierID = sm.supplierCodeSystem
-     ) AS transcation
+     ) AS transcation,
+    eb.documentType as documentTypeID,
+    eb.retentionPercentage
 FROM erp_purchaseorderadvpayment
 LEFT JOIN erp_bookinvsupp_item_det details ON details.logisticID = erp_purchaseorderadvpayment.poAdvPaymentID 
 LEFT JOIN erp_grvmaster 
@@ -7944,7 +7860,8 @@ AND eb.cancelYN = 0
 AND eb.documentType =  0
 GROUP BY details.bookingSuppMasInvAutoID 
  ';
-        }else {
+        }
+        else {
             $querry2 = 'SELECT 
   eb.createdDateAndTime,
                 eb.companyID AS companyID,
@@ -7965,7 +7882,18 @@ GROUP BY details.bookingSuppMasInvAutoID
                 (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AS rcmActivated,
                 CONCAT(itemmaster.primaryCode," | ",itemmaster.itemDescription) AS lineItemNumber,
                 ctm.countryName,
-                eb.retentionAmount,
+                CASE 
+                    WHEN  (eb.rcmActivated = 1 OR pom.rcmActivated = 1) AND eb.retentionPercentage > 0 THEN
+                        ((details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)) 
+                    ELSE
+	                    ((details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage) -  ((details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)/100*eb.retentionPercentage)) 
+                END AS VATAmount,
+                CASE 
+                    WHEN pom.rcmActivated = 1 AND eb.retentionPercentage > 0 THEN
+                        IFNULL(((details.supplierInvoAmount)/100*eb.retentionPercentage) ,0) 
+                    ELSE
+                        IFNULL(((details.supplierInvoAmount)/100*eb.retentionPercentage) - ((details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage)/100*eb.retentionPercentage) ,0) 
+                END AS retentionAmount, 
                 erp_purchaseorderadvpayment.VATPercentage,
                 erp_purchaseorderadvpayment.currencyID,
     erp_purchaseorderadvpayment.poAdvPaymentID AS logisticID,
@@ -7974,8 +7902,7 @@ GROUP BY details.bookingSuppMasInvAutoID
     erp_tax_vat_sub_categories.mainCategory AS vatMasterCategoryID,
     erp_purchaseorderadvpayment.vatSubCategoryID,
     0 AS exempt_vat_portion,
-	(details.supplierInvoAmount-details.VATAmount)  as value,
-	details.VATAmount  as VATAmount,
+	(details.supplierInvoAmount-(details.supplierInvoAmount/(100+erp_purchaseorderadvpayment.VATPercentage) * erp_purchaseorderadvpayment.VATPercentage))  as value,
 	IFNULL(etvsc1.subCategoryDescription,"-") AS subCategoryDescription,
 	details.companyReportingER,
 	0 AS discount,
@@ -7994,7 +7921,9 @@ GROUP BY details.bookingSuppMasInvAutoID
                         ON ssa.supSubCategoryID = scs.supCategorySubID
                         AND scs.supMasterCategoryID = sbca.supCategoryMasterID
                     WHERE sbca.supplierID = sm.supplierCodeSystem
-     ) AS transcation
+     ) AS transcation,
+eb.documentType as documentTypeID,
+eb.retentionPercentage
 FROM erp_purchaseorderadvpayment
 LEFT JOIN erp_bookinvsupp_item_det details ON details.logisticID = erp_purchaseorderadvpayment.poAdvPaymentID 
 LEFT JOIN erp_grvmaster 
@@ -8019,6 +7948,7 @@ AND eb.companySystemID IN (' . implode(',', $companyID) . ')
 AND eb.approved = -1
 AND eb.cancelYN = 0
 AND eb.documentType =  0
+GROUP BY id
 ';
         }
 
@@ -8051,13 +7981,19 @@ AND eb.documentType =  0
 
                     if(!in_array($docCode,$adddedDocCode))
                     {
-                        $item->rowSpan = collect($mergedData)->where('DocumentCode',$docCode)->count();
-                        $item->retentionAmount = collect($mergedData)->where('DocumentCode',$docCode)->first()->retentionAmount;
+//                        $item->rowSpan = 1;
+                        if($item->documentTypeID == 0 || $item->documentTypeID == 2)
+                        {
+//                            $item->retentionAmount = 0;
+                        }else {
+//                            $item->retentionAmount = collect($mergedData)->where('DocumentCode',$docCode)->first()->retentionAmount + ((collect($mergedData)->where('DocumentCode',$docCode)->sum('VATAmount') / 100 ) * collect($mergedData)->where('DocumentCode',$docCode)->first()->retentionPercentage);
+                        }
+
                         $item->borderTop = true;
                         array_push($adddedDocCode,$docCode);
                     }else {
-                        $item->rowSpan = -1;
-                        $item->retentionAmount= null;
+//                        $item->rowSpan = -1;
+//                        $item->retentionAmount= null;
                         $item->borderTop = false;
                     }
                 }
@@ -8446,7 +8382,7 @@ AND eb.documentType =  0
                     $firstRef = array_values(array_filter(json_decode($selectedColumn->column_reference), function ($item) use ($documentSystemID) {
                         return $item->documentID == $documentSystemID;
                     }))[0];
-                    
+
                     if (isset($firstRef->table)) {
                         // 23 - vat category type this join is conditional join with it's subcategory id, conditon based on document type
                         if($selectedColumn->id == 23) {
@@ -8487,7 +8423,7 @@ AND eb.documentType =  0
             case 'FGL':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $db = isset($request->db) ? $request->db : ""; 
+                $db = isset($request->db) ? $request->db : "";
 
                 $employeeID = \Helper::getEmployeeSystemID();
                 GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
@@ -8497,7 +8433,7 @@ AND eb.documentType =  0
 
             case 'FTB':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $db = isset($request->db) ? $request->db : ""; 
+                $db = isset($request->db) ? $request->db : "";
 
                 $checkIsGroup = Company::find($request->companySystemID);
                 $companyName = $checkIsGroup->CompanyName;
@@ -8508,7 +8444,7 @@ AND eb.documentType =  0
                 $employeeID = \Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
-                
+
                 $output = $this->getTrialBalance($request);
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 if($companyCurrency) {
@@ -8555,16 +8491,16 @@ AND eb.documentType =  0
                 $dataArr = array(   'output'=>$output,
                                     'employeeData'=>$employeeData,
                                     'fromDate' => \Helper::dateFormat($request->fromDate),
-                                    'toDate' => \Helper::dateFormat($request->toDate), 
-                                    'companyLogo'=>$companyLogo, 
-                                    'companyName'=>$companyName, 
-                                    'totalOpeningBalanceRpt'=>$totalOpeningBalanceRpt, 
-                                    'totalOpeningBalanceLocal'=>$totalOpeningBalanceLocal, 
-                                    'totaldocumentLocalAmountDebit'=>$totaldocumentLocalAmountDebit, 
-                                    'totaldocumentRptAmountDebit'=>$totaldocumentRptAmountDebit, 
-                                    'totaldocumentLocalAmountCredit'=>$totaldocumentLocalAmountCredit, 
-                                    'totaldocumentRptAmountCredit'=>$totaldocumentRptAmountCredit, 
-                                    'totalClosingBalanceRpt'=>$totalClosingBalanceRpt, 
+                                    'toDate' => \Helper::dateFormat($request->toDate),
+                                    'companyLogo'=>$companyLogo,
+                                    'companyName'=>$companyName,
+                                    'totalOpeningBalanceRpt'=>$totalOpeningBalanceRpt,
+                                    'totalOpeningBalanceLocal'=>$totalOpeningBalanceLocal,
+                                    'totaldocumentLocalAmountDebit'=>$totaldocumentLocalAmountDebit,
+                                    'totaldocumentRptAmountDebit'=>$totaldocumentRptAmountDebit,
+                                    'totaldocumentLocalAmountCredit'=>$totaldocumentLocalAmountCredit,
+                                    'totaldocumentRptAmountCredit'=>$totaldocumentRptAmountCredit,
+                                    'totalClosingBalanceRpt'=>$totalClosingBalanceRpt,
                                     'totalClosingBalanceLocal'=>$totalClosingBalanceLocal,
                                     'requestCurrencyLocal'=>$requestCurrencyLocal,
                                     'requestCurrencyRpt'=>$requestCurrencyRpt,
@@ -8580,9 +8516,9 @@ AND eb.documentType =  0
 
                 return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
                 break;
-                
+
             case 'FCT':
-                
+
                 $companyName = $request->companySystemID[0]['CompanyName'];
                 $employeeID = \Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
@@ -8599,27 +8535,27 @@ AND eb.documentType =  0
                 } else {
                     $reportData['decimalPlaces'] = 0;
                 }
-        
+
                 if ($input['currency'] === 1) {
                     $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
                 } else {
                     $reportData['currencyCode'] = $reportData['companyCurrency']['reportingcurrency']['CurrencyCode'];
                 }
-        
+
                 $reportData['accountType'] = $input['accountType'];
-        
+
                 if (is_array($reportData['uncategorize']) && $reportData['columnTemplateID'] == null) {
                     $reportData['isUncategorize'] = false;
                 } else {
                     $reportData['isUncategorize'] = true;
                 }
-        
+
                 if ($reportData['columnTemplateID'] == 1 || $reportData['columnTemplateID'] == 2) {
                     $templateName = "print.finance_column_template_one";
                 } else {
                     $templateName = $reportData['accountType'] == 4? "print.equity_finance":"print.finance";
                 }
-        
+
                 $month = '';
                 if ($request->dateType != 1) {
                     $period = CompanyFinancePeriod::find($request->month);
@@ -8632,7 +8568,7 @@ AND eb.documentType =  0
                 $reportData['report_tittle'] = 'Finance Report';
                 $reportData['from_date'] = $input['fromDate'];
                 $reportData['to_date'] = $input['toDate'];
-        
+
                 if ($request->dateType == 1) {
                     $toDate = new Carbon($input['toDate']);
                     $reportData['to_date'] = $toDate->format('d/m/Y');
@@ -8781,7 +8717,7 @@ AND eb.documentType =  0
             $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
             $templateGroup = ', serviceLineID';
         }
-        
+
         // if (!$showZeroGL) {
         //     $whereNonZero = ' WHERE (' . join(' OR ', $whereQry) . ')';
         // }
@@ -8976,7 +8912,7 @@ GROUP BY
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
-        
+
 
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
@@ -10119,7 +10055,7 @@ GROUP BY
             $x = 0;
             foreach ($output as $val) {
                 $tem = (array)$val;
-                
+
                 $data[$x]['Document Number'] = $val->documentCode;
                 $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                 $data[$x]['Document Narration'] = $val->documentNarration;
@@ -10327,7 +10263,7 @@ GROUP BY
                 }
                 if ($val->shortCode == 'LYYTD') {
                     if ($request->accountType == 2) {
-                        
+
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
@@ -10358,7 +10294,7 @@ GROUP BY
 
                 if ($val->shortCode == 'CY-2') {
                     if ($request->accountType == 2) {
-                        
+
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(2)->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear(2)->format('Y-m-d');
@@ -10385,7 +10321,7 @@ GROUP BY
 
                 if ($val->shortCode == 'CY-3') {
                     if ($request->accountType == 2) {
-                        
+
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(3)->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear(3)->format('Y-m-d');
@@ -10412,7 +10348,7 @@ GROUP BY
 
                 if ($val->shortCode == 'CY-4') {
                     if ($request->accountType == 2) {
-                        
+
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear(4)->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear(4)->format('Y-m-d');
@@ -11800,9 +11736,9 @@ GROUP BY
             $reportData['to_date'] = Carbon::parse($period->dateTo)->format('d/m/Y');
             $reportData['from_date'] = Carbon::parse($period->dateFrom)->format('d/m/Y');
         }
-        
+
         $excelColumnFormat = ExcelColumnFormat::getExcelColumnFormat($reportData['reportData'],$request['reportID']);
-        
+
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                 $sheet->setColumnFormat($excelColumnFormat);
@@ -12137,7 +12073,7 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             return $this->sendError($exception->getMessage());
         }
     }
-    
+
 
     public function getGeneralLedgerRefAmount() {
         return DB::select("SELECT * FROM (SELECT
@@ -12319,20 +12255,20 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->with('total', $total)
-            ->filter(function ($query) { 
+            ->filter(function ($query) {
             })
             ->make(true);
     }
 
     public function reportTemplateEquityGLDrillDownQry(Request $request)
     {
-        
+
         $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
         $toDate = Carbon::parse($request->toDate)->endOfDay()->format('Y-m-d H:i:s');
-        $selectedGL = $request->details; 
-        $selectedColumn = $request->selectedColumn; 
+        $selectedGL = $request->details;
+        $selectedColumn = $request->selectedColumn;
         $currency = isset($request->currency[0]) ? $request->currency[0]: $request->currency;
-        $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';    
+        $amountColumn = ($currency == 1) ? 'documentLocalAmount' : 'documentRptAmount';
         $search = ($request->search['value'] ?? '');
         $output = DB::table('erp_generalledger')
                 ->selectRaw("documentSystemCode,documentCode,erp_generalledger.documentSystemID,documentDate,documentNarration,(-1 *$amountColumn) as `$selectedColumn` ,serviceline.ServiceLineDes,clientContractID,
@@ -12346,8 +12282,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                 ->whereBetween('documentDate', [$fromDate, $toDate])
                 ->where('erp_generalledger.companySystemID', $request->selectedCompany)
                 ->whereIn('chartOfAccountSystemID',$selectedGL);
-                
-                
+
+
                 if (!empty($search)) {
                     $search = strtolower($search);
                     $output->where(function ($query) use ($search) {
