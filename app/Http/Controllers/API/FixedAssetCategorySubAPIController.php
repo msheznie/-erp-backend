@@ -419,7 +419,14 @@ class FixedAssetCategorySubAPIController extends AppBaseController
                 ->make(true);
         }
         else {
-            $assetCategories = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->where('companySystemID', $selectedCompanyId)->where('faCatID', $id)->get();
+            $assetCategories = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)
+                ->where('companySystemID', $selectedCompanyId)
+                ->when(is_array($input['id']), function($query) use ($input) {
+                    return $query->whereIn('faCatID', $input['id']);
+                }, function($query) use ($id) {
+                    return $query->where('faCatID', $id);
+                })
+                ->get();
 
             return $this->sendResponse($assetCategories, 'Asset Sub Category fetched successfully');
         }

@@ -121,7 +121,13 @@ class AssetManagementReportAPIController extends AppBaseController
         $assets = FixedAssetMaster::where('confirmedYN',1)
             ->where('approved',-1)
             ->where('companySystemID',$companyID)
-            ->where('faCatID', $mainCategory)
+            ->when(is_array($mainCategory), 
+                function($query) use ($mainCategory) {
+                    return $query->whereIn('faCatID', collect($mainCategory)->pluck('id')->toArray());
+                }, 
+                function($query) use ($mainCategory) {
+                    return $query->where('faCatID', $mainCategory);
+                })
             ->where(function ($query) use ($subCategory) {
                 $query->whereIn('faSubCatID', $subCategory)
                     ->orWhereIn('faSubCatID2', $subCategory)
