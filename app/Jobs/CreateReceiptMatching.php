@@ -20,6 +20,7 @@ use App\Models\CreditNote;
 use App\Models\CustomerInvoice;
 use App\Services\API\ReceiptMatchingAPIService;
 use App\Traits\DocumentSystemMappingTrait;
+use GuzzleHttp\Client;
 
 class CreateReceiptMatching implements ShouldQueue
 {
