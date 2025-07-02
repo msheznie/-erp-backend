@@ -306,7 +306,10 @@ class CreateSupplierInvoice implements ShouldQueue
 
                         if ($checkStockReceive) {
                             $consoleJVData = [
-                                'data' => $checkStockReceive,
+                                'data' => [
+                                    'docData' => $checkStockReceive,
+                                    'from' => "AFTER_STOCK_RECEIVE",
+                                ],
                                 'type' => "STOCK_TRANSFER"
                             ];
 

@@ -17,6 +17,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $masterModel;
+    protected $otherData;
     protected $dataBase;
     private $tag = "account-receivable-ledger";
     /**
@@ -24,7 +25,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($masterModel, $dataBase)
+    public function __construct($masterModel, $dataBase, $otherData = null)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -38,6 +39,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
         $this->masterModel = $masterModel;
         $this->dataBase = $dataBase;
+        $this->otherData = $otherData;
     }
 
     /**
@@ -53,7 +55,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
         if (!empty($masterModel)) {
             DB::beginTransaction();
             try {
-                $res = AccountReceivableLedgerService::postLedgerEntry($masterModel);
+                $res = AccountReceivableLedgerService::postLedgerEntry($masterModel, $this->otherData);
                 if (!$res['status']) {
                     DB::rollback();
                     Log::error($res['error']['message']);

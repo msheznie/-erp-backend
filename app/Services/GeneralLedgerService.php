@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Log;
 
 class GeneralLedgerService
 {
-	public static function postGlEntry($masterModel, $dataBase)
+	public static function postGlEntry($masterModel, $dataBase, $otherData = null)
 	{		
         switch ($masterModel["documentSystemID"]) {
             case 3: // GRV
@@ -111,7 +111,7 @@ class GeneralLedgerService
             return $result;
         } 
         
-        $resultPosting = GeneralLedgerPostingService::postGeneralLedgerData($masterModel, $result['data']['finalData'], $result['data']['taxLedgerData'], $dataBase);
+        $resultPosting = GeneralLedgerPostingService::postGeneralLedgerData($masterModel, $result['data']['finalData'], $result['data']['taxLedgerData'], $dataBase, $otherData);
 
         if (!$resultPosting['status']) {
             return $resultPosting;
