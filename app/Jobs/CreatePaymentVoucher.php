@@ -1189,8 +1189,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
         // Validate GL Code
         if (isset($request['gl_account'])) {
-            $chartOfAccount = ChartOfAccount::where('primaryCompanySystemID', $companyId)
-                ->where('AccountCode',$request['gl_account'])
+            $chartOfAccount = ChartOfAccount::where('AccountCode',$request['gl_account'])
                 ->first();
 
             if ($chartOfAccount){
