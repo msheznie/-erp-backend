@@ -23,6 +23,7 @@ use App\Models\SupplierMaster;
 use App\Services\DocumentAutoApproveService;
 use App\Services\PaymentVoucherServices;
 use App\Traits\DocumentSystemMappingTrait;
+use App\Jobs\InitiateWebhook;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
@@ -44,13 +45,15 @@ class CreatePaymentVoucher implements ShouldQueue
     public $apiExternalKey;
     public $apiExternalUrl;
     public $authorization;
+    public $externalReference;
+    public $tenantUuid;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization)
+    public function __construct($input, $db, $apiExternalKey, $apiExternalUrl, $authorization, $externalReference = null, $tenantUuid = null)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -69,6 +72,8 @@ class CreatePaymentVoucher implements ShouldQueue
         $this->apiExternalKey = $apiExternalKey;
         $this->apiExternalUrl = $apiExternalUrl;
         $this->authorization = $authorization;
+        $this->externalReference = $externalReference;
+        $this->tenantUuid = $tenantUuid;
     }
 
     /**
@@ -408,26 +413,18 @@ class CreatePaymentVoucher implements ShouldQueue
         Log::error($returnData);
 
 
-        $apiExternalKey = $this->apiExternalKey;
-        $apiExternalUrl = $this->apiExternalUrl;
-        if($apiExternalKey != null && $apiExternalUrl != null) {
-            try {
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'Authorization' => 'ERP '.$apiExternalKey
-                ];
-                $res = $client->request('POST', $apiExternalUrl . '/payment-voucher/webhook', [
-                    'headers' => $headers,
-                    'json' => [
-                        'data' => $returnData
-                    ]
-                ]);
-                $json = $res->getBody();
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-        }
+        // Dispatch webhook job
+        $webhookPayload = ['data' => $returnData];
+        InitiateWebhook::dispatch(
+            $this->db,
+            $this->apiExternalKey,
+            $this->apiExternalUrl,
+            $this->input['webhook_url'],
+            $webhookPayload,
+            $this->externalReference,
+            $this->tenantUuid,
+            $this->input['company_id']
+        );
     }
 
     public static function validateAPIDate($date): bool {

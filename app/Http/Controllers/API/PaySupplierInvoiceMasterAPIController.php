@@ -3952,7 +3952,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 return $this->sendError("Company details not found");
             }
 
-            CreatePaymentVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            // Get tracking parameters from ThirdPartyApiLogger middleware
+            $externalReference = $request->get('external_reference');
+            $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
+
+            CreatePaymentVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
 
             return $this->sendResponse([],"Payment voucher request has been successfully queued for processing!");
         }

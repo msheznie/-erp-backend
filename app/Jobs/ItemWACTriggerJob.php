@@ -47,7 +47,7 @@ class ItemWACTriggerJob implements ShouldQueue
 
         CommonJobService::db_switch($this->tenantDb);
 
-        $integrationKeys = ThirdPartyIntegrationKeys::where('api_external_key', '!=', null)->where('api_external_url', '!=', null)->where('third_party_system_id', 2)->get();
+        $integrationKeys = ThirdPartyIntegrationKeys::where('api_external_key', '!=', null)->where('api_external_url', '!=', null)->where('third_party_system_id', 2)->where('status', 'Active')->get();
 
         foreach ($integrationKeys as $integrationKey) {
 

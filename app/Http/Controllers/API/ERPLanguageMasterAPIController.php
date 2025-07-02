@@ -325,7 +325,7 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $record->save();
 
         $db = isset($input['db']) ? $input['db'] : "";
-        $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
+        $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->where('status', 'Active')->first();
 
         if(!empty($thirdParty)){
             UserWebHook::dispatch($db, $input['employeeID'], $thirdParty->api_external_key, $thirdParty->api_external_url);

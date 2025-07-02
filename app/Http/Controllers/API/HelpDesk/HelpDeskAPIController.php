@@ -30,7 +30,7 @@ class HelpDeskAPIController extends AppBaseController
                 $ids = is_array($request->employeeSystemID)? $request->employeeSystemID :
                     [$request->employeeSystemID];
                 $db = isset($request->db) ? $request->db : "";
-                $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
+                $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->where('status', 'Active')->first();
                 DB::commit();
 
                 if(!empty($thirdParty)){
@@ -76,7 +76,7 @@ class HelpDeskAPIController extends AppBaseController
     public function verifyIntegration(){
         $data = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
-        })->first();
+        })->where('status', 'Active')->first();
 
         if(empty($data)){
             $msg = 'The third party integration not available';
