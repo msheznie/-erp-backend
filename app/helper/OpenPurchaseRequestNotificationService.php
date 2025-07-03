@@ -25,10 +25,10 @@ class OpenPurchaseRequestNotificationService
         Log::useFiles($log_file);
 
         // Check if today is the last day of the month
-        // if (!$this->isLastDayOfMonth()) {
-        //     // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
-        //     return;
-        // }
+        if (!$this->isLastDayOfMonth()) {
+            // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
+            return;
+        }
 
         // Get open purchase requests
         $openPRs = $this->getOpenPurchaseRequests();
