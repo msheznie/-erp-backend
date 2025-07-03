@@ -1610,7 +1610,7 @@ class TenderMasterRepository extends BaseRepository
             $data['confirmedEditRequest'] = false;
         }
 
-        if($data['enableChangeRequest']){
+        if($data['enableChangeRequest'] || $data['confirmedEditRequest']){
             unset($data['master']['confirmed_by']);
             $data['master']['confirmed_date'] = null;
         }
