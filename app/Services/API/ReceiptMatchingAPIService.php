@@ -51,14 +51,22 @@ class ReceiptMatchingAPIService extends AppBaseController
 
         if ($input['matchType'] == 1 || $input['matchType'] == 3) { // 1 - unallocation; 3 - advance receipt
 
-           if($input['tableType'] == 1) {
-            
-               $directReceiptDetails = DirectReceiptDetail::where('directReceiptAutoID', $input['custReceivePaymentAutoID'])->first();
-           }
-            if($input['tableType'] == 2) {
-
-                $directReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->first();
+            if($input['isAutoCreateDocument']){
+                if($input['tableType'] == 1) {
+                    $directReceiptDetails = DirectReceiptDetail::where('directReceiptAutoID', $input['custReceivePaymentAutoID'])->first();
+                }
+                if($input['tableType'] == 2) {
+                    $directReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->first();
+                }            
+            }else{
+                if($input['tableType'] == 1) {
+                    $directReceiptDetails = DirectReceiptDetail::where('directReceiptDetailsID', $input['custReceivePaymentAutoID'])->first();
+                }
+                 if($input['tableType'] == 2) {
+                     $directReceiptDetails = AdvanceReceiptDetails::where('advanceReceiptDetailAutoID', $input['custReceivePaymentAutoID'])->first();
+                 }            
             }
+
 
             if (empty($directReceiptDetails)) {
                 return [
@@ -405,14 +413,18 @@ class ReceiptMatchingAPIService extends AppBaseController
                 }
         }
         $matchDocumentMasters = MatchDocumentMaster::create($input);
-        if($input['isAutoCreateDocument']){
+        if($matchDocumentMasters){
             return [
                 'status' => true,
                 'data' => $matchDocumentMasters->refresh()->toArray(),
                 'message' => 'Receipt Matching saved successfully'
             ];
         } else {
-            return $matchDocumentMasters;
+            return [
+                'status' => false,
+                'message' => 'Receipt Matching not saved',
+                'type' => []
+            ];
         }
 
 

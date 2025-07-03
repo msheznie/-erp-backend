@@ -560,7 +560,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
             $input['isAutoCreateDocument'] = false;
             $matchDocumentMasters = \App\Services\API\ReceiptMatchingAPIService::createReceiptMatching($input);
-            return $this->sendResponse($matchDocumentMasters, 'Match Document Master saved successfully');
+            if($matchDocumentMasters['status'] == true){
+                return $this->sendResponse($matchDocumentMasters['data'], 'Match Document Master saved successfully');
+            }else{
+                return $this->sendError($matchDocumentMasters['message'], 500);
+            }
 
         }
 
