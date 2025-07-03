@@ -1205,7 +1205,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                         if ($chartOfAccountAssigned->controlAccountsSystemID == 1) {
                                             $errorData[] = [
                                                 'field' => "gl_account",
-                                                'message' => ["Selected GL code is of type 'Income' and is not allowed for this transaction."]
+                                                'message' => ["Selected GL code is of type Income and is not allowed for this transaction."]
                                             ];
                                         }
                                     }
