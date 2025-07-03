@@ -674,35 +674,20 @@ class CreateExcel
                 ]);
 
                 $rowNum = 1;
-                $knownHeaders = [
-                    'PR Code',
-                    'Category',
-                    'Segment',
-                    'Location',
-                    'Priority',
-                    'Buyer',
-                    'Budget Year',
-                    'Comments',
-                    'Internal Note',
-                    'Created By',
-                    'Created At',
-                    'Status',
-                    'Details'
-                ];
                   
                 $sheet->setAutoSize(true);
 
 
                 $columnWidths = [
-                    'A' => 25,
-                    'B' => 13, 
+                    'A' => 25.80,
+                    'B' => 12.80, 
                     'C' => 13, 
                     'D' => 13, 
                     'E' => 13, 
                     'F' => 13, 
                     'G' => 13, 
-                    'H' => 13, 
-                    'I' => 13, 
+                    'H' => 15.80, 
+                    'I' => 15.80, 
                     'J' => 13, 
                     'K' => 13, 
                     'L' => 13, 
@@ -718,20 +703,11 @@ class CreateExcel
                 }
 
                 foreach ($data as $row) {
+                    $isHeader = isset($row['IsHeader']) ? $row['IsHeader'] : false;
+                    unset($row['IsHeader']);
                     $paddedRow = array_pad($row, $maxColumns, '');
                     $sheet->appendRow($paddedRow);
-
-                    $isHeader = false;
-                    foreach ($paddedRow as $cell) {
-                        $clean = (trim($cell));
-                        foreach ($knownHeaders as $keyword) {
-                            if ($clean === $keyword || strpos($clean, $keyword) !== false) {
-                                $isHeader = true;
-                                break 2;
-                            }
-                        }
-                    }
-
+                    
                     if ($isHeader) {
                         $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
                         $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) {
