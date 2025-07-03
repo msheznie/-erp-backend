@@ -135,7 +135,7 @@ class PurchaseRequestRepository extends BaseRepository
 
         }, 'financeCategory' => function ($query) {
 
-        }, 'location_pdf','priority_pdf']);
+        }, 'location_pdf','priority_pdf','currency_by']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -208,7 +208,8 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.manuallyClosed',
                 'erp_purchaserequest.prClosedYN',
                 'erp_purchaserequest.budgetYear',
-                'erp_purchaserequest.isBulkItemJobRun'
+                'erp_purchaserequest.isBulkItemJobRun',
+                'erp_purchaserequest.currency'
             ]);
 
 
@@ -258,11 +259,11 @@ class PurchaseRequestRepository extends BaseRepository
         $this->data = [];
         $dataSet = $dataSet->get();
         foreach ($dataSet as $val) {
-
+            $currency = $val->currency_by ? $val->currency_by->CurrencyCode : '';
             $this->mainHeader();
             $this->headerDetails($val);
             $this->data[] = [];
-            $this->detailDetails($val->details);
+            $this->detailDetails($val->details,$currency);
             $this->data[] = [];
 
         }
@@ -272,6 +273,7 @@ class PurchaseRequestRepository extends BaseRepository
 
     private function mainHeader() {
         $this->data[] = [
+            'IsHeader' => true,
             'PR Code' => 'PR Code',
             'Category' => 'Category',
             'Segment' => 'Segment',
@@ -283,12 +285,13 @@ class PurchaseRequestRepository extends BaseRepository
             'Internal Note' => 'Internal Note',
             'Created By' => 'Created By',
             'Created At' => 'Created At',
-            'Status' => 'Status',
+            'Status' => 'Status'
         ];
     }
 
     private function headerDetails($val) {
         $this->data[] = [
+            'IsHeader' => false,
             'PR Code' => $val->purchaseRequestCode,
             'Category' => $val->finance_category ? $val->finance_category : '',
             'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
@@ -300,28 +303,34 @@ class PurchaseRequestRepository extends BaseRepository
             'Internal Note' => $val->internalNotes,
             'Created By' => $val->created_by? $val->created_by->empName : '',
             'Created At' =>\Helper::dateFormat($val->createdDateTime),
-            'Status' => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN),
+            'Status' => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
         ];
     }
 
-    private function detailDetails($val) {
+    private function detailDetails($val,$currency) {
          if (!empty($val) && count($val) > 0) {
             $headerOne ['Details'] = 'Details';
+            $headerOne ['IsHeader'] = true;
 
             $this->data[] = $headerOne;
             $header = [];
+            $header ['IsHeader'] = true;
             $header['item Code'] = 'Item Code';
             $header['Description'] = 'Item Description';
             $header['UOM'] = 'UOM';
             $header['Qty Requested'] = 'Qty Requested';
-            $header['Estimated Unit Cost'] = 'Estimated Unit Cost';
+            $header['Estimated Unit Cost'] = 'Estimated Unit Cost (' . $currency . ')';
             $header['Total'] = 'Total';
             $header['Qty On Order'] = 'Qty On Order';
-            $header['Qty On Hand'] = 'Qty On Hand';
+            $header['Qty in Hand'] = 'Qty in Hand';
             $this->data[] = $header;
+
+            $totalQtyRequested = 0;
+            $totalCost = 0;
 
             foreach ($val as $detail) {
                 $row = [];
+                $row['IsHeader'] =false;
                 $row['item Code'] = $detail->itemPrimaryCode ?? '';
                 $row['Description'] = $detail->itemDescription ?? '';
                 $row['UOM'] = $detail->uom->UnitDes ?? '';
@@ -329,9 +338,23 @@ class PurchaseRequestRepository extends BaseRepository
                 $row['Estimated Unit Cost'] = $detail->estimatedCost ?? '';
                 $row['Total'] = $detail->totalCost ?? '';
                 $row['Qty On Order'] = $detail->quantityOnOrder ?? '';
-                $row['Qty On Hand'] = $detail->quantityInHand ?? '';
+                $row['Qty in Hand'] = $detail->quantityInHand ?? '';
                 $this->data[] = $row;
+                $totalQtyRequested += $detail->quantityRequested;
+                $totalCost += $detail->estimatedCost;
             }
+            $totalRow = [
+                'IsHeader' => true,
+                'item Code' => '', 
+                'Description' => '',
+                'UOM' => 'Total',
+                'Qty Requested' => $totalQtyRequested,
+                'Estimated Unit Cost' => $totalCost,
+                'Total' => '',
+                'Qty On Order' => '',
+                'Qty in Hand' => ''
+            ];
+        $this->data[] = $totalRow;
             $this->data[] = [];
          }
     }
