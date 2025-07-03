@@ -1614,7 +1614,7 @@ WHERE
         }
 
         $documentAutoId = $id;
-        $documentSystemID = $masterData->documentSystemiD;
+        $documentSystemID = $masterData->documentSystemID;
 
         $checkBalance = GeneralLedgerService::validateDebitCredit($documentSystemID, $documentAutoId);
         if (!$checkBalance['status']) {
@@ -1623,14 +1623,14 @@ WHERE
             $allowValidateDocumentAmend = true;
         }
 
-        if($masterData->approved == -1){
+        if($masterData->approvedYN == -1){
             $validateFinanceYear = ValidateDocumentAmend::validateFinanceYear($documentAutoId,$documentSystemID);
             if(isset($validateFinanceYear['status']) && $validateFinanceYear['status'] == false){
                 if(isset($validateFinanceYear['message']) && $validateFinanceYear['message']){
                     return $this->sendError($validateFinanceYear['message']);
                 }
             }
-            
+
             $validateFinancePeriod = ValidateDocumentAmend::validateFinancePeriod($documentAutoId,$documentSystemID);
             if(isset($validateFinancePeriod['status']) && $validateFinancePeriod['status'] == false){
                 if(isset($validateFinancePeriod['message']) && $validateFinancePeriod['message']){
