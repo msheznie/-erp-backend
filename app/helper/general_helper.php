@@ -3763,10 +3763,12 @@ class Helper
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         }
                     } else {
+
+
                         if ($trasToRptER > 1) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
-                            $reportingAmount = $transactionAmount / $trasToRptER;
+                            $reportingAmount = $trasToRptER != 0 ? $transactionAmount / $trasToRptER : 1;
                         }
                     }
                 }
@@ -3784,7 +3786,7 @@ class Helper
                         if ($trasToLocER > 1) {
                             $localAmount = $transactionAmount * $trasToLocER;
                         } else {
-                            $localAmount = $transactionAmount / $trasToLocER;
+                            $localAmount = $trasToLocER  != 0 ? $transactionAmount / $trasToLocER : 1;
                         }
                     }
                 }
@@ -3812,7 +3814,7 @@ class Helper
                         if ($transToBankER > 1) {
                             $bankAmount = $transactionAmount * $transToBankER;
                         } else {
-                            $bankAmount = $transactionAmount / $transToBankER;
+                            $bankAmount = $transToBankER != 0 ? $transactionAmount / $transToBankER : 1;
                         }
                     }
                 }
@@ -3837,7 +3839,7 @@ class Helper
                     if ($transToDocER > 1) {
                         $documentAmount = $transactionAmount * $transToDocER;
                     } else {
-                        $documentAmount = $transactionAmount / $transToDocER;
+                        $documentAmount = $transToDocER != 0 ? $transactionAmount / $transToDocER : 1;
                     }
                 }
             }
