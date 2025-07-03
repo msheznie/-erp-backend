@@ -209,7 +209,8 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.prClosedYN',
                 'erp_purchaserequest.budgetYear',
                 'erp_purchaserequest.isBulkItemJobRun',
-                'erp_purchaserequest.currency'
+                'erp_purchaserequest.currency',
+                'erp_purchaserequest.buyerEmpSystemID'
             ]);
 
 
@@ -237,7 +238,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
                 $data[$x]['Location'] = $val->location_pdf ? $val->location_pdf->locationName : '';
                 $data[$x]['Priority'] = $val->priority_pdf? $val->priority_pdf->priorityDescription : '';
-                $data[$x]['Buyer'] = $val->buyerEmpName;
+                $data[$x]['Buyer'] = ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '';
                 $data[$x]['Budget Year'] = $val->budgetYear;
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Internal Note'] = $val->internalNotes;
@@ -297,7 +298,7 @@ class PurchaseRequestRepository extends BaseRepository
             'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
             'Location' => $val->location_pdf ? $val->location_pdf->locationName : '',
             'Priority' => $val->priority_pdf ? $val->priority_pdf->priorityDescription : '',
-            'Buyer' => $val->buyerEmpName,
+            'Buyer' => ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '',
             'Budget Year' => $val->budgetYear,
             'Comments' => $val->comments,
             'Internal Note' => $val->internalNotes,
