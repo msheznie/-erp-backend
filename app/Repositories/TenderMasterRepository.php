@@ -2426,4 +2426,15 @@ class TenderMasterRepository extends BaseRepository
         }
         return ['success' => true, 'message' => 'Valid Go No Go and Technical Evaluation'];
     }
+    public function getEvaluationCriteriaForTenderConfirm($tenderMasterID, $editOrAmend, $versionID){
+        try{
+            $evaluationData = $editOrAmend ?
+                EvaluationCriteriaDetailsEditLog::getEvaluationCriteriaDetailsList($tenderMasterID, 2, $versionID) :
+                EvaluationCriteriaDetails::getEvaluationCriteriaDetailsList($tenderMasterID, 2);
+
+            return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $evaluationData];
+        } catch(\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+        }
+    }
 }

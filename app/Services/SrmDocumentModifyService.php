@@ -69,7 +69,7 @@ class SrmDocumentModifyService
             'amendment' => $conditions['checkOpeningDate'] ?? false,
             'enableChangeRequest' => self::enableChangeRequest($documentModifyRequest, $conditions),
             'requestedToEditAmend' => self::getRequestedToEditAmend($documentModifyRequest, $conditions),
-            'confirmedEditRequest' => !empty($documentModifyRequest) && !$conditions['checkOpeningDate'] && $conditions['checkClosingDate']
+            'confirmedEditRequest' => !empty($documentModifyRequest) && $documentModifyRequest->modify_type == 1 &&  $conditions['checkOpeningDate'] && $conditions['checkClosingDate']
         ];
     }
     public static function getRequestType($documentModifyRequest, $conditions)

@@ -1287,13 +1287,13 @@ class TenderMasterAPIController extends AppBaseController
                             $tenderMaster->save();
                         }
 
-                        $techCriteria = EvaluationCriteriaDetails::with(['child' => function ($q) {
-                            $q->with(['child' => function ($q) {
-                                $q->with(['child' => function ($q) {
-                                    $q->with(['evaluation_criteria_type', 'tender_criteria_answer_type']);
-                                }]);
-                            }]);
-                        }])->where('tender_id', $input['id'])->where('level', 1)->where('critera_type_id', 2)->get();
+                        $getTechCriteria = $this->tenderMasterRepository->getEvaluationCriteriaForTenderConfirm(
+                            $input['id'], $editOrAmend, $versionID
+                        );
+                        if(!$getTechCriteria['success']){
+                            return $this->sendError($getTechCriteria['message']);
+                        }
+                        $techCriteria = $getTechCriteria['data'];
 
                         if (!empty($techCriteria)) {
                             foreach ($techCriteria as $level1) {

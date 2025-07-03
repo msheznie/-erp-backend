@@ -397,11 +397,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
                 if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
                     if($input['yes_value'] > $input['no_value']){
-                        $data['max_value'] = $input['yes_value'];
-                        $data['min_value'] = $input['no_value'];
+                        $data['max_value'] = $input['yes_value'] ?? 0;
+                        $data['min_value'] = $input['no_value'] ?? 0;
                     }else{
-                        $data['max_value'] = $input['no_value'];
-                        $data['min_value'] = $input['yes_value'];
+                        $data['max_value'] = $input['no_value'] ?? 0;
+                        $data['min_value'] = $input['yes_value'] ?? 0;
                     }
                 }
 
@@ -418,14 +418,14 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                     if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
                         $datayes['criteria_detail_id'] = $editOrAmend ? $result['amd_id'] : $result['id'];
                         $datayes['label'] = $input['yes_label'];
-                        $datayes['score'] = $input['yes_value'];
+                        $datayes['score'] = $input['yes_value'] ?? 0;
                         $datayes['created_by'] = $employee->employeeSystemID;
                         $datayes['fromTender'] = $fromTender;
                         $this->evaluationCriteriaDetailsRepository->createCriteriaScoreConfig($datayes, $editOrAmend, $versionID);
 
                         $datano['criteria_detail_id'] = $editOrAmend ? $result['amd_id'] : $result['id'];
                         $datano['label'] = $input['no_label'];
-                        $datano['score'] = $input['no_value'];
+                        $datano['score'] = $input['no_value'] ?? 0;
                         $datano['created_by'] = $employee->employeeSystemID;
                         $datano['fromTender'] = $fromTender;
                         $this->evaluationCriteriaDetailsRepository->createCriteriaScoreConfig($datano, $editOrAmend, $versionID);
@@ -522,7 +522,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             'parent_id' => $parentId,
             'level' => $level,
             'critera_type_id' => $result->critera_type_id,
-            'max_value' => $result->max_value,
+            'min_value' => $result->min_value ?? 0,
+            'max_value' => $result->max_value ?? 0,
             'sort_order' => $result->sort_order,
             'evaluation_criteria_master_id' => $evaluationCriteriaMasterId,
         ];
