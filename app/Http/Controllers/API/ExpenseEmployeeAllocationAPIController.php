@@ -416,23 +416,39 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
     public function getEmployeeRecentAllocation(Request $request) {
 
         $request->validate([
-            'employeeSystemID' => 'required',
+            'employeeSystemID' => 'required_if:isAsset,false',
             'documentSystemID' => 'required',
-            'itemCodeSystem' => 'required'
+            'itemCodeSystem' => 'required',
+            'isAsset' => 'required',
+            'assetID' => 'required_if:isAsset,true'
         ]);
 
         $input = $request->all();
+        $input['isAsset'] = filter_var($input['isAsset'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
-        $data = DB::table('expense_employee_allocation')
-            ->join('erp_itemissuedetails', 'expense_employee_allocation.documentDetailID', '=', 'erp_itemissuedetails.itemIssueDetailID')
-            ->where('expense_employee_allocation.employeeSystemID', $input['employeeSystemID'])
-            ->where('expense_employee_allocation.documentSystemID', $input['documentSystemID'])
-            ->where('erp_itemissuedetails.itemCodeSystem', $input['itemCodeSystem'])
-            ->where('expense_employee_allocation.documentSystemCode', '!=', $input['documentSystemCode'])
-            ->select('expense_employee_allocation.created_at', 'expense_employee_allocation.assignedQty', 'erp_itemissuedetails.itemIssueCode')
-            ->orderBy('erp_itemissuedetails.itemIssueAutoID', 'desc')
-            ->take(3)
-            ->get();
+        if ($input['isAsset']) {
+            $data = DB::table('expense_asset_allocation')
+                ->join('erp_itemissuedetails', 'expense_asset_allocation.documentDetailID', '=', 'erp_itemissuedetails.itemIssueDetailID')
+                ->where('expense_asset_allocation.assetID', $input['assetID'])
+                ->where('expense_asset_allocation.documentSystemID', $input['documentSystemID'])
+                ->where('erp_itemissuedetails.itemCodeSystem', $input['itemCodeSystem'])
+                ->where('expense_asset_allocation.documentSystemCode', '!=', $input['documentSystemCode'])
+                ->select('expense_asset_allocation.created_at', 'expense_asset_allocation.allocation_qty as assignedQty', 'erp_itemissuedetails.itemIssueCode')
+                ->orderBy('erp_itemissuedetails.itemIssueAutoID', 'desc')
+                ->take(3)
+                ->get();
+        } else {
+            $data = DB::table('expense_employee_allocation')
+                ->join('erp_itemissuedetails', 'expense_employee_allocation.documentDetailID', '=', 'erp_itemissuedetails.itemIssueDetailID')
+                ->where('expense_employee_allocation.employeeSystemID', $input['employeeSystemID'])
+                ->where('expense_employee_allocation.documentSystemID', $input['documentSystemID'])
+                ->where('erp_itemissuedetails.itemCodeSystem', $input['itemCodeSystem'])
+                ->where('expense_employee_allocation.documentSystemCode', '!=', $input['documentSystemCode'])
+                ->select('expense_employee_allocation.created_at', 'expense_employee_allocation.assignedQty', 'erp_itemissuedetails.itemIssueCode')
+                ->orderBy('erp_itemissuedetails.itemIssueAutoID', 'desc')
+                ->take(3)
+                ->get();
+        }
 
         return $this->sendResponse($data, 'Data retrieved successfully');
     }
