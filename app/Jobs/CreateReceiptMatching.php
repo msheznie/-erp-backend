@@ -18,6 +18,7 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Jobs\InitiateWebhook;
 use App\Models\CreditNote;
+use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoice;
 use App\Services\API\ReceiptMatchingAPIService;
 use App\Traits\DocumentSystemMappingTrait;
@@ -178,24 +179,45 @@ class CreateReceiptMatching implements ShouldQueue
 
         if (!empty($errors)) return ['errors' => $errors, 'data' => $data];
 
-        // Customer validation
-        $customer = CustomerMaster::where(function($q) use ($customerCode) {
-            $q->where('CutomerCode', $customerCode)->orWhere('customer_registration_no', $customerCode);
-        })->first();
 
-        if (!$customer) {
-            $errors[] = 'Selected customer is not available in the system';
-        } else {
-            if ($customer->isCustomerActive != 1) {
-                $errors[] = 'Selected customer is not active.';
-            } else{
-                if ($customer->approvedYN != 1) {
-                    $errors[] = 'Selected customer is not approved.';
+        if (isset($customerCode)) {
+            $approvedCustomer = CustomerMaster::where(function ($query) use ($customerCode) {
+                                                    $query->where('CutomerCode', $customerCode)
+                                                        ->orWhere('customer_registration_no', $customerCode);
+                                                })
+                                                ->first();
+
+            if(!$approvedCustomer){
+                $errors[] = [
+                    'field' => "customer",
+                    'message' => ["Selected Customer is not available in the system"]
+                ];
+            }
+
+            if ($approvedCustomer) {
+                if($approvedCustomer->approvedYN == 0) {
+                    $errors[] = [
+                        'field' => "customer",
+                        'message' => ["Selected Customer is not approved"]
+                    ];
                 } else {
-                    if ($companySystemId && $customer->primaryCompanySystemID != $companySystemId) {
-                        $errors[] = 'Selected customer is not assigned to the company.';
+                    $customer = CustomerAssigned::Where('CutomerCode',$approvedCustomer->CutomerCode)
+                    ->where('companySystemID', $companySystemId)
+                    ->where('isAssigned', -1)
+                    ->first();
+    
+                    if(!$customer){
+                        $errors[] = [
+                            'field' => "customer",
+                            'message' => ["Selected Customer is not assigned to the company"]
+                        ];
                     } else {
-                        $data['customerCodeSystem'] = $customer->customerCodeSystem;
+                        if($customer->isActive == 0) {
+                            $errors[] = [
+                                'field' => "customer",
+                                'message' => ["Selected Customer is not active"]
+                            ];
+                        }
                     }
                 }
             }
