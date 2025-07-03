@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\CommonJobService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -67,6 +68,7 @@ class CreateReceiptMatching implements ShouldQueue
     public function handle()
     {
         \Log::useFiles(storage_path() . '/logs/create_receipt_matching.log');
+        CommonJobService::db_switch($this->db);
 
         $input = $this->input;
         $externalReference = $this->externalReference;
