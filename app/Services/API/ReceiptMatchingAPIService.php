@@ -448,12 +448,10 @@ class ReceiptMatchingAPIService extends AppBaseController
 
         //Find the source document (Invoice, Direct Invoice, or Credit Note) to get all details from.
         $sourceDocument = null;
-        if ($arLedger->documentSystemID == 2) { // 2 = Customer Invoice
+        if ($arLedger->documentSystemID == 20) { // 2 = Customer Invoice
             $sourceDocument = CustomerInvoice::where('custInvoiceDirectAutoID', $arLedger->documentCodeSystem)->first();
-        } elseif ($arLedger->documentSystemID == 21) { // 21 = Credit Note
+        } elseif ($arLedger->documentSystemID == 19) { // 21 = Credit Note
             $sourceDocument = CreditNote::where('creditNoteAutoID', $arLedger->documentCodeSystem)->first();
-        } elseif ($arLedger->documentSystemID == 20) { // 20 = Customer Invoice Direct
-            $sourceDocument = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $arLedger->documentCodeSystem)->first();
         }
 
         if (!$sourceDocument) {
@@ -496,7 +494,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $detail->receiveAmountTrans = $input['receiveAmountTrans'];
 
         // Use the helper to calculate local/rpt amounts for the received value
-        $conversionAmount = Helper::convertAmountToLocalRpt(205, $detail->matchingDocID, $detail->receiveAmountTrans);
+        $conversionAmount = Helper::convertAmountToLocalRpt(204, $master->matchDocumentMasterAutoID, $detail->receiveAmountTrans);
         $detail->receiveAmountLocal = Helper::roundValue($conversionAmount["localAmount"]);
         $detail->receiveAmountRpt = Helper::roundValue($conversionAmount["reportingAmount"]);
 
@@ -551,7 +549,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (isset($detail->VATPercentage) && $detail->VATPercentage > 0) {
                  $vatAmount = ($detail->receiveAmountTrans * $detail->VATPercentage) / (100 + $detail->VATPercentage);
                  $detail->VATAmount = Helper::roundValue($vatAmount);
-                 $conversionAmount = Helper::convertAmountToLocalRpt(205, $detail->matchingDocID, $vatAmount);
+                 $conversionAmount = Helper::convertAmountToLocalRpt(204, $detail->matchingDocID, $vatAmount);
                  $detail->VATAmountLocal = Helper::roundValue($conversionAmount["localAmount"]);
                  $detail->VATAmountRpt = Helper::roundValue($conversionAmount["reportingAmount"]);
             } else {
