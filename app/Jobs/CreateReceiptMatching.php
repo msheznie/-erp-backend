@@ -662,10 +662,19 @@ class CreateReceiptMatching implements ShouldQueue
         $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
 
         $totalMatchingAmount = 0;
-        foreach ($details as $i => $detail) {
+        foreach ($details as $index => $detail) {
             $err = [];
             $bookingInvCode = $detail['bookingInvCode'] ?? null;
             $matchingAmount = $detail['matchingAmount'] ?? null;
+
+            // Validate required fields
+            if (empty($bookingInvCode)) {
+                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Booking Invoice Code is required.']];
+            }
+            if (empty($matchingAmount)) {
+                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Matching Amount is required.']];
+            }
+
             if ($bookingInvCode) {
                     $invoice = CustomerInvoice::where('bookingInvCode', $bookingInvCode)
                                                 ->where('companySystemID', $companySystemID)
@@ -688,9 +697,9 @@ class CreateReceiptMatching implements ShouldQueue
                                     }
                                 }
                             }
+                        } else {
+                            $err[] = "Customer invoice document code not matching with system.";
                         }
-                    } else {
-                        $err[] = "Customer invoice document code not matching with system.";
                     }
                
 
@@ -700,7 +709,7 @@ class CreateReceiptMatching implements ShouldQueue
             }
 
             if (!empty($err)) {
-                $detailsErrors[] = ['detailsIndex' => $i, 'errors' => $err];
+                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => $err];
             }
         
 
@@ -738,7 +747,7 @@ class CreateReceiptMatching implements ShouldQueue
                 throw new \Exception($masterInsert['message'] ?? 'Failed to create receipt matching master record.');
             } else {
                     $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
-                    foreach ($details as $detail) {
+                    foreach ($details as $index => $detail) {
             
                         $invoice = AccountsReceivableLedger::where('documentCode', $detail['bookingInvCode'])->first();
             
