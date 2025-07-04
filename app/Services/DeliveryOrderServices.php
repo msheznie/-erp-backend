@@ -10,6 +10,8 @@ use App\Models\StockTransfer;
 use App\Models\StockAdjustment;
 use App\Models\StockCount;
 use App\Models\ErpItemLedger;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\SalesReturnDetail;
 
 class DeliveryOrderServices
 {
@@ -21,12 +23,35 @@ class DeliveryOrderServices
     public function amendDeliveryOrder($orderId,$masterData,$input,$employee)
     {
         $emails = array();
-        if(DeliveryOrder::where('deliveryOrderID',$orderId)->where('selectedForCustomerInvoice',-1)->exists()){
-            return ['status' => false,'message'=>'You cannot return back to amend this document. It is added to a customer invoice'];
+        $codes = [];
+        if(DeliveryOrder::where('deliveryOrderID',$orderId)->where('invoiceStatus','!=',0)->exists()){
+                $items = CustomerInvoiceItemDetails::where('deliveryOrderID', $orderId)->with(['master' => function($query) {
+                              $query->select('custInvoiceDirectAutoID', 'bookingInvCode');
+                        }])->select('custInvoiceDirectAutoID','deliveryOrderID')->get();
+
+                
+                foreach ($items as $item) {
+                    if (isset($item->master->bookingInvCode)) {
+                        $codes[] = $item->master->bookingInvCode . ' - Customer Invoice';
+                    }
+                }
         }
 
-        if(DeliveryOrder::where('deliveryOrderID',$orderId)->where('selectedForSalesReturn',-1)->exists()){
-            return ['status' => false,'message'=>'You cannot return back to amend this document. It is added to a sales return'];
+        if(DeliveryOrder::where('deliveryOrderID',$orderId)->where('returnStatus','!=',0)->exists()){
+                $sales = SalesReturnDetail::where('deliveryOrderID', $orderId)->with(['master' => function($query) {
+                        $query->select('id', 'salesReturnCode');
+                }])->select('salesReturnID','deliveryOrderID')->get();
+                
+                foreach ($sales as $sale) {
+                    if (isset($sale->master->salesReturnCode)) {
+                        $codes[] = $sale->master->salesReturnCode . ' - Sales Return';
+                    }
+                }
+        }
+
+        if (!empty($codes)) {
+            $message = 'The selected Delivery Order has been pulled into ' . implode(', ', $codes) . '.';
+            return ['status' => false, 'message' => $message];
         }
 
         $masterDataDetails = DeliveryOrder::with('detail')
