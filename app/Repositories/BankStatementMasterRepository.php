@@ -7,6 +7,7 @@ use App\Models\BankReconciliation;
 use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Models\BankAccount;
 
 /**
  * Class BankStatementMasterRepository
@@ -36,6 +37,7 @@ class BankStatementMasterRepository extends BaseRepository
         'endingBalance',
         'filePath',
         'documentStatus',
+        'matchingInprogress',
         'importStatus',
         'importError',
         'createdDateTime',
@@ -137,15 +139,73 @@ class BankStatementMasterRepository extends BaseRepository
     function getBankWorkbookDetails($statementId, $companySystemID)
     {
         $statementDetails = BankStatementMaster::where('statementId', $statementId)->first();
+        $decimalPlaces = BankAccount::with('currency')->where('bankAccountAutoID', $statementDetails->bankAccountAutoID)->first()->currency->DecimalPlaces;
+        
+        /*** Bank Ledger Details ***/
+        $bankLedgers = BankLedger::with('bankStatementDetail')
+                                ->where('bankAccountID', $statementDetails->bankAccountAutoID)
+                                ->where('trsClearedYN', -1)
+                                ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
+                                ->where('bankClearedYN', 0)
+                                ->where('companySystemID', $companySystemID)
+                                ->get();
+                                
+        $data['fullyMatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
+            return $ledger->bankStatementDetail && $ledger->bankStatementDetail->matchType == 1;
+        })->values()->toArray();
 
-        $data['bankLedger'] = BankLedger::where("bankAccountID", $statementDetails->bankAccountAutoID)
-            ->where("trsClearedYN", -1)
-            ->whereDate("postedDate", '<=', $statementDetails->statementEndDate)
-            ->where("bankClearedYN", 0)
-            ->where("companySystemID", $companySystemID)
-            ->get()->toArray();
+        $data['partiallyMatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
+            return $ledger->bankStatementDetail && $ledger->bankStatementDetail->matchType == 2;
+        })->values()->toArray();
 
-        $data['bankStatement'] = BankStatementDetail::where('statementId', $statementId)->get()->toArray();
+        $data['unmatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
+            return is_null($ledger->bankStatementDetail);
+        })->values()->toArray();
+
+        $data['totalValues'] = [
+            'fullyMatchedSystemTotal' => number_format((array_sum(array_map(function($val) {
+                return $val < 0 ? $val * -1 : $val;
+            }, array_column($data['fullyMatchedBankLedger'], 'payAmountBank')))), $decimalPlaces),
+            'partiallyMatchedSystemTotal' => number_format((array_sum(array_map(function($val) {
+                return $val < 0 ? $val * -1 : $val;
+            }, array_column($data['partiallyMatchedBankLedger'], 'payAmountBank')))), $decimalPlaces)
+        ];
+
+
+        /*** Bank Statement Details ***/
+        $bankStatements = BankStatementDetail::where('statementId', $statementId)->get();
+
+        $data['fullyMatchedBankStatement'] = $bankStatements->filter(function ($item) {
+            return $item->matchType == 1;
+        })->values()->toArray();
+
+        $data['partiallyMatchedBankStatement'] = $bankStatements->filter(function ($item) {
+            return $item->matchType == 2;
+        })->values()->toArray();
+
+        $data['unMatchedBankStatement'] = $bankStatements->filter(function ($item) {
+            return !in_array($item->matchType, [1, 2]);
+        })->values()->toArray();
+
+        $creditFullyTotal = array_sum(array_map(function($val) {
+            return $val < 0 ? $val * -1 : $val;
+        }, array_column($data['fullyMatchedBankStatement'], 'credit')));
+
+        $debitFullyTotal = array_sum(array_map(function($val) {
+            return $val < 0 ? $val * -1 : $val;
+        }, array_column($data['fullyMatchedBankStatement'], 'debit')));
+
+        $data['totalValues']['fullyMatchedStatementTotal'] = number_format($creditFullyTotal + $debitFullyTotal, $decimalPlaces);
+
+        $creditPartialTotal = array_sum(array_map(function($val) {
+            return $val < 0 ? $val * -1 : $val;
+        }, array_column($data['partiallyMatchedBankStatement'], 'credit')));
+
+        $debitPartialTotal = array_sum(array_map(function($val) {
+            return $val < 0 ? $val * -1 : $val;
+        }, array_column($data['partiallyMatchedBankStatement'], 'debit')));
+
+        $data['totalValues']['partiallyMatchedStatementTotal'] = number_format($creditPartialTotal + $debitPartialTotal, $decimalPlaces);
 
         return $data;
     }
