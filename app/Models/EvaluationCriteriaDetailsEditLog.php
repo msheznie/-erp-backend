@@ -253,7 +253,8 @@ class EvaluationCriteriaDetailsEditLog extends Model
 
     public static function getEvaluationCriteriaDetailsLog($tenderId, $level, $criteriaType, $versionID){
         return EvaluationCriteriaDetailsEditLog::where('tender_id', $tenderId)
-            ->where('tender_version_id')
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
             ->where('critera_type_id', $criteriaType)
             ->where('level', $level);
     }
