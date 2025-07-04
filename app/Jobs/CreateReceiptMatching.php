@@ -181,7 +181,6 @@ class CreateReceiptMatching implements ShouldQueue
 
         if (!empty($errors)) return ['errors' => $errors, 'data' => $data];
 
-
         if (isset($customerCode)) {
             $approvedCustomer = CustomerMaster::where(function ($query) use ($customerCode) {
                                                     $query->where('CutomerCode', $customerCode)
@@ -660,8 +659,7 @@ class CreateReceiptMatching implements ShouldQueue
         $matchingType = $header['matchingType'] ?? null;
         $availableBalance = $validationData['availableBalance'] ?? 0;
         $companySystemID = $companySystemId ?? null;
-        $customerCodeSystem = $validationData['customerCodeSystem'] ?? null;
-
+        $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
 
         $totalMatchingAmount = 0;
         foreach ($details as $i => $detail) {
@@ -720,7 +718,7 @@ class CreateReceiptMatching implements ShouldQueue
             $input = [];
             $input['companySystemID'] = $companySystemId;
             $input['custReceivePaymentAutoID'] = $validationData['matchDocument']->masterAutoID;
-            $input['customerID'] = $validationData['customerCodeSystem'];
+            $input['customerID'] = $validationData['matchDocument']->customerID;
             $input['isDelegation'] = false;
             $input['matchBalanceAmount'] = $validationData['availableBalance'];
             $input['matchingDocdate'] = $header['matchingDate'];
@@ -739,7 +737,7 @@ class CreateReceiptMatching implements ShouldQueue
                         if (!$masterInsert['status']) {
                 throw new \Exception($masterInsert['message'] ?? 'Failed to create receipt matching master record.');
             } else {
-                    $customerCodeSystem = $validationData['customerCodeSystem'] ?? null;
+                    $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
                     foreach ($details as $detail) {
             
                         $invoice = AccountsReceivableLedger::where('documentCode', $detail['bookingInvCode'])->first();
