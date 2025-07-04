@@ -537,4 +537,9 @@ class BankLedger extends Model
     {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentSystemCode', 'PayMasterAutoId');
     }
+
+    public function bankStatementDetail()
+    {
+        return $this->belongsTo('App\Models\BankStatementDetail','bankLedgerAutoID', 'bankLedgerAutoID');
+    }
 }

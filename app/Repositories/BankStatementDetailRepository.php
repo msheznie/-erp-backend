@@ -28,6 +28,9 @@ class BankStatementDetailRepository extends BaseRepository
         'description',
         'category',
         'createdDateTime',
+        'matchType',
+        'bankLedgerAutoID',
+        'matchedId',
         'timeStamp'
     ];
 
@@ -37,5 +40,18 @@ class BankStatementDetailRepository extends BaseRepository
     public function model()
     {
         return BankStatementDetail::class;
+    }
+
+    public function updateMatchType($input)
+    {
+        $statementMatchDetail = $this->model->find($input['statementDetailId']);
+        $statementMatchDetail->matchType = $input['matchTypeId'];
+        if($input['matchTypeId'] == 0) {
+            $statementMatchDetail->matchType = null;
+            $statementMatchDetail->bankLedgerAutoID = null;
+            $statementMatchDetail->matchedId = null;
+        }
+        $statementMatchDetail->save();
+        return $statementMatchDetail;
     }
 }

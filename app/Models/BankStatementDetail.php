@@ -106,6 +106,9 @@ class BankStatementDetail extends Model
         'description',
         'category',
         'createdDateTime',
+        'matchType',
+        'bankLedgerAutoID',
+        'matchedId',
         'timeStamp'
     ];
 
@@ -124,6 +127,9 @@ class BankStatementDetail extends Model
         'description' => 'string',
         'category' => 'string',
         'createdDateTime' => 'datetime',
+        'matchType' => 'integer',
+        'bankLedgerAutoID' => 'integer',
+        'matchedId' => 'integer',
         'timeStamp' => 'datetime'
     ];
 

@@ -14,6 +14,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Jobs\BankStatementMatch;
+use App\Models\BankReconciliationRules;
 
 /**
  * Class BankStatementMasterController
@@ -385,8 +387,26 @@ class BankStatementMasterAPIController extends AppBaseController
             return $this->sendError('Bank reconciliation already available. Proceed for the as-of date.');
         }
 
+        /** validate matching rule */
+        $matchingRule = BankReconciliationRules::where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)
+                                    ->where('isDefault', 1)
+                                    ->where('companySystemID', $bankStatementMaster->companySystemID)
+                                    ->where('matchType', 1)
+                                    ->whereIn('transactionType', [1, 2])
+                                    ->pluck('transactionType')
+                                    ->toArray();
+                                    
+        if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
+            return $this->sendError('Exact Matching rule for both PV & RV documents should be active.');
+        }
+
         $update['documentStatus'] = 1;
+        $update['matchingInprogress'] = 1;
         $this->bankStatementMasterRepository->update($update, $statementId);
+
+        /** initiate worksheet process in a job */
+        $db = isset($request->db) ? $request->db : "";
+        BankStatementMatch::dispatch($db, $statementId);
 
         return $this->sendResponse([], 'Workbook validation success.');
     }
@@ -425,5 +445,27 @@ class BankStatementMasterAPIController extends AppBaseController
 
         $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookDetails($statementId, $companySystemID);
         return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+    }
+
+    function fetchWrkbookJobStatus(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
+
+        if (empty($bankStatementMaster)) {
+            return $this->sendError('Bank statement not found');
+        } else {
+            $data['status'] = $bankStatementMaster->matchingInprogress == 3? 1 : 0;
+            return $this->sendResponse($data, 'Workbook job status fetched successfully.');
+        }
     }
 }
