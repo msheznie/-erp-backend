@@ -280,6 +280,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
     }
     public function supplierCreation(Request $request)
     {
+        $this->sendError('asd');
         $input = $request->all();
         $supplierFormValues = $input['data'];
         $supplierMasterData = $input['supplierRegistration'];
