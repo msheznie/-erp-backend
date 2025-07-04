@@ -1603,8 +1603,8 @@ class TenderMasterRepository extends BaseRepository
             $data['conditions'] = null;
             $data['changesRequestStatus'] = null;
             $data['requestType'] = null;
-            $data['editable'] = false;
-            $data['amendment'] = false;
+            $data['editable'] = true;
+            $data['amendment'] = true;
             $data['enableChangeRequest'] = false;
             $data['requestedToEditAmend'] = false;
             $data['confirmedEditRequest'] = false;
