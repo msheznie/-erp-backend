@@ -945,7 +945,8 @@ class SupplierInvoiceCreation implements ShouldQueue
                 $this->externalReference,
                 $this->tenantUuid,
                 $this->input['company_id'],
-                $this->input['log_id']
+                $this->input['log_id'],
+                $this->input['thirdPartyIntegrationKeyId']
             );
 
         } catch (\Exception $exception) {

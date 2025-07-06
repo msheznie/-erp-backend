@@ -70,6 +70,7 @@ class ThirdPartyApiLogger
             $request->request->add(['external_reference' => $externalReference]);
             $request->request->add(['log_id' => $logId]);
             $request->request->add(['tenant_uuid' => $tenantUuid]);
+            $request->request->add(['thirdPartyIntegrationKeyId' => $thirdPartyIntegrationKeyId]);
             $request->request->add(['webhook_url' => $checkApi->webhook_endpoint]);
         }
 
