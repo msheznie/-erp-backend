@@ -458,6 +458,8 @@ class ReceiptMatchingAPIService extends AppBaseController
             throw new Exception("Could not find the source document for AR Ledger entry: " . $arLedger->arAutoID . ". System ID: " . $arLedger->documentSystemID . ", Code System: " . $arLedger->documentCodeSystem);
         }
 
+        $totalreceivedAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $master->PayMasterAutoId)->sum('receiveAmountTrans');
+
         $detail = new CustomerReceivePaymentDetail();
 
         // IDs and Codes
@@ -490,7 +492,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $detail->bookingAmountTrans = $arLedger->custInvoiceAmount;
         $detail->bookingAmountLocal = $arLedger->localAmount;
         $detail->bookingAmountRpt = $arLedger->comRptAmount;
-        $detail->custbalanceAmount = $arLedger->custInvoiceAmount - $input['receiveAmountTrans'];
+        $detail->custbalanceAmount = $arLedger->custInvoiceAmount - $totalreceivedAmountTrans -$input['receiveAmountTrans'];
         $detail->receiveAmountTrans = $input['receiveAmountTrans'];
 
         // Use the helper to calculate local/rpt amounts for the received value
