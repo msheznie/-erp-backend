@@ -2229,7 +2229,7 @@ HAVING
                 $externalReference,
                 $tenantUuid
             );
-            return $this->sendResponse([],"Journal voucher request has been successfully queued for processing!");
+            return $this->sendResponse(['externalReference' => $externalReference],"Journal voucher request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format", 404);

@@ -186,6 +186,13 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             }
         }
 
+        // Also check nested arrays
+        foreach ($payload as $key => $value) {
+            if (is_array($value)) {
+                $payload[$key] = $this->sanitizePayload($value);
+            }
+        }
+
         return $payload;
     }
 } 
