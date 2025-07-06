@@ -18,9 +18,11 @@ use App\Models\MatchDocumentMaster;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Jobs\InitiateWebhook;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoice;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Services\API\ReceiptMatchingAPIService;
 use App\Traits\DocumentSystemMappingTrait;
 use GuzzleHttp\Client;
@@ -390,6 +392,7 @@ class CreateReceiptMatching implements ShouldQueue
                                            ROUND((COALESCE (SUM(erp_custreceivepaymentdet.receiveAmountTrans),0) - IFNULL(advd.SumOfmatchingAmount, 0)
                                            ),currency.DecimalPlaces) AS BalanceAmt,
                                                currency.CurrencyCode,
+                                               currency.currencyID,
                                            currency.DecimalPlaces
                                         FROM
                                            erp_customerreceivepayment
@@ -448,6 +451,7 @@ class CreateReceiptMatching implements ShouldQueue
                                             erp_creditnote.creditNoteDate AS docMatchedDate,
                                             erp_creditnote.customerID,
                                             currency.CurrencyCode,
+                                            currency.currencyID,
                                             currency.DecimalPlaces,
                                             SUM(erp_creditnotedetails.creditAmount) AS SumOfreceiveAmountTrans,
                                             erp_creditnotedetails.serviceLineSystemID AS serviceLineSystemID,
@@ -549,6 +553,7 @@ class CreateReceiptMatching implements ShouldQueue
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
+                                            currency.currencyID,
                                             currency.DecimalPlaces,
                                             1 AS tableType
                                         FROM
@@ -609,6 +614,7 @@ class CreateReceiptMatching implements ShouldQueue
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
+                                            currency.currencyID,
                                             currency.DecimalPlaces ,
                                             2 AS tableType
                                         FROM
@@ -661,7 +667,8 @@ class CreateReceiptMatching implements ShouldQueue
         $availableBalance = $validationData['availableBalance'] ?? 0;
         $companySystemID = $companySystemId ?? null;
         $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
-
+        $currencyID = $validationData['matchDocument']->currencyID ?? null;
+        $segmentID = $validationData['matchDocument']->serviceLineSystemID ?? null;
         $totalMatchingAmount = 0;
         foreach ($details as $index => $detail) {
             $err = [];
@@ -677,45 +684,58 @@ class CreateReceiptMatching implements ShouldQueue
             }
 
             if ($bookingInvCode) {
-                    $invoice = CustomerInvoice::where('bookingInvCode', $bookingInvCode)
-                                                ->where('companySystemID', $companySystemID)
-                                                ->first();
-                    if ($invoice) {
-                        // Check approval
-                        if ($invoice->approved != -1){
-                            $err[] = 'Customer invoice not approved.';
+                $invoice = CustomerInvoice::where('bookingInvCode', $bookingInvCode)
+                                            ->where('companySystemID', $companySystemID)
+                                            ->first();
+                $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->first();
+                if ($invoice) {
+                    // Check approval
+                    if ($invoice->approved != -1){
+                        $err[] = 'Customer invoice not approved.';
+                    } else {
+                        if($invoice->customerID != $customerCodeSystem){
+                            $err[] = "The selected customer invoice document code {$bookingInvCode} does not belong to the selected customer.";
                         } else {
-                            if($invoice->customerID != $customerCodeSystem){
-                                $err[] = "The selected customer invoice document code {$bookingInvCode} does not belong to the selected customer.";
-                            } else {
-                                    if ($matchingDate) {
-                                        $invoiceBookingDate = \Carbon\Carbon::parse($invoice->bookingDate);
-                                        $matchingDateObject = \Carbon\Carbon::createFromFormat('d-m-Y', $matchingDate);
-                                        
-                                        if ($invoiceBookingDate > $matchingDateObject) {
-                                            $err[] = 'The customer invoice date is greater than matching date.';
+                            if ($matchingDate) {
+                                $invoiceBookingDate = \Carbon\Carbon::parse($invoice->bookingDate)->startOfDay();
+                                $matchingDateObject = \Carbon\Carbon::createFromFormat('d-m-Y', $matchingDate)->startOfDay();
+                                
+                                if ($invoiceBookingDate->gt($matchingDateObject)) {
+                                    $err[] = 'The customer invoice date is greater than matching date.';
+                                } else {    
+                                    if($invoice->custTransactionCurrencyID != $currencyID){
+                                        $err[] = 'Can not match the two different currency documents.';
+                                    } else {
+                                        $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
+                                        ->where('companySystemID', $companySystemID)
+                                        ->first();
+
+                                        if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
+                                            if($invoiceDetails && $invoiceDetails->serviceLineSystemID != $segmentID){
+                                                $err[] = 'Selected customer invoice segment not matching with advance or  credit note segment.';
+                                            }
                                         }
                                     }
                                 }
                             }
-                        } else {
-                            $err[] = "Customer invoice document code not matching with system.";
-                        }
+                         }
                     }
-               
-
+                } else {
+                        $err[] = "Customer invoice document code not matching with system.";
+                }
             }
-            if ($matchingAmount !== null) {
-                $totalMatchingAmount += $matchingAmount;
-            }
+        }
 
-            if (!empty($err)) {
-                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => $err];
-            }
-        
+        if ($matchingAmount !== null) {
+            $totalMatchingAmount += $matchingAmount;
+        }
 
-        if ($totalMatchingAmount > $availableBalance) {
-            $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => ['Total matching amount exceeds the available balance of the document.']];
+        if (!empty($err)) {
+            $detailsErrors[] = ['detailsIndex' => $index, 'errors' => $err];
+        } else {
+            if ($totalMatchingAmount > $availableBalance) {
+                $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => ['Total matching amount exceeds the available balance of the document.']];
+            }
         }
 
         return $detailsErrors;
