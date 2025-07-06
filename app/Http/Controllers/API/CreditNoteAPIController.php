@@ -1953,7 +1953,7 @@ WHERE
 
             CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
 
-            return $this->sendResponse([],"Credit note request has been successfully queued for processing!");
+            return $this->sendResponse(['externalReference' => $externalReference],"Credit note request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format");

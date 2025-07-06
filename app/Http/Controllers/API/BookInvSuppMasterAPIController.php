@@ -3554,7 +3554,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
         
         SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
-        return $this->sendResponse(array(),"Supplier invoice creation is sent to queue!");
+        return $this->sendResponse(array('externalReference' => $externalReference),"Supplier invoice creation is sent to queue!");
     }
 
 

@@ -149,7 +149,7 @@ class CreateReceiptMatching implements ShouldQueue
         \Log::error($response);
 
         // Dispatch webhook job
-        $webhookPayload = ['data' => $response];
+        $webhookPayload = $response;
         InitiateWebhook::dispatch(
             $this->db,
             $this->apiExternalKey,
