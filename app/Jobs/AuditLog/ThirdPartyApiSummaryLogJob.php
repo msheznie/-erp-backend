@@ -131,9 +131,11 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
      */
     private function logToFile($externalReference, $isWebhook)
     {
+        $sanitizedRequestPayload = $this->sanitizePayload($this->requestPayload);
+
         $logData = [
             'external_reference' => $externalReference,
-            'request_payload' => $this->requestPayload,
+            'request_payload' => $sanitizedRequestPayload,
             'response_payload' => $this->responsePayload,
             'status_code' => $this->statusCode,
             'execution_time_ms' => $this->executionTime
@@ -155,5 +157,35 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             'date_time' => date('Y-m-d H:i:s'),
             'data' => json_encode($logData),
         ]);
+    }
+
+    /**
+     * Sanitize payload by removing sensitive information
+     * 
+     * @param array $payload
+     * @return array
+     */
+    private function sanitizePayload($payload)
+    {
+        if (!is_array($payload)) {
+            return $payload;
+        }
+
+        $sensitiveKeys = [
+            'db',
+            'tenant_uuid',
+            'company_id',
+            'api_external_key',
+            'api_external_url',
+            'third_party_system_id'
+        ];
+
+        foreach ($sensitiveKeys as $key) {
+            if (isset($payload[$key])) {
+                unset($payload[$key]);
+            }
+        }
+
+        return $payload;
     }
 } 

@@ -26,13 +26,14 @@ class InitiateWebhook implements ShouldQueue
     public $tenantUuid;
     public $companyId;
     public $logId;
+    public $thirdPartyIntegrationKeyId;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $apiExternalKey, $apiExternalUrl, $webhookEndpoint, $webhookPayload, $externalReference = null, $tenantUuid = null, $companyId = null, $logId = null)
+    public function __construct($db, $apiExternalKey, $apiExternalUrl, $webhookEndpoint, $webhookPayload, $externalReference = null, $tenantUuid = null, $companyId = null, $logId = null, $thirdPartyIntegrationKeyId = null)
     {
         if (env('QUEUE_DRIVER_CHANGE', 'database') == 'database') {
             if (env('IS_MULTI_TENANCY', false)) {
@@ -53,6 +54,7 @@ class InitiateWebhook implements ShouldQueue
         $this->tenantUuid = $tenantUuid;
         $this->companyId = $companyId;
         $this->logId = $logId;
+        $this->thirdPartyIntegrationKeyId = $thirdPartyIntegrationKeyId;
     }
 
     /**
@@ -208,6 +210,7 @@ class InitiateWebhook implements ShouldQueue
                 ->where('key_api.is_active', 1)
                 ->where('integration_key.status', 'Active')
                 ->where('integration_key.company_id', $this->companyId)
+                ->where('integration_key.id', $this->thirdPartyIntegrationKeyId)
                 ->select([
                     'key_api.webhook_security_method',
                     'key_api.webhook_security',
