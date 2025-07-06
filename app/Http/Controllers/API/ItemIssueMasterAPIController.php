@@ -2271,13 +2271,61 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         elseif($input['reportType'] == 2) {
 
-            $groupByField = empty($input['groupByAsset'])
-                ? 'erp_itemissuedetails.itemPrimaryCode'
-                : 'expense_asset_allocation.assetID';
+            if(!empty($input['groupByAsset']))
+            {
+                $assetsConditon = '';
 
-            $selectField = $groupByField;
 
-            $expenseAllocationsSubquery = "
+                if(isset($input['assets']))
+                {
+                    $assets = collect($input['assets'])->pluck('id')->toArray();
+                    $assets = implode(',', $assets);
+                    if(!empty($assets))
+                    {
+                        $assetsConditon = " AND ep.assetID IN ($assets)";
+                    }
+                }
+
+
+                $query = "
+                   select 
+                        ei2.issueDate ,
+                        ei2.itemIssueCode,
+                        efam.faCode ,
+                        ep.amount ,
+                        ep.allocation_qty ,
+                        efam.assetDescription ,
+                        ei.issueCostLocal ,
+                        ei.issueCostLocalTotal ,
+                        ei.qtyIssued ,
+                        ei.itemIssueCode ,
+                        ei.itemPrimaryCode ,
+                        ei.itemIssueDetailID,
+                        ei.itemDescription,
+                    units.UnitShortCode 
+                    from erp_itemissuedetails ei 
+                    inner join expense_asset_allocation ep on ep.documentDetailID  = ei.itemIssueDetailID 
+                    inner join erp_fa_asset_master efam on ep.assetID = efam.faID 
+                    inner join erp_itemissuemaster ei2 on ei2.itemIssueAutoID = ei.itemIssueAutoID 
+                    JOIN units ON ei.unitOfMeasureIssued = units.UnitID 
+                    WHERE  ei.itemCodeSystem IN ($items)
+                    AND ei2.approved = -1
+                    AND DATE(ei2.issueDate) BETWEEN '$startDate' AND '$endDate'
+                    $assetsConditon
+                ";
+
+
+                $output = \DB::select($query);
+
+            }
+            else {
+                $groupByField = empty($input['groupByAsset'])
+                    ? 'erp_itemissuedetails.itemPrimaryCode'
+                    : 'expense_asset_allocation.assetID,erp_itemissuedetails.itemPrimaryCode,erp_itemissuedetails.itemIssueDetailID';
+
+                $selectField = $groupByField;
+
+                $expenseAllocationsSubquery = "
                 SELECT CONCAT(
                     '[', 
                     GROUP_CONCAT(
@@ -2298,7 +2346,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $assetsConditon
             ";
 
-            $jsonItems = "
+                $jsonItems = "
                 CONCAT(
                     '[', 
                     GROUP_CONCAT(
@@ -2320,12 +2368,12 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ) AS items
             ";
 
-            $leftJoinAssetAllocation = empty($input['groupByAsset']) ? "" : "
+                $leftJoinAssetAllocation = empty($input['groupByAsset']) ? "" : "
                 LEFT JOIN expense_asset_allocation
                     ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
             ";
 
-            $query = "
+                $query = "
                 SELECT 
                     $selectField,
                     $jsonItems
@@ -2350,9 +2398,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $groupByField
             ";
 
-            $output = \DB::select($query);
-
-
+                $output = \DB::select($query);
+            }
         }
         else {
             $groupByField = empty($input['groupByAsset']) ? 'erp_itemissuedetails.itemPrimaryCode' : 'erp_itemissuemaster.serviceLineSystemID';
@@ -2432,52 +2479,83 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $groupedResults = [];
 
+
             foreach ($output as $row) {
-                
-                $details = json_decode($row->items,true);
+
 
 
                 if($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true))
                 {
-                    $groupedResults[$row->assetID] = $details;
+                    $groupedResults[$row->faCode][] = [
+                        'RequestCode' => $row->itemIssueCode,
+                        'expenseAllocations' => [
+                            [
+                                'empID' => $row->faCode,
+                                'amount' => $row->amount,
+                                'empName' => $row->assetDescription,
+                                'assignedQty' => $row->allocation_qty,
+                            ]
+                        ],
+                        'issueCostLocal' => $row->issueCostLocal,
+                        'issueCostLocalTotal' => $row->issueCostLocalTotal,
+                        'issueDate' => $row->issueDate,
+                        'itemDescription' => $row->itemDescription,
+                        'itemIssueCode' => $row->itemIssueCode,
+                        'itemIssueDetailID' => $row->itemIssueDetailID,
+                        'itemPrimaryCode' => $row->itemPrimaryCode,
+                        'qtyIssued' => $row->qtyIssued,
+                        'unit' => 'Each',
+                    ];
 
-
-                    foreach($details as $key => $value)
-                    {
-
-                        if($value['expenseAllocations'] != null)
-                        {
-
-                            $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
-                        }
-                    }
-
-                }else if($input['reportType'] == 3 &&  (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                }
+                else {
                     $details = json_decode($row->items,true);
-                    $groupedResults[$row->serviceLineSystemID] = $details;
-                    foreach($details as $key => $value)
-                    {
 
-                        if($value['expenseAllocations'] != null)
+
+                    if($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true))
+                    {
+                        $groupedResults[$row->assetID] = $details;
+
+
+                        foreach($details as $key => $value)
                         {
 
-                            $groupedResults[$row->serviceLineSystemID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                            if($value['expenseAllocations'] != null)
+                            {
+
+                                $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                            }
+                        }
+
+                    }
+                    else if($input['reportType'] == 3 &&  (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                        $details = json_decode($row->items,true);
+                        $groupedResults[$row->serviceLineSystemID] = $details;
+                        foreach($details as $key => $value)
+                        {
+
+                            if($value['expenseAllocations'] != null)
+                            {
+
+                                $groupedResults[$row->serviceLineSystemID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                            }
+                        }
+
+                    }else {
+                        $groupedResults[$row->itemPrimaryCode] = $details;
+
+
+                        foreach($details as $key => $value)
+                        {
+
+                            if($value['expenseAllocations'] != null)
+                            {
+
+                                $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
+                            }
                         }
                     }
 
-                }else {
-                    $groupedResults[$row->itemPrimaryCode] = $details;
-
-
-                    foreach($details as $key => $value)
-                    {
-
-                        if($value['expenseAllocations'] != null)
-                        {
-
-                            $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
-                        }
-                    }
                 }
 
 
@@ -2551,8 +2629,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             'fromDate' => $fromDate,
             'toDate' => $toDate,
             'groupBy' => $groupBy,
-            'selectedAssets' => $selectedAssets,
-            'selectedSegments' => $selectedSegments,
+            'selectedAssets' => empty($selectedAssets) ? null  : $selectedAssets,
+            'selectedSegments' => empty($selectedSegments) ? null : $selectedSegments,
             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
         ];
 

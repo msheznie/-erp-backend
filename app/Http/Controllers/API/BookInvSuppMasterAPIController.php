@@ -798,7 +798,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
                 }
 
-                if ($input['documentType'] == 0) {
+                if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                     $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
                     $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
                 }
@@ -2179,12 +2179,57 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->where('documentSystemID', 11);
         }, 'project','company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
 
+
+        $stdVatAmountTotal = 0;
+        $totalVatAmount = 0;
+
+       switch ($output->documentType)
+       {
+           case 1 :
+               $totalVatAmount = $output->directdetail->sum('VATAmount');
+               $stdVatAmountTotal = $output->directdetail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount');
+               break;
+           case 2 :
+               $totalVatAmount = $output->detail->sum('VATAmount');
+               $stdVatAmountTotal = $output->detail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount');
+               break;
+           case 3 :
+               $totalVatAmount = $output->item_details->sum(function ($item) {
+                   return $item->VATAmount * $item->noQty;
+               });
+               $stdVatAmountTotal = $output->item_details
+                   ->filter(function ($item) {
+                       return optional($item->vat_sub_category)->subCatgeoryType == 1;
+                   })
+                   ->sum(function ($item) {
+                       return $item->VATAmount * $item->noQty;
+                   });
+               break;
+           case 4 :
+               $totalVatAmount = $output->directdetail->sum('VATAmount');
+               $stdVatAmountTotal = $output->directdetail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount');
+               break;
+           default:
+               break;
+       }
+
+
+
+        $vatAmount = ($totalVatAmount - (($stdVatAmountTotal*$output->retentionPercentage)/100));
+
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
         ->where('isYesNO', 1)
         ->exists();
 
         $output['isProjectBase'] = $isProjectBase;
+        $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -3065,8 +3110,7 @@ IF (
 	erp_paysupplierinvoicedetail.matchingDocID = 0,
 	erp_paysupplierinvoicemaster.BPVNarration,
 	"Matching"
-) AS docNarration,
- erp_paysupplierinvoicedetail.addedDocumentID,
+) AS docNarration, erp_paysupplierinvoicedetail.addedDocumentID,
  erp_paysupplierinvoicedetail.bookingInvSystemCode,
  erp_paysupplierinvoicedetail.bookingInvDocCode,
  erp_paysupplierinvoicedetail.bookingInvoiceDate,
@@ -3097,7 +3141,7 @@ FROM
 LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
 LEFT JOIN suppliermaster ON erp_paysupplierinvoicedetail.supplierCodeSystem = suppliermaster.supplierCodeSystem
 LEFT JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
-LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  WHERE bookingInvSystemCode = ' . $bookingSuppMasInvAutoID . ' AND erp_paysupplierinvoicedetail.companySystemID = ' . $companySystemID . ' ');
+LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  WHERE bookingInvSystemCode = ' . $bookingSuppMasInvAutoID . ' AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 AND erp_paysupplierinvoicedetail.companySystemID = ' . $companySystemID . ' ');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
@@ -3504,8 +3548,13 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $input = $request->all();
         $db = isset($request->db) ? $request->db : "";
         $authorization = $request->header('Authorization');
-        SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
-        return $this->sendResponse(array(),"Supplier invoice creation is sent to queue!");
+        
+        // Get tracking parameters from ThirdPartyApiLogger middleware
+        $externalReference = $request->get('external_reference');
+        $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
+        
+        SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
+        return $this->sendResponse(array('externalReference' => $externalReference),"Supplier invoice creation is sent to queue!");
     }
 
 

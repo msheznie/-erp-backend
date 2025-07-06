@@ -55,6 +55,50 @@ php artisan serve
 ```
 By default, this will host the application at http://localhost:8000. If you need to change the port, make sure to update it not only in the Artisan serve command but also in the frontend of the application. The frontend uses a proxy to connect to the backend, and the port configuration must be consistent.
 
+### Running through docker-composer
+
+Pull the frontend and backend into same directory, and create a docker-compose.yml in the root directory with following content
+
+```
+version: "3.5"
+services:
+  backend:
+    image: ososerp/ubuntu-php-7.2:latest
+    container_name: erp-backend
+    ports:
+      - 8000:8080
+    volumes:
+      - ./Gears_BackEnd:/var/www/html:delegated
+    working_dir: /var/www/html
+    networks:
+      - gears
+
+  frontend:
+    image: node:10.16.3-alpine
+    container_name: erp-frontend
+    working_dir: /app
+    ports:
+      - 4200:4200
+    volumes:
+      - ./Gears_FrontEnd:/app:delegated
+      - /app/node_modules
+    command: sh -c "npm install && npm start -- --host 0.0.0.0 --port 4200 --disable-host-check --proxy-config proxy.conf.docker.json"
+    networks:
+      - gears
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+
+networks:
+  gears:
+    driver: bridge
+    name: gears
+```
+
+then docker-compose up
+
 ## Development Instructions
 
 ### Creating Models from Database Table

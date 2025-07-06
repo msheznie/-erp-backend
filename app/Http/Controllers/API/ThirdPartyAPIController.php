@@ -24,6 +24,7 @@ class ThirdPartyAPIController extends AppBaseController
                     ->where('company_id',$data['companyId'])
                     ->whereNotNull('api_external_key')
                     ->whereNotNull('api_external_url')
+                    ->where('status', 'Active')
                     ->first();
                 if(!empty($thirdPartyIntegrationKey)) {
                     try {

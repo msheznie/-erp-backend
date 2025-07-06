@@ -25,7 +25,7 @@ class JobInvokeAPIController extends AppBaseController
     public function verifyIntegration(){
         $data = ThirdPartyIntegrationKeys::whereHas('thirdPartySystem', function ($query) {
             $query->where('description', 'OSOS_3_O');
-        })->first();
+        })->where('status', 'Active')->first();
 
         if(empty($data)){
             $msg = 'The third party integration not available';

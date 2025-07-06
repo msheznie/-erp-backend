@@ -21,6 +21,7 @@ class GeneralLedgerInsert implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $masterModel;
+    protected $otherData;
     protected $dataBase;
     private $tag = "general-ledger";
     /**
@@ -28,7 +29,7 @@ class GeneralLedgerInsert implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($masterModel, $dataBase)
+    public function __construct($masterModel, $dataBase, $otherData = null)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -42,6 +43,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
         $this->dataBase = $dataBase;
         $this->masterModel = $masterModel;
+        $this->otherData = $otherData;
     }
 
     /**
@@ -58,7 +60,7 @@ class GeneralLedgerInsert implements ShouldQueue
         if (!empty($masterModel)) {
             DB::beginTransaction();
             try {
-                $res = GeneralLedgerService::postGlEntry($masterModel, $this->dataBase);
+                $res = GeneralLedgerService::postGlEntry($masterModel, $this->dataBase, $this->otherData);
                 if (!$res['status']) {
                     DB::rollback();
                     Log::error('Error');

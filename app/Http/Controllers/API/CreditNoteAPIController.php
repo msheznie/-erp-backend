@@ -1947,9 +1947,13 @@ WHERE
                 return $this->sendError("Company details not found");
             }
 
-            CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            // Get tracking parameters from ThirdPartyApiLogger middleware
+            $externalReference = $request->get('external_reference');
+            $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
 
-            return $this->sendResponse([],"Credit note request has been successfully queued for processing!");
+            CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
+
+            return $this->sendResponse(['externalReference' => $externalReference],"Credit note request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format");

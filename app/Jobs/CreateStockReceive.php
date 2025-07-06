@@ -158,7 +158,7 @@ class CreateStockReceive implements ShouldQueue
                             $customerInvoiceData['custTransactionCurrencyER'] = 1;
                         }
 
-                        $revenuePercentageForInterCompanyInventoryTransfer = ($fromCompany) ? $fromCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
+                        $revenuePercentageForInterCompanyInventoryTransfer = 0;
 
                         $bookingAmountLocal = 0;
                         $bookingAmountRpt = 0;
@@ -508,7 +508,7 @@ class CreateStockReceive implements ShouldQueue
                             $stockReceive->save();
 
                             $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
-                            $revenuePercentageForInterCompanyInventoryTransfer = ($toCompany) ? $toCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
+                            $revenuePercentageForInterCompanyInventoryTransfer = 0;
                             $stockReceiveAutoID = $stockReceive->stockReceiveAutoID;
                             foreach ($stDetails as $new) {
 
@@ -561,6 +561,15 @@ class CreateStockReceive implements ShouldQueue
 
                             $resST = InterCompanyStockTransfer::create($interCompanySTData);
 
+                            $consoleJVData = [
+                                'data' => [
+                                    'docData' => $stMaster,
+                                    'from' => "AFTER_CUSTOMER_INVOICE",
+                                ],
+                                'type' => "STOCK_TRANSFER"
+                            ];
+
+                            CreateConsoleJV::dispatch($consoleJVData);
 
                         }
                     }

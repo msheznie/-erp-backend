@@ -3763,10 +3763,12 @@ class Helper
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         }
                     } else {
+
+
                         if ($trasToRptER > 1) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
-                            $reportingAmount = $transactionAmount / $trasToRptER;
+                            $reportingAmount = $trasToRptER != 0 ? $transactionAmount / $trasToRptER : 1;
                         }
                     }
                 }
@@ -3784,7 +3786,7 @@ class Helper
                         if ($trasToLocER > 1) {
                             $localAmount = $transactionAmount * $trasToLocER;
                         } else {
-                            $localAmount = $transactionAmount / $trasToLocER;
+                            $localAmount = $trasToLocER  != 0 ? $transactionAmount / $trasToLocER : 1;
                         }
                     }
                 }
@@ -3812,7 +3814,7 @@ class Helper
                         if ($transToBankER > 1) {
                             $bankAmount = $transactionAmount * $transToBankER;
                         } else {
-                            $bankAmount = $transactionAmount / $transToBankER;
+                            $bankAmount = $transToBankER != 0 ? $transactionAmount / $transToBankER : 1;
                         }
                     }
                 }
@@ -3837,7 +3839,7 @@ class Helper
                     if ($transToDocER > 1) {
                         $documentAmount = $transactionAmount * $transToDocER;
                     } else {
-                        $documentAmount = $transactionAmount / $transToDocER;
+                        $documentAmount = $transToDocER != 0 ? $transactionAmount / $transToDocER : 1;
                     }
                 }
             }
@@ -5487,7 +5489,10 @@ class Helper
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
                                         $consoleJVData = [
-                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'data' => [
+                                                'docData' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                                'from' => "AFTER_GRV_VOUCHER",
+                                            ],
                                             'type' => "INTER_ASSET_DISPOSAL"
                                         ];
 
@@ -5505,6 +5510,23 @@ class Helper
 
                                         CreateConsoleJV::dispatch($receiptData);
                                     }
+                                }
+
+                                if ($input["documentSystemID"] == 4 || $input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    $consoleJVData = [
+                                        'data' => [
+                                            'docData' => $sourceData,
+                                            'from' => $input["documentSystemID"] == 4 ? "AFTER_PAYMENT_VOUCHER" : "AFTER_RECEIPT_VOUCHER",
+                                        ],
+                                        'type' => "STOCK_TRANSFER"
+                                    ];
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
+
+                                    $consoleJVData['type'] = "INTER_ASSET_DISPOSAL";
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
                                 }
                             }
 
@@ -6352,7 +6374,7 @@ class Helper
                     $docInforArr["modelName"] = 'SegmentMaster';
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
-                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
@@ -6431,7 +6453,7 @@ class Helper
 
                 if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($docModal[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot reject!'];
                     }
                 }
 
@@ -10085,11 +10107,20 @@ class Helper
                 $percentage = $invmaster->supplier->tax->whtPercentage;
             }
 
-            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
-            if( $invmaster->supplier->whtApplicableYN == 1)
+            if(isset($invmaster->supplier))
             {
-                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+                if($isWHTApplicableSupplier)
+                {
+                    $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                }
             }
+            else
+            {
+                $isWHTApplicableSupplier = false;
+            }
+
+          
 
             $whtTotalAmountDirect = 0;
 

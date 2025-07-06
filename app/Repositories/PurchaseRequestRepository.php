@@ -17,6 +17,7 @@ use App\helper\StatusService;
 */
 class PurchaseRequestRepository extends BaseRepository
 {
+    protected $data = [];
     /**
      * @var array
      */
@@ -123,7 +124,9 @@ class PurchaseRequestRepository extends BaseRepository
         }
 
 
-        $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
+        $purchaseRequests = $purchaseRequests->with(['details' => function($query){
+            $query->with(['uom']);
+        },'created_by' => function ($query) {
         }, 'priority' => function ($query) {
 
         }, 'location' => function ($query) {
@@ -132,7 +135,7 @@ class PurchaseRequestRepository extends BaseRepository
 
         }, 'financeCategory' => function ($query) {
 
-        }, 'location_pdf','priority_pdf']);
+        }, 'location_pdf','priority_pdf','currency_by']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -205,7 +208,9 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.manuallyClosed',
                 'erp_purchaserequest.prClosedYN',
                 'erp_purchaserequest.budgetYear',
-                'erp_purchaserequest.isBulkItemJobRun'
+                'erp_purchaserequest.isBulkItemJobRun',
+                'erp_purchaserequest.currency',
+                'erp_purchaserequest.buyerEmpSystemID'
             ]);
 
 
@@ -233,7 +238,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
                 $data[$x]['Location'] = $val->location_pdf ? $val->location_pdf->locationName : '';
                 $data[$x]['Priority'] = $val->priority_pdf? $val->priority_pdf->priorityDescription : '';
-                $data[$x]['Buyer'] = $val->buyerEmpName;
+                $data[$x]['Buyer'] = ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '';
                 $data[$x]['Budget Year'] = $val->budgetYear;
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Internal Note'] = $val->internalNotes;
@@ -248,5 +253,110 @@ class PurchaseRequestRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function setExportExcelDataDetail($dataSet) {
+
+        $this->data = [];
+        $dataSet = $dataSet->get();
+        foreach ($dataSet as $val) {
+            $currency = $val->currency_by ? $val->currency_by->CurrencyCode : '';
+            $this->mainHeader();
+            $this->headerDetails($val);
+            $this->data[] = [];
+            $this->detailDetails($val->details,$currency);
+            $this->data[] = [];
+
+        }
+        
+        return $this->data;
+    }
+
+    private function mainHeader() {
+        $this->data[] = [
+            'IsHeader' => true,
+            'PR Code' => 'PR Code',
+            'Category' => 'Category',
+            'Segment' => 'Segment',
+            'Location' => 'Location',
+            'Priority' => 'Priority',
+            'Buyer' => 'Buyer',
+            'Budget Year' => 'Budget Year',
+            'Comments' => 'Comments',
+            'Internal Note' => 'Internal Note',
+            'Created By' => 'Created By',
+            'Created At' => 'Created At',
+            'Status' => 'Status'
+        ];
+    }
+
+    private function headerDetails($val) {
+        $this->data[] = [
+            'IsHeader' => false,
+            'PR Code' => $val->purchaseRequestCode,
+            'Category' => $val->finance_category ? $val->finance_category : '',
+            'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
+            'Location' => $val->location_pdf ? $val->location_pdf->locationName : '',
+            'Priority' => $val->priority_pdf ? $val->priority_pdf->priorityDescription : '',
+            'Buyer' => ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '',
+            'Budget Year' => $val->budgetYear,
+            'Comments' => $val->comments,
+            'Internal Note' => $val->internalNotes,
+            'Created By' => $val->created_by? $val->created_by->empName : '',
+            'Created At' =>\Helper::dateFormat($val->createdDateTime),
+            'Status' => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
+        ];
+    }
+
+    private function detailDetails($val,$currency) {
+         if (!empty($val) && count($val) > 0) {
+            $headerOne ['Details'] = 'Details';
+            $headerOne ['IsHeader'] = true;
+
+            $this->data[] = $headerOne;
+            $header = [];
+            $header ['IsHeader'] = true;
+            $header['item Code'] = 'Item Code';
+            $header['Description'] = 'Item Description';
+            $header['UOM'] = 'UOM';
+            $header['Qty Requested'] = 'Qty Requested';
+            $header['Estimated Unit Cost'] = 'Estimated Unit Cost (' . $currency . ')';
+            $header['Total'] = 'Total';
+            $header['Qty On Order'] = 'Qty On Order';
+            $header['Qty in Hand'] = 'Qty in Hand';
+            $this->data[] = $header;
+
+            $totalQtyRequested = 0;
+            $totalCost = 0;
+
+            foreach ($val as $detail) {
+                $row = [];
+                $row['IsHeader'] =false;
+                $row['item Code'] = $detail->itemPrimaryCode ?? '';
+                $row['Description'] = $detail->itemDescription ?? '';
+                $row['UOM'] = $detail->uom->UnitDes ?? '';
+                $row['Qty Requested'] = $detail->quantityRequested ?? '';
+                $row['Estimated Unit Cost'] = $detail->estimatedCost ?? '';
+                $row['Total'] = $detail->totalCost ?? '';
+                $row['Qty On Order'] = $detail->quantityOnOrder ?? '';
+                $row['Qty in Hand'] = $detail->quantityInHand ?? '';
+                $this->data[] = $row;
+                $totalQtyRequested += $detail->quantityRequested;
+                $totalCost += $detail->estimatedCost;
+            }
+            $totalRow = [
+                'IsHeader' => true,
+                'item Code' => '', 
+                'Description' => '',
+                'UOM' => 'Total',
+                'Qty Requested' => $totalQtyRequested,
+                'Estimated Unit Cost' => $totalCost,
+                'Total' => '',
+                'Qty On Order' => '',
+                'Qty in Hand' => ''
+            ];
+        $this->data[] = $totalRow;
+            $this->data[] = [];
+         }
     }
 }

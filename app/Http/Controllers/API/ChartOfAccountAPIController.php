@@ -966,7 +966,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $reportTypeId = 0;
             if (isset($input['templateMasterID'])) {
                 $template = ReportTemplate::find($input['templateMasterID']);
-                $reportTypeId = $template->reportID;
+                $reportTypeId = $template ? $template->reportID : 0;
             }
     
             $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->when(isset($reportTypeId) && $reportTypeId == 4, function ($query) {
@@ -989,9 +989,15 @@ class ChartOfAccountAPIController extends AppBaseController
             }
         }
 
-        if (isset($input['templateMasterID'])) {
-            $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+
+        if(isset($input['isCashFlowReport']) && $input['isCashFlowReport']){ 
+            $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
             $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+        } else { 
+            if (isset($input['templateMasterID'])) {
+                $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+            }
         }
 
         $items = $items->get();

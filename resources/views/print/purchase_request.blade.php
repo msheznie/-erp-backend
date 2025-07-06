@@ -333,6 +333,8 @@
                 <th class="text-left">{{ __('custom.part_number') }}</th>
                 <th class="text-left">{{ __('custom.uom') }}</th>
                 <th class="text-left">{{ __('custom.qty_requested') }}</th>
+                <th class="text-left">{{ __('custom.estimated_unit_cost') }}</th>
+                <th class="text-left">{{ __('custom.total') }}</th>
                  @if($request->allowAltUom)
                 <th class="text-left">{{ __('custom.alt_uom') }}</th>
                 <th class="text-left">{{ __('custom.alt_qnty') }}</th>
@@ -358,6 +360,8 @@
                         @endif
                     </td>
                     <td class="text-right" style="padding-right: 5px;">{{$item->quantityRequested}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->estimatedCost}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->totalCost}}</td>
                     @if($request->allowAltUom)
                         <td style="padding-left: 5px;">
                             @if($item->altUom)

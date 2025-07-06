@@ -647,7 +647,7 @@
                                 style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
                         @else
                             <td class="text-right"
-                                style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT), $transDecimal)}}</td>
+                                style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) - $retentionVatPortion), $transDecimal)}}</td>
                         @endif
                     </tr>
                     @if ($masterdata->documentType != 4)
@@ -854,7 +854,7 @@
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                     <span class="font-weight-bold">
                         @if ($masterdata->detail)
-                            {{number_format(($subTotal + $VATTotal + $directTotTra), $transDecimal)}}
+                            {{number_format((($subTotal + $VATTotal + $directTotTra) - $retentionVatPortion), $transDecimal)}}
                         @endif
                     </span>
                     </td>
