@@ -97,7 +97,8 @@ class TenantEnforce
             'api/v1/exportProcumentOrderMaster',
             'api/v1/quotation/add-multiple-items',
             'api/v1/exportReportOpenRequest',
-            'api/v1/exportTransactionsRecord'
+            'api/v1/exportTransactionsRecord',
+            'api/v1/validateWorkbookCreation'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {
