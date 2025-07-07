@@ -12,6 +12,7 @@ use App\Models\StockCount;
 use App\Models\ErpItemLedger;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\SalesReturnDetail;
+use Carbon\Carbon;
 
 class DeliveryOrderServices
 {
@@ -62,6 +63,7 @@ class DeliveryOrderServices
         $isExist = false;                                    
         if ($masterDataDetails)
         {
+            $currentDate = Carbon::parse($masterDataDetails->postedDate);
             foreach ($masterDataDetails->detail as $detail) {
                 $item = $detail->itemCodeSystem;
 
@@ -78,7 +80,7 @@ class DeliveryOrderServices
                     [$model, $relation] = $modelInfo;
                     $additionalWhere = $modelInfo[2] ?? [];
 
-                    $query = $model::with($relation)
+                    $query = $model::with($relation)->where('companySystemID', $masterDataDetails->companySystemID)
                         ->whereHas($relation, function ($q) use ($item) {
                             $q->where('itemCodeSystem', $item);
                         });
@@ -88,17 +90,31 @@ class DeliveryOrderServices
                     }
 
                     if ($model === DeliveryOrder::class && isset($orderId)) {
-                        $query->where('deliveryOrderID', '!=', $orderId);
+                        $otherOrders = DeliveryOrder::with('detail')
+                                            ->where('deliveryOrderID', '!=', $orderId)
+                                            ->where('companySystemID', $masterDataDetails->companySystemID)
+                                            ->where('documentSystemID', $masterDataDetails->documentSystemID)
+                                            ->whereHas('detail', function ($query) use($item){
+                                                $query->where('itemCodeSystem', ($item));
+                                            })
+                                            ->get(['deliveryOrderID', 'postedDate']);
+
+                            foreach ($otherOrders as $order) {
+                                if (Carbon::parse($order->postedDate)->greaterThan($currentDate)) {
+                                    $isExist = true;
+                                    break 2;
+                                }
+                            }
+
                     }
 
-                    if ($query->exists()) {
+                    if ($model !== DeliveryOrder::class && $query->exists()) {
                         $isExist = true;
                         break 2;
                     }
                 }
             }
         }
-
         if($isExist)
         {
             return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
