@@ -400,8 +400,19 @@ class SupplierRegistrationApprovalController extends AppBaseController
             $supplierID = $supplierMasters['supplierCodeSystem'];
         }else {
             
-            SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
+            $supplierMasterUpdate = SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
             ->update($data);
+
+            if($supplierMasterUpdate && !empty($supplierMasterData['supplierMasterId']) && !empty($data)) {
+                $keysToRemove = ['primaryCompanySystemID', 'primaryCompanyID', 'documentSystemID', 'documentID',
+                    'createdUserID', 'isSMEYN', 'createdPcID', 'createdUserSystemID'];
+                $filteredData = array_diff_key($data, array_flip($keysToRemove));
+
+                if (!empty($filteredData)) {
+                    SupplierAssigned::where('supplierCodeSytem',$supplierMasterData['supplierMasterId'])
+                        ->update($filteredData);
+                }
+            }
 
             $supplierMasters['supplierCodeSystem'] =$supplierMasterData['supplierMasterId'];
             $supplierMasters['currency'] = ($supplierFormValues['currency'] != "0") ? $supplierFormValues['currency']  : null;
