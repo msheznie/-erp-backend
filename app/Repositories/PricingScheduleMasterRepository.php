@@ -221,9 +221,11 @@ class PricingScheduleMasterRepository extends BaseRepository
                 $price_bid_format_id = $masterData['price_bid_format_id'] ?? 0;
                 $companySystemID = $masterData['companySystemID'] ?? 0;
 
-                $deleteExistsScheduleBidFormat = self::deleteExistingScheduleBidFormat($scheduleID, $editOrAmend, $versionID);
-                if(!$deleteExistsScheduleBidFormat['success']){
-                    return $deleteExistsScheduleBidFormat;
+                if(!$editOrAmend){
+                    $deleteExistsScheduleBidFormat = self::deleteExistingScheduleBidFormat($scheduleID, $editOrAmend, $versionID);
+                    if(!$deleteExistsScheduleBidFormat['success']){
+                        return $deleteExistsScheduleBidFormat;
+                    }
                 }
 
                 if(!empty($priceBidFormat)){
@@ -252,22 +254,38 @@ class PricingScheduleMasterRepository extends BaseRepository
                             if(!empty($val['value']) || $val['value'] == "0")
 
                             {
-                                $data['bid_format_detail_id'] = $val['id'];
-                                $data['schedule_id'] = $scheduleID;
-                                $data['value'] = $val['value'];
-                                $data['created_by'] = $employee->employeeSystemID;
-                                $data['company_id'] = $masterData['companySystemID'];
+                                $data = [
+                                    'bid_format_detail_id' => $val['id'],
+                                    'schedule_id' => $scheduleID,
+                                    'value' => $val['value'],
+                                    'created_by' => $employee->employeeSystemID,
+                                    'company_id' => $masterData['companySystemID']
+                                ];
 
                                 if($editOrAmend){
-                                    $data['id'] = null;
-                                    $data['level_no'] = 1;
-                                    $data['amd_bid_format_detail_id'] = $val['id'];
-                                    $data['amd_pricing_schedule_master_id'] = $scheduleID;
-                                    $data['tender_edit_version_id'] = $versionID;
-                                    $result = ScheduleBidFormatDetailsLog::create($data);
+                                    $checkScheduleExists = ScheduleBidFormatDetailsLog::checkScheduleBidFormatDetailExists($scheduleID, $val['id'], $versionID);
+                                    if($checkScheduleExists){
+                                        $result = ScheduleBidFormatDetailsLog::where('amd_pricing_schedule_master_id', $scheduleID)
+                                            ->where('amd_bid_format_detail_id', $val['id'])
+                                            ->where('tender_edit_version_id', $versionID)
+                                            ->where('is_deleted', 0)
+                                            ->update(['value' => $val['value']]);
+                                    } else {
+                                        $data_log = [
+                                            'id' => null,
+                                            'level_no' => 1,
+                                            'amd_bid_format_detail_id' => $val['id'],
+                                            'amd_pricing_schedule_master_id' => $scheduleID,
+                                            'tender_edit_version_id' => $versionID,
+                                        ];
+
+                                        $result = ScheduleBidFormatDetailsLog::create(array_merge($data, $data_log));
+                                    }
+
                                 } else {
                                     $result = ScheduleBidFormatDetails::create($data);
                                 }
+
                             }
 
                         }
