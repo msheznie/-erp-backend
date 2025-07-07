@@ -580,4 +580,7 @@ return [
     "address" => "Address",
     'failed_export' => 'Unable to export excel',
     "estimated_unit_cost" => "Estimated Unit Cost",
+    "asset_allocation_details" => "Asset Allocation Details",
+    "asset_id" => "Asset ID",
+    "asset_name" => "Asset Name",
 ];
