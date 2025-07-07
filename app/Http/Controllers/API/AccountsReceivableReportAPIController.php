@@ -1144,6 +1144,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
+                            $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
                         });
                     })->download('xlsx');
@@ -1179,6 +1180,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData,$excelColumnFormat) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
+                            $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);
                         });
                     })->download('xlsx');
