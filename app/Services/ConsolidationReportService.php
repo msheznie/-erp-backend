@@ -106,12 +106,16 @@ class ConsolidationReportService
         }
     }
 
-    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn, $glType = 2) {
+    public static function getTotalProfit($serviceLineIDs, $company, $fromDate, $toDate, $amountColumn, $glType = 2, $isOpeningBalance = false) {
         $totalProfit = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount')
             ->whereIn('serviceLineSystemID', $serviceLineIDs)
             ->where('companySystemID', $company)
             ->where('glAccountTypeID', $glType)
-            ->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate])
+            ->when($isOpeningBalance, function ($query) use ($toDate) {
+                return $query->where(DB::raw('DATE(documentDate)'), '<', $toDate);
+            }, function ($query) use ($fromDate, $toDate) {
+                return $query->whereBetween(DB::raw('DATE(documentDate)'), [$fromDate, $toDate]);
+            })
             ->first();
 
         return $totalProfit->$amountColumn * -1;
@@ -342,5 +346,116 @@ class ConsolidationReportService
                 ORDER BY final.glAutoID";
 
         return DB::select($sql);
+    }
+
+    public static function generateBSConsolidationOpeningBalance($request, $consolidationKeys) {
+        $openingBalanceLastDate = Carbon::parse($request->fromDate)->subDay();
+        $reportEndDate = Carbon::parse($request->toDate);
+
+        $servicelineIDs = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $parentCompanySystemID = collect($request->groupCompanySystemID)->first()['companySystemID'];
+        // Remove parent company from companySystemID list
+        $allCompanyIDs = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $childCompanyIDs = array_values(array_diff($allCompanyIDs,[$parentCompanySystemID]));
+
+        if(empty($childCompanyIDs)) $childCompanyIDs[] = 0;
+
+        $currencyColumn = $request->currency == 1 ? "documentLocalAmount" : "documentRptAmount";
+
+        $openingBalance = 0;
+
+        // Parent company
+        $openingBalance += self::getTotalProfit($servicelineIDs, $parentCompanySystemID, null, $openingBalanceLastDate->format('Y-m-d'), $currencyColumn, 1, true);
+
+        $periods = self::getCompanyOwnershipPeriods($parentCompanySystemID, $childCompanyIDs, [1,2,3]);
+
+        foreach ($childCompanyIDs as $companyID) {
+            // Get first transaction date each company
+            $firstTransactionDate = GeneralLedger::whereIn('serviceLineSystemID', $servicelineIDs)
+                ->where('companySystemID', $companyID)
+                ->where('glAccountTypeID', 1)
+                ->min('documentDate');
+
+            if ($firstTransactionDate) {
+                $firstTransactionDate = Carbon::parse(explode(" ", $firstTransactionDate)[0]);
+                $selectedCompanyPeriods = $periods->where('company_system_id', $companyID);
+
+                if (count($selectedCompanyPeriods) == 1) {
+                    if ($firstTransactionDate <= $openingBalanceLastDate) {
+                        $openingBalanceSelectedCompany = self::getTotalProfit($servicelineIDs, $companyID, null, $openingBalanceLastDate->format('Y-m-d'), $currencyColumn, 1, true);
+                        if ($selectedCompanyPeriods[0]->group_type == 1) {
+                            $openingBalance += $openingBalanceSelectedCompany;
+                        }
+                        else {
+                            $openingBalance += (($openingBalanceSelectedCompany * $selectedCompanyPeriods[0]->holding_percentage) / 100);
+                        }
+                    }
+                }
+                else {
+                    $openingStart = $firstTransactionDate;
+                    $openingEnd = $openingBalanceLastDate;
+
+                    $companyRanges= [];
+                    foreach ($selectedCompanyPeriods as $period) {
+                        $rowEndDate = ($period->end_date == null) ? $reportEndDate : Carbon::parse($period->end_date);
+
+                        $companyRanges[] = [
+                            'start' => Carbon::parse($period->start_date),
+                            'end' => $rowEndDate,
+                            'groupType' => $period->group_type,
+                            'holdingPercentage' => $period->holding_percentage
+                        ];
+                    }
+
+                    // Sort ranges by start date
+                    usort($companyRanges, function ($a, $b) {
+                        return $a['start'] <=> $b['start'];
+                    });
+
+                    $availableRanges = [];
+                    $currentStart = $openingStart->copy();
+
+                    foreach ($companyRanges as $range) {
+                        if ($range['start'] > $currentStart) {
+                            $availableRanges[] = [
+                                'start' => $currentStart->copy(),
+                                'end' => ($range['start']->copy())->subDay(),
+                            ];
+                        }
+
+                        // Move currentStart forward if needed
+                        if ($range['end'] >= $currentStart) {
+                            $currentStart = ($range['end']->copy())->addDay();
+                        }
+                    }
+
+                    // Add the final range if it goes till end of main range
+                    if ($currentStart <= $openingEnd) {
+                        $availableRanges[] = [
+                            'start' => $currentStart->copy(),
+                            'end' => $openingEnd,
+                        ];
+                    }
+
+                    // Opening Balance Periods
+                    foreach ($availableRanges as $range) {
+                        $openingBalanceSelectedCompany = self::getTotalProfit($servicelineIDs, $companyID, $range['start']->format('Y-m-d'), $range['end']->format('Y-m-d'), $currencyColumn, 1, false);
+                        $openingBalance += $openingBalanceSelectedCompany;
+                    }
+
+                    // Structure History Periods
+                    foreach ($companyRanges as $range) {
+                        if ($range['start'] < $openingBalanceLastDate) {
+                            $endDate = $range['end'] <= $openingBalanceLastDate ? $range['end'] : $openingBalanceLastDate;
+                            $openingBalanceSelectedCompany = self::getTotalProfit($servicelineIDs, $companyID, $range['start']->format('Y-m-d'), $endDate->format('Y-m-d'), $currencyColumn, 1, false);
+                            $openingBalance += $openingBalanceSelectedCompany;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $openingBalance;
     }
 }
