@@ -152,7 +152,7 @@
                 @if(in_array(3, $selectedColumns)) <td>{{ $data->DocumentDate }}</td> @endif
                 @if(in_array(34, $selectedColumns)) <td>{{ $data->documentType }}</td> @endif
                 @if(in_array(15, $selectedColumns))
-                    <td>{{ $data->rcmActivated == 1 ? 'Yes' : 'No' }}</td>
+                    <td>{{ (isset($data->rcmActivated) && $data->rcmActivated == 1) ? 'Yes' : 'No' }}</td>
                 @endif
                 @if(in_array(4, $selectedColumns)) <td>{{ $data->invoiceNo }}</td> @endif
                 @if(in_array(5, $selectedColumns)) <td>{{ $data->invoiceDate }}</td> @endif
@@ -238,18 +238,18 @@
                     <td>
                         {{ $reportViewID == 1
                             ? $data->exemptVATPortionALL
-                            : ($data->exempt_vat_portion) }}
+                            : ($data->exempt_vat_portion ?? null) }}
                     </td>
                 @endif
 
                 @if(in_array(31, $selectedColumns))
                     <td
-                            @if($reportViewID == 2 && $data->rowSpan > 1)
+                            @if($reportViewID == 2 && (isset($data->rowSpan) && $data->rowSpan) > 1)
                                 rowspan="{{ $data->rowSpan }}"
                             style="vertical-align: middle; text-align: center"
                             @endif
                     >
-                        {{ ($data->retentionAmount) }}
+                        {{ ($data->retentionAmount ?? 0 ) }}
                     </td>
                 @endif
 
@@ -259,13 +259,13 @@
                         $totalAmount = 0;
                         if ($reportViewID == 1) {
                             if (in_array($tempType, [1, 2])) {
-                                $totalAmount = $data->bookingAmountTrans - $data->discountAmount + ($data->rcmActivated ? 0 : $data->taxTotalAmount) - ($data->retentionAmount ?? 0);
+                                $totalAmount = $data->bookingAmountTrans - $data->discountAmount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->taxTotalAmount) - ($data->retentionAmount ?? 0);
                             } else {
                                 $totalAmount = $data->bookingAmountTrans + $data->discountAmount + $data->taxTotalAmount;
                             }
                         } else {
                             if (in_array($tempType, [1, 2])) {
-                                $totalAmount = $data->value - $data->discount + ($data->rcmActivated ? 0 : $data->VATAmount);
+                                $totalAmount = $data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount);
                             } else {
                                 $totalAmount = $data->value + $data->discount + $data->VATAmount;
                             }
@@ -282,7 +282,7 @@
                             if ($reportViewID == 1) {
                                 if (in_array($tempType, [1, 2])) {
                                     $reportingVal = (
-                                        ($data->bookingAmountTrans - $data->discountAmount + ($data->rcmActivated ? 0 : $data->taxTotalAmount) - ($data->retentionAmount ?? 0))/
+                                        ($data->bookingAmountTrans - $data->discountAmount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->taxTotalAmount) - ($data->retentionAmount ?? 0))/
                                         $data->companyReportingER
                                     );
                                 } else {
@@ -294,7 +294,7 @@
                             } else {
                                 if (in_array($tempType, [1, 2])) {
                                     $reportingVal = (
-                                        ($data->value - $data->discount + ($data->rcmActivated ? 0 : $data->VATAmount))/
+                                        ($data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount))/
                                         $data->companyReportingER
                                     );
                                 } else {
