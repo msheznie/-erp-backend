@@ -147,7 +147,7 @@ class ReceiptVoucherMatch implements ShouldQueue
                     ->where('bankLedgerAutoID', '!=', null)
                     ->pluck('bankLedgerAutoID')->toArray();
 
-                $rvPendingLedgerDetails = array_filter($rvBankLedgerData, function($ledger) use ($updatedLedgerId) {
+                $pvPendingLedgerDetails = array_filter($rvBankLedgerData, function($ledger) use ($updatedLedgerId) {
                     return !in_array($ledger['bankLedgerAutoID'], $updatedLedgerId);
                 });
                 

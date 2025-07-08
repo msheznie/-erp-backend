@@ -168,7 +168,7 @@ class PaymentVoucherMatch implements ShouldQueue
                             $statementDocument = $pvPartialMatchingRule->statementDocumentColumn == 1? 'transactionNumber' : 'description';
                             
                             if($pvPartialMatchingRule->isUseReference == 1) {
-                                $referenceFrom = $pvMatchpvPartialMatchingRuleingRule->statementReferenceFrom - 1;
+                                $referenceFrom = $pvPartialMatchingRule->statementReferenceFrom - 1;
                                 $referenceTo = $pvPartialMatchingRule->statementReferenceTo - $pvPartialMatchingRule->statementReferenceFrom + 1;
                                 $bankledgerDocument = substr($bankledgerDocument, $referenceFrom, $referenceTo);
                             }
