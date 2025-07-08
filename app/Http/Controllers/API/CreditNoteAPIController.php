@@ -169,7 +169,13 @@ class CreditNoteAPIController extends AppBaseController
         $company = Company::select('CompanyID')->where('companySystemID', $input['companySystemID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-        /**/
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         if (isset($input['debitNoteAutoID'])) {
             $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
@@ -645,6 +651,13 @@ class CreditNoteAPIController extends AppBaseController
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);

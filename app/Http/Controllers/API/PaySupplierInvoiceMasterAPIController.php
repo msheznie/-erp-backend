@@ -210,6 +210,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500,
+                    ['type' => 'create']
+                );
+            }
+
             $conditions = [
                 'invoiceType' => 'required',
                 'paymentMode' => 'required',
@@ -411,6 +419,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
+
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
 
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
@@ -1354,6 +1369,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
+
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
 
             $pvUpdateStatus = PaymentVoucherServices::updatePaymentVoucher($id, $input);
 

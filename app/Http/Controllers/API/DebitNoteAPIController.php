@@ -178,6 +178,13 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+
         $employee = \Helper::getEmployeeInfo();
 
         $type =  $input['type'];
@@ -516,6 +523,14 @@ class DebitNoteAPIController extends AppBaseController
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
 
         $input = $this->convertArrayToValue($input);
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+        
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
@@ -1019,7 +1034,13 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-      
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
