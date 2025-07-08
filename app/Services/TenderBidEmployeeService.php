@@ -195,6 +195,7 @@ class TenderBidEmployeeService
             return DB::transaction(function () use ($input){
                 $id = $input['id'];
                 $tenderID = $input['tender_id'];
+                $module_id = $input['module_id'];
 
                 $requestData = $this->documentModifyService->checkForEditOrAmendRequest($tenderID);
                 $userID = $input['user_id'];
@@ -202,6 +203,7 @@ class TenderBidEmployeeService
                     $versionID = $requestData['versionID'] ?? 0;
                     SrmTenderUserAccessEditLog::where('tender_id', $tenderID)
                         ->where('user_id', $userID)
+                        ->where('module_id', $module_id)
                         ->where('version_id', $versionID)
                         ->update(['is_deleted' => 1]);
                 } else {
