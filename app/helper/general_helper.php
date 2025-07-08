@@ -3771,7 +3771,7 @@ class Helper
                         if ($trasToRptER > 1) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
-                            $reportingAmount = $trasToRptER != 0 ? $transactionAmount / $trasToRptER : 1;
+                            $reportingAmount = $transactionAmount / $trasToRptER;
                         }
                     }
                 }
@@ -3789,7 +3789,7 @@ class Helper
                         if ($trasToLocER > 1) {
                             $localAmount = $transactionAmount * $trasToLocER;
                         } else {
-                            $localAmount = $trasToLocER  != 0 ? $transactionAmount / $trasToLocER : 1;
+                            $localAmount = $transactionAmount / $trasToLocER;
                         }
                     }
                 }
@@ -3817,7 +3817,7 @@ class Helper
                         if ($transToBankER > 1) {
                             $bankAmount = $transactionAmount * $transToBankER;
                         } else {
-                            $bankAmount = $transToBankER != 0 ? $transactionAmount / $transToBankER : 1;
+                            $bankAmount = $transactionAmount / $transToBankER;
                         }
                     }
                 }
@@ -3842,7 +3842,7 @@ class Helper
                     if ($transToDocER > 1) {
                         $documentAmount = $transactionAmount * $transToDocER;
                     } else {
-                        $documentAmount = $transToDocER != 0 ? $transactionAmount / $transToDocER : 1;
+                        $documentAmount = $transactionAmount / $transToDocER;
                     }
                 }
             }
@@ -10277,5 +10277,25 @@ class Helper
         return collect($data_array)->pluck('id')->filter()->values()->all();
     }
 
+    public static function validateCurrencyRate($companyId, $transactionCurrencyId)
+    {
+        $company = Models\Company::find($companyId);
+
+        if (!$company) {
+            return false;
+        }
+
+        $localRate = Models\CurrencyConversion::where([
+            ['masterCurrencyID', '=', $transactionCurrencyId],
+            ['subCurrencyID', '=', $company->localCurrencyID]
+        ])->value('conversion');
+
+        $reportingRate = Models\CurrencyConversion::where([
+            ['masterCurrencyID', '=', $transactionCurrencyId],
+            ['subCurrencyID', '=', $company->reportingCurrency]
+        ])->value('conversion');
+
+        return $localRate > 0 && $reportingRate > 0;
+    }
 
 }

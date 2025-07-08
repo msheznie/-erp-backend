@@ -216,8 +216,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function store(CreateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
-
         $input = $this->convertArrayToValue($input);
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -431,7 +437,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
-        
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+
         if (isset($input['directItems'])) {
             $directItems = $input['directItems'];
         }
@@ -1478,6 +1491,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice','employee']);
         $input = $this->convertArrayToValue($input);
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         $employee = \Helper::getEmployeeInfo();
 
