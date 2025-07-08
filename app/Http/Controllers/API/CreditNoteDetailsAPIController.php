@@ -403,11 +403,16 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $id = $input['creditNoteDetailsID'];
         array_except($input, 'creditNoteDetailsID');
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
-            return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
-                500
-            );
+        $companyId = $input['companySystemID'] ?? null;
+        $currencyId = $input['customerCurrencyID'] ?? null;
+
+        if ($companyId && $currencyId) {
+            if (!\Helper::validateCurrencyRate($companyId, $currencyId)) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
         }
 
         $detail = CreditNoteDetails::where('creditNoteDetailsID', $id)->first();
