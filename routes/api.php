@@ -17,6 +17,431 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ExtractHeadersFromBody;
 
 
+ Route::get('remote-config', function () {
+                    return response()->json([
+                        "version" => 1,
+                        "dataSets" => [
+                            [
+                                "id" => "vizzly_data_set_1xp4c34",
+                                "fields" => [
+                                    [
+                                        "id" => "vizzly_field_1pcvkpt",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "email"
+                                        ],
+                                        "publicName" => "Email",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_1w99mlg",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "empID"
+                                        ],
+                                        "publicName" => "EmpID",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_1tnanyv",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "employee_id"
+                                        ],
+                                        "publicName" => "Employee id",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_dhqv2x",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "login_token"
+                                        ],
+                                        "publicName" => "Login token",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_jfzezf",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "name"
+                                        ],
+                                        "publicName" => "Name",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_1kfjs9q",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "password"
+                                        ],
+                                        "publicName" => "Password",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_1thxd4q",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "remember_token"
+                                        ],
+                                        "publicName" => "Remember token",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_y66hai",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "userType"
+                                        ],
+                                        "publicName" => "UserType",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_12na1kz",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "username"
+                                        ],
+                                        "publicName" => "Username",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_164jgpj",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "uuid"
+                                        ],
+                                        "publicName" => "Uuid",
+                                        "dataType" => "VARCHAR",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            "=",
+                                            "!=",
+                                            "is_one_of",
+                                            "is_not_one_of",
+                                            "starts_with",
+                                            "ends_with",
+                                            "contains_substring",
+                                            "does_not_contain_substring"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_14061s9",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "created_at"
+                                        ],
+                                        "publicName" => "Created at",
+                                        "dataType" => "TIMESTAMP",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            ">",
+                                            "<",
+                                            "=",
+                                            "!=",
+                                            ">=",
+                                            "<=",
+                                            "is_one_of",
+                                            "is_not_one_of"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_obq3po",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "updated_at"
+                                        ],
+                                        "publicName" => "Updated at",
+                                        "dataType" => "TIMESTAMP",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            ">",
+                                            "<",
+                                            "=",
+                                            "!=",
+                                            ">=",
+                                            "<=",
+                                            "is_one_of",
+                                            "is_not_one_of"
+                                        ]
+                                    ],
+                                    [
+                                        "id" => "vizzly_field_1uibfyu",
+                                        "address" => [
+                                            "gearserp_qa",
+                                            "users",
+                                            "id"
+                                        ],
+                                        "publicName" => "Id",
+                                        "dataType" => "INT",
+                                        "canBeDimension" => true,
+                                        "canBeMeasure" => true,
+                                        "allowedGranularities" => [
+                                            "month",
+                                            "year",
+                                            "day",
+                                            "hour",
+                                            "minute",
+                                            "second"
+                                        ],
+                                        "allowedOperators" => [
+                                            ">",
+                                            "<",
+                                            "=",
+                                            "!=",
+                                            ">=",
+                                            "<=",
+                                            "is_one_of",
+                                            "is_not_one_of"
+                                        ]
+                                    ]
+                                ],
+                                "name" => "Users",
+                                "joins" => [],
+                                "description" => "",
+                                "hide" => false,
+                                "secureFilterGuards" => [],
+                                "connectionId" => "7d7b1a11-a5a0-42d2-8e94-6190529d06xx"
+                            ]
+                        ],
+                        "connections" => (object)[
+                            "7d7b1a11-a5a0-42d2-8e94-6190529d06xx" => (object)[
+                                "client" => "mysql",
+                                "name" => "MySQL connection",
+                                "unencryptedCredentials" => (object)[
+                                    "host" => "172.18.0.2",
+                                    "database" => "gearserp_tue",
+                                    "user" => "root",
+                                    "password" => "root",
+                                    "port" => "3306"
+                                ]
+                            ]
+                        ],
+                        "publicKeys" => [],
+                        "sqlViews" => (object)[],
+                        "executableDashboardConfigForPDF" => null
+                    ]);
+                });
+
 Route::group(['middleware' => ['mobileServer']], function () {
     Route::group(['middleware' => ['tenant','locale', 'cors']], function () {
         Route::get('getAppearance', 'CompanyAPIController@getAppearance')->middleware(MobileAccessVerify::class);
@@ -104,6 +529,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::get('checkUser', 'UserAPIController@checkUser');
                 
                 // Vizzly Dashboard Integration
+                Route::get('vizzly/test','VizzlyController@test');
                 Route::post('vizzly/identity','VizzlyController@generateTokens');
 
                 Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');

@@ -16,109 +16,155 @@ class VizzlyController extends AppBaseController
     private $projectId = 'prj_589be17c00f343d9819dacd36a0a4f60';
     
     /**
-     * Generate Vizzly access tokens for the authenticated user
+     * Test endpoint to verify Vizzly integration
      */
-    public function generateTokens(Request $request): JsonResponse
+    public function test(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $selectedCompany = $request->header('X-Company-ID') 
+            ?? $request->input('company_id') 
+            ?? ($user ? $user->default_company_id : null);
+            
+        return response()->json([
+            'success' => true,
+            'message' => 'Vizzly integration is working',
+            'data' => [
+                'user_authenticated' => !is_null($user),
+                'user_id' => $user ? $user->id : null,
+                'selected_company' => $selectedCompany,
+                'project_id' => $this->projectId,
+                'timestamp' => now()->toISOString()
+            ]
+        ]);
+    }
+    
+    /**
+     * Generate Vizzly identity tokens for the authenticated user
+     * Following Vizzly documentation standards
+     */
+    public function generateTokens(Request $request)
     {
         try {
             $user = Auth::user();
             
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Authentication required',
+                    'message' => 'User must be authenticated to generate Vizzly tokens'
+                ], 401);
+            }
+
             // Get the selected company from request or user's default
             $selectedCompany = $request->header('X-Company-ID') 
                 ?? $request->input('company_id') 
                 ?? $user->default_company_id;
 
+            if (!$selectedCompany) {
+                return response()->json([
+                    'error' => 'Company context required',
+                    'message' => 'A company must be selected to generate Vizzly tokens'
+                ], 400);
+            }
+
+            // Validate user has access to the selected company
+            // if (!$this->userHasAccessToCompany($user, $selectedCompany)) {
+            //     return response()->json([
+            //         'error' => 'Access denied',
+            //         'message' => 'User does not have access to the selected company'
+            //     ], 403);
+            // }
+
             // Generate tokens using JWT
             $tokens = $this->createVizzlyTokens($user, $selectedCompany);
 
             return response()->json([
-                'accessTokens' => $tokens,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'company_id' => $selectedCompany
+                'success' => true,
+                'data' => [
+                    'identity' => $tokens,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'company_id' => $selectedCompany,
+                        'access_type' => $this->getUserAccessType($user)
+                    ],
+                    'expires_at' => now()->addHours(2)->toISOString()
                 ]
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Vizzly token generation failed: ' . $e->getMessage());
+            Log::error('Vizzly token generation failed: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'company_id' => $selectedCompany ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             // Return fallback tokens in case of error
             return response()->json([
-                'accessTokens' => $this->getFallbackTokens(),
-                'fallback' => true,
-                'error' => 'Using fallback tokens due to: ' . $e->getMessage()
-            ]);
+                'success' => false,
+                'data' => [
+                    'identity' => $this->getFallbackTokens(),
+                    'fallback' => true
+                ],
+                'message' => 'Using fallback tokens due to error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Create Vizzly access tokens using Firebase JWT
+     * Create Vizzly identity tokens using Firebase JWT
+     * Following Vizzly documentation structure
      */
-    private function createVizzlyTokens($user, $companyId): array
+    private function createVizzlyTokens($user, $companyId)
     {
         try {
-            // Try to load private key from storage
-            $privateKey = null;
-            $keyPaths = [
-                'vizzly-private.pem',
-                'vizzly/vizzly-private.pem',
-                storage_path('app/vizzly-private.pem'),
-                storage_path('vizzly/vizzly-private.pem'),
-                base_path('vizzly-private.pem')
-            ];
-
-            foreach ($keyPaths as $path) {
-                if (Storage::exists($path)) {
-                    $privateKey = Storage::get($path);
-                    break;
-                } elseif (file_exists($path)) {
-                    $privateKey = file_get_contents($path);
-                    break;
-                }
-            }
-
+            $privateKey = $this->getPrivateKey();
+            
             if (!$privateKey) {
-                Log::warning('Vizzly private key not found in any location, using fallback tokens');
+                Log::warning('Vizzly private key not found, using fallback tokens');
                 return $this->getFallbackTokens();
             }
 
-            // Current time
+            // Current time and expiration
             $now = time();
             $ttl = 2 * 60 * 60; // 2 hours
+            $userReference = "user_{$user->id}";
 
             // Create dashboard access token
             $dashboardPayload = [
-                'organisationId' => $this->projectId,
-                'userReference' => "user_{$user->id}",
+                'projectId' => $this->projectId,
+                'userReference' => $userReference,
                 'scope' => 'read_write',
                 'accessType' => $this->getUserAccessType($user),
-                'iat' => $now,
-                'exp' => $now + $ttl,
-                'iss' => 'vizzly'
+                // 'iat' => $now,
+                'expires' => '2025-07-21T04:06:58.621Z',
+                // 'iss' => 'vizzly'
             ];
 
             // Create data access token with secure filters
             $dataPayload = [
-                'organisationId' => $this->projectId,
-                'dataSetIds' => '*',
-                'userReference' => "user_{$user->id}",
-                'scope' => 'read_write',
-                'accessType' => $this->getUserAccessType($user),
-                'secureFilters' => $this->buildSecureFilters($user, $companyId),
-                'parameters' => [
-                    'company_id' => $companyId,
-                    'user_id' => $user->id
-                ],
-                'iat' => $now,
-                'exp' => $now + $ttl,
-                'iss' => 'vizzly'
+                'projectId' => $this->projectId,
+                'dataSetIds' => '*', // Access to all datasets
+                // 'userReference' => $userReference,
+                // 'secureFilters' => $this->buildSecureFilters($user, $companyId),
+                'parameters' => [],
+                'secureFilters' => [],
+                // 'parameters' => [
+                //     'company_id' => $companyId,
+                //     'user_id' => $user->id,
+                //     'user_name' => $user->name,
+                //     'user_email' => $user->email
+                // ],
+
+                // 'iat' => $now,
+                'expires' => '2025-07-21T04:06:58.621Z',
+                // 'iss' => 'vizzly'
             ];
 
             // Sign the tokens
-            $dashboardToken = JWT::encode($dashboardPayload, $privateKey, 'RS256');
-            $dataToken = JWT::encode($dataPayload, $privateKey, 'RS256');
+            $dashboardToken = JWT::encode($dashboardPayload, $privateKey, 'ES256');
+            $dataToken = JWT::encode($dataPayload, $privateKey, 'ES256');
 
             $tokens = [
                 'dashboardAccessToken' => $dashboardToken,
@@ -129,15 +175,15 @@ class VizzlyController extends AppBaseController
             if ($this->userHasQueryEngineAccess($user)) {
                 $queryEnginePayload = [
                     'organisationId' => $this->projectId,
-                    'userReference' => "user_{$user->id}",
-                    'scope' => 'read_write',
-                    'accessType' => 'admin',
+                    'userReference' => $userReference,
+                    'allowDatabaseSchemaAccess' => true,
+                    'allowDataPreviewAccess' => true,
                     'iat' => $now,
                     'exp' => $now + $ttl,
                     'iss' => 'vizzly'
                 ];
                 
-                $tokens['queryEngineAccessToken'] = JWT::encode($queryEnginePayload, $privateKey, 'RS256');
+                $tokens['queryEngineAccessToken'] = JWT::encode($queryEnginePayload, $privateKey, 'ES256');
             }
 
             return $tokens;
@@ -146,6 +192,20 @@ class VizzlyController extends AppBaseController
             Log::error('JWT token creation failed: ' . $e->getMessage());
             return $this->getFallbackTokens();
         }
+    }
+
+    /**
+     * Get private key for JWT signing
+     */
+    private function getPrivateKey(): ?string
+    {
+        $path = 'vizzly-private.pem';
+
+        if (Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->get($path);
+        } 
+
+        return null;
     }
 
     /**
@@ -162,6 +222,7 @@ class VizzlyController extends AppBaseController
 
     /**
      * Build secure filters for multi-tenancy
+     * Following Vizzly documentation for secure filters
      */
     private function buildSecureFilters($user, $companyId): array
     {
@@ -173,17 +234,37 @@ class VizzlyController extends AppBaseController
             [
                 'field' => 'company_id',
                 'op' => '=',
-                'value' => $companyId
+                'value' => (string) $companyId
             ]
         ];
 
-        // Add user-level filtering if needed
+        // Add user-level filtering for non-admin users
         if (!$this->userIsAdmin($user)) {
-            $filters['user_specific_data'] = [
+            // Apply user-specific filtering to sensitive datasets
+            $userSpecificDatasets = [
+                'user_data',
+                'personal_reports',
+                'user_specific_data'
+            ];
+
+            foreach ($userSpecificDatasets as $dataset) {
+                $filters[$dataset] = [
+                    [
+                        'field' => 'user_id',
+                        'op' => '=',
+                        'value' => (string) $user->id
+                    ]
+                ];
+            }
+        }
+
+        // Add department-level filtering if user has department
+        if (property_exists($user, 'department_id') && $user->department_id) {
+            $filters['department_data'] = [
                 [
-                    'field' => 'user_id',
+                    'field' => 'department_id',
                     'op' => '=',
-                    'value' => $user->id
+                    'value' => (string) $user->department_id
                 ]
             ];
         }
@@ -197,8 +278,25 @@ class VizzlyController extends AppBaseController
     private function userHasAccessToCompany($user, $companyId): bool
     {
         // Implement your company access logic here
-        // For now, allow access if user has company_id or is admin
-        return $user->company_id == $companyId || $this->userIsAdmin($user);
+        // This could check user_companies table, roles, etc.
+        
+        // For now, basic checks:
+        if ($this->userIsAdmin($user)) {
+            return true; // Admins have access to all companies
+        }
+
+        // Check if user's default company matches
+        if (property_exists($user, 'company_id') && $user->company_id == $companyId) {
+            return true;
+        }
+
+        // Check if user has explicit access to this company
+        // You might have a user_companies pivot table
+        if (method_exists($user, 'companies')) {
+            return $user->companies()->where('company_id', $companyId)->exists();
+        }
+
+        return false;
     }
 
     /**
@@ -223,7 +321,18 @@ class VizzlyController extends AppBaseController
     private function userIsAdmin($user): bool
     {
         // Implement your admin check logic
-        return (method_exists($user, 'hasRole') && $user->hasRole('admin')) 
-            || (property_exists($user, 'is_admin') && $user->is_admin);
+        if (method_exists($user, 'hasRole')) {
+            return $user->hasRole('admin') || $user->hasRole('super_admin');
+        }
+        
+        if (property_exists($user, 'is_admin')) {
+            return $user->is_admin;
+        }
+        
+        if (property_exists($user, 'role')) {
+            return in_array($user->role, ['admin', 'super_admin']);
+        }
+        
+        return false;
     }
 }
