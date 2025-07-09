@@ -54,6 +54,5 @@ class BankStatementMatch implements ShouldQueue
         Log::useFiles(storage_path().'/logs/bank_statement_match.log');
         Log::info("Payment Voucher Match");
         PaymentVoucherMatch::dispatch($db, $statementId);
-        ReceiptVoucherMatch::dispatch($db, $statementId);      
     }
 }

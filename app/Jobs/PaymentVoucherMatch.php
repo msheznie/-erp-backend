@@ -79,13 +79,13 @@ class PaymentVoucherMatch implements ShouldQueue
                     foreach ($chunk as $bankLedgerDetail) {
                         $pvWhereCondition = 'debit != 0 AND (bankLedgerAutoID IS NULL OR bankLedgerAutoID = 0)';
                         if($pvMatchingRule->isMatchAmount == 1) {
-                            $payAmount = (float) $bankLedgerDetail['payAmountBank'];
+                            $payAmount = (float) $bankLedgerDetail['payAmountBank'] < 0 ? $bankLedgerDetail['payAmountBank'] * -1 : $bankLedgerDetail['payAmountBank'];
                             $amountDiff = (float) $pvMatchingRule->amountDifference;
 
                             $minCredit = $payAmount - $amountDiff;
                             $maxCredit = $payAmount + $amountDiff;
 
-                            $pvWhereCondition .= " AND (debit >= {$minCredit} AND debit <= {$maxCredit})";
+                            $pvWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvMatchingRule->isMatchDate == 1) {
                             $pvWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvMatchingRule->dateDifference . ' days')) . "' 
@@ -151,13 +151,13 @@ class PaymentVoucherMatch implements ShouldQueue
                     foreach ($chunk as $bankLedgerDetail) {
                         $partialWhereCondition = 'debit != 0 AND (bankLedgerAutoID IS NULL OR bankLedgerAutoID = 0)';
                         if($pvPartialMatchingRule->isMatchAmount == 1) {
-                            $payAmount = (float) $bankLedgerDetail['payAmountBank'];
+                            $payAmount = (float) $bankLedgerDetail['payAmountBank'] < 0 ? $bankLedgerDetail['payAmountBank'] * -1 : $bankLedgerDetail['payAmountBank'];
                             $amountDiff = (float) $pvPartialMatchingRule->amountDifference;
 
                             $minCredit = $payAmount - $amountDiff;
                             $maxCredit = $payAmount + $amountDiff;
 
-                            $partialWhereCondition .= " AND (debit >= {$minCredit} AND debit <= {$maxCredit})";
+                            $partialWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvPartialMatchingRule->isMatchDate == 1) {
                             $partialWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvPartialMatchingRule->dateDifference . ' days')) . "' 
@@ -202,7 +202,8 @@ class PaymentVoucherMatch implements ShouldQueue
             }
             /*** End of Payment Voucher Partial Matching ***/
 
-           BankStatementMaster::where('statementId', $statementId)->increment('matchingInprogress', 1);
+            BankStatementMaster::where('statementId', $statementId)->increment('matchingInprogress', 1);
+            ReceiptVoucherMatch::dispatch($db, $statementId);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();

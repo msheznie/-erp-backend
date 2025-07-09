@@ -81,13 +81,13 @@ class ReceiptVoucherMatch implements ShouldQueue
                     {
                         $receiptWhereCondition = 'credit != 0 AND (bankLedgerAutoID IS NULL OR bankLedgerAutoID = 0)';
                         if($rvMatchingRule->isMatchAmount == 1) {
-                            $payAmount = (float) $bankLedgerDetail['payAmountBank'];
+                            $payAmount = (float) $bankLedgerDetail['payAmountBank'] < 0? $bankLedgerDetail['payAmountBank'] * -1 : $bankLedgerDetail['payAmountBank'];
                             $amountDiff = (float) $rvMatchingRule->amountDifference;
 
                             $minCredit = $payAmount - $amountDiff;
                             $maxCredit = $payAmount + $amountDiff;
 
-                            $receiptWhereCondition .= " AND (credit >= {$minCredit} AND credit <= {$maxCredit})";
+                            $receiptWhereCondition .= " AND (ABS(credit) >= {$minCredit} AND ABS(credit) <= {$maxCredit})";
                         }
                         if($rvMatchingRule->isMatchDate == 1) {
                             $receiptWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $rvMatchingRule->dateDifference . ' days')) . "' 
@@ -155,13 +155,13 @@ class ReceiptVoucherMatch implements ShouldQueue
                     foreach ($chunk as $bankLedgerDetail) {
                         $receiptWhereCondition = 'credit != 0 AND (bankLedgerAutoID IS NULL OR bankLedgerAutoID = 0)';
                         if($rvPatialMatchingRule->isMatchAmount == 1) {
-                            $payAmount = (float) $bankLedgerDetail['payAmountBank'];
+                            $payAmount = (float) $bankLedgerDetail['payAmountBank'] < 0 ? $bankLedgerDetail['payAmountBank'] * -1 : $bankLedgerDetail['payAmountBank'];
                             $amountDiff = (float) $rvPatialMatchingRule->amountDifference;
     
                             $minCredit = $payAmount - $amountDiff;
                             $maxCredit = $payAmount + $amountDiff;
     
-                            $receiptWhereCondition .= " AND (credit >= {$minCredit} AND credit <= {$maxCredit})";
+                            $receiptWhereCondition .= " AND (ABS(credit) >= {$minCredit} AND ABS(credit) <= {$maxCredit})";
                         }
                         if($rvPatialMatchingRule->isMatchDate == 1) {
                             $receiptWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $rvPatialMatchingRule->dateDifference . ' days')) . "' 
