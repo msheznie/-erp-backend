@@ -6,6 +6,7 @@ use App\Models\BankLedger;
 use App\Models\BankReconciliation;
 use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
+use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Models\BankAccount;
 
@@ -98,40 +99,41 @@ class BankStatementMasterRepository extends BaseRepository
     {
         $data = [];
         $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first()->toArray();
-        $bankAccountId = $data['details']['bankAccountAutoID'];
+        if(!empty($data['details']))
+        {
+            $bankAccountId = $data['details']['bankAccountAutoID'];
 
-        $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
-            ->where('companySystemID', $companySystemID)
-            ->where("bankAccountID", $bankAccountId)
-            ->where("trsClearedYN", -1)
-            ->where("bankClearedYN", -1)
-            ->groupBy('companySystemID', 'bankAccountID')
-            ->first();
+            $fromDate = new Carbon($data['details']['statementStartDate']);
+            $openingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as opening')
+                ->where('companySystemID', $companySystemID)
+                ->where("bankAccountID", $bankAccountId)
+                ->whereDate("documentDate", "<", $fromDate)
+                ->first();
 
-        if (!empty($openingBalance)) {
-            $data['systemOpeningBalance'] = $openingBalance->opening;
-        } else {
-            $data['systemOpeningBalance'] = 0;
+            if (!empty($openingBalance)) {
+                $data['systemOpeningBalance'] = $openingBalance->opening;
+            } else {
+                $data['systemOpeningBalance'] = 0;
+            }
+            $toDate = new Carbon($data['details']['statementEndDate']);
+            $closingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as closing')
+                ->where('companySystemID', $companySystemID)
+                ->where("bankAccountID", $bankAccountId)
+                ->where("documentDate", "<", $toDate)
+                ->first();
+
+            if (!empty($closingBalance)) {
+                $data['systemClosingBalance'] = $closingBalance->closing;
+            } else {
+                $data['systemClosingBalance'] = 0;
+            }
+
+            $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                ->orderBy('bankRecAsOf', 'desc')
+                ->first();
+
+            $data['lastBankRecAmount'] = $lastRec ? $lastRec->closingBalance : 0;
         }
-        $closingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as closing')
-            ->where('companySystemID', $companySystemID)
-            ->where("bankAccountID", $bankAccountId)
-            ->where("trsClearedYN", -1)
-            ->where("bankClearedYN", -1)
-            ->groupBy('companySystemID', 'bankAccountID')
-            ->first();
-
-        if (!empty($closingBalance)) {
-            $data['systemClosingBalance'] = $closingBalance->closing;
-        } else {
-            $data['systemClosingBalance'] = 0;
-        }
-
-        $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
-            ->orderBy('bankRecAsOf', 'desc')
-            ->first();
-
-        $data['lastBankRecAmount'] = $lastRec ? $lastRec->closingBalance : 0;
 
         return $data;
     }
