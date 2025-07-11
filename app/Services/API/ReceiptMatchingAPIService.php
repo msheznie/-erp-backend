@@ -492,7 +492,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $detail->bookingAmountTrans = $arLedger->custInvoiceAmount;
         $detail->bookingAmountLocal = $arLedger->localAmount;
         $detail->bookingAmountRpt = $arLedger->comRptAmount;
-        $detail->custbalanceAmount = $arLedger->custInvoiceAmount - $totalreceivedAmountTrans -$input['receiveAmountTrans'];
+        $detail->custbalanceAmount = $arLedger->custInvoiceAmount - ($totalreceivedAmountTrans + $input['receiveAmountTrans']);
         $detail->receiveAmountTrans = $input['receiveAmountTrans'];
 
         // Use the helper to calculate local/rpt amounts for the received value
