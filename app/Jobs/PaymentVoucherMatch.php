@@ -105,7 +105,7 @@ class PaymentVoucherMatch implements ShouldQueue
                         if($pvMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $pvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentCode'] . "%')";
+                            $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -179,7 +179,7 @@ class PaymentVoucherMatch implements ShouldQueue
                         if($pvPartialMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $pvPartialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentCode'] . "%')";
+                            $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)

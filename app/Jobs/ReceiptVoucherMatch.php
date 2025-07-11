@@ -109,7 +109,7 @@ class ReceiptVoucherMatch implements ShouldQueue
                         if($rvMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $rvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentCode'] . "%')";
+                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -183,7 +183,7 @@ class ReceiptVoucherMatch implements ShouldQueue
                         if($rvPatialMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $rvPatialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
     
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentCode'] . "%')";
+                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
                         }
     
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
