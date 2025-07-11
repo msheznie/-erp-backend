@@ -189,7 +189,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [19, 21]);
-        $invMaster->with(['segment','created_by' => function ($query) {
+        $invMaster->with(['segment','documentSystemMapping','created_by' => function ($query) {
         }, 'customer' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
         }, 'localcurrency' => function ($query) {

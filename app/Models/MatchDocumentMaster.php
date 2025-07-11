@@ -332,6 +332,8 @@ class MatchDocumentMaster extends Model
 
     protected $primaryKey = 'matchDocumentMasterAutoID';
 
+    protected $appends = ['isFromApi'];
+
     public $fillable = [
         'PayMasterAutoId',
         'documentSystemID',
@@ -567,5 +569,22 @@ class MatchDocumentMaster extends Model
         return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'matchingDocID', 'matchDocumentMasterAutoID');
     }
 
+    public function documentSystemMapping()
+    {
+        return $this->hasMany(\App\Models\DocumentSystemMapping::class, 'documentId', 'matchDocumentMasterAutoID')
+                ->where('documentSystemId',70);
+    }
 
+
+    public function getIsFromApiAttribute()
+    {
+        $master = DocumentSystemMapping::where('documentSystemId',70)->where('documentId',$this->matchDocumentMasterAutoID)->first();
+
+        if($master)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
