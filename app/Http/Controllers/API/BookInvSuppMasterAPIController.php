@@ -1125,10 +1125,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totRptAmount');
                         if (!$valEligible) {
-                            $grvDetailTotal = $grvDetailSum['total'];
+                            $grvDetailTotal = $grvDetailSum['total'] + $logisticVATTotal;
                         } else {
                             $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'] + $logisticVATTotal;
                         }
+
+
                         if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount(Reporting Currency) is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount(Reporting Currency) is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
                         }
