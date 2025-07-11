@@ -128,7 +128,7 @@ class SlotMaster extends Model
         return $this->hasMany('App\Models\SlotDetails', 'slot_master_id', 'id');
     }
 
-    public function getSlotData($tenantID, $formSrm = 0)
+    public function getSlotData($tenantID, $formSrm = 0, $assignedWareHouseIds = [])
     {
         return SlotMaster::with([
             'slot_details' => function ($q) {
@@ -146,6 +146,9 @@ class SlotMaster extends Model
                 $q->whereIn('company_id', $tenantID);
             })
             /*  ->where('warehouse_id', $wareHouseID) */
+            ->when(!empty($assignedWareHouseIds), function ($q) use ($assignedWareHouseIds) {
+                $q->whereIn('warehouse_id', $assignedWareHouseIds);
+            })
             ->get();
     }
     public function ware_house()

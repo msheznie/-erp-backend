@@ -298,55 +298,21 @@ class SlotMasterAPIController extends AppBaseController
     }
     public function getFormDataCalander(Request $request)
     {
-        $companyID = $request['companyID'];
-        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyID)->where('isActive', 1);
-        if (isset($request['type']) && $request['type'] != 'filter') {
-            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
+        try{
+            $calendarSlots = $this->slotMasterRepository->getFormDataCalendar($request);
+            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
+        } catch (\Exception $ex){
+            return $this->sendError($ex->getMessage(), 500);
         }
-        $weekDays = WeekDays::all();
-
-        $wareHouseLocation = $wareHouseLocation->get();
-
-        $output = array(
-            'wareHouseLocation' => $wareHouseLocation,
-            'weekDays' => $weekDays
-        );
-        return $this->sendResponse($output, 'Record retrieved successfully');
     }
     public function getCalanderSlotData(Request $request)
     {
-        $input = $request->all();
-        $slot = new SlotMaster();
-        $companyID  = $input['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
-
-        if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($companyID);
-        }else{
-            $subCompanies = [$companyID];
+        try{
+            $calendarSlots = $this->slotMasterRepository->getCalendarSlotData($request);
+            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
+        } catch (\Exception $ex){
+            return $this->sendError($ex->getMessage(), 500);
         }
-        $wareHouseID = $input['warhouse'];
-        $data = $slot->getSlotData($subCompanies, 0);
-        $arr = [];
-        $x = 0;
-        if (!empty($data)) {
-            foreach ($data as $row) {
-                foreach ($row['slot_details'] as $slotDetail) {
-                    $status = collect($slotDetail->appointment)->contains('confirmed_yn', true) ? 1 : 0;
-
-                    $arr[$x]['id'] = $slotDetail->id;
-                    $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] =  date("h:i A",strtotime($slotDetail->start_date)). '-'. date("h:i A",strtotime($slotDetail->end_date)). ' '.$row->ware_house->wareHouseDescription;
-                    $arr[$x]['start'] = $slotDetail->start_date;
-                    $arr[$x]['end'] = $slotDetail->end_date;
-                    $arr[$x]['fullDay'] = 0;
-                    $arr[$x]['color'] =($status == 1?'#cf3000ba':'#ffc107');
-                    $arr[$x]['status'] = $status;
-                    $x++;
-                }
-            }
-        }
-        return $this->sendResponse($arr, 'Record retrieved successfully');
     }
 
     private function getStartDate(){

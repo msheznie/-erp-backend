@@ -143,4 +143,12 @@ class WarehouseRights extends Model
     public function employee(){
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
     }
+
+    public static function getAssignedWarehouses($user, $subCompanies)
+    {
+        return WarehouseRights::where('employeeSystemID', $user)
+            ->whereIn('companySystemID', $subCompanies)
+            ->pluck('wareHouseSystemCode')
+            ->toArray();
+    }
 }
