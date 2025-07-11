@@ -362,8 +362,8 @@ class StockTransferDetailsAPIController extends AppBaseController
         //     $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
         // }
 
-        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned ? $financeItemCategorySubAssigned->financeGLcodebBS : null;
+        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned ? $financeItemCategorySubAssigned->financeGLcodebBSSystemID : null;
         
 
         
