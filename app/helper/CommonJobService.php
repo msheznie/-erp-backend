@@ -58,7 +58,9 @@ class CommonJobService
             case 'recurring-voucher':
                 return storage_path() . '/logs/recurring_voucher_service.log';
             case 'delegation':
-                return storage_path() . '/logs/delegation.log';
+                return storage_path() . '/logs/delegation.log';  
+            case 'absent-notification':
+                return storage_path() . '/logs/absent-notification.log';
         }
     }
 

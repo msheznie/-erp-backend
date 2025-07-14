@@ -28,6 +28,7 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
+use App\Services\hrms\attendance\AbsentNotificationNonCrossDayService;
 use App\helper\BirthdayWishService;
 use App\Jobs\DelegationActivation;
 use App\Jobs\HrDocNotificationJob;
@@ -93,6 +94,11 @@ class HRJobInvokeAPIController extends AppBaseController
             case 17:
                 $job = new AttendanceWeeklySummaryService($companyId, $date);
             break;
+
+            case 50:
+                $job = new AbsentNotificationNonCrossDayService($companyId, $date, $time);
+            break;
+
                 throw new Exception("scenario id is not valid");
             default:
                 

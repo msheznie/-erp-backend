@@ -78,6 +78,12 @@ class Kernel extends ConsoleKernel
             ->timezone('Asia/Muscat')
             ->dailyAt('21:00')
             ->withoutOverlapping();
+
+        $schedule->command('command:AbsentNotificationNonCrossDay')
+            ->timezone('Asia/Muscat')
+            ->hourly()
+            ->between('12:00', '23:59')
+            ->withoutOverlapping();    
     }
 
     /**
