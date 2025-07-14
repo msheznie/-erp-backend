@@ -6600,4 +6600,77 @@ class SRMService
         $encrypted = openssl_encrypt($string, $cipher, $key, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $encrypted);
     }
+
+    public function supplierValidation(Request $request)
+    {
+        $input = $request->all();
+        $supplierFormValues = $input['data'];
+        $supplierMasterData = $input['supplierRegistration'];
+
+        $companyId = $supplierMasterData['company_id'] ?? null;
+        $registrationNumber = $supplierFormValues['registrationNumber'] ?? null;
+        $supEmail = strtolower(trim($supplierFormValues['email'])) ?? null;
+
+        $validator = $this->validator($companyId, $registrationNumber, $supEmail);
+        if(!$validator['success']){
+            return $validator;
+        }
+
+        if (!empty($registrationNumber) && SupplierMaster::checkFieldExists($companyId, 'registrationNumber', $registrationNumber)) {
+            return [
+                'success' => false,
+                'message' => 'Same CR number already exists, cannot create as new supplier, please link with the
+                 existing supplier',
+                'data' => 1
+            ];
+        }
+
+        if(!empty($supEmail) && $supEmail !== '0' && SupplierMaster::checkFieldExists($companyId, 'supEmail', $supEmail)){
+            return [
+                'success' => false,
+                'message' => 'Supplier name or Email already exist, Do you wish to continue?',
+                'data' => 0
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Supplier validation successfully',
+            'data' => []
+        ];
+    }
+    public function validator($companyId, $registrationNumber, $supEmail){
+
+        $validationData = [
+            'company_id' => $companyId,
+            'registrationNumber' => $registrationNumber,
+            'email' => $supEmail,
+        ];
+
+
+        $rules = [
+            'company_id' => 'required|integer',
+            'registrationNumber' => 'required|string',
+            'email' => 'required|email',
+        ];
+
+
+        $messages = [
+            'company_id.required' => 'Company ID is required.',
+            'registrationNumber.required' => 'Registration number is required.',
+            'email.email' => 'Email is required.',
+        ];
+
+        $validator = Validator::make($validationData, $rules, $messages);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'data' => 1
+            ];
+        }
+
+        return ['success' => true];
+    }
 }

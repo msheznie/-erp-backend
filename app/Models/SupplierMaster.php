@@ -428,4 +428,12 @@ class SupplierMaster extends Model
     {
         return $this->isActive;
     }
+
+    public static function checkFieldExists($companyId, $field, $value)
+    {
+        return SupplierMaster::where($field, $value)
+            ->where('primaryCompanySystemID', $companyId)
+            ->where('isActive', 1)
+            ->exists();
+    }
 }

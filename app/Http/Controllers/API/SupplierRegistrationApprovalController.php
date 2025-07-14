@@ -278,6 +278,16 @@ class SupplierRegistrationApprovalController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
     }
+
+    public function supplierValidation(Request $request)
+    {
+        try{
+            $supplierValidation = $this->srmService->supplierValidation($request);
+            return $this->sendResponse($supplierValidation, 'Record retrieved successfully');
+        } catch (\Exception $ex){
+            return $this->sendError($ex->getMessage(), 500);
+        }
+    }
     public function supplierCreation(Request $request)
     {
         $input = $request->all();
@@ -393,13 +403,13 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['registrationExprity'] = $supplierFormValues['expireDate'];
 
         if($isApprovalAmmend!=1){
-            $supplierMasters = SupplierMaster::create($data); 
+            $supplierMasters = SupplierMaster::create($data);
             $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
             SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
                 ->update($dataPrimary);
             $supplierID = $supplierMasters['supplierCodeSystem'];
         }else {
-            
+
             $supplierMasterUpdate = SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
             ->update($data);
 
@@ -553,7 +563,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             foreach ($supplierFormValues['vatCertification'] as $index => $item) {
                 $formFieldId = $item['form_field_id'];
                 $value = $item['value'];
-                
+
                 switch ($formFieldId) {
                     case 67:
                         $vatCertificationData['path'] = $value;
@@ -597,7 +607,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             ]);
         }
 
-        $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first(); 
+        $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee['empID'];
@@ -620,7 +630,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             ->update([
                 'supplier_master_id' => $supplier->supplierCodeSystem
             ]);
-        }else { 
+        }else {
             BankMemoSupplier::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
             ->update([
                 'supplierCurrencyID' => $supplierCurrency->supplierCurrencyID
