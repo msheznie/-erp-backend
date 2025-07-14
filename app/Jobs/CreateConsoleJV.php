@@ -245,7 +245,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData['companySystemID'] = $stMaster->companyToSystemID;
                 $consoleJVDetailData['companyID'] = $stMaster->companyTo;
 
-                $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $stMaster->companyToSystemID)->first();
+                $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $stMaster->companyFromSystemID)->first();
                 if ($supplierMaster) {
                     $consoleJVDetailData['glAccountSystemID'] = $supplierMaster->liabilityAccountSysemID;
                     $consoleJVDetailData['glAccount'] = $supplierMaster->liabilityAccount;
@@ -282,7 +282,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData['companySystemID'] = $stMaster->companyFromSystemID;
                 $consoleJVDetailData['companyID'] = $stMaster->companyFrom;
 
-                $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $stMaster->companyFromSystemID)->first();
+                $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $stMaster->companyToSystemID)->first();
                 if ($customerMaster) {
                     $consoleJVDetailData['glAccountSystemID'] = $customerMaster->custGLAccountSystemID;
                     $consoleJVDetailData['glAccount'] = $customerMaster->custGLaccount;
@@ -310,7 +310,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData['companySystemID'] = $stMaster->companyFromSystemID;
                 $consoleJVDetailData['companyID'] = $stMaster->companyFrom;
 
-                $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $stMaster->companyFromSystemID)->first();
+                $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $stMaster->companyToSystemID)->first();
                 if ($customerMaster) {
                     $consoleJVDetailData['glAccountSystemID'] = $customerMaster->custGLAccountSystemID;
                     $consoleJVDetailData['glAccount'] = $customerMaster->custGLaccount;
@@ -368,7 +368,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData['companySystemID'] = $stMaster->companyToSystemID;
                 $consoleJVDetailData['companyID'] = $stMaster->companyTo;
 
-                $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $stMaster->companyToSystemID)->first();
+                $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $stMaster->companyFromSystemID)->first();
                 if ($supplierMaster) {
                     $consoleJVDetailData['glAccountSystemID'] = $supplierMaster->liabilityAccountSysemID;
                     $consoleJVDetailData['glAccount'] = $supplierMaster->liabilityAccount;
@@ -770,7 +770,7 @@ class CreateConsoleJV implements ShouldQueue
                     $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->companySystemID;
                     $consoleJVDetailData['companyID'] = $assetDisposalMaster->companyID;
 
-                    $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
+                    $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
                     if ($customerMaster) {
                         $consoleJVDetailData['glAccountSystemID'] = $customerMaster->custGLAccountSystemID;
                         $consoleJVDetailData['glAccount'] = $customerMaster->custGLaccount;
@@ -790,7 +790,7 @@ class CreateConsoleJV implements ShouldQueue
                     $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->toCompanySystemID;
                     $consoleJVDetailData['companyID'] = $assetDisposalMaster->toCompanyID;
 
-                    $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                    $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
                     if ($supplierMaster) {
                         $consoleJVDetailData['glAccountSystemID'] = $supplierMaster->liabilityAccountSysemID;
                         $consoleJVDetailData['glAccount'] = $supplierMaster->liabilityAccount;
@@ -814,7 +814,7 @@ class CreateConsoleJV implements ShouldQueue
                     $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->toCompanySystemID;
                     $consoleJVDetailData['companyID'] = $assetDisposalMaster->toCompanyID;
 
-                    $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                    $supplierMaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
                     if ($supplierMaster) {
                         $consoleJVDetailData['glAccountSystemID'] = $supplierMaster->liabilityAccountSysemID;
                         $consoleJVDetailData['glAccount'] = $supplierMaster->liabilityAccount;
@@ -834,7 +834,7 @@ class CreateConsoleJV implements ShouldQueue
                     $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->companySystemID;
                     $consoleJVDetailData['companyID'] = $assetDisposalMaster->companyID;
 
-                    $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
+                    $customerMaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
                     if ($customerMaster) {
                         $consoleJVDetailData['glAccountSystemID'] = $customerMaster->custGLAccountSystemID;
                         $consoleJVDetailData['glAccount'] = $customerMaster->custGLaccount;
