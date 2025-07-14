@@ -384,11 +384,11 @@ class ConsolidationReportService
                 if (count($selectedCompanyPeriods) == 1) {
                     if ($firstTransactionDate <= $openingBalanceLastDate) {
                         $openingBalanceSelectedCompany = self::getTotalProfit($servicelineIDs, $companyID, null, $openingBalanceLastDate->format('Y-m-d'), $currencyColumn, 1, true);
-                        if ($selectedCompanyPeriods[0]->group_type == 1) {
+                        if ($selectedCompanyPeriods->first()->group_type == 1) {
                             $openingBalance += $openingBalanceSelectedCompany;
                         }
                         else {
-                            $openingBalance += (($openingBalanceSelectedCompany * $selectedCompanyPeriods[0]->holding_percentage) / 100);
+                            $openingBalance += (($openingBalanceSelectedCompany * $selectedCompanyPeriods->first()->holding_percentage) / 100);
                         }
                     }
                 }
