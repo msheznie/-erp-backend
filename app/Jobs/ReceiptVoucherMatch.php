@@ -102,14 +102,15 @@ class ReceiptVoucherMatch implements ShouldQueue
                                 $referenceTo = $rvMatchingRule->statementReferenceTo - $rvMatchingRule->statementReferenceFrom + 1;
                                 $bankledgerDocument = substr($bankledgerDocument, $referenceFrom, $referenceTo);
                             }
-
-                            $receiptWhereCondition .= " AND (".$statementDocument." LIKE '%" . $bankledgerDocument . "%')";
+                            $safeBankledgerDocument = str_replace('\\', '\\\\\\\\', $bankledgerDocument);
+                            $receiptWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
                         if($rvMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $rvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
+                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
+                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -176,14 +177,15 @@ class ReceiptVoucherMatch implements ShouldQueue
                                 $referenceTo = $rvPatialMatchingRule->statementReferenceTo - $rvPatialMatchingRule->statementReferenceFrom + 1;
                                 $bankledgerDocument = substr($bankledgerDocument, $referenceFrom, $referenceTo);
                             }
-    
-                            $receiptWhereCondition .= " AND (".$statementDocument." LIKE '%" . $bankledgerDocument . "%')";
+                            $safeBankledgerDocument = str_replace('\\', '\\\\\\\\', $bankledgerDocument);
+                            $receiptWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
     
                         if($rvPatialMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $rvPatialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
     
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
+                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
+                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
                         }
     
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)

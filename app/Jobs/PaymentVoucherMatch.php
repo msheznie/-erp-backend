@@ -106,7 +106,8 @@ class PaymentVoucherMatch implements ShouldQueue
                         if($pvMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $pvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
+                            $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
+                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -173,14 +174,15 @@ class PaymentVoucherMatch implements ShouldQueue
                                 $referenceTo = $pvPartialMatchingRule->statementReferenceTo - $pvPartialMatchingRule->statementReferenceFrom + 1;
                                 $bankledgerDocument = substr($bankledgerDocument, $referenceFrom, $referenceTo);
                             }
-
-                            $partialWhereCondition .= " AND (".$statementDocument." LIKE '%" . $bankledgerDocument . "%')";
+                            $safeBankledgerDocument = str_replace('\\', '\\\\\\\\', $bankledgerDocument);
+                            $partialWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
                         if($pvPartialMatchingRule->isMatchChequeNo) {
                             $chequeStatementDoc = $pvPartialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%')";
+                            $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
+                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
