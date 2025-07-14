@@ -99,7 +99,8 @@ class PaymentVoucherMatch implements ShouldQueue
                                 $bankledgerDocument = substr($bankledgerDocument, ($pvMatchingRule->statementReferenceFrom - 1), ($pvMatchingRule->statementReferenceTo - $pvMatchingRule->statementReferenceFrom + 1));
                             }
 
-                            $pvWhereCondition .= " AND (".$statementDocument." LIKE '%" . $bankledgerDocument . "%')";
+                            $safeBankledgerDocument = str_replace('\\', '\\\\\\\\', $bankledgerDocument);
+                            $pvWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
                         if($pvMatchingRule->isMatchChequeNo) {
