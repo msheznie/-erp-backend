@@ -18,11 +18,14 @@ use App\Models\MatchDocumentMaster;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Jobs\InitiateWebhook;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
+use App\Models\CreditNoteDetails;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoice;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\DirectReceiptDetail;
 use App\Services\API\ReceiptMatchingAPIService;
 use App\Traits\DocumentSystemMappingTrait;
 use GuzzleHttp\Client;
@@ -238,6 +241,22 @@ class CreateReceiptMatching implements ShouldQueue
             if (!$brv) {
                 $errors[] = 'Advance receipt voucher document code not matching with system';
             } else {
+                $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
+                ->where('companySystemID', $companySystemId)
+                ->first();
+
+                if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
+                    $isMultipleSegmentDetails = DirectReceiptDetail::where('directReceiptAutoID', $brv->custReceivePaymentAutoID)->get();
+
+                    if ($isMultipleSegmentDetails->count() > 1) {
+                        $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
+                        if ($uniqueSegments->count() > 1) {
+                            $errors[] = 'The advance receipt voucher contains multiple lines with different segments.';
+                            return ['errors' => $errors, 'data' => $data];
+                        }
+                    }
+                } 
+
                 if($brv->customerID != $customer->customerCodeSystem){
                     $errors[] = "The selected document {$brvOrCreditNoteCode} does not belong to the selected customer.";
                 } else {
@@ -308,6 +327,23 @@ class CreateReceiptMatching implements ShouldQueue
             $errors[] = 'Credit note document code not matching with system';
             return ['errors' => $errors, 'data' => $data];
         } else {
+            $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
+                                ->where('companySystemID', $companySystemID)
+                                ->first();
+
+            if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
+                $isMultipleSegmentDetails = CreditNoteDetails::where('creditNoteAutoID', $creditNote->creditNoteAutoID)->get();
+
+
+                if ($isMultipleSegmentDetails->count() > 1) {
+                    $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
+                    if ($uniqueSegments->count() > 1) {
+                        $errors[] = 'The credit note contains multiple lines with different segments.';
+                        return ['errors' => $errors, 'data' => $data];
+                    }
+                }
+            }
+
             if($creditNote->customerID != $customerSystemID) {
                 $errors[] = "The selected document {$documentCode} does not belong to the selected customer.";
                 return ['errors' => $errors, 'data' => $data];
@@ -662,6 +698,10 @@ class CreateReceiptMatching implements ShouldQueue
     private function validateDetails($details, $header, $validationData, $companySystemId)
     {
         $detailsErrors = [];
+        if($validationData['matchDocument']==null){
+            $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => ['Correct matching document not found.']];
+            return $detailsErrors;
+        }
         $matchingDate = $header['matchingDate'] ?? null;
         $matchingType = $header['matchingType'] ?? null;
         $availableBalance = $validationData['availableBalance'] ?? 0;
@@ -711,8 +751,18 @@ class CreateReceiptMatching implements ShouldQueue
                                         ->first();
 
                                         if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
-                                            if($invoiceDetails && $invoiceDetails->serviceLineSystemID != $segmentID){
-                                                $err[] = 'Selected customer invoice segment not matching with advance or  credit note segment.';
+                                            $isMultipleSegmentnvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->get();
+                
+
+                                            if ($isMultipleSegmentnvoiceDetails->count() > 1) {
+                                                $uniqueSegments = $isMultipleSegmentnvoiceDetails->pluck('serviceLineSystemID')->unique();
+                                                if ($uniqueSegments->count() > 1) {
+                                                    $err[] = 'Selected customer invoice has multiple segments. All segments must be the same.';
+                                                }
+                                            }else{
+                                                if($invoiceDetails && $invoiceDetails->serviceLineSystemID != $segmentID){
+                                                    $err[] = 'The customer invoice contains multiple lines with different segments.';
+                                                }
                                             }
                                         }
                                     }
@@ -811,10 +861,15 @@ class CreateReceiptMatching implements ShouldQueue
                         ];
                         $updateReceiptMatching = ReceiptMatchingAPIService::updateReceiptMatching($inputData,true);
                         if (!$updateReceiptMatching['status']) {
-                            throw new \Exception($updateReceiptMatching['message'] ?? 'Failed to update receipt matching.');
+                            if (count($updateReceiptMatching['message']) > 0) {
+                                    throw new \Exception(Arr::flatten($updateReceiptMatching['message'])[0] ?? 'Failed to update receipt matching.');
+                                } else {
+                                    throw new \Exception($updateReceiptMatching['message'] ?? 'Failed to update receipt matching.');
+                                }
                         } else {
                             $this->storeToDocumentSystemMapping(70,$masterInsert['data']['matchDocumentMasterAutoID'],$this->authorization);
                         }
+ 
                     }
                     $masterData = MatchDocumentMaster::where('matchDocumentMasterAutoID',$masterInsert['data']['matchDocumentMasterAutoID'])->first();
             

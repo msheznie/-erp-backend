@@ -761,31 +761,6 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $input['serialNo'] = $lastSerialNumber;
                 $input['matchingDocCode'] = $matchingDocCode;
             }
-            $itemExistArray = array();
-
-            foreach ($detailAllRecords as $item) {
-
-                $payDetailMoreBooked = CustomerReceivePaymentDetail::selectRaw('IFNULL(SUM(IFNULL(receiveAmountTrans,0)),0) as receiveAmountTrans')
-                    ->where('arAutoID', $item['arAutoID'])
-                    ->first();
-
-                $a = $payDetailMoreBooked->receiveAmountTrans;
-                $b = $item['bookingAmountTrans'];
-                $epsilon = 0.00001;
-                if(($a-$b) > $epsilon) {
-                    $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
-                    $itemExistArray[] = [$itemDrt];
-
-                }
-            }
-
-            if (!empty($itemExistArray)) {
-                    return [
-                    'status' => false,
-                    'message' => $itemExistArray,
-                    'type' => ['confirm']
-                ];
-            }
 
             foreach ($detailAllRecords as $val) {
 
