@@ -241,21 +241,16 @@ class CreateReceiptMatching implements ShouldQueue
             if (!$brv) {
                 $errors[] = 'Advance receipt voucher document code not matching with system';
             } else {
-                $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
-                ->where('companySystemID', $companySystemId)
-                ->first();
 
-                if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
-                    $isMultipleSegmentDetails = DirectReceiptDetail::where('directReceiptAutoID', $brv->custReceivePaymentAutoID)->get();
+                $isMultipleSegmentDetails = DirectReceiptDetail::where('directReceiptAutoID', $brv->custReceivePaymentAutoID)->get();
 
-                    if ($isMultipleSegmentDetails->count() > 1) {
-                        $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
-                        if ($uniqueSegments->count() > 1) {
-                            $errors[] = 'The advance receipt voucher contains multiple lines with different segments.';
-                            return ['errors' => $errors, 'data' => $data];
-                        }
+                if ($isMultipleSegmentDetails->count() > 1) {
+                    $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
+                    if ($uniqueSegments->count() > 1) {
+                        $errors[] = 'The advance receipt voucher contains multiple lines with different segments.';
+                        return ['errors' => $errors, 'data' => $data];
                     }
-                } 
+                }
 
                 if($brv->customerID != $customer->customerCodeSystem){
                     $errors[] = "The selected document {$brvOrCreditNoteCode} does not belong to the selected customer.";
@@ -327,20 +322,15 @@ class CreateReceiptMatching implements ShouldQueue
             $errors[] = 'Credit note document code not matching with system';
             return ['errors' => $errors, 'data' => $data];
         } else {
-            $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
-                                ->where('companySystemID', $companySystemID)
-                                ->first();
 
-            if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
-                $isMultipleSegmentDetails = CreditNoteDetails::where('creditNoteAutoID', $creditNote->creditNoteAutoID)->get();
+            $isMultipleSegmentDetails = CreditNoteDetails::where('creditNoteAutoID', $creditNote->creditNoteAutoID)->get();
 
 
-                if ($isMultipleSegmentDetails->count() > 1) {
-                    $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
-                    if ($uniqueSegments->count() > 1) {
-                        $errors[] = 'The credit note contains multiple lines with different segments.';
-                        return ['errors' => $errors, 'data' => $data];
-                    }
+            if ($isMultipleSegmentDetails->count() > 1) {
+                $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
+                if ($uniqueSegments->count() > 1) {
+                    $errors[] = 'The credit note contains multiple lines with different segments.';
+                    return ['errors' => $errors, 'data' => $data];
                 }
             }
 
@@ -746,22 +736,21 @@ class CreateReceiptMatching implements ShouldQueue
                                     if($invoice->custTransactionCurrencyID != $currencyID){
                                         $err[] = 'Can not match the two different currency documents.';
                                     } else {
-                                        $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
-                                        ->where('companySystemID', $companySystemID)
-                                        ->first();
+                                        
+                                        $isMultipleSegmentnvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->get();
+                                        if ($isMultipleSegmentnvoiceDetails->count() > 1) {
+                                            $uniqueSegments = $isMultipleSegmentnvoiceDetails->pluck('serviceLineSystemID')->unique();
+                                            if ($uniqueSegments->count() > 1) {
+                                                $err[] = 'The customer invoice contains multiple lines with different segments.';
+                                            }
+                                        }else{
+                                            $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
+                                            ->where('companySystemID', $companySystemID)
+                                            ->first();
 
-                                        if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
-                                            $isMultipleSegmentnvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->get();
-                
-
-                                            if ($isMultipleSegmentnvoiceDetails->count() > 1) {
-                                                $uniqueSegments = $isMultipleSegmentnvoiceDetails->pluck('serviceLineSystemID')->unique();
-                                                if ($uniqueSegments->count() > 1) {
-                                                    $err[] = 'Selected customer invoice has multiple segments. All segments must be the same.';
-                                                }
-                                            }else{
+                                            if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
                                                 if($invoiceDetails && $invoiceDetails->serviceLineSystemID != $segmentID){
-                                                    $err[] = 'The customer invoice contains multiple lines with different segments.';
+                                                    $err[] = 'Selected customer invoice segment not matching with advance or credit note segment.';
                                                 }
                                             }
                                         }
