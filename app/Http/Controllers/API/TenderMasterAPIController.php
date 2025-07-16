@@ -5022,6 +5022,8 @@ class TenderMasterAPIController extends AppBaseController
             ->where('rejectedYN',-1)
             ->get();
 
+        $data['modifyRequestList'] = DocumentModifyRequest::getModificationRequestList($input['id']);
+
         if (empty($data['tenderMaster'])) {
             return $this->sendError('Tender Master not found');
         }

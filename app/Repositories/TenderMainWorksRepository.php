@@ -92,8 +92,8 @@ class TenderMainWorksRepository extends BaseRepository
         try{
             return DB::transaction(function () use ($input) {
                 $employee = Helper::getEmployeeInfo();
-                $editOrAmend = $input['enableRequestChange'] ?? false;
                 $versionID = $input['versionID'] ?? 0;
+                $editOrAmend = $versionID > 0;
 
                 $pricingScheduleDetail = $editOrAmend && $versionID > 0 ?
                     PricingScheduleDetailEditLog::find($input['id']) :

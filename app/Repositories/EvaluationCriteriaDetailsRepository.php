@@ -148,8 +148,8 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Answer Type is required'];
             }
 
-            $editOrAmend = $input['editOrAmend'] ?? false;
             $versionID = $input['versionID'] ?? 0;
+            $editOrAmend = $versionID > 0;
 
             $chkDuplicate = $editOrAmend ?
                 EvaluationCriteriaDetailsEditLog::checkForDescriptionDuplication($input['tender_id'], $input['description'], $input['level'], $versionID, $input['amd_id']) :

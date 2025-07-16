@@ -44,8 +44,8 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
         try{
             return DB::transaction(function () use ($input) {
                 $employee = Helper::getEmployeeInfo();
-                $editOrAmend = $input['editOrAmend'] ?? false;
                 $versionID = $input['versionID'] ?? 0;
+                $editOrAmend = $versionID > 0;
                 $ScoreConfig = $editOrAmend ?
                     EvacuationCriteriaScoreConfigLog::find($input['id']) :
                     EvaluationCriteriaScoreConfig::find($input['id'])->first();

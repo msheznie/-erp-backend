@@ -10,6 +10,7 @@ use App\Models\TenderMaster;
 use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Repositories\SrmTenderMasterEditLogRepository;
 use App\Repositories\DocumentAttachmentsEditLogRepository;
@@ -29,6 +30,7 @@ use App\Repositories\TenderBudgetItemEditLogRepository;
 use App\Repositories\TenderDepartmentEditLogRepository;
 use App\Repositories\TenderSupplierAssigneeEditLogRepository;
 use App\Services\SrmDocumentModifyService;
+use App\Services\SrmTenderEditAmendService;
 use Illuminate\Http\Request;
 
 /**
@@ -83,6 +85,7 @@ class DocumentModifyRequestRepository extends BaseRepository
     protected $srmDocumentModifyService;
     protected $tenderSupplierAssigneeEditLogRepository;
     protected $pricingScheduleMasterEditLogRepository;
+    protected $srmTenderEditAmendService;
     public function __construct(
         SrmTenderMasterEditLogRepository $srmTenderMasterEditLogRepository,
         Application $app,
@@ -103,7 +106,8 @@ class DocumentModifyRequestRepository extends BaseRepository
         TenderDepartmentEditLogRepository $tenderDepartmentEditLogRepo,
         SrmDocumentModifyService $documentModifyService,
         TenderSupplierAssigneeEditLogRepository $tenderSupplierAssigneeEditLogRepo,
-        PricingScheduleMasterEditLogRepository $pricingScheduleMasterEditLogRepo
+        PricingScheduleMasterEditLogRepository $pricingScheduleMasterEditLogRepo,
+        SrmTenderEditAmendService $srmTenderEditAmendService
     ){
         parent::__construct($app);
         $this->srmTenderMasterEditLogRepository = $srmTenderMasterEditLogRepository;
@@ -125,6 +129,7 @@ class DocumentModifyRequestRepository extends BaseRepository
         $this->srmDocumentModifyService = $documentModifyService;
         $this->tenderSupplierAssigneeEditLogRepository = $tenderSupplierAssigneeEditLogRepo;
         $this->pricingScheduleMasterEditLogRepository = $pricingScheduleMasterEditLogRepo;
+        $this->srmTenderEditAmendService = $srmTenderEditAmendService;
     }
 
     /**
@@ -231,11 +236,6 @@ class DocumentModifyRequestRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Tender master not found'];
             }
 
-            $closingDateTime = Carbon::parse($tenderMaster->bid_submission_closing_date);
-            if ($closingDateTime->lte(Carbon::now())) {
-                return ['success' => false, 'message' => 'Unable to approve this document. Bid Submission closing date has already passed.'];
-            }
-
             return DB::transaction(function () use ($input, $reference_document_id, $tenderMaster) {
                 $approve = Helper::approveDocument($input);
                 if (!$approve["success"]){
@@ -284,5 +284,45 @@ class DocumentModifyRequestRepository extends BaseRepository
         $input['serial_number'] = $lastSerialNumber;
         $input['modify_type'] = 1;
         return $input;
+    }
+
+    public function getEditOrAmendHistory(Request $request): array {
+        $input = $request->all();
+
+        $validate = self::checkValidRequestParams($input);
+        if(!$validate['success']){
+            return $validate;
+        }
+
+        $tenderID = $input['tenderID'];
+        $requestID = $input['requestID'];
+
+        $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
+        if(empty($tenderMaster)){
+            return ['success' => false, 'message' => 'Tender master not found'];
+        }
+
+        $requestMaster = DocumentModifyRequest::getDocumentModifyData($requestID);
+        if(empty($requestMaster)){
+            return ['success' => false, 'message' => 'Document modify request not found'];
+        }
+
+        $allChanges = $this->srmTenderEditAmendService->getHistoryData($tenderID, $requestID);
+        return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $allChanges];
+    }
+    public function checkValidRequestParams($input): array{
+        $validator = Validator::make($input, [
+            'tenderID' => 'required',
+            'requestID' => 'required',
+        ], [
+
+            'tenderID.required' => 'Tender Master ID is required',
+            'requestID.required' => 'Document Request ID is required',
+        ]);
+
+        if ($validator->fails()) {
+            return ['success' => false, 'message' => implode(', ', $validator->errors()->all())];
+        }
+        return ['success' => true, 'message' => 'Validation check success'];
     }
 }

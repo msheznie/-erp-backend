@@ -58,38 +58,28 @@ class SrmDocumentModifyService
     public static function getDocumentModifyRequestForms($tender_id, $tenderMaster){
         $documentModifyRequest = DocumentModifyRequest::getTenderModifyRequest($tender_id);
         $conditions = self::checkConditions($tender_id, $tenderMaster);
-        $requestType = self::getRequestType($documentModifyRequest, $conditions);
+        $requestType = self::getRequestType($documentModifyRequest);
         $changeRequestStatus = self::getChangeRequestStatus($documentModifyRequest, $conditions);
 
         return [
-            'conditions' => $conditions,
             'changesRequestStatus' => $changeRequestStatus,
             'requestType' => $requestType,
-            'editable' => $conditions['checkClosingDate'] ?? false,
-            'amendment' => $conditions['checkOpeningDate'] ?? false,
+            'editable' => true,
+            'amendment' => true,
             'enableChangeRequest' => self::enableChangeRequest($documentModifyRequest, $conditions),
-            'requestedToEditAmend' => self::getRequestedToEditAmend($documentModifyRequest, $conditions),
-            'confirmedEditRequest' => !empty($documentModifyRequest) && $documentModifyRequest->modify_type == 1 &&  !$conditions['checkOpeningDate'] && $conditions['checkClosingDate']
+            'requestedToEditAmend' => self::getRequestedToEditAmend($documentModifyRequest)
         ];
     }
-    public static function getRequestType($documentModifyRequest, $conditions)
+    public static function getRequestType($documentModifyRequest)
     {
         if(!empty($documentModifyRequest) &&
             $documentModifyRequest->status == 1 &&
             $documentModifyRequest->confirmation_approved != -1){
-            if($conditions['checkOpeningDate']){
-                return $documentModifyRequest->type == 1 ? 'Edit' : 'Amend';
-            } else if(!$conditions['checkOpeningDate'] && $conditions['checkClosingDate']){
-                return 'Edit';
-            }
+            return $documentModifyRequest->type == 1 ? 'Edit' : 'Amend';
         }
         return '';
     }
-    public static function getRequestedToEditAmend($documentModifyRequest, $conditions): bool{
-        if (!$conditions['checkOpeningDate'] && !$conditions['checkClosingDate']) {
-            return false;
-        }
-
+    public static function getRequestedToEditAmend($documentModifyRequest): bool{
         if (empty($documentModifyRequest)) {
             return true;
         }
@@ -116,10 +106,8 @@ class SrmDocumentModifyService
         if (empty($documentModifyRequest) || $documentModifyRequest->status != 1) {
             return null;
         }
-        if (!$conditions['checkOpeningDate'] && !$conditions['checkClosingDate']) {
-            return null;
-        }
-        $requestType = self::getRequestType($documentModifyRequest, $conditions);
+
+        $requestType = self::getRequestType($documentModifyRequest);
         if ($documentModifyRequest->modify_type == 1) {
             return ($documentModifyRequest->approved == 0 && $documentModifyRequest->confirmation_approved == 0)
                 ? 'Requested for ' . $requestType . ' approval'
@@ -983,5 +971,33 @@ class SrmDocumentModifyService
         } catch(\Exception $exception){
             return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
         }
+    }
+    public static function getFieldPermissions($tender_id, $tenderMaster): array{
+        $conditions = self::checkConditions($tender_id, $tenderMaster);
+        $checkOpeningDate = $conditions['checkOpeningDate'] ?? false;
+        $checkClosingDate = $conditions['checkClosingDate'] ?? false;
+        $isSupplierProceeded = $conditions['tenderPurchasedOrProceed'];
+        $isSupplierSubmittedBid = $conditions['isTenderBidSubmitted'];
+        $isSupplierRankingNotCompleted = $conditions['isSupplierRankingNotCompleted'];
+        $publishedYN = $tenderMaster->published_yn == 1;
+        return [
+            'tender_strategy' => $publishedYN && !$isSupplierProceeded,
+            'alternative_solution' => $publishedYN && !$isSupplierSubmittedBid,
+            'minimum_approval' => $isSupplierRankingNotCompleted,
+            'weightage' => $publishedYN && !$isSupplierSubmittedBid,
+            'passing_weightage' => $publishedYN && $isSupplierRankingNotCompleted,
+            'tender_users' => $publishedYN,
+            'tender_general_info' => $publishedYN,
+            'prebid_method' => $publishedYN && $checkOpeningDate,
+            'tender_calendar_days' => $publishedYN,
+            'tender_fee' => $publishedYN && !$isSupplierProceeded,
+            'criteria_to_supplier' => $publishedYN && !$isSupplierProceeded,
+            'pricing_schedule' => $publishedYN && !$isSupplierProceeded,
+            'go_no_go' => $publishedYN && !$isSupplierProceeded,
+            'technical_evaluation' => $publishedYN && !$isSupplierProceeded,
+            'tender_document' => $publishedYN && !$isSupplierProceeded,
+            'assign_suppliers' => $publishedYN && $checkClosingDate,
+        ];
+
     }
 }

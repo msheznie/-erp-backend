@@ -1557,13 +1557,12 @@ class TenderMasterRepository extends BaseRepository
             $checkEditAmendCondition = $this->srmDocumentModifyService->checkConditions($tenderMasterId, $data['master']);
         }
 
-        $hasOpeningOrClosingCheck = ($checkEditAmendCondition['checkOpeningDate'] ?? false) || ($checkEditAmendCondition['checkClosingDate'] ?? false);
         $hasValidTenderRequest = !empty($checkHasTenderRequest)
             && $checkHasTenderRequest->status == 1
             && $checkHasTenderRequest->approved != 0
             && $checkHasTenderRequest->confirmation_approved != -1;
 
-        if ($hasOpeningOrClosingCheck && $hasValidTenderRequest) {
+        if ($hasValidTenderRequest) {
             $data['master'] = SrmTenderMasterEditLog::getEditTenderMasterData($tenderMasterId, $companySystemID, $isTender);
             $editOrAmendRequest = true;
         }
@@ -1600,17 +1599,25 @@ class TenderMasterRepository extends BaseRepository
             $serviceResp = $this->srmDocumentModifyService->getDocumentModifyRequestForms($tenderMasterId, $tenderMaster);
             $data = array_merge($data, $serviceResp);
         } else {
-            $data['conditions'] = null;
             $data['changesRequestStatus'] = null;
             $data['requestType'] = null;
             $data['editable'] = true;
             $data['amendment'] = true;
             $data['enableChangeRequest'] = false;
             $data['requestedToEditAmend'] = false;
-            $data['confirmedEditRequest'] = false;
         }
 
-        if($data['enableChangeRequest'] || $data['confirmedEditRequest']){
+        $data['fieldPermissions'] = $this->srmDocumentModifyService->getFieldPermissions($tenderMasterId, $tenderMaster);
+        $enableToModify = false;
+        if(!$data['enableChangeRequest']){
+            $enableToModify = !empty($checkHasTenderRequest) &&
+                $checkHasTenderRequest->modify_type == 1 &&
+                $checkHasTenderRequest->status == 1 &&
+                $checkHasTenderRequest->approved == 1;
+        }
+        $data['enableToModify'] = $enableToModify;
+
+        if($data['enableChangeRequest'] || $enableToModify){
             unset($data['master']['confirmed_by']);
             $data['master']['confirmed_date'] = null;
         }

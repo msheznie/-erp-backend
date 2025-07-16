@@ -27,8 +27,8 @@ class TenderBidEmployeeService
             return DB::transaction(function () use ($input) {
                 $insertData = [];
                 $tenderID = $input['tender_id'] ?? 0;
-                $enableChangeRequest = $input['enableChangeRequest'] ?? false;
                 $versionID = $input['versionID'] ?? 0;
+                $enableChangeRequest = $versionID > 0;
 
                 if(isset($input['rfx'])){
                     $insertData[0] = [
