@@ -265,7 +265,7 @@
                             }
                         } else {
                             if (in_array($tempType, [1, 2])) {
-                                $totalAmount = $data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount) + (in_array($data->documentTypeID,[0,2]) ? $data->exempt_vat_portion : 0) - ($data->retentionAmount ?? 0);
+                                $totalAmount = $data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount) + (isset($data->documentTypeID) && in_array($data->documentTypeID,[0,2]) ? $data->exempt_vat_portion : 0) - ($data->retentionAmount ?? 0);
                             } else {
                                 $totalAmount = $data->value + $data->discount + $data->VATAmount;
                             }
@@ -294,7 +294,7 @@
                             } else {
                                 if (in_array($tempType, [1, 2])) {
                                     $reportingVal = (
-                                        ($data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount) + (in_array($data->documentTypeID,[0,2]) ? $data->exempt_vat_portion : 0) - ($data->retentionAmount ?? 0))/
+                                        ($data->value - $data->discount + ((isset($data->rcmActivated) && $data->rcmActivated) ? 0 : $data->VATAmount) + (isset($data->documentTypeID) && in_array($data->documentTypeID,[0,2]) ? $data->exempt_vat_portion : 0) - ($data->retentionAmount ?? 0))/
                                         $data->companyReportingER
                                     );
                                 } else {
