@@ -449,7 +449,12 @@ class ConsolidationReportService
                         if ($range['start'] < $openingBalanceLastDate) {
                             $endDate = $range['end'] <= $openingBalanceLastDate ? $range['end'] : $openingBalanceLastDate;
                             $openingBalanceSelectedCompany = self::getTotalProfit($servicelineIDs, $companyID, $range['start']->format('Y-m-d'), $endDate->format('Y-m-d'), $currencyColumn, 1, false);
-                            $openingBalance += $openingBalanceSelectedCompany;
+                            if ($range['groupType'] == 1) {
+                                $openingBalance += $openingBalanceSelectedCompany;
+                            }
+                            else {
+                                $openingBalance += (($openingBalanceSelectedCompany * $range['holdingPercentage']) / 100);
+                            }
                         }
                     }
                 }
