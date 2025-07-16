@@ -233,6 +233,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             $financeGLcodePLSystemID = $financeCategorySub->financeGLcodePLSystemID;
                             $financeGLcodebBS = $financeCategorySub->financeGLcodebBS;
                             $financeGLcodebBSSystemID = $financeCategorySub->financeGLcodebBSSystemID;
+                            $includePLForGRVYN = $financeCategorySub->includePLForGRVYN;
                         }
                         else
                         {
@@ -240,6 +241,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             $financeGLcodePLSystemID = null;
                             $financeGLcodebBS = null;
                             $financeGLcodebBSSystemID = null;
+                            $includePLForGRVYN = 0;
                         }
             
                         $detail['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
@@ -248,7 +250,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['financeGLcodePL'] = $financeGLcodePL;
                         $detail['itemFinanceCategoryID'] = $val->item->financeCategoryMaster;
                         $detail['itemFinanceCategorySubID'] = $val->item->financeCategorySub;
-                        $detail['includePLForGRVYN'] =0;
+                        $detail['includePLForGRVYN'] =$includePLForGRVYN;
                         $detail['supplierPartNumber'] = $val->item->secondaryItemCode;
                         $detail['unitOfMeasure'] = $val->item->unit;
                         $detail['noQty'] = $val->qty;
