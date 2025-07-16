@@ -703,13 +703,17 @@ class CreateReceiptMatching implements ShouldQueue
         foreach ($details as $index => $detail) {
             $err = [];
             $bookingInvCode = $detail['bookingInvCode'] ?? null;
-            $matchingAmount = $detail['matchingAmount'] ?? null;
+            $matchingAmount = $detail['matchingAmount'] ?? 0;
 
             // Validate required fields
             if (empty($bookingInvCode)) {
                 $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Booking Invoice Code is required.']];
             }
-            if (empty($matchingAmount)) {
+            if(isset($detail['matchingAmount'])){
+                if($matchingAmount <= 0){
+                    $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['The matching amount should be positive value.']];
+                }
+            } else {
                 $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Matching Amount is required.']];
             }
 
