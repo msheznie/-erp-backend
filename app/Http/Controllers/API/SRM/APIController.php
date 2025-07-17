@@ -106,6 +106,7 @@ define('REOPEN_PAYMENT_PROOF', 'REOPEN_PAYMENT_PROOF');
 define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
 define('PO_REPORT', 'PO_REPORT');
 define('GET_PAYMENT_DETAILS', 'GET_PAYMENT_DETAILS');
+define('CHECK_TENDER_READY_TO_PURCHASE', 'CHECK_TENDER_READY_TO_PURCHASE');
 
 
 class APIController extends Controller
@@ -299,6 +300,8 @@ class APIController extends Controller
                 return $this->SRMService->exportPOReport($request);
             case GET_PAYMENT_DETAILS:
                 return $this->SRMService->getPaymentDetails($request);
+            case CHECK_TENDER_READY_TO_PURCHASE:
+                return $this->SRMService->checkTenderReadyToPurchase($request);
             default:
                 return [
                     'success'   => false,

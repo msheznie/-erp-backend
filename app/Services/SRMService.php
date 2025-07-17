@@ -25,6 +25,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
+use App\Models\DocumentModifyRequest;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
@@ -6672,5 +6673,27 @@ class SRMService
         }
 
         return ['success' => true];
+    }
+    public function checkTenderReadyToPurchase($request){
+        try{
+            $tenderMaster = TenderMaster::getTenderByUuid($request->input('extra.uuid'));
+            if(empty($tenderMaster)){
+                return $this->generateResponse(false, 'Tender data not found');
+            }
+            $tenderID = $tenderMaster->id;
+            $documentModifyRequest = DocumentModifyRequest::getTenderModifyRequest($tenderID);
+
+            if(empty($documentModifyRequest)){
+                return $this->generateResponse(true, 'Continue purchasing');
+            }
+
+            $hasValidTenderRequest = $documentModifyRequest->status == 1 && $documentModifyRequest->approved != 0 && $documentModifyRequest->confirmation_approved != -1;
+            if($hasValidTenderRequest){
+                return $this->generateResponse(false, 'The tender is under edit/amend by the company. Please wait until it is completed before purchasing the Tender/RFX.');
+            }
+            return $this->generateResponse(true, 'Continue purchasing');
+        } catch (\Exception $ex) {
+            return $this->generateResponse(false, 'Failed to check: '. $ex->getMessage());
+        }
     }
 }

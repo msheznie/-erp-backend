@@ -973,31 +973,40 @@ class SrmDocumentModifyService
         }
     }
     public static function getFieldPermissions($tender_id, $tenderMaster): array{
+        $isPublished = $tenderMaster->published_yn == 1;
+
+        $fields = [
+            'tender_strategy', 'alternative_solution', 'minimum_approval', 'weightage', 'passing_weightage',
+            'tender_users', 'tender_general_info', 'prebid_method', 'tender_calendar_days', 'tender_fee',
+            'criteria_to_supplier', 'pricing_schedule', 'go_no_go', 'technical_evaluation', 'tender_document', 'assign_suppliers',
+        ];
+
+        $permissions = array_fill_keys($fields, true);
+        if (!$isPublished) {
+            return $permissions;
+        }
+
         $conditions = self::checkConditions($tender_id, $tenderMaster);
-        $checkOpeningDate = $conditions['checkOpeningDate'] ?? false;
-        $checkClosingDate = $conditions['checkClosingDate'] ?? false;
+        $isOpeningDateValid = $conditions['checkOpeningDate'] ?? false;
+        $isClosingDateValid = $conditions['checkClosingDate'] ?? false;
         $isSupplierProceeded = $conditions['tenderPurchasedOrProceed'];
         $isSupplierSubmittedBid = $conditions['isTenderBidSubmitted'];
         $isSupplierRankingNotCompleted = $conditions['isSupplierRankingNotCompleted'];
-        $publishedYN = $tenderMaster->published_yn == 1;
-        return [
-            'tender_strategy' => $publishedYN && !$isSupplierProceeded,
-            'alternative_solution' => $publishedYN && !$isSupplierSubmittedBid,
-            'minimum_approval' => $isSupplierRankingNotCompleted,
-            'weightage' => $publishedYN && !$isSupplierSubmittedBid,
-            'passing_weightage' => $publishedYN && $isSupplierRankingNotCompleted,
-            'tender_users' => $publishedYN,
-            'tender_general_info' => $publishedYN,
-            'prebid_method' => $publishedYN && $checkOpeningDate,
-            'tender_calendar_days' => $publishedYN,
-            'tender_fee' => $publishedYN && !$isSupplierProceeded,
-            'criteria_to_supplier' => $publishedYN && !$isSupplierProceeded,
-            'pricing_schedule' => $publishedYN && !$isSupplierProceeded,
-            'go_no_go' => $publishedYN && !$isSupplierProceeded,
-            'technical_evaluation' => $publishedYN && !$isSupplierProceeded,
-            'tender_document' => $publishedYN && !$isSupplierProceeded,
-            'assign_suppliers' => $publishedYN && $checkClosingDate,
-        ];
 
+        $permissions['tender_strategy'] = !$isSupplierProceeded;
+        $permissions['alternative_solution'] = !$isSupplierSubmittedBid;
+        $permissions['minimum_approval'] = $isSupplierRankingNotCompleted;
+        $permissions['weightage'] = !$isSupplierSubmittedBid;
+        $permissions['passing_weightage'] = $isSupplierRankingNotCompleted;
+        $permissions['prebid_method'] = $isOpeningDateValid;
+        $permissions['tender_fee'] = !$isSupplierProceeded;
+        $permissions['criteria_to_supplier'] = !$isSupplierProceeded;
+        $permissions['pricing_schedule'] = !$isSupplierProceeded;
+        $permissions['go_no_go'] = !$isSupplierProceeded;
+        $permissions['technical_evaluation'] = !$isSupplierProceeded;
+        $permissions['tender_document'] = !$isSupplierProceeded;
+        $permissions['assign_suppliers'] = $isClosingDateValid;
+
+        return $permissions;
     }
 }
