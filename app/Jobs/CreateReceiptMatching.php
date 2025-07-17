@@ -209,22 +209,30 @@ class CreateReceiptMatching implements ShouldQueue
                         'message' => ["Selected Customer is not approved"]
                     ];
                 } else {
-                    $customer = CustomerAssigned::Where('CutomerCode',$approvedCustomer->CutomerCode)
-                    ->where('companySystemID', $companySystemId)
-                    ->where('isAssigned', -1)
-                    ->first();
-    
-                    if(!$customer){
+
+                    if($approvedCustomer->isCustomerActive == 0){
                         $errors[] = [
                             'field' => "customer",
-                            'message' => ["Selected Customer is not assigned to the company"]
+                            'message' => ["Selected Customer is not active"]
                         ];
                     } else {
-                        if($customer->isActive == 0) {
+                        $customer = CustomerAssigned::Where('CutomerCode',$approvedCustomer->CutomerCode)
+                        ->where('companySystemID', $companySystemId)
+                        ->where('isAssigned', -1)
+                        ->first();
+        
+                        if(!$customer){
                             $errors[] = [
                                 'field' => "customer",
-                                'message' => ["Selected Customer is not active"]
+                                'message' => ["Selected Customer is not assigned to the company"]
                             ];
+                        } else {
+                            if($customer->isActive == 0) {
+                                $errors[] = [
+                                    'field' => "customer",
+                                    'message' => ["Company assigned Customer is not active"]
+                                ];
+                            }
                         }
                     }
                 }
