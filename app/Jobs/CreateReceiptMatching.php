@@ -245,9 +245,9 @@ class CreateReceiptMatching implements ShouldQueue
 
                 $isMultipleSegmentDetails = DirectReceiptDetail::where('directReceiptAutoID', $brv->custReceivePaymentAutoID)->get();
 
-                if ($isMultipleSegmentDetails->count() > 1) {
+                if (!empty($isMultipleSegmentDetails) && $isMultipleSegmentDetails->count() > 1) {
                     $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
-                    if ($uniqueSegments->count() > 1) {
+                    if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
                         $errors[] = 'The advance receipt voucher contains multiple lines with different segments.';
                         return ['errors' => $errors, 'data' => $data];
                     }
@@ -327,9 +327,9 @@ class CreateReceiptMatching implements ShouldQueue
             $isMultipleSegmentDetails = CreditNoteDetails::where('creditNoteAutoID', $creditNote->creditNoteAutoID)->get();
 
 
-            if ($isMultipleSegmentDetails->count() > 1) {
+            if (!empty($isMultipleSegmentDetails) && $isMultipleSegmentDetails->count() > 1) {
                 $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
-                if ($uniqueSegments->count() > 1) {
+                if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
                     $errors[] = 'The credit note contains multiple lines with different segments.';
                     return ['errors' => $errors, 'data' => $data];
                 }
@@ -724,7 +724,7 @@ class CreateReceiptMatching implements ShouldQueue
                                             ->first();
                 $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->first();
                 if ($invoice) {
-                    // Check approval
+                    // Check approval 
                     if ($invoice->approved != -1){
                         $err[] = 'Customer invoice not approved.';
                     } else {
@@ -774,9 +774,9 @@ class CreateReceiptMatching implements ShouldQueue
                                     } else {
                                         
                                         $isMultipleSegmentnvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->get();
-                                        if ($isMultipleSegmentnvoiceDetails->count() > 1) {
+                                        if (!empty($isMultipleSegmentnvoiceDetails) && $isMultipleSegmentnvoiceDetails->count() > 1) {
                                             $uniqueSegments = $isMultipleSegmentnvoiceDetails->pluck('serviceLineSystemID')->unique();
-                                            if ($uniqueSegments->count() > 1) {
+                                            if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
                                                 $err[] = 'The customer invoice contains multiple lines with different segments.';
                                             }
                                         }else{
