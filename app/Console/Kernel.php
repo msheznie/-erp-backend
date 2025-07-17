@@ -84,6 +84,12 @@ class Kernel extends ConsoleKernel
             ->hourly()
             ->between('12:00', '23:59')
             ->withoutOverlapping();    
+
+        $schedule->command('command:AbsentNotificationCrossDay')
+        ->timezone('Asia/Muscat')
+        ->hourly()
+        ->between('00:00', '12:00')
+        ->withoutOverlapping();      
     }
 
     /**

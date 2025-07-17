@@ -6,13 +6,13 @@ use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
 use App\helper\NotificationService;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\AbsentNotificationNonCrossDayCompany;
+use App\Jobs\AbsentNotificationCrossDayCompany;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class AbsentNotificationNonCrossDayTenant implements ShouldQueue
+class AbsentNotificationCrossDayTenant implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -43,9 +43,9 @@ class AbsentNotificationNonCrossDayTenant implements ShouldQueue
         foreach ($setupData as $setup) { 
             $companyId = $setup['companyID'];
             $companyName = $setup['company']['CompanyName']; 
-            $companyScenarioId = $setup['id'];
+            $companyScenarioId = $setup['id']; 
 
-            AbsentNotificationNonCrossDayCompany::dispatch($this->tenantDb, $companyId, $companyName, $companyScenarioId);
+            AbsentNotificationCrossDayCompany::dispatch($this->tenantDb, $companyId, $companyName, $companyScenarioId);
         }
 
     }

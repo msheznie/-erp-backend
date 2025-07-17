@@ -10,10 +10,10 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\hrms\attendance\AbsentNotificationNonCrossDayService;
+use App\Services\hrms\attendance\AbsentNotificationCrossDayService;
 
 
-class AbsentNotificationNonCrossDayCompany implements ShouldQueue
+class AbsentNotificationCrossDayCompany implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -55,7 +55,7 @@ class AbsentNotificationNonCrossDayCompany implements ShouldQueue
         $date = $now->format('Y-m-d');
         $time = $now->format('H:i:s');        
         
-        $job = new AbsentNotificationNonCrossDayService($this->companyId, $date, $time, $this->companyScenarioId);
+        $job = new AbsentNotificationCrossDayService($this->companyId, $date, $time, $this->companyScenarioId);
         
         $job->run();
     }

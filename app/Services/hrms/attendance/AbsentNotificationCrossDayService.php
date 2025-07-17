@@ -9,32 +9,34 @@ use Illuminate\Support\Facades\DB;
 use App\helper\NotificationService;
 use App\Traits\AbsentNotificationTrait;
 
-class AbsentNotificationNonCrossDayService{
+class AbsentNotificationCrossDayService{
     private $companyId;
     private $date;
     private $time;
     private $processedFor;
+    private $jobProcessDate;
     private $setupHour;
-
-    private $mailSubject = 'Absent Notification';
-
     private $dayId;
     private $dayName;
     private $proceedShifts = [];
     private $shiftMasters;
     private $isShiftModule;
+    private $companyScenarioId;
+    private $mailSubject = 'Absent Notification';
     use AbsentNotificationTrait;
+   
 
     public function __construct($companyId, $date, $time, $companyScenarioId)
     {
         $this->companyId = $companyId;
         $this->date = $date;
         $this->time = $time;
-
+        $this->companyScenarioId = $companyScenarioId;
+        $this->date = Carbon::parse($this->date)->subDay()->format('Y-m-d');
+        $this->jobProcessDate = Carbon::parse($this->date)->addDay()->toDateString();
         $this->processedFor = Carbon::parse($date.' '.$time)->format('Y:m:d H:i:s');
         $this->isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
         $this->setupHour = ($hour = NotificationService::getHours($companyScenarioId)) === '' ? 2 : $hour;
-
     }
 
     public function run(){
@@ -43,8 +45,7 @@ class AbsentNotificationNonCrossDayService{
             return $this->newShiftProcess();
         }
 
-        return $this->defaultProcess();
-
+        return;
     }
 
     function newShiftProcess(){
@@ -69,36 +70,22 @@ class AbsentNotificationNonCrossDayService{
 
     function getShiftData(){
 
-        $shFixed = Shifts::FIXED;
         $shRota = Shifts::ROTA;
-
         $offDutyTime = Carbon::parse($this->time)->subHours($this->setupHour)->format('H:i:s');
+        
 
-        $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sm.shiftType, sd.is_cross_day, 
-                she.schedule_date, sm.Description
-                FROM hr_shift_schedule_details AS she 
-                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
-                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
-                AND sd.weekDayNo = WEEKDAY(she.schedule_date)
+        $rotaQuery = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sm.shiftType, sd.is_cross_day,
+                    she.schedule_date, sm.Description
+                FROM hr_shift_schedule_details AS she
+                JOIN srp_erp_pay_shiftmaster AS sm ON sm.shiftID = she.shift_id
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID
                 WHERE sm.companyID = {$this->companyId}
-                AND sm.shiftType = {$shFixed} 
+                AND sm.shiftType = {$shRota}
                 AND she.schedule_date = '{$this->date}'
-                AND sd.is_cross_day = 0 ";
+                AND sd.is_cross_day = 1";
 
-        $rotaUnion = " UNION ALL 
-                SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sm.shiftType, sd.is_cross_day, she.schedule_date, 
-                sm.Description
-                FROM hr_shift_schedule_details AS she 
-                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
-                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
-                WHERE sm.companyID = {$this->companyId}
-                AND sm.shiftType = {$shRota} 
-                AND she.schedule_date = '{$this->date}'
-                AND sd.is_cross_day = 0";
 
-        $query = $fixedJoin . $rotaUnion;
-
-        $data = DB::table(DB::raw("($query) as shiftDetails"))
+        $data = DB::table(DB::raw("($rotaQuery) as shiftDetails"))
             ->where(DB::raw('TIME(shiftDetails.offDutyTime)'), '<=', $offDutyTime);
 
         if ($this->proceedShifts) {
@@ -106,47 +93,6 @@ class AbsentNotificationNonCrossDayService{
         }
 
         $data = $data->groupBy('shiftDetails.shiftID')->get();
-
-        $this->shiftMasters = $data;
-    }
-
-    function defaultProcess(){
-
-        if($this->isHoliday()){
-            return;
-        }
-
-        $this->getDayId();
-        $this->loadProceedShifts();
-        $this->getShiftMasters();
-         
-        if($this->shiftMasters->count() == 0){
-            $this->insertToLogTb(
-                [ 'message'=> 'No data found to proceed Absent Notification']
-            );
-            return;
-        }
-
-        $this->processOverShifts();
-    }
-
-    public function getShiftMasters(){
-
-        $offDutyTime = Carbon::parse($this->time)->subHours($this->setupHour)->format('H:i:s');
-
-        $data = DB::table('srp_erp_pay_shiftmaster AS m')
-            ->selectRaw("m.shiftID, m.Description, d.dayID, d.onDutyTime, d.offDutyTime, d.dayID")
-            ->join('srp_erp_pay_shiftdetails AS d', 'd.shiftID', '=', 'm.shiftID')
-            ->where('d.dayID', $this->dayId)
-            ->where('d.offDutyTime', '<=', $offDutyTime)
-            ->where('d.isWeekend', 0)
-            ->where('m.companyID', $this->companyId);
-
-        if($this->proceedShifts){
-            $data = $data->whereNotIn('m.shiftID', $this->proceedShifts);
-        }
-        
-        $data = $data->get();
 
         $this->shiftMasters = $data;
     }
@@ -213,7 +159,8 @@ class AbsentNotificationNonCrossDayService{
                 continue;
             }
 
-            $notPunched = $this->empForgotToPunchIn($empArr);
+            $notPunched = $this->empForgotToPunchIn($empArr);    
+
             if($notPunched->count() == 0){
                 $this->insertToLogTb(
                     [
@@ -239,24 +186,13 @@ class AbsentNotificationNonCrossDayService{
     }
     
     public function empAssignedWithShift($shiftId){
-        if ($this->isShiftModule) {
 
-            $empArr = DB::table('hr_shift_schedule_details')
+        $empArr = DB::table('hr_shift_schedule_details')
                 ->select('emp_id as empID')
                 ->where('shift_id', $shiftId)
                 ->where('schedule_date', $this->date)
                 ->where('company_id', $this->companyId)
                 ->get();
-        } else {
-
-            $empArr = DB::table('srp_erp_pay_shiftemployees')
-                ->select('empID')
-                ->where('shiftID', $shiftId)
-                ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
-                ->where('companyID', $this->companyId)
-                ->get();
-
-        }
 
         if($empArr->count() == 0){
             return [];
@@ -316,7 +252,7 @@ class AbsentNotificationNonCrossDayService{
                 ->groupBy('l.empID');
             })                       
             ->get(); 
-        
+
         return $notPunched;
     }
 
@@ -326,7 +262,7 @@ class AbsentNotificationNonCrossDayService{
         
         foreach ($empArr as $emp) {
             $mailBody = "Dear {$emp->Ename2},<br/>";
-            $mailBody .= "You have missed both clock-in and clock-out today ({$this->date}), and your attendance has been marked as Absent"; 
+            $mailBody .= "You have missed both clock-in ({$this->date}) and clock-out today ({$this->jobProcessDate}), and your attendance has been marked as Absent"; 
             $mailBody .= $bodyContent;
 
             $empEmail = $emp->EEmail;
@@ -355,14 +291,16 @@ class AbsentNotificationNonCrossDayService{
     function getShiftDetView($shiftDet){
 
         return $this->getEmailBodyContent($shiftDet);
+
     }
 
     public function loadProceedShifts(){
 
+        
         $data = DB::table('job_logs')
         ->selectRaw("`log_data`->'$.\"shiftId\"' AS shiftId")
         ->where('company_id', $this->companyId)
-        ->whereDate('processed_for', $this->date)
+        ->whereDate('processed_for', $this->jobProcessDate)
         ->where('scenario_id', 50)
         ->where('log_type', 'data') 
         ->get();

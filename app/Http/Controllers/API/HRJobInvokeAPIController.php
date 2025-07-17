@@ -29,6 +29,7 @@ use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\Services\hrms\attendance\AbsentNotificationNonCrossDayService;
+use App\Services\hrms\attendance\AbsentNotificationCrossDayService;
 use App\helper\BirthdayWishService;
 use App\Jobs\DelegationActivation;
 use App\Jobs\HrDocNotificationJob;
@@ -72,6 +73,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $companyId = $request->input('companyId');
         $date = $request->input('date');
         $time = $request->input('time');
+        $companyScenarioId = $request->input('companyScenarioId');
 
         $this->loadTenantDb($tenantId);
 
@@ -96,7 +98,11 @@ class HRJobInvokeAPIController extends AppBaseController
             break;
 
             case 50:
-                $job = new AbsentNotificationNonCrossDayService($companyId, $date, $time);
+                $job = new AbsentNotificationNonCrossDayService($companyId, $date, $time, $companyScenarioId);
+            break;
+
+            case 50.1:
+                $job = new AbsentNotificationCrossDayService($companyId, $date, $time, $companyScenarioId);
             break;
 
                 throw new Exception("scenario id is not valid");
