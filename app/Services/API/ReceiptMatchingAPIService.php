@@ -458,8 +458,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             throw new Exception("Could not find the source document for AR Ledger entry: " . $arLedger->arAutoID . ". System ID: " . $arLedger->documentSystemID . ", Code System: " . $arLedger->documentCodeSystem);
         }
 
-        $totalreceivedAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $master->PayMasterAutoId)
-                                                                    ->where('arAutoID', $arLedger->arAutoID)
+        $totalreceivedAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $arLedger->arAutoID)
                                                                     ->sum('receiveAmountTrans');
 
         $detail = new CustomerReceivePaymentDetail();
