@@ -130,6 +130,10 @@ class SlotMaster extends Model
 
     public function getSlotData($tenantID, $formSrm = 0, $assignedWareHouseIds = [])
     {
+        if ($formSrm == 0 && empty($assignedWareHouseIds)) {
+            return [];
+        }
+
         return SlotMaster::with([
             'slot_details' => function ($q) {
                 $q->with([
@@ -142,13 +146,11 @@ class SlotMaster extends Model
                 $q->select('wareHouseSystemCode', 'wareHouseCode', 'wareHouseDescription', 'isActive');
             }
         ])
-            ->when($formSrm == 0, function ($q) use ($tenantID) {
-                $q->whereIn('company_id', $tenantID);
+            ->when($formSrm == 0, function ($q) use ($tenantID, $assignedWareHouseIds) {
+                $q->whereIn('company_id', $tenantID)
+                    ->whereIn('warehouse_id', $assignedWareHouseIds);
             })
             /*  ->where('warehouse_id', $wareHouseID) */
-            ->when(!empty($assignedWareHouseIds), function ($q) use ($assignedWareHouseIds) {
-                $q->whereIn('warehouse_id', $assignedWareHouseIds);
-            })
             ->get();
     }
     public function ware_house()
