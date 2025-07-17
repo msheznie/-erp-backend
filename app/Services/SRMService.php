@@ -1142,6 +1142,7 @@ class SRMService
                             $q->whereHas('appointment', function ($q) use ($appointmentID) {
                                 $q->where('refferedBackYN', '!=', -1);
                                 $q->where('cancelYN', 0);
+                                $q->where('grv_create_yn', 0);
                                 if (isset($appointmentID)) {
                                     $q->where('id', '!=', $appointmentID);
                                 }
@@ -1203,6 +1204,7 @@ class SRMService
                 $q->whereHas('appointment', function ($q) use ($appointmentID) {
                     $q->where('refferedBackYN', '!=', -1);
                     $q->where('cancelYN', 0);
+                    $q->where('grv_create_yn', 0);
                     if (isset($appointmentID)) {
                         $q->where('id', '!=', $appointmentID);
                     }
