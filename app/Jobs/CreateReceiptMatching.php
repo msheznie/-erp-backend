@@ -26,6 +26,7 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoice;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\DirectReceiptDetail;
+use App\Models\SalesReturnDetail;
 use App\Services\API\ReceiptMatchingAPIService;
 use App\Traits\DocumentSystemMappingTrait;
 use GuzzleHttp\Client;
@@ -730,6 +731,37 @@ class CreateReceiptMatching implements ShouldQueue
                         if($invoice->customerID != $customerCodeSystem){
                             $err[] = "The selected customer invoice document code {$bookingInvCode} does not belong to the selected customer.";
                         } else {
+                            
+                            $notApprovedReceiptVoucher = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                            ->whereHas('master', function($query) {
+                                $query->where('approved', 0);
+                            })
+                            ->exists();
+
+                            if ($notApprovedReceiptVoucher) {
+                                $err[] = 'A receipt voucher document for the selected customer invoice is created and not approved. Please approve the previously created document and try again.';
+                            }
+
+                            $unconfirmedMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                            ->whereHas('matching_master', function($query) {
+                                $query->where('matchingConfirmedYN', 0);
+                            })
+                            ->exists();
+
+                            if ($unconfirmedMatch) {
+                                $err[] = 'A matching document for the selected customer invoice is created and not confirmed. Please confirm the previously created document and try again.';
+                            }
+
+                            $notApprovedSalesReturn = SalesReturnDetail::where('custInvoiceDirectAutoID', $invoice->custInvoiceDirectAutoID)
+                            ->whereHas('master', function($query) {
+                                $query->where('approvedYN', 0);
+                            })
+                            ->exists();
+
+                            if ($notApprovedSalesReturn) {
+                                $err[] = 'A sales return document for the selected customer invoice is created and not approved. Please approve the previously created document and try again.';
+                            }
+
                             if ($matchingDate) {
                                 $invoiceBookingDate = \Carbon\Carbon::parse($invoice->bookingDate)->startOfDay();
                                 $matchingDateObject = \Carbon\Carbon::createFromFormat('d-m-Y', $matchingDate)->startOfDay();
