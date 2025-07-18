@@ -1,6 +1,27 @@
 # Changelog
 
 
+## [10.75.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.74.0...v10.75.0) (2025-07-18)
+
+
+### Features
+
+* **Invoice:** Supplier Portal Supplier Invoice Enhancemen [GSUP-3408] ([bb18fef](https://github.com/pbsgears/Gears_BackEnd/commit/bb18fef84cdc3c2857829c7c7a408acdc122fb63))
+* **Invoice:** Supplier Portal Supplier Invoice Enhancemen [GSUP-3408] ([bb18fef](https://github.com/pbsgears/Gears_BackEnd/commit/bb18fef84cdc3c2857829c7c7a408acdc122fb63))
+* **srm:** Edit/Amen Request change [GSUP-3013] ([#8269](https://github.com/pbsgears/Gears_BackEnd/issues/8269)) ([#8270](https://github.com/pbsgears/Gears_BackEnd/issues/8270)) ([28be721](https://github.com/pbsgears/Gears_BackEnd/commit/28be7215d1e976a3e7a2e2ded980187d17b0cbf2))
+* **srm:** Payment Gateway Workaround Enhancement [GSUP-2401] ([#8203](https://github.com/pbsgears/Gears_BackEnd/issues/8203)) ([26be260](https://github.com/pbsgears/Gears_BackEnd/commit/26be26004701732756ad514d30d0cdde6e209247))
+* **srm:** SRM | Create Contract for Awarded Tender | Create new supplier for DB [GSUP-2318] ([#8202](https://github.com/pbsgears/Gears_BackEnd/issues/8202)) ([4d79196](https://github.com/pbsgears/Gears_BackEnd/commit/4d79196d6a83e5f662f75f30397afdc3a5c9ac84))
+* **srm:** Supplier Document Attachment Option when initiating Invoice [GSUP-2416] ([#8205](https://github.com/pbsgears/Gears_BackEnd/issues/8205)) ([eb8e713](https://github.com/pbsgears/Gears_BackEnd/commit/eb8e71374c3299372ff7344e8a03ab7e9892d3d6))
+* **srm:** Validation for the Technical Evaluation Criteria Total [GSUP-2870] ([#8054](https://github.com/pbsgears/Gears_BackEnd/issues/8054)) ([afba3f7](https://github.com/pbsgears/Gears_BackEnd/commit/afba3f7f92b528d761df2d10c0449f8a0f0cbcbd))
+
+
+### Bug Fixes
+
+* **srm:** After Saving the Delievery Appointment System not showing the correct delivery item quantity [GSUP-3369] ([#8240](https://github.com/pbsgears/Gears_BackEnd/issues/8240)) ([e76fb3c](https://github.com/pbsgears/Gears_BackEnd/commit/e76fb3c971fce727c0da29af8f44f190bda0044f))
+* **srm:** GRV Confirmation Fails Due to Missing Expense Account Configuration [GSUP-3563] ([#8414](https://github.com/pbsgears/Gears_BackEnd/issues/8414)) ([2b0c162](https://github.com/pbsgears/Gears_BackEnd/commit/2b0c16246d7cd369bdfe40aa5b6fa91a45e75d08))
+* **srm:** Null Records Created in Bid Submission Due to Internet Drop or Interruption [GSUP-3431] ([#8311](https://github.com/pbsgears/Gears_BackEnd/issues/8311)) ([d0a0470](https://github.com/pbsgears/Gears_BackEnd/commit/d0a047007dbe62a9ab1443626bc5b5de0c94d19d))
+* **srm:** Planned Quantity Not Updated After Full GRV Receipt [GSUP-3565] ([#8426](https://github.com/pbsgears/Gears_BackEnd/issues/8426)) ([0d4e7c9](https://github.com/pbsgears/Gears_BackEnd/commit/0d4e7c9e148f15ed963eed7ef668b6eeb99ad98a))
+
 ## [10.74.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.73.2...v10.74.0) (2025-06-26)
 
 
