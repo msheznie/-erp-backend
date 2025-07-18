@@ -15,6 +15,7 @@ use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
 use App\Models\CalendarDatesDetail;
+use App\Models\CalendarDatesDetailEditLog;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
@@ -22,6 +23,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
+use App\Models\ProcumentActivityEditLog;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
@@ -35,6 +37,7 @@ use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderCustomEmail;
+use App\Models\TenderDepartmentEditLog;
 use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -52,10 +55,12 @@ use App\Models\TenderMaster;
 use App\Models\TenderNegotiationArea;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderPurchaseRequest;
+use App\Models\TenderPurchaseRequestEditLog;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
+use App\Models\SrmTenderMasterEditLog;
 use App\Repositories\TenderMasterRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -93,6 +98,7 @@ use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\helper\email;
+use App\Services\SrmDocumentModifyService;
 
 /**
  * Class TenderMasterController
@@ -107,13 +113,15 @@ class TenderMasterAPIController extends AppBaseController
     private $commercialBidRankingItemsRepository;
     private $tenderFinalBidsRepository;
     private $documentModifyRequestRepository;
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    private $documentModifyService;
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
         $this->commercialBidRankingItemsRepository = $commercialBidRankingItemsRepo;
         $this->tenderFinalBidsRepository = $tenderFinalBidsRepo;
         $this->documentModifyRequestRepository = $documentModifyRequestRepo;
+        $this->documentModifyService = $documentModifyService;
     }
 
     /**
@@ -509,58 +517,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderDropDowns(Request $request)
     {
         $input = $request->all();
-
-        if (isset($input['tenderMasterId'])) {
-            $tenderMaster = TenderMaster::where('id', $input['tenderMasterId'])->first();
-
-            if (!empty($tenderMaster['procument_cat_id'])) {
-                $category = TenderProcurementCategory::where('id', $tenderMaster['procument_cat_id'])->first();
-            } else {
-                $category['is_active'] = 1;
-            }
-        }
-
-        $employee = Helper::getEmployeeInfo();
-        $company = Helper::companyCurrency($employee->empCompanySystemID);
-
-
-        $data['tenderType'] = TenderType::get();
-        $data['yesNoSelection'] = YesNoSelection::all();
-        $data['envelopType'] = EnvelopType::get();
-        $data['currency'] = CurrencyMaster::get();
-        $data['evaluationTypes'] = EvaluationType::get();
-        $data['bank'] = BankMaster::get();
-        $data['currentDate'] = now();
-        $data['defaultCurrency'] = $company;
-        $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        if (isset($input['tenderMasterId'])) {
-            $assignedDocsArray = TenderDocumentTypeAssign::select('document_type_id')->where('tender_id', $input['tenderMasterId'])->get()->toArray();
-            $notInArray = [1, 2];
-            foreach ($assignedDocsArray as $assignedDocs) {
-                $notInArray[] = $assignedDocs['document_type_id'];
-            }
-            if ($tenderMaster['published_yn'] === 1 && isset($input['editable'] ,$input['isConfirm']) && $input['editable'] && !$input['isConfirm'])
-            {
-                $data['documentTypes'] = TenderDocumentTypes::whereNotIn('id', $notInArray)->get();
-            }
-            else if(($tenderMaster['published_yn'] === 1 && isset($input['editable']) && !$input['editable'] ) || ($tenderMaster['published_yn'] === 1 && isset($input['editable'],$input['isConfirm'])  && !$input['editable'] && !$input['isConfirm'])|| ($tenderMaster['published_yn'] === 1 && isset($input['isConfirm']) && $input['isConfirm']))
-            {
-
-                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
-            }
-            else
-            {
-                $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
-            }
-        }
-
-        if (isset($input['tenderMasterId'])) {
-            if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
-                $data['procurementCategory'][] = $category;
-            }
-        }
-
-        return $data;
+        return $this->tenderMasterRepository->getTenderDropdowns($input);
     }
 
     public function createTender(Request $request)
@@ -660,275 +617,10 @@ class TenderMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
     }
-
     public function getTenderMasterData(Request $request)
     {
-
         $input = $request->all();
-        $tenderMasterId = $input['tenderMasterId'];
-        $companySystemID = $input['companySystemID'];
-        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by', 'approvedRejectStatus'=> function($q) use ($companySystemID , $input){
-            $q->select('documentSystemCode','status')
-                ->where('companySystemID', $companySystemID)
-                ->where('documentSystemID', isset($input['isTender']) && $input['isTender'] ? 108 : 113);
-        }])->where('id', $input['tenderMasterId'])->first();
-        $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
-        $act = array();
-        if (!empty($activity)) {
-            foreach ($activity as $vl) {
-                $dt['id'] = $vl['tender_procurement_category']['id'];
-                $dt['itemName'] = $vl['tender_procurement_category']['code'] . ' | ' . $vl['tender_procurement_category']['description'];
-                array_push($act, $dt);
-            }
-        }
-        $employee = \Helper::getEmployeeInfo();
-        $data['master']['comment'] = SRMTenderCalendarLog::getNarration($input['tenderMasterId'], $companySystemID);
-
-        $showEditIcon = false;
-        if ($data['master']['commercial_ranking_line_item_status'] == 0  && $data['master']['is_negotiation_started'] == 0 && $data['master']['approved'] == -1) {
-            $showEditIcon = true;
-        }
-
-        $data['master']['canEdit'] = $showEditIcon;
-
-
-        $data['activity'] = $act;
-
-        $qry = "SELECT
-	srm_calendar_dates.id as id,
-	srm_calendar_dates.calendar_date as calendar_date,
-	srm_calendar_dates.company_id as company_id,
-	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
-FROM
-	srm_calendar_dates 
-	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
-WHERE
-	srm_calendar_dates.company_id = $companySystemID";
-
-        $qryAll = "SELECT
-	srm_calendar_dates.id as id,
-	srm_calendar_dates.calendar_date as calendar_date,
-	srm_calendar_dates.company_id as company_id,
-	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
-FROM
-	srm_calendar_dates 
-	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
-WHERE
-	(srm_calendar_dates.company_id = $companySystemID OR srm_calendar_dates.company_id IS NULL)
-	and ISNULL(srm_calendar_dates_detail.from_date)
-	and ISNULL(srm_calendar_dates_detail.to_date)
-ORDER BY
-    CASE WHEN srm_calendar_dates.is_default IN (1, 2) THEN 0 ELSE 1 END, srm_calendar_dates.is_default, srm_calendar_dates.id";
-
-        $data['edit_valid'] = false;
-        $data['is_request_process'] = false;
-        $data['request_type'] = '';
-        $data['is_request_process_complete'] = false;
-        $data['is_confirm_process'] = false;
-        $data['isBidSubmissionOpeningDatePast'] = true;
-        if ($data['master']['published_yn'] == 1) {
-
-            $currentDate = Carbon::now()->format('Y-m-d H:i:s');
-            $openingDate= Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
-
-            $resultObj = $openingDate->gt($currentDate);
-            $data['edit_valid'] = $resultObj;
-            $data['edit_valid_after_closed'] = ($resultObj) ? false : true;
-            $data['isBidSubmissionOpeningDatePast'] = $resultObj;
-            $data['edit_valid_closing_date'] = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_closing_date'])->gt(now());
-
-            if($data['edit_valid_closing_date'] != 1){
-                $data['edit_valid_after_closed'] = false;
-            }
-
-            $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
-                ->select('id','type','modify_type','status','confirmation_approved','approved')
-                ->orderBy('id', 'desc')->first();
-
-            if (isset($tendeEditLog)) {
-                $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
-
-                if ($resultObj) {
-                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
-                        $data['is_confirm_process'] = true;
-                        $data['edit_valid'] = false;
-                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
-                        $data['edit_valid'] = false;
-                        $data['is_request_process'] = $tendeEditLog->approved == 0;
-                        $data['is_request_process_complete'] = $tendeEditLog->approved == -1;
-                    }
-
-                } else if ($data['edit_valid_closing_date']) {
-                    $data['request_type'] = 'Edit';
-                    if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
-                        $data['is_confirm_process'] = true;
-                        $data['edit_valid_after_closed'] = false;
-                    } else if ($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1) {
-                        $data['is_request_process'] = $tendeEditLog->approved == 0;
-                        $data['edit_valid_after_closed'] = false;
-                        $data['isProcessCompleteBeforeClosing'] = $tendeEditLog->approved == -1;
-                    }
-                }
-            }
-
-        }
-
-
-        // $calenderData =  CalendarDates::
-        //             join('srm_calendar_dates_detail','srm_calendar_dates_detail.calendar_date_id','=','srm_calendar_dates.id')
-        //             ->where('srm_calendar_dates_detail.tender_id',$tenderMasterId)
-        //             ->where('srm_calendar_dates.company_id',$companySystemID)
-        //             ->select('srm_calendar_dates_detail.calendar_date_id as id','srm_calendar_dates.calendar_date as calendar_date','srm_calendar_dates.company_id as company_id','srm_calendar_dates_detail.*')
-        //             ->get();
-
-
-        $calenderDataDetails = CalendarDatesDetail::where('company_id', $companySystemID)->where('tender_id', $tenderMasterId)->get();
-
-        $dataArray = array();
-        $i = 0;
-
-        foreach ($calenderDataDetails as $calenderDataDetail) {
-
-            $fromDate = $calenderDataDetail->from_date;
-            $toDate = $calenderDataDetail->to_date;
-            $calenderDate = CalendarDates::find($calenderDataDetail->calendar_date_id);
-
-            $dataArray[$i]['id'] = $calenderDate->id;
-            $dataArray[$i]['calendar_date'] = $calenderDate->calendar_date;
-            $dataArray[$i]['is_default'] = $calenderDate->is_default;
-            $dataArray[$i]['company_id'] = $calenderDataDetail->company_id;
-            $dataArray[$i]['from_date'] = $fromDate->format('Y-m-d H:i:s');
-            $dataArray[$i]['to_date'] = isset($toDate) ? $toDate->format('Y-m-d H:i:s') : null;
-            $dataArray[$i]['from_time'] = $calenderDataDetail->from_time;
-            $dataArray[$i]['to_time'] = isset($toDate) ? $calenderDataDetail->to_time : null;
-            $i++;
-        }
-
-        $data['calendarDates'] = collect($dataArray);
-
-        $calenderDataAll =  CalendarDates::select('srm_calendar_dates_detail.calendar_date_id as id', 'srm_calendar_dates.calendar_date as calendar_date', 'srm_calendar_dates.company_id as company_id', 'srm_calendar_dates_detail.*')
-            ->join('srm_calendar_dates_detail', 'srm_calendar_dates_detail.calendar_date_id', '=', 'srm_calendar_dates.id')
-            ->where('srm_calendar_dates_detail.tender_id', $tenderMasterId)
-            ->where('srm_calendar_dates.company_id', $companySystemID)
-            ->orWhereNull('srm_calendar_dates.company_id')
-            ->whereNull('srm_calendar_dates_detail.from_date')
-            ->whereNull('srm_calendar_dates_detail.to_date')
-            ->get();
-
-        $data['calendarDatesAll'] =  DB::select($qryAll);
-
-
-        $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
-        $docTypeArr = array();
-        if (!empty($documentTypes)) {
-            foreach ($documentTypes as $vl) {
-                $dt['id'] = $vl['document_type']['id'];
-                $dt['itemName'] = $vl['document_type']['document_type'];
-                array_push($docTypeArr, $dt);
-            }
-        }
-        $data['documentTypes'] = $docTypeArr;
-
-        // Get Purchase Request Data
-        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
-            ->with(['tender_purchase_request','details.podetail'])
-            ->where('approved', '-1')
-            ->where('companySystemID', $companySystemID);
-
-        if($data['master']->document_type == 0){
-            $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
-                $query->where(function ($subQuery) use ($tenderMasterId) {
-                    $subQuery->where('tender_id', '!=', $tenderMasterId)
-                        ->whereHas('tender', function ($subSubQuery) {
-                            $subSubQuery->where('document_type', 0);
-                        });
-                });
-            });
-        } elseif ($data['master']->document_type != 0){
-            $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
-                $query->where(function ($subQuery) use ($tenderMasterId) {
-                    $subQuery->where('tender_id', '!=', $tenderMasterId)
-                        ->whereHas('tender', function ($subSubQuery) {
-                            $subSubQuery->where('document_type', '!=', 0);
-                        });
-                });
-            });
-        }
-
-        $purchaseRequest =  $purchaseRequest->whereDoesntHave('details.podetail')
-            ->get();
-
-        $data['purchaseRequest'] = $purchaseRequest;
-
-        // Get Tender Purchase Request Data
-        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id', 'erp_purchaserequest.purchaseRequestCode as itemName')
-            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
-            ->where('tender_id', $tenderMasterId)
-            ->get();
-        $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
-
-        // Get the data from srm_tender_budget_items if it exists, otherwise from srm_budget_items
-        $srmBudgetItem = DB::table('srm_tender_budget_items')
-            ->select('srm_tender_budget_items.item_id as id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_tender_budget_items.budget_amount) AS item_name"))
-            ->leftJoin('srm_budget_items', 'srm_tender_budget_items.item_id', '=', 'srm_budget_items.id')
-            ->where('srm_tender_budget_items.tender_id', $tenderMasterId)
-            ->where('srm_budget_items.is_active', 1)
-            ->where('srm_budget_items.company_id', $companySystemID)
-            ->unionAll(DB::table('srm_budget_items')
-                ->select('srm_budget_items.id', DB::raw("CONCAT(srm_budget_items.item_name, ' - ', srm_budget_items.budget_amount) AS item_name"))
-                ->where('srm_budget_items.is_active', 1)
-                ->where('srm_budget_items.company_id', $companySystemID)
-                ->whereNotIn('srm_budget_items.id', function ($query) use ($tenderMasterId) {
-                    $query->select('item_id')->from('srm_tender_budget_items')->where('tender_id', $tenderMasterId);
-                }))
-            ->get();
-
-        $data['srmBudgetItem'] = $srmBudgetItem;
-
-        $srmBudgetItemList = SrmBudgetItem::select('srm_budget_items.id as id', 'item_name AS itemName')
-            ->where('company_id', $companySystemID)
-            ->whereHas('tenderBudgetItems', function ($query) use ($tenderMasterId) {
-                $query->where('tender_id', $tenderMasterId);
-            })->get();
-
-        $data['srmBudgetItemList'] = $srmBudgetItemList;
-
-        // Get Department Master Data
-        $departmentMaster = SrmDepartmentMaster::where('company_id', $companySystemID)->where('is_active', 1)->get();
-        $data['departmentMaster'] = $departmentMaster;
-
-        // Get Tender Department
-        $tenderdepartment = SrmTenderDepartment::select('department_id as id', 'srm_department_master.description as itemName')
-            ->leftJoin('srm_department_master', 'srm_department_master.id', '=', 'srm_tender_department.department_id')
-            ->where('tender_id', $tenderMasterId)
-            ->get();
-        $data['tenderdepartment'] = $tenderdepartment;
-
-
-        //check prebid Clarification Added
-        $prebidclarificationDateId = CalendarDates::select('id')->where('is_default', 1)->first();
-        $prebidclarificationDateCount = CalendarDatesDetail::where('calendar_date_id', $prebidclarificationDateId->id)
-            ->where('tender_id', $tenderMasterId)
-            ->count();
-
-        $data['hasPreBidClarifications'] = $prebidclarificationDateCount;
-
-        //check Site Visit Date Added
-        $siteVisitDateId = CalendarDates::select('id')->where('is_default', 2)->first();
-        $siteVisitDateCount = CalendarDatesDetail::where('calendar_date_id', $siteVisitDateId->id)
-            ->where('tender_id', $tenderMasterId)
-            ->count();
-
-        $data['hasPreBidClarifications'] = $prebidclarificationDateCount;
-        $data['prebidclarificationDateId'] = $prebidclarificationDateId->id;
-        $data['hasSiteVisitDate'] = $siteVisitDateCount;
-        $data['siteVisitDateId'] = $siteVisitDateId->id;
-
-
-
-        return $data;
+        return $this->tenderMasterRepository->getTenderMasterData($input);
     }
 
     public function loadTenderSubCategory(Request $request)
@@ -975,13 +667,16 @@ ORDER BY
             'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id'
         ));
 
-        $tenderMaster = TenderMaster::find($input['id']);
-        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id', $input['id'])->count();
+        $requestData = $this->documentModifyService->checkForEditOrAmendRequest($input['id']);
+        $amdID = $input['amd_id'] ?? 0;
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $versionID = $requestData['versionID'] ?? 0;
+        $tenderMaster = $this->tenderMasterRepository->getTenderExistData($input['id'], $editOrAmend, $versionID);
+        $checkMinApprovalBidOpening = $this->tenderMasterRepository->checkTenderBidEmployeesAdded($input['id'], $editOrAmend, $amdID, $versionID);
 
-        if ($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
-            return ['status' => false, 'message' => "Atleast " . $tenderMaster->min_approval_bid_opening . " employee should selected"];
+        if (!$checkMinApprovalBidOpening['success']) {
+            return ['status' => false, 'message' => $checkMinApprovalBidOpening['message']];
         }
-
 
         if ($input['addCalendarDates'] === 0) {
             $resValidate = $this->validateTenderHeader($input);
@@ -998,9 +693,9 @@ ORDER BY
             $rfq = ($input['rfq'] == true) ? true : false;
         }
 
-        $condition = $this->validateDates($input['id'], $rfq);
+        $condition = $this->validateDates($input['id'], $rfq, $editOrAmend, $versionID);
         if(isset($condition['success']) && $condition['success'] == false){
-            return $this->validateDates($input['id'], $rfq);
+            return $this->validateDates($input['id'], $rfq, $editOrAmend, $versionID);
         }
 
         $documentSystemID = $rfq ? 113 : 108;
@@ -1113,28 +808,28 @@ ORDER BY
             }
         }
 
-        if (!isset(($input['bid_submission_opening_time']))) {
+        if (!isset($input['bid_submission_opening_time'])) {
             return ['success' => false, 'message' => 'Bid submission from time is required'];
         }
 
 
-        if (isset($input['pre_bid_clarification_start_date']) && !isset(($input['pre_bid_clarification_start_time']))) {
+        if (isset($input['pre_bid_clarification_start_date']) && !isset($input['pre_bid_clarification_start_time'])) {
             return ['success' => false, 'message' => 'Pre-bid Clarification from time is required'];
         }
 
-        if (isset($input['pre_bid_clarification_end_date']) && !isset(($input['pre_bid_clarification_end_time']))) {
+        if (isset($input['pre_bid_clarification_end_date']) && !isset($input['pre_bid_clarification_end_time'])) {
             return ['success' => false, 'message' => 'Pre-bid Clarification to time is required'];
         }
 
-        if (isset($input['site_visit_date']) && !isset(($input['site_visit_start_time']))) {
+        if (isset($input['site_visit_date']) && !isset($input['site_visit_start_time'])) {
             return ['success' => false, 'message' => 'Site Visit from time is required'];
         }
 
-        if (isset($input['site_visit_end_date']) && !isset(($input['site_visit_end_time']))) {
+        if (isset($input['site_visit_end_date']) && !isset($input['site_visit_end_time'])) {
             return ['success' => false, 'message' => 'Site Visit to time is required'];
         }
 
-        if (!isset(($input['bid_submission_closing_time']))) {
+        if (!isset($input['bid_submission_closing_time'])) {
             return ['success' => false, 'message' => 'Bid submission to time is required'];
         }
 
@@ -1361,7 +1056,7 @@ ORDER BY
 
 
         $employee = \Helper::getEmployeeInfo();
-        $exist = TenderMaster::where('id', $input['id'])->first();
+        $exist = $this->tenderMasterRepository->getTenderExistData($input['id'], $editOrAmend, $versionID);
 
         if (!isset($input['tender_document_fee'])) {
             $bankId = 0;
@@ -1381,7 +1076,7 @@ ORDER BY
         DB::beginTransaction();
 
         try {
-            $tenderMaster = TenderMaster::find($input['id']);
+
             $data['title'] = $input['title'];
             $data['title_sec_lang'] = $input['title_sec_lang'];
             $data['description'] = $input['description'];
@@ -1414,50 +1109,29 @@ ORDER BY
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date : null;
             $data['updated_by'] = $employee->employeeSystemID;
             $data['show_technical_criteria'] = $input['show_technical_criteria'];
-            $result =  $tenderMaster->update($data);
+
+            $result = $this->tenderMasterRepository->updateTenderMaster($data, $input['id'], $editOrAmend, $versionID);
+            if(!$result['success']){
+                return $this->sendError($result['message'], 500);
+            }
 
             if ($result) {
-                if (isset($input['procument_activity'])) {
-                    if (count($input['procument_activity']) > 0) {
 
-                        $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
-
-                        if (!$proActivity['success']) {
-                            return $this->sendError($proActivity['message'], 500);
-                        }
-
-                        foreach ($input['procument_activity'] as $vl) {
-                            $activity['tender_id'] = $input['id'];
-                            $activity['category_id'] = $vl['id'];
-                            $activity['company_id'] = $input['company_id'];
-                            $activity['created_by'] = $employee->employeeSystemID;
-
-                            ProcumentActivity::create($activity);
-                        }
-                    } else {
-
-                        $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
-
-                        if (!$proActivity['success']) {
-                            return $this->sendError($proActivity['message'], 500);
-                        }
-                    }
-                } else {
-
-                    $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
-                    if (!$proActivity['success']) {
-                        return $this->sendError($proActivity['message'], 500);
-                    }
+                $procurementActivity = $input['procument_activity'] ?? null;
+                $addProcurementData = $this->tenderMasterRepository->updateProcurementActivity(
+                    $procurementActivity, $input['id'], $input['company_id'], $employee, $editOrAmend, $versionID
+                );
+                if(!$addProcurementData['success']){
+                    return $this->sendError($addProcurementData['message'], 500);
                 }
 
-
                 if ($exist['site_visit_date'] != $site_visit_date) {
-                    $site['tender_id'] = $input['id'];
-                    $site['date'] = $site_visit_date;
-                    $site['company_id'] = $input['company_id'];
-                    $site['created_by'] = $employee->employeeSystemID;
-
-                    TenderSiteVisitDates::create($site);
+                    $tenderSiteVisitDateUpdate = $this->tenderMasterRepository->addTenderSiteVisitDate(
+                        $input['id'], $input['company_id'], $site_visit_date, $employee, $versionID, $editOrAmend
+                    );
+                    if(!$tenderSiteVisitDateUpdate['success']){
+                        return $this->sendError($tenderSiteVisitDateUpdate['message'], 500);
+                    }
                 }
 
                 if (isset($input['Attachment']) && !empty($input['Attachment'])) {
@@ -1487,7 +1161,7 @@ ORDER BY
                         Storage::disk(Helper::policyWiseDisk($input['company_id'], 'public'))->put($path, $decodeFile);
 
                         $att['budget_document'] = $path;
-                        $tenderUpdated = TenderMaster::find($input['id']);
+                        $tenderUpdated = $this->tenderMasterRepository->getTenderExistData($input['id'], $editOrAmend, $versionID);
                         $tenderUpdated->update($att);
                     }
                 }
@@ -1507,22 +1181,11 @@ ORDER BY
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
 
-                        if ((isset($input['isRequestProcessComplete']) && isset($input['requestType'])) && (($input['isRequestProcessComplete']) && $input['requestType'] == 'Amend')) {
+                        if (isset($input['requestType']) && $input['requestType'] == 'Amend') {
 
-                            $tenderCircular = TenderCirculars::select('id')->where('tender_id',$input['id'])->where('status',0);
-                            if($tenderCircular->count() == 0)
-                            {
-                                return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
-                            }
-
-                            $circulatIds = $tenderCircular->pluck('id');
-
-                            foreach($circulatIds as $id)
-                            {
-                                $circulatAmends =  CircularAmendments::where('circular_id', $id)->count();
-                                if ($circulatAmends == 0) {
-                                    return ['success' => false, 'message' => 'Please attach at least one amendment to a circular'];
-                                }
+                            $circulars = $this->tenderMasterRepository->checkTenderCircularValidation($input['id'], $versionID);
+                            if(!$circulars['success']){
+                                return ['success' => false, 'message' => $circulars['message']];
                             }
 
                         }
@@ -1530,18 +1193,19 @@ ORDER BY
                         if (empty($technical) && !$rfq) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
                         }
+
                         if($input['tender_type_id'] == 2 || $input['tender_type_id'] == 3){
-                            $assignSupplier = TenderSupplierAssignee::with(['supplierAssigned'])
-                                ->where('company_id', $input['company_id'])
-                                ->where('tender_master_id', $input['id'])->first();
-                            if (empty($assignSupplier)) {
-                                return ['success' => false, 'message' => 'At least one supplier should be added'];
+                            $assignSupplierExists = $this->tenderMasterRepository->checkAssignSuppliers(
+                                $input['company_id'], $input['id'], $rfq, true, $editOrAmend, $versionID
+                            );
+                            if (!$assignSupplierExists['success']) {
+                                return $assignSupplierExists;
                             }
                         }
 
                         if($input['tender_type_id'] == 3){
                             $assignSupplier =  $this->tenderMasterRepository->checkAssignSuppliers(
-                                $input['company_id'], $input['id'], $rfq
+                                $input['company_id'], $input['id'], $rfq, false, $editOrAmend, $versionID
                             );
 
                             if(!$assignSupplier['success']){
@@ -1549,70 +1213,21 @@ ORDER BY
                             }
                         }
 
-                        $parentsWithoutSubLevels = DB::table('srm_evaluation_criteria_details as parent')
-                            ->leftJoin('srm_evaluation_criteria_details as child', 'parent.id', '=', 'child.parent_id')
-                            ->where('parent.parent_id', 0)
-                            ->where('parent.tender_id', $input['id'])
-                            ->where('parent.critera_type_id', 2)
-                            ->whereNull('child.id')
-                            ->where('parent.is_final_level', 0)
-                            ->select('parent.*')
-                            ->get();
-
-
-                        $subLevelsWithoutFurtherSubLevels = DB::table('srm_evaluation_criteria_details as sub')
-                            ->leftJoin('srm_evaluation_criteria_details as child', 'sub.id', '=', 'child.parent_id')
-                            ->where('sub.parent_id', '!=', 0)
-                            ->where('sub.tender_id', $input['id'])
-                            ->where('sub.critera_type_id', 2)
-                            ->whereNull('child.id')
-                            ->where('sub.is_final_level', 0)
-                            ->select('sub.*')
-                            ->get();
-
-                        if (!$parentsWithoutSubLevels->isEmpty()) {
-                            return ['success' => false, 'message' => 'If there is no child Technical Evaluation criteria, parent Technical Evaluation criteria should be marked as Final'];
-                        }
-                        if (!$subLevelsWithoutFurtherSubLevels->isEmpty()) {
-                            return ['success' => false, 'message' => 'At least one Criteria should be marked as Final under a parent Technical Evaluation Criteria'];
+                        $criteriaValidation = $this->tenderMasterRepository->checkEvaluationCriteriaValid(
+                            $input['id'], $versionID, $editOrAmend, $input['is_active_go_no_go']
+                        );
+                        if(!$criteriaValidation['success']){
+                            return ['success' => false, 'message' => $criteriaValidation['message']];
                         }
 
-                        if (($input['is_active_go_no_go'] == 1) || $input['is_active_go_no_go'] == true) {
-                            $goNoGo = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 1)->first();
-                            if (empty($goNoGo)) {
-                                return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
-                            }
+                        $pricingSchedule = $this->tenderMasterRepository->checkPricingScheduleMasterValidation(
+                            $input['id'], $editOrAmend, $versionID
+                        );
+                        if(!$pricingSchedule['success']){
+                            return ['success' => false, 'message' => $pricingSchedule['message']];
                         }
 
-                        $schedule = PricingScheduleMaster::where('tender_id', $input['id'])->first();
-                        if (empty($schedule)) {
-                            return ['success' => false, 'message' => 'At least one work schedule should be added'];
-                        }
-                        $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
-
-                        foreach ($scheduleAll as $val) {
-                            $scheduleDetail = PricingScheduleDetail::where('tender_id', $input['id'])->where('pricing_schedule_master_id', $val['id'])->where('is_disabled', true);
-                            if ($scheduleDetail->count() > 0) {
-                                $scheduleDetails = $scheduleDetail->get();
-                                foreach ($scheduleDetails as $shed) {
-                                    $scheduleDetailInfo = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->where('bid_format_detail_id', $shed['id'])->first();
-                                    if (empty($scheduleDetailInfo)) {
-                                        return ['success' => false, 'message' => 'All work schedules should be completed'];
-                                    }
-                                }
-                            }
-                            $mainwork = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $input['id'])->where('deleted_at', null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id']);
-                            if ($mainwork->count() > 0) {
-                                $mainworks = $mainwork->get();
-                                foreach ($mainworks as $main) {
-                                    if (count($main->tender_boq_items) == 0) {
-                                        return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
-                                    }
-                                }
-                            }
-                        }
-
-                        if (isset($input['isRequestProcessComplete']) && ($input['isRequestProcessComplete'] ?? false) || ($input['isProcessCompleteBeforeClosing'] ?? false)) {
+                        if ($requestData['enableRequestChange']) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
 
@@ -1662,24 +1277,23 @@ ORDER BY
                         }
 
 
-                        $confirm = \Helper::confirmDocument($params);
+                        $confirm = Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];
                         } else {
-                            $dataC['confirmed_yn'] = 1;
-                            $dataC['confirmed_date'] = now();
-                            $dataC['confirmed_by_emp_system_id'] = $employee->employeeSystemID;
-
-                            TenderMaster::where('id', $input['id'])->update($dataC);
+                            $tenderMaster->confirmed_yn = 1;
+                            $tenderMaster->confirmed_date = now();
+                            $tenderMaster->confirmed_by_emp_system_id = $employee->employeeSystemID;
+                            $tenderMaster->save();
                         }
 
-                        $techCriteria = EvaluationCriteriaDetails::with(['child' => function ($q) {
-                            $q->with(['child' => function ($q) {
-                                $q->with(['child' => function ($q) {
-                                    $q->with(['evaluation_criteria_type', 'tender_criteria_answer_type']);
-                                }]);
-                            }]);
-                        }])->where('tender_id', $input['id'])->where('level', 1)->where('critera_type_id', 2)->get();
+                        $getTechCriteria = $this->tenderMasterRepository->getEvaluationCriteriaForTenderConfirm(
+                            $input['id'], $editOrAmend, $versionID
+                        );
+                        if(!$getTechCriteria['success']){
+                            return $this->sendError($getTechCriteria['message']);
+                        }
+                        $techCriteria = $getTechCriteria['data'];
 
                         if (!empty($techCriteria)) {
                             foreach ($techCriteria as $level1) {
@@ -1715,111 +1329,28 @@ ORDER BY
                     }
                 }
 
-                $tenderPurchaseRequestCount = TenderPurchaseRequest::where('tender_id', $input['id'])->count();
-
-                if( $tenderPurchaseRequestCount > 0 && ($input['editAfterBidOpeningDate'] == false)){
-                    TenderPurchaseRequest::where('tender_id', $input['id'])->delete();
+                $tenderPurchaseRequest = $input['purchaseRequest'] ?? [];
+                $tenderPurchaseRequestUpdate = $this->tenderMasterRepository->tenderPurchaseRequestUpdate(
+                    $tenderPurchaseRequest, $input['id'], $input['company_id'], $editOrAmend, $versionID
+                );
+                if(!$tenderPurchaseRequestUpdate['success']){
+                    return $this->sendError($tenderPurchaseRequestUpdate['message'], 500);
                 }
 
-                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0 && ($input['editAfterBidOpeningDate'] == false)){
-                    foreach ($input['purchaseRequest'] as $pr) {
-
-                        $data = [
-                            'tender_id' => $input['id'],
-                            'purchase_request_id' => $pr['id'],
-                            'company_id' => $input['company_id'],
-                        ];
-
-                        TenderPurchaseRequest::create($data);
-                    }
-
+                $budgetItemList = $input['srmBudgetItem'] ?? [];
+                $updateTenderBudget = $this->tenderMasterRepository->updateTenderBudgetItems(
+                    $budgetItemList, $input['id'], $input['company_id'], $editOrAmend, $versionID
+                );
+                if(!$updateTenderBudget['success']){
+                    return $this->sendError($updateTenderBudget['message'], 500);
                 }
 
-
-                if(isset($input['srmBudgetItem']) && !empty($input['srmBudgetItem'])){
-                    $existingItems = SrmTenderBudgetItem::where('tender_id', $input['id'])->pluck('item_id')->toArray();
-                    $itemsToDelete = array_diff($existingItems, array_column($input['srmBudgetItem'], 'id'));
-                    if($input['editAfterBidOpeningDate'] == false){
-                        SrmTenderBudgetItem::where('tender_id', $input['id'])->whereIn('item_id', $itemsToDelete)->delete();
-                    }
-                }
-
-                if (!empty($input['srmBudgetItem']) && !$input['editAfterBidOpeningDate']) {
-                    foreach ($input['srmBudgetItem'] as $pr) {
-                        $existingBudgetItem = SrmTenderBudgetItem::where('item_id', $pr['id'])
-                            ->where('tender_id', $input['id'])
-                            ->first();
-
-                        if ($existingBudgetItem) {
-                            $budget_amount = $existingBudgetItem->budget_amount;
-                        } else {
-                            $srmBudgetItem = SrmBudgetItem::select('budget_amount')
-                                ->where('id', $pr['id'])
-                                ->where('company_id', $input['company_id'])
-                                ->first();
-
-                            $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
-                        }
-
-                        $data = [
-                            'item_id' => $pr['id'],
-                            'tender_id' => $input['id'],
-                            'budget_amount' => $budget_amount,
-                            'created_at' => now()
-                        ];
-
-                        SrmTenderBudgetItem::updateOrCreate(['item_id' => $pr['id'], 'tender_id' => $input['id']], $data);
-                    }
-                }
-
-
-                $getinactivedepartments = SrmDepartmentMaster::select('id','description')
-                    ->where('company_id', $input['company_id'])
-                    ->where('is_active', 0)
-                    ->get();
-
-                $convertedArray = [];
-                foreach ($getinactivedepartments as $item) {
-                    $convertedArray[] = [
-                        'id' => $item['id'],
-                        'itemName' => $item['description'],
-                    ];
-                }
-
-                $id1 = array_column($input['departmentMaster'], 'id');
-                $id2 = array_column($convertedArray, 'id');
-                // Find the intersection of 'id' values
-                $commonIds = array_intersect($id1, $id2);
-
-                $name1 = array_column($input['departmentMaster'], 'itemName');
-                $name2 = array_column($convertedArray, 'itemName');
-                // Find the intersection of 'itemName' values
-                $commonnames = array_intersect($name1, $name2);
-
-                if(!empty($commonIds)){
-                    foreach ($commonnames as $name) {
-                        return ['success' => false, 'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'];
-                    }
-                }else{
-                    $departmentMasterCount = SrmTenderDepartment::where('tender_id', $input['id'])->count();
-
-                    if( $departmentMasterCount > 0 && !$input['editAfterBidOpeningDate']){
-                        SrmTenderDepartment::where('tender_id', $input['id'])->delete();
-                    }
-
-                    if(isset($input['departmentMaster']) && sizeof($input['departmentMaster']) > 0 &&
-                        isset($input['editAfterBidOpeningDate']) && !$input['editAfterBidOpeningDate']){
-                        foreach ($input['departmentMaster'] as $dm) {
-                            $data = [
-                                'tender_id' => $input['id'],
-                                'department_id' => $dm['id'],
-                                'company_id' => $input['company_id'],
-                            ];
-
-                            SrmTenderDepartment::create($data);
-                        }
-
-                    }
+                $departmentMaster = $input['departmentMaster'] ?? [];
+                $createDepartment = $this->tenderMasterRepository->updateTenderDepartments(
+                    $departmentMaster, $input['company_id'], $input['id'], $editOrAmend, $versionID
+                );
+                if(!$createDepartment['success']){
+                    return $this->sendError($createDepartment['message'], 500);
                 }
 
                 DB::commit();
@@ -1832,14 +1363,9 @@ ORDER BY
         }
     }
 
-    private function validateDates($id, $rfq){
+    private function validateDates($id, $rfq, $editOrAmend, $versionID){
         $currentDate = Carbon::now();
-        $calendarDates = CalendarDatesDetail::where('tender_id', $id)
-            ->whereHas('calendarDates', function ($query) {
-                $query->where('is_default', 0);
-            })
-            ->get()
-            ->toArray();
+        $calendarDates = $this->tenderMasterRepository->getCalendarDateDetailsData($id, $editOrAmend, $versionID);
 
         foreach ($calendarDates as $calDate) {
             $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
@@ -1916,7 +1442,15 @@ ORDER BY
             $rfq = ($input['rfq'] == true) ? true : false;
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $requestData = $this->documentModifyService->checkForEditOrAmendRequest($input['id']);
+        $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        $versionID = $requestData['versionID'] ?? 0;
+        $amd_id = $requestData['tenderMasterHistory']['amd_id'] ?? 0;
+
+        if($editOrAmend && empty($requestData['tenderMasterHistory'])){
+            return ['success' => false, 'message' => 'Tender history data not found'];
+        }
+
         $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
             if (count($input['calendarDates']) > 0) {
@@ -1992,7 +1526,7 @@ ORDER BY
                 }
 
 
-                $calenderDetails = $this->deleteCalenderDetails($input['id'], $input['company_id']);
+                $calenderDetails = $this->tenderMasterRepository->deleteCalenderDetails($input['id'], $input['company_id'], $requestData);
                 if (!$calenderDetails['success']) {
                     return $this->sendError($calenderDetails['message'], 500);
                 }
@@ -2030,11 +1564,17 @@ ORDER BY
                     $calDt['from_date'] = $frm_date;
                     $calDt['to_date'] = $to_date;
                     $calDt['company_id'] = $input['company_id'];
-                    $calDt['created_by'] = $employee->employeeSystemID;
                     $calDt['created_at'] = Carbon::now();
-                    CalendarDatesDetail::create($calDt);
+                    if($editOrAmend){
+                        $calDt['id'] = null;
+                        $calDt['level_no'] = 1;
+                        $calDt['version_id'] = $versionID;
+                        CalendarDatesDetailEditLog::create($calDt);
+                    } else {
+                        CalendarDatesDetail::create($calDt);
+                    }
 
-                    $tenderMaster = TenderMaster::find($input['id']);
+                    $tenderMaster = $editOrAmend ? SrmTenderMasterEditLog::find($amd_id) : TenderMaster::find($input['id']);
                     if($calenderDateDetails->is_default == 1){
                         $tenderMaster->pre_bid_clarification_start_date = $frm_date;
                         $tenderMaster->pre_bid_clarification_end_date = $to_date;
@@ -2050,10 +1590,10 @@ ORDER BY
                 }
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
             } else {
-                CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                return $this->tenderMasterRepository->deleteCalenderDetails($input['id'], $input['company_id'], $requestData);
             }
         } else {
-            CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+            return $this->tenderMasterRepository->deleteCalenderDetails($input['id'], $input['company_id'], $requestData);
         }
     }
 
@@ -2566,28 +2106,9 @@ ORDER BY
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($request->all(), array('procument_cat_id'));
-        $tenderMaster = TenderMaster::where('id', $input['tenderMasterId'])->first();
-        if ($input['procument_cat_id'] > 0) {
-            $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id', $input['procument_cat_id'])->where('is_active', 1)->get();
-        } else {
-            $data['procurementSubCategory'] = array();
-        }
+        $tenderActivity = $this->tenderMasterRepository->loadTenderSubActivity($input);
 
-
-        $activity = ProcumentActivity::where('tender_id', $input['tenderMasterId'])->get();
-
-        if ($tenderMaster['confirmed_yn'] == 1) {
-            if (count($activity) > 0) {
-                foreach ($activity as $vl) {
-                    $category = TenderProcurementCategory::where('id', $vl['category_id'])->first();
-                    if ($category['is_active'] == 0) {
-                        $data['procurementSubCategory'][] = $category;
-                    }
-                }
-            }
-        }
-
-        return $data;
+        return $this->sendResponse($tenderActivity, 'Tender sub activity retrieved successfully');
     }
     public function sendSupplierInvitation(Request $request)
     {
@@ -2625,153 +2146,26 @@ ORDER BY
     }
     public function getSupplierList(Request $request)
     {
-        $input = $request->all();
-        $selectedCategoryIds = array();
-        $selectedCompanyId = $input['companyId'];
-        $tenderMasterId = $input['tenderMasterId'];
-        $selectedCategories = $input['selectedCategories'];
-
-        foreach ($selectedCategories as $selectedCategory) {
-            $selectedCategoryIds[] = $selectedCategory['id'];
-        }
-
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-
-
-        $qry = SupplierAssigned::with(['businessCategoryAssigned' => function ($query) use ($selectedCategoryIds) {
-            if (sizeof($selectedCategoryIds) != 0) {
-                $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
-            }
-        }])->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderMasterId) {
-            $query->where('tender_master_id', '=', $tenderMasterId);
-        })
-            ->where('companySystemID', $selectedCompanyId)
-            ->where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->where('supEmail', '!=', null)
-            ->where('registrationNumber', '!=', null);
-
-        if(sizeof($selectedCategoryIds) != 0) {
-            $qry = $qry->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
-                $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
-            });
-        }
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $qry = $qry->where(function ($query) use ($search) {
-                $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
-                    ->orWhere('registrationNumber', 'LIKE', "%{$search}%")
-                    ->orWhere('supEmail', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
-            });
-        }
-
-        return \DataTables::eloquent($qry)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
+        return $this->tenderMasterRepository->getSupplierList($request);
     }
     public function saveSupplierAssigned(Request $request)
     {
         $input = $request->all();
-        $companySystemId = $input['companySystemID'];
-        $isCheck = $input['isCheck'];
-        $pullList = $input['pullList'];
-        $removedSuppliersId = $input['removedSuppliersId'];
-        $selectAll = $input['selectAll'];
-        $tenderId = $input['tenderId'];
-        $employee = \Helper::getEmployeeInfo();
-        $data = [];
-        $insertSupplierAssignee = false;
-        $messages = array(
-            'pullList.required'   => 'Please select the supplier(s).',
-        );
-
-        $validator = \Validator::make($input, [
-            'companySystemID' => 'required',
-            'pullList' => 'required'
-        ], $messages);
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
-
-        if (!empty($pullList)) {
-            if ($selectAll == true) {
-                $pullList = [];
-                TenderSupplierAssignee::where('tender_master_id', $tenderId)
-                    ->whereNotNull('supplier_assigned_id')->where('mail_sent', 0)
-                    ->delete();
-                $suppilerAssigned = SupplierAssigned::whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
-                    $query->where('tender_master_id', '=', $tenderId);
-                })
-                    ->whereNotIn('supplierAssignedID', $removedSuppliersId)
-                    ->where('companySystemID', $companySystemId)
-                    ->where('isActive', 1)
-                    ->where('isAssigned', -1)
-                    ->where('supEmail', '!=', null)
-                    ->where('registrationNumber', '!=', null);
-                $pullList = collect($suppilerAssigned->get())->pluck('supplierAssignedID')->toArray();
+        try{
+            $response = $this->tenderMasterRepository->saveSupplierAssigned($input);
+            if(!$response['success']){
+                $code = $response['code'] ?? 500;
+                return $this->sendError($response['message'], $code);
+            } else {
+                return $this->sendResponse([], $response['message']);
             }
-
-            foreach ($pullList as $key => $val) {
-                $data[] = array(
-                    'tender_master_id' => $tenderId,
-                    'supplier_assigned_id' => $val,
-                    'created_by' => $employee->employeeSystemID,
-                    'company_id' => $companySystemId,
-                    'created_at' => Helper::currentDateTime()
-                );
-            }
-            $insertSupplierAssignee = TenderSupplierAssignee::insert($data);
-        }
-        if ($insertSupplierAssignee) {
-            return $this->sendResponse([], 'New supplier(s) added');
-        } else {
-            return $this->sendError('Insertion faild', 422);
+        } catch (\Exception $exception) {
+            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
         }
     }
     public function getSupplierAssignedList(Request $request)
     {
-        $input = $request->all();
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-        $companyId = $input['companyId'];
-        $tenderMasterId =  $input['tenderMasterId'];
-        $qry = TenderSupplierAssignee::with(['supplierAssigned'])
-            ->where('company_id', $companyId)
-            ->where('tender_master_id', $tenderMasterId);
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $qry = $qry->where(function ($query) use ($search) {
-                $query->where('supplier_name', 'LIKE', "%{$search}%");
-                $query->orWhere('supplier_email', 'LIKE', "%{$search}%");
-                $query->orWhere('registration_number', 'LIKE', "%{$search}%");
-                $query->orWhereHas('supplierAssigned', function ($query1) use ($search) {
-                    $query1->where('primarySupplierCode', 'LIKE', "%{$search}%");
-                    $query1->orWhere('registrationNumber', 'LIKE', "%{$search}%");
-                    $query1->orWhere('supEmail', 'LIKE', "%{$search}%");
-                    $query1->orWhere('supplierName', 'LIKE', "%{$search}%");
-                });
-            });
-        }
-        return \DataTables::eloquent($qry)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
+        return $this->tenderMasterRepository->getSupplierAssignedList($request);
     }
 
     public function getSupplierCategoryList(Request $request)
@@ -2785,81 +2179,36 @@ ORDER BY
     }
     public function updateTenderStrategy(Request $request)
     {
-        $input = $this->convertArrayToSelectedValue($request->all(), array('tender_type_id', 'envelop_type_id', 'evaluation_type_id', 'stage'));
-        $resValidate = $this->validateTenderStrategy($input);
-        if (!$resValidate['status']) {
-            return $this->sendError($resValidate['message'], 422);
-        }
-        $commercialWeightage = $input['commercial_weightage'];
-        $technicalWeightage = $input['technical_weightage'];
-
-        $total = ((int)$commercialWeightage + (int)$technicalWeightage);
-        $employee = \Helper::getEmployeeInfo();
-        if ($total != 100) {
-            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
-        }
-
-        if (!isset($input['rfx'])) {
-            if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
-                return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
-            }
-
-            if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
-                return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
-            }
-        }
-
-
-        $tenderMaster = TenderMaster::find($input['id']);
-        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id', $input['id'])->count();
-
-        if (($input['min_approval_bid_opening'] != 0)) {
-            if ($tenderbidEmployee < $input['min_approval_bid_opening']) {
-                return ['status' => false, 'message' => "Atleast " . $input['min_approval_bid_opening'] . " employee should selected"];
-            }
-        }
-
-
-        DB::beginTransaction();
         try {
-            $tenderMaster = TenderMaster::find($input['id']);
-            $data['tender_type_id'] = $input['tender_type_id'];
-            $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
-            $data['evaluation_type_id'] = $input['evaluation_type_id'];
-            $data['stage'] = $input['stage'];
-            $data['no_of_alternative_solutions'] = $input['no_of_alternative_solutions'];
-            $data['commercial_weightage'] = $input['commercial_weightage'];
-            $data['technical_weightage'] = $input['technical_weightage'];
-            $data['is_active_go_no_go'] = isset($input['is_active_go_no_go']) ? $input['is_active_go_no_go'] : 0;
-            $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
-            $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
-            $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
-            $tenderMaster->update($data);
-            if ($tenderMaster) {
-                if (isset($input['document_types'])) {
-                    if (count($input['document_types']) > 0) {
-                        TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                        foreach ($input['document_types'] as $vl) {
-                            $docTypeAssign['tender_id'] = $input['id'];
-                            $docTypeAssign['document_type_id'] = $vl['id'];
-                            $docTypeAssign['company_id'] = $input['company_id'];
-                            $docTypeAssign['created_by'] = $employee->employeeSystemID;
-                            TenderDocumentTypeAssign::create($docTypeAssign);
-                        }
-                    } else {
-                        TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                    }
+            $input = $this->convertArrayToSelectedValue($request->all(), array('tender_type_id', 'envelop_type_id', 'evaluation_type_id', 'stage'));
+            $resValidate = $this->validateTenderStrategy($input);
+            if (!$resValidate['status']) {
+                return $this->sendError($resValidate['message'], 422);
+            }
+            $commercialWeightage = $input['commercial_weightage'];
+            $technicalWeightage = $input['technical_weightage'];
+
+            $total = ((int)$commercialWeightage + (int)$technicalWeightage);
+            $employee = \Helper::getEmployeeInfo();
+            if ($total != 100) {
+                return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
+            }
+
+            if (!isset($input['rfx'])) {
+                if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
+                    return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+                }
+
+                if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
+                    return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
                 }
             }
 
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated'];
+            return $this->tenderMasterRepository->updateTenderStrategy($input);
+
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
-        return ['success' => true, 'message' => 'Successfully updated'];
     }
 
     public function validateTenderStrategy($input)
@@ -2908,49 +2257,9 @@ ORDER BY
 
     public function removeCalenderDate(Request $request)
     {
-        DB::beginTransaction();
         try {
-            $calenderDateTypeId = $request['calenderDateTypeId'];
-            if(isset($request['is_default']) && $request['is_default'] != 0){
-                $calendarDates = CalendarDates::select('id')->where('is_default', $request['is_default'])->first();
-                $calenderDateTypeId = $calendarDates->id;
-                $tenderMaster = TenderMaster::find($request['tenderMasterId']);
-
-                if($request['is_default'] == 1){
-                    $tenderMaster->pre_bid_clarification_start_date = null;
-                    $tenderMaster->pre_bid_clarification_end_date = null;
-                    $tenderMaster->save();
-                }
-
-                if($request['is_default'] == 2){
-                    $tenderMaster->site_visit_date = null;
-                    $tenderMaster->site_visit_end_date = null;
-                    $tenderMaster->save();
-                }
-            }
-
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $calenderDateTypeId)
-                ->where('tender_id', $request['tenderMasterId'])
-                ->get();
-
-            if (empty($calendarDatesDetail)) {
-                return $this->sendError('Calendar Date Type not found');
-            }
-
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $calenderDateTypeId)
-                ->where('tender_id', $request['tenderMasterId'])
-                ->first();
-
-            if(isset($calendarDatesDetail->id)){
-                $result = CalendarDatesDetail::find($calendarDatesDetail->id);
-                $result->delete();
-            }
-
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
+            return $this->tenderMasterRepository->removeCalendarDates($request);
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
     }
@@ -5091,25 +4400,6 @@ ORDER BY
             ->make(true);
     }
 
-    public function deleteProcumentActivity($id, $company_id)
-    {
-
-        DB::beginTransaction();
-        try {
-            $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
-
-            foreach ($proActivity as $val) {
-                $procument = ProcumentActivity::find($val->id);
-                $procument->delete();
-            }
-
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully Deleted'];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
-    }
-
     public function startTenderNegotiation(Request $request) {
 
         DB::beginTransaction();
@@ -5215,25 +4505,6 @@ ORDER BY
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-    }
-
-    public function deleteCalenderDetails($id, $company_id)
-    {
-
-        DB::beginTransaction();
-        try {
-            $details = CalendarDatesDetail::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
-
-            foreach ($details as $val) {
-                $calender = CalendarDatesDetail::find($val->id);
-                $calender->delete();
-            }
-
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully Deleted'];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
     }
 
     public function getTenderFilterData(Request $request){
@@ -5813,20 +5084,8 @@ ORDER BY
 
     public function getBudgetItemTotalAmount(Request $request){
         $input = $request->all();
-        $tenderMasterId = $input['tenderMasterId'];
-        $companySystemID = $input['companySystemID'];
-        // Get the budget amount for each item in the idList
-        return collect($input['idList'])->map(function($itemId) use ($tenderMasterId, $companySystemID) {
-            $existingItem = SrmTenderBudgetItem::where('item_id', $itemId)->where('tender_id', $tenderMasterId)->first();
-            if ($existingItem) {
-                return $existingItem->budget_amount;
-            } else {
-                $budgetItem = SrmBudgetItem::where('id', $itemId)
-                    ->where('company_id', $companySystemID)
-                    ->first();
-                return $budgetItem ? $budgetItem->budget_amount : 0;
-            }
-        })->sum();
+        $record = $this->tenderMasterRepository->getBudgetItemTotalAmount($input);
+        return $this->sendResponse($record, 'Budget item amount retrieved successfully');
     }
 
 

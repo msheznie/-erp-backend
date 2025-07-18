@@ -112,14 +112,15 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
 {
 
     public $table = 'srm_tender_bid_employee_details_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected  $primaryKey = 'amd_id';
 
 
     public $fillable = [
+        'id',
         'commercial_eval_remarks',
         'commercial_eval_status',
         'emp_id',
@@ -131,6 +132,8 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
         'tender_edit_version_id',
         'tender_id',
         'updated_by',
+        'level_no',
+        'is_deleted',
     ];
 
     /**
@@ -139,6 +142,7 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'commercial_eval_remarks' => 'string',
         'commercial_eval_status' => 'boolean',
         'emp_id' => 'integer',
@@ -149,7 +153,9 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
         'tender_award_commite_mem_comment' => 'string',
         'tender_award_commite_mem_status' => 'boolean',
         'tender_edit_version_id' => 'integer',
-        'tender_id' => 'integer'
+        'tender_id' => 'integer',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**
@@ -158,10 +164,41 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
      * @var array
      */
     public static $rules = [
-        'commercial_eval_status' => 'required',
-        'status' => 'required',
-        'tender_award_commite_mem_status' => 'required'
+
     ];
 
-    
+    public function employee()
+    {
+        return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'emp_id');
+    }
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+
+    public static function getTenderBidEmployeesAmd($tenderID, $versionID){
+        return self::where('tender_id', $tenderID)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->get();
+    }
+    public static function getAmendRecords($versionID, $tenderMasterID, $onlyNullRecord){
+        return self::where('tender_edit_version_id', $versionID)
+            ->where('tender_id', $tenderMasterID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecord, function ($q) {
+                $q->whereNull('id');
+            })
+            ->when(!$onlyNullRecord, function ($q) {
+                $q->whereNotNull('id');
+            })
+            ->get();
+    }
+
+    public static function getTenderBidEmployees($tender_id, $versionID){
+        return self::where('tender_id', $tender_id)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->with('employee')->get();
+    }
+
 }

@@ -3,7 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\PricingScheduleDetailEditLog;
+use Illuminate\Contracts\Foundation\Application;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\PricingScheduleDetailRepository;
 
 /**
  * Class PricingScheduleDetailEditLogRepository
@@ -39,11 +41,61 @@ class PricingScheduleDetailEditLogRepository extends BaseRepository
         'updated_by'
     ];
 
+    protected  $pricingScheduleDetailRepository;
+    public function __construct(PricingScheduleDetailRepository $pricingScheduleDetailRepository, Application $app)
+    {
+        parent::__construct($app);
+        $this->pricingScheduleDetailRepository = $pricingScheduleDetailRepository;
+    }
+    public function getFieldsSearchable()
+    {
+        return $this->fieldSearchable;
+    }
+
     /**
      * Configure the Model
      **/
     public function model()
     {
         return PricingScheduleDetailEditLog::class;
+    }
+    public function saveInitialRecord($tenderID){
+        try{
+            $scheduleDetailData = $this->pricingScheduleDetailRepository->getPricingScheduleDetailForAmd($tenderID);
+            if(!empty($scheduleDetailData)){
+                foreach($scheduleDetailData as $record){
+                    $levelNo = $this->model->getLevelNo($record['id']);
+                    $recordData = $record->toArray();
+                    $recordData['level_no'] = $levelNo;
+                    $recordData['id'] = $record['id'];
+                    $recordData['tender_edit_version_id'] = null;
+                    $recordData['modify_type'] = null;
+                    $this->model->create($recordData);
+                }
+            }
+            return ['success' => false, 'message' => 'Success'];
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
+    }
+
+    public function save($tenderID, $version_id){
+        try{
+            $scheduleDetailData = $this->pricingScheduleDetailRepository->getPricingScheduleDetailForAmd($tenderID);
+            if(!empty($scheduleDetailData)){
+                foreach($scheduleDetailData as $record){
+                    $levelNo = $this->model->getLevelNo($record['id']);
+                    $recordData = $record->toArray();
+                    $recordData['level_no'] = $levelNo;
+                    $recordData['id'] = $record['id'];
+                    $recordData['tender_edit_version_id'] = $version_id;
+                    $recordData['modify_type'] = null;
+                    $this->model->create($recordData);
+                }
+            }
+            return ['success' => false, 'message' => 'Success'];
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 }

@@ -182,4 +182,8 @@ class BidSubmissionMaster extends Model
             'supplier_registration_id' =>$supplierId
         ])->first();
     }
+
+    public static function checkTenderBidSubmitted($tender_id){
+        return self::where('tender_id', $tender_id)->exists();
+    }
 }

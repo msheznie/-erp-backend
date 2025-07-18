@@ -60,4 +60,14 @@ class TenderProcurementCategory extends Model
     {
         return $this->hasMany('App\Models\ProcumentActivity', 'category_id', 'id');
     }
+    public static function getTenderProcurementCatDrop($procurementCatID){
+        return self::where('id', $procurementCatID)->first();
+    }
+    public static function getAllProcurementCategory(){
+        return self::where('level', 0)->where('is_active', 1)->get();
+    }
+
+    public static function getTenderProcurementCat($procurementCatId){
+        return self::where('parent_id', $procurementCatId)->where('is_active', 1)->get();
+    }
 }

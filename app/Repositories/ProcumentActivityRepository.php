@@ -33,4 +33,8 @@ class ProcumentActivityRepository extends BaseRepository
     {
         return ProcumentActivity::class;
     }
+
+    public function getProcumentActivityForAmd($tender_id){
+        return $this->model->getProcumentActivityForAmd($tender_id);
+    }
 }

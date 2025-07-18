@@ -179,14 +179,14 @@ class PricingScheduleDetailEditLog extends Model
 {
 
     public $table = 'srm_pricing_schedule_detail_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $primaryKey = 'amd_id';
 
     public $fillable = [
+        'id',
         'bid_format_detail_id',
         'bid_format_id',
         'boq_applicable',
@@ -206,6 +206,9 @@ class PricingScheduleDetailEditLog extends Model
         'updated_by',
         'master_id',
         'ref_log_id',
+        'level_no',
+        'is_deleted',
+        'amd_pricing_schedule_master_id'
     ];
 
     /**
@@ -214,6 +217,7 @@ class PricingScheduleDetailEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'bid_format_detail_id' => 'integer',
         'bid_format_id' => 'integer',
         'boq_applicable' => 'integer',
@@ -231,7 +235,10 @@ class PricingScheduleDetailEditLog extends Model
         'tender_edit_version_id' => 'integer',
         'tender_id' => 'integer',
         'tender_ranking_line_item' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer',
+        'amd_pricing_schedule_master_id' => 'integer'
     ];
 
     /**
@@ -240,8 +247,66 @@ class PricingScheduleDetailEditLog extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function tender_boq_items(){
+        return $this->hasMany('App\Models\TenderBoqItemsEditLog', 'amd_main_work_id', 'amd_id');
+    }
+
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+
+    public static function getPricingScheduleDetails($tender_id, $schedule_id, $companyId, $versionID){
+        return self::with(['tender_boq_items' => function ($q) {
+            $q->where('is_deleted', 0);
+        }])
+            ->where('tender_id', $tender_id)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('amd_pricing_schedule_master_id', $schedule_id)
+            ->where('company_id', $companyId)
+            ->where(function($query){
+                $query->where('boq_applicable',true);
+                $query->orWhere('is_disabled',false);
+            })->where('field_type','!=',4);
+    }
+    public static function getTenderPricingSchedule($tenderID, $scheduleID, $versionID){
+        return self::where('tender_id', $tenderID)->where('amd_pricing_schedule_master_id', $scheduleID)->where('is_disabled', true)
+            ->where('tender_edit_version_id', $versionID)->where('is_deleted', 0);
+    }
+    public static function getPricingScheduleMainWork($tenderMasterID, $scheduleID, $versionID, $type = ''){
+        $rec = self::with(['tender_boq_items' => function ($q) {
+            $q->where('is_deleted', 0);
+        }])
+            ->where('tender_id', $tenderMasterID)
+            ->where('deleted_at', null)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('boq_applicable', true)
+            ->where('amd_pricing_schedule_master_id', $scheduleID);
+        if($type == 'get'){
+            return $rec->get();
+        }
+        return $rec;
+    }
+
+    public static function getPricingScheduleDetailAmdRecords($scheduleID, $versionID, $onlyNullRecords, $tenderID)
+    {
+        return self::where('tender_id', $tenderID)
+            ->where('is_deleted', 0)
+            ->where('tender_edit_version_id', $versionID)
+            ->where('amd_pricing_schedule_master_id', $scheduleID)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })->get();
+
+    }
+    public static function getPricingScheduleByID($id){
+        return self::where('amd_id', $id)
+            ->select('id','tender_id','pricing_schedule_master_id', 'amd_pricing_schedule_master_id')
+            ->first();
+    }
 }

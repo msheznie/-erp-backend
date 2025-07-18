@@ -421,8 +421,8 @@ class SlotMasterAPIController extends AppBaseController
             ->where('id', $slotMasterID)->first();
 
 
-        $dateFrom = Carbon::parse($slotMaster['from_date']);
-        $dateTo =  Carbon::parse($slotMaster['to_date']);
+        $dateFrom = Carbon::parse($slotMaster['from_date'] ?? null);
+        $dateTo = Carbon::parse($slotMaster['to_date'] ?? null);
         $begin =  new DateTime($dateFrom->format('Y-m-d'));
         $end = clone $begin;
         $end->modify($dateTo->format('Y-m-d'));

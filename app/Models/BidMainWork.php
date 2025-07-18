@@ -155,7 +155,10 @@ class BidMainWork extends Model
     {
         $duplicateIds = BidMainWork::where('tender_id', $tenderId)
             ->where('bid_master_id', $bidMasterId)
-            ->whereNull('qty')
+            ->where(function ($query) {
+                $query->whereNull('qty')
+                    ->orWhereNull('amount');
+            })
             ->whereIn('bid_format_detail_id', function ($query) {
                 $query->select('bid_format_detail_id')
                     ->from('srm_bid_main_work')

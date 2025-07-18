@@ -120,5 +120,16 @@ class TenderBidFormatDetail extends Model
         return $this->hasOne('App\Models\TenderFieldType', 'id', 'field_type');
     }
 
-    
+    public static function checkTenderBidFormatFormulaExists($price_bid_format_id, $field_type, $finalTotalYn){
+        return self::where('tender_id', $price_bid_format_id)
+            ->where('field_type',$field_type)
+            ->where('finalTotalYn', $finalTotalYn)
+            ->where('formula_string',"")
+            ->count();
+    }
+    public static function getPricingBidFormatDetails($price_bid_format_id){
+        return self::where('tender_id', $price_bid_format_id)
+            ->select('id','field_type','tender_id','label','is_disabled','boq_applicable','formula_string')
+            ->get();
+    }
 }

@@ -109,5 +109,12 @@ class EvaluationCriteriaScoreConfig extends Model
             ->get();
     }
 
-
+    public static function getEvalScoreForAmend($criteriaDetailID)
+    {
+        return self::select('id', 'criteria_detail_id', 'fromTender', 'label', 'score', 'created_at', 'created_by',
+        'updated_at', 'updated_by')->where('criteria_detail_id', $criteriaDetailID)->get();
+    }
+    public static function getCriteriaBaseScore($criteriaID){
+        return self::where('criteria_detail_id', $criteriaID)->first();
+    }
 }

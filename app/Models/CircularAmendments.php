@@ -53,4 +53,23 @@ class CircularAmendments extends Model
         return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'amendment_id');
     }
 
+    public static function getCircularAmendmentForAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
+    public static function getCircularAmendmentByID($circularID){
+        return self::select('amendment_id')->where('circular_id', $circularID)->get()->toArray();
+    }
+    public static function getAmendmentAttachment($amendmentID, $circularID, $tenderMasterId)
+    {
+        return self::where('amendment_id', $amendmentID)
+            ->where('tender_id', $tenderMasterId)
+            ->where('circular_id', $circularID)
+            ->first();
+    }
+    public static function getAllCircularAmendments($circularID){
+        return self::where('circular_id', $circularID)->get();
+    }
+    public static function checkAmendmentIsUsedInCircular($amendmentID, $tenderMasterId){
+        return self::where('amendment_id',  $amendmentID)->where('tender_id', $tenderMasterId)->count();
+    }
 }

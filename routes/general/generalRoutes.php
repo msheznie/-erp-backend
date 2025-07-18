@@ -93,4 +93,7 @@ Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit l
 
 Route::get('getSearchCustomers', 'CustomerMasterAPIController@getSearchCustomers')->name("Get Search Customers");
 Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");
+Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");
+
+Route::resource('document_attachment_edit_log', 'DocumentAttachmentsEditLogAPIController');
 

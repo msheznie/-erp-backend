@@ -50,7 +50,7 @@ class ProcumentActivity extends Model
 {
 
     public $table = 'srm_procument_activity';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'created_at';
 
@@ -83,7 +83,7 @@ class ProcumentActivity extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function tender_procurement_category()
@@ -96,6 +96,18 @@ class ProcumentActivity extends Model
         return $this->hasOne('App\Models\TenderMaster', 'id', 'tender_id');
     }
 
+    public static function getProcumentActivityForAmd($tender_id){
+        return self::where('tender_id', $tender_id)->get();
+    }
 
-    
+    public static function getTenderProcurements($tenderMasterId, $companySystemID){
+        return self::with([
+            'tender_procurement_category'
+        ])
+            ->where('tender_id', $tenderMasterId)
+            ->where('company_id', $companySystemID)
+            ->get();
+    }
+
+
 }

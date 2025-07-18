@@ -31,6 +31,7 @@ class SrmTenderBidEmployeeDetails extends Model
      */
     protected $casts = [
         'emp_id' => 'integer',
+        'id' => 'integer',
         'tender_id' => 'integer',
         'status' => 'integer',
         'created_at' => 'date',
@@ -57,8 +58,16 @@ class SrmTenderBidEmployeeDetails extends Model
     }
 
     public static function getTenderBidEmployees($tenderID){
-        return SrmTenderBidEmployeeDetails::select('id')
-            ->where('tender_id', $tenderID)
-            ->get();
+        return SrmTenderBidEmployeeDetails::where('tender_id', $tenderID)->get();
     }
+
+    public static function getTenderBidEmployeesEdit($tender_id){
+        return self::where('tender_id', $tender_id)
+            ->with('employee')->get();
+    }
+
+    public static function getTenderBidEmployee($tenderID, $empID){
+        return self::where('tender_id', $tenderID)->where('emp_id', $empID)->first();
+    }
+
 }

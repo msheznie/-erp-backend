@@ -86,4 +86,12 @@ class SupplierRegistrationLink extends Model
 
         return '';
     }
+
+    public static function getSupplierMasterId($supplierId, $companySystemId)
+    {
+        return SupplierRegistrationLink::select('supplier_master_id')
+            ->where('id', $supplierId)
+            ->where('company_id', $companySystemId)
+            ->first();
+    }
 }

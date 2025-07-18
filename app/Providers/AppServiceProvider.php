@@ -77,19 +77,19 @@ class AppServiceProvider extends ServiceProvider
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);
         AssetDisposalMaster::observe(DisposalObserver::class);
-        TenderMaster::observe(TenderObserver::class);
-        SrmTenderBidEmployeeDetails::observe(TenderBidEmployeeObserver::class);
-        PricingScheduleMaster::observe(PricingScheduleMasterObserver::class);
-        ScheduleBidFormatDetails::observe(ScheduleBidFormatDetailsObserver::class);
-        PricingScheduleDetail::observe(PricingScheduleDetailObserver::class);
-        TenderBoqItems::observe(TenderBoqItemsObserver::class);
-        EvaluationCriteriaDetails::observe(EvaluationCriteriaDetailsObserver::class);
-        DocumentAttachments::observe(DocumentAttachmentsObserver::class);
-        TenderCirculars::observe(TenderCircularsObserver::class);
-        CircularAmendments::observe(CircularAmendmentsObserver::class);
-        CalendarDatesDetail::observe(CalendarDatesDetailObserver::class);
-        ProcumentActivity::observe(ProcumentActivityObserver::class);
-        TenderDocumentTypeAssign::observe(TenderDocumentTypeObserver::class);
+        //TenderMaster::observe(TenderObserver::class);
+        //SrmTenderBidEmployeeDetails::observe(TenderBidEmployeeObserver::class);
+        //PricingScheduleMaster::observe(PricingScheduleMasterObserver::class);
+        //ScheduleBidFormatDetails::observe(ScheduleBidFormatDetailsObserver::class);
+        //PricingScheduleDetail::observe(PricingScheduleDetailObserver::class);
+        //TenderBoqItems::observe(TenderBoqItemsObserver::class);
+        //EvaluationCriteriaDetails::observe(EvaluationCriteriaDetailsObserver::class);
+        //DocumentAttachments::observe(DocumentAttachmentsObserver::class);
+        //TenderCirculars::observe(TenderCircularsObserver::class);
+        //CircularAmendments::observe(CircularAmendmentsObserver::class);
+        //CalendarDatesDetail::observe(CalendarDatesDetailObserver::class);
+        //ProcumentActivity::observe(ProcumentActivityObserver::class);
+        //TenderDocumentTypeAssign::observe(TenderDocumentTypeObserver::class);
 
         Validator::extend('greater_than_field', function($attribute, $value, $parameters, $validator) {
             $min_field = $parameters[0];

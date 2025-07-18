@@ -185,23 +185,26 @@ class DocumentAttachmentsEditLog extends Model
 {
 
     public $table = 'erp_documentattachments_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $primaryKey = 'amd_id';
 
     public $fillable = [
+        'id',
         'approvalLevelOrder',
         'attachmentDescription',
         'attachmentType',
         'companySystemID',
+        'companyID',
         'docExpirtyDate',
         'documentID',
         'documentSystemCode',
         'documentSystemID',
         'envelopType',
+        'order_number',
+        'isAutoCreateDocument',
         'isUploaded',
         'master_id',
         'modify_type',
@@ -213,7 +216,9 @@ class DocumentAttachmentsEditLog extends Model
         'ref_log_id',
         'sizeInKbs',
         'version_id',
-        'updated_by'
+        'updated_by',
+        'level_no',
+        'is_deleted'
     ];
 
     /**
@@ -222,15 +227,17 @@ class DocumentAttachmentsEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'approvalLevelOrder' => 'integer',
         'attachmentDescription' => 'string',
         'attachmentType' => 'integer',
         'companySystemID' => 'integer',
+        'companyID' => 'string',
         'docExpirtyDate' => 'date',
         'documentID' => 'string',
         'documentSystemCode' => 'integer',
         'documentSystemID' => 'integer',
-        'envelopType' => 'integer',
+        'envelopType' => 'string',
         'id' => 'integer',
         'isUploaded' => 'integer',
         'master_id' => 'integer',
@@ -241,7 +248,11 @@ class DocumentAttachmentsEditLog extends Model
         'path' => 'string',
         'pullFromAnotherDocument' => 'integer',
         'ref_log_id' => 'integer',
-        'sizeInKbs' => 'float'
+        'sizeInKbs' => 'float',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer',
+        'version_id' => 'integer',
+        'isAutoCreateDocument' => 'integer'
     ];
 
     /**
@@ -250,8 +261,77 @@ class DocumentAttachmentsEditLog extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public static function getLevelNo($attachmentID){
+        return max(1, (self::where('id', $attachmentID)->max('level_no') ?? 0) + 1);
+    }
+
+    public static function getDocumentAttachmentEditLog($documentSystemID, $documentSystemCode, $versionID){
+        return self::where('documentSystemID', $documentSystemID)
+            ->where('documentSystemCode', $documentSystemCode)
+            ->where('version_id', $versionID)
+            ->where('is_deleted', 0)->get();
+    }
+
+    public static function checkDocumentExists($companySystemID, $documentSystemID, $attachmentType, $documentSystemCode, $attachmentDescription, $versionID, $id, $masterID = 0){
+        return self::where('companySystemID',$companySystemID)
+            ->when($id > 0, function ($q) use ($id) {
+                $q->where('amd_id', '!=', $id);
+            })
+            ->when($masterID > 0, function ($q) use ($masterID) {
+                $q->where('id', '!=', $masterID);
+            })
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->where('attachmentDescription',$attachmentDescription)
+            ->where('version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('attachmentDescription',$attachmentDescription)
+            ->exists();
+    }
+
+    public static function getAttachmentDocumentTypeBase($companySystemID, $documentSystemID,$attachmentType, $documentSystemCode, $versionID){
+        return self::where('companySystemID',$companySystemID)
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->where('version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->orderBy('amd_id', 'asc')
+            ->get();
+    }
+
+    public static function getAmendRecords($versionID, $tenderMasterID, $documentSystemID, $onlyNullRecords){
+        return self::where('version_id', $versionID)
+            ->where('documentSystemID', $documentSystemID)
+            ->where('documentSystemCode', $tenderMasterID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })
+            ->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })->get();
+    }
+    public static function getAttachmentForCirculars($attachmentArray, $documentSystemID, $tenderMasterId, $versionID)
+    {
+        return self::whereNotIn('amd_id', $attachmentArray)
+            ->where('documentSystemID', $documentSystemID)
+            ->where('version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('attachmentType',3)
+            ->where('parent_id', null)
+            ->where('documentSystemCode', $tenderMasterId)->orderBy('amd_id', 'asc')->get()->toArray();
+    }
+    public static function getNotUsedAttachmentForCirculars($circularAttachmentIDs, $versionID){
+        return self::whereIn('amd_id', $circularAttachmentIDs)->where('version_id', $versionID)
+            ->where('is_deleted', 0)->get();
+    }
+    public static function getLatestAttachmentAmdID($attachmentID){
+        return self::where('id', $attachmentID)->orderBy('amd_id', 'desc')->first();
+    }
+
 }

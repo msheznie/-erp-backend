@@ -5,6 +5,7 @@ namespace App\Services;
 use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\API\DocumentAttachmentsAPIController;
+use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
@@ -534,6 +535,7 @@ class SRMService
     {
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
+        $companyId = $request->input('extra.slotCompanyId');
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $appointment = Appointment::select('id')
@@ -569,6 +571,7 @@ class SRMService
             ->where('created_by', $supplierID)
             ->get();
         $arr['data'] = $data;
+        $arr['attachmentPolicyEnabled'] = Helper::checkPolicy($companyId, 104);
         return [
             'success' => true,
             'message' => 'Calander appointment deliveries get',
@@ -1139,6 +1142,7 @@ class SRMService
                             $q->whereHas('appointment', function ($q) use ($appointmentID) {
                                 $q->where('refferedBackYN', '!=', -1);
                                 $q->where('cancelYN', 0);
+                                $q->where('grv_create_yn', 0);
                                 if (isset($appointmentID)) {
                                     $q->where('id', '!=', $appointmentID);
                                 }
@@ -1200,6 +1204,7 @@ class SRMService
                 $q->whereHas('appointment', function ($q) use ($appointmentID) {
                     $q->where('refferedBackYN', '!=', -1);
                     $q->where('cancelYN', 0);
+                    $q->where('grv_create_yn', 0);
                     if (isset($appointmentID)) {
                         $q->where('id', '!=', $appointmentID);
                     }
@@ -4255,7 +4260,6 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $deleteNullBidMainWorks = BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
         BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId,[$bidMasterId]);
 
         $validator = Validator::make($detail, [
@@ -4293,6 +4297,7 @@ class SRMService
                     $att['updated_at'] = Carbon::now();
                     $att['updated_by'] = $supplierRegId;
                     $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->update($att);
+                    BidMainWork::deleteNullBidMainWorkRecords($tenderId,$bidMasterId);
                 }
             } else {
                 $att['created_at'] = Carbon::now();
@@ -5537,11 +5542,82 @@ class SRMService
         ];
     }
 
+    public function validateInvoiceAttachment(Request $request)
+    {
+        $maxFileSize = 2 * 1024 * 1024;
+        $allowedExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+        $attachment = $request->input('extra.attachments') ?? null;
+
+        $extension = strtolower($attachment['fileType'] ?? '');
+        $fileSize = $attachment['sizeInKbs'] ?? 0;
+
+        if (!in_array($extension, $allowedExtensions)) {
+            return [
+                'success' => false,
+                'message' => 'This file type is not allowed to upload.',
+                'data' => []
+            ];
+        }
+
+        if ($fileSize > $maxFileSize) {
+            return [
+                'success' => false,
+                'message' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
+                'data' => []
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Invoice attachment validation successfully',
+            'data' => []
+        ];
+    }
+
     public function createInvoice(Request $request)
     {
 
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
+        $data['attachmentsList'] = $request->input('extra.attachments');
+
+        $maxFileSize = 2 * 1024 * 1024;
+        $allowedExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+        $attachments = $data['attachmentsList'] ?? [];
+
+        $attachmentPolicyEnabled = Helper::checkPolicy($data['companySystemID'], 104);
+        if (!$attachmentPolicyEnabled && empty($attachments)) {
+            return [
+                'success' => false,
+                'message' => 'At least one document attachment should be mandatory',
+                'data' => []
+            ];
+        }
+
+        foreach ($attachments as $attachment) {
+            if (empty($attachment['file'] ?? null)) {
+                continue;
+            }
+
+            $extension = strtolower($attachment['fileType'] ?? '');
+            $fileSize = $attachment['size'] ?? 0;
+
+            if (!in_array($extension, $allowedExtensions)) {
+                return [
+                    'success' => false,
+                    'message' => 'This file type is not allowed to upload.',
+                    'data' => []
+                ];
+            }
+
+            if ($fileSize > $maxFileSize) {
+                return [
+                    'success' => false,
+                    'message' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
+                    'data' => []
+                ];
+            }
+        }
 
         $acc_d = DeliveryAppointmentInvoice::dispatch($data);
         return [

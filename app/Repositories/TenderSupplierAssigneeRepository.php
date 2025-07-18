@@ -2,8 +2,16 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderSupplierAssignee;
+use App\Models\TenderSupplierAssigneeEditLog;
+use Illuminate\Container\Container as Application;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Services\SrmDocumentModifyService;
+use mysql_xdevapi\Exception;
 
 /**
  * Class TenderSupplierAssigneeRepository
@@ -30,6 +38,12 @@ class TenderSupplierAssigneeRepository extends BaseRepository
         'updated_by',
         'mail_sent'
     ];
+    protected $srmDocumentModifyService;
+    public function __construct(Application $app, SrmDocumentModifyService $srmDocumentModifyService)
+    {
+        parent::__construct($app);
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
+    }
 
     /**
      * Configure the Model
@@ -40,23 +54,148 @@ class TenderSupplierAssigneeRepository extends BaseRepository
     }
 
     public function deleteAllAssignedSuppliers($input) {
-
-        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->where('mail_sent',0)->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])->delete(); 
-
-        if($data) 
-            return true;
-
-        return false;
+        try{
+            return DB::transaction(function () use ($input) {
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($input['tenderId']);
+                if($requestData['enableRequestChange']){
+                    TenderSupplierAssigneeEditLog::where('tender_master_id',$input['tenderId'])
+                        ->where('company_id',$input['companySystemId'])
+                        ->where('mail_sent',0)
+                        ->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])
+                        ->where('version_id', $requestData['versionID'])
+                        ->where('is_deleted', 0)
+                        ->update(['is_deleted' => 1]);
+                } else {
+                    TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])
+                        ->where('company_id',$input['companySystemId'])
+                        ->where('mail_sent',0)
+                        ->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])
+                        ->delete();
+                }
+                return ['success' => true, 'message' => 'Deleted successfully'];
+            });
+        } catch (\Exception $ex) {
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 
     
     public function deleteAllSelectedSuppliers($input) {
+        try{
+            return DB::transaction(function () use ($input) {
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($input['tenderId']);
+                if($requestData['enableRequestChange']){
+                    TenderSupplierAssigneeEditLog::where('tender_master_id', $input['tenderId'])
+                        ->where('company_id', $input['companySystemId'])
+                        ->where('version_id', $requestData['versionID'])
+                        ->where('is_deleted', 0)
+                        ->whereIn('amd_id', $input['deleteList'])
+                        ->update(['is_deleted' => 1, 'updated_at' => now()]);
+                } else {
+                    TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->whereIn('id',$input['deleteList'])->delete();
+                }
+                return ['success' => true, 'message' => 'Deleted successfully'];
+            });
+        } catch (\Exception $ex) {
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
+    }
+    public function supplierAssignCRUD($input)
+    {
+        try{
+            return DB::transaction(function () use ($input) {
+                $name = $input['name'];
+                $email = $input['email'];
+                $regNo = $input['regNo'];
+                $tenderId = $input['tenderId'];
+                $companySystemID = $input['companySystemID'];
+                $employee = Helper::getEmployeeInfo();
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderId);
+                $validateFields = $this->validateFileds($input);
 
-        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->whereIn('id',$input['deleteList'])->delete();
+                if(!$validateFields['status']){
+                    return ['success' => false, 'message' => $validateFields['message'], 'code' => $validateFields['code']];
+                }
 
-        if($data) 
-            return true;
+                $data = [
+                    'tender_master_id' => $tenderId,
+                    'supplier_name' => $name,
+                    'supplier_email' => $email,
+                    'registration_number' => $regNo,
+                    'created_by' => $employee->employeeSystemID,
+                    'company_id' => $companySystemID,
+                    'created_at' => now()
+                ];
+                if($requestData['enableRequestChange']){
+                    $data['id'] = null;
+                    $data['level_no'] = 0;
+                    $data['version_id'] = $requestData['versionID'];
 
-        return false;
+                    $result = TenderSupplierAssigneeEditLog::create($data);
+                } else {
+                    $result = TenderSupplierAssignee::create($data);
+                }
+                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+            });
+        } catch(\Exception $ex){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+        }
+    }
+    public function validateFileds($input){
+        $validator = \Validator::make($input, [
+            'email' => 'required|email|max:255',
+            'name' => 'required|max:255',
+            'regNo' => 'required|max:255',
+        ]);
+        if ($validator->fails()) {
+            return ['status' => false, 'message' => $validator->messages(), 'code' => 422];
+        }
+
+
+        $email = $input['email'];
+        $regNo = $input['regNo'];
+        $companyId =$input['companySystemID'];
+
+        $supplierRegLink = SupplierRegistrationLink::select('id','email','registration_number')
+            ->where('company_id',$companyId)
+            ->where('STATUS',1)
+            ->get();
+
+        $emails = $supplierRegLink->pluck('email')->toArray();
+        $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
+
+        if (in_array($email, $emails)) {
+            return ['status' => false, 'message' => 'Email already exists','code' => 402];
+        }
+
+        if (in_array($regNo, $registrationNumbers)) {
+            return ['status' => false, 'message' => 'Registration number already exists','code' => 402];
+        }
+
+
+        return ['status' => true, 'message' => 'success'];
+
+    }
+    public static function deleteAssignedUsers($id, $versionID, $editOrAmend){
+        try{
+            return DB::transaction(function () use ($id, $versionID, $editOrAmend) {
+                $supplier = $editOrAmend ?
+                    TenderSupplierAssigneeEditLog::find($id) :
+                    TenderSupplierAssignee::find($id);
+
+                if(empty($supplier)){
+                    return ['success' => false, 'message' => 'Assigned supplier not found'];
+                }
+
+                if($editOrAmend){
+                    TenderSupplierAssigneeEditLog::where('amd_id', $id)->where('version_id', $versionID)->update(['is_deleted' => 1, 'updated_at' => now()]);
+                } else {
+                    TenderSupplierAssignee::where('id', $id)->delete();
+                }
+                return ['success' => true, 'message' => 'Successfully deleted.'];
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => 'Unexpected Error: '. $ex->getMessage()];
+        }
     }
 }

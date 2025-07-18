@@ -751,4 +751,21 @@ class TenderMaster extends Model
     {
         return $this->belongsTo('App\Models\SRMTenderTechnicalEvaluationAttachment', 'id', 'tender_id');
     }
+
+    public static function getEditTenderMasterData($tender_id, $company_id, $isTender){
+        return TenderMaster::with([
+            'procument_activity',
+            'confirmed_by' => function ($q) {
+                $q->select('employeeSystemID', 'empName');
+            },
+            'approvedRejectStatus' => function($q) use ($company_id , $isTender){
+                $q->select('documentSystemCode','status')
+                    ->where('companySystemID', $company_id)
+                    ->where('documentSystemID', $isTender ? 108 : 113);
+                }
+             ])->where('id', $tender_id)->first();
+    }
+    public static function getTenderMasterData($tenderID){
+        return self::where('id', $tenderID)->first();
+    }
 }

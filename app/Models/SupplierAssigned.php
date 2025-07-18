@@ -249,4 +249,52 @@ class SupplierAssigned extends Model
     {
         return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplierCodeSytem','supplier_master_id');
     }
+    public function tenderSupplierAssignedLog(){
+        return $this->hasOne('App\Models\TenderSupplierAssigneeEditLog', 'supplier_assigned_id','supplierAssignedID');
+
+    }
+    public static function tenderAssignSuppliersForCreation($tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID){
+        $supplierAssigned = self::when(!$editOrAmend, function ($q) use ($tenderId){
+            $q->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
+                $query->where('tender_master_id', $tenderId);
+            });
+        })->when(!$editOrAmend, function ($q) use ($tenderId, $versionID) {
+            $q->whereDoesntHave('tenderSupplierAssignedLog', function ($query) use ($tenderId, $versionID) {
+                $query->where('tender_master_id', $tenderId)
+                    ->where('version_id', $versionID)
+                    ->where('is_deleted', 0);
+            });
+        })->whereNotIn('supplierAssignedID', $removedSuppliersId)
+            ->where('companySystemID', $companySystemId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->where('supEmail', '!=', null)
+            ->where('registrationNumber', '!=', null);
+        return collect($supplierAssigned->get())->pluck('supplierAssignedID')->toArray();
+    }
+    public static function getTenderAssignedSupplierQry($selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $editOrAmend, $versionID){
+        return self::with(['businessCategoryAssigned' => function ($query) use ($selectedCategoryIds) {
+            if (sizeof($selectedCategoryIds) != 0) {
+                $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+            }
+        }])->when(!$editOrAmend, function ($q) use ($tenderMasterId){
+            $q->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderMasterId) {
+                $query->where('tender_master_id', $tenderMasterId);
+            });
+        })->when($editOrAmend, function ($q) use ($tenderMasterId, $versionID) {
+            $q->whereDoesntHave('tenderSupplierAssignedLog', function ($query) use ($tenderMasterId, $versionID) {
+                $query->where('tender_master_id', $tenderMasterId)
+                    ->where('version_id', $versionID)
+                    ->where('is_deleted', 0);
+            });
+            $q->with([
+                'tenderSupplierAssignedLog'
+            ]);
+        })
+            ->where('companySystemID', $selectedCompanyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->where('supEmail', '!=', null)
+            ->where('registrationNumber', '!=', null);
+    }
 }

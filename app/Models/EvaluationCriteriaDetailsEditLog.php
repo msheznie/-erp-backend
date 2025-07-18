@@ -157,14 +157,15 @@ class EvaluationCriteriaDetailsEditLog extends Model
 {
 
     public $table = 'srm_evaluation_criteria_details_edit_log';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $primaryKey = 'amd_id';
+    protected $appends = ['active'];
 
     public $fillable = [
+        'id',
         'answer_type_id',
         'critera_type_id',
         'description',
@@ -181,7 +182,11 @@ class EvaluationCriteriaDetailsEditLog extends Model
         'tender_id',
         'weightage',
         'tender_version_id',
-        'updated_by'
+        'created_by',
+        'updated_by',
+        'level_no',
+        'is_deleted',
+        'evaluation_criteria_master_id'
     ];
 
     /**
@@ -190,6 +195,7 @@ class EvaluationCriteriaDetailsEditLog extends Model
      * @var array
      */
     protected $casts = [
+        'amd_id' => 'integer',
         'answer_type_id' => 'integer',
         'critera_type_id' => 'integer',
         'description' => 'string',
@@ -205,7 +211,11 @@ class EvaluationCriteriaDetailsEditLog extends Model
         'ref_log_id' => 'integer',
         'sort_order' => 'integer',
         'tender_id' => 'integer',
-        'weightage' => 'float'
+        'weightage' => 'float',
+        'level_no' => 'integer',
+        'is_deleted' => 'integer',
+        'evaluation_criteria_master_id' => 'integer'
+
     ];
 
     /**
@@ -214,10 +224,120 @@ class EvaluationCriteriaDetailsEditLog extends Model
      * @var array
      */
     public static $rules = [
-        'is_final_level' => 'required',
-        'level' => 'required',
-        'sort_order' => 'required'
-    ];
 
-    
+    ];
+    public function getActiveAttribute(){
+        return false;
+    }
+    public function evaluation_criteria_type()
+    {
+        return $this->belongsTo('App\Models\EvaluationCriteriaType', 'critera_type_id', 'id');
+    }
+
+    public function tender_criteria_answer_type()
+    {
+        return $this->belongsTo('App\Models\TenderCriteriaAnswerType', 'answer_type_id', 'id');
+    }
+
+    public function child()
+    {
+        return $this->hasMany('App\Models\EvaluationCriteriaDetailsEditLog', 'parent_id', 'amd_id');
+    }
+    public function evaluation_criteria_score_config()
+    {
+        return $this->hasMany('App\Models\EvacuationCriteriaScoreConfigLog', 'criteria_detail_id', 'amd_id');
+    }
+    public static function getLevelNo($id){
+        return max(1, (self::where('id', $id)->max('level_no') ?? 0) + 1);
+    }
+
+    public static function getEvaluationCriteriaDetailsLog($tenderId, $level, $criteriaType, $versionID){
+        return EvaluationCriteriaDetailsEditLog::where('tender_id', $tenderId)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->where('critera_type_id', $criteriaType)
+            ->where('level', $level);
+    }
+
+    public static function getEvaluationCriteriaDetailsList($tenderMasterID, $criteriaTypeID, $versionID){
+        return self::with(['evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q) use ($versionID){
+            $q->where('tender_version_id', $versionID)
+                ->where('is_deleted', 0);
+            $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q)use ($versionID){
+                $q->where('tender_version_id', $versionID)
+                    ->where('is_deleted', 0);
+                $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q)use ($versionID){
+                    $q->where('tender_version_id', $versionID)
+                        ->where('is_deleted', 0);
+                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                }]);
+            }]);
+        }])->where('tender_id', $tenderMasterID)
+            ->where('level', 1)
+            ->where('critera_type_id', $criteriaTypeID)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)->get();
+    }
+    public static function getSortOrder($tenderMasterId, $level, $parent_id, $versionID){
+        return self::where('tender_id', $tenderMasterId)
+            ->where('level', $level)
+            ->where('parent_id', $parent_id)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->orderBy('sort_order', 'desc')
+            ->first();
+    }
+    public static function checkForDescriptionDuplication($tenderMasterId, $description, $level, $versionID, $id = 0){
+        return self::where('tender_id', $tenderMasterId)
+            ->when($id . 0, function ($q) use ($id) {
+                $q->where('amd_id', '!=', $id);
+            })
+            ->where('description', $description)
+            ->where('level', $level)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->first();
+    }
+    public static function getEvaluationDetailById($evaluationID, $versionID){
+        return self::with(['evaluation_criteria_score_config' => function ($q) {
+            $q->where('fromTender', 1);
+        }])
+            ->where('amd_id', $evaluationID)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->first();
+    }
+    public static function getAmdID($parent_id){
+        return self::where('id', $parent_id)->orderBy('amd_id', 'desc')->first();
+    }
+    public static function getChildCriteria($parent_id){
+        return self::where('parent_id', $parent_id)->where('is_deleted', 0)->get();
+    }
+
+    public static function getAmendRecords($tenderID, $versionID, $onlyNullRecords){
+        return self::where('tender_id', $tenderID)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->when($onlyNullRecords, function ($q) {
+                $q->whereNull('id');
+            })->when(!$onlyNullRecords, function ($q) {
+                $q->whereNotNull('id');
+            })->get();
+    }
+    public static function calculateWeightage($tenderMasterId, $level, $versionID, $parentId = 0, $amd_id = 0){
+        return self::where('tender_id', $tenderMasterId)
+            ->when($amd_id > 0, function ($q) use ($amd_id) {
+                $q->where('amd_id', '!=', $amd_id);
+            })
+            ->where('level', $level)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)
+            ->when($level > 1, function ($q) use ($parentId) {
+                $q->where('parent_id',$parentId);
+            })
+            ->sum('weightage');
+    }
+    public static function getParentEvaluationCriteria($parentID){
+        return self::where('amd_id', $parentID)->first();
+    }
 }

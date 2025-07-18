@@ -39,4 +39,8 @@ class PricingScheduleDetailRepository extends BaseRepository
     {
         return PricingScheduleDetail::class;
     }
+
+    public function getPricingScheduleDetailForAmd($tender_id){
+        return $this->model->getPricingScheduleDetailForAmd($tender_id);
+    }
 }

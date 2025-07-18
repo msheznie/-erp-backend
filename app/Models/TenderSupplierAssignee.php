@@ -140,7 +140,7 @@ class TenderSupplierAssignee extends Model
     {
         return TenderSupplierAssignee::select('id', 'tender_master_id', 'company_id', 'supplier_assigned_id')
             ->with(['supplierAssigned' => function ($q) {
-                $q->select('supplierAssignedID', 'supplierCodeSytem');
+                $q->select('supplierAssignedID', 'supplierCodeSytem', 'supplierName');
                 $q->with([
                     'supplierRegistrationLink' => function ($q) {
                         $q->select(
@@ -153,5 +153,14 @@ class TenderSupplierAssignee extends Model
             ->where('company_id', $companySystemID)
             ->where('tender_master_id', $tenderMasterId)
             ->get();
+    }
+
+    public static function getTenderSupplierAssignForAmd($tenderMasterID){
+        return self::where('tender_master_id', $tenderMasterID)->get();
+    }
+    public static function getSupplierAssignedListQry($companyId, $tenderMasterId){
+        return self::with(['supplierAssigned'])
+            ->where('company_id', $companyId)
+            ->where('tender_master_id', $tenderMasterId);
     }
 }
