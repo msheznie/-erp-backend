@@ -99,6 +99,7 @@ use App\Models\CircularAmendments;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\helper\email;
 use App\Services\SrmDocumentModifyService;
+use App\Services\SrmTenderEditAmendService;
 
 /**
  * Class TenderMasterController
@@ -114,7 +115,8 @@ class TenderMasterAPIController extends AppBaseController
     private $tenderFinalBidsRepository;
     private $documentModifyRequestRepository;
     private $documentModifyService;
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService)
+    private $srmTenderEditAmendService;
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
@@ -122,6 +124,7 @@ class TenderMasterAPIController extends AppBaseController
         $this->tenderFinalBidsRepository = $tenderFinalBidsRepo;
         $this->documentModifyRequestRepository = $documentModifyRequestRepo;
         $this->documentModifyService = $documentModifyService;
+        $this->srmTenderEditAmendService = $srmTenderEditAmendService;
     }
 
     /**
@@ -1811,6 +1814,12 @@ class TenderMasterAPIController extends AppBaseController
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
+            if($request['documentSystemID'] == 118){
+                $deleteLogRecords = $this->srmTenderEditAmendService->rejectDocumentRequestChanges($request['id']);
+                if(!$deleteLogRecords['success']){
+                    return $this->sendError($deleteLogRecords["message"]);
+                }
+            }
             return $this->sendResponse(array(), $reject["message"]);
         }
     }

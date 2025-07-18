@@ -6681,15 +6681,21 @@ class SRMService
                 return $this->generateResponse(false, 'Tender data not found');
             }
             $tenderID = $tenderMaster->id;
+            $documentType = $tenderMaster->document_system_id == 108 ? 'tender' : 'RFX';
             $documentModifyRequest = DocumentModifyRequest::getTenderModifyRequest($tenderID);
 
             if(empty($documentModifyRequest)){
                 return $this->generateResponse(true, 'Continue purchasing');
             }
 
-            $hasValidTenderRequest = $documentModifyRequest->status == 1 && $documentModifyRequest->approved != 0 && $documentModifyRequest->confirmation_approved != -1;
+            $hasValidTenderRequest = $documentModifyRequest->status == 1 &&
+                $documentModifyRequest->approved != 0 &&
+                $documentModifyRequest->confirmation_approved != -1;
+
             if($hasValidTenderRequest){
-                return $this->generateResponse(false, 'The tender is under edit/amend by the company. Please wait until it is completed before purchasing the Tender/RFX.');
+                $requestType = $documentModifyRequest->type == 1 ? 'edit' : 'amend';
+                $message = "The {$documentType} is under {$requestType} by the company. Please wait until it is completed before purchasing the {$documentType}.";
+                return $this->generateResponse(false, $message);
             }
             return $this->generateResponse(true, 'Continue purchasing');
         } catch (\Exception $ex) {

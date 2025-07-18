@@ -28,6 +28,7 @@ use App\Models\TenderBudgetItemEditLog;
 use App\Models\TenderDepartmentEditLog;
 use App\Models\TenderDocumentTypeAssignLog;
 use App\Models\TenderDocumentTypes;
+use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderPurchaseRequestEditLog;
 use App\Models\TenderSupplierAssigneeEditLog;
@@ -35,6 +36,7 @@ use App\Models\TenderType;
 use App\Models\Unit;
 use App\Models\YesNoSelection;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SrmTenderEditAmendService
@@ -541,5 +543,45 @@ class SrmTenderEditAmendService
     }
     public static function pricingScheduleMasterStatus($status){
         return $status == 1 ? 'Completed' : 'Pending';
+    }
+    public function rejectDocumentRequestChanges($tenderID){
+        try {
+            $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
+            if(empty($tenderMaster)){
+                return ['success' => false, 'message' => 'Tender data not found.'];
+            }
+
+            $tenderMasterID = $tenderMaster->id;
+            $tenderHistory = SrmTenderMasterEditLog::tenderMasterHistory($tenderMasterID);
+            if(empty($tenderHistory)){
+                return ['success' => false, 'message' => 'Tender history data not found.'];
+            }
+            $versionID = $tenderHistory->version_id;
+            return DB::transaction(function () use ($tenderMasterID, $versionID) {
+                $sections = $this->sectionConfig();
+                $allSectionIDs = [
+                    '1', '1.1', '1.2', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '4', '5', '6',
+                    '6.1', '7'
+                ];
+
+                foreach ($sections as $section) {
+                    $model = $section['modelName'] ?? null;
+                    $sectionId = $section['sectionId'] ?? '';
+
+                    if ($model && class_exists($model) && in_array($sectionId, $allSectionIDs)) {
+                        $model::when(in_array($sectionId, ['1', '2', '1.2', '2.1', '2.2', '2.3', '2.4', '6', '6.1', '7']), function ($q) use ($versionID){
+                            $q->where('version_id', $versionID);
+                        })->when(in_array($sectionId, ['1.1', '3', '3.1', '3.2', '3.3']), function ($q) use ($versionID){
+                            $q->where('tender_edit_version_id', $versionID);
+                        })->when(in_array($sectionId, ['4', '5']), function ($q) use ($versionID){
+                            $q->where('tender_version_id', $versionID);
+                        })->where('is_deleted', 0)->update(['is_deleted' => 1]);
+                    }
+                }
+                return ['success' => true, 'message' => 'Deleted successfully.'];
+            });
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => 'Unexpected error: ' . $ex->getMessage()];
+        }
     }
 }
