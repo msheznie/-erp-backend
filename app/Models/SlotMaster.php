@@ -130,11 +130,7 @@ class SlotMaster extends Model
 
     public function getSlotData($tenantID, $formSrm = 0, $assignedWareHouseIds = [])
     {
-        if ($formSrm == 0 && empty($assignedWareHouseIds)) {
-            return [];
-        }
-
-        return SlotMaster::with([
+        $slots = SlotMaster::with([
             'slot_details' => function ($q) {
                 $q->with([
                     'appointment' => function ($q) {
@@ -146,12 +142,35 @@ class SlotMaster extends Model
                 $q->select('wareHouseSystemCode', 'wareHouseCode', 'wareHouseDescription', 'isActive');
             }
         ])
-            ->when($formSrm == 0, function ($q) use ($tenantID, $assignedWareHouseIds) {
-                $q->whereIn('company_id', $tenantID)
-                    ->whereIn('warehouse_id', $assignedWareHouseIds);
+            ->when($formSrm == 0, function ($query) use ($tenantID, $assignedWareHouseIds) {
+                $query->where(function ($q) use ($tenantID, $assignedWareHouseIds) {
+                    $q->whereIn('company_id', $tenantID)
+                        ->whereIn('warehouse_id', $assignedWareHouseIds);
+                })
+                    ->orWhere(function ($q) use ($tenantID, $assignedWareHouseIds) {
+                        $q->whereIn('company_id', $tenantID)
+                            ->whereNotIn('warehouse_id', $assignedWareHouseIds)
+                            ->whereHas('slot_details', function ($sub) {
+                                $sub->where('status', 1);
+                            });
+                    });
             })
             /*  ->where('warehouse_id', $wareHouseID) */
             ->get();
+
+
+        if ($formSrm == 0) {
+            return $slots->map(function ($slot) use ($assignedWareHouseIds) {
+                if (!in_array($slot->warehouse_id, $assignedWareHouseIds)) {
+                    $slot->slot_details = $slot->slot_details->filter(function ($detail) {
+                        return $detail->status == 1;
+                    })->values();
+                }
+                return $slot;
+            });
+        } else {
+            return $slots;
+        }
     }
     public function ware_house()
     {

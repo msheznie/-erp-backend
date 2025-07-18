@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSlotMasterAPIRequest;
 use App\Http\Requests\API\UpdateSlotMasterAPIRequest;
 use App\Models\Company;
 use App\Models\SlotMaster;
+use App\Models\WarehouseRights;
 use App\Repositories\SlotMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -383,9 +385,15 @@ class SlotMasterAPIController extends AppBaseController
 
         $slotMaster = SlotMaster::with(['slot_days' => function ($query) {
             $query->with(['week_days']);
+        }, 'ware_house' => function ($q) {
+            $q->select('wareHouseSystemCode', 'wareHouseCode', 'wareHouseDescription', 'isActive');
         }])
             ->where('id', $slotMasterID)->first();
 
+        $user = Helper::getEmployeeSystemID();
+        $subCompanies = $isGroupCompany ? $companyData : [$companyID];
+        $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
+        $hasAccess = in_array($slotMaster['warehouse_id'], $assignedWareHouseIds);
 
         $dateFrom = Carbon::parse($slotMaster['from_date'] ?? null);
         $dateTo = Carbon::parse($slotMaster['to_date'] ?? null);
@@ -411,7 +419,8 @@ class SlotMasterAPIController extends AppBaseController
             'masterData' => $slotMaster,
             'weekDayArr' =>  $weekDayArr,
             'company' => $companyData,
-            'is_group_company' => $isGroupCompany
+            'is_group_company' => $isGroupCompany,
+            'hasAccess' => $hasAccess
         ];
     }
 
