@@ -494,12 +494,17 @@ class ReceiptMatchingAPIService extends AppBaseController
         $detail->bookingAmountLocal = $arLedger->localAmount;
         $detail->bookingAmountRpt = $arLedger->comRptAmount;
         $detail->custbalanceAmount = $arLedger->custInvoiceAmount - ($totalreceivedAmountTrans + $input['receiveAmountTrans']);
-        $detail->receiveAmountTrans = $input['receiveAmountTrans'];
 
-        // Use the helper to calculate local/rpt amounts for the received value
-        $conversionAmount = Helper::convertAmountToLocalRpt(204, $master->matchDocumentMasterAutoID, $detail->receiveAmountTrans);
-        $detail->receiveAmountLocal = Helper::roundValue($conversionAmount["localAmount"]);
-        $detail->receiveAmountRpt = Helper::roundValue($conversionAmount["reportingAmount"]);
+        if ($arLedger->documentSystemID == 20) {
+            $conversionAmount = \Helper::convertAmountToLocalRpt(20, $sourceDocument->custInvoiceDirectAutoID, ABS($input["receiveAmountTrans"]));
+        }
+        elseif ($arLedger->documentSystemID == 19) {
+            $conversionAmount = \Helper::convertAmountToLocalRpt(19, $sourceDocument->creditNoteAutoID, ABS($input["receiveAmountTrans"]));
+        }
+
+        $detail->receiveAmountLocal = $conversionAmount['localAmount'];
+        $detail->receiveAmountRpt = $conversionAmount['reportingAmount'];
+        $detail->receiveAmountTrans = $input['receiveAmountTrans'];
 
         // VAT Information from the source document
         if (($arLedger->documentSystemID == 2 || $arLedger->documentSystemID == 20) && isset($sourceDocument->vatRegisteredYN) && $sourceDocument->vatRegisteredYN) {

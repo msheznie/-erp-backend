@@ -7307,6 +7307,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'currencyER';
                 break;
+            case 20:
+                $docInforArr["modelName"] = 'CustomerInvoice';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

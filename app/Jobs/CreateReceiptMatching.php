@@ -238,7 +238,7 @@ class CreateReceiptMatching implements ShouldQueue
                 }
             }
         }
-
+ 
         if (!empty($errors)) return ['errors' => $errors, 'data' => $data];
 
         // Type-specific validations
