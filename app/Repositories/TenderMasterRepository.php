@@ -1830,57 +1830,55 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => $exception->getMessage()];
         }
     }
-    public function updateProcurementActivity($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID){
-        try{
-            return DB::transaction( function () use ($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID){
-                if(!empty($procurementActivity) && count($procurementActivity) > 0){
-                    $deleteExistData = self::deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID);
-                    if(!$deleteExistData['success']){
-                        return $deleteExistData;
-                    }
-                    foreach ($procurementActivity as $vl) {
-                        $activity['tender_id'] = $tenderID;
-                        $activity['category_id'] = $vl['id'];
-                        $activity['company_id'] = $companyID;
-                        $activity['created_at'] = Carbon::now();
-                        if($editOrAmend){
-                            $activity['id'] = null;
-                            $activity['version_id'] = $versionID;
-                            $activity['level_no'] = 1;
-                            ProcumentActivityEditLog::create($activity);
-                        } else {
-                            $activity['created_by'] = $employee->employeeSystemID;
-                            ProcumentActivity::create($activity);
-                        }
-                    }
-                    return ['success' => true, 'message' => 'Procurement Activity created successfully'];
-                } else {
-                    return self::deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID);
-                }
-            });
-        } catch(\Exception $exception){
-            return ['success' => false, 'message' => $exception->getMessage()];
-        }
-    }
-    public function deleteProcurementActivity($tenderID, $companyID, $editOrAmend, $versionID)
+    public function updateProcurementActivity($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID)
     {
         try {
-            return DB::transaction( function () use ($tenderID, $companyID, $editOrAmend, $versionID){
-                $proActivity = $editOrAmend ?
-                    ProcumentActivityEditLog::getTenderProcurements($tenderID, $companyID, $versionID) :
-                    ProcumentActivity::getTenderProcurements($tenderID, $companyID);
+            return DB::transaction(function () use ($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID) {
+                if (empty($procurementActivity)) {
+                    return ['success' => true, 'message' => 'No procurement activity to be added'];
+                }
 
-                $proActivity->each(function($record) use($editOrAmend, $versionID){
-                    if($editOrAmend){
-                        $record->is_deleted = 1;
-                        $record->save();
+                $requestedIds = collect($procurementActivity)->pluck('id')->toArray();
+                $existingActivities = $editOrAmend
+                    ? ProcumentActivityEditLog::getTenderProcurements($tenderID, $companyID, $versionID)
+                    : ProcumentActivity::getTenderProcurements($tenderID, $companyID);
+
+                $existingIds = $existingActivities->pluck('category_id')->toArray();
+                $newIds = array_diff($requestedIds, $existingIds);
+                foreach ($newIds as $id) {
+                    $activity = [
+                        'tender_id' => $tenderID,
+                        'category_id' => $id,
+                        'company_id' => $companyID,
+                        'created_at' => Carbon::now(),
+                    ];
+
+                    if ($editOrAmend) {
+                        $activity['id'] = null;
+                        $activity['version_id'] = $versionID;
+                        $activity['level_no'] = 1;
+                        ProcumentActivityEditLog::create($activity);
                     } else {
-                        $record->delete();
+                        $activity['created_by'] = $employee->employeeSystemID;
+                        ProcumentActivity::create($activity);
                     }
-                });
-                return ['success' => true, 'message' => 'Successfully Deleted'];
-            });
+                }
 
+                $toDelete = $existingActivities->filter(function ($activity) use ($requestedIds) {
+                    return !in_array($activity->category_id, $requestedIds);
+                });
+
+                foreach ($toDelete as $activity) {
+                    if ($editOrAmend) {
+                        $activity->is_deleted = 1;
+                        $activity->save();
+                    } else {
+                        $activity->delete();
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Procurement Activity updated successfully'];
+            });
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -1909,142 +1907,199 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => $exception->getMessage()];
         }
     }
-    public function tenderPurchaseRequestUpdate($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID){
-        try{
+    public function tenderPurchaseRequestUpdate($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID)
+    {
+        try {
             return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
-                if ($editOrAmend) {
-                    TenderPurchaseRequestEditLog::where('tender_id', $tenderID)
-                        ->where('version_id', $versionID)
-                        ->where('is_deleted', 0)
-                        ->update(['is_deleted' => 1]);
-                } else {
-                    TenderPurchaseRequest::where('tender_id', $tenderID)->delete();
+                if (empty($tenderPurchaseRequestData)) {
+                    return ['success' => true, 'message' => 'No purchase request to update.'];
                 }
+
+                $newPRIds = collect($tenderPurchaseRequestData)->pluck('id')->unique()->toArray();
+                $existingRecords = $editOrAmend
+                    ? TenderPurchaseRequestEditLog::getPurchaseRequests($tenderID, $versionID)
+                    : TenderPurchaseRequest::getTenderPurchaseRequestForAmd($tenderID);
+
+                $existingPRIds = $existingRecords->pluck('purchase_request_id')->toArray();
+                $toInsert = array_diff($newPRIds, $existingPRIds);
+                $toDelete = array_diff($existingPRIds, $newPRIds);
+
+                if (!empty($toDelete)) {
+                    if ($editOrAmend) {
+                        TenderPurchaseRequestEditLog::where('tender_id', $tenderID)
+                            ->where('version_id', $versionID)
+                            ->whereIn('purchase_request_id', $toDelete)
+                            ->update(['is_deleted' => 1]);
+                    } else {
+                        TenderPurchaseRequest::where('tender_id', $tenderID)
+                            ->whereIn('purchase_request_id', $toDelete)
+                            ->delete();
+                    }
+                }
+
                 foreach ($tenderPurchaseRequestData as $pr) {
+                    if (in_array($pr['id'], $toInsert)) {
+                        $data = [
+                            'tender_id' => $tenderID,
+                            'purchase_request_id' => $pr['id'],
+                            'company_id' => $companyID,
+                        ];
+                        if ($editOrAmend) {
+                            $data['id'] = null;
+                            $data['version_id'] = $versionID;
+                            $data['level_no'] = 1;
+                            TenderPurchaseRequestEditLog::create($data);
+                        } else {
+                            TenderPurchaseRequest::create($data);
+                        }
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Tender purchase updated successfully'];
+            });
+        } catch (\Exception $exception) {
+            return ['success' => false, 'message' => $exception->getMessage()];
+        }
+    }
+    public function updateTenderBudgetItems($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID)
+    {
+        try {
+            return DB::transaction(function () use ($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID) {
+                if (empty($budgetItemList)) {
+                    return ['success' => true, 'message' => 'No budget items to update.'];
+                }
+
+                $existingItems = $editOrAmend
+                    ? TenderBudgetItemEditLog::getExistingTenderBudgetItemList($tenderID, $versionID)->pluck('item_id')->toArray()
+                    : SrmTenderBudgetItem::getTenderBudgetItemForAmd($tenderID)->pluck('item_id')->toArray();
+
+                $newItemIDs = array_column($budgetItemList, 'id');
+                $itemsToDelete = array_diff($existingItems, $newItemIDs);
+
+                if (!empty($itemsToDelete)) {
+                    if ($editOrAmend) {
+                        TenderBudgetItemEditLog::where('tender_id', $tenderID)
+                            ->where('version_id', $versionID)
+                            ->where('is_deleted', 0)
+                            ->whereIn('item_id', $itemsToDelete)
+                            ->update(['is_deleted' => 1]);
+                    } else {
+                        SrmTenderBudgetItem::where('tender_id', $tenderID)
+                            ->whereIn('item_id', $itemsToDelete)
+                            ->delete();
+                    }
+                }
+
+                foreach ($budgetItemList as $pr) {
+                    $itemID = $pr['id'];
+                    $existingBudgetItem = $editOrAmend
+                        ? TenderBudgetItemEditLog::getExistingBudgetItem($itemID, $tenderID, $versionID)
+                        : SrmTenderBudgetItem::getExistingBudgetItem($itemID, $tenderID);
+
+                    if ($existingBudgetItem) {
+                        $budgetAmount = $existingBudgetItem->budget_amount;
+                    } else {
+                        $srmBudgetItem = SrmBudgetItem::getSrmBudgetItem($itemID, $companyID);
+                        $budgetAmount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
+                    }
+
+                    $data = [
+                        'item_id'       => $itemID,
+                        'tender_id'     => $tenderID,
+                        'budget_amount' => $budgetAmount,
+                        'created_at'    => now(),
+                    ];
+
+                    if ($editOrAmend) {
+                        $data['id']         = null;
+                        $data['version_id'] = $versionID;
+                        $data['level_no']   = 1;
+
+                        TenderBudgetItemEditLog::updateOrCreate(
+                            [
+                                'item_id'    => $itemID,
+                                'tender_id'  => $tenderID,
+                                'version_id' => $versionID,
+                                'is_deleted' => 0
+                            ],
+                            $data
+                        );
+                    } else {
+                        SrmTenderBudgetItem::updateOrCreate(
+                            ['item_id' => $itemID, 'tender_id' => $tenderID],
+                            $data
+                        );
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Tender budget item created successfully'];
+            });
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+    public function updateTenderDepartments($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID)
+    {
+        try {
+            return DB::transaction(function () use ($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID) {
+                $getInactiveDepartments = SrmDepartmentMaster::getDepartmentMaster($company_id);
+                $inactiveIds = $getInactiveDepartments->pluck('id')->toArray();
+                $requestedIds = collect($departmentMaster)->pluck('id')->toArray();
+
+                $commonIds = array_intersect($requestedIds, $inactiveIds);
+                if (!empty($commonIds)) {
+                    return [
+                        'success' => false,
+                        'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'
+                    ];
+                }
+
+                $existing = $editOrAmend
+                    ? TenderDepartmentEditLog::where('tender_id', $tenderID)->where('version_id', $versionID)->where('is_deleted', 0)->get()
+                    : SrmTenderDepartment::where('tender_id', $tenderID)->get();
+
+                $existingIds = $existing->pluck('department_id')->toArray();
+                $toInsert = array_diff($requestedIds, $existingIds);
+                $toDelete = array_diff($existingIds, $requestedIds);
+
+                if (!empty($toDelete)) {
+                    if ($editOrAmend) {
+                        TenderDepartmentEditLog::where('tender_id', $tenderID)
+                            ->where('version_id', $versionID)
+                            ->whereIn('department_id', $toDelete)
+                            ->update(['is_deleted' => 1]);
+                    } else {
+                        SrmTenderDepartment::where('tender_id', $tenderID)
+                            ->whereIn('department_id', $toDelete)
+                            ->delete();
+                    }
+                }
+
+                foreach ($departmentMaster as $dm) {
+                    if (!in_array($dm['id'], $toInsert)) {
+                        continue;
+                    }
 
                     $data = [
                         'tender_id' => $tenderID,
-                        'purchase_request_id' => $pr['id'],
-                        'company_id' => $companyID,
+                        'department_id' => $dm['id'],
+                        'company_id' => $company_id,
                     ];
-                    if($editOrAmend){
+
+                    if ($editOrAmend) {
                         $data['id'] = null;
                         $data['version_id'] = $versionID;
                         $data['level_no'] = 1;
-                        TenderPurchaseRequestEditLog::create($data);
-                    } else{
-                        TenderPurchaseRequest::create($data);
+                        TenderDepartmentEditLog::create($data);
+                    } else {
+                        SrmTenderDepartment::create($data);
                     }
                 }
-                return ['success' => true, 'message' => 'Tender purchase created successfully'];
+
+                return ['success' => true, 'message' => 'Tender department updated successfully'];
             });
-        } catch(\Exception $exception){
-            return ['success' => false, 'message' => $exception->getMessage()];
-        }
-    }
-    public function updateTenderBudgetItems($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID){
-        try{
-            return DB::transaction(function () use ($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID) {
-                if(!empty($budgetItemList)){
-                    $existingItems = $editOrAmend ?
-                        TenderBudgetItemEditLog::getExistingTenderBudgetItemList($tenderID, $versionID)->pluck('item_id')->toArray() :
-                        SrmTenderBudgetItem::getTenderBudgetItemForAmd($tenderID)->pluck('item_id')->toArray();
-                    $itemsToDelete = array_diff($existingItems, array_column($budgetItemList, 'id'));
-
-                    $editOrAmend ?
-                        TenderBudgetItemEditLog::where('tender_id', $tenderID)->where('version_id', $versionID)->where('is_deleted', 0)->whereIn('item_id', $itemsToDelete)->update(['is_deleted' => 1]) :
-                        SrmTenderBudgetItem::where('tender_id', $tenderID)->whereIn('item_id', $itemsToDelete)->delete();
-
-                    foreach ($budgetItemList as $pr) {
-                        $existingBudgetItem = $editOrAmend ?
-                            TenderBudgetItemEditLog::getExistingBudgetItem($pr['id'], $tenderID, $versionID) :
-                            SrmTenderBudgetItem::getExistingBudgetItem($pr['id'], $tenderID);
-
-                        if ($existingBudgetItem) {
-                            $budget_amount = $existingBudgetItem->budget_amount;
-                        } else {
-                            $srmBudgetItem = SrmBudgetItem::getSrmBudgetItem($pr['id'], $companyID);
-                            $budget_amount = $srmBudgetItem ? $srmBudgetItem->budget_amount : 0;
-                        }
-
-                        $data = [
-                            'item_id' => $pr['id'],
-                            'tender_id' => $tenderID,
-                            'budget_amount' => $budget_amount,
-                            'created_at' => now()
-                        ];
-                        if($editOrAmend){
-                            $data['id'] = null;
-                            $data['version_id'] = $versionID;
-                            $data['level_no'] = 1;
-                            TenderBudgetItemEditLog::updateOrCreate(
-                                [
-                                    'item_id' => $pr['id'],
-                                    'tender_id' => $tenderID,
-                                    'version_id' => $versionID,
-                                    'is_deleted' => 0
-                                ], $data);
-
-                        } else {
-                            SrmTenderBudgetItem::updateOrCreate(['item_id' => $pr['id'], 'tender_id' => $tenderID], $data);
-                        }
-                    }
-                }
-                return ['success' => true, 'message' => 'Tender budget item created successfully'];
-            });
-        } catch (\Exception $exception){
-            return ['success' => false, 'message' => $exception->getMessage()];
-        }
-    }
-    public function updateTenderDepartments($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID){
-        try{
-            return DB::transaction(function () use ($departmentMaster, $company_id, $tenderID, $editOrAmend, $versionID) {
-                $getInactiveDepartments = SrmDepartmentMaster::getDepartmentMaster($company_id);
-
-                $convertedArray = [];
-                foreach ($getInactiveDepartments as $item) {
-                    $convertedArray[] = [
-                        'id' => $item['id'],
-                        'itemName' => $item['description'],
-                    ];
-                }
-
-                $id1 = array_column($departmentMaster, 'id');
-                $id2 = array_column($convertedArray, 'id');
-                $commonIds = array_intersect($id1, $id2);
-
-                if (!empty($commonIds)) {
-                    return ['success' => false, 'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'];
-                } else {
-                    $existDepartmentMaster = $editOrAmend ?
-                        TenderDepartmentEditLog::getTenderDepartmentEditLog($tenderID, $versionID) :
-                        SrmTenderDepartment::getTenderDepartmentEditLog($tenderID);
-                    $departmentMasterCount = count($existDepartmentMaster);
-
-                    if ($departmentMasterCount > 0 && count($departmentMaster) > 0){
-                        $editOrAmend ?
-                            TenderDepartmentEditLog::where('tender_id', $tenderID)->where('version_id', $versionID)->where('is_deleted', 0)->update(['is_deleted' => 1]) :
-                            SrmTenderDepartment::where('tender_id', $tenderID)->delete();
-                    }
-                    foreach ($departmentMaster as $dm) {
-                        $data = [
-                            'tender_id' => $tenderID,
-                            'department_id' => $dm['id'],
-                            'company_id' => $company_id,
-                        ];
-                        if($editOrAmend){
-                            $data['id'] = null;
-                            $data['version_id'] = $versionID;
-                            $data['level_no'] = 1;
-                            TenderDepartmentEditLog::create($data);
-                        } else {
-                            SrmTenderDepartment::create($data);
-                        }
-                    }
-                }
-                return ['success' => true, 'message' => 'Tender department created successfully'];
-            });
-        } catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return ['success' => false, 'message' => $exception->getMessage()];
         }
     }

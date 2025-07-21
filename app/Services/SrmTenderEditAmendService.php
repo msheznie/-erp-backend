@@ -77,7 +77,7 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Bid Minimum Approval Details (Strategy)' => [
+            'Bid Minimum Approval Details' => [
                 'sectionId' => '1.1',
                 'modelName' => SrmTenderBidEmployeeDetailsEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'tender_id', 'tender_edit_version_id', 'modify_type', 'updated_by', 'level_no', 'is_deleted'],
@@ -90,8 +90,34 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Other Tender User Access (Strategy)' => [
+            'Bid Opening Members' => [
                 'sectionId' => '1.2',
+                'modelName' => SrmTenderUserAccessEditLog::class,
+                'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
+                'fieldDescriptions' => ['user_id' => 'Employee'],
+                'fieldMappings' => [
+                    'user_id' => [
+                        'model' => Employee::class,
+                        'attribute' => 'empName',
+                        'colName' => 'employeeSystemID'
+                    ]
+                ]
+            ],
+            'Commercial Bid Opening Members' => [
+                'sectionId' => '1.3',
+                'modelName' => SrmTenderUserAccessEditLog::class,
+                'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
+                'fieldDescriptions' => ['user_id' => 'Employee'],
+                'fieldMappings' => [
+                    'user_id' => [
+                        'model' => Employee::class,
+                        'attribute' => 'empName',
+                        'colName' => 'employeeSystemID'
+                    ]
+                ]
+            ],
+            'Supplier Ranking Members' => [
+                'sectionId' => '1.4',
                 'modelName' => SrmTenderUserAccessEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
                 'fieldDescriptions' => ['user_id' => 'Employee'],
@@ -478,9 +504,16 @@ class SrmTenderEditAmendService
             })->when(in_array($sectionId, ['1.1', '3', '3.1', '3.3']), function ($q) use ($versionID, $tenderID) {
                 $q->where('tender_edit_version_id', $versionID)
                     ->where('tender_id', $tenderID);
-            })->when(in_array($sectionId, ['1.2', '2.1', '2.2', '2.3', '2.4', '6']), function ($q) use ($versionID, $tenderID) {
+            })->when(in_array($sectionId, ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '6']), function ($q) use ($versionID, $tenderID, $sectionId) {
                 $q->where('version_id', $versionID)
                     ->where('tender_id', $tenderID);
+                if ($sectionId === '1.2') {
+                    $q->where('module_id', 1);
+                } elseif ($sectionId === '1.3') {
+                    $q->where('module_id', 2);
+                } elseif ($sectionId === '1.4') {
+                    $q->where('module_id', 3);
+                }
             })->when($sectionId == '3.2', function ($q) use ($versionID, $tenderID) {
                 $q->where('tender_edit_version_id', $versionID);
             })->when(in_array($sectionId, ['4', '5']), function ($q) use ($versionID, $tenderID, $sectionId) {
@@ -502,14 +535,22 @@ class SrmTenderEditAmendService
     public function getPreviousRecords($modelName, $tenderID, $currentRecord, $sectionId, $versionID)
     {
         $currentID = $currentRecord->id ?? 0;
-        $sectionArr = ['1.1', '1.2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.3', '4', '5', '6'];
+        $sectionArr = ['1.1', '1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.3', '4', '5', '6'];
         return $modelName::where('level_no', '<', $currentRecord->level_no)
             ->where(function ($q) use ($tenderID, $sectionId, $currentID, $versionID, $sectionArr) {
                 $q->when(in_array($sectionId, ['1', '2']), function ($q) use ($tenderID) {
                     $q->where('id', $tenderID);
-                })->when(in_array($sectionId, $sectionArr), function ($q) use ($tenderID, $currentID) {
+                })->when(in_array($sectionId, $sectionArr), function ($q) use ($tenderID, $currentID, $sectionId) {
                         $q->where('id', $currentID);
                         $q->where('tender_id', $tenderID);
+
+                        if ($sectionId === '1.2') {
+                            $q->where('module_id', 1);
+                        } elseif ($sectionId === '1.3') {
+                            $q->where('module_id', 2);
+                        } elseif ($sectionId === '1.4') {
+                            $q->where('module_id', 3);
+                        }
                 })->when($sectionId == '3.2', function ($q) use ($currentID, $versionID) {
                     $q->where('id', $currentID);
                 })->when($sectionId == '6.1', function ($q) use ($currentID, $tenderID) {

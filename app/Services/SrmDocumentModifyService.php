@@ -128,7 +128,9 @@ class SrmDocumentModifyService
             'checkClosingDate'               => $closingDate->gt($currentDate),
             'tenderPurchasedOrProceed'       => TenderMasterSupplier::checkTenderPurchased($tender_id),
             'isTenderBidSubmitted'           => BidSubmissionMaster::checkTenderBidSubmitted($tender_id),
-            'isSupplierRankingNotCompleted'  => $tenderMaster['combined_ranking_status'] == 0 || $tenderMaster['negotiation_combined_ranking_status'] == 0,
+            'isSupplierRankingNotCompleted'  => $tenderMaster['combined_ranking_status'] == 0 ||
+                $tenderMaster['negotiation_combined_ranking_status'] == 0 &&
+                $tenderMaster['is_negotiation_started'] == 0,
         ];
     }
     public static function checkForEditOrAmendRequest($tenderMasterID){
