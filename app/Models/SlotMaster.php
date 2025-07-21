@@ -134,7 +134,7 @@ class SlotMaster extends Model
             'slot_details' => function ($q) {
                 $q->with([
                     'appointment' => function ($q) {
-                        $q->select('id', 'supplier_id', 'slot_detail_id', 'confirmed_yn');
+                        $q->select('id', 'supplier_id', 'slot_detail_id', 'confirmed_yn', 'approved_yn');
                     }
                 ])->select('id', 'slot_master_id', 'start_date', 'end_date', 'status', 'company_id');
             },
@@ -166,7 +166,10 @@ class SlotMaster extends Model
             return $slots->map(function ($slot) use ($assignedWareHouseIds) {
                 if (!in_array($slot->warehouse_id, $assignedWareHouseIds)) {
                     $slot->slot_details = $slot->slot_details->filter(function ($detail) {
-                        return $detail->status == 1;
+                        return $detail->status == 1 &&
+                            $detail->appointment->contains(function ($appt) {
+                                return $appt->approved_yn == -1;
+                            });
                     })->values();
                 }
                 return $slot;
