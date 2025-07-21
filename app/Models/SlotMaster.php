@@ -151,7 +151,10 @@ class SlotMaster extends Model
                         $q->whereIn('company_id', $tenantID)
                             ->whereNotIn('warehouse_id', $assignedWareHouseIds)
                             ->whereHas('slot_details', function ($sub) {
-                                $sub->where('status', 1);
+                                $sub->where('status', 1)
+                                    ->whereHas('appointment', function ($subSub) {
+                                        $subSub->where('approved_yn', -1);
+                                        });
                             });
                     });
             })
