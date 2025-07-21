@@ -8,9 +8,17 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use App\Services\SupplierRegistrationService;
 
 class SupplierRegistrationController extends Controller
 {
+    private $supplierRegistrationService;
+
+    public function __construct(SupplierRegistrationService $supplierRegistrationService)
+    {
+        $this->supplierRegistrationService = $supplierRegistrationService;
+    }
+
     /**
      * get KYC list
      * @param Request $request
@@ -62,27 +70,48 @@ class SupplierRegistrationController extends Controller
         try {
             $selectedSupplier = $request->input('selectedSupplier');
             $selectedKYC = $request->input('selectedKYC');
+            $supplierKyc = $request->input('supplierKyc');
+            $companyID = $request->input('companyID');
 
             throw_unless($selectedSupplier, 'selected supplier must be passed');
+            throw_unless($supplierKyc, 'selected KYC details must be passed');
 
-            $isUpdated = SupplierRegistrationLink::where('id', $selectedKYC)
-                ->update([
-                    'supplier_master_id' => $selectedSupplier
-                ]);
-            
-            throw_unless($isUpdated, "Something went wrong!, Supplier cannot attached to the KYC");
-
-            return [
-                'success'   => true,
-                'message'   => 'Supplier has been attached to the KYC',
-                'data'      => $isUpdated
-            ];
-        }catch(\Exception $e){
-            return [
-                'success'   => false,
-                'message'   => $e->getMessage(),
-                'data'      => []
-            ];
+            $linkSuppliers = $this->supplierRegistrationService->linkKYCWithSupplier(
+                $selectedSupplier, $supplierKyc, $selectedKYC, $companyID
+            );
+            if(!$linkSuppliers['success']){
+                return $this->sendError($linkSuppliers['message']);
+            }
+            return $this->sendSuccessResponse('Supplier has been attached to the KYC');
+        } catch(\Exception $e){
+            return $this->sendError($e->getMessage());
         }
+    }
+    public function checkSupplierMatchWithKyc(Request $request){
+        try{
+            $input = $request->all();
+            $matchingData = $this->supplierRegistrationService->compareSupplierData($input);
+            if(!$matchingData['success']){
+                return $this->sendError($matchingData['message']);
+            }
+            return $this->sendSuccessResponse($matchingData['message'], $matchingData['data']);
+        } catch (\Exception $ex){
+            return $this->sendError('Unexpected Error: '. $ex->getMessage());
+        }
+    }
+
+    protected function sendError($message = ''){
+        return [
+            'success' => false,
+            'message' => $message,
+            'data' => []
+        ];
+    }
+    protected function sendSuccessResponse($message='', $data=[]){
+        return [
+            'success' => true,
+            'message' => $message,
+            'data' => $data
+        ];
     }
 }
