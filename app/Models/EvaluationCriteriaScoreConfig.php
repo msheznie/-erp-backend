@@ -117,4 +117,9 @@ class EvaluationCriteriaScoreConfig extends Model
     public static function getCriteriaBaseScore($criteriaID){
         return self::where('criteria_detail_id', $criteriaID)->first();
     }
+    public static function getAllEvaluationCriteriaScore($fromTender, $criteria_detail_id){
+        return self::where('fromTender', $fromTender)
+            ->where('criteria_detail_id', $criteria_detail_id)
+            ->get();
+    }
 }

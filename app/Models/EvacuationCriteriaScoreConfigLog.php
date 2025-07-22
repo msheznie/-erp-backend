@@ -188,4 +188,10 @@ class EvacuationCriteriaScoreConfigLog extends Model
             ->pluck('id')
             ->toArray();
     }
+    public static function getAllEvaluationCriteriaScore($fromTender, $criteria_detail_id, $versionID){
+        return self::where('criteria_detail_id', $criteria_detail_id)
+            ->where('fromTender', $fromTender)
+            ->where('version_id', $versionID)
+            ->get();
+    }
 }

@@ -286,44 +286,14 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
     public function removeCriteriaConfig(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
-        $min_value = 0;
-        $max_value = 0;
-        $x=1;
-        $fromTender = $input['fromTender'] ?? false;
-        $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
-        DB::beginTransaction();
-        try {
-            $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->delete();
-            if($result) {
-                $criteriaConfig = EvaluationCriteriaScoreConfig::where('fromTender',$fromTender)
-                    ->where('criteria_detail_id',$input['criteria_detail_id'])
-                    ->get();
-                foreach ($criteriaConfig as $val){
-                    if($x==1){
-                        $min_value = $val['score'];
-                    }
-
-                    if($val['score']>$max_value){
-                        $max_value = $val['score'];
-                    }
-
-                    if($val['score']<$min_value){
-                        $min_value = $val['score'];
-                    }
-
-                    $ans['max_value'] = $max_value;
-                    $ans['min_value'] = $min_value;
-                    $model::where('id',$input['criteria_detail_id'])->update($ans);
-                    $x++;
-                }
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+        try{
+            $deleteCriteriaScore = $this->evaluationCriteriaScoreConfigRepository->removeCriteriaConfig($input);
+            if(!$deleteCriteriaScore['success']){
+                return $this->sendError($deleteCriteriaScore['message']);
             }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
+            return $this->sendResponse([], 'Score configuration deleted successfully');
+        } catch (\Exception $ex){
+            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
         }
     }
 
