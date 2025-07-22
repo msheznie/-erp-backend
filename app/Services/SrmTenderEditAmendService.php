@@ -268,7 +268,7 @@ class SrmTenderEditAmendService
                 'modelName' => TenderBoqItemsEditLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'level_no','main_work_id', 'amd_main_work_id', 'company_id', 'tender_ranking_line_item', 'modify_type', 'master_id', 'purchase_request_id', 'created_by',
-                    'origin', 'ref_log_id', 'updated_by', 'is_deleted', 'item_primary_code', 'tender_edit_version_id'
+                    'origin', 'ref_log_id', 'updated_by', 'is_deleted', 'item_primary_code', 'tender_edit_version_id', 'tender_id'
                 ],
                 'fieldDescriptions' => ['item_name' => 'Item', 'description' => 'Description', 'uom' => 'UOM', 'qty' => 'Qty'],
                 'fieldMappings' => [
@@ -315,7 +315,7 @@ class SrmTenderEditAmendService
                 ],
                 'fieldDescriptions' => ['document_type_id' => 'Document Type'],
                 'fieldMappings' => [
-                    'uom' => [
+                    'document_type_id' => [
                         'model' => TenderDocumentTypes::class,
                         'attribute' => 'document_type',
                         'colName' => 'id'
