@@ -449,7 +449,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                     $minAns = $vl['drop_value'];
                                 }
 
-                                $drop['criteria_detail_id'] = $result['id'];
+                                $drop['criteria_detail_id'] = $editOrAmend ? $result['amd_id'] : $result['id'];;
                                 $drop['label'] = $vl['drop_label'];
                                 $drop['score'] = $vl['drop_value'];
                                 $drop['created_by'] = $employee->employeeSystemID;
