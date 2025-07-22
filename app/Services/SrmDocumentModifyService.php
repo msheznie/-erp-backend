@@ -93,10 +93,12 @@ class SrmDocumentModifyService
         if (empty($documentModifyRequest) || $documentModifyRequest->status != 1) {
             return false;
         }
-        if ($documentModifyRequest->modify_type == 1
+        if ($conditions['checkOpeningDate']
+            && !$conditions['tenderPurchasedOrProceed']
+            && $documentModifyRequest->modify_type == 1
             && $documentModifyRequest->approved == -1
             && $documentModifyRequest->confirmation_approved == 0
-            && $conditions['checkOpeningDate']) {
+        ) {
             return true;
         }
         return false;
