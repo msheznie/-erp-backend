@@ -39,11 +39,11 @@ class SupplierRegistrationService
 
     }
 
-    public static function getMappingData($supplierKyc, $formSectionIDs, $formFieldID=0): array{
+    public static function getMappingData($supplierKyc, $formSectionIDs, $formFieldID=[]): array{
         return collect($supplierKyc ?? [])
             ->whereIn('form_section_id', $formSectionIDs)
-            ->when($formFieldID > 0, function ($q) use ($formFieldID) {
-                return $q->where('form_field_id', $formFieldID);
+            ->when(!empty($formFieldID), function ($q) use ($formFieldID) {
+                return $q->whereIn('form_field_id', $formFieldID);
             })
             ->map(function ($item) {
                 return [
@@ -204,10 +204,12 @@ class SupplierRegistrationService
                                     ->delete();
 
                 $section = [1];
-                $attachments = self::getMappingData($supplierKyc, $section);
+                $formField = [11, 12, 14];
+                $attachments = self::getMappingData($supplierKyc, $section, $formField);
+
                 $initial = true;
-                $x = 0;
                 $insertData = [];
+                $tempData = [];
 
                 $documentMaster = DocumentMaster::getDocumentData(56);
                 $companyCode = Company::getComanyCode($companyID);
@@ -227,33 +229,35 @@ class SupplierRegistrationService
                     $value = trim($map['value']);
 
                     if($fieldID == 11){
-                        $x = !$initial ? $x + 1 : 0;
-                    }
-                    $insertData[$x]['docExpirtyDate'] = null;
-                    switch ($fieldID) {
-                        case 11:
-                            $insertData[$x]['attachmentDescription'] = $value;
-                            $insertData[$x]['originalFileName'] = $value;
-                            $insertData[$x]['myFileName'] = $value;
-                            break;
-                        case 12:
-                            $insertData[$x]['path'] = $value;
-                            break;
-                        case 14:
-                            $insertData[$x]['docExpirtyDate'] = !empty($value) && $value != '-' ? Carbon::parse($value)->format('Y-m-d') : null;
-                            break;
-                    }
-                    if($fieldID == 11){
+                        if (!$initial) {
+                            if (!empty($tempData['path']) && $tempData['path'] !== '-') {
+                                $insertData[] = array_merge($tempData, $commonData);
+                            }
+                        }
+
+                        $tempData = [];
+                        $tempData['attachmentDescription'] = $value;
+                        $tempData['originalFileName'] = $value;
+                        $tempData['myFileName'] = $value;
+                        $tempData['docExpirtyDate'] = null;
                         $initial = false;
+                    }
+
+                    if ($fieldID == 12) {
+                        $tempData['path'] = $value;
+                    }
+
+                    if ($fieldID == 14) {
+                        $tempData['docExpirtyDate'] = (!empty($value) && $value !== '-') ? Carbon::parse($value)->format('Y-m-d') : null;
                     }
                 }
 
-                if($insertData){
-                    $finalInsertData = [];
-                    foreach ($insertData as $data) {
-                        $finalInsertData[] = array_merge($data, $commonData);
-                    }
-                    DocumentAttachments::insert($finalInsertData);
+                if (!empty($tempData['path']) && $tempData['path'] !== '-') {
+                    $insertData[] = array_merge($tempData, $commonData);
+                }
+
+                if (!empty($insertData)) {
+                    DocumentAttachments::insert($insertData);
                 }
                 return self::sendSuccessResponse('Attachment updated successfully');
             });
@@ -265,7 +269,8 @@ class SupplierRegistrationService
         try{
             return DB::transaction(function () use ($selectedSupplier, $supplierKyc) {
                 $section = [1];
-                $businessCat = self::getMappingData($supplierKyc, $section, 1);
+                $formField = [1];
+                $businessCat = self::getMappingData($supplierKyc, $section, $formField);
                 $commonData = ['supplierID' => $selectedSupplier, 'timestamp' => now()];
                 $insertData = [];
 
@@ -292,7 +297,8 @@ class SupplierRegistrationService
         try{
             return DB::transaction(function () use ($selectedSupplier, $supplierKyc) {
                 $section = [1];
-                $businessCat = self::getMappingData($supplierKyc, $section, 2);
+                $formField = [2];
+                $businessCat = self::getMappingData($supplierKyc, $section, $formField);
                 $commonData = ['supplierID' => $selectedSupplier, 'timestamp' => now()];
                 $insertData = [];
 
