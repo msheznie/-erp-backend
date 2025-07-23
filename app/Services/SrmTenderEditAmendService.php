@@ -9,6 +9,7 @@ use App\Models\DocumentAttachmentsEditLog;
 use App\Models\DocumentAttachmentType;
 use App\Models\Employee;
 use App\Models\EnvelopType;
+use App\Models\EvacuationCriteriaScoreConfigLog;
 use App\Models\EvaluationCriteriaDetailsEditLog;
 use App\Models\EvaluationType;
 use App\Models\PricingScheduleDetailEditLog;
@@ -52,7 +53,9 @@ class SrmTenderEditAmendService
                     'description', 'description_sec_lang', 'currency_id', 'procument_cat_id', 'procument_sub_cat_id', 'estimated_value', 'allocated_budget', 'pre_bid_clarification_method',
                     'show_technical_criteria', 'tender_document_fee', 'bank_id' , 'bank_account_id', 'document_sales_start_date', 'document_sales_end_date', 'pre_bid_clarification_start_date', 'pre_bid_clarification_end_date',
                     'site_visit_date', 'site_visit_end_date', 'bid_submission_opening_date', 'bid_submission_closing_date', 'bid_opening_date', 'bid_opening_end_date',
-                    'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date', 'commerical_bid_closing_date', 'confirmed_by_emp_system_id'
+                    'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date', 'commerical_bid_closing_date', 'confirmed_by_emp_system_id',
+                    'id', 'uuid', 'tender_type_id', 'created_by', 'updated_by', 'company_id', 'document_system_id', 'document_id', 'tender_code', 'serial_number', 'confirmed_yn',
+                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at'
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => 'Commercial Criteria Passing Weightage',
                     'technical_passing_weightage' => 'Technical Criteria Passing Weightage',
@@ -135,7 +138,9 @@ class SrmTenderEditAmendService
                 'skippedFields' => [
                     'amd_id', 'version_id', 'level_no', 'is_deleted', 'tender_edit_version_id', 'confirmed_date', 'tender_edit_confirm_id', 'commercial_passing_weightage', 'technical_passing_weightage',
                     'envelop_type_id', 'evaluation_type_id', 'stage', 'no_of_alternative_solutions', 'commercial_weightage', 'technical_weightage', 'is_active_go_no_go',
-                    'min_approval_bid_opening', 'confirmed_by_emp_system_id', 'budget_document'
+                    'min_approval_bid_opening', 'confirmed_by_emp_system_id', 'budget_document', 'id', 'uuid', 'tender_type_id', 'created_by',
+                    'updated_by', 'company_id', 'document_system_id', 'document_id', 'tender_code', 'serial_number', 'confirmed_yn',
+                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at'
                 ],
                 'fieldDescriptions' => [
                     'title' => 'Title', 'title_sec_lang' => 'Title in Secondary', 'description' => 'Description', 'description_sec_lang' => 'Description in Secondary',
@@ -303,6 +308,19 @@ class SrmTenderEditAmendService
                     'passing_weightage' => 'Passing Weightage',
                     'min_value' => 'Minimum Value',
                     'max_value' => 'Maximum Value'
+                ],
+                'fieldMappings' => []
+            ],
+            'Technical Evaluation - Score Configuration' => [
+                'sectionId' => '5.1',
+                'modelName' => EvacuationCriteriaScoreConfigLog::class,
+                'skippedFields' => [
+                    'amd_id', 'version_id', 'level_no','id', 'criteria_detail_id', 'critera_type_id', 'fromTender',
+                    'created_at', 'created_by', 'updated_at', 'updated_by', 'is_deleted',
+                ],
+                'fieldDescriptions' => [
+                    'label' => 'Label',
+                    'score' => 'Value'
                 ],
                 'fieldMappings' => []
             ],
@@ -528,6 +546,8 @@ class SrmTenderEditAmendService
             })->when($sectionId == '7', function ($q) use ($versionID, $tenderID) {
                 $q->where('version_id', $versionID)
                     ->where('tender_master_id', $tenderID);
+            })->when($sectionId == '5.1', function ($q) use ($versionID, $tenderID) {
+                $q->where('version_id', $versionID);
             });
         })->where('is_deleted', 0)->get();
     }
@@ -551,7 +571,7 @@ class SrmTenderEditAmendService
                         } elseif ($sectionId === '1.4') {
                             $q->where('module_id', 3);
                         }
-                })->when($sectionId == '3.2', function ($q) use ($currentID, $versionID) {
+                })->when(in_array($sectionId, ['5.1', '3.2']), function ($q) use ($currentID, $versionID) {
                     $q->where('id', $currentID);
                 })->when($sectionId == '6.1', function ($q) use ($currentID, $tenderID) {
                     $q->where('id', $currentID)
@@ -601,7 +621,7 @@ class SrmTenderEditAmendService
             return DB::transaction(function () use ($tenderMasterID, $versionID) {
                 $sections = $this->sectionConfig();
                 $allSectionIDs = [
-                    '1', '1.1', '1.2', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '4', '5', '6',
+                    '1', '1.1', '1.2', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '4', '5', '5.1', '6',
                     '6.1', '7'
                 ];
 
@@ -610,7 +630,7 @@ class SrmTenderEditAmendService
                     $sectionId = $section['sectionId'] ?? '';
 
                     if ($model && class_exists($model) && in_array($sectionId, $allSectionIDs)) {
-                        $model::when(in_array($sectionId, ['1', '2', '1.2', '2.1', '2.2', '2.3', '2.4', '6', '6.1', '7']), function ($q) use ($versionID){
+                        $model::when(in_array($sectionId, ['1', '2', '1.2', '2.1', '2.2', '2.3', '2.4', '5.1', '6', '6.1', '7']), function ($q) use ($versionID){
                             $q->where('version_id', $versionID);
                         })->when(in_array($sectionId, ['1.1', '3', '3.1', '3.2', '3.3']), function ($q) use ($versionID){
                             $q->where('tender_edit_version_id', $versionID);

@@ -27,7 +27,7 @@ class SupplierRegistrationService
         if(empty($supplierMaster)){
             return self::sendError('Supplier not found');
         }
-        $section = [1, 5];
+        $section = [1, 3, 5];
         $mappingData = self::getMappingData($supplierKyc, $section);
         $isNotMapping = self::checkSupplierDataMatching($mappingData, $supplierMaster);
 
@@ -69,6 +69,9 @@ class SupplierRegistrationService
             if($hasCompanyRegistration && $map['form_field_id'] == 14){
                 $isNotMapping = $map['value'] != $supplierMaster->registrationExprity ?? '';
                 $hasCompanyRegistration = false;
+            }
+            if($map['form_field_id'] == 28){
+                $isNotMapping = $map['value'] != $supplierMaster->currency ?? 0;
             }
             if($map['form_field_id'] == 46){
                 $isNotMapping = $map['value'] != $supplierMaster->countryID ?? 0;
@@ -135,10 +138,17 @@ class SupplierRegistrationService
     protected static function updateSupplierDetails($selectedSupplier, $supplierKyc){
         try {
             return DB::transaction(function () use ($selectedSupplier, $supplierKyc) {
-                $section = [1, 5];
+                $section = [1, 3, 5];
                 $mappingData = self::getMappingData($supplierKyc, $section);
                 $updateData = [];
                 $previousCertification = null;
+
+                $updateData += [
+                    'vatEligible' => 0,
+                    'vatPercentage' => 0,
+                    'vatNumber' => 0
+                ];
+                $commonColumnNo = ['isSMEYN' => 0];
 
                 foreach ($mappingData as $map) {
                     $fieldID = $map['form_field_id'];
@@ -149,6 +159,9 @@ class SupplierRegistrationService
                     }
 
                     switch ($fieldID) {
+                        case 4:
+                            $updateData['supplierName'] = trim($value);
+                            break;
                         case 8:
                             $updateData['registrationNumber'] = trim($value);
                             break;
@@ -158,7 +171,18 @@ class SupplierRegistrationService
                                 $updateData['registrationExprity'] = !empty($value) ? Carbon::parse($value)->format('Y-m-d') : null;
                             }
                             break;
-
+                        case 28:
+                            $updateData['currency'] = trim($value);
+                            break;
+                        case 30:
+                            $updateData['vatEligible'] = trim($value);
+                            break;
+                        case 31:
+                            $updateData['vatPercentage'] = trim($value);
+                            break;
+                        case 36:
+                            $updateData['vatNumber'] = trim($value);
+                            break;
                         case 46:
                             $updateData['countryID'] = $value;
                             $updateData['supplierCountryID'] = $value;
@@ -183,12 +207,15 @@ class SupplierRegistrationService
                         case 75:
                             $updateData['supplier_group_id'] = $value ?? null;
                             break;
-
+                        case 76:
+                            $commonColumnNo['isSMEYN'] = trim($value);
+                            break;
                         default:
                             break;
                     }
                 }
-                SupplierMaster::where('supplierCodeSystem', $selectedSupplier)->update($updateData);
+                $supplierUpdate = array_merge($updateData, $commonColumnNo);
+                SupplierMaster::where('supplierCodeSystem', $selectedSupplier)->update($supplierUpdate);
                 SupplierAssigned::where('supplierCodeSytem', $selectedSupplier)->update($updateData);
                 return self::sendSuccessResponse('Supplier details updated successfully');
             });

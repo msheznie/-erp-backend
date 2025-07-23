@@ -1192,9 +1192,11 @@ class TenderMasterAPIController extends AppBaseController
                             }
 
                         }
-                        $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
-                        if (empty($technical) && !$rfq) {
-                            return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+                        if(!$rfq){
+                            $technicalExists = $this->tenderMasterRepository->checkTenderTechnicalCriteriaAdded($input['id'], $versionID, $editOrAmend);
+                            if(!$technicalExists['success']){
+                                return $technicalExists;
+                            }
                         }
 
                         if($input['tender_type_id'] == 2 || $input['tender_type_id'] == 3){

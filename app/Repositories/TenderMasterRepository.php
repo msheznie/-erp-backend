@@ -2499,4 +2499,18 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
         }
     }
+    public function checkTenderTechnicalCriteriaAdded($tenderMasterID, $versionID, $editOrAmend){
+        try{
+            $checkTechnicalExists = $editOrAmend ?
+                EvaluationCriteriaDetailsEditLog::getTenderTechnicalCriteria($tenderMasterID, 2, $versionID) :
+                EvaluationCriteriaDetails::getTenderTechnicalCriteria($tenderMasterID, 2);
+
+            if(empty($checkTechnicalExists)){
+                return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+            }
+            return ['success' => true, 'message' => 'Technical criteria has been added'];
+        } catch(\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+        }
+    }
 }

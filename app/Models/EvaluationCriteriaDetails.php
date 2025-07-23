@@ -289,4 +289,7 @@ class EvaluationCriteriaDetails extends Model
     public static function getParentEvaluationCriteria($parentID){
         return self::where('id', $parentID)->first();
     }
+    public static function getTenderTechnicalCriteria($tenderMasterID, $criteriaTypeID){
+        return self::where('tender_id', $tenderMasterID)->where('critera_type_id', $criteriaTypeID)->first();
+    }
 }
