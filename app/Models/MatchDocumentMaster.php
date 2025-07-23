@@ -12,7 +12,7 @@
  */
 namespace App\Models;
 
-use Eloquent as Model;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @SWG\Definition(
@@ -308,6 +308,19 @@ use Eloquent as Model;
  *          type="string"
  *      )
  * )
+ * @property string $companyID
+ * @property integer $companySystemID
+ * @property string $matchingDocdate
+ * @property string $narration
+ * @property integer $matchingType
+ * @property string $externalRef
+ * @property integer $PayMasterAutoId
+ * @property integer $documentSystemID
+ * @property integer $serviceLineSystemID
+ * @property integer $tableType
+ * @property integer $BPVsupplierID
+ * @property integer $supplierTransCurrencyID
+ * @property string $BPVcode
  */
 class MatchDocumentMaster extends Model
 {
@@ -318,6 +331,8 @@ class MatchDocumentMaster extends Model
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'matchDocumentMasterAutoID';
+
+    protected $appends = ['isFromApi'];
 
     public $fillable = [
         'PayMasterAutoId',
@@ -554,5 +569,22 @@ class MatchDocumentMaster extends Model
         return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'matchingDocID', 'matchDocumentMasterAutoID');
     }
 
+    public function documentSystemMapping()
+    {
+        return $this->hasMany(\App\Models\DocumentSystemMapping::class, 'documentId', 'matchDocumentMasterAutoID')
+                ->where('documentSystemId',70);
+    }
 
+
+    public function getIsFromApiAttribute()
+    {
+        $master = DocumentSystemMapping::where('documentSystemId',70)->where('documentId',$this->matchDocumentMasterAutoID)->first();
+
+        if($master)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }

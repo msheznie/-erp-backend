@@ -96,6 +96,10 @@ class ItemIssueMasterRepository extends BaseRepository
                   $q2->with(['employee' => function ($q3) {
                       $q3->with(['hr_emp']);
                   }]);
+              },'allocate_assets' => function($q4){
+                $q4->with(['asset' => function($q5){
+                    $q5->with(['category_by','sub_category_by']);
+                }]);
               }]);
         }, 'approved_by' => function ($query) {
             $query->with(['employee' => function ($q) {

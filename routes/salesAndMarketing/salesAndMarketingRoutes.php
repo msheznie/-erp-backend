@@ -92,6 +92,8 @@ Route::group([], function () {
     Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation')->name("Store delivery detail from sales quotation");
     Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO')->name("Get sales quotation detail for delivery order");
     Route::post('deliveryOrderValidateItem', 'DeliveryOrderDetailAPIController@validateDeliveryOrderItem')->name("Validate Delivery Order Item");
+    Route::post('amendDeliveryorderReview', 'DeliveryOrderAPIController@amendDeliveryorderReview')->name("Amend delivery order");
+
 });
 
 //Sales Return
@@ -179,5 +181,8 @@ Route::group([], function () {
     Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
     Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory')->name("Get SQ details history");
     Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate')->name("Download quotation item upload template");
+    Route::post('quotation/validate-item', 'QuotationDetailsAPIController@validateItem')->name("Validate quotation item");
+    Route::post('quotation/add-multiple-items', 'QuotationDetailsAPIController@addMultipleItems')->name("Add multiple items to quotation");
 
 });
+

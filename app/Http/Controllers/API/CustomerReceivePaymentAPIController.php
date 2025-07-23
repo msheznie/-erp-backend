@@ -188,6 +188,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID', 'employeeID'));
 
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
+
             $resultData = CustomerReceivePaymentService::createCustomerReceivePayment($input);
             if($resultData['status']){
                 DB::commit();
@@ -314,6 +321,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'employeeID','companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee','bank_info']);
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
@@ -1323,6 +1337,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank','bank_info']);
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 

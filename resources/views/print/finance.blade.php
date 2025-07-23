@@ -201,6 +201,28 @@
     </thead>
     <tbody>
         @foreach ($reportData as $header)
+        @if($accountType == 1 && $loop->first)
+            <tr>
+                <td><strong>Opening Balance</strong></td>
+                @if($firstLevel)
+                    <td></td>
+                @endif
+                @if($secondLevel)
+                    <td></td>
+                @endif
+                @if($thirdLevel)
+                    <td></td>
+                @endif
+                @if($fourthLevel)
+                    <td></td>
+                @endif
+                @foreach ($columns as $column)
+                    <td style="text-align:right">
+                        {{number_format($openingBalance[$column], $decimalPlaces)}}
+                    </td>
+                @endforeach
+            </tr>
+        @endif
         @if($header->hideHeader == 0)
         <tr>
             @if($header->itemType == 1 || $header->itemType == 4 || $header->itemType == 6)

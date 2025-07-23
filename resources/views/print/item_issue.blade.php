@@ -385,6 +385,56 @@
         </div>
         {{--<hr>--}}
     @endif
+
+    @if($isShowAllocatedAssetTable)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr style="background-color: #DEDEDE !important; border-color:#000">
+                    <th style="text-align: left; width: 15%">{{ __('custom.item_code') . " / " . __('custom.part_no') }}</th>
+                    <th style="text-align: left; width: 12.5%">{{ __('custom.item_description') }}</th>
+                    <th style="text-align: left; width: 12.5%">{{ __('custom.asset_id') }}</th>
+                    <th style="text-align: left; width: 12.5%">{{ __('custom.asset_name') }}</th>
+                    <th style="text-align: left; width: 12.5%">{{ __('custom.qty_issued') }}</th>
+                    <th style="text-align: left; width: 12.5%">{{ __('custom.uom') }}</th>
+                    <th>{{ __('custom.date_issued') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                    @foreach ($entity->details as $itemIndex => $item)
+                        @php $isFirstRow = true; @endphp
+                        @foreach($item->allocate_assets as $asset)
+                        <tr style="border-top: 2px solid #333 !important; border-bottom: 2px solid #333 !important;">
+                            <td style="padding-left: 5px">
+                                @if($isFirstRow)
+                                    {{ $item->itemPrimaryCode }}
+                                    @if(!empty($item->item_by->secondaryItemCode))
+                                        / {{ $item->item_by->secondaryItemCode }}
+                                    @endif
+                                @endif
+                            </td>
+                            <td style="padding: 0 5px;">
+                                @if($isFirstRow)
+                                    {{ $item->itemDescription }}
+                                @endif
+                            </td>
+                            <td style="padding: 0 5px;">{{ $asset->assetID }}</td>
+                            <td style="padding-left: 5px">{{ optional($asset->asset)->assetDescription }}</td>
+                            <td style="padding-right: 5px; text-align: right;">{{ $asset->allocation_qty }}</td>
+                            <td style="padding-left: 5px">{{ optional($item->uom_issuing)->UnitShortCode }}</td>
+                            <td style="padding-left: 5px">{{ \Carbon\Carbon::parse($asset->created_at)->format('d-m-Y') }}</td>
+                        </tr>
+                        @php $isFirstRow = false; @endphp
+                    @endforeach
+                        @if(!$loop->last && count($item->allocate_assets))
+                            <tr><td colspan="7">&nbsp;</td></tr>
+                        @endif
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
     <div class="row" style="margin-top: 60px;margin-left: -8px">
         <table>
             <tr width="100%">

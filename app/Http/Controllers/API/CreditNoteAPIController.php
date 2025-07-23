@@ -169,7 +169,13 @@ class CreditNoteAPIController extends AppBaseController
         $company = Company::select('CompanyID')->where('companySystemID', $input['companySystemID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-        /**/
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         if (isset($input['debitNoteAutoID'])) {
             $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
@@ -645,6 +651,13 @@ class CreditNoteAPIController extends AppBaseController
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
@@ -1947,9 +1960,13 @@ WHERE
                 return $this->sendError("Company details not found");
             }
 
-            CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            // Get tracking parameters from ThirdPartyApiLogger middleware
+            $externalReference = $request->get('external_reference');
+            $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
 
-            return $this->sendResponse([],"Credit note request has been successfully queued for processing!");
+            CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
+
+            return $this->sendResponse(['externalReference' => $externalReference],"Credit note request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format");

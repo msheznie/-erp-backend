@@ -210,6 +210,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500,
+                    ['type' => 'create']
+                );
+            }
+
             $conditions = [
                 'invoiceType' => 'required',
                 'paymentMode' => 'required',
@@ -411,6 +419,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
+
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
 
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
@@ -1354,6 +1369,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
+
+            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
+                return $this->sendError(
+                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    500
+                );
+            }
 
             $pvUpdateStatus = PaymentVoucherServices::updatePaymentVoucher($id, $input);
 
@@ -3952,9 +3974,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 return $this->sendError("Company details not found");
             }
 
-            CreatePaymentVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization);
+            // Get tracking parameters from ThirdPartyApiLogger middleware
+            $externalReference = $request->get('external_reference');
+            $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
 
-            return $this->sendResponse([],"Payment voucher request has been successfully queued for processing!");
+            CreatePaymentVoucher::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
+
+            return $this->sendResponse(['externalReference' => $externalReference],"Payment voucher request has been successfully queued for processing!");
         }
         else {
             return $this->sendError("Invalid Data Format");

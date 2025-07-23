@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'max_execution_limit' => \App\Http\Middleware\MaxExecutionLimit::class,
         'access_token' => \App\Http\Middleware\AccessToken::class,
         'thirdPartyApis' => \App\Http\Middleware\PosApi::class,
+        'thirdPartyApiLogger' => \App\Http\Middleware\ThirdPartyApiLogger::class,
         'print_lang' => \App\Http\Middleware\DetectPrintLang::class,
         'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,

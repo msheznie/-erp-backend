@@ -90,11 +90,15 @@ class TenantEnforce
             'api/v1/uploadBankStatement',
             'api/v1/payment-voucher',
             'api/v1/credit-note',
+            'api/v1/receipt-matching',
             'api/v1/chequeRegisterDetailSwitch',
             'api/v1/chequeRegisterDetailCancellation',
             'api/v1/supplierInvoiceDetailsAddAllItems',
             'api/v1/exportProcumentOrderMaster',
-            'api/v1/exportReportOpenRequest'
+            'api/v1/quotation/add-multiple-items',
+            'api/v1/exportReportOpenRequest',
+            'api/v1/exportTransactionsRecord',
+            'api/v1/validateWorkbookCreation'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

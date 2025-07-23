@@ -1262,7 +1262,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
         $isPVHasVAT = false;
 
-        if(PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId)->applyVAT)
+        if($matchDocumentMasterData->documentSystemID == 4 && PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId)->applyVAT)
         {
             $isPVHasVAT = true;
         }

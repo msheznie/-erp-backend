@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\helper\Helper;
 use Awobaz\Compoships\Compoships;
-use Eloquent as Model;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @SWG\Definition(

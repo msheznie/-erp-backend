@@ -211,6 +211,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
 
+        if (!\Helper::validateCurrencyRate($input['companyID'], $input['custTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+
         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
             $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
             if (!$wareHouse) {
@@ -365,6 +372,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
+
         $customerInvoiceDirect = CustomerInvoiceDirect::find($id);
 
         if (empty($customerInvoiceDirect)) {
@@ -398,6 +412,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function updateCurrency($id, UpdateCustomerInvoiceDirectAPIRequest $request)
     {
         $input = $request->all();
+
+        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+            return $this->sendError(
+                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                500
+            );
+        }
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);

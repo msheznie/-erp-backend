@@ -496,5 +496,8 @@ class ItemIssueDetails extends Model
     public function allocate_employees(){
         return $this->hasMany('App\Models\ExpenseEmployeeAllocation','documentDetailID','itemIssueDetailID');
     }
+    public function allocate_assets(){
+        return $this->hasMany('App\Models\ExpenseAssetAllocation','documentDetailID','itemIssueDetailID');
+    }
     
 }

@@ -384,7 +384,11 @@ SELECT
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
+	CASE 
+		WHEN erp_paysupplierinvoicemaster.invoiceType = 3 AND erp_paysupplierinvoicemaster.rcmActivated = 1 
+		THEN erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.retentionVatAmount
+		ELSE erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount
+	END AS DocumentValue,
 	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
@@ -892,11 +896,19 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
@@ -956,10 +968,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1004,7 +1024,11 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
+	CASE 
+		WHEN erp_paysupplierinvoicemaster.invoiceType = 3 AND erp_paysupplierinvoicemaster.rcmActivated = 1 
+		THEN erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.retentionVatAmount
+		ELSE erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount
+	END AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	employeesdepartments.approvalDeligated,
@@ -1013,10 +1037,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1071,10 +1103,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1129,10 +1169,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_grvmaster ON erp_grvmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1188,10 +1236,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_itemissuemaster ON erp_itemissuemaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1247,10 +1303,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_request ON erp_request.companySystemID = erp_documentapproved.companySystemID 
@@ -1302,10 +1366,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
 	INNER JOIN employees ON erp_bookinvsuppmaster.confirmedByEmpSystemID = employees.employeeSystemID
@@ -1361,10 +1433,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_itemreturnmaster ON erp_itemreturnmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1416,10 +1496,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchasereturnmaster ON erp_purchasereturnmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1473,10 +1561,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue 
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_stockadjustment ON erp_stockadjustment.companySystemID = erp_documentapproved.companySystemID 
@@ -1528,10 +1624,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_stocktransfer ON erp_stocktransfer.companySystemID = erp_documentapproved.companySystemID 
@@ -1583,10 +1687,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_stockreceive ON erp_stockreceive.companySystemID = erp_documentapproved.companySystemID 
@@ -1638,10 +1750,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_stockcount ON erp_stockcount.companySystemID = erp_documentapproved.companySystemID 
@@ -1693,10 +1813,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_bankrecmaster ON erp_bankrecmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -1748,10 +1876,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_paymentbanktransfer ON erp_paymentbanktransfer.companySystemID = erp_documentapproved.companySystemID 
@@ -1803,10 +1939,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_bankaccount ON erp_bankaccount.companySystemID = erp_documentapproved.companySystemID 
@@ -1859,10 +2003,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN currency_conversion_master ON currency_conversion_master.id = erp_documentapproved.documentSystemCode 
@@ -1911,10 +2063,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue 
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_debitnote ON erp_debitnote.companySystemID = erp_documentapproved.companySystemID 
@@ -1967,10 +2127,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.companySystemID = erp_documentapproved.companySystemID 
@@ -2024,10 +2192,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_delivery_order ON erp_delivery_order.companySystemID = erp_documentapproved.companySystemID 
@@ -2080,10 +2256,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN salesreturn ON salesreturn.companySystemID = erp_documentapproved.companySystemID 
@@ -2136,10 +2320,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue 
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_creditnote ON erp_creditnote.companySystemID = erp_documentapproved.companySystemID 
@@ -2191,10 +2383,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_quotationmaster ON erp_quotationmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2247,10 +2447,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_quotationmaster ON erp_quotationmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2303,10 +2511,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_jvmaster ON erp_jvmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2368,10 +2584,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.companySystemID = erp_documentapproved.companySystemID 
@@ -2422,10 +2646,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposalmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2476,10 +2708,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_budgetmaster ON erp_budgetmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2532,10 +2772,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_budgettransferform ON erp_budgettransferform.companySystemID = erp_documentapproved.companySystemID 
@@ -2586,10 +2834,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_budgetaddition ON erp_budgetaddition.companySystemID = erp_documentapproved.companySystemID 
@@ -2640,10 +2896,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_fa_fa_asset_transfer ON erp_fa_fa_asset_transfer.company_id = erp_documentapproved.companySystemID 
@@ -2694,10 +2958,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.companySystemID = erp_documentapproved.companySystemID 
@@ -2750,10 +3022,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_customerreceivepayment ON erp_customerreceivepayment.companySystemID = erp_documentapproved.companySystemID
@@ -2805,10 +3085,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN itemmaster ON itemmaster.primaryCompanySystemID = erp_documentapproved.companySystemID 
 	AND itemmaster.documentSystemID = erp_documentapproved.documentSystemID 
@@ -2858,10 +3146,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN customermaster ON erp_documentapproved.documentSystemCode = customerCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
@@ -2910,10 +3206,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN serviceline ON erp_documentapproved.documentSystemCode = serviceline.serviceLineSystemID AND erp_documentapproved.rollLevelOrder = serviceline.RollLevForApp_curr
@@ -2961,10 +3265,18 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' as srmValue
 FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN chartofaccounts ON erp_documentapproved.documentSystemCode = chartOfAccountSystemID AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
@@ -3012,10 +3324,18 @@ FROM
 		'' as srmValue
 	FROM
 		erp_documentapproved
+		INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+		AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 		INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 		AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 		AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 		AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+		AND (
+			(companydocumentattachment.isServiceLineApproval = -1 
+				AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+			OR companydocumentattachment.isServiceLineApproval IS NULL
+			OR companydocumentattachment.isServiceLineApproval != -1
+		)
 		INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 		INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID 
 		INNER JOIN suppliermaster ON erp_documentapproved.documentSystemCode = supplierCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
@@ -3076,10 +3396,18 @@ FROM
 	spr.uuid AS srmValue 
 FROM
 	`erp_documentapproved`
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN `employeesdepartments` ON `erp_documentapproved`.`companySystemID` = `employeesdepartments`.`companySystemID`
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND `erp_documentapproved`.`documentSystemID` = `employeesdepartments`.`documentSystemID` 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID 
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	)
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN srm_supplier_registration_link spr ON erp_documentapproved.documentSystemCode = spr.id  AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr 
 WHERE
@@ -3128,10 +3456,18 @@ WHERE
 	tm.id AS srmValue 
 	FROM 
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN `employeesdepartments` ON `erp_documentapproved`.`companySystemID` = `employeesdepartments`.`companySystemID`
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND `erp_documentapproved`.`documentSystemID` = `employeesdepartments`.`documentSystemID` 
-	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	) 
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees em ON erp_documentapproved.docConfirmedByEmpSystemID = em.employeeSystemID 
 		INNER JOIN srm_tender_master tm ON erp_documentapproved.documentSystemCode = id AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
@@ -3176,10 +3512,18 @@ WHERE
 	'' as srmValue
     FROM
 	erp_documentapproved
+	INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	) 
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN recurring_voucher_setup ON recurring_voucher_setup.companySystemID = erp_documentapproved.companySystemID 

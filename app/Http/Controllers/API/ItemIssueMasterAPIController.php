@@ -1310,15 +1310,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $isShowAllocatedEmployeeTable = false;
+        $isShowAllocatedAssetTable = false;
 
         foreach ($materielIssue->details as $detail) {
             if (count($detail->allocate_employees) > 0) {
                 $isShowAllocatedEmployeeTable = true;
             }
+
+            if (count($detail->allocate_assets) > 0) {
+                $isShowAllocatedAssetTable = true;
+            }
         }
 
         $array = array(
             'isShowAllocatedEmployeeTable' => $isShowAllocatedEmployeeTable,
+            'isShowAllocatedAssetTable' => $isShowAllocatedAssetTable,
             'entity' => $materielIssue
         );
         $time = strtotime("now");

@@ -3766,6 +3766,8 @@ class Helper
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         }
                     } else {
+
+
                         if ($trasToRptER > 1) {
                             $reportingAmount = $transactionAmount * $trasToRptER;
                         } else {
@@ -5491,7 +5493,10 @@ class Helper
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
                                         $consoleJVData = [
-                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'data' => [
+                                                'docData' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                                'from' => "AFTER_GRV_VOUCHER",
+                                            ],
                                             'type' => "INTER_ASSET_DISPOSAL"
                                         ];
 
@@ -5509,6 +5514,23 @@ class Helper
 
                                         CreateConsoleJV::dispatch($receiptData);
                                     }
+                                }
+
+                                if ($input["documentSystemID"] == 4 || $input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    $consoleJVData = [
+                                        'data' => [
+                                            'docData' => $sourceData,
+                                            'from' => $input["documentSystemID"] == 4 ? "AFTER_PAYMENT_VOUCHER" : "AFTER_RECEIPT_VOUCHER",
+                                        ],
+                                        'type' => "STOCK_TRANSFER"
+                                    ];
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
+
+                                    $consoleJVData['type'] = "INTER_ASSET_DISPOSAL";
+
+                                    CreateConsoleJV::dispatch($consoleJVData);
                                 }
                             }
 
@@ -6356,7 +6378,7 @@ class Helper
                     $docInforArr["modelName"] = 'SegmentMaster';
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
-                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
@@ -6435,7 +6457,7 @@ class Helper
 
                 if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($docModal[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot reject!'];
                     }
                 }
 
@@ -7284,6 +7306,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'rptCurrencyER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'currencyER';
+                break;
+            case 20:
+                $docInforArr["modelName"] = 'CustomerInvoice';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -10090,11 +10123,20 @@ class Helper
                 $percentage = $invmaster->supplier->tax->whtPercentage;
             }
 
-            $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
-            if( $invmaster->supplier->whtApplicableYN == 1)
+            if(isset($invmaster->supplier))
             {
-                $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                $isWHTApplicableSupplier = $invmaster->supplier->whtApplicableYN == 1?true:false;
+                if($isWHTApplicableSupplier)
+                {
+                    $isWHTApplicableSupplier = $invmaster->whtApplicableYN == 1?true:false;
+                }
             }
+            else
+            {
+                $isWHTApplicableSupplier = false;
+            }
+
+          
 
             $whtTotalAmountDirect = 0;
 
@@ -10246,5 +10288,25 @@ class Helper
         return collect($data_array)->pluck('id')->filter()->values()->all();
     }
 
+    public static function validateCurrencyRate($companyId, $transactionCurrencyId)
+    {
+        $company = Models\Company::find($companyId);
+
+        if (!$company) {
+            return false;
+        }
+
+        $localRate = Models\CurrencyConversion::where([
+            ['masterCurrencyID', '=', $transactionCurrencyId],
+            ['subCurrencyID', '=', $company->localCurrencyID]
+        ])->value('conversion');
+
+        $reportingRate = Models\CurrencyConversion::where([
+            ['masterCurrencyID', '=', $transactionCurrencyId],
+            ['subCurrencyID', '=', $company->reportingCurrency]
+        ])->value('conversion');
+
+        return $localRate > 0 && $reportingRate > 0;
+    }
 
 }

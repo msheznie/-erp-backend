@@ -661,4 +661,85 @@ class CreateExcel
         }
         return $path;
     }
+
+    public static function processPRDetailExport($data,$companyCode) 
+    {
+        $excel_content = \Excel::create('pr_details_export', function($excel) use ($data) {
+            $excel->sheet('Sheet1', function($sheet) use ($data) {
+                $sheet->setStyle([
+                    'font' => [
+                        'name' => 'Calibri',
+                        'size' => 11,
+                    ]
+                ]);
+
+                $rowNum = 1;
+                  
+                $sheet->setAutoSize(true);
+
+
+                $columnWidths = [
+                    'A' => 25.80,
+                    'B' => 12.80, 
+                    'C' => 13, 
+                    'D' => 13, 
+                    'E' => 13, 
+                    'F' => 13, 
+                    'G' => 13, 
+                    'H' => 15.80, 
+                    'I' => 15.80, 
+                    'J' => 13, 
+                    'K' => 13, 
+                    'L' => 13, 
+                ];
+
+                foreach ($columnWidths as $col => $width) {
+                    $sheet->setWidth($col, $width);
+                }
+
+                $maxColumns = 0;
+                foreach ($data as $row) {
+                    $maxColumns = max($maxColumns, count($row));
+                }
+
+                foreach ($data as $row) {
+                    $isHeader = isset($row['IsHeader']) ? $row['IsHeader'] : false;
+                    unset($row['IsHeader']);
+                    $paddedRow = array_pad($row, $maxColumns, '');
+                    $sheet->appendRow($paddedRow);
+                    
+                    if ($isHeader) {
+                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) {
+                            $cells->setFont([
+                                'bold' => true,
+                                'size' => 12,
+                                'name' => 'Calibri'
+                            ]);
+                        });
+                    }
+
+                    $rowNum++;
+                }
+            });
+        })->string('xlsx');
+
+        $disk = 's3';
+        $fileName = 'PR_detail_export';
+        $path_dir='procurement/purchase_order/excel/';
+        $type='xlsx';
+
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+        $path = $companyCode.'/'.$path_dir.$full_name;
+        $result = Storage::disk($disk)->put($path, $excel_content);
+        $basePath = '';
+        if($result)
+        {
+            if (Storage::disk($disk)->exists($path))
+            {
+                $basePath = \Helper::getFileUrlFromS3($path);
+            }
+        }
+        return $path;
+    }
 }

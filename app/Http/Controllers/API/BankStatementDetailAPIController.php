@@ -295,4 +295,19 @@ class BankStatementDetailAPIController extends AppBaseController
 
         return $this->sendSuccess('Bank Statement Detail deleted successfully');
     }
+
+    public function moveStatementMatchDetail(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementDetailId' => 'required',
+            'matchTypeId' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        $updateMatchType = $this->bankStatementDetailRepository->updateMatchType($input);
+        return $this->sendResponse($updateMatchType, 'Match type updated successfully');
+    }
 }
