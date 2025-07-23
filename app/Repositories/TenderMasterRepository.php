@@ -1974,6 +1974,7 @@ class TenderMasterRepository extends BaseRepository
                     : SrmTenderBudgetItem::getTenderBudgetItemForAmd($tenderID)->pluck('item_id')->toArray();
 
                 $newItemIDs = array_column($budgetItemList, 'id');
+                $toInsert = array_diff($newItemIDs, $existingItems);
                 $itemsToDelete = array_diff($existingItems, $newItemIDs);
 
                 if (!empty($itemsToDelete)) {
@@ -1991,6 +1992,10 @@ class TenderMasterRepository extends BaseRepository
                 }
 
                 foreach ($budgetItemList as $pr) {
+                    if (!in_array($pr['id'], $toInsert)) {
+                        continue;
+                    }
+
                     $itemID = $pr['id'];
                     $existingBudgetItem = $editOrAmend
                         ? TenderBudgetItemEditLog::getExistingBudgetItem($itemID, $tenderID, $versionID)
@@ -2014,16 +2019,7 @@ class TenderMasterRepository extends BaseRepository
                         $data['id']         = null;
                         $data['version_id'] = $versionID;
                         $data['level_no']   = 1;
-
-                        TenderBudgetItemEditLog::updateOrCreate(
-                            [
-                                'item_id'    => $itemID,
-                                'tender_id'  => $tenderID,
-                                'version_id' => $versionID,
-                                'is_deleted' => 0
-                            ],
-                            $data
-                        );
+                        TenderBudgetItemEditLog::create($data);
                     } else {
                         SrmTenderBudgetItem::updateOrCreate(
                             ['item_id' => $itemID, 'tender_id' => $tenderID],
