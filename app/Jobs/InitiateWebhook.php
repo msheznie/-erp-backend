@@ -260,9 +260,9 @@ class InitiateWebhook implements ShouldQueue
 
             case 'Custom Headers':
                 $customHeaders = json_decode($webhookConfig['webhook_security'] ?? '{}', true);
-                if (is_array($customHeaders)) {
-                    foreach ($customHeaders as $key => $value) {
-                        $headers[$key] = $value;
+                if (isset($customHeaders['headers'])) {
+                   foreach ($customHeaders['headers'] as $header) {
+                        $headers[$header['name']] = $header['value'];
                     }
                 }
                 break;
