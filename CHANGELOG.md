@@ -1,6 +1,51 @@
 # Changelog
 
 
+## [10.76.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.75.0...v10.76.0) (2025-07-23)
+
+
+### Features
+
+* **accounts receivable:** API for Receipt Matching Creation [GCP-8390] ([#8328](https://github.com/pbsgears/Gears_BackEnd/issues/8328)) ([5a66cc8](https://github.com/pbsgears/Gears_BackEnd/commit/5a66cc8d16d20a5db2da07d7f3f04843360c0d71))
+* **accounts receivable:** API for Receipt Matching Creation [GCP-8390] ([#8334](https://github.com/pbsgears/Gears_BackEnd/issues/8334)) ([8967566](https://github.com/pbsgears/Gears_BackEnd/commit/89675664cafd71170739642d725d84ea94469b29))
+* **accounts-payable:** total amount when rcm is active is handled [GCP-8379] ([#8323](https://github.com/pbsgears/Gears_BackEnd/issues/8323)) ([93024d1](https://github.com/pbsgears/Gears_BackEnd/commit/93024d1a2bb5b9e574c41883f2849de2d13712cd))
+* api log for thirdparty api [GCP-7868] ([#8342](https://github.com/pbsgears/Gears_BackEnd/issues/8342)) ([e62dd67](https://github.com/pbsgears/Gears_BackEnd/commit/e62dd67836e6dc13ef30792a8656df6bf622d4ea))
+* **asset management:** Multiple cat selection in Asset tracking report [GCP-8381] ([#8339](https://github.com/pbsgears/Gears_BackEnd/issues/8339)) ([13d75ac](https://github.com/pbsgears/Gears_BackEnd/commit/13d75ac6b2ecead3c9bd51b38ec61c6e92a798ea))
+* **common:** Elimination Auto JV Configuration [GCP-8369] ([#8340](https://github.com/pbsgears/Gears_BackEnd/issues/8340)) ([7e17a1e](https://github.com/pbsgears/Gears_BackEnd/commit/7e17a1e5224c0f082113c3c806bb70eff8b9a3f8))
+* **general ledger:** tax details details level vat , retention amount added [GCP-8370] ([#8338](https://github.com/pbsgears/Gears_BackEnd/issues/8338)) ([06438af](https://github.com/pbsgears/Gears_BackEnd/commit/06438af86824d54114e9b214e7f5950b82a87c77))
+* **group report:** consolidation balance sheet report opening balance configuration [GCP-7933] ([#8378](https://github.com/pbsgears/Gears_BackEnd/issues/8378)) ([b86bfe1](https://github.com/pbsgears/Gears_BackEnd/commit/b86bfe18a0d41df30ed31d98d3a1ce454e85acd0))
+* **inventory:** Changes in MI print & Print preview [GCP-8081] ([#8368](https://github.com/pbsgears/Gears_BackEnd/issues/8368)) ([081f00c](https://github.com/pbsgears/Gears_BackEnd/commit/081f00c303bbd11bcacaeb00654dc18c23980ed1))
+* **inventory:** material issue asset allocation issue details ,inventory details add [GCP-8045] ([#8347](https://github.com/pbsgears/Gears_BackEnd/issues/8347)) ([0639d15](https://github.com/pbsgears/Gears_BackEnd/commit/0639d150446913784fe7705cafdc4ee39bb03629))
+* **procument:** open request notification [GCP-5726] ([#8324](https://github.com/pbsgears/Gears_BackEnd/issues/8324)) ([33b0002](https://github.com/pbsgears/Gears_BackEnd/commit/33b0002446e7f13eec346a7543af9235109e1959))
+* **procurement:** Estimated Unit Cost column in the PR Print [GCP-8074] ([#8330](https://github.com/pbsgears/Gears_BackEnd/issues/8330)) ([a6dd5d9](https://github.com/pbsgears/Gears_BackEnd/commit/a6dd5d963947100779b49b1854d15ee8465c0417))
+* **procurement:** Exporting Purchase Request [GCP-6386] ([#8326](https://github.com/pbsgears/Gears_BackEnd/issues/8326)) ([060b432](https://github.com/pbsgears/Gears_BackEnd/commit/060b432b0ef634cf8abbc6ea3cc76bb72a4b33bc))
+* **sales & marketing:** Delivery order review option [GCP-5845] ([#8317](https://github.com/pbsgears/Gears_BackEnd/issues/8317)) ([5455ec6](https://github.com/pbsgears/Gears_BackEnd/commit/5455ec62f8b7586f71c3b10e5ffcd6f4bedd1a16))
+* **sales&Marketing:** add multiple items option on sales order and quoatation [GCP-8044] ([#8322](https://github.com/pbsgears/Gears_BackEnd/issues/8322)) ([3b88edb](https://github.com/pbsgears/Gears_BackEnd/commit/3b88edb99c805fbde3fee4b4c3fa8167abfa4142))
+* **treasury management:** Added worksheet auto matching [GCP-8226] ([#8359](https://github.com/pbsgears/Gears_BackEnd/issues/8359)) ([f2beb52](https://github.com/pbsgears/Gears_BackEnd/commit/f2beb52521d33c9eb7c5815fe958544f47f129d3))
+* **treasury management:** Added Worksheet for bank reconciliation [GCP-6590] ([#8312](https://github.com/pbsgears/Gears_BackEnd/issues/8312)) ([ba4d295](https://github.com/pbsgears/Gears_BackEnd/commit/ba4d295a0255c6620f1c3208151fe8e02578f8b3))
+
+
+### Bug Fixes
+
+* **accounsts payable:** Alignment excel Issue in Supplier aging report [GCP-8750] ([#8329](https://github.com/pbsgears/Gears_BackEnd/issues/8329)) ([f59b6c8](https://github.com/pbsgears/Gears_BackEnd/commit/f59b6c80a63632de1765bb7a848c6f9d199c39c0))
+* **accounts payable:** Employee aging mismatch [GCP-8365] ([#8281](https://github.com/pbsgears/Gears_BackEnd/issues/8281)) ([c5ac167](https://github.com/pbsgears/Gears_BackEnd/commit/c5ac1675ffeae110bfef227cf1020e6ca9e09d78))
+* **accounts payable:** other companies created GL allowed for payment voucher API [GCP-8534] ([#8345](https://github.com/pbsgears/Gears_BackEnd/issues/8345)) ([db4b6df](https://github.com/pbsgears/Gears_BackEnd/commit/db4b6dfa1271a0347d8c3d89997242e114d66e0d))
+* **accounts payable:** Prevent error when supplier relationship in WHT is missing on invoice master [GCP-8223] ([#8333](https://github.com/pbsgears/Gears_BackEnd/issues/8333)) ([5a5c1f0](https://github.com/pbsgears/Gears_BackEnd/commit/5a5c1f0430e9118bc6ae7f75b1b56c361c6237a9))
+* **accounts payable:** SI print preview vat , vat report issue fixes [GCP-8701] ([#8305](https://github.com/pbsgears/Gears_BackEnd/issues/8305)) ([76969ec](https://github.com/pbsgears/Gears_BackEnd/commit/76969ec18539e145874909c68d012e75acf53559))
+* **accounts payable:** supplier aging summary report issue fixes [GCP-8450] ([#8337](https://github.com/pbsgears/Gears_BackEnd/issues/8337)) ([02699bb](https://github.com/pbsgears/Gears_BackEnd/commit/02699bbc0596f9962cc388a050616c41fd264d11))
+* **accounts payable:** supplier invoice print preview changes [GCP-8323] ([#8298](https://github.com/pbsgears/Gears_BackEnd/issues/8298)) ([49fef83](https://github.com/pbsgears/Gears_BackEnd/commit/49fef83a311ade411b2199601b161cbdd23657c8))
+* **accounts payable:** system not allowing to select the supplier invoice [GCP-9184S] ([#8395](https://github.com/pbsgears/Gears_BackEnd/issues/8395)) ([c331238](https://github.com/pbsgears/Gears_BackEnd/commit/c331238b723f5b7a03f5be3285ee260821c09183))
+* **accounts payable:** Unable to confirm Supplier PO invoice [GCP-8420] ([#8400](https://github.com/pbsgears/Gears_BackEnd/issues/8400)) ([14f011e](https://github.com/pbsgears/Gears_BackEnd/commit/14f011ec81a9fb01404e609e1afefa8bfe8d96c0))
+* **accounts payable:** unable to make advanced payment issue fixes [GCP-8122] ([#8302](https://github.com/pbsgears/Gears_BackEnd/issues/8302)) ([57fe3cb](https://github.com/pbsgears/Gears_BackEnd/commit/57fe3cb646df98dfd5823375fd74412709549b03))
+* **accounts receivable:** Customer ledger excel export error fixed [GCP-8273] ([#8371](https://github.com/pbsgears/Gears_BackEnd/issues/8371)) ([69884b1](https://github.com/pbsgears/Gears_BackEnd/commit/69884b106e91420fc4f44f15239bee9f995e84c1))
+* **accounts receivable:** Fix sentry issue in credit-note API [GCP-8407] ([#8332](https://github.com/pbsgears/Gears_BackEnd/issues/8332)) ([01c3676](https://github.com/pbsgears/Gears_BackEnd/commit/01c3676b88a0bef6bf6cdc597d1bee42cebdb32b))
+* **common:** Currency exchange rate division by zero issue fixes [GCP-8400] ([#8382](https://github.com/pbsgears/Gears_BackEnd/issues/8382)) ([128d2e4](https://github.com/pbsgears/Gears_BackEnd/commit/128d2e45da6decc256c91dc5257fa630eabdc9a4))
+* **common:** Document Approval issue [GCP-8284] ([#8292](https://github.com/pbsgears/Gears_BackEnd/issues/8292)) ([1d1854f](https://github.com/pbsgears/Gears_BackEnd/commit/1d1854f15785c6532649f93df18c575a15fadb39))
+* **inventory:** Trying to get property 'financeGLcodebBS' of non-object [GCP-9168] ([#8391](https://github.com/pbsgears/Gears_BackEnd/issues/8391)) ([ac75a88](https://github.com/pbsgears/Gears_BackEnd/commit/ac75a88190a105ac3034268286021376cec11d04))
+* **procurement:** Fix sentry issue [GCP-8225] ([#8331](https://github.com/pbsgears/Gears_BackEnd/issues/8331)) ([56bfbe8](https://github.com/pbsgears/Gears_BackEnd/commit/56bfbe839e05a46b84c15fae54cfb12595be97ba))
+* **sales & marketing:** Add validation for delivery orde3r update [GCP-8272] ([#8344](https://github.com/pbsgears/Gears_BackEnd/issues/8344)) ([9a7601a](https://github.com/pbsgears/Gears_BackEnd/commit/9a7601ae749fa7c005c8ca08848cc677cb184889))
+* **system-admin:** fix the issue in rejecting segemnt [GCP-8540] ([9f729a1](https://github.com/pbsgears/Gears_BackEnd/commit/9f729a102d579d6431e80605b485cdff38942698))
+
 ## [10.75.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.74.0...v10.75.0) (2025-07-18)
 
 
