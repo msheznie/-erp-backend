@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [10.77.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.76.0...v10.77.0) (2025-07-24)
+
+
+### Features
+
+* **Attendance:** HRMS | POMCO | Absent Notification for cross day [GHR-5375] ([#8410](https://github.com/pbsgears/Gears_BackEnd/issues/8410)) ([6ae506e](https://github.com/pbsgears/Gears_BackEnd/commit/6ae506e46b2d9e73be4014c5db5be05e40f9a3fe))
+* **Attendance:** HRMS | POMCO | New Shift Module | Attendance | Absent Notification [GHR-4917]  ([#8380](https://github.com/pbsgears/Gears_BackEnd/issues/8380)) ([8da53f5](https://github.com/pbsgears/Gears_BackEnd/commit/8da53f56dbf39b7a551f5a967ccdcb06a9ffcb17))
+
 ## [10.76.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.75.0...v10.76.0) (2025-07-23)
 
 
