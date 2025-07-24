@@ -6,7 +6,7 @@ use App\Models\Employee;
 use App\Models\NotificationCompanyScenario;
 use App\Models\NotificationScenarios;
 use App\Models\NotificationUserDayCheck;
-// use App\helper\ShiftPeriodEndtNotificationService;
+use App\Models\NotificationHourSetup;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -299,6 +299,7 @@ class NotificationService
         ];
         $sendEmail = \Email::sendEmailErp($emails);
         return $sendEmail;
+
     }
 
     public static function get_filter_date($type, $days){
@@ -357,4 +358,12 @@ class NotificationService
             ->get();        
     }
 
+    public static function getHours($companyScenarioId)
+    {
+        $result = NotificationHourSetup::where('company_scenario_id', $companyScenarioId)
+            ->where('before_after', 2)
+            ->value('hours');
+
+        return empty($result) ? '' : $result;
+    }
 }
