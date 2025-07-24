@@ -589,9 +589,9 @@ class SrmTenderEditAmendService
     public static function getPreBidClarificationMethodtype($type): string{
         switch($type){
             case 0:
-                return 'Online';
-            case 1 :
                 return 'Offline';
+            case 1 :
+                return 'Online';
             case 2 :
                 return 'Both';
             default:
