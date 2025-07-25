@@ -2283,10 +2283,14 @@ class TenderMasterAPIController extends AppBaseController
         $rfx = isset($request['rfq']) ? true : false;
         $fromTime = ($request['from_time']) ? new Carbon($request['from_time']) : null;
         $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
+        $versionID = $request['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
-        $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-            ->where('tender_id', $request['tenderMasterId'])
-            ->first();
+        $calendarDateValid = $this->tenderMasterRepository->getCalendarDateData($request, $versionID, $editOrAmend);
+        if(!$calendarDateValid['success']){
+            return $this->sendError($calendarDateValid['message']);
+        }
+        $calendarDatesDetail = $calendarDateValid['data'];
 
         if (!isset($request['from_time'])) {
             $fromTime = new Carbon($calendarDatesDetail->from_time);
@@ -2344,25 +2348,20 @@ class TenderMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                ->where('tender_id', $request['tenderMasterId'])
-                ->first();
-
-            if (empty($calendarDatesDetail)) {
-                return $this->sendError('Calendar Date Type not found');
-            }
-
             if (isset($request['time_changed']) && $request['time_changed']) {
                 if ($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
 
-                    $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                        ->where('tender_id', $request['tenderMasterId'])
-                        ->first();
-                    $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);
+                    $calenderDates =  $editOrAmend ?
+                        CalendarDatesDetailEditLog::find($calendarDatesDetail->amd_id) :
+                        CalendarDatesDetail::find($calendarDatesDetail->id);
                     $calenderDates->update($data);
 
-                    $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                    $tenderMasterData = $this->tenderMasterRepository->getTenderData($request, $versionID, $editOrAmend);
+                    if(!$tenderMasterData['success']){
+                        return $this->sendError($tenderMasterData['message']);
+                    }
+                    $tenderMaster = $tenderMasterData['data'];
+
                     if($calendarDatesDetail->is_default == 1){
                         $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
                         $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];
@@ -2379,13 +2378,17 @@ class TenderMasterAPIController extends AppBaseController
                     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
                 }
             } else {
-                $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                    ->where('tender_id', $request['tenderMasterId'])
-                    ->first();
-                $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);
+                $calenderDates =  $editOrAmend ?
+                    CalendarDatesDetailEditLog::find($calendarDatesDetail->amd_id) :
+                    CalendarDatesDetail::find($calendarDatesDetail->id);
                 $calenderDates->update($data);
 
-                $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                $tenderMasterData = $this->tenderMasterRepository->getTenderData($request, $versionID, $editOrAmend);
+                if(!$tenderMasterData['success']){
+                    return $this->sendError($tenderMasterData['message']);
+                }
+                $tenderMaster = $tenderMasterData['data'];
+
                 if($calendarDatesDetail->is_default == 1){
                     $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
                     $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];

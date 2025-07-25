@@ -2509,4 +2509,31 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
         }
     }
+    public function getCalendarDateData($input, $versionID, $editOrAmend){
+        try {
+            $calendarDateDetail = $editOrAmend ?
+                CalendarDatesDetailEditLog::getCalendarDateDetailForAmd($input['tenderMasterId'], $input['companyID'], $input['calenderDateTypeId'], $versionID) :
+                CalendarDatesDetail::getCalendarDateDetail($input['tenderMasterId'], $input['companyID'], $input['calenderDateTypeId']);
+            if(empty($calendarDateDetail)){
+                return ['success' => false, 'message' => 'Calendar Date Type not found', 'data' => []];
+            }
+            return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $calendarDateDetail];
+        } catch (\Exception $ex){
+            return ['success' => false, 'message' => 'Unexpected Error: '. $ex->getMessage(), 'data' => []];
+        }
+    }
+    public static function getTenderData($request, $versionID, $editOrAmend)
+    {
+        try {
+            $tenderMaster = $editOrAmend ?
+                SrmTenderMasterEditLog::tenderMasterHistory($request['tenderMasterId'], $versionID):
+                TenderMaster::getTenderMasterData($request['tenderMasterId']);
+            if(empty($tenderMaster)){
+                return ['success' => false, 'message' => 'Tender record not found'];
+            }
+            return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $tenderMaster];
+        }  catch(\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+        }
+    }
 }

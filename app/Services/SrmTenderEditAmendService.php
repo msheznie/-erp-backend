@@ -55,7 +55,11 @@ class SrmTenderEditAmendService
                     'site_visit_date', 'site_visit_end_date', 'bid_submission_opening_date', 'bid_submission_closing_date', 'bid_opening_date', 'bid_opening_end_date',
                     'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date', 'commerical_bid_closing_date', 'confirmed_by_emp_system_id',
                     'id', 'uuid', 'tender_type_id', 'created_by', 'updated_by', 'company_id', 'document_system_id', 'document_id', 'tender_code', 'serial_number', 'confirmed_yn',
-                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at'
+                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at', 'combined_ranking_status',
+                    'is_awarded', 'award_comment', 'commercial_ranking_comment', 'final_tender_award_comment', 'final_tender_awarded', 'final_tender_award_email',
+                    'award_commite_mem_status', 'final_tender_comment_status', 'negotiation_serial_no', 'negotiation_code', 'is_negotiation_closed',
+                    'negotiation_commercial_ranking_line_item_status', 'negotiation_commercial_ranking_comment', 'negotiation_combined_ranking_status',
+                    'negotiation_award_comment', 'negotiation_is_awarded', 'tender_award_commite_mem_status',
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => 'Commercial Criteria Passing Weightage',
                     'technical_passing_weightage' => 'Technical Criteria Passing Weightage',
@@ -140,7 +144,11 @@ class SrmTenderEditAmendService
                     'envelop_type_id', 'evaluation_type_id', 'stage', 'no_of_alternative_solutions', 'commercial_weightage', 'technical_weightage', 'is_active_go_no_go',
                     'min_approval_bid_opening', 'confirmed_by_emp_system_id', 'budget_document', 'id', 'uuid', 'tender_type_id', 'created_by',
                     'updated_by', 'company_id', 'document_system_id', 'document_id', 'tender_code', 'serial_number', 'confirmed_yn',
-                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at'
+                    'approved', 'approved_date', 'approved_by_user_system_id', 'RollLevForApp_curr', 'approved_by_emp_name', 'published_yn', 'published_at', 'combined_ranking_status',
+                    'is_awarded', 'award_comment', 'commercial_ranking_comment', 'final_tender_award_comment', 'final_tender_awarded', 'final_tender_award_email',
+                    'award_commite_mem_status', 'final_tender_comment_status', 'negotiation_serial_no', 'negotiation_code', 'is_negotiation_closed',
+                    'negotiation_commercial_ranking_line_item_status', 'negotiation_commercial_ranking_comment', 'negotiation_combined_ranking_status',
+                    'negotiation_award_comment', 'negotiation_is_awarded', 'tender_award_commite_mem_status'
                 ],
                 'fieldDescriptions' => [
                     'title' => 'Title', 'title_sec_lang' => 'Title in Secondary', 'description' => 'Description', 'description_sec_lang' => 'Description in Secondary',
