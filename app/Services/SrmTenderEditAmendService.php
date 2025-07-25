@@ -59,7 +59,11 @@ class SrmTenderEditAmendService
                     'is_awarded', 'award_comment', 'commercial_ranking_comment', 'final_tender_award_comment', 'final_tender_awarded', 'final_tender_award_email',
                     'award_commite_mem_status', 'final_tender_comment_status', 'negotiation_serial_no', 'negotiation_code', 'is_negotiation_closed',
                     'negotiation_commercial_ranking_line_item_status', 'negotiation_commercial_ranking_comment', 'negotiation_combined_ranking_status',
-                    'negotiation_award_comment', 'negotiation_is_awarded', 'tender_award_commite_mem_status',
+                    'negotiation_award_comment', 'negotiation_is_awarded', 'tender_award_commite_mem_status', 'doc_verifiy_date', 'commercial_verify_at',
+                    'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
+                    'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
+                    'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
+                    'technical_eval_status'
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => 'Commercial Criteria Passing Weightage',
                     'technical_passing_weightage' => 'Technical Criteria Passing Weightage',
@@ -87,7 +91,10 @@ class SrmTenderEditAmendService
             'Bid Minimum Approval Details' => [
                 'sectionId' => '1.1',
                 'modelName' => SrmTenderBidEmployeeDetailsEditLog::class,
-                'skippedFields' => ['amd_id', 'id', 'tender_id', 'tender_edit_version_id', 'modify_type', 'updated_by', 'level_no', 'is_deleted'],
+                'skippedFields' => [
+                    'amd_id', 'id', 'commercial_eval_remarks', 'commercial_eval_status', 'modify_type', 'remarks', 'status',
+                    'tender_award_commite_mem_comment', 'tender_award_commite_mem_status', 'tender_edit_version_id', 'tender_id', 'updated_by', 'level_no', 'is_deleted',
+                ],
                 'fieldDescriptions' => ['emp_id' => 'Employee'],
                 'fieldMappings' => [
                     'emp_id' => [
@@ -148,7 +155,11 @@ class SrmTenderEditAmendService
                     'is_awarded', 'award_comment', 'commercial_ranking_comment', 'final_tender_award_comment', 'final_tender_awarded', 'final_tender_award_email',
                     'award_commite_mem_status', 'final_tender_comment_status', 'negotiation_serial_no', 'negotiation_code', 'is_negotiation_closed',
                     'negotiation_commercial_ranking_line_item_status', 'negotiation_commercial_ranking_comment', 'negotiation_combined_ranking_status',
-                    'negotiation_award_comment', 'negotiation_is_awarded', 'tender_award_commite_mem_status'
+                    'negotiation_award_comment', 'negotiation_is_awarded',  'tender_award_commite_mem_status', 'doc_verifiy_date', 'commercial_verify_at',
+                    'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
+                    'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
+                    'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
+                    'technical_eval_status'
                 ],
                 'fieldDescriptions' => [
                     'title' => 'Title', 'title_sec_lang' => 'Title in Secondary', 'description' => 'Description', 'description_sec_lang' => 'Description in Secondary',
