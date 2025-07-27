@@ -144,7 +144,7 @@ class BankStatementMasterRepository extends BaseRepository
         $decimalPlaces = BankAccount::with('currency')->where('bankAccountAutoID', $statementDetails->bankAccountAutoID)->first()->currency->DecimalPlaces;
         
         /*** Bank Ledger Details ***/
-        $bankLedgers = BankLedger::with('bankStatementDetail')
+        $bankLedgers = BankLedger::with(['bankStatementDetail', 'paymentVoucher', 'receiptVoucher'])
                                 ->where('bankAccountID', $statementDetails->bankAccountAutoID)
                                 ->where('trsClearedYN', -1)
                                 ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)

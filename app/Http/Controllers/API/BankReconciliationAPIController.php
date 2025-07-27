@@ -1545,7 +1545,7 @@ class BankReconciliationAPIController extends AppBaseController
         $statementEndDate = self::dateValidation($statementEndDate);
 
         if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
-            return $this->sendError('Some header level dates are not in date format.',500);
+            return $this->sendError('Wrong date format - Correct format "DD/MM/YYYY"',500);
         }
 
         $statementExists = $this->bankStatementMaster->where('companySystemID', $input['companySystemID'])
@@ -1557,8 +1557,8 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         /** bank validation */
-        $bankName = $sheet->getCell($template['bankName'])->getValue();
-        $bankAccount = $sheet->getCell($template['bankAccountNumber'])->getValue();
+        $bankName = trim($sheet->getCell($template['bankName'])->getValue());
+        $bankAccount = trim($sheet->getCell($template['bankAccountNumber'])->getValue());
         if ($bankName != $template['bank_account']['bankName'] || $bankAccount != $template['bank_account']['AccountNo']) {
             return $this->sendError('Bank Account details not matched', 500);
         }
@@ -1573,7 +1573,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         /** dates validation */
-        $bankReconciliationMonth = $sheet->getCell($template['bankReconciliationMonth'])->getValue();
+        $bankReconciliationMonth = Carbon::createFromFormat('Y-m-d', $statementEndDate)->format('M');
 
         /*** create bank statement master record - tbl = bank_statement_master */
         $statementMaster['bankAccountAutoID'] = $input['uploadBankAccount'];
@@ -1618,13 +1618,10 @@ class BankReconciliationAPIController extends AppBaseController
         if (is_numeric($date)) {
             return Date::excelToDateTimeObject($date)->format('Y-m-d');
         } else {
-            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d', 'd/m/Y h:i:s A', 'd/m/Y h:i A'];
-            foreach ($dateFormats as $format) {
-                try {
-                    return Carbon::createFromFormat($format, trim($date))->format('Y-m-d');
-                } catch (\Exception $e) {
-                    continue;
-                }
+            try {
+                return Carbon::createFromFormat('d/m/Y', trim($date))->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
             }
         }
     }
