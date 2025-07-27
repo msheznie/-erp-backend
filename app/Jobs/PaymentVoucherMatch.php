@@ -89,8 +89,11 @@ class PaymentVoucherMatch implements ShouldQueue
                             $pvWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvMatchingRule->isMatchDate == 1) {
-                            $pvWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $pvMatchingRule->dateDifference . ' days')) . "')";
+                            $pvWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $pvMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $pvMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($pvMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $pvMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
@@ -166,8 +169,11 @@ class PaymentVoucherMatch implements ShouldQueue
                             $partialWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvPartialMatchingRule->isMatchDate == 1) {
-                            $partialWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvPartialMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $pvPartialMatchingRule->dateDifference . ' days')) . "')";
+                            $partialWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $pvPartialMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $pvPartialMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($pvPartialMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $pvPartialMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
