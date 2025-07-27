@@ -440,7 +440,7 @@ Route::group([],function (){
 	Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees')->name('Get segment assigned employees');
 	Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees')->name('Get segment right employees');
 	Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster')->name('Update segment master');
-	
+
 	Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany')->name('Get serviceline by company');
 	Route::get('getServiceLineByparent', 'ServiceLineAPIController@getServiceLineByparent')->name('Get serviceline parent');
 	Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData')->name('Get segment master form data');
@@ -451,7 +451,8 @@ Route::group([],function (){
     Route::get('assignedCompaniesBySegment', 'SegmentMasterAPIController@assignedCompaniesBySegment')->name("Get company assigened segment");;
     Route::post('rejectSegmentMaster', 'SegmentMasterAPIController@rejectSegmentMaster')->name("Reject segment master");
     Route::post('exportSegmentMaster', 'SegmentMasterAPIController@exportSegmentMaster')->name("All segments Export to Excel");
-
+    Route::post('segmentReopen', 'SegmentMasterAPIController@segmentReopen')->name("Reopen Segment");
+    Route::post('segmentReferBack', 'SegmentMasterAPIController@segmentReferBack')->name("Refferback Segment");
 
 	Route::resource('segment_rights', 'SegmentRightsAPIController');
 	Route::resource('segment/masters', 'SegmentMasterAPIController', ['names' => 'Segment masters']);

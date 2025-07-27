@@ -212,6 +212,19 @@ class ReopenDocument
                 $docInforArr["companyColumnName"] = null;
                 $docInforArr["confirmedByName"] = 'confirmedEmpName';
                 break;
+            case 132:
+                $docInforArr["documentCodeColumnName"] = 'ServiceLineCode';
+                $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                $docInforArr["confirmedByID"] = 'confirmed_by_emp_id';
+                $docInforArr["confirmedDate"] = 'confirmed_date';
+                $docInforArr["tableName"] = 'serviceline';
+                $docInforArr["modelName"] = 'SegmentMaster';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["primarykey"] = 'serviceLineSystemID';
+                $docInforArr["companyColumnName"] = 'companySystemID';
+                $docInforArr["confirmedByName"] = 'confirmed_by_name';
+                break;
             default:
                 return [];
         }
