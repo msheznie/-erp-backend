@@ -59,6 +59,24 @@ class PoAnalysisService
                     $output = $output->having('receivedStatus', $request->grvStatus);
                 }
             }
+
+            if (isset($request->lcc)) {
+                if (!empty($request->lcc)) {
+                    $output = $output->having('isLcc', $request->lcc);
+                }
+            }
+
+            if (isset($request->sme)) {
+                if (!empty($request->sme)) {
+                    $output = $output->having('isSme', $request->sme);
+                }
+            }
+
+            if (isset($request->segment)) {
+                if (!empty($request->segment) && is_array($request->segment)) {
+                    $output = $output->whereIN('erp_purchaseorderdetails.serviceLineSystemID', $request->segment);
+                }
+            }
             $output = $output->get();
             $data = array();
             if(empty($data))
