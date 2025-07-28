@@ -431,9 +431,15 @@ class SupplierMaster extends Model
 
     public static function checkFieldExists($companyId, $field, $value)
     {
-        return SupplierMaster::where($field, $value)
-            ->where('primaryCompanySystemID', $companyId)
-            ->where('isActive', 1)
-            ->exists();
+        $query = SupplierMaster::where('primaryCompanySystemID', $companyId)
+            ->where('isActive', 1);
+
+        if ($field === 'supplierName') {
+            $query->whereRaw("LOWER(REPLACE($field, ' ', '')) = ?", [$value]);
+        } else {
+            $query->where($field, $value);
+        }
+
+        return $query->exists();
     }
 }

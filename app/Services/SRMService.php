@@ -6611,8 +6611,9 @@ class SRMService
         $companyId = $supplierMasterData['company_id'] ?? null;
         $registrationNumber = $supplierFormValues['registrationNumber'] ?? null;
         $supEmail = strtolower(trim($supplierFormValues['email'])) ?? null;
+        $supName = isset($supplierFormValues['name']) ? strtolower(str_replace(' ', '', $supplierFormValues['name'])) : null;
 
-        $validator = $this->validator($companyId, $registrationNumber, $supEmail);
+        $validator = $this->validator($companyId, $registrationNumber, $supEmail, $supName);
         if(!$validator['success']){
             return $validator;
         }
@@ -6626,7 +6627,9 @@ class SRMService
             ];
         }
 
-        if(!empty($supEmail) && $supEmail !== '0' && SupplierMaster::checkFieldExists($companyId, 'supEmail', $supEmail)){
+        if((!empty($supEmail) && $supEmail !== '0' && SupplierMaster::checkFieldExists($companyId, 'supEmail', $supEmail))
+        || (!empty($supName) && SupplierMaster::checkFieldExists($companyId, 'supplierName', $supName))
+        ){
             return [
                 'success' => false,
                 'message' => 'Supplier name or Email already exist, Do you wish to continue?',
@@ -6640,12 +6643,13 @@ class SRMService
             'data' => []
         ];
     }
-    public function validator($companyId, $registrationNumber, $supEmail){
+    public function validator($companyId, $registrationNumber, $supEmail, $supName){
 
         $validationData = [
             'company_id' => $companyId,
             'registrationNumber' => $registrationNumber,
             'email' => $supEmail,
+            'name' => $supName,
         ];
 
 
@@ -6653,6 +6657,7 @@ class SRMService
             'company_id' => 'required|integer',
             'registrationNumber' => 'required|string',
             'email' => 'required|email',
+            'name' => 'required|string',
         ];
 
 
@@ -6660,6 +6665,7 @@ class SRMService
             'company_id.required' => 'Company ID is required.',
             'registrationNumber.required' => 'Registration number is required.',
             'email.email' => 'Email is required.',
+            'name.required' => 'Name is required.',
         ];
 
         $validator = Validator::make($validationData, $rules, $messages);
