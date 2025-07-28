@@ -442,4 +442,9 @@ class SupplierMaster extends Model
 
         return $query->exists();
     }
+
+    public static function getSupplierData($supplerId)
+    {
+        return self::where('supplierCodeSystem', $supplerId)->first();
+    }
 }

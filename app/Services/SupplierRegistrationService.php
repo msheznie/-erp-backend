@@ -2,17 +2,21 @@
 
 namespace App\Services;
 
+use App\Models\BankMemoSupplier;
+use App\Models\BankMemoTypes;
 use App\Models\Company;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierBusinessCategoryAssign;
 use App\Models\SupplierContactDetails;
+use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierSubCategoryAssign;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SupplierRegistrationService
 {
@@ -123,6 +127,12 @@ class SupplierRegistrationService
                     return self::sendError($contactDetails['message'] ?? 'Failed to update contact details');
                 }
 
+                $assignCurrency = self::updateAssignCurrency($selectedSupplier, $supplierKyc);
+
+                if (!$assignCurrency['success']) {
+                    return self::sendError($assignCurrency['message'] ?? 'Failed to update currency details');
+                }
+
                 SupplierRegistrationLink::where('id', $selectedKYC)
                     ->update([
                         'supplier_master_id' => $selectedSupplier
@@ -170,9 +180,6 @@ class SupplierRegistrationService
                             if($previousCertification == 'Company Registration Certificate'){
                                 $updateData['registrationExprity'] = !empty($value) ? Carbon::parse($value)->format('Y-m-d') : null;
                             }
-                            break;
-                        case 28:
-                            $updateData['currency'] = trim($value);
                             break;
                         case 30:
                             $updateData['vatEligible'] = trim($value);
@@ -401,6 +408,51 @@ class SupplierRegistrationService
                     SupplierContactDetails::insert($finalInsertData);
                 }
                 return self::sendSuccessResponse('Supplier contact details updated successfully');
+            });
+        } catch(\Exception $ex){
+            return self::sendError('Unexpected Error: '. $ex->getMessage());
+        }
+    }
+
+    protected static function updateAssignCurrency($selectedSupplier, $supplierKyc)
+    {
+        try{
+            return DB::transaction(function () use ($selectedSupplier, $supplierKyc) {
+                $section = [3];
+                $formField = [28];
+                $currencyData = self::getMappingData($supplierKyc, $section, $formField);
+                $currency = $currencyData[0]['value'];
+                $supplierCurrencyCheck = SupplierCurrency::getCurrency($selectedSupplier,$currency);
+                $insertData = [];
+
+                if(!empty($currency) && empty($supplierCurrencyCheck)){
+                    SupplierCurrency::where('supplierCodeSystem', $selectedSupplier)
+                        ->update(['isDefault' => 0]);
+
+                    $dataCurrency = [
+                        'supplierCodeSystem' => $selectedSupplier,
+                        'currencyID' => $currency,
+                        'isAssigned' => -1,
+                        'isDefault' => 1,
+                    ];
+
+                    SupplierCurrency::create($dataCurrency);
+
+                    $supplier = SupplierMaster::getSupplierData($selectedSupplier);
+                    $companyDefaultBankMemos = BankMemoTypes::getBankMemo();
+
+                    foreach ($companyDefaultBankMemos as $value) {
+                        $temBankMemo = [
+                            'memoHeader' => $value['bankMemoHeader'],
+                            'bankMemoTypeID' => $value['bankMemoTypeID'],
+                            'memoDetail' => '',
+                            'supplierCodeSystem' => $supplier->supplierCodeSystem,
+                            'supplierCurrencyID' => $currency
+                        ];
+                        BankMemoSupplier::create($temBankMemo);
+                    }
+                }
+                return self::sendSuccessResponse('Supplier currency assigned successfully');
             });
         } catch(\Exception $ex){
             return self::sendError('Unexpected Error: '. $ex->getMessage());
