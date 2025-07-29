@@ -583,4 +583,12 @@ return [
     "asset_allocation_details" => "Asset Allocation Details",
     "asset_id" => "Asset ID",
     "asset_name" => "Asset Name",
+    "document_code" => "Document Code",
+    'finance_years' => 'Finance Year',
+    "template_created_date" => "Template Created date",
+    "template_description" => "Template Description",
+    "adjustment_amount" => "Adjustment Amount",
+    "from" => "from",
+    "to" => "to",
+    'template' => 'Template',
 ];
