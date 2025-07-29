@@ -60,12 +60,15 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use App\Models\BookInvSuppMaster;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Services\Excel\ExportGeneralLedgerReportService;
 ini_set('max_execution_time', 500);
 use App\Models\ReportTemplateEquity;
+use App\Models\SupplierAssigned;
+
 class FinancialReportAPIController extends AppBaseController
 {
     protected $globalFormula; //keep whole formula ro replace
@@ -108,6 +111,10 @@ class FinancialReportAPIController extends AppBaseController
                                             ->get();
         $departments2 = collect($departments2Info);
         $departments = $departments1->merge($departments2)->all();
+
+        $supplierData = SupplierAssigned::whereIn('companySystemID', $companiesByGroup)
+                                        ->where('isAssigned', -1)
+                                        ->get();
 
         $controlAccount = ChartOfAccountsAssigned::leftJoin('chartofaccounts', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
         ->whereIn('chartofaccountsassigned.companySystemID', $companiesByGroup)
@@ -201,6 +208,7 @@ class FinancialReportAPIController extends AppBaseController
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
+            'supplierData' => $supplierData,
             'controlAccount' => $controlAccount,
             'contracts' => $contracts,
             'accountType' => $accountType,
@@ -549,6 +557,14 @@ class FinancialReportAPIController extends AppBaseController
                     'selectedServicelines' => 'required',
                     // 'contracts' => 'required'
                 ]);
+            case 'RTD':
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'currencyID' => 'required',
+                        'suppliers' => 'required',
+                    ]);
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -1693,6 +1709,7 @@ class FinancialReportAPIController extends AppBaseController
     /*generate report according to each report id*/
     public function generateFRReport(Request $request)
     {
+
         $reportID = $request->reportID;
         if($request->glCodeWiseOption) {
            return $this->getGlCodeWiseOptionData($request);
@@ -1995,9 +2012,357 @@ class FinancialReportAPIController extends AppBaseController
                 );
 
                 break;
+            case 'RTD':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $checkIsGroup = Company::find($request->companySystemID);
+
+                $output = $this->getRTDReportQry($request);
+
+
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+
+                if($request->currencyID == 1) {
+                    $currency = $companyCurrency->localcurrency;
+                }
+                if($request->currencyID == 2) {
+                    $currency = $companyCurrency->reportingcurrency;
+                }   
+                if($request->currencyID == 3) {
+                    if(!empty($output->first()->supplierTransactionCurrencyID)) {
+                        $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
+                    } else {
+                        $currency = $companyCurrency->localcurrency;
+                    }
+                }
+   
+               
+
+                return array(
+                    'reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'decimalPlaceRpt' => $currency->DecimalPlaces,
+                    'currencyLocal' => $currency->CurrencyCode,
+                    'currencyRpt' => $currency->CurrencyCode,
+                );
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function getRTDReportQry($request) {
+
+        
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+        if(isset($request->type)) {
+            unset($request->type);
+        }
+        if(isset($request->tempType)) {
+            unset($request->tempType);
+        }
+        if(isset($request->isBS)) {
+            unset($request->isBS);
+        }
+        if(isset($request->isPL)) {
+            unset($request->isPL);
+        }
+        if(isset($request->glCodeWiseOption)) {
+            unset($request->glCodeWiseOption);
+        }
+        if(isset($request->jvType)) {
+            unset($request->jvType);
+        }
+        if(isset($request->selectedServicelines)) {
+            unset($request->selectedServicelines);
+        }
+        if(isset($request->departments)) {  
+            unset($request->departments);
+        }
+        if(isset($request->glCodes)) {
+            unset($request->glCodes);
+        }
+        if(isset($request->contracts)) {    
+            unset($request->contracts);
+        }
+        if(isset($request->selectedColumn)) {
+            unset($request->selectedColumn);
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $supplierCodeSytem = collect($request->suppliers)->pluck('supplierCodeSytem')->toArray();
+        
+        // Fix datetime issue - ensure toDate includes full day
+        $fromDatetime = \Carbon\Carbon::parse($fromDate)->startOfDay()->format('Y-m-d H:i:s');
+        $toDatetime = \Carbon\Carbon::parse($toDate)->endOfDay()->format('Y-m-d H:i:s');
+        
+
+        // Get ProcumentOrder records that have supplier invoices with documentType = 0
+        $result = BookInvSuppMaster::with('detail.unbilled_grv', 'detail.pomaster.po_logistics_details', 'paysuppdetail.payment_master', 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier')
+                     ->whereIn('companySystemID', $companyID)
+                     ->whereIn('supplierID', $supplierCodeSytem)
+                     ->where('whtApplicableYN', 1)
+                     ->where('whtType', '>', '0')
+                     ->where('whtPercentage', '>', '0')
+                     ->whereBetween('bookingDate', [$fromDatetime, $toDatetime])
+                     ->where('approved', -1)
+                     ->where('documentType', 0)
+                     ->get();
+        
+        // Calculate poAmount and paymentDueDate for each BookInvSuppMaster record
+        foreach ($result as $key => $bookInvSuppMaster) {
+            $poAmount = 0;
+            
+            // Add logistic amounts (reqAmount and VATAmount) for the same supplier
+            $logisticReqAmount = 0;
+            $logisticVATAmount = 0;
+            $poMasterCode = null;
+            $hasLogisticDetails = false;
+            $hasItemDetails = false;
+            
+            // Check what types of details this invoice contains
+            if ($bookInvSuppMaster->detail) {
+                foreach ($bookInvSuppMaster->detail as $detail) {
+                    if ($detail->unbilled_grv) {
+                        if ($detail->unbilled_grv->logisticYN == 1) {
+                            $hasLogisticDetails = true;
+                        } else {
+                            $hasItemDetails = true;
+                        }
+                    }
+                }
+            }
+            
+            // Get PO details from BookInvSuppDet - ensure each PO is only counted once
+            $processedPOs = []; // Track processed POs to avoid duplicates
+            if ($bookInvSuppMaster->detail) {
+                foreach ($bookInvSuppMaster->detail as $detail) {
+                    if ($detail->pomaster && !in_array($detail->purchaseOrderID, $processedPOs)) {
+                        $procumentOrder = $detail->pomaster;
+                        $processedPOs[] = $detail->purchaseOrderID; // Mark this PO as processed
+                        $poMasterCode = $procumentOrder->purchaseOrderCode;    
+                        
+                        // Always calculate logistic amounts if logistic details exist
+                        if ($hasLogisticDetails && $procumentOrder->po_logistics_details) {
+                            foreach ($procumentOrder->po_logistics_details as $logisticDetail) {
+                                if ($logisticDetail->supplierID == $bookInvSuppMaster->supplierID) {
+                                    if($request->currencyID == 1) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPOLocalCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmountLocal ?? 0;
+                                    }
+                                    if($request->currencyID == 2) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPORptCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmountRpt ?? 0;
+                                    }
+                                    if($request->currencyID == 3) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPOTransCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmount ?? 0;
+                                    }       
+                                }
+                            }
+                        }
+                        
+                        // Calculate PO line items amount if item details exist
+                        if ($hasItemDetails) {
+                            if($request->currencyID == 1) {
+                                if ($procumentOrder->poTotalLocalCurrency) {
+                                    $poAmount += $procumentOrder->poTotalLocalCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountLocal : 0));    
+                                }
+                            }
+                            if($request->currencyID == 2) {
+                                if ($procumentOrder->poTotalComRptCurrency) {
+                                    $poAmount += $procumentOrder->poTotalComRptCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountRpt : 0));
+                                }
+                            }
+                            if($request->currencyID == 3) {
+                                if ($procumentOrder->poTotalSupplierTransactionCurrency) {
+                                    $poAmount += $procumentOrder->poTotalSupplierTransactionCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmount : 0));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Set poAmount based on invoice type
+            if ($hasLogisticDetails && $hasItemDetails) {
+                // Mixed invoice - add both logistic and item amounts
+                $poAmount = $poAmount + $logisticReqAmount + $logisticVATAmount;
+            } elseif ($hasLogisticDetails && !$hasItemDetails) {
+                // Pure logistic invoice - only logistic amounts
+                $poAmount = $logisticReqAmount + $logisticVATAmount;
+            } else {
+                // Pure item invoice - only item amounts (poAmount already calculated above)
+                // No additional calculation needed
+            }
+            
+            // Get payment details from paysuppdetail
+            $paymentVoucherDate = null;
+            $paymentVoucherStatus = 3; // Default to 3 (not created)
+            $paymentDetailsFound = false;
+            if ($bookInvSuppMaster->paysuppdetail) {
+                foreach ($bookInvSuppMaster->paysuppdetail as $payDetail) {
+                    if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
+                        $paymentVoucherDate = $payDetail->payment_master->BPVdate;
+                        $paymentVoucherStatus = ($payDetail->payment_master->confirmedYN == 0) ? 0 : (($payDetail->payment_master->approvedYN == 0) ? 1 : 2);
+                        $paymentDetailsFound = true;
+                        break; // Get only the first BPVdate
+                    }
+                }
+            }
+            
+            // If no payment details were found, set status to 3 (not created)
+            if (!$paymentDetailsFound) {
+                $paymentVoucherStatus = 3;
+            }
+            
+            // Calculate paymentDueDate based on booking date
+            $paymentDueDate = null;
+            if ($bookInvSuppMaster->bookingDate) {
+                $bookingDate = \Carbon\Carbon::parse($bookInvSuppMaster->bookingDate);
+                $dayOfMonth = $bookingDate->day;
+                
+                if ($dayOfMonth <= 14) {
+                    // If invoice is created on or before the 14th, due date is 14th of same month
+                    $paymentDueDate = $bookingDate->copy()->day(14);
+                } else {
+                    // If invoice is created after the 14th, due date is 14th of next month
+                    $paymentDueDate = $bookingDate->copy()->addMonth()->day(14);
+                }
+            }
+            
+            // Calculate number of months delay
+            $numberOfMonthsDelay = 0;
+            if ($paymentVoucherDate && $paymentDueDate) {
+                $dueDate = \Carbon\Carbon::parse($paymentDueDate);
+                $paymentDate = \Carbon\Carbon::parse($paymentVoucherDate);
+                
+                // Calculate base months difference
+                $baseMonthsDelay = $paymentDate->diffInMonths($dueDate);
+                
+                // If payment is after the 14th, add 1 month for each month delayed
+                if ($paymentDate->day > 14) {
+                    $numberOfMonthsDelay = $baseMonthsDelay + 1;
+                } else {
+                    $numberOfMonthsDelay = $baseMonthsDelay;
+                }
+                
+                // Ensure delay is not negative (payment before due date)
+                if ($paymentDate->lt($dueDate)) {
+                    $numberOfMonthsDelay = 0;
+                }
+            }
+            
+            // Add calculated fields to each BookInvSuppMaster record
+            $bookInvSuppMaster->poAmount = $poAmount;
+            $bookInvSuppMaster->supplierInvoiceNo = $bookInvSuppMaster->bookingInvCode;
+            $bookInvSuppMaster->bookingInvCode = $poMasterCode;
+            $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = $bookInvSuppMaster->bookingDate;
+            $bookInvSuppMaster->logisticReqAmount = $logisticReqAmount;
+            $bookInvSuppMaster->logisticVATAmount = $logisticVATAmount;
+            $bookInvSuppMaster->isLogisticInvoice = $hasLogisticDetails && !$hasItemDetails; // Pure logistic invoice
+            $bookInvSuppMaster->hasLogisticDetails = $hasLogisticDetails;
+            $bookInvSuppMaster->hasItemDetails = $hasItemDetails;
+            $bookInvSuppMaster->dueDateForPaymentOfWithholdingTax = $paymentDueDate ? $paymentDueDate->format('Y-m-d') : null;
+            $bookInvSuppMaster->paymentVoucherDate = $paymentVoucherDate;
+            $bookInvSuppMaster->hasPaymentDetails = !is_null($paymentVoucherDate);
+            $bookInvSuppMaster->numberOfMonthsDelay = $numberOfMonthsDelay;
+            $bookInvSuppMaster->withholdingTax = $poAmount * ($bookInvSuppMaster->whtPercentage / 100);
+            $bookInvSuppMaster->additionalTax = $bookInvSuppMaster->withholdingTax * $numberOfMonthsDelay * 0.01;
+            $bookInvSuppMaster->total = ($bookInvSuppMaster->withholdingTax + $bookInvSuppMaster->additionalTax);
+            $bookInvSuppMaster->currency = CurrencyMaster::find($bookInvSuppMaster->supplierTransactionCurrencyID)->CurrencyCode;
+            $bookInvSuppMaster->paymentVoucherStatus = $paymentVoucherStatus;
+            
+            // Set supplier invoice amount based on selected currency
+            if($request->currencyID == 1) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountLocal;
+            } elseif($request->currencyID == 2) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountRpt;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountTrans;
+            }
+            
+            $bookInvSuppMaster->whtPercentage = $bookInvSuppMaster->whtPercentage;
+        }   
+        
+        // Consolidate supplier invoices that have the same PO and are both item-based (not logistic)
+        $consolidatedResult = collect();
+        $groupedInvoices = $result->groupBy(function($invoice) {
+            // Group by supplier ID and PO code
+            $poCode = null;
+            if ($invoice->detail) {
+                foreach ($invoice->detail as $detail) {
+                    if ($detail->pomaster) {
+                        $poCode = $detail->pomaster->purchaseOrderCode;
+                        break; // Get the first PO code
+                    }
+                }
+            }
+            return $invoice->supplierID . '_' . $poCode;
+        });
+        
+        foreach ($groupedInvoices as $groupKey => $invoices) {
+            // Check if all invoices in this group are item-based (not logistic)
+            $allItemBased = true;
+            foreach ($invoices as $invoice) {
+                if ($invoice->hasLogisticDetails) {
+                    $allItemBased = false;
+                    break;
+                }
+            }
+            
+            if ($allItemBased && $invoices->count() > 1) {
+                // Consolidate multiple item-based invoices for the same PO
+                // Use the first invoice with PO details, don't sum up PO amounts
+                $consolidatedInvoice = $invoices->first();
+                
+                // Sum up only the supplier invoice amounts and withholding tax amounts
+                $totalSupplierInvoiceAmount = 0;
+                $totalWithholdingTax = 0;
+                $totalAdditionalTax = 0;
+                $totalTotal = 0;
+                
+                foreach ($invoices as $invoice) {
+                    $totalSupplierInvoiceAmount += $invoice->supplierInvoiceAmount ?? 0;
+                    $totalWithholdingTax += $invoice->withholdingTax ?? 0;
+                    $totalAdditionalTax += $invoice->additionalTax ?? 0;
+                    $totalTotal += $invoice->total ?? 0;
+                }
+                
+                // Update the consolidated invoice - keep original PO amount, sum only supplier amounts
+                $consolidatedInvoice->supplierInvoiceAmount = $totalSupplierInvoiceAmount;
+                $consolidatedInvoice->withholdingTax = $totalWithholdingTax;
+                $consolidatedInvoice->additionalTax = $totalAdditionalTax;
+                $consolidatedInvoice->total = $totalTotal;
+                
+                // Add a flag to indicate this is a consolidated invoice
+                $consolidatedInvoice->isConsolidated = true;
+                $consolidatedInvoice->originalInvoiceCount = $invoices->count();
+                
+                $consolidatedResult->push($consolidatedInvoice);
+            } else {
+                // Add individual invoices (either logistic invoices or single item-based invoices)
+                foreach ($invoices as $invoice) {
+                    $invoice->isConsolidated = false;
+                    $invoice->originalInvoiceCount = 1;
+                    $consolidatedResult->push($invoice);
+                }
+            }
+        }
+        
+        return $consolidatedResult;
     }
 
     public function processConsolidationData($request,$response) {
@@ -4207,7 +4572,80 @@ class FinancialReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
 
                 break;
-            default:
+                case 'RTD':
+                    $type = $request->type;
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $checkIsGroup = Company::find($request->companySystemID);
+
+                    $output = $this->getRTDReportQry($request);
+                    $data = array();
+
+                    $cur = null;
+                    $title = 'Report Tax Details';
+                    $company_name = $companyCurrency->CompanyName;
+                    $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
+                    $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                    $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+
+                    if($request->currencyID == 1) {
+                        $currency = $companyCurrency->localcurrency;
+                    }
+                    if($request->currencyID == 2) {
+                        $currency = $companyCurrency->reportingcurrency;
+                    }   
+                    if($request->currencyID == 3) {
+                        if(!empty($output->first()->supplierTransactionCurrencyID)) {
+                            $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
+                        } else {
+                            $currency = $companyCurrency->localcurrency;
+                        }
+                    }
+       
+                   
+
+
+                    $detail_array = array(  'type' => 1,
+                                            'fromDate'=>$fromDate,  
+                                            'toDate'=>$toDate,
+                                            'company_name'=>$company_name,
+                                            'company_code'=>$companyID,
+                                            'cur'=>$cur,
+                                            'tempType' => 'csv',
+                                            'reportViewID' => 1,
+                                            'reportData' => $output,
+                                            'taxExtraColumn' => isset($request->taxExtraColumn) ? $request->taxExtraColumn : null,
+                                            'decimalPlaceRpt' => $currency->DecimalPlaces,
+                                            'currencyRpt' => $currency->CurrencyCode,
+                    );
+
+                    $templateName = "export_report.generalLedger.rtd_details";
+                    $fileName = 'Tax Deductibility';
+                    $path = 'general-ledger/report/rtd_details/excel/';
+                    $type = "xls";
+                    $excelColumnFormat = [
+
+                    ];
+
+
+                    $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
+
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+                    break;
+                default:
                 return $this->sendError('No report ID found');
         }
     }
