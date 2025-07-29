@@ -97,6 +97,11 @@ class FinancialReportAPIController extends AppBaseController
 
         $departments2Info = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
                                             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+                                            ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
+                                            ->where('serviceline.approved_yn', 1)
+                                            ->whereIn('service_line_assigned.companySystemID', $companiesByGroup)
+                                            ->where('service_line_assigned.isActive', 1)
+                                            ->where('service_line_assigned.isAssigned', 1)
                                             ->where('serviceline.serviceLineSystemID', 24)
                                             ->where('serviceline.isFinalLevel', 1)
                                             ->where('serviceline.isDeleted', 0)
@@ -231,7 +236,10 @@ class FinancialReportAPIController extends AppBaseController
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
-        $segment = SegmentMaster::where('isActive', 1)->get();
+        $segment = SegmentMaster::where('isActive', 1)
+                                ->approved()
+                                ->withAssigned($companiesByGroup)
+                                ->get();
 
         $output = array(
             'departments' => $departments,

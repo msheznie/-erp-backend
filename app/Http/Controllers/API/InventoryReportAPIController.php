@@ -171,7 +171,7 @@ class InventoryReportAPIController extends AppBaseController
 
         $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
-        $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
+        $segment = SegmentMaster::approved()->withAssigned($companiesByGroup)->get();
 
         $categoryType = $request->input('categoryType');
         $categoryTypeID = collect($categoryType)->pluck('id')->toArray();
