@@ -1,0 +1,379 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateDepartmentBudgetTemplateAPIRequest;
+use App\Http\Requests\API\UpdateDepartmentBudgetTemplateAPIRequest;
+use App\Models\DepartmentBudgetTemplate;
+use App\Repositories\DepartmentBudgetTemplateRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Yajra\DataTables\DataTables;
+
+class DepartmentBudgetTemplateAPIController extends AppBaseController
+{
+    private $departmentBudgetTemplateRepository;
+
+    public function __construct(DepartmentBudgetTemplateRepository $departmentBudgetTemplateRepo)
+    {
+        $this->departmentBudgetTemplateRepository = $departmentBudgetTemplateRepo;
+    }
+
+    /**
+     * Display a listing of the DepartmentBudgetTemplate.
+     * GET|HEAD /departmentBudgetTemplates
+     */
+    public function index(Request $request)
+    {
+        $departmentBudgetTemplates = $this->departmentBudgetTemplateRepository->all(
+            $request->except(['skip', 'limit']),
+            $request->get('skip'),
+            $request->get('limit')
+        );
+
+        return $this->sendResponse($departmentBudgetTemplates->toArray(), 'Department Budget Templates retrieved successfully');
+    }
+
+    /**
+     * Store a newly created DepartmentBudgetTemplate in storage.
+     * POST /departmentBudgetTemplates
+     */
+    public function store(CreateDepartmentBudgetTemplateAPIRequest $request)
+    {
+        $input = $request->all();
+
+        // Check if template is already assigned to department
+        if ($this->departmentBudgetTemplateRepository->isTemplateAssigned($input['departmentSystemID'], $input['budgetTemplateID'])) {
+            return $this->sendError('This budget template is already assigned to the department');
+        }
+
+        // Get the budget template to check its type
+        $budgetTemplate = \App\Models\BudgetTemplate::find($input['budgetTemplateID']);
+        if (!$budgetTemplate) {
+            return $this->sendError('Budget template not found');
+        }
+
+        // Check if department already has an active template of the same type
+        $hasActiveTemplateOfType = $this->departmentBudgetTemplateRepository
+            ->hasActiveTemplateOfType($input['departmentSystemID'], $budgetTemplate->type);
+
+        // If there's already an active template of this type, set new template as inactive
+        if ($hasActiveTemplateOfType) {
+            $input['isActive'] = 0;
+            $message = 'Budget template assigned successfully as inactive (another template of this type is already active)';
+        } else {
+            // If no active template of this type exists, set as active
+            $input['isActive'] = 1;
+            $message = 'Budget template assigned successfully.';
+        }
+
+        $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->create($input);
+
+        return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
+    }
+
+    /**
+     * Display the specified DepartmentBudgetTemplate.
+     * GET|HEAD /departmentBudgetTemplates/{id}
+     */
+    public function show($id)
+    {
+        $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
+
+        if (empty($departmentBudgetTemplate)) {
+            return $this->sendError('Department Budget Template not found');
+        }
+
+        return $this->sendResponse($departmentBudgetTemplate->toArray(), 'Department Budget Template retrieved successfully');
+    }
+
+    /**
+     * Update the specified DepartmentBudgetTemplate in storage.
+     * PUT/PATCH /departmentBudgetTemplates/{id}
+     */
+    public function update($id, UpdateDepartmentBudgetTemplateAPIRequest $request)
+    {
+        $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
+
+        if (empty($departmentBudgetTemplate)) {
+            return $this->sendError('Department Budget Template not found');
+        }
+
+        $input = $request->all();
+
+        // If activating a template, handle business logic
+        if (isset($input['isActive']) && $input['isActive'] == 1) {
+            // Get the budget template to check its type
+            $budgetTemplate = \App\Models\BudgetTemplate::find($departmentBudgetTemplate->budgetTemplateID);
+            
+            if ($budgetTemplate) {
+                // Deactivate other templates of the same type for this department
+                $this->departmentBudgetTemplateRepository->deactivateOtherTemplatesOfType(
+                    $departmentBudgetTemplate->departmentSystemID,
+                    $budgetTemplate->type,
+                    $departmentBudgetTemplate->budgetTemplateID
+                );
+                
+                $message = 'Template activated successfully. Other templates of the same type have been deactivated.';
+            } else {
+                $message = 'Template updated successfully';
+            }
+        } else {
+            $message = 'Template updated successfully';
+        }
+
+        $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->update($input, $id);
+
+        return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
+    }
+
+    /**
+     * Remove the specified DepartmentBudgetTemplate from storage.
+     * DELETE /departmentBudgetTemplates/{id}
+     */
+    public function destroy($id)
+    {
+        $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
+
+        if (empty($departmentBudgetTemplate)) {
+            return $this->sendError('Department Budget Template not found');
+        }
+
+        $departmentBudgetTemplate->delete();
+
+        return $this->sendResponse($id, 'Department Budget Template deleted successfully');
+    }
+
+    /**
+     * Get department budget templates for DataTables
+     * POST /departmentBudgetTemplates/datatable/{departmentSystemID}
+     */
+    public function getDepartmentBudgetTemplates($departmentSystemID, Request $request)
+    {
+        $query = DepartmentBudgetTemplate::where('departmentSystemID', $departmentSystemID)
+                 ->with(['budgetTemplate'])
+                 ->withCount('depBudgetTemplateGls')
+                 ->orderBy('departmentBudgetTemplateID', 'desc')
+                 ->get();
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('template_type_label', function ($row) {
+
+                if (isset($row->budgetTemplate) && isset($row->budgetTemplate->type)) {
+                    switch ($row->budgetTemplate->type) {
+                        case '1':
+                            return 'OPEX';
+                        case '2':
+                            return 'CAPEX';
+                        case '3':
+                            return 'Common';
+                        default:
+                            return 'Unknown';
+                    }
+                } else {
+                    return 'Unknown';
+                }
+            })
+            ->addColumn('is_active_label', function ($row) {
+                return $row->isActive ? 'Yes' : 'No';
+            })
+            ->addColumn('gl_codes_count', function ($row) {
+                return $row->dep_budget_template_gls_count ?? 0;
+            })
+            ->make(true);
+    }
+
+    /**
+     * Get budget templates by type
+     * GET /departmentBudgetTemplates/templates-by-type/{type}
+     */
+    public function getBudgetTemplatesByType($type)
+    {
+        $templates = $this->departmentBudgetTemplateRepository->getBudgetTemplatesByType($type);
+
+        return $this->sendResponse($templates->toArray(), 'Budget templates retrieved successfully');
+    }
+
+    /**
+     * Get form data
+     */
+    public function getFormData()
+    {
+        try {
+            $budgetTypes = [
+                ['value' => 1, 'label' => 'OPEX'],
+                ['value' => 2, 'label' => 'CAPEX'],
+                ['value' => 3, 'label' => 'Both']
+            ];
+
+            return $this->sendResponse(['budgetTypes' => $budgetTypes], 'Form data retrieved successfully');
+        } catch (Exception $e) {
+            return $this->sendError('Error occurred while fetching form data', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get chart of accounts for template type
+     */
+    public function getChartOfAccountsForTemplate($templateType)
+    {
+        try {
+            // Get approved chart of accounts assigned to company
+            $chartOfAccounts = \App\Models\ChartOfAccount::where('isApproved', 1)
+                ->where('companySystemID', auth()->user()->companySystemID ?? 1)
+                ->select('chartOfAccountSystemID', 'glCode', 'description', 'accountType')
+                ->selectRaw("CONCAT(glCode, ' - ', description) as glCodeDescription")
+                ->orderBy('glCode')
+                ->get();
+
+            return $this->sendResponse($chartOfAccounts, 'Chart of accounts retrieved successfully');
+        } catch (Exception $e) {
+            return $this->sendError('Error occurred while fetching chart of accounts', $e->getMessage());
+        }
+    }
+
+    public function getChartOfAccountsByBudgetTemplate(Request $request)
+    {
+        $input = $request->all();
+
+        $items = \App\Models\ChartOfAccount::where('isActive', 1)->where('isApproved', 1)
+                               ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                    $query->where('companySystemID', $input['companySystemID'])
+                                          ->where('isAssigned', -1)
+                                          ->where('isActive', 1);
+                               })->when($input['templateType'] == 1, function ($query) {
+                                    $query->where('catogaryBLorPL', 'PL');
+                               })->when($input['templateType'] == 2, function ($query) {
+                                    $query->where('catogaryBLorPL', 'BS');
+                               })
+                               ->whereNotNull('reportTemplateCategory')
+                               ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL', 'controlAccounts');
+
+        $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
+        $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail))->get();
+
+        return $this->sendResponse($items, 'Chart of accounts retrieved successfully');
+    }
+
+    /**
+     * Get chart of accounts by type
+     */
+    public function getChartOfAccountsByType($templateType, $accountType)
+    {
+        try {
+            $query = \App\Models\ChartOfAccount::where('isApproved', 1)
+                ->where('companySystemID', auth()->user()->companySystemID ?? 1);
+
+            // Filter by account type
+            switch (strtoupper($accountType)) {
+                case 'BS':
+                    $query->where('accountType', 'BS');
+                    break;
+                case 'BSA':
+                    $query->where('accountType', 'BSA');
+                    break;
+                case 'BSL':
+                    $query->where('accountType', 'BSL');
+                    break;
+                case 'BSE':
+                    $query->where('accountType', 'BSE');
+                    break;
+                case 'PL':
+                    $query->where('accountType', 'PL');
+                    break;
+                case 'PLE':
+                    $query->where('accountType', 'PLE');
+                    break;
+                case 'PLI':
+                    $query->where('accountType', 'PLI');
+                    break;
+            }
+
+            $chartOfAccounts = $query->select('chartOfAccountSystemID', 'glCode', 'description', 'accountType')
+                ->selectRaw("CONCAT(glCode, ' - ', description) as glCodeDescription")
+                ->orderBy('glCode')
+                ->get();
+
+            return $this->sendResponse($chartOfAccounts, 'Chart of accounts retrieved successfully');
+        } catch (Exception $e) {
+            return $this->sendError('Error occurred while fetching chart of accounts', $e->getMessage());
+        }
+    }
+
+    /**
+     * Assign GL codes to department budget template
+     */
+    public function assignGLCodes(Request $request)
+    {
+        try {
+            $input = $request->all();
+            
+            $departmentBudgetTemplateID = $input['departmentBudgetTemplateID'];
+            $chartOfAccountSystemIDs = $input['chartOfAccountSystemIDs'];
+
+            // Validate that the department budget template exists
+            $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($departmentBudgetTemplateID);
+            if (!$departmentBudgetTemplate) {
+                return $this->sendError('Department Budget Template not found');
+            }
+
+            // Delete existing GL assignments for this template
+            \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplateID)->delete();
+
+            // Create new GL assignments
+            $assignedCount = 0;
+            foreach ($chartOfAccountSystemIDs as $chartOfAccountSystemID) {
+                \App\Models\DepBudgetTemplateGl::create([
+                    'departmentBudgetTemplateID' => $departmentBudgetTemplateID,
+                    'chartOfAccountSystemID' => $chartOfAccountSystemID,
+                    'createdUserSystemID' => auth()->id(),
+                    'modifiedUserSystemID' => auth()->id()
+                ]);
+                $assignedCount++;
+            }
+
+            return $this->sendResponse(
+                ['assignedCount' => $assignedCount], 
+                "Successfully assigned {$assignedCount} GL codes to the budget template"
+            );
+        } catch (Exception $e) {
+            return $this->sendError('Error occurred while assigning GL codes', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get assigned GL codes for a department budget template
+     */
+    public function getAssignedGLCodes(Request $request)
+    {
+        try {
+            $departmentBudgetTemplateID = $request->get('departmentBudgetTemplateID');
+
+            if (!$departmentBudgetTemplateID) {
+                return $this->sendError('Department Budget Template ID is required');
+            }
+
+            // Get assigned GL codes with chart of account details
+            $assignedGLCodes = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplateID)
+                ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                ->join('erp_companyreporttemplatedetails', 'erp_companyreporttemplatedetails.detID', '=', 'chartofaccounts.reportTemplateCategory')
+                ->select(
+                    'dep_budget_template_gl.*',
+                    'chartofaccounts.AccountCode',
+                    'chartofaccounts.AccountDescription',
+                    'chartofaccounts.catogaryBLorPL',
+                    'erp_companyreporttemplatedetails.description',
+                    'chartofaccounts.controlAccounts'
+                )
+                ->orderBy('chartofaccounts.catogaryBLorPL')
+                ->orderBy('chartofaccounts.controlAccounts')
+                ->orderBy('chartofaccounts.AccountCode')
+                ->get();
+
+            return $this->sendResponse($assignedGLCodes, 'Assigned GL codes retrieved successfully');
+        } catch (Exception $e) {
+            return $this->sendError('Error occurred while fetching assigned GL codes', $e->getMessage());
+        }
+    }
+} 
