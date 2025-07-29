@@ -2463,7 +2463,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
-                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType'] = $master->documentType;
                 $output['payeeTypeID'] = $master->payeeTypeID;
@@ -2532,7 +2532,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
-                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType'] = $master->documentType;
                 $output['bankDropdown'] = BankAssign::where('isActive', 1)

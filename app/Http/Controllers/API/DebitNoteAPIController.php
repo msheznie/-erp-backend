@@ -1647,7 +1647,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $currency = CurrencyMaster::all();
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))

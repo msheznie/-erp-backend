@@ -1252,7 +1252,7 @@ class GRVMasterAPIController extends AppBaseController
 
         $grvAutoID = isset($request['grvAutoID']) ? $request['grvAutoID'] : 0;
         $wareHouseBinLocations = array();
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
         }

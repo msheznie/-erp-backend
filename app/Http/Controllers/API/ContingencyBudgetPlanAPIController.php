@@ -466,6 +466,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         $masterTemplates = TemplatesMaster::all();

@@ -701,7 +701,7 @@ class MaterielRequestAPIController extends AppBaseController
             $subCompanies = [$companyId];
         }
 
-        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies);
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->approved()->withAssigned($companyId);
         $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
 
         if (array_key_exists('isFilter', $input)) {

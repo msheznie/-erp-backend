@@ -1166,7 +1166,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
-                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
                 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $companySystemID)
@@ -1201,7 +1201,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
-                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
         }
 
         $output['isOperationIntergrated'] = ModuleAssigned::where('moduleID', 3)->where('companySystemID', $companySystemID)->exists();

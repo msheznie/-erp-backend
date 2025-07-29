@@ -645,6 +645,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         $masterTemplates = ReportTemplate::where('isActive', 1)

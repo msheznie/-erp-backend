@@ -3797,6 +3797,7 @@ class BudgetMasterAPIController extends AppBaseController
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->when(request('isFilter') == 0, function ($q) {
                 return $q->where('isActive', 1);
             })

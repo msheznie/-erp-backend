@@ -547,7 +547,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $customerID = $request['customerID'];
         $output['contracts'] = Contract::where('companySystemID', $companyId)->where('clientID', $customerID)->get();
-        $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)
+        $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->approved()->withAssigned($companyId)
                                         ->whereIn('serviceLineSystemID', function($q) use($companyId,$customerID){
                                             $q->select('serviceLineSystemID')->from('contractmaster')->where('companySystemID', $companyId)->where('clientID', $customerID);
                                         })->get();

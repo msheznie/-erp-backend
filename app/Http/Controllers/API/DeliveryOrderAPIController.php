@@ -804,7 +804,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->approved()->withAssigned($companyId)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
