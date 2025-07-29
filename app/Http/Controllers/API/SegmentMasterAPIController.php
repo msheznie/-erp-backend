@@ -1246,8 +1246,11 @@ class SegmentMasterAPIController extends AppBaseController
             ->whereIn('companySystemID',$childCompanies)
             ->with(['company']);
 
-        if(isset($segmentId) && !is_null($segmentId)) {
-            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        if(isset($segmentId) && $segmentId !== null && $segmentId != 0)  {
+            $segmentMasters->where(function($query) use ($segmentId) {
+                $query->where('serviceLineSystemID', $segmentId)
+                    ->orWhere('masterID', $segmentId);
+            });
         }
 
         if(isset($isActive) && !is_null($isActive)) {
