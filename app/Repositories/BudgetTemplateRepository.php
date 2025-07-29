@@ -50,9 +50,9 @@ class BudgetTemplateRepository extends BaseRepository
         $query = $this->model->newQuery();
 
         // Apply company filter
-        if (isset($input['companyId']) && $input['companyId']) {
-            $query->where('companySystemID', $input['companyId']);
-        }
+        // if (isset($input['companyId']) && $input['companyId']) {
+        //     $query->where('companySystemID', $input['companyId']);
+        // }
 
         // Apply type filter
         if (isset($input['type']) && $input['type']) {

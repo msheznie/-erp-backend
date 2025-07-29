@@ -139,6 +139,9 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             return $this->sendError('Department Budget Template not found');
         }
 
+        //delete all gl codes assigned to the template
+        \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $id)->delete();
+
         $departmentBudgetTemplate->delete();
 
         return $this->sendResponse($id, 'Department Budget Template deleted successfully');

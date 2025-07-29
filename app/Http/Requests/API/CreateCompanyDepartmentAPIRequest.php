@@ -25,12 +25,12 @@ class CreateCompanyDepartmentAPIRequest extends APIRequest
     public function rules()
     {
         return [
-            'departmentCode' => 'required|string|max:15|unique:company_departments,departmentCode',
+            'departmentCode' => 'required|string|max:15',
             'departmentDescription' => 'required|string|max:255',
             'companySystemID' => 'required|integer|exists:companymaster,companySystemID',
             'type' => 'required|integer|in:1,2',
             'parentDepartmentID' => 'nullable|integer|exists:company_departments,departmentSystemID',
-            'isFinance' => 'nullable|integer|in:0,1',
+            'isFinance' => 'nullable|boolean', //integer or boolean  
             'isActive' => 'required|integer|in:0,1'
         ];
     }

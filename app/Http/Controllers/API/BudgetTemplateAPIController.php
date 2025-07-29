@@ -6,6 +6,8 @@ use App\Http\Requests\API\CreateBudgetTemplateAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTemplateAPIRequest;
 use App\Models\BudgetTemplate;
 use App\Models\DepartmentBudgetTemplate;
+use App\Models\CompanyDepartment;
+use App\Models\DepBudgetTemplateGl;
 use App\Repositories\BudgetTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -104,6 +106,22 @@ class BudgetTemplateAPIController extends AppBaseController
             return $this->sendError('Budget Template not found');
         }
 
+        if (isset($input['update']) && $input['update'] == 'default') {
+            $budgetTemplate->isDefault = $input['isDefault'];
+            $budgetTemplate->modifiedUserSystemID = auth()->id();
+            $budgetTemplate->save();
+
+            if($input['isDefault'] == 1) {
+                //write a service to assign this template to all departments
+                $this->assignTemplateToAllDepartments($id); 
+            }
+
+            //update all other templates to non-default
+            BudgetTemplate::where('budgetTemplateID', '!=', $id)->update(['isDefault' => 0]);
+            
+            return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+        }
+
         $companyDepartmentTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
         if ($companyDepartmentTemplate) {
             return $this->sendError('The template already assigned to the department cannot be amended');
@@ -115,6 +133,63 @@ class BudgetTemplateAPIController extends AppBaseController
         $budgetTemplate = $this->budgetTemplateRepository->update($input, $id);
 
         return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+    }
+
+    public function assignTemplateToAllDepartments($id)
+    {
+        $budgetTemplate = $this->budgetTemplateRepository->find($id);
+        $departments = CompanyDepartment::where('isActive', 1)->get();
+        foreach ($departments as $department) {
+
+            // check if the template is already assigned to the department
+            $departmentBudgetTemplateCheck = DepartmentBudgetTemplate::where('budgetTemplateID', $id)
+                                                                    ->where('departmentSystemID', $department->departmentSystemID)
+                                                                    ->where('isActive', 1)
+                                                                    ->first();
+            if(!$departmentBudgetTemplateCheck) {
+                //check if the template type is already assigned to the department
+                $departmentBudgetTemplateCheck = DepartmentBudgetTemplate::whereHas('budgetTemplate', function($query) use ($budgetTemplate) {
+                                                                $query->where('type', $budgetTemplate->type);
+                                                            })->where('departmentSystemID', $department->departmentSystemID)
+                                                            ->where('isActive', 1)
+                                                            ->first();
+
+                $departmentBudgetTemplate = new DepartmentBudgetTemplate();
+                $departmentBudgetTemplate->budgetTemplateID = $id;
+                $departmentBudgetTemplate->departmentSystemID = $department->departmentSystemID;
+                $departmentBudgetTemplate->isActive = $departmentBudgetTemplateCheck ? 0 : 1;
+                $departmentBudgetTemplate->createdUserSystemID = auth()->id();
+                $departmentBudgetTemplate->modifiedUserSystemID = auth()->id();
+                $departmentBudgetTemplate->save();
+
+                $departmentBudgetTemplateID = $departmentBudgetTemplate->departmentBudgetTemplateID;
+                
+
+                $items = \App\Models\ChartOfAccount::where('isActive', 1)->where('isApproved', 1)
+                                                ->whereHas('chartofaccount_assigned', function($query) use ($department) {
+                                                    $query->where('companySystemID', $department->companySystemID)
+                                                        ->where('isAssigned', -1)
+                                                        ->where('isActive', 1);
+                                                })->when($budgetTemplate->type == 1, function ($query) {
+                                                    $query->where('catogaryBLorPL', 'PL');
+                                                })->when($budgetTemplate->type == 2, function ($query) {
+                                                    $query->where('catogaryBLorPL', 'BS');
+                                                })
+                                                ->whereNotNull('reportTemplateCategory')
+                                                ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL', 'controlAccounts')
+                                                ->get();
+
+                foreach($items as $item) {
+                    //assign the gl to DepBudgetTemplateGl
+                    $depBudgetTemplateGl = new DepBudgetTemplateGl();
+                    $depBudgetTemplateGl->departmentBudgetTemplateID = $departmentBudgetTemplateID;
+                    $depBudgetTemplateGl->chartOfAccountSystemID = $item->chartOfAccountSystemID;
+                    $depBudgetTemplateGl->createdUserSystemID = auth()->id();
+                    $depBudgetTemplateGl->modifiedUserSystemID = auth()->id();
+                    $depBudgetTemplateGl->save();
+                }
+            }
+        }
     }
 
     /**
@@ -133,6 +208,15 @@ class BudgetTemplateAPIController extends AppBaseController
         if (empty($budgetTemplate)) {
             return $this->sendError('Budget Template not found');
         }
+
+        //check if template is assigned to any department
+        $departmentBudgetTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
+        if($departmentBudgetTemplate) {
+            return $this->sendError('The template is assigned to the department cannot be deleted');
+        }
+
+        //delete all columns assigned to the template
+        \App\Models\BudgetTemplateColumn::where('budgetTemplateID', $id)->delete();
 
         $budgetTemplate->delete();
 

@@ -201,6 +201,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         
         // Check if department code is unique
         $existingDepartment = CompanyDepartment::where('departmentCode', $createData['departmentCode'])
+                                               ->where('companySystemID', $createData['companySystemID'])
                                                ->first();
         
         if ($existingDepartment) {
