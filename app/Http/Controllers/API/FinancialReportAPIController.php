@@ -8805,10 +8805,12 @@ GROUP BY id
 
                 $html = view('print.financial_trial_balance', $dataArr);
 
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
 
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('financial_trial_balance.pdf', 'I');   
                 break;
 
             case 'FCT':
@@ -8878,14 +8880,18 @@ GROUP BY id
                 $reportData['CompanyName'] = $companyName;
 
                 $html = view($templateName, $reportData);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
 
-                if (count($input['companySystemID'] ) > 1) {
-                    return $pdf->setPaper('a3', 'landscape')->setWarnings(false)->stream();
+                if (count($input['companySystemID']) > 1) {
+                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A3-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 } else {
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 }
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+        
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($templateName, 'I');
+
                 break;
 
             default:
