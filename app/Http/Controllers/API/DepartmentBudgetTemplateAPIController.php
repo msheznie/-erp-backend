@@ -9,9 +9,14 @@ use App\Repositories\DepartmentBudgetTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Yajra\DataTables\DataTables;
+use App\Traits\AuditLogsTrait;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DepartmentBudgetTemplateAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     private $departmentBudgetTemplateRepository;
 
     public function __construct(DepartmentBudgetTemplateRepository $departmentBudgetTemplateRepo)
@@ -69,6 +74,11 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
 
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->create($input);
 
+        // Audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $departmentBudgetTemplate->departmentBudgetTemplateID, $uuid, "department_budget_templates", "Budget template assigned to department", "C", $departmentBudgetTemplate->toArray(), [], $input['departmentSystemID'], 'company_departments');
+
         return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
     }
 
@@ -99,6 +109,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             return $this->sendError('Department Budget Template not found');
         }
 
+        $oldValues = $departmentBudgetTemplate->toArray();
         $input = $request->all();
 
         // If activating a template, handle business logic
@@ -124,6 +135,11 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
 
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->update($input, $id);
 
+        // Audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $id, $uuid, "department_budget_templates", "Department budget template updated", "U", $departmentBudgetTemplate->toArray(), $oldValues, $departmentBudgetTemplate->departmentSystemID, 'company_departments');
+
         return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
     }
 
@@ -131,7 +147,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
      * Remove the specified DepartmentBudgetTemplate from storage.
      * DELETE /departmentBudgetTemplates/{id}
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
 
@@ -139,10 +155,17 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             return $this->sendError('Department Budget Template not found');
         }
 
+        $previousValue = $departmentBudgetTemplate->toArray();
+
         //delete all gl codes assigned to the template
         \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $id)->delete();
 
         $departmentBudgetTemplate->delete();
+
+        // Audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $id, $uuid, "department_budget_templates", "Department budget template deleted", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
 
         return $this->sendResponse($id, 'Department Budget Template deleted successfully');
     }

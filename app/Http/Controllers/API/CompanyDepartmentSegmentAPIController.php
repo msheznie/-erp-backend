@@ -121,7 +121,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                     
                     $uuid = $request->get('tenant_uuid', 'local');
                     $db = $request->get('db', '');
-                    $this->auditLog($db, $companyDepartmentSegment->departmentSegmentSystemID, $uuid, "company_departments_segments", "Segment assigned to department", "C", $companyDepartmentSegment->toArray(), []);
+                    $this->auditLog($db, $companyDepartmentSegment->departmentSegmentSystemID, $uuid, "company_departments_segments", "Segment assigned to department", "C", $companyDepartmentSegment->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
                     
                     $results[] = $companyDepartmentSegment;
                 }
@@ -140,7 +140,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                 
                 $uuid = $request->get('tenant_uuid', 'local');
                 $db = $request->get('db', '');
-                $this->auditLog($db, $companyDepartmentSegment->departmentSegmentSystemID, $uuid, "company_departments_segments", "Segment assigned to department", "C", $companyDepartmentSegment->toArray(), []);
+                $this->auditLog($db, $companyDepartmentSegment->departmentSegmentSystemID, $uuid, "company_departments_segments", "Segment assigned to department", "C", $companyDepartmentSegment->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
                 
                 DB::commit();
                 return $this->sendResponse($companyDepartmentSegment->toArray(), 'Segment assigned to department successfully');
@@ -174,7 +174,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "company_departments_segments", "Department segment assignment updated", "U", $companyDepartmentSegment->toArray(), $oldValues);
+            $this->auditLog($db, $id, $uuid, "company_departments_segments", "Department segment assignment updated", "U", $companyDepartmentSegment->toArray(), $oldValues, $processedData['departmentSystemID'], 'company_departments');
 
             DB::commit();
 
@@ -205,7 +205,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "company_departments_segments", "Segment removed from department", "D", [], $oldValues);
+            $this->auditLog($db, $id, $uuid, "company_departments_segments", "Segment removed from department", "D", [], $oldValues, $oldValues['departmentSystemID'], 'company_departments');
 
             DB::commit();
 

@@ -94,6 +94,8 @@ class CompanyDepartmentAPIController extends AppBaseController
                         $processedData[$field] = $value;
                         break;
                 }
+            } else {
+                $processedData[$field] = null;
             }
         }
 

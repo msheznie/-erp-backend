@@ -14,6 +14,9 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\AuditLogsTrait;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class BudgetTemplateController
@@ -22,6 +25,8 @@ use Response;
 
 class BudgetTemplateAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  BudgetTemplateRepository */
     private $budgetTemplateRepository;
 
@@ -62,6 +67,11 @@ class BudgetTemplateAPIController extends AppBaseController
         $input['createdUserSystemID'] = auth()->id();
         
         $budgetTemplate = $this->budgetTemplateRepository->create($input);
+
+        // Audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $budgetTemplate->budgetTemplateID, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been created", "C", $budgetTemplate->toArray(), []);
 
         return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template saved successfully');
     }
@@ -106,6 +116,8 @@ class BudgetTemplateAPIController extends AppBaseController
             return $this->sendError('Budget Template not found');
         }
 
+        $oldValues = $budgetTemplate->toArray();
+
         if (isset($input['update']) && $input['update'] == 'default') {
             $budgetTemplate->isDefault = $input['isDefault'];
             $budgetTemplate->modifiedUserSystemID = auth()->id();
@@ -119,6 +131,11 @@ class BudgetTemplateAPIController extends AppBaseController
             //update all other templates to non-default
             BudgetTemplate::where('budgetTemplateID', '!=', $id)->update(['isDefault' => 0]);
             
+            // Audit log for default update
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template default status updated", "U", $budgetTemplate->toArray(), $oldValues);
+            
             return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
         }
 
@@ -131,6 +148,11 @@ class BudgetTemplateAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = auth()->id();
 
         $budgetTemplate = $this->budgetTemplateRepository->update($input, $id);
+
+        // Audit log for regular update
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been updated", "U", $budgetTemplate->toArray(), $oldValues);
 
         return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
     }
@@ -200,7 +222,7 @@ class BudgetTemplateAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         /** @var BudgetTemplate $budgetTemplate */
         $budgetTemplate = $this->budgetTemplateRepository->find($id);
@@ -208,6 +230,8 @@ class BudgetTemplateAPIController extends AppBaseController
         if (empty($budgetTemplate)) {
             return $this->sendError('Budget Template not found');
         }
+
+        $previousValue = $budgetTemplate->toArray();
 
         //check if template is assigned to any department
         $departmentBudgetTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
@@ -219,6 +243,11 @@ class BudgetTemplateAPIController extends AppBaseController
         \App\Models\BudgetTemplateColumn::where('budgetTemplateID', $id)->delete();
 
         $budgetTemplate->delete();
+
+        // Audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been deleted", "D", [], $previousValue);
 
         return $this->sendResponse($id, 'Budget Template deleted successfully');
     }

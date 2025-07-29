@@ -158,7 +158,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     // Audit log
                     $uuid = $request->get('tenant_uuid', 'local');
                     $db = $request->get('db', '');
-                    $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "Employee assigned to department", "C", $companyDepartmentEmployee->toArray(), []);
+                    $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "Employee assigned to department", "C", $companyDepartmentEmployee->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
                     
                     $results[] = $companyDepartmentEmployee;
                 }
@@ -195,7 +195,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 // Audit log
                 $uuid = $request->get('tenant_uuid', 'local');
                 $db = $request->get('db', '');
-                $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "Employee assigned to department", "C", $companyDepartmentEmployee->toArray(), []);
+                $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "Employee assigned to department", "C", $companyDepartmentEmployee->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
 
                 DB::commit();
 
@@ -251,7 +251,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             // Audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "company_departments_employees", "Department employee assignment updated", "U", $companyDepartmentEmployee->toArray(), $oldValues);
+            $this->auditLog($db, $id, $uuid, "company_departments_employees", "Department employee assignment updated", "U", $companyDepartmentEmployee->toArray(), $oldValues, $processedData['departmentSystemID'], 'company_departments');
 
             DB::commit();
 
@@ -285,7 +285,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             // Audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "company_departments_employees", "Employee removed from department", "D", [], $previousValue);
+            $this->auditLog($db, $id, $uuid, "company_departments_employees", "Employee removed from department", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
 
             return $this->sendResponse($id, 'Employee removed from department successfully');
 

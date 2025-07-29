@@ -89,6 +89,18 @@ class LokiService
             case 'asset_costing_attributes':
                 $table = 'erp_attributes';
                 break;
+            case 'company_departments':
+                $table = 'company_departments';
+                break;
+            case 'department_budget_templates':
+                $table = 'department_budget_templates';
+                break;
+            case 'budget_templates':
+                $table = 'budget_templates';
+                break;
+            case 'budget_template_columns':
+                $table = 'budget_template_columns';
+                break;
             default:
                 $table = null;
                 break;

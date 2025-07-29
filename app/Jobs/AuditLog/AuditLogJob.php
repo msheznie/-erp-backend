@@ -4,6 +4,12 @@ namespace App\Jobs\AuditLog;
 
 use App\Services\AuditLog\ChartOfAccountConfigAuditService;
 use App\Services\AuditLog\ItemFinanceCategorySubAssignedAuditService;
+use App\Services\AuditLog\DepartmentAuditService;
+use App\Services\AuditLog\DepartmentSegmentAuditService;
+use App\Services\AuditLog\DepartmentEmployeeAuditService;
+use App\Services\AuditLog\DepartmentBudgetTemplateAuditService;
+use App\Services\AuditLog\BudgetTemplateAuditService;
+use App\Services\AuditLog\BudgetTemplateColumnAuditService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -120,6 +126,24 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'serviceline':
                 $data = SegmentMasterAuditService::process($auditData);
+                break;
+            case 'company_departments':
+                $data = DepartmentAuditService::process($auditData);
+                break;
+            case 'company_departments_segments':
+                $data = DepartmentSegmentAuditService::process($auditData);
+                break;
+            case 'company_departments_employees':
+                $data = DepartmentEmployeeAuditService::process($auditData);
+                break;
+            case 'department_budget_templates':
+                $data = DepartmentBudgetTemplateAuditService::process($auditData);
+                break;
+            case 'budget_templates':
+                $data = BudgetTemplateAuditService::process($auditData);
+                break;
+            case 'budget_template_columns':
+                $data = BudgetTemplateColumnAuditService::process($auditData);
                 break;
             default:
                 // code...
