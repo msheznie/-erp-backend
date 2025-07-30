@@ -6708,4 +6708,88 @@ class SRMService
             return $this->generateResponse(false, 'Failed to check: '. $ex->getMessage());
         }
     }
+
+    public function generateSupplierInvoiceExcel($request)
+        {
+            $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+            $search = $request->input('extra.search');
+            $filter = $request->input('extra.filters');
+            $query = $this->invoiceService->buildInvoiceQuery($supplierID, $search, $filter);
+            $type = 'xlsx';
+            $invoices = $query->get();
+
+            if (empty($invoices)) {
+                return [
+                    'success' => false,
+                    'message' => 'There are no records to download',
+                    'data' => [],
+                ];
+            }
+
+            $dataInvoice = [];
+            foreach ($invoices as $index => $val) {
+                $status = $this->getApprovalStatus($val['confirmedYN'], $val['approved'], $val['refferedBackYN']);
+                $dataInvoice[$index + 1] = [
+                    'Invoice Code' => $val['bookingInvCode'] ?? '-',
+                    'Invoice No' => $val['supplierInvoiceNo'] ?? '-',
+                    'Booking Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
+                    'Comments' => $val['comments'] ?? '-',
+                    'Created At' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
+                    'Approved on' => Carbon::parse($val['approvedDate'])->format('d/m/Y') ?? '-',
+                    'Payment Status' => $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']),
+                    'Status' => $status,
+                    'Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                ];
+            }
+
+            $fileName = 'supplier_invoice_summary';
+            $path = 'srm/invoice/report/excel/';
+            $reportConfig = [
+                'origin' => 'SRM',
+                'faq_data' => [],
+                'prebid_data' => $dataInvoice,
+                'parentIdList' => [],
+                'nonParentIdList' => [],
+            ];
+
+        $basePath = $this->encryptUrl(CreateExcel::process($dataInvoice, $type, $fileName, $path, $reportConfig));
+
+        return $basePath
+            ? ['success' => true, 'message' => 'Successfully retrieved', 'data' => $basePath]
+            : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
+    }
+
+   private function getApprovalStatus($co, $ap, $tr)
+    {
+        if ($co === 1 && $ap === 0 && $tr === 0) {
+            return 'Pending Approval';
+        } elseif ($co === 1 && ($ap === -1 || $ap === 1)) {
+            return 'Fully Approved';
+        } elseif ($co === 1 && $ap === 0 && $tr === -1) {
+            return 'Referred Back';
+        }
+
+        return '-';
+    }
+
+    private function supplierPaymentStatus($paymentDetails, $bookingAmountTrans): string
+    {
+        if (empty($paymentDetails)) {
+            return 'Not Paid';
+        }
+
+        $totalPaid = 0;
+        foreach ($paymentDetails as $payment) {
+            $amount = isset($payment['supplierPaymentAmount']) ? floatval($payment['supplierPaymentAmount']) : 0;
+            $totalPaid += $amount;
+        }
+
+        if ($totalPaid >= $bookingAmountTrans) {
+            return 'Fully Paid';
+        } elseif ($totalPaid > 0 && $totalPaid < $bookingAmountTrans) {
+            return 'Partially Paid';
+        } else {
+            return 'Not Paid';
+        }
+    }
 }

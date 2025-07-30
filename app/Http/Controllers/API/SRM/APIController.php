@@ -107,6 +107,7 @@ define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
 define('PO_REPORT', 'PO_REPORT');
 define('GET_PAYMENT_DETAILS', 'GET_PAYMENT_DETAILS');
 define('CHECK_TENDER_READY_TO_PURCHASE', 'CHECK_TENDER_READY_TO_PURCHASE');
+define('SUPPLIER_INVOICE_EXCEL', 'SUPPLIER_INVOICE_EXCEL');
 
 
 class APIController extends Controller
@@ -302,6 +303,8 @@ class APIController extends Controller
                 return $this->SRMService->getPaymentDetails($request);
             case CHECK_TENDER_READY_TO_PURCHASE:
                 return $this->SRMService->checkTenderReadyToPurchase($request);
+            case SUPPLIER_INVOICE_EXCEL:
+                return $this->SRMService->generateSupplierInvoiceExcel($request);
             default:
                 return [
                     'success'   => false,

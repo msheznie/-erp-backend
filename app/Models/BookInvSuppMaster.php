@@ -803,4 +803,9 @@ class BookInvSuppMaster extends Model
         return $invoiceDetails;
     }
 
+    public function paymentDetail()
+    {
+        return $this->hasMany(PaySupplierInvoiceDetail::class, 'bookingInvSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
 }
