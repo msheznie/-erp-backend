@@ -24,6 +24,7 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
 use App\Models\PdcLog;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -637,13 +638,23 @@ class ReceiptAPIService
             array_push($this->detailsArrayObj,$headerError);
 
         }else {
-
-
-            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            if($segmentMaster->approved_yn != 1)
             {
                 $this->isError = true;
-                $headerError = new Error('segmentCode','Segment Code not assigned to the company');
+                $headerError = new Error('segmentCode','The segment is not approved');
                 array_push($this->detailsArrayObj,$headerError);
+            }
+
+            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
+                ->where('companySystemID', $segmentMaster->companySystemID)
+                ->where('isAssigned', 1)
+                ->first();
+
+            if(!$segmentAssigned)
+            {
+                $this->isError = true;
+                $detailsError = new Error('segmentCode','Segment is not assigned to the company');
+                array_push($this->detailsArrayObj,$detailsError);
             }
 
             if(!$segmentMaster->isActive)
@@ -684,15 +695,24 @@ class ReceiptAPIService
     private function  validateSegmentCode($details,$receipt) {
         $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
 
-        if(!isset($segmentMaster))
-        {
+        if(!isset($segmentMaster)) {
             $this->isError = true;
             $detailsError = new Error('segmentCode','Segment Code not found');
             array_push($this->detailsArrayObj,$detailsError);
-        }else {
+        } else {
+            if($segmentMaster->approved_yn != 1)
+            {
+                $this->isError = true;
+                $headerError = new Error('segmentCode','The segment is not approved');
+                array_push($this->detailsArrayObj,$headerError);
+            }
 
+            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
+                ->where('companySystemID', $segmentMaster->companySystemID)
+                ->where('isAssigned', 1)
+                ->first();
 
-            if($segmentMaster->companySystemID != $receipt->companySystemID)
+            if(!$segmentAssigned)
             {
                 $this->isError = true;
                 $detailsError = new Error('segmentCode','Segment is not assigned to the company');

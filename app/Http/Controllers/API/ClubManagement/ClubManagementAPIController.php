@@ -27,6 +27,7 @@ use App\Models\DocumentMaster;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\MatchDocumentMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
@@ -84,6 +85,19 @@ class ClubManagementAPIController extends AppBaseController
                     $segment = SegmentMaster::find($dt['serviceLineSystemID']);
                     if (empty($segment)) {
                         return $this->sendError('Segment not found');
+                    } else {
+                        if($segment->approved_yn == 0) {
+                            return $this->sendError('The segment is not approved');
+                        } else {
+                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                                ->where('companySystemID', $segment->companySystemID)
+                                ->where('isAssigned', 1)
+                                ->first();
+
+                            if(!$segmentAssigned){
+                                return $this->sendError('Selected segment is not assigned to the company');
+                            }
+                        }
                     }
 
 
@@ -469,8 +483,21 @@ class ClubManagementAPIController extends AppBaseController
                 $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
                     ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
                     ->first();
-                if(empty($serviceLine)){
+                if (empty($serviceLine)) {
                     return $this->sendError('Segment not found');
+                } else {
+                    if($serviceLine->approved_yn == 0) {
+                        return $this->sendError('The segment is not approved');
+                    } else {
+                        $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$serviceLine->serviceLineSystemID)
+                            ->where('companySystemID', $serviceLine->companySystemID)
+                            ->where('isAssigned', 1)
+                            ->first();
+
+                        if(!$segmentAssigned){
+                            return $this->sendError('Selected segment is not assigned to the company');
+                        }
+                    }
                 }
 
                 $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['directReceiptAutoID'])->first();

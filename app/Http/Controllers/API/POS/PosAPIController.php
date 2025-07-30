@@ -119,6 +119,10 @@ class PosAPIController extends AppBaseController
                 ->where('ServiceLineCode', '!=', '')
                 ->where('companySystemID', '=', $company_id)
                 ->where('ServiceLineDes', '!=', '')
+                ->where('approved_yn', 1)
+                ->whereHas('assignedSegments', function ($query) use ($company_id) {
+                    $query->where('companySystemID', $company_id);
+                })
                 ->get();
 
             DB::commit();

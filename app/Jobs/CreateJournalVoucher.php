@@ -12,6 +12,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ErpProjectMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Services\DocumentAutoApproveService;
 use App\Services\JournalVoucherService;
@@ -641,16 +642,33 @@ class CreateJournalVoucher implements ShouldQueue
                 ->first();
 
             if($segment){
-                $request['segmentID'] = $segment->serviceLineSystemID;
-            }
-            else {
+                if($segment->approved_yn == 0) {
+                    $errorData[] = [
+                            'field' => "segment",
+                            'message' => ["Selected segment is not approved"]
+                        ];
+                } else {
+                    $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                        ->where('companySystemID', $segment->companySystemID)
+                        ->where('isAssigned', 1)
+                        ->first();
+
+                    if(!$segmentAssigned){
+                        $errorData[] = [
+                            'field' => "segment",
+                            'message' => ["Selected segment is not assigned to the company"]
+                        ];
+                    } else {
+                        $request['segmentID'] = $segment->serviceLineSystemID;
+                    }
+                }
+            } else {
                 $errorData[] = [
                     'field' => 'segment',
                     'message' => ['Segment not found']
                 ];
             }
-        }
-        else {
+        } else {
             $errorData[] = [
                 'field' => "segment",
                 'message' => ["segment field is required"]

@@ -19,6 +19,7 @@ use App\Models\DocumentAttachmentType;
 use App\Models\FinanceItemCategorySub;
 use App\Models\ItemAssigned;
 use App\Models\ItemCategoryTypeMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -198,7 +199,26 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             'message' => 'Segment not found'
                                         ];
                                     } else {
-                                        $invMaster['serviceLineSystemID'] = $segment['serviceLineSystemID'];
+                                        if($segment->approved_yn == 0) {
+                                            $validationError[] = [
+                                                'field' => "segment",
+                                                'message' => ["Selected segment is not approved"]
+                                            ];
+                                        } else {
+                                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                                                ->where('companySystemID', $segment->companySystemID)
+                                                ->where('isAssigned', 1)
+                                                ->first();
+
+                                            if(!$segmentAssigned){
+                                                $validationError[] = [
+                                                    'field' => "segment",
+                                                    'message' => ["Selected segment is not assigned to the company"]
+                                                ];
+                                            } else {
+                                                $invMaster['serviceLineSystemID'] = $segment['serviceLineSystemID'];
+                                            }
+                                        }
                                     }
                                 }
 
@@ -412,6 +432,25 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                     'field' => 'segment',
                                                     'message' => 'Segment not found'
                                                 ];
+                                            } else {
+                                                if($detSegment->approved_yn == 0) {
+                                                    $detailsDataError[] = [
+                                                        'field' => "segment",
+                                                        'message' => ["Selected segment is not approved"]
+                                                    ];
+                                                } else {
+                                                    $segmentAssigned = SegmentAssigned::where('serviceLineSystemID', $detSegment->serviceLineSystemID)
+                                                        ->where('companySystemID', $detSegment->companySystemID)
+                                                        ->where('isAssigned', 1)
+                                                        ->first();
+
+                                                    if (!$segmentAssigned) {
+                                                        $detailsDataError[] = [
+                                                            'field' => "segment",
+                                                            'message' => ["Selected segment is not assigned to the company"]
+                                                        ];
+                                                    }
+                                                }
                                             }
                                         }
 

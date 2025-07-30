@@ -22,6 +22,7 @@ use App\Models\DebitNote;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -791,6 +792,24 @@ class CreateCreditNote implements ShouldQueue
                 ->first();
 
             if ($segment) {
+                if($segment->approved_yn == 0) {
+                    $errorData[] = [
+                        'field' => "segment",
+                        'message' => ["Selected segment is not approved"]
+                    ];
+                } else {
+                    $segmentAssigned = SegmentAssigned::Where('serviceLineSystemID',$segment->serviceLineSystemID)
+                        ->where('companySystemID', $segment->companySystemID)
+                        ->where('isAssigned', 1)
+                        ->first();
+
+                    if(!$segmentAssigned){
+                        $errorData[] = [
+                            'field' => "segment",
+                            'message' => ["Selected segment is not assigned to the company"]
+                        ];
+                    }
+                }
                 if ($segment->isActive == 1) {
                     if ($segment->isDeleted != 0) {
                         $errorData[] = [

@@ -261,6 +261,4 @@ class SegmentMaster extends Model
         return $this->hasMany('App\Models\SegmentAssigned', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
- 
-   
 }
