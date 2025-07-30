@@ -300,7 +300,8 @@ class EvaluationCriteriaDetailsEditLog extends Model
     }
     public static function getEvaluationDetailById($evaluationID, $versionID){
         return self::with(['evaluation_criteria_score_config' => function ($q) {
-            $q->where('fromTender', 1);
+            $q->where('fromTender', 1)
+                ->where('is_deleted', 0);
         }])
             ->where('amd_id', $evaluationID)
             ->where('tender_version_id', $versionID)
@@ -339,5 +340,11 @@ class EvaluationCriteriaDetailsEditLog extends Model
     }
     public static function getParentEvaluationCriteria($parentID){
         return self::where('amd_id', $parentID)->first();
+    }
+    public static function getTenderTechnicalCriteria($tenderMasterID, $criteriaTypeID, $versionID){
+        return self::where('tender_id', $tenderMasterID)
+            ->where('critera_type_id', $criteriaTypeID)
+            ->where('tender_version_id', $versionID)
+            ->where('is_deleted', 0)->first();
     }
 }

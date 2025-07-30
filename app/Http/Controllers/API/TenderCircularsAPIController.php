@@ -315,7 +315,7 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         $tenderMasterID = $input['tenderMasterId'] ?? 0;
         $versionID = $input['versionID'] ?? 0;
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $editOrAmend = $versionID > 0;
         $requestType = $input['requestType'] ?? '';
         $companySystemID = $input['companySystemID'] ?? 0;
         $id = $input['id'] ?? 0;
@@ -566,7 +566,7 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         $versionID = $input['versionID'] ?? 0;
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $editOrAmend = $versionID > 0;
 
         $purchased = SupplierRegistrationLink::selectRaw('*')
             ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
@@ -618,8 +618,8 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $editOrAmend = $input['enableChangeRequest'] ?? false;
             $versionID = $input['versionID'] ?? 0;
+            $editOrAmend = $versionID > 0;
             $attachmentID = $input['attachmentID'] ?? 0;
             $tenderMasterId = $input['tenderMasterId'] ?? 0;
             $circularId = (int) $input['circularId'] ?? 0;
@@ -682,7 +682,7 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
         $versionID = $input['versionID'] ?? 0;
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $editOrAmend = $versionID > 0;
 
         DB::beginTransaction();
         try {

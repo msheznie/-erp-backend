@@ -148,8 +148,8 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Answer Type is required'];
             }
 
-            $editOrAmend = $input['editOrAmend'] ?? false;
             $versionID = $input['versionID'] ?? 0;
+            $editOrAmend = $versionID > 0;
 
             $chkDuplicate = $editOrAmend ?
                 EvaluationCriteriaDetailsEditLog::checkForDescriptionDuplication($input['tender_id'], $input['description'], $input['level'], $versionID, $input['amd_id']) :
@@ -205,7 +205,8 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
     public function deleteEvaluationCriteria($input)
     {
         try{
-            $editOrAmend = $input['editOrAmend'] ?? false;
+            $versionID = $input['versionID'] ?? 0;
+            $editOrAmend = $versionID > 0;
             $fromTender = $input['fromTender'] ?? false;
 
             return DB::transaction(function () use ($input, $editOrAmend, $fromTender) {
@@ -256,8 +257,8 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
     public function validateWeightage($input){
         $weightage = $input['weightage'];
         $tenderMasterId = $input['tenderMasterId'];
-        $versionID = $input['versionID'];
-        $editOrAmend = $input['editOrAmend'];
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
         $level  = $input['level'] ?? null;
 
         $parentId = $input['parentId'];

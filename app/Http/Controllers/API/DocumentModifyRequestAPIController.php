@@ -334,4 +334,16 @@ class DocumentModifyRequestAPIController extends AppBaseController
             return $this->sendError('Unexpected Error: ' . $e->getMessage(), 500);
         }
     }
+    public function getEditOrAmendHistory(Request $request)
+    {
+        try{
+            $response = $this->documentModifyRequestRepository->getEditOrAmendHistory($request);
+            if(!$response['success']) {
+                return $this->sendError($response['message']);
+            }
+            return $this->sendResponse($response['data'], 'Data retrieved successfully');
+        } catch (\Exception $exception) {
+            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+        }
+    }
 }

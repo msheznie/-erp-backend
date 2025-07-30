@@ -184,8 +184,9 @@ class PricingScheduleMasterRepository extends BaseRepository
     }
     public function getPricingScheduleMasterEditData($input)
     {
-        $enableChangeRequest = $input['enableChangeRequest'] ?? false;
-        $id = $input['id'] ?? 0;
+        $versionID = $input['versionID'] ?? 0;
+        $enableChangeRequest = $versionID > 0;
+        $id = $input['id'];
         if($enableChangeRequest){
             return PricingScheduleMasterEditLog::getScheduleMasterData($id);
         } else {
@@ -216,7 +217,7 @@ class PricingScheduleMasterRepository extends BaseRepository
                 $priceBidFormat = $input['priceBidFormat'] ?? [];
                 $employee = Helper::getEmployeeInfo();
                 $versionID = $masterData['versionID'] ?? 0;
-                $editOrAmend = $masterData['enableChangeRequest'] ?? false;
+                $editOrAmend = $versionID > 0;
                 $scheduleID = $masterData['schedule_id'] ?? 0;
                 $price_bid_format_id = $masterData['price_bid_format_id'] ?? 0;
                 $companySystemID = $masterData['companySystemID'] ?? 0;

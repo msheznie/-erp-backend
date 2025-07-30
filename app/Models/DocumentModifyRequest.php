@@ -271,4 +271,12 @@ class DocumentModifyRequest extends Model
         return self::select('id','type','requested_document_master_id')->where('id', $versionID)->first();
     }
 
+    public static function getModificationRequestList($tenderMasterID)
+    {
+        return self::where('documentSystemCode', $tenderMasterID)
+            ->where('status', 1)
+            ->where('modify_type', 1)
+            ->orderBY('id', 'desc')
+            ->get();
+    }
 }

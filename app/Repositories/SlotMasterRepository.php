@@ -6,11 +6,16 @@ use App\helper\Helper;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SlotMasterWeekDays;
+use App\Models\WarehouseMaster;
+use App\Models\WarehouseRights;
 use App\Models\WeekDays;
 use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -260,5 +265,98 @@ class SlotMasterRepository extends AppBaseController
         } else {
             return ['status' => false, 'message' => "Not Successfull"];
         }
+    }
+
+    public function getFormDataCalendar(Request $request) {
+
+        $companyID = $request['companyID'];
+        $validator = $this->companyIdValidator($companyID);
+        if(!$validator['success']){
+            return $validator;
+        }
+        $subCompanies = $this->getCompanyHierarchy($companyID);
+        $wareHouseLocation = WarehouseMaster::getAllCompanyWarehouseList($subCompanies);
+
+        $user = Helper::getEmployeeSystemID();
+        $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
+
+        $filteredWarehouses = $wareHouseLocation->filter(function ($warehouse) use ($assignedWareHouseIds) {
+            return in_array($warehouse->wareHouseSystemCode, $assignedWareHouseIds);
+        })->values();
+
+        $weekDays = WeekDays::all();
+
+        $output = array(
+            'wareHouseLocation' => $filteredWarehouses,
+            'weekDays' => $weekDays
+        );
+
+        return $output;
+    }
+
+    public function getCalendarSlotData(Request $request)
+    {
+        $input = $request->all();
+        $slot = new SlotMaster();
+
+        $companyID  = $input['companyID'];
+        $validator = $this->companyIdValidator($companyID);
+        if(!$validator['success']){
+            return $validator;
+        }
+
+        $subCompanies = $this->getCompanyHierarchy($companyID);
+
+        $user = Helper::getEmployeeSystemID();
+        $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
+
+        $data = $slot->getSlotData($subCompanies, 0, $assignedWareHouseIds);
+        $arr = [];
+        $x = 0;
+        if (!empty($data)) {
+            foreach ($data as $row) {
+                foreach ($row['slot_details'] as $slotDetail) {
+                    $status = collect($slotDetail->appointment)->contains('confirmed_yn', true) ? 1 : 0;
+
+                    $arr[$x]['id'] = $slotDetail->id;
+                    $arr[$x]['slot_master_id'] = $row->id;
+                    $arr[$x]['title'] =  Carbon::parse($slotDetail->start_date)->format('h:i A'). '-'. Carbon::parse($slotDetail->end_date)->format('h:i A'). ' '.$row->ware_house->wareHouseDescription;
+                    $arr[$x]['start'] = $slotDetail->start_date;
+                    $arr[$x]['end'] = $slotDetail->end_date;
+                    $arr[$x]['fullDay'] = 0;
+                    $arr[$x]['color'] =($status == 1?'#cf3000ba':'#ffc107');
+                    $arr[$x]['status'] = $status;
+                    $x++;
+                }
+            }
+        }
+        return $arr;
+    }
+
+    private function getCompanyHierarchy($companyID) {
+
+        return \Helper::checkIsCompanyGroup($companyID)
+            ? \Helper::getGroupCompany($companyID)
+            : [$companyID];
+    }
+
+    private function companyIdValidator($companyID)
+    {
+        $validator = Validator::make(
+            ['companyID' => $companyID],
+            ['companyID' => 'required'],
+            [
+                'companyID.required' => 'Company ID is required.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => $validator->errors()->first('name')
+            ];
+        }
+
+        return ['success' => true];
     }
 }

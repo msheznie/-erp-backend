@@ -268,6 +268,7 @@ Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRe
 Route::post('referBackTenderMaster', 'TenderMasterAPIController@referBackTenderMaster')->name("Referback tender master");
 Route::post('getTenderAmendHistory', 'TenderMasterAPIController@getTenderAmendHistory')->name("Get tender amend history");
 Route::post('getTenderRfxAudit', 'TenderMasterAPIController@getTenderRfxAudit')->name("Get tender rfx audit");
+Route::post('getEditOrAmendHistory', 'DocumentModifyRequestAPIController@getEditOrAmendHistory')->name("Get edit amend history");
 
 
 Route::group(['prefix' => 'srm'], function (){

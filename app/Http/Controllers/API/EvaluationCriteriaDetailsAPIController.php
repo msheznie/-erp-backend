@@ -307,8 +307,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $sort_order = 1;
         $fromTender = $input['fromTender'] ?? false;
         $model = $fromTender ? EvaluationCriteriaDetails::class : EvaluationCriteriaMasterDetails::class;
-        $editOrAmend = $input['editOrAmend'] ?? false;
         $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
         if($input['tenderMasterId'] == null && isset($input['level']) && $input['level'] !== 0){
             return $this->addMasterEvaluationCriteriaDetail($request);
@@ -449,7 +449,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                     $minAns = $vl['drop_value'];
                                 }
 
-                                $drop['criteria_detail_id'] = $result['id'];
+                                $drop['criteria_detail_id'] = $editOrAmend ? $result['amd_id'] : $result['id'];;
                                 $drop['label'] = $vl['drop_label'];
                                 $drop['score'] = $vl['drop_value'];
                                 $drop['created_by'] = $employee->employeeSystemID;
@@ -781,8 +781,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }
         $tenderMasterID = $input['tenderMasterId'] ?? 0;
-        $editOrAmend = $input['editOrAmend'] ?? false;
         $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
         $criteriaTypeID = $input['critera_type_id'] ?? 0;
 
         $data['criteriaDetail'] = $this->evaluationCriteriaDetailsRepository->getCriteriaDetails(

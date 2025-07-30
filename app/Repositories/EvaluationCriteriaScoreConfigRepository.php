@@ -44,8 +44,8 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
         try{
             return DB::transaction(function () use ($input) {
                 $employee = Helper::getEmployeeInfo();
-                $editOrAmend = $input['editOrAmend'] ?? false;
                 $versionID = $input['versionID'] ?? 0;
+                $editOrAmend = $versionID > 0;
                 $ScoreConfig = $editOrAmend ?
                     EvacuationCriteriaScoreConfigLog::find($input['id']) :
                     EvaluationCriteriaScoreConfig::find($input['id'])->first();
@@ -93,8 +93,8 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
         try{
             return DB::transaction(function () use($input){
                 $fromTender = $input['fromTender'] ?? false;
-                $editOrAmend = $input['editOrAmend'] ?? false;
                 $versionID = $input['versionID'] ?? 0;
+                $editOrAmend = $versionID > 0;
                 $employee = Helper::getEmployeeInfo();
                 $min_value = 0;
                 $max_value = 0;
@@ -153,6 +153,53 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception];
+        }
+    }
+    public function removeCriteriaConfig($input){
+        try {
+            $fromTender = $input['fromTender'] ?? false;
+            $versionID = $input['versionID'] ?? 0;
+            $editOrAmend = $versionID > 0;
+
+            $model = $fromTender
+                ? ($editOrAmend ? EvaluationCriteriaDetailsEditLog::class : EvaluationCriteriaDetails::class)
+                : EvaluationCriteriaMasterDetails::class;
+
+            return DB::transaction(function () use ($editOrAmend, $input, $model, $versionID, $fromTender) {
+                $configModel = $editOrAmend ? EvacuationCriteriaScoreConfigLog::class : EvaluationCriteriaScoreConfig::class;
+                $key = $editOrAmend ? 'amd_id' : 'id';
+
+                $exists = $configModel::find($input[$key]);
+                if (empty($exists)) {
+                    return ['success' => false, 'message' => 'Score configuration not found'];
+                }
+
+                $editOrAmend
+                    ? $configModel::where($key, $input[$key])->update(['is_deleted' => 1])
+                    : $configModel::where($key, $input[$key])->delete();
+
+                $criteriaConfig = $editOrAmend
+                    ? $configModel::getAllEvaluationCriteriaScore($fromTender, $input['criteria_detail_id'], $versionID)
+                    : $configModel::getAllEvaluationCriteriaScore($fromTender, $input['criteria_detail_id']);
+
+                $max_value = 0;
+                $min_value = 0;
+                if(!empty($criteriaConfig)){
+                    $collection = collect($criteriaConfig);
+
+                    $max_value = $collection->max('score');
+                    $min_value = $collection->min('score');
+                }
+
+                $model::where('id', $input['criteria_detail_id'])->update([
+                    'max_value' => $max_value,
+                    'min_value' => $min_value
+                ]);
+
+                return ['success' => true, 'message' => 'Score configuration deleted successfully.'];
+            });
+        } catch (\Exception $exception) {
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
         }
     }
 }

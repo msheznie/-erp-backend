@@ -55,6 +55,8 @@ Route::group([], function(){
         Route::post('/', 'SupplierRegistrationController@index')->name("Get supplier registrations");
         Route::post('/attach', 'SupplierRegistrationController@linkKYCWithSupplier')->name("Link KYC with supplier");
         Route::post('/supplierCreation', 'SupplierRegistrationApprovalController@supplierCreation')->name("Create supplier");
+        Route::post('/supplierValidation', 'SupplierRegistrationApprovalController@supplierValidation')->name("Validate supplier");
+        Route::post('checkSupplierMatchWithKyc', 'SupplierRegistrationController@checkSupplierMatchWithKyc')->name("Get edit amend history");
     });
 
 });

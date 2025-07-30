@@ -62,5 +62,10 @@ class BankMemoTypes extends Model
         
     ];
 
+    public static function getBankMemo()
+    {
+        return self::orderBy('sortOrder', 'asc')->get();
+    }
+
     
 }

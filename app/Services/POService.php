@@ -149,7 +149,7 @@ class POService
     public function getAppointmentSlots($tenantID)
     {
         $slot = new SlotMaster();
-        $data = $slot->getSlotData([$tenantID], 1);
+        $data = $slot->getSlotData([$tenantID], 1, []);
         return $data;
     }
 

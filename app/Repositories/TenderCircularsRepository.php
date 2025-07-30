@@ -99,7 +99,7 @@ class TenderCircularsRepository extends BaseRepository
         $input = $request->all();
         $documentSystemID = $input['documentSystemID'] ?? 0;
         $versionID = $input['versionID'] ?? 0;
-        $editOrAmend = $input['enableChangeRequest'] ?? 0;
+        $editOrAmend = $versionID > 0;
         $tenderMasterId = $input['tenderMasterId'] ?? 0;
         $circularID = $input['circularId'] ?? 0;
 
@@ -150,8 +150,8 @@ class TenderCircularsRepository extends BaseRepository
             return DB::transaction(function () use ($input) {
                 $id = (int) $input['id'] ?? 0;
                 $amd_id = (int) $input['amd_id'] ?? 0;
-                $editOrAmend = $input['enableChangeRequest'] ?? false;
-                $versionID = $input['versionID'] ?? false;
+                $versionID = $input['versionID'] ?? 0;
+                $editOrAmend = $versionID > 0;
 
                 $tenderCircular = $editOrAmend ?
                     TenderCircularsEditLog::find($amd_id) :

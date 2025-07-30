@@ -428,4 +428,23 @@ class SupplierMaster extends Model
     {
         return $this->isActive;
     }
+
+    public static function checkFieldExists($companyId, $field, $value)
+    {
+        $query = SupplierMaster::where('primaryCompanySystemID', $companyId)
+            ->where('isActive', 1);
+
+        if ($field === 'supplierName') {
+            $query->whereRaw("LOWER(REPLACE($field, ' ', '')) = ?", [$value]);
+        } else {
+            $query->where($field, $value);
+        }
+
+        return $query->exists();
+    }
+
+    public static function getSupplierData($supplerId)
+    {
+        return self::where('supplierCodeSystem', $supplerId)->first();
+    }
 }

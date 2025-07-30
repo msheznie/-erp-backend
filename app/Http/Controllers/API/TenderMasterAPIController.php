@@ -99,6 +99,7 @@ use App\Models\CircularAmendments;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\helper\email;
 use App\Services\SrmDocumentModifyService;
+use App\Services\SrmTenderEditAmendService;
 
 /**
  * Class TenderMasterController
@@ -114,7 +115,8 @@ class TenderMasterAPIController extends AppBaseController
     private $tenderFinalBidsRepository;
     private $documentModifyRequestRepository;
     private $documentModifyService;
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService)
+    private $srmTenderEditAmendService;
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
@@ -122,6 +124,7 @@ class TenderMasterAPIController extends AppBaseController
         $this->tenderFinalBidsRepository = $tenderFinalBidsRepo;
         $this->documentModifyRequestRepository = $documentModifyRequestRepo;
         $this->documentModifyService = $documentModifyService;
+        $this->srmTenderEditAmendService = $srmTenderEditAmendService;
     }
 
     /**
@@ -1189,9 +1192,11 @@ class TenderMasterAPIController extends AppBaseController
                             }
 
                         }
-                        $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
-                        if (empty($technical) && !$rfq) {
-                            return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+                        if(!$rfq){
+                            $technicalExists = $this->tenderMasterRepository->checkTenderTechnicalCriteriaAdded($input['id'], $versionID, $editOrAmend);
+                            if(!$technicalExists['success']){
+                                return $technicalExists;
+                            }
                         }
 
                         if($input['tender_type_id'] == 2 || $input['tender_type_id'] == 3){
@@ -1811,6 +1816,12 @@ class TenderMasterAPIController extends AppBaseController
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
+            if($request['documentSystemID'] == 118){
+                $deleteLogRecords = $this->srmTenderEditAmendService->rejectDocumentRequestChanges($request['id']);
+                if(!$deleteLogRecords['success']){
+                    return $this->sendError($deleteLogRecords["message"]);
+                }
+            }
             return $this->sendResponse(array(), $reject["message"]);
         }
     }
@@ -2272,10 +2283,14 @@ class TenderMasterAPIController extends AppBaseController
         $rfx = isset($request['rfq']) ? true : false;
         $fromTime = ($request['from_time']) ? new Carbon($request['from_time']) : null;
         $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
+        $versionID = $request['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
-        $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-            ->where('tender_id', $request['tenderMasterId'])
-            ->first();
+        $calendarDateValid = $this->tenderMasterRepository->getCalendarDateData($request, $versionID, $editOrAmend);
+        if(!$calendarDateValid['success']){
+            return $this->sendError($calendarDateValid['message']);
+        }
+        $calendarDatesDetail = $calendarDateValid['data'];
 
         if (!isset($request['from_time'])) {
             $fromTime = new Carbon($calendarDatesDetail->from_time);
@@ -2333,25 +2348,20 @@ class TenderMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                ->where('tender_id', $request['tenderMasterId'])
-                ->first();
-
-            if (empty($calendarDatesDetail)) {
-                return $this->sendError('Calendar Date Type not found');
-            }
-
             if (isset($request['time_changed']) && $request['time_changed']) {
                 if ($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
 
-                    $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                        ->where('tender_id', $request['tenderMasterId'])
-                        ->first();
-                    $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);
+                    $calenderDates =  $editOrAmend ?
+                        CalendarDatesDetailEditLog::find($calendarDatesDetail->amd_id) :
+                        CalendarDatesDetail::find($calendarDatesDetail->id);
                     $calenderDates->update($data);
 
-                    $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                    $tenderMasterData = $this->tenderMasterRepository->getTenderData($request, $versionID, $editOrAmend);
+                    if(!$tenderMasterData['success']){
+                        return $this->sendError($tenderMasterData['message']);
+                    }
+                    $tenderMaster = $tenderMasterData['data'];
+
                     if($calendarDatesDetail->is_default == 1){
                         $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
                         $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];
@@ -2368,13 +2378,17 @@ class TenderMasterAPIController extends AppBaseController
                     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
                 }
             } else {
-                $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                    ->where('tender_id', $request['tenderMasterId'])
-                    ->first();
-                $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);
+                $calenderDates =  $editOrAmend ?
+                    CalendarDatesDetailEditLog::find($calendarDatesDetail->amd_id) :
+                    CalendarDatesDetail::find($calendarDatesDetail->id);
                 $calenderDates->update($data);
 
-                $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                $tenderMasterData = $this->tenderMasterRepository->getTenderData($request, $versionID, $editOrAmend);
+                if(!$tenderMasterData['success']){
+                    return $this->sendError($tenderMasterData['message']);
+                }
+                $tenderMaster = $tenderMasterData['data'];
+
                 if($calendarDatesDetail->is_default == 1){
                     $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
                     $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];
@@ -5021,6 +5035,8 @@ class TenderMasterAPIController extends AppBaseController
             ->where('documentSystemCode',$id)
             ->where('rejectedYN',-1)
             ->get();
+
+        $data['modifyRequestList'] = DocumentModifyRequest::getModificationRequestList($input['id']);
 
         if (empty($data['tenderMaster'])) {
             return $this->sendError('Tender Master not found');

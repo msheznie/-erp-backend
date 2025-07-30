@@ -79,5 +79,12 @@ class SupplierCurrency extends Model
     public function bankMemo_by(){
         return $this->hasMany('App\Models\BankMemoSupplier','supplierCurrencyID','supplierCurrencyID');
     }
+
+    public static function getCurrency($selectedSupplier,$currency)
+    {
+        return self::where('supplierCodeSystem',$selectedSupplier)
+            ->where('currencyID',$currency)
+            ->first();
+    }
     
 }

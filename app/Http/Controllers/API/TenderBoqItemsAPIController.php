@@ -421,10 +421,10 @@ class TenderBoqItemsAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'QTY cannot be less than or equal to zero'];
             }
         }
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
         $versionID = $input['versionID'] ?? 0;
-        $id = $editOrAmend && $versionID > 0 ? $input['amd_id'] : $input['id'];
-        $mainWorkID = $editOrAmend && $versionID > 0 ? $input['amd_main_work_id'] : $input['main_work_id'];
+        $editOrAmend = $versionID > 0;
+        $id = $editOrAmend ? $input['amd_id'] : $input['id'];
+        $mainWorkID = $editOrAmend ? $input['amd_main_work_id'] : $input['main_work_id'];
 
         $exist = $editOrAmend ?
             TenderBoqItemsEditLog::checkItemNameExists($input['item_name'], $mainWorkID, $id) :
@@ -461,10 +461,10 @@ class TenderBoqItemsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $editOrAmend = $input['enableChangeRequest'] ?? false;
             $versionID = $input['versionID'] ?? 0;
-            $id = $editOrAmend && $versionID > 0 ? $input['amd_id'] : $input['id'];
-            $mainWorkID = $editOrAmend && $versionID > 0 ? $input['amd_main_work_id'] : $input['main_work_id'];
+            $editOrAmend = $versionID > 0;
+            $id = $editOrAmend ? $input['amd_id'] : $input['id'];
+            $mainWorkID = $editOrAmend ? $input['amd_main_work_id'] : $input['main_work_id'];
 
             $tenderBoqItems = $editOrAmend ? TenderBoqItemsEditLog::find($id) : TenderBoqItems::find($input['id']);
             if($editOrAmend){

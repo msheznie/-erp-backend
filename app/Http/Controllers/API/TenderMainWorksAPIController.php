@@ -478,21 +478,5 @@ class TenderMainWorksAPIController extends AppBaseController
         } catch(\Exception $ex) {
             return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
         }
-        $employee = \Helper::getEmployeeInfo();
-        DB::beginTransaction();
-        try {
-            $pricingShedulrDetail = PricingScheduleDetail::find($input['id']);
-            $data['description']=$input['description'];
-            $data['updated_by'] = $employee->employeeSystemID;
-            $result = $pricingShedulrDetail->update($data);
-            if($result){
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
-            }
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error($this->failed($e));
-            return ['success' => false, 'message' => $e];
-        }
     }
 }

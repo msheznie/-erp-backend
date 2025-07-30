@@ -25,6 +25,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
+use App\Models\DocumentModifyRequest;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
@@ -6599,5 +6600,112 @@ class SRMService
         $iv = random_bytes(openssl_cipher_iv_length($cipher)); // 16 bytes random IV
         $encrypted = openssl_encrypt($string, $cipher, $key, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $encrypted);
+    }
+
+    public function supplierValidation(Request $request)
+    {
+        $input = $request->all();
+        $supplierFormValues = $input['data'];
+        $supplierMasterData = $input['supplierRegistration'];
+
+        $companyId = $supplierMasterData['company_id'] ?? null;
+        $registrationNumber = $supplierFormValues['registrationNumber'] ?? null;
+        $supEmail = strtolower(trim($supplierFormValues['email'])) ?? null;
+        $supName = isset($supplierFormValues['name']) ? strtolower(str_replace(' ', '', $supplierFormValues['name'])) : null;
+
+        $validator = $this->validator($companyId, $registrationNumber, $supEmail, $supName);
+        if(!$validator['success']){
+            return $validator;
+        }
+
+        if (!empty($registrationNumber) && SupplierMaster::checkFieldExists($companyId, 'registrationNumber', $registrationNumber)) {
+            return [
+                'success' => false,
+                'message' => 'Same CR number already exists, cannot create as new supplier, please link with the
+                 existing supplier',
+                'data' => 1
+            ];
+        }
+
+        if((!empty($supEmail) && $supEmail !== '0' && SupplierMaster::checkFieldExists($companyId, 'supEmail', $supEmail))
+        || (!empty($supName) && SupplierMaster::checkFieldExists($companyId, 'supplierName', $supName))
+        ){
+            return [
+                'success' => false,
+                'message' => 'Supplier name or Email already exist, Do you wish to continue?',
+                'data' => 0
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Supplier validation successfully',
+            'data' => []
+        ];
+    }
+    public function validator($companyId, $registrationNumber, $supEmail, $supName){
+
+        $validationData = [
+            'company_id' => $companyId,
+            'registrationNumber' => $registrationNumber,
+            'email' => $supEmail,
+            'name' => $supName,
+        ];
+
+
+        $rules = [
+            'company_id' => 'required|integer',
+            'registrationNumber' => 'required|string',
+            'email' => 'required|email',
+            'name' => 'required|string',
+        ];
+
+
+        $messages = [
+            'company_id.required' => 'Company ID is required.',
+            'registrationNumber.required' => 'Registration number is required.',
+            'email.email' => 'Email is required.',
+            'name.required' => 'Name is required.',
+        ];
+
+        $validator = Validator::make($validationData, $rules, $messages);
+
+        if ($validator->fails()) {
+            return [
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'data' => 1
+            ];
+        }
+
+        return ['success' => true];
+    }
+    public function checkTenderReadyToPurchase($request){
+        try{
+            $tenderMaster = TenderMaster::getTenderByUuid($request->input('extra.uuid'));
+            if(empty($tenderMaster)){
+                return $this->generateResponse(false, 'Tender data not found');
+            }
+            $tenderID = $tenderMaster->id;
+            $documentType = $tenderMaster->document_system_id == 108 ? 'tender' : 'RFX';
+            $documentModifyRequest = DocumentModifyRequest::getTenderModifyRequest($tenderID);
+
+            if(empty($documentModifyRequest)){
+                return $this->generateResponse(true, 'Continue purchasing');
+            }
+
+            $hasValidTenderRequest = $documentModifyRequest->status == 1 &&
+                $documentModifyRequest->approved != 0 &&
+                $documentModifyRequest->confirmation_approved != -1;
+
+            if($hasValidTenderRequest){
+                $requestType = $documentModifyRequest->type == 1 ? 'edit' : 'amend';
+                $message = "The {$documentType} is under {$requestType} by the company. Please wait until it is completed before purchasing the {$documentType}.";
+                return $this->generateResponse(false, $message);
+            }
+            return $this->generateResponse(true, 'Continue purchasing');
+        } catch (\Exception $ex) {
+            return $this->generateResponse(false, 'Failed to check: '. $ex->getMessage());
+        }
     }
 }
