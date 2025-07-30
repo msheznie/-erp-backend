@@ -6,6 +6,13 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
     });
 });
 
+//workflow configuration
+Route::group([], function () {
+    Route::post('getWorkflowConfiguration', 'WorkflowConfigurationAPIController@getWorkflowConfiguration');
+    Route::get('getWorkflowConfigurationFormData', 'WorkflowConfigurationAPIController@getWorkflowConfigurationFormData');
+    Route::post('changeWorkflowConfigurationStatus', 'WorkflowConfigurationAPIController@changeWorkflowConfigurationStatus');
+});
+
 // Budget Template Routes
 Route::resource('budget_templates', 'BudgetTemplateAPIController');
 Route::post('getAllBudgetTemplates', 'BudgetTemplateAPIController@getAllBudgetTemplates')->name('Get all budget templates');

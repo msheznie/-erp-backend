@@ -932,6 +932,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('checkCustomerInvoiceUploadStatus', 'CustomerInvoiceDirectAPIController@checkCustomerInvoiceUploadStatus');
 
                 Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
+
+                Route::resource('workflow_configurations', 'WorkflowConfigurationAPIController');
+                Route::resource('workflow_configuration_hod_actions', 'WorkflowConfigurationHodActionAPIController')->parameters(['workflow_configuration_hod_actions' => 'id']);
+                Route::resource('hod_actions', 'HodActionAPIController');
             });
         });
 
