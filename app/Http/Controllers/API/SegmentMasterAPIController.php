@@ -1375,4 +1375,11 @@ class SegmentMasterAPIController extends AppBaseController
         return $this->sendResponse($segment->toArray(), 'Segment Master Amend successfully');
 
     }
+
+    public function segmentsForPoAnalysisReport(Request $request)
+    {
+        $companySystemID = $request['companySystemID'];
+        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->where('refferedBackYN', 0)->approved()->withAssigned($companySystemID)->get();
+        return $this->sendResponse($serviceLines, 'Segments retrieved successfully');
+    }
 }

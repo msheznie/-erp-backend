@@ -464,6 +464,7 @@ Route::group([],function (){
     Route::post('exportSegmentMaster', 'SegmentMasterAPIController@exportSegmentMaster')->name("All segments Export to Excel");
     Route::post('segmentReopen', 'SegmentMasterAPIController@segmentReopen')->name("Reopen Segment");
     Route::post('segmentReferBack', 'SegmentMasterAPIController@segmentReferBack')->name("Refferback Segment");
+    Route::get('segments_for_po_analysis_report', 'SegmentMasterAPIController@segmentsForPoAnalysisReport')->name('Get segments for PO analysis report');
 
 	Route::resource('segment_rights', 'SegmentRightsAPIController');
 	Route::resource('segment/masters', 'SegmentMasterAPIController', ['names' => 'Segment masters']);
