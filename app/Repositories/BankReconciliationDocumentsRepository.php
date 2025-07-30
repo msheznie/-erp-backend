@@ -24,7 +24,8 @@ class BankReconciliationDocumentsRepository extends BaseRepository
     protected $fieldSearchable = [
         'bankRecAutoID',
         'documentSystemID',
-        'documentAutoId'
+        'documentAutoId',
+        'statementId'
     ];
 
     /**

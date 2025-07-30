@@ -66,6 +66,7 @@ class PaymentVoucherMatch implements ShouldQueue
                                         ->where('transactionType', 1)
                                         ->first();
 
+            $matchedLedgerIds = BankStatementDetail::where('statementId', $statementId)->pluck('bankLedgerAutoID')->toArray();
             $pvBankLedgerData = BankLedger::with('paymentVoucher')
                                         ->where("bankAccountID", $bankAccountID)
                                         ->where("trsClearedYN", -1)
@@ -73,6 +74,7 @@ class PaymentVoucherMatch implements ShouldQueue
                                         ->where("bankClearedYN", 0)
                                         ->where("companySystemID", $companySystemID)
                                         ->where('documentSystemID', 4)
+                                        ->whereNotIn('bankLedgerAutoID', $matchedLedgerIds)
                                         ->get()->toArray();
             if (!empty($pvMatchingRule)) 
             {

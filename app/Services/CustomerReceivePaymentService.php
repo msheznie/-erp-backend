@@ -40,7 +40,8 @@ class CustomerReceivePaymentService
                 ];
             }
 
-            $input['narration'] = $input['narration'] . '(' . $input['bankRecCode'] . ')';
+            $narration = isset($input['bankRecCode']) ? $input['bankRecCode'] : 'Generated from Auto Bank Reconciliation';
+            $input['narration'] = $input['narration'] . '(' . $narration . ')';
             $input['custPaymentReceiveDate'] = $input['documentDate'];
             $input['documentType'] = 14;
             $input['payeeTypeID'] = 3;

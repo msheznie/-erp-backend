@@ -397,7 +397,8 @@ class BankStatementMasterAPIController extends AppBaseController
                                     ->toArray();
                                     
         if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
-            return $this->sendError('Exact Matching rule for both PV & RV documents should be active.');
+            return $this->sendError('The matching rules are not active to proceed.', 500, ['type' => 'rulesNotFound', 'bankAccountAutoID' => $bankStatementMaster->bankAccountAutoID]);
+
         }
 
         $update['documentStatus'] = 1;
@@ -467,5 +468,64 @@ class BankStatementMasterAPIController extends AppBaseController
             $data['status'] = $bankStatementMaster->matchingInprogress == 3? 1 : 0;
             return $this->sendResponse($data, 'Workbook job status fetched successfully.');
         }
+    }
+
+    function rematchWorkBook(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required',
+            'companyId' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $companySystemID = $input['companyId'];
+        
+        $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
+        if (empty($bankStatementMaster)) {
+            return $this->sendError('Bank statement not found');
+        }
+
+        $matchingRule = BankReconciliationRules::where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)
+                                                ->where('isDefault', 1)
+                                                ->where('companySystemID', $bankStatementMaster->companySystemID)
+                                                ->where('matchType', 1)
+                                                ->whereIn('transactionType', [1, 2])
+                                                ->pluck('transactionType')
+                                                ->toArray();
+        
+        if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
+            return $this->sendError('The matching rules are not active to proceed');
+        }
+
+        /** updating matchingInprogress to 1 to start rematching */
+        $update['matchingInprogress'] = 1;
+        $this->bankStatementMasterRepository->update($update, $statementId);
+
+        /** initiate worksheet process in a job */
+        $db = isset($request->db) ? $request->db : "";
+        BankStatementMatch::dispatch($db, $statementId);
+
+        return $this->sendResponse([], 'Workbook validation success.');
+    }
+
+    function getWorkbookAdditionalEntries(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'statementId' => 'required',
+            'companyId' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $statementId = $input['statementId'];
+        $companySystemID = $input['companyId'];
+        $bankRecDetails = $this->bankStatementMasterRepository->getWorkbookAdditionalEntries($statementId, $companySystemID);
+        return $this->sendResponse($bankRecDetails, 'Workbook additional entries fetched successfully.');
     }
 }

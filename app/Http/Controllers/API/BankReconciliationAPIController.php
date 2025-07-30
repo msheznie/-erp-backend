@@ -621,16 +621,29 @@ class BankReconciliationAPIController extends AppBaseController
     public function getCheckBeforeCreate(Request $request)
     {
         $input = $request->all();
-        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
-
+        $validator = \Validator::make($input, [
+            'bankAccountAutoID' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $bankAccountAutoID = $input['bankAccountAutoID'];
+        $bankAccount = BankAccount::find($bankAccountAutoID);
         if (empty($bankAccount)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        $checkPending = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
+        $matchingInProgress = BankStatementMaster::where('bankAccountAutoId', $bankAccountAutoID)
+                                                    ->where('documentStatus', 1)
+                                                    ->first();
+        if(!empty($matchingInProgress))
+        {
+            return $this->sendError('Auto bank reconciliation is in progress. Manual reconciliation is not allowed.', 500);
+        }
+
+        $checkPending = BankReconciliation::where('bankAccountAutoID', $bankAccountAutoID)
             ->where('approvedYN', 0)
             ->first();
-
 
         if (!empty($checkPending)) {
             return $this->sendError(trans('custom.there_is_a_bank_reconciliation') .' '. $checkPending->bankRecPrimaryCode .' '. trans('custom.pending_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again'), 500);
@@ -1460,7 +1473,12 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('Document Date is not within the active Financial Year.',500);
         }
 
-        $document['bankRecAutoID'] = $input['bankRecAutoID'];
+        if($input['documentType'] == 1) {
+            $document['bankRecAutoID'] = $input['bankRecAutoID'];
+        } else if($input['documentType'] == 2) {
+            $document['statementId'] = $input['statementId'];
+        }
+        
         $document['documentSystemID'] = ($input['type'] == 1) ? 4 : 21;
         if ($input['type'] == 1) {
             $resultData = PaymentVoucherServices::generatePaymentVoucher($input);

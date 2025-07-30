@@ -9,6 +9,7 @@ use App\Models\BankStatementMaster;
 use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Models\BankAccount;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class BankStatementMasterRepository
@@ -210,5 +211,48 @@ class BankStatementMasterRepository extends BaseRepository
         $data['totalValues']['partiallyMatchedStatementTotal'] = number_format($creditPartialTotal + $debitPartialTotal, $decimalPlaces);
 
         return $data;
+    }
+
+    function getWorkbookAdditionalEntries($statementId, $companySystemID)
+    {        
+        $query = "
+            SELECT
+                bank_reconciliation_documents.*,
+                custPaymentReceiveCode AS documentCode,
+                custPaymentReceiveDate AS postedDate,
+                netAmount AS payAmountBank,
+                narration as documentNarration,
+                custChequeNo AS chequeNo,
+                'Deposit' as category
+                FROM
+                    bank_reconciliation_documents
+                    JOIN erp_customerreceivepayment ON erp_customerreceivepayment.custReceivePaymentAutoID = bank_reconciliation_documents.documentAutoId 
+                    AND bank_reconciliation_documents.documentSystemID = erp_customerreceivepayment.documentSystemID 
+                WHERE
+                    companySystemID = {$companySystemID}
+                    AND statementId = {$statementId}
+                    AND approved != -1
+            UNION ALL
+            SELECT
+                    bank_reconciliation_documents.*,
+                    BPVcode AS documentCode,
+                    BPVdate AS postedDate,
+                    ( netAmount + VATAmount ) AS payAmountBank,
+                    BPVNarration AS documentNarration,
+                    BPVchequeNo AS chequeNo,
+                    'Withdraw' as category
+                FROM
+                    bank_reconciliation_documents
+                    JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = bank_reconciliation_documents.documentAutoId 
+                    AND bank_reconciliation_documents.documentSystemID = erp_paysupplierinvoicemaster.documentSystemID 
+                WHERE
+                    companySystemID = {$companySystemID}
+                    AND statementId = {$statementId}
+                    AND approved != -1
+        ";
+
+        $result = DB::select($query);
+
+        return $result;
     }
 }
