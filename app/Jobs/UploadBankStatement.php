@@ -108,7 +108,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => 'Wrong date format for transaction date - Correct format "DD/MM/YYYY"'
+                                'importError' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY'
                             ]);
                         DB::commit();
                         return;
