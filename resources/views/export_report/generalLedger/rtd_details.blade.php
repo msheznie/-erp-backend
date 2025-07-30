@@ -42,8 +42,8 @@
             <th>Actual Date of Payment of Withholding Tax</th>
             <th>Number of Months Delay</th>
             <th>PO Amount</th>
-            <th>Withholding Tax Percentage</th>
-            <th>Withholding Tax</th>
+            <th>Withholding Tax %</th>
+            <th>Withholding Tax Amount</th>
             <th>Additional Tax (1% per month)</th>
             <th>Total</th>
         </tr>
