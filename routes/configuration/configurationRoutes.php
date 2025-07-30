@@ -117,6 +117,8 @@ Route::group([], function() {
     Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions')->name('Get company document filter options');
     Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
+    Route::resource('attachment_type_configurations', 'AttachmentTypeConfigurationAPIController');
+    Route::post('getAttachmentTypeConfig', 'AttachmentTypeConfigurationAPIController@getAttachmentTypeConfig')->name('Get all attachment type config ');
 });
 
 

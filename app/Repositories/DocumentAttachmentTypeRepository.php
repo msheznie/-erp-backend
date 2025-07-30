@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachmentType;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -32,4 +33,27 @@ class DocumentAttachmentTypeRepository extends BaseRepository
     {
         return DocumentAttachmentType::class;
     }
+
+    public function documentAttachmentTypes($documentSystemID, $companySystemID)
+    {
+        $attachmentConfig = CompanyDocumentAttachment::getCompanyDocumentAttachmentList(
+            $documentSystemID,
+            $companySystemID
+        );
+
+        if (empty($attachmentConfig)) {
+            return DocumentAttachmentType::get();
+        }
+
+        $configuredTypes = collect($attachmentConfig->attachmentTypeConfiguration)
+            ->pluck('attachment_type_id')
+            ->toArray();
+
+        if (empty($configuredTypes)) {
+            return DocumentAttachmentType::get();
+        }
+
+        return DocumentAttachmentType::whereIn('travelClaimAttachmentTypeID', $configuredTypes)->get();
+    }
+
 }

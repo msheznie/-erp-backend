@@ -45,10 +45,19 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->documentAttachmentTypeRepository->pushCriteria(new RequestCriteria($request));
-        $this->documentAttachmentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $documentAttachmentTypes = $this->documentAttachmentTypeRepository->all();
+        $documentSystemID = filter_var($request['documentSystemID'] ?? 0, FILTER_VALIDATE_INT);
+        $companySystemID = filter_var($request['companySystemID'] ?? 0, FILTER_VALIDATE_INT);
+        $documentSystemIDs = [1];
 
+        if($documentSystemID == 0 || !in_array($documentSystemID, $documentSystemIDs)){
+            $this->documentAttachmentTypeRepository->pushCriteria(new RequestCriteria($request));
+            $this->documentAttachmentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
+            $documentAttachmentTypes = $this->documentAttachmentTypeRepository->all();
+        } else {
+            $documentAttachmentTypes = $this->documentAttachmentTypeRepository->documentAttachmentTypes(
+                $documentSystemID, $companySystemID
+            );
+        }
         return $this->sendResponse($documentAttachmentTypes->toArray(), 'Document Attachment Types retrieved successfully');
     }
 

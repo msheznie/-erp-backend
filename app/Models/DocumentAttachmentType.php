@@ -64,5 +64,8 @@ class DocumentAttachmentType extends Model
         
     ];
 
+    public static function getAllDocumentAttachmentType(){
+        return self::select('travelClaimAttachmentTypeID', 'documentID', 'description')->get();
+    }
     
 }
