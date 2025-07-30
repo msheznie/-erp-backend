@@ -113,7 +113,7 @@ class PaymentVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $pvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
                             if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
-                                $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
+                                $pvWhereCondition .= " AND (". $bankLedgerDetail['payment_voucher']['BPVchequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
                             } else {
                                 $pvWhereCondition .= " AND (1=0)";
                             }
@@ -194,7 +194,7 @@ class PaymentVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $pvPartialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
                             if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
-                                $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
+                                $partialWhereCondition .= " AND (". $bankLedgerDetail['payment_voucher']['BPVchequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
                             } else {
                                 $partialWhereCondition .= " AND (1=0)";
                             }

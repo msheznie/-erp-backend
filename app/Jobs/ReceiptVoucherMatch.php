@@ -116,7 +116,7 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $rvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
                             if($bankLedgerDetail['receipt_voucher']['custChequeNo'] != null && $bankLedgerDetail['receipt_voucher']['custChequeNo'] != 0) { 
-                                $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['receipt_voucher']['custChequeNo'] . "%')";
+                                $receiptWhereCondition .= " AND (". $bankLedgerDetail['receipt_voucher']['custChequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
                             } else {
                                 $receiptWhereCondition .= " AND (1=0)";
                             }
@@ -197,7 +197,7 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $rvPatialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
     
                             if($bankLedgerDetail['receipt_voucher']['custChequeNo'] != null && $bankLedgerDetail['receipt_voucher']['custChequeNo'] != 0) { 
-                                $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['receipt_voucher']['custChequeNo'] . "%')";
+                                $receiptWhereCondition .= " AND (". $bankLedgerDetail['receipt_voucher']['custChequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
                             } else {
                                 $receiptWhereCondition .= " AND (1=0)";
                             }

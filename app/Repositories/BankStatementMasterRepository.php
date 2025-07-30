@@ -108,7 +108,7 @@ class BankStatementMasterRepository extends BaseRepository
             $openingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as opening')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
-                ->whereDate("documentDate", "<", $fromDate)
+                ->whereDate("documentDate", "<=", $fromDate)
                 ->first();
 
             if (!empty($openingBalance)) {
@@ -120,7 +120,7 @@ class BankStatementMasterRepository extends BaseRepository
             $closingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as closing')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
-                ->where("documentDate", "<", $toDate)
+                ->where("documentDate", "<=", $toDate)
                 ->first();
 
             if (!empty($closingBalance)) {
