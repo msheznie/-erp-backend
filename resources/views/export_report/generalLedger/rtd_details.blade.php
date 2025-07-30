@@ -4,7 +4,11 @@
         <tr></tr>
         <tr>
             <td colspan="2"></td>
-            <td><h1>Tax Deductibility Report</h1></td>
+            <td style="text-align: center;"><h1>Tax Deductibility Report</h1></td>
+        </tr>
+        <tr>
+            <td colspan="2"></td>
+            <td style="text-align: center;"><h2>{{ $company_name ?? '' }}</h2></td>
         </tr>
         <tr></tr>
         <tr style="font-weight: bold">
