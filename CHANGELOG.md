@@ -1,6 +1,22 @@
 # Changelog
 
 
+## [10.78.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.77.0...v10.78.0) (2025-07-30)
+
+
+### Features
+
+* **srm:** Edit / Amend request in Tender and Rfx Enhancement [GSUP-2760] ([#8415](https://github.com/pbsgears/Gears_BackEnd/issues/8415)) ([fb67c5e](https://github.com/pbsgears/Gears_BackEnd/commit/fb67c5ecd36df325c13aff5bf7a7f6615db38175))
+* **srm:** Show Delivery Appointment Based on the Warehousewise Access [GSUP-3330] ([#8396](https://github.com/pbsgears/Gears_BackEnd/issues/8396)) ([e145991](https://github.com/pbsgears/Gears_BackEnd/commit/e1459914e9e1533f5e060da6b522798c721e5e36))
+* **srm:** Validations | Creating New Suppliers [GSUP-3479] ([#8405](https://github.com/pbsgears/Gears_BackEnd/issues/8405)) ([fad4723](https://github.com/pbsgears/Gears_BackEnd/commit/fad47237f290ca365f760484373b05586c0cc22b))
+* **srm:** Validations | Linking with existing suppliers [GSUP-3478] ([#8437](https://github.com/pbsgears/Gears_BackEnd/issues/8437)) ([d4986e0](https://github.com/pbsgears/Gears_BackEnd/commit/d4986e0fd3bb04106c57cf231ef46ed066b3f2d4))
+* **Supplier KYC:** Currency mismatch during Supplier KYC linking – new currency should be added as new record [GSUP-36590] ([#8472](https://github.com/pbsgears/Gears_BackEnd/issues/8472)) ([a3e34fc](https://github.com/pbsgears/Gears_BackEnd/commit/a3e34fca0b71a913a1aadadea9ba301707c48c8d))
+
+
+### Bug Fixes
+
+* **srm:** Missing Warning Message When Creating Supplier with Same Name [GSUP-3655] ([#8469](https://github.com/pbsgears/Gears_BackEnd/issues/8469)) ([aac6e59](https://github.com/pbsgears/Gears_BackEnd/commit/aac6e59de58f46bf532270c65b1301da1a2fba61))
+
 ## [10.77.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.76.0...v10.77.0) (2025-07-24)
 
 
