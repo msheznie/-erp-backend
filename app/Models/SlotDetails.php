@@ -153,4 +153,11 @@ class SlotDetails extends Model
     {
         return SlotDetails::select('id', 'company_id')->where('id', $slotDetailID)->first();
     }
+
+    public static function getSlotDetailIDs($slotMasterId, $companyId)
+    {
+        return SlotDetails::where('slot_master_id', $slotMasterId)
+            ->where('company_id', $companyId)
+            ->pluck('id')->toArray();
+    }
 }
