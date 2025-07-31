@@ -105,10 +105,11 @@ class BankStatementMasterRepository extends BaseRepository
             $bankAccountId = $data['details']['bankAccountAutoID'];
 
             $fromDate = new Carbon($data['details']['statementStartDate']);
+            $fromDate = $fromDate->format('Y-m-d');
             $openingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as opening')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
-                ->whereDate("documentDate", "<=", $fromDate)
+                ->whereDate("documentDate", "<", $fromDate)
                 ->first();
 
             if (!empty($openingBalance)) {
@@ -117,10 +118,11 @@ class BankStatementMasterRepository extends BaseRepository
                 $data['systemOpeningBalance'] = 0;
             }
             $toDate = new Carbon($data['details']['statementEndDate']);
+            $toDate = $toDate->format('Y-m-d');
             $closingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as closing')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
-                ->where("documentDate", "<=", $toDate)
+                ->whereDate("documentDate", "<=", $toDate)
                 ->first();
 
             if (!empty($closingBalance)) {

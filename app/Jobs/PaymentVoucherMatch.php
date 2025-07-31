@@ -66,17 +66,20 @@ class PaymentVoucherMatch implements ShouldQueue
                                         ->where('transactionType', 1)
                                         ->first();
 
-            $matchedLedgerIds = BankStatementDetail::where('statementId', $statementId)->pluck('bankLedgerAutoID')->toArray();
-            $pvBankLedgerData = BankLedger::with('paymentVoucher')
-                                        ->where("bankAccountID", $bankAccountID)
-                                        ->where("trsClearedYN", -1)
-                                        ->whereDate("postedDate", '<=', $bankStatementMaster->statementEndDate)
-                                        ->where("bankClearedYN", 0)
-                                        ->where("companySystemID", $companySystemID)
-                                        ->where('documentSystemID', 4)
-                                        ->whereNotIn('bankLedgerAutoID', $matchedLedgerIds)
-                                        ->get()->toArray();
-            if (!empty($pvMatchingRule)) 
+            $matchedLedgerIds = BankStatementDetail::where('statementId', $statementId)->wherenotNull('bankLedgerAutoID')->pluck('bankLedgerAutoID')->toArray();
+            $pvBankLedgerDataQuery = BankLedger::with('paymentVoucher')
+                ->where("bankAccountID", $bankAccountID)
+                ->where("trsClearedYN", -1)
+                ->whereDate("postedDate", '<=', $bankStatementMaster->statementEndDate)
+                ->where("bankClearedYN", 0)
+                ->where("companySystemID", $companySystemID)
+                ->where("documentSystemID", 4);
+            if (!empty($matchedLedgerIds)) {
+                $pvBankLedgerDataQuery->whereNotIn('bankLedgerAutoID', $matchedLedgerIds);
+            }
+            $pvBankLedgerData = $pvBankLedgerDataQuery->get()->toArray();
+
+            if (!empty($pvMatchingRule))
             {
                 collect($pvBankLedgerData)->chunk(100)->each(function ($chunk) use ($pvMatchingRule, $statementId, $exactMatchId) {
                     foreach ($chunk as $bankLedgerDetail) {
@@ -113,7 +116,7 @@ class PaymentVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $pvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
                             if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
-                                $pvWhereCondition .= " AND (". $bankLedgerDetail['payment_voucher']['BPVchequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
+                                $pvWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
                             } else {
                                 $pvWhereCondition .= " AND (1=0)";
                             }
@@ -194,7 +197,7 @@ class PaymentVoucherMatch implements ShouldQueue
                             $chequeStatementDoc = $pvPartialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
                             if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
-                                $partialWhereCondition .= " AND (". $bankLedgerDetail['payment_voucher']['BPVchequeNo'] ." LIKE '%" . $chequeStatementDoc . "%')";
+                                $partialWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
                             } else {
                                 $partialWhereCondition .= " AND (1=0)";
                             }

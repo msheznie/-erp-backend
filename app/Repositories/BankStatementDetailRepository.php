@@ -50,6 +50,9 @@ class BankStatementDetailRepository extends BaseRepository
             $statementMatchDetail->matchType = null;
             $statementMatchDetail->bankLedgerAutoID = null;
             $statementMatchDetail->matchedId = null;
+        } else if($input['matchTypeId'] == 1) {
+            $exactMatchId = BankStatementDetail::where('statementId', $statementMatchDetail->statementId)->where('matchType', 1)->count() + 1;
+            $statementMatchDetail->matchedId = $exactMatchId;
         }
         $statementMatchDetail->save();
         return $statementMatchDetail;
