@@ -138,7 +138,7 @@ class VizzlyController extends AppBaseController
                 'scope' => 'read_write',
                 'accessType' => $this->getUserAccessType($user),
                 // 'iat' => $now,
-                'expires' => '2025-07-21T04:06:58.621Z',
+                'expires' => '2025-08-21T04:06:58.621Z',
                 // 'iss' => 'vizzly'
             ];
 
@@ -158,7 +158,7 @@ class VizzlyController extends AppBaseController
                 // ],
 
                 // 'iat' => $now,
-                'expires' => '2025-07-21T04:06:58.621Z',
+                'expires' => '2025-08-21T04:06:58.621Z',
                 // 'iss' => 'vizzly'
             ];
 

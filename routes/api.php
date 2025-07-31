@@ -429,7 +429,7 @@ use App\Http\Middleware\ExtractHeadersFromBody;
                                 "name" => "MySQL connection",
                                 "unencryptedCredentials" => (object)[
                                     "host" => "172.18.0.2",
-                                    "database" => "gearserp_tue",
+                                    "database" => "gearserp_qa",
                                     "user" => "root",
                                     "password" => "root",
                                     "port" => "3306"
