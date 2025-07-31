@@ -784,6 +784,7 @@ class ProcumentOrder extends Model
             ]);
     }
 
+
     public function supplier_invoice_details()
     {
         return $this->hasMany('\App\Models\BookInvSuppDet', 'purchaseOrderID', 'purchaseOrderID');

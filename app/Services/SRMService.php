@@ -2542,6 +2542,8 @@ class SRMService
     public function removeDeliveryAppointmentAttachment($request)
     {
         $attachmentID = $request->input('extra.attachmentID');
+        $isBidSubmission = $request->input('extra.isBidSubmission') ?? false;
+        $envelopType = $request->input('extra.envelopType') ?? null;
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentID)->first();
 
@@ -2558,6 +2560,22 @@ class SRMService
         }
 
         $attachment->delete();
+
+        if ($isBidSubmission && $envelopType == 3)
+        {
+            $attachmentVerify =   BidDocumentVerification::BidDocumentVerification($attachmentID);
+
+            if (!$attachmentVerify) {
+                return [
+                    'success' => false,
+                    'message' => 'Attachment verification not found.',
+                ];
+            }
+
+            $attachmentVerify->delete();
+        }
+
+
 
         return [
             'success' => true,
@@ -3539,6 +3557,8 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
+        $isBidSubmission = $request->input('extra.isBidSubmission');
+        $masterId = $request->input('extra.masterId');
 
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
@@ -3614,6 +3634,20 @@ class SRMService
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
         }
 
+        if($isBidSubmission){
+            $documentAttachments = $data['attachments']
+                ->pluck('document_attachments')
+                ->flatten()
+                ->where('parent_id', $masterId)
+                ->values();
+
+            $data = DataTables::of($documentAttachments)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->order(function ($query){})
+                ->addIndexColumn()
+                ->make(true);
+        }
+
         return [
             'success' => true,
             'message' => 'Successfully Received',
@@ -3626,6 +3660,8 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
         $negotiation = $request->input('extra.negotiation');
+        $isBidSubmission = $request->input('extra.isBidSubmission');
+        $masterId = $request->input('extra.masterId');
 
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
@@ -3696,6 +3732,20 @@ class SRMService
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
         }
 
+        if($isBidSubmission){
+            $documentAttachments = $data['attachments']
+                ->pluck('document_attachments')
+                ->flatten()
+                ->where('parent_id', $masterId)
+                ->values();
+
+            $data = DataTables::of($documentAttachments)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->order(function ($query){})
+                ->addIndexColumn()
+                ->make(true);
+        }
+
         return [
             'success' => true,
             'message' => 'Successfully Received',
@@ -3709,6 +3759,7 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $parentId = $request->input('extra.masterId');
         $attachment = $request->input('extra.attachment');
+        $description = $request->input('extra.description');
         /*return [
             'success' => true,
             'message' => 'Attached Successfully',
@@ -3736,12 +3787,16 @@ class SRMService
         $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx', 'pptx'];
 
         if (!in_array(strtolower($extension), $allowExtensions)) {
-            throw new Exception("This file type is not allowed to upload.", 500);
+            return [
+                'success' => false,
+                'message' => 'This file type is not allowed to upload.',
+                'data' => 'This file type is not allowed to upload.'
+            ];
         }
 
         if (isset($attachment['size'])) {
-            if ($attachment['size'] > 2097152) {
-                throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+            if ($attachment['size'] > 20971520) {
+                throw new Exception("Maximum allowed file size is 20 MB. Please upload lesser than 20 MB.", 500);
             }
         }
 
@@ -3758,7 +3813,7 @@ class SRMService
             $att['documentSystemID'] = $documentCode->documentSystemID;
             $att['documentID'] = $documentCode->documentID;
             $att['documentSystemCode'] = $bidMasterId;
-            $att['attachmentDescription'] = 'Bid Submission ' . time();
+            $att['attachmentDescription'] = $description;
             $att['path'] = $path;
             $att['parent_id'] = $parentId;
             $att['attachmentType'] = 0;
@@ -4009,8 +4064,9 @@ class SRMService
                 }
                 $query->where('documentSystemID', $type);
             })
-            ->where('documentSystemCode', $bidMasterId)->count();
-
+            ->where('documentSystemCode', $bidMasterId)->pluck('parent_id')
+            ->unique()
+            ->toArray();
 
         $documentAttachedCountIdsTechnical = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
             $q->where('srm_action', 1);
@@ -4043,7 +4099,11 @@ class SRMService
                 }
                 $query->where('documentSystemID', $type);
             })
-            ->where('documentSystemCode', $bidMasterId)->count();
+            ->where('documentSystemCode', $bidMasterId)->pluck('parent_id')
+            ->unique()
+            ->toArray();
+
+
 
         $documentAttachedCountIdsCommercial = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
@@ -4077,7 +4137,9 @@ class SRMService
                 }
                 $query->where('documentSystemID', $type);
             })
-            ->where('documentSystemCode', $bidMasterId)->count();
+            ->where('documentSystemCode', $bidMasterId)->pluck('parent_id')
+            ->unique()
+            ->toArray();
 
 
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
@@ -4178,7 +4240,7 @@ class SRMService
 
 
 
-        if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
+        if(count($documentAttachedCountIds) == count($documentAttachedCountAnswer)) {
             $data['commonStatus'] = 0;
         }else {
             $data['commonStatus'] = 1;
@@ -4189,9 +4251,9 @@ class SRMService
         }
 
 
-        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+        if((count($documentAttachedCountIdsTechnical) == count($documentAttachedCountAnswerTechnical)) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
             $data['technicalStatus'] = 0;
-        } else if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1) {
+        } else if((count($documentAttachedCountIdsTechnical) == count($documentAttachedCountAnswerTechnical)) && $showTechnicalCriteria['show_technical_criteria'] == 1) {
             $data['technicalStatus'] = 0;
         }else {
             $data['technicalStatus'] =1;
@@ -4210,7 +4272,7 @@ class SRMService
             }
         }
 
-        if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
+        if((count($documentAttachedCountIdsCommercial) == count($documentAttachedCountAnswerCommercial))) {
             if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
                 $data['commercial_bid_submission_status'] = 0;
             }else {
@@ -4926,7 +4988,9 @@ class SRMService
 
                 })
                 ->where('documentSystemCode', $bidMasterId)
-                ->count();
+                ->pluck('parent_id')
+                ->unique()
+                ->toArray();
 
             if($goNoGoActiveStatus['is_active_go_no_go'] == 1){
                 if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
@@ -4940,7 +5004,7 @@ class SRMService
             }
 
             if(count($documentAttachedCountIds) != 0){
-                if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
+                if(count($documentAttachedCountIds) == count($documentAttachedCountAnswer) || count($documentAttachedCountIds) == 0) {
                     $group['commonStatus'] = 0;
                 } else {
                     $group['commonStatus'] = 1;
@@ -4983,7 +5047,9 @@ class SRMService
                     $query->where('documentSystemID', $type);
 
                 })
-                ->where('documentSystemCode', $bidMasterId)->count();
+                ->where('documentSystemCode', $bidMasterId)->pluck('parent_id')
+                ->unique()
+                ->toArray();
 
             $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tender, $bidMasterId) {
                 $q1->where('tender_id', $tender);
@@ -5057,7 +5123,7 @@ class SRMService
             /*$bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
             $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();*/
 
-            if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
+            if((count($documentAttachedCountIdsCommercial) == count($documentAttachedCountAnswerCommercial))) {
                 if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
                     $group['commercial_bid_submission_status'] = "Completed";
                 } else {
@@ -5101,14 +5167,16 @@ class SRMService
                     }
                     $query->where('documentSystemID', $type);
                 })
-                ->where('documentSystemCode', $bidMasterId)->count();
+                ->where('documentSystemCode', $bidMasterId)->pluck('parent_id')
+                ->unique()
+                ->toArray();
 
 
             $showTechnicalCriteria = TenderMaster::select('show_technical_criteria')->where('id', $tender)->first();
 
-            if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+            if((count($documentAttachedCountIdsTechnical) == count($documentAttachedCountAnswerTechnical)) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
                 $group['technical_bid_submission_status'] = 0;
-            } else if( (count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $showTechnicalCriteria['show_technical_criteria'] == 1){
+            } else if( (count($documentAttachedCountIdsTechnical) == count($documentAttachedCountAnswerTechnical)) && $showTechnicalCriteria['show_technical_criteria'] == 1){
                 $group['technical_bid_submission_status'] = 0;
             }else {
                 $group['technical_bid_submission_status'] =1;
@@ -6662,7 +6730,7 @@ class SRMService
         }
 
         if((!empty($supEmail) && $supEmail !== '0' && SupplierMaster::checkFieldExists($companyId, 'supEmail', $supEmail))
-        || (!empty($supName) && SupplierMaster::checkFieldExists($companyId, 'supplierName', $supName))
+            || (!empty($supName) && SupplierMaster::checkFieldExists($companyId, 'supplierName', $supName))
         ){
             return [
                 'success' => false,
@@ -6744,48 +6812,48 @@ class SRMService
     }
 
     public function generateSupplierInvoiceExcel($request)
-        {
-            $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
-            $search = $request->input('extra.search');
-            $filter = $request->input('extra.filters');
-            $query = $this->invoiceService->buildInvoiceQuery($supplierID, $search, $filter);
-            $type = 'xlsx';
-            $invoices = $query->get();
+    {
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $search = $request->input('extra.search');
+        $filter = $request->input('extra.filters');
+        $query = $this->invoiceService->buildInvoiceQuery($supplierID, $search, $filter);
+        $type = 'xlsx';
+        $invoices = $query->get();
 
-            if (empty($invoices)) {
-                return [
-                    'success' => false,
-                    'message' => 'There are no records to download',
-                    'data' => [],
-                ];
-            }
-
-            $dataInvoice = [];
-            foreach ($invoices as $index => $val) {
-                $status = $this->getApprovalStatus($val['confirmedYN'], $val['approved'], $val['refferedBackYN']);
-                $paymentData = $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']);
-                $dataInvoice[$index + 1] = [
-                    'Invoice Code' => $val['bookingInvCode'] ?? '-',
-                    'Invoice Number' => $val['supplierInvoiceNo'] ?? '-',
-                    'Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
-                    'Comments' => $val['comments'] ?? '-',
-                    'Created Date' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
-                    'Invoice Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
-                    'Paid Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($paymentData['amountPaid'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
-                    'Payment Status' => $paymentData['status']
-
-                ];
-            }
-
-            $fileName = 'supplier_invoice_summary';
-            $path = 'srm/invoice/report/excel/';
-            $reportConfig = [
-                'origin' => 'SRM',
-                'faq_data' => [],
-                'prebid_data' => $dataInvoice,
-                'parentIdList' => [],
-                'nonParentIdList' => [],
+        if (empty($invoices)) {
+            return [
+                'success' => false,
+                'message' => 'There are no records to download',
+                'data' => [],
             ];
+        }
+
+        $dataInvoice = [];
+        foreach ($invoices as $index => $val) {
+            $status = $this->getApprovalStatus($val['confirmedYN'], $val['approved'], $val['refferedBackYN']);
+            $paymentData = $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']);
+            $dataInvoice[$index + 1] = [
+                'Invoice Code' => $val['bookingInvCode'] ?? '-',
+                'Invoice Number' => $val['supplierInvoiceNo'] ?? '-',
+                'Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
+                'Comments' => $val['comments'] ?? '-',
+                'Created Date' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
+                'Invoice Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                'Paid Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($paymentData['amountPaid'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                'Payment Status' => $paymentData['status']
+
+            ];
+        }
+
+        $fileName = 'supplier_invoice_summary';
+        $path = 'srm/invoice/report/excel/';
+        $reportConfig = [
+            'origin' => 'SRM',
+            'faq_data' => [],
+            'prebid_data' => $dataInvoice,
+            'parentIdList' => [],
+            'nonParentIdList' => [],
+        ];
 
         $basePath = $this->encryptUrl(CreateExcel::process($dataInvoice, $type, $fileName, $path, $reportConfig));
 
@@ -6794,7 +6862,7 @@ class SRMService
             : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
     }
 
-   private function getApprovalStatus($co, $ap, $tr)
+    private function getApprovalStatus($co, $ap, $tr)
     {
         if ($co === 1 && $ap === 0 && $tr === 0) {
             return 'Pending Approval';
