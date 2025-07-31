@@ -28,8 +28,12 @@ class ReopenDocument
             $employeeSystemID = Helper::getEmployeeSystemID();
 
             // Model name
-            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; 
-            $sourceModel = $namespacedModel::find($input["documentAutoID"]);
+            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"];
+            if ($input["documentSystemID"] == 132) {
+                $sourceModel = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentAutoID"]);
+            } else {
+                $sourceModel = $namespacedModel::find($input["documentAutoID"]);
+            }
 
             $emails = array();
             if (empty($sourceModel)) {

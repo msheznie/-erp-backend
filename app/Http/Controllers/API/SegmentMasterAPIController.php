@@ -1346,10 +1346,12 @@ class SegmentMasterAPIController extends AppBaseController
             ->where('documentSystemID', $segment->documentSystemID)
             ->get();
 
-        if (!empty($fetchDocumentApproved)) {
-            foreach ($fetchDocumentApproved as $DocumentApproved) {
-                $DocumentApproved['refTimes'] = $segment->timesReferred;
-            }
+        if ($fetchDocumentApproved->isEmpty()) {
+            return $this->sendError('Approval records not found');
+        }
+
+        foreach ($fetchDocumentApproved as $DocumentApproved) {
+            $DocumentApproved['refTimes'] = $segment->timesReferred;
         }
 
         $documentApprovedArray = $fetchDocumentApproved->toArray();
@@ -1369,7 +1371,7 @@ class SegmentMasterAPIController extends AppBaseController
             $data['refferedBackYN'] = 0;
             $data['RollLevForApp_curr'] = 1;
 
-           SegmentMaster::where('serviceLineSystemID', $id)->update($data);
+           SegmentMaster::withoutGlobalScope('final_level')->where('serviceLineSystemID', $id)->update($data);
         }
 
         return $this->sendResponse($segment->toArray(), 'Segment Master Amend successfully');
