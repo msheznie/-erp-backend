@@ -19,6 +19,7 @@ use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ContractMaster;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
@@ -6791,5 +6792,58 @@ class SRMService
         } else {
             return 'Not Paid';
         }
+    }
+
+    public function getContractList(Request $request)
+    {
+        $input = $request->all();
+        $sort = (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') ? 'asc' : 'desc';
+        $supplierId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $query = ContractMaster::getContractDataBySupplier($supplierId);
+        $contractRecords = $query->get();
+
+        $formattedRecords = $contractRecords->map(function ($item) {
+            return [
+                'contractCode' => $item->contractCode,
+                'contractType' => $item->contractTypes->cm_type_name ?? '-',
+                'title' => $item->title ?? '-',
+                'referenceCode' => $item->referenceCode ?? '-',
+                'supplierName' => $item->contractUsers->contractSupplierUser->supplierName ?? '-',
+                'startDate' => $item->startDate,
+                'endDate' => $item->endDate,
+                'approve' => $item->approved_yn,
+                'confirm' => $item->confirmed_yn,
+                'status' => $item->status,
+            ];
+        });
+
+        $data = DataTables::collection($formattedRecords)
+            ->filter(function ($instance) use ($input) {
+                $search = $input['search']['value'] ?? null;
+                if (!empty($search)) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $instance->collection = $instance->collection->filter(function ($item) use ($search) {
+                        return stripos($item['contractCode'] ?? '', $search) !== false
+                            || stripos($item['contractType'] ?? '', $search) !== false
+                            || stripos($item['title'] ?? '', $search) !== false
+                            || stripos($item['referenceCode'] ?? '', $search) !== false
+                            || stripos($item['supplierName'] ?? '', $search) !== false;
+                    });
+                }
+            })
+            ->addColumn('Actions', function ($row) {
+                return 'Actions';
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+
+        return [
+            'success' => true,
+            'message' => 'Contract list successfully get',
+            'data' => $data
+        ];
+
     }
 }

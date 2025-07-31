@@ -60,4 +60,9 @@ class ContractUsers extends Model
             ->where('isActive', $isActive)
             ->exists();
     }
+
+    public function contractSupplierUser()
+    {
+        return $this->belongsTo(SupplierMaster::class, 'contractUserId', 'supplierCodeSystem');
+    }
 }
