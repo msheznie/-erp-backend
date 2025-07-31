@@ -925,6 +925,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Materiel Issue Details not found');
         }
 
+        if (!is_numeric($input['qtyIssued']) ||
+            fmod($input['qtyIssued'], 1) !== 0.0 ||
+            $input['qtyIssued'] > 999999999) {
+            return $this->sendError('Invalid qtyIssued', 422);
+        }
+
         if(isset($input['deliveryPrint'])){
             if($input['deliveryPrint'] == 1){
                 if(isset($input['p1'])) {

@@ -524,6 +524,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             }else{
                 $input['allowCreatePR']   =  0;
             }
+
+            if (!is_numeric($input['quantityRequested']) ||
+                fmod($input['quantityRequested'], 1) !== 0.0 ||
+                $input['quantityRequested'] > 999999999) {
+                return $this->sendError('Invalid quantityRequested', 422);
+            }
         }
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->update($input, $id);
