@@ -185,7 +185,7 @@ class SRMService
         $query = ProcumentOrder::select('purchaseOrderCode', 'referenceNumber', 'expectedDeliveryDate', 'supplierName',
             'narration', 'createdDateTime', 'poConfirmedDate', 'approvedDate', 'poTotalSupplierTransactionCurrency',
             'grvRecieved', 'invoicedBooked', 'createdUserSystemID', 'serviceLineSystemID', 'supplierID',
-            'supplierTransactionCurrencyID', 'purchaseOrderID')
+            'supplierTransactionCurrencyID', 'purchaseOrderID', 'documentSystemID', 'companySystemID')
             ->where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
@@ -5468,6 +5468,10 @@ class SRMService
         {
             $masterData = PaySupplierInvoiceMaster::select('BPVsupplierID as supplierID')
                 ->where('PayMasterAutoId', $id)->first();
+        }
+        elseif($documentSystemID == 2 || $documentSystemID == 52)
+        {
+            $masterData = ProcumentOrder::getPoSupplierData($id);
         }
 
         if($supplierID != $masterData['supplierID'])

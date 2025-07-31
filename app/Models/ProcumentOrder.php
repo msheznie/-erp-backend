@@ -788,4 +788,9 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany('\App\Models\BookInvSuppDet', 'purchaseOrderID', 'purchaseOrderID');
     }
+    public static function getPoSupplierData($id)
+    {
+        return ProcumentOrder::select('supplierID')
+            ->where('purchaseOrderID', $id)->first();
+    }
 }
