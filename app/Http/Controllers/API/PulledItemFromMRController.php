@@ -73,7 +73,10 @@ class PulledItemFromMRController extends AppBaseController
 
         $this->validatePolicies();
 
-        
+        if (!is_numeric($input['pr_qnty']) || floor($input['pr_qnty']) != $input['pr_qnty']) {
+            return $this->sendError("Invalid input, please enter a whole number for the Purchase Quantity", 500);
+        }
+
         if ($input['pr_qnty'] > $input['mr_qnty']) {
             return $this->sendError("You cannot Request Purchase Quantity more the the Materiel Requested Quantity", 500);
         }
