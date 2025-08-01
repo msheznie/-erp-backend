@@ -166,7 +166,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
      * Remove column from template
      * DELETE /budgetTemplateColumns/template/{templateId}/column/{preColumnId}
      */
-    public function removeFromTemplate($templateId, $preColumnId)
+    public function removeFromTemplate($templateId, $preColumnId, Request $request)
     {
         // First, find the template column to get its templateColumnID
         $templateColumn = $this->budgetTemplateColumnRepository->getModel()
@@ -192,6 +192,14 @@ class BudgetTemplateColumnAPIController extends AppBaseController
                 'Cannot delete this column because it is referenced in formulas by the following columns: ' . $columnNamesList . 
                 '. Please remove the references from these formulas first.'
             );
+        }
+
+        // Check if this column is linked to any link request amount, check in the budget template table
+        $budgetTemplate = \App\Models\BudgetTemplate::where('linkRequestAmount', $templateColumn->templateColumnID)
+                                        ->first();
+
+        if ($budgetTemplate) {
+            return $this->sendError('Cannot delete this column because it is linked to a link request amount');
         }
 
         $result = $this->budgetTemplateColumnRepository->removeFromTemplate($templateId, $preColumnId);

@@ -139,6 +139,19 @@ class BudgetTemplateAPIController extends AppBaseController
             return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
         }
 
+        if (isset($input['update']) && $input['update'] == 'linkRequestAmount') {
+            $budgetTemplate->linkRequestAmount = isset($input['linkRequestAmount']) ? $input['linkRequestAmount'] : null;
+            $budgetTemplate->modifiedUserSystemID = auth()->id();
+            $budgetTemplate->save();
+
+            // // Audit log for link request amount update
+            // $uuid = $request->get('tenant_uuid', 'local');
+            // $db = $request->get('db', '');
+            // $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template link request amount updated", "U", $budgetTemplate->toArray(), $oldValues);
+
+            return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+        }
+
         $companyDepartmentTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
         if ($companyDepartmentTemplate) {
             return $this->sendError('The template already assigned to the department cannot be amended');

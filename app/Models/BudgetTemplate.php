@@ -33,6 +33,7 @@ class BudgetTemplate extends Model
         'isActive',
         'isDefault',
         'companySystemID',
+        'linkRequestAmount',
         'createdUserSystemID',
         'modifiedUserSystemID'
     ];
@@ -48,6 +49,7 @@ class BudgetTemplate extends Model
         'type' => 'integer',
         'isActive' => 'integer',
         'isDefault' => 'integer',
+        'linkRequestAmount' => 'integer',
         'companySystemID' => 'integer',
         'createdUserSystemID' => 'integer',
         'modifiedUserSystemID' => 'integer'
