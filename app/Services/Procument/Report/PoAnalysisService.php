@@ -74,7 +74,8 @@ class PoAnalysisService
 
             if (isset($request->segment)) {
                 if (!empty($request->segment) && is_array($request->segment)) {
-                    $output = $output->whereIN('erp_purchaseorderdetails.serviceLineSystemID', $request->segment);
+                    $segmentIds = array_column($request->segment, 'id');
+                    $output = $output->whereIN('erp_purchaseorderdetails.serviceLineSystemID', $segmentIds);
                 }
             }
             $output = $output->get();
