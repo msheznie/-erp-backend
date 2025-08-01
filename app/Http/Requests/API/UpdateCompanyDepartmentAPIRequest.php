@@ -27,7 +27,7 @@ class UpdateCompanyDepartmentAPIRequest extends APIRequest
         $departmentId = $this->route('company_department') ?: $this->route('id');
         
         return [
-            'departmentCode' => 'required|string|max:50|unique:company_departments,departmentCode,' . $departmentId . ',departmentSystemID',
+            'departmentCode' => 'required|string|max:50',
             'departmentDescription' => 'required|string|max:255',
             'companySystemID' => 'required|integer|exists:companymaster,companySystemID',
             'type' => 'required|integer|in:1,2',

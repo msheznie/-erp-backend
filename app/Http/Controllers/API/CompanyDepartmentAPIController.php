@@ -289,6 +289,21 @@ class CompanyDepartmentAPIController extends AppBaseController
             }
         }
 
+        // same department cannot be set as parent department
+        if (isset($updateData['parentDepartmentID']) && $updateData['parentDepartmentID'] == $id) {
+            return $this->sendAPIError('The department cannot be set as parent department', 422);
+        }
+
+        // Check if department code is unique
+        $existingDepartment = CompanyDepartment::where('departmentCode', $updateData['departmentCode'])
+                                               ->where('companySystemID', $updateData['companySystemID'])
+                                               ->where('departmentSystemID', '!=', $id)
+                                               ->first();
+        
+        if ($existingDepartment) {  
+            return $this->sendAPIError('The department code must be unique, and this code is already being used by another department', 422);
+        }
+
         $updateData['modifiedUserSystemID'] = Auth::id();
 
         $companyDepartment = $this->companyDepartmentRepository->update($updateData, $id);
