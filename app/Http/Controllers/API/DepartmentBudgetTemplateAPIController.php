@@ -344,8 +344,8 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 return $this->sendError('Department Budget Template not found');
             }
 
-            // Delete existing GL assignments for this template
-            \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplateID)->delete();
+            // // Delete existing GL assignments for this template
+            // \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplateID)->delete();
 
             // Create new GL assignments
             $assignedCount = 0;
