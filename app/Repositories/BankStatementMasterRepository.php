@@ -144,6 +144,9 @@ class BankStatementMasterRepository extends BaseRepository
     function getBankWorkbookDetails($statementId, $companySystemID)
     {
         $statementDetails = BankStatementMaster::where('statementId', $statementId)->first();
+        if (empty($statementDetails)) {
+            throw new \Exception("Bank Statement not found");
+        }
         $decimalPlaces = BankAccount::with('currency')->where('bankAccountAutoID', $statementDetails->bankAccountAutoID)->first()->currency->DecimalPlaces;
         
         /*** Bank Ledger Details ***/

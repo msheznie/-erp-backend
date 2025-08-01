@@ -376,6 +376,9 @@ class BankStatementMasterAPIController extends AppBaseController
 
         $statementId = $input['statementId'];
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
+        if (empty($bankStatementMaster)) {
+            return $this->sendError('Bank Statement not found.', 422);
+        }
 
         $exists = BankReconciliation::where('approvedYN', 0)->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
         if (!empty($exists)) {
@@ -444,8 +447,12 @@ class BankStatementMasterAPIController extends AppBaseController
         $statementId = $input['statementId'];
         $companySystemID = $input['companyId'];
 
-        $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookDetails($statementId, $companySystemID);
-        return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+        try {
+            $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookDetails($statementId, $companySystemID);
+            return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 422);
+        }
     }
 
     function fetchWrkbookJobStatus(Request $request)
