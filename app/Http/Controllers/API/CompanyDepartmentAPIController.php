@@ -491,12 +491,12 @@ class CompanyDepartmentAPIController extends AppBaseController
             $data[$x]['Department Code'] = $val->departmentCode;
             $data[$x]['Department Description'] = $val->departmentDescription;
             // $data[$x]['Type'] = ($val->type == 1) ? 'Parent' : 'Final';
-            $data[$x]['Parent Department'] = $val->parent ? $val->parent->departmentDescription : '-';
-            $data[$x]['Is Finance'] = ($val->isFinance == 1) ? 'Yes' : 'No';
+            $data[$x]['Parent Department'] = !is_null($val->parentDepartmentID) ? ($val->parent ? $val->parent->departmentDescription : '-') : $val->company->CompanyName;
+            // $data[$x]['Is Finance'] = ($val->isFinance == 1) ? 'Yes' : 'No';
             $data[$x]['HOD'] = $val->hod ? $val->hod->employee->empName : '-';
             $data[$x]['Active Status'] = ($val->isActive == 1) ? 'Yes' : 'No';  
-            $data[$x]['Company'] = $val->company ? $val->company->companyName : '';
-            $data[$x]['Created Date'] = $val->created_at ? $val->created_at->format('d/m/Y') : '';
+            // $data[$x]['Company'] = $val->company ? $val->company->companyName : '';
+            // $data[$x]['Created Date'] = $val->created_at ? $val->created_at->format('d/m/Y') : '';
         }
 
         $companyMaster = Company::find(isset($request->companyId) ? $request->companyId : null);

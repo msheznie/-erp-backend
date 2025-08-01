@@ -32,7 +32,7 @@ class UpdateCompanyDepartmentAPIRequest extends APIRequest
             'companySystemID' => 'required|integer|exists:companymaster,companySystemID',
             'type' => 'required|integer|in:1,2',
             'parentDepartmentID' => 'nullable|integer|exists:company_departments,departmentSystemID',
-            'isFinance' => 'nullable|integer|in:0,1',
+            'isFinance' => 'nullable',
             'isActive' => 'required|integer|in:0,1'
         ];
     }
