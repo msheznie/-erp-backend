@@ -82,12 +82,14 @@ class SlotMasterRepository extends AppBaseController
             }
         });
 
-        $slotDetailIDs = SlotDetails::getSlotDetailIDs($slotMasterID, $input['companyId']);
-        $countConfirmedAppointment = Appointment::countConfirmedAppointment($slotDetailIDs, $input['companyId']);
+        if ($slotMasterID > 0) {
+            $slotDetailIDs = SlotDetails::getSlotDetailIDs($slotMasterID, $input['companyId']);
+            $countConfirmedAppointment = Appointment::countConfirmedAppointment($slotDetailIDs, $input['companyId']);
 
-        if($countConfirmedAppointment > 0){
-            return ['status' => false, 'message' => 'You cannot update this slot, because there are pending approve,
+            if($countConfirmedAppointment > 0){
+                return ['status' => false, 'message' => 'You cannot update this slot, because there are pending approve,
              approve, reject, or cancel records associated with other relevant slots'];
+            }
         }
 
         if($toTime <= $fromTime){
