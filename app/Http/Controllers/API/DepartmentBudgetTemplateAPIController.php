@@ -62,15 +62,17 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $hasActiveTemplateOfType = $this->departmentBudgetTemplateRepository
             ->hasActiveTemplateOfType($input['departmentSystemID'], $budgetTemplate->type);
 
-        // If there's already an active template of this type, set new template as inactive
-        if ($hasActiveTemplateOfType) {
-            $input['isActive'] = 0;
-            $message = 'Budget template assigned successfully as inactive (another template of this type is already active)';
-        } else {
-            // If no active template of this type exists, set as active
-            $input['isActive'] = 1;
-            $message = 'Budget template assigned successfully.';
-        }
+        $input['isActive'] = 0;
+        // // If there's already an active template of this type, set new template as inactive
+        // if ($hasActiveTemplateOfType) {
+        //     $input['isActive'] = 0;
+        //     $message = 'Budget template assigned successfully as inactive (another template of this type is already active)';
+        // } else {
+        //     // If no active template of this type exists, set as active
+        //     $input['isActive'] = 1;
+        //     $message = 'Budget template assigned successfully.';
+        // }
+        $message = 'Budget template assigned successfully.';
 
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->create($input);
 

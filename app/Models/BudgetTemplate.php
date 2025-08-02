@@ -67,4 +67,9 @@ class BudgetTemplate extends Model
         'isDefault' => 'boolean',
         'companySystemID' => 'required|integer'
     ];
+
+    public function getDescriptionAttribute($value)
+    {
+        return is_string($value) ? htmlspecialchars_decode($value) : $value;
+    }
 } 
