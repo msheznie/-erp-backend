@@ -32,3 +32,10 @@ Route::post('budget_template_columns/template/{templateId}/sort-order', 'BudgetT
 Route::delete('budget_template_columns/template/{templateId}/column/{preColumnId}', 'BudgetTemplateColumnAPIController@removeFromTemplate');
 Route::get('budget_template_columns/template/{templateId}/formula-references/{excludeColumnId?}', 'BudgetTemplateColumnAPIController@getFormulaReferenceColumns');
 Route::resource('budget_template_columns', 'BudgetTemplateColumnAPIController');
+
+// Budget Planning Routes
+Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
+Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
+Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
+Route::post('validateBudgetPlanning', 'CompanyBudgetPlanningAPIController@validateBudgetPlanning')->name('Validate budget planning');
+Route::post('checkBudgetPlanningInProgress', 'CompanyBudgetPlanningAPIController@checkBudgetPlanningInProgress')->name('Check budget planning in progress');

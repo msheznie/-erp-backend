@@ -936,6 +936,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('workflow_configurations', 'WorkflowConfigurationAPIController');
                 Route::resource('workflow_configuration_hod_actions', 'WorkflowConfigurationHodActionAPIController')->parameters(['workflow_configuration_hod_actions' => 'id']);
                 Route::resource('hod_actions', 'HodActionAPIController');
+                Route::resource('company_budget_plannings', 'CompanyBudgetPlanningAPIController');
+                Route::resource('department_budget_plannings', 'DepartmentBudgetPlanningAPIController');
             });
         });
 
