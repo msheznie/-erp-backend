@@ -162,12 +162,12 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     
                     $results[] = $companyDepartmentEmployee;
                 }
-
-                DB::commit();
-
+                
                 if (!empty($errorMessages)) {
+                    DB::rollback();
                     return $this->sendError('Some employees could not be assigned: ' . implode(', ', $errorMessages));
                 }
+                DB::commit();
 
                 return $this->sendResponse($results, count($results) . ' employee(s) assigned to department successfully');
             } else {

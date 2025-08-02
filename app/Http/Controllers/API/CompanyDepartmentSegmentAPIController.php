@@ -126,12 +126,13 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                     $results[] = $companyDepartmentSegment;
                 }
 
-                DB::commit();
-
+                
                 if (!empty($errorMessages)) {
+                    DB::rollback();
                     return $this->sendError('Some segments could not be assigned: ' . implode(', ', $errorMessages));
                 }
-
+                
+                DB::commit();
                 return $this->sendResponse($results, count($results) . ' segment(s) assigned to department successfully');
             } else {
                 // Handle single segment assignment (backward compatibility)
