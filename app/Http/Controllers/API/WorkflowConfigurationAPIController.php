@@ -123,13 +123,22 @@ class WorkflowConfigurationAPIController extends AppBaseController
             'workflowName' => 'required',
             'initiateBudget' => 'required',
             'method' => 'required',
-            'allocation' => 'required',
+            'allocation' => 'required_if:method,2',
             'finalApproval' => 'required',
             'hodActions' => 'required'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        // Custom validation for workflowName uniqueness
+        $existingWorkflow = WorkflowConfiguration::where('workflowName', $input['workflowName'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->exists();
+
+        if ($existingWorkflow) {
+            return $this->sendError('Workflow name already exists. Please enter a unique name.', 500);
         }
 
         $data = array_except($input, ['hodActions']);
@@ -272,13 +281,23 @@ class WorkflowConfigurationAPIController extends AppBaseController
             'workflowName' => 'required',
             'initiateBudget' => 'required',
             'method' => 'required',
-            'allocation' => 'required',
+            'allocation' => 'required_if:method,2',
             'finalApproval' => 'required',
             'hodActions' => 'required'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        // Custom validation for workflowName uniqueness (excluding current record)
+        $existingWorkflow = WorkflowConfiguration::where('workflowName', $input['workflowName'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($existingWorkflow) {
+            return $this->sendError('Workflow name already exists. Please enter a unique name.', 500);
         }
 
         $data = array_except($input, ['hodActions']);
@@ -309,7 +328,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             WorkflowConfigurationHodAction::create($hodAction);
         }
 
-        return $this->sendResponse($workflowConfiguration->toArray(), 'WorkflowConfiguration updated successfully');
+        return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration updated successfully');
     }
 
     /**
