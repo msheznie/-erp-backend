@@ -8,6 +8,7 @@ use App\Models\BudgetTemplate;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\CompanyDepartment;
 use App\Models\DepBudgetTemplateGl;
+use App\Jobs\AssignBudgetTemplateToAllDepartments;
 use App\Repositories\BudgetTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -124,8 +125,9 @@ class BudgetTemplateAPIController extends AppBaseController
             $budgetTemplate->save();
 
             if($input['isDefault'] == 1) {
-                //write a service to assign this template to all departments
-                $this->assignTemplateToAllDepartments($id); 
+                // Dispatch job to assign this template to all departments in background
+                $db = $request->get('db', '');
+                AssignBudgetTemplateToAllDepartments::dispatch($id, auth()->id(), $db);
             }
 
             //update all other templates to non-default
@@ -170,62 +172,7 @@ class BudgetTemplateAPIController extends AppBaseController
         return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
     }
 
-    public function assignTemplateToAllDepartments($id)
-    {
-        $budgetTemplate = $this->budgetTemplateRepository->find($id);
-        $departments = CompanyDepartment::where('isActive', 1)->get();
-        foreach ($departments as $department) {
 
-            // check if the template is already assigned to the department
-            $departmentBudgetTemplateCheck = DepartmentBudgetTemplate::where('budgetTemplateID', $id)
-                                                                    ->where('departmentSystemID', $department->departmentSystemID)
-                                                                    ->where('isActive', 1)
-                                                                    ->first();
-            if(!$departmentBudgetTemplateCheck) {
-                //check if the template type is already assigned to the department
-                $departmentBudgetTemplateCheck = DepartmentBudgetTemplate::whereHas('budgetTemplate', function($query) use ($budgetTemplate) {
-                                                                $query->where('type', $budgetTemplate->type);
-                                                            })->where('departmentSystemID', $department->departmentSystemID)
-                                                            ->where('isActive', 1)
-                                                            ->first();
-
-                $departmentBudgetTemplate = new DepartmentBudgetTemplate();
-                $departmentBudgetTemplate->budgetTemplateID = $id;
-                $departmentBudgetTemplate->departmentSystemID = $department->departmentSystemID;
-                $departmentBudgetTemplate->isActive = $departmentBudgetTemplateCheck ? 0 : 1;
-                $departmentBudgetTemplate->createdUserSystemID = auth()->id();
-                $departmentBudgetTemplate->modifiedUserSystemID = auth()->id();
-                $departmentBudgetTemplate->save();
-
-                $departmentBudgetTemplateID = $departmentBudgetTemplate->departmentBudgetTemplateID;
-                
-
-                $items = \App\Models\ChartOfAccount::where('isActive', 1)->where('isApproved', 1)
-                                                ->whereHas('chartofaccount_assigned', function($query) use ($department) {
-                                                    $query->where('companySystemID', $department->companySystemID)
-                                                        ->where('isAssigned', -1)
-                                                        ->where('isActive', 1);
-                                                })->when($budgetTemplate->type == 1, function ($query) {
-                                                    $query->where('catogaryBLorPL', 'PL');
-                                                })->when($budgetTemplate->type == 2, function ($query) {
-                                                    $query->where('catogaryBLorPL', 'BS');
-                                                })
-                                                ->whereNotNull('reportTemplateCategory')
-                                                ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL', 'controlAccounts')
-                                                ->get();
-
-                foreach($items as $item) {
-                    //assign the gl to DepBudgetTemplateGl
-                    $depBudgetTemplateGl = new DepBudgetTemplateGl();
-                    $depBudgetTemplateGl->departmentBudgetTemplateID = $departmentBudgetTemplateID;
-                    $depBudgetTemplateGl->chartOfAccountSystemID = $item->chartOfAccountSystemID;
-                    $depBudgetTemplateGl->createdUserSystemID = auth()->id();
-                    $depBudgetTemplateGl->modifiedUserSystemID = auth()->id();
-                    $depBudgetTemplateGl->save();
-                }
-            }
-        }
-    }
 
     /**
      * Remove the specified BudgetTemplate from storage.
