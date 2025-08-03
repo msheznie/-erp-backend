@@ -3,6 +3,7 @@
 namespace App\Services\AuditLog;
 
 use App\Models\Company;
+use App\Models\BudgetTemplateColumn;
 
 class BudgetTemplateAuditService
 {
@@ -50,6 +51,19 @@ class BudgetTemplateAuditService
             
             if($auditData['previosValue']['isDefault'] != $auditData['newValue']['isDefault']) {
                 $modifiedData[] = ['amended_field' => "is_default", 'previous_value' => ($auditData['previosValue']['isDefault'] == 1) ? 'yes' : 'no', 'new_value' => ($auditData['newValue']['isDefault'] == 1) ? 'yes' : 'no'];
+            }
+
+            if($auditData['previosValue']['linkRequestAmount'] != $auditData['newValue']['linkRequestAmount']) {
+                //get the link request amount from the budget template columns
+
+                $budgetTemplatePrevios = BudgetTemplateColumn::with('preColumn')->where('templateColumnID', $auditData['previosValue']['linkRequestAmount'])->get();
+                $budgetTemplateNew = BudgetTemplateColumn::with('preColumn')->where('templateColumnID', $auditData['newValue']['linkRequestAmount'])->get();
+
+                //get the pre column name from the budget template columns, pre column name is one value not array
+                $preColumnPrevios = $budgetTemplatePrevios->pluck('preColumn.columnName')->first();
+                $preColumnNew = $budgetTemplateNew->pluck('preColumn.columnName')->first();
+
+                $modifiedData[] = ['amended_field' => "link_request_amount", 'previous_value' => $preColumnPrevios, 'new_value' => $preColumnNew];
             }
             
         } elseif ($auditData['crudType'] == "D") {

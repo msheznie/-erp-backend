@@ -60,15 +60,15 @@ class BudgetTemplateColumnAuditService
                 $modifiedData[] = ['amended_field' => "sort_order", 'previous_value' => $auditData['previosValue']['sortOrder'], 'new_value' => $auditData['newValue']['sortOrder']];
             }
             
-            if(isset($auditData['previosValue']['fieldCode']) && isset($auditData['newValue']['fieldCode']) && $auditData['previosValue']['fieldCode'] != $auditData['newValue']['fieldCode']) {
+            if(array_key_exists('fieldCode', $auditData['previosValue']) && array_key_exists('fieldCode', $auditData['newValue']) && $auditData['previosValue']['fieldCode'] != $auditData['newValue']['fieldCode']) {
                 $modifiedData[] = ['amended_field' => "field_code", 'previous_value' => $auditData['previosValue']['fieldCode'], 'new_value' => $auditData['newValue']['fieldCode']];
             }
             
-            if(isset($auditData['previosValue']['formulaExpression']) && isset($auditData['newValue']['formulaExpression']) && $auditData['previosValue']['formulaExpression'] != $auditData['newValue']['formulaExpression']) {
+            if(array_key_exists('formulaExpression', $auditData['previosValue']) && array_key_exists('formulaExpression', $auditData['newValue']) && $auditData['previosValue']['formulaExpression'] != $auditData['newValue']['formulaExpression']) {
                 $modifiedData[] = ['amended_field' => "formula_expression", 'previous_value' => $auditData['previosValue']['formulaExpression'], 'new_value' => $auditData['newValue']['formulaExpression']];
             }
             
-            if(isset($auditData['previosValue']['formulaColumnIDs']) && isset($auditData['newValue']['formulaColumnIDs']) && $auditData['previosValue']['formulaColumnIDs'] != $auditData['newValue']['formulaColumnIDs']) {
+            if(array_key_exists('formulaColumnIDs', $auditData['previosValue']) && array_key_exists('formulaColumnIDs', $auditData['newValue']) && $auditData['previosValue']['formulaColumnIDs'] != $auditData['newValue']['formulaColumnIDs']) {
                 $modifiedData[] = ['amended_field' => "formula_column_ids", 'previous_value' => $auditData['previosValue']['formulaColumnIDs'], 'new_value' => $auditData['newValue']['formulaColumnIDs']];
             }
             

@@ -146,10 +146,10 @@ class BudgetTemplateAPIController extends AppBaseController
             $budgetTemplate->modifiedUserSystemID = auth()->id();
             $budgetTemplate->save();
 
-            // // Audit log for link request amount update
-            // $uuid = $request->get('tenant_uuid', 'local');
-            // $db = $request->get('db', '');
-            // $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template link request amount updated", "U", $budgetTemplate->toArray(), $oldValues);
+            // Audit log for link request amount update
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template link request amount updated", "U", $budgetTemplate->toArray(), $oldValues);
 
             return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
         }
