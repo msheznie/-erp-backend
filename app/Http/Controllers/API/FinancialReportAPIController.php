@@ -1325,7 +1325,7 @@ class FinancialReportAPIController extends AppBaseController
                         collect($columnKeys)->each(function($colKey) use ($item,$data)
                         {
                             $key = explode('-',$colKey);
-                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD","BYTDFULL"]))
                                 $item->$colKey = collect($data)->sum($colKey);
                         });
                     }
@@ -1334,7 +1334,7 @@ class FinancialReportAPIController extends AppBaseController
                     {
                         if ((isset($item->itemType) && $item->itemType != 3)) {
                             $key = explode('-',$colKey);
-                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD","BYTDFULL"]))
                                 $item->$colKey = collect($data)->sum($colKey);
                         }
                     });
@@ -2122,6 +2122,7 @@ class FinancialReportAPIController extends AppBaseController
                      ->where('approved', -1)
                      ->where('documentType', 0)
                      ->get();
+
         
         // Calculate poAmount and paymentDueDate for each BookInvSuppMaster record
         foreach ($result as $key => $bookInvSuppMaster) {
@@ -2133,16 +2134,22 @@ class FinancialReportAPIController extends AppBaseController
             $poMasterCode = null;
             $hasLogisticDetails = false;
             $hasItemDetails = false;
-            
+            $vatAmountLocal = 0;
+            $vatAmountRpt = 0;
+            $vatAmountTrans = 0;
             // Check what types of details this invoice contains
             if ($bookInvSuppMaster->detail) {
                 foreach ($bookInvSuppMaster->detail as $detail) {
                     if ($detail->unbilled_grv) {
                         if ($detail->unbilled_grv->logisticYN == 1) {
                             $hasLogisticDetails = true;
+                            $hasItemDetails = true;
                         } else {
                             $hasItemDetails = true;
+                            $hasLogisticDetails = true; 
                         }
+                    }else {
+                        // $hasItemDetails = true;
                     }
                 }
             }
@@ -2155,7 +2162,9 @@ class FinancialReportAPIController extends AppBaseController
                         $procumentOrder = $detail->pomaster;
                         $processedPOs[] = $detail->purchaseOrderID; // Mark this PO as processed
                         $poMasterCode = $procumentOrder->purchaseOrderCode;    
-                        
+                        $vatAmountLocal += $procumentOrder->VATAmountLocal ?? 0;
+                        $vatAmountRpt += $procumentOrder->VATAmountRpt ?? 0;
+                        $vatAmountTrans += $procumentOrder->VATAmount ?? 0;
                         // Always calculate logistic amounts if logistic details exist
                         if ($hasLogisticDetails && $procumentOrder->po_logistics_details) {
                             foreach ($procumentOrder->po_logistics_details as $logisticDetail) {
@@ -2175,12 +2184,12 @@ class FinancialReportAPIController extends AppBaseController
                                 }
                             }
                         }
-                        
+                       
                         // Calculate PO line items amount if item details exist
                         if ($hasItemDetails) {
                             if($request->currencyID == 1) {
                                 if ($procumentOrder->poTotalLocalCurrency) {
-                                    $poAmount += $procumentOrder->poTotalLocalCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountLocal : 0));    
+                                        $poAmount += $procumentOrder->poTotalLocalCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountLocal : 0));    
                                 }
                             }
                             if($request->currencyID == 2) {
@@ -2194,9 +2203,15 @@ class FinancialReportAPIController extends AppBaseController
                                 }
                             }
                         }
+                        
+
                     }
                 }
             }
+
+       
+            // Store item amounts separately for retention calculation
+            $itemAmount = $poAmount;
             
             // Set poAmount based on invoice type
             if ($hasLogisticDetails && $hasItemDetails) {
@@ -2209,6 +2224,7 @@ class FinancialReportAPIController extends AppBaseController
                 // Pure item invoice - only item amounts (poAmount already calculated above)
                 // No additional calculation needed
             }
+     
             
             // Get payment details from paysuppdetail
             $paymentVoucherDate = null;
@@ -2268,6 +2284,7 @@ class FinancialReportAPIController extends AppBaseController
             $bookInvSuppMaster->supplierInvoiceNo = $bookInvSuppMaster->bookingInvCode;
             $bookInvSuppMaster->bookingInvCode = $poMasterCode;
             $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = $bookInvSuppMaster->bookingDate;
+            $bookInvSuppMaster->invoiceDate = $bookInvSuppMaster->bookingDate; // Date of invoice with WHT applicable
             $bookInvSuppMaster->logisticReqAmount = $logisticReqAmount;
             $bookInvSuppMaster->logisticVATAmount = $logisticVATAmount;
             $bookInvSuppMaster->isLogisticInvoice = $hasLogisticDetails && !$hasItemDetails; // Pure logistic invoice
@@ -2290,6 +2307,64 @@ class FinancialReportAPIController extends AppBaseController
                 $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountRpt;
             } else {
                 $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountTrans;
+            }
+            
+            // Calculate supplier net amount for each currency (similar to frontend calculation)
+            // Net amount = (Order Amount + Tax Amount) - WHT - Additional Tax
+            // For RCM activated: Net amount = Order Amount - WHT - Additional Tax
+            
+            // Local Currency Net Amount
+            $localOrderAmount = $bookInvSuppMaster->bookingAmountLocal ?? 0;
+            $localTaxAmount = $bookInvSuppMaster->VATAmountLocal ?? 0;
+            $localWHTAmount = $bookInvSuppMaster->bookingAmountLocal * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($bookInvSuppMaster->rcmActivated) {
+                $localRetentionAmount = ($localOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $localRetentionAmount = ((($localOrderAmount + $localTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            
+            if ($bookInvSuppMaster->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $localOrderAmount - $localWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $localRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($localOrderAmount + $localTaxAmount) - $localWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $localRetentionAmount;
+            }
+            
+            // Report Currency Net Amount
+            $rptOrderAmount = $bookInvSuppMaster->bookingAmountRpt ?? 0;
+            $rptTaxAmount = $bookInvSuppMaster->VATAmountRpt ?? 0;
+            $rptWHTAmount = $bookInvSuppMaster->bookingAmountRpt * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($bookInvSuppMaster->rcmActivated) {
+                $rptRetentionAmount = ($rptOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $rptRetentionAmount = ((($rptOrderAmount + $rptTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            
+            if ($bookInvSuppMaster->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $rptOrderAmount - $rptWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $rptRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($rptOrderAmount + $rptTaxAmount) - $rptWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $rptRetentionAmount;
+            }
+            
+            // Transaction Currency Net Amount
+            $transOrderAmount = $bookInvSuppMaster->bookingAmountTrans ?? 0;
+            $transTaxAmount = $bookInvSuppMaster->VATAmount ?? 0;
+            $transWHTAmount = $bookInvSuppMaster->bookingAmountTrans * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($bookInvSuppMaster->rcmActivated) {
+                $transRetentionAmount = ($transOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $transRetentionAmount = ((($transOrderAmount + $transTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            
+            if ($bookInvSuppMaster->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $transOrderAmount - $transWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $transRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($transOrderAmount + $transTaxAmount) - $transWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $transRetentionAmount;
             }
             
             $bookInvSuppMaster->whtPercentage = $bookInvSuppMaster->whtPercentage;
@@ -2331,12 +2406,18 @@ class FinancialReportAPIController extends AppBaseController
                 $totalWithholdingTax = 0;
                 $totalAdditionalTax = 0;
                 $totalTotal = 0;
+                $totalSupplierNetAmountLocal = 0;
+                $totalSupplierNetAmountRpt = 0;
+                $totalSupplierNetAmountTrans = 0;
                 
                 foreach ($invoices as $invoice) {
                     $totalSupplierInvoiceAmount += $invoice->supplierInvoiceAmount ?? 0;
                     $totalWithholdingTax += $invoice->withholdingTax ?? 0;
                     $totalAdditionalTax += $invoice->additionalTax ?? 0;
                     $totalTotal += $invoice->total ?? 0;
+                    $totalSupplierNetAmountLocal += $invoice->supplierNetAmountLocal ?? 0;
+                    $totalSupplierNetAmountRpt += $invoice->supplierNetAmountRpt ?? 0;
+                    $totalSupplierNetAmountTrans += $invoice->supplierNetAmountTrans ?? 0;
                 }
                 
                 // Update the consolidated invoice - keep original PO amount, sum only supplier amounts
@@ -2344,6 +2425,9 @@ class FinancialReportAPIController extends AppBaseController
                 $consolidatedInvoice->withholdingTax = $totalWithholdingTax;
                 $consolidatedInvoice->additionalTax = $totalAdditionalTax;
                 $consolidatedInvoice->total = $totalTotal;
+                $consolidatedInvoice->supplierNetAmountLocal = $totalSupplierNetAmountLocal;
+                $consolidatedInvoice->supplierNetAmountRpt = $totalSupplierNetAmountRpt;
+                $consolidatedInvoice->supplierNetAmountTrans = $totalSupplierNetAmountTrans;
                 
                 // Add a flag to indicate this is a consolidated invoice
                 $consolidatedInvoice->isConsolidated = true;
@@ -9426,6 +9510,8 @@ GROUP BY id
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $fifthLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $fifthLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -9714,6 +9800,8 @@ GROUP BY
                 $secondLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $secondLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $secondLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -9801,6 +9889,7 @@ WHERE
 ORDER BY
     erp_companyreporttemplatelinks.sortOrder) b ) a '.$whereNonZero;
 
+//        dd($sql);
         $output = \DB::select($sql);
         return $output;
     }
@@ -9891,6 +9980,8 @@ ORDER BY
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $key . '`,';
             } else if ($coloumnShortCode == "BYTD" && !$changeSelect) {
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $key . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL" && !$changeSelect) {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $key . '`,';
             } else if ($coloumnShortCode == "ELMN" && !$changeSelect) {
                 $thirdLinkedcolumnQry .= '0 AS `' . $key . '`,';
             } else if ($coloumnShortCode == "CONS" && !$changeSelect) {
@@ -10280,6 +10371,8 @@ GROUP BY
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $thirdLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -11005,9 +11098,37 @@ GROUP BY
 
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
                 }
+                if ($val->shortCode == 'LYYTDFULL') {
+                    if ($request->accountType == 2) {
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
+                }
                 if ($val->shortCode == 'LYYTD') {
                     if ($request->accountType == 2) {
-
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
@@ -11026,15 +11147,16 @@ GROUP BY
                         else if ($request->dateType == 1) {
                             $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
                         }
-
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 3) {
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     }
+
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }
+
 
                 if ($val->shortCode == 'CY-2') {
                     if ($request->accountType == 2) {
@@ -11137,6 +11259,15 @@ GROUP BY
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
                 }
 
+                if ($val->shortCode == 'BYTDFULL') {
+                    if ($changeSelect) {
+                        $columnArray[$val->shortCode] = "IFNULL(bAmountYearFull, 0)";
+                    } else {
+                        $columnArray[$val->shortCode] = "0";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                }
+
                 if (($val->shortCode == 'CMB') || ($val->shortCode == 'ELMN') || ($val->shortCode == 'CONS')) {
                     $columnArray[$val->shortCode] = "0";
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
@@ -11201,7 +11332,17 @@ GROUP BY
                                 )
                             ),
                             0
-                        ) AS `bAmountMonth`";
+                        ) AS `bAmountMonth`,
+                        IFNULL(
+                            SUM(
+                                IF(
+                                    erp_budjetdetails.Year = '" . $currentYear . "',
+                                    $budgetColumn, 
+                                    0
+                                )
+                            ),
+                            0
+                        ) AS `bAmountYearFull`";
 
 
 
@@ -11231,12 +11372,12 @@ GROUP BY
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
                         $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 2);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'LYYTDFULL' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
                     $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
-                } else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM') {
+                } else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM' || $val->shortCode == 'BYTDFULL' ) {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
