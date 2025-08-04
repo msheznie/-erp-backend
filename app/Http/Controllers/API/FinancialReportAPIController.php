@@ -21,6 +21,7 @@ use App\Exports\GeneralLedger\GeneralLedger\GeneralLedgerReport;
 use App\Models\AccountsPayableLedger;
 use App\Models\CustomReportColumns;
 use App\Models\GroupCompanyStructure;
+use App\Models\Tax;
 use App\Models\GroupParents;
 use App\Models\ReportCustomColumn;
 use App\Services\ConsolidationReportService;
@@ -2281,9 +2282,10 @@ class FinancialReportAPIController extends AppBaseController
             }
             
             if($paymentVoucherStatus == 1) {
-                $whtSupplierData = AccountsPayableLedger::select('supplierCodeSystem')->where('supplierCodeSystem','!=', $bookInvSuppMaster->supplierID)->where('documentSystemID', 11)->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)->first();
-                if($whtSupplierData) {
-                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $whtSupplierData->supplierCodeSystem)->first();        
+                $tax = Tax::where('taxCategory',3)->where('isDefault',1)->where('isActive',1)->where('companySystemID', $companyID)->first();
+
+                if($tax) {
+                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $tax->authorityAutoID)->first();      
                     $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
                 }else {
                     $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
