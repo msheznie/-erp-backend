@@ -2212,23 +2212,19 @@ class FinancialReportAPIController extends AppBaseController
             
             // Get payment details from paysuppdetail
             $paymentVoucherDate = null;
-            $paymentVoucherStatus = 3; // Default to 3 (not created)
+            $paymentVoucherStatus = 2; // Default to 3 (not created)
             $paymentDetailsFound = false;
             if ($bookInvSuppMaster->paysuppdetail) {
                 foreach ($bookInvSuppMaster->paysuppdetail as $payDetail) {
                     if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
                         $paymentVoucherDate = $payDetail->payment_master->BPVdate;
-                        $paymentVoucherStatus = ($payDetail->payment_master->confirmedYN == 0) ? 0 : (($payDetail->payment_master->approvedYN == 0) ? 1 : 2);
+                        $paymentVoucherStatus = ((!isset($payDetail->payment_master) || $payDetail->payment_master->approved == 0) ? 2 : 1);
                         $paymentDetailsFound = true;
                         break; // Get only the first BPVdate
                     }
                 }
             }
             
-            // If no payment details were found, set status to 3 (not created)
-            if (!$paymentDetailsFound) {
-                $paymentVoucherStatus = 3;
-            }
             
             // Calculate paymentDueDate based on booking date
             $paymentDueDate = null;

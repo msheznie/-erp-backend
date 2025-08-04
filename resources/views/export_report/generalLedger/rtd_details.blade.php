@@ -67,12 +67,10 @@
                 @endif
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'payment_voucher_status')->count() > 0)
                     <td class="text-center">
-                        @if($data->paymentVoucherStatus === 0)
-                            <span>Not Confirmed</span>
-                        @elseif($data->paymentVoucherStatus === 1)
-                            <span>Pending to approval</span>
+                        @if($data->paymentVoucherStatus === 1)
+                            <span>Paid</span>
                         @elseif($data->paymentVoucherStatus === 2)
-                            <span>Approved</span>
+                            <span>Not Paid</span>
                         @else
                             {{ '' }}
                         @endif
