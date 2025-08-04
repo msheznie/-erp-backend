@@ -9,6 +9,7 @@ use App\Models\HodAction;
 use App\Models\WorkflowConfiguration;
 use App\Models\WorkflowConfigurationHodAction;
 use App\Repositories\WorkflowConfigurationRepository;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -22,6 +23,8 @@ use Response;
 
 class WorkflowConfigurationAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  WorkflowConfigurationRepository */
     private $workflowConfigurationRepository;
 
@@ -164,6 +167,24 @@ class WorkflowConfigurationAPIController extends AppBaseController
             WorkflowConfigurationHodAction::create($hodAction);
         }
 
+        // Get created workflow with HOD actions for audit log
+        $createdWorkflow = $this->workflowConfigurationRepository->with('hodActions')->findWithoutFail($workflowConfiguration->id);
+        $newValues = $createdWorkflow->toArray();
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db, 
+            $workflowConfiguration->id, 
+            $uuid, 
+            "workflow_configurations", 
+            "Workflow Configuration '{$input['workflowName']}' has been created", 
+            "C", 
+            $newValues, 
+            []
+        );
+
         return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration saved successfully');
     }
 
@@ -283,7 +304,6 @@ class WorkflowConfigurationAPIController extends AppBaseController
             'method' => 'required',
             'allocation' => 'required_if:method,2',
             'finalApproval' => 'required',
-            'hodActions' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -310,6 +330,10 @@ class WorkflowConfigurationAPIController extends AppBaseController
             return $this->sendError('Workflow Configuration not found');
         }
 
+        // Store old values for audit log
+        $oldValues = $workflowConfiguration->toArray();
+        $oldHodActions = $workflowConfiguration->hodActions()->get()->toArray();
+
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if (empty($company)) {
@@ -320,6 +344,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration = $this->workflowConfigurationRepository->update($data, $id);
         $workflowConfiguration->hodActions()->delete();
 
+        
         foreach ($input['hodActions'] as $hodAction) {
             $hodAction['workflowConfigurationID'] = $id;
             $hodAction['hodActionID'] = $hodAction['id'];
@@ -327,6 +352,25 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $hodAction['child'] = $hodAction['childHod'];
             WorkflowConfigurationHodAction::create($hodAction);
         }
+
+        // Get updated values for audit log
+        $updatedWorkflow = $this->workflowConfigurationRepository->findWithoutFail($id);
+        $newValues = $updatedWorkflow->toArray();
+        $newHodActions = $updatedWorkflow->hodActions()->get()->toArray();
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db, 
+            $id, 
+            $uuid, 
+            "erp_workflow_configurations", 
+            "Workflow Configuration '{$input['workflowName']}' has been updated", 
+            "U", 
+            array_merge($newValues, ['hodActions' => $newHodActions]), 
+            array_merge($oldValues, ['hodActions' => $oldHodActions])
+        );
 
         return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration updated successfully');
     }
@@ -370,7 +414,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
      *      )
      * )
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         /** @var WorkflowConfiguration $workflowConfiguration */
         $workflowConfiguration = $this->workflowConfigurationRepository->findWithoutFail($id);
@@ -379,9 +423,27 @@ class WorkflowConfigurationAPIController extends AppBaseController
             return $this->sendError('Workflow Configuration not found');
         }
 
+        // Store old values for audit log
+        $oldValues = $workflowConfiguration->toArray();
+        $oldHodActions = $workflowConfiguration->hodActions()->get()->toArray();
+
         $workflowConfiguration->hodActions()->delete();
 
         $workflowConfiguration->delete();
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db, 
+            $id, 
+            $uuid, 
+            "workflow_configurations", 
+            "Workflow Configuration '{$workflowConfiguration->workflowName}' has been deleted", 
+            "D", 
+            [], 
+            array_merge($oldValues, ['hodActions' => $oldHodActions])
+        );
 
         return $this->sendResponse(null,'Workflow Configuration deleted successfully');
     }

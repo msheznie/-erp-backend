@@ -2282,8 +2282,12 @@ class FinancialReportAPIController extends AppBaseController
             
             if($paymentVoucherStatus == 1) {
                 $whtSupplierData = AccountsPayableLedger::select('supplierCodeSystem')->where('supplierCodeSystem','!=', $bookInvSuppMaster->supplierID)->where('documentSystemID', 11)->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)->first();
-                $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $whtSupplierData->supplierCodeSystem)->first();        
-                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                if($whtSupplierData) {
+                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $whtSupplierData->supplierCodeSystem)->first();        
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                }else {
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+                }
             }else {
                 $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
             }
