@@ -18,6 +18,7 @@
 namespace App\Http\Controllers\API;
 use App\Exports\GeneralLedger\Financials\ExcelColumnFormat;
 use App\Exports\GeneralLedger\GeneralLedger\GeneralLedgerReport;
+use App\Models\AccountsPayableLedger;
 use App\Models\CustomReportColumns;
 use App\Models\GroupCompanyStructure;
 use App\Models\GroupParents;
@@ -2279,11 +2280,18 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
             
+            if($paymentVoucherStatus == 1) {
+                $whtSupplierData = AccountsPayableLedger::select('supplierCodeSystem')->where('supplierCodeSystem','!=', $bookInvSuppMaster->supplierID)->where('documentSystemID', 11)->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)->first();
+                $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $whtSupplierData->supplierCodeSystem)->first();        
+                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+            }else {
+                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+            }
+            
             // Add calculated fields to each BookInvSuppMaster record
             $bookInvSuppMaster->poAmount = $poAmount;
             $bookInvSuppMaster->supplierInvoiceNo = $bookInvSuppMaster->bookingInvCode;
             $bookInvSuppMaster->bookingInvCode = $poMasterCode;
-            $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = $bookInvSuppMaster->bookingDate;
             $bookInvSuppMaster->invoiceDate = $bookInvSuppMaster->bookingDate; // Date of invoice with WHT applicable
             $bookInvSuppMaster->logisticReqAmount = $logisticReqAmount;
             $bookInvSuppMaster->logisticVATAmount = $logisticVATAmount;
@@ -2319,16 +2327,16 @@ class FinancialReportAPIController extends AppBaseController
             $localWHTAmount = $bookInvSuppMaster->bookingAmountLocal * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
             
             // Calculate retention amount based on frontend logic
-            if ($bookInvSuppMaster->rcmActivated) {
+            if ($procumentOrder->rcmActivated) {
                 $localRetentionAmount = ($localOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
             } else {
                 $localRetentionAmount = ((($localOrderAmount + $localTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
             }
             
-            if ($bookInvSuppMaster->rcmActivated) {
-                $bookInvSuppMaster->supplierInvoiceAmount = $localOrderAmount - $localWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $localRetentionAmount;
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $localOrderAmount - $localWHTAmount - $localRetentionAmount;
             } else {
-                $bookInvSuppMaster->supplierInvoiceAmount = ($localOrderAmount + $localTaxAmount) - $localWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $localRetentionAmount;
+                $bookInvSuppMaster->supplierInvoiceAmount = ($localOrderAmount + $localTaxAmount) - $localWHTAmount - $localRetentionAmount;
             }
             
             // Report Currency Net Amount
@@ -2337,16 +2345,15 @@ class FinancialReportAPIController extends AppBaseController
             $rptWHTAmount = $bookInvSuppMaster->bookingAmountRpt * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
             
             // Calculate retention amount based on frontend logic
-            if ($bookInvSuppMaster->rcmActivated) {
+            if ($procumentOrder->rcmActivated) {
                 $rptRetentionAmount = ($rptOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
             } else {
                 $rptRetentionAmount = ((($rptOrderAmount + $rptTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
             }
-            
-            if ($bookInvSuppMaster->rcmActivated) {
-                $bookInvSuppMaster->supplierInvoiceAmount = $rptOrderAmount - $rptWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $rptRetentionAmount;
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $rptOrderAmount - $rptWHTAmount  - $rptRetentionAmount;
             } else {
-                $bookInvSuppMaster->supplierInvoiceAmount = ($rptOrderAmount + $rptTaxAmount) - $rptWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $rptRetentionAmount;
+                $bookInvSuppMaster->supplierInvoiceAmount = ($rptOrderAmount + $rptTaxAmount) - $rptWHTAmount  - $rptRetentionAmount;
             }
             
             // Transaction Currency Net Amount
@@ -2355,16 +2362,16 @@ class FinancialReportAPIController extends AppBaseController
             $transWHTAmount = $bookInvSuppMaster->bookingAmountTrans * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
             
             // Calculate retention amount based on frontend logic
-            if ($bookInvSuppMaster->rcmActivated) {
+            if ($procumentOrder->rcmActivated) {
                 $transRetentionAmount = ($transOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
             } else {
                 $transRetentionAmount = ((($transOrderAmount + $transTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
             }
             
-            if ($bookInvSuppMaster->rcmActivated) {
-                $bookInvSuppMaster->supplierInvoiceAmount = $transOrderAmount - $transWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $transRetentionAmount;
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $transOrderAmount - $transWHTAmount - $transRetentionAmount;
             } else {
-                $bookInvSuppMaster->supplierInvoiceAmount = ($transOrderAmount + $transTaxAmount) - $transWHTAmount - ($bookInvSuppMaster->additionalTax ?? 0) - $transRetentionAmount;
+                $bookInvSuppMaster->supplierInvoiceAmount = ($transOrderAmount + $transTaxAmount) - $transWHTAmount - $transRetentionAmount;
             }
             
             $bookInvSuppMaster->whtPercentage = $bookInvSuppMaster->whtPercentage;
