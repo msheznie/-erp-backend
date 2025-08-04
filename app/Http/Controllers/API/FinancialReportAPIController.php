@@ -2330,7 +2330,7 @@ class FinancialReportAPIController extends AppBaseController
             // Local Currency Net Amount
             $localOrderAmount = $bookInvSuppMaster->bookingAmountLocal ?? 0;
             $localTaxAmount = $bookInvSuppMaster->VATAmountLocal ?? 0;
-            $localWHTAmount = $bookInvSuppMaster->bookingAmountLocal * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            $localWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountLocal * ($bookInvSuppMaster->whtPercentage / 100) : 0;
             
             // Calculate retention amount based on frontend logic
             if ($procumentOrder->rcmActivated) {
@@ -2348,7 +2348,7 @@ class FinancialReportAPIController extends AppBaseController
             // Report Currency Net Amount
             $rptOrderAmount = $bookInvSuppMaster->bookingAmountRpt ?? 0;
             $rptTaxAmount = $bookInvSuppMaster->VATAmountRpt ?? 0;
-            $rptWHTAmount = $bookInvSuppMaster->bookingAmountRpt * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            $rptWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountRpt * ($bookInvSuppMaster->whtPercentage / 100) : 0;
             
             // Calculate retention amount based on frontend logic
             if ($procumentOrder->rcmActivated) {
@@ -2365,7 +2365,7 @@ class FinancialReportAPIController extends AppBaseController
             // Transaction Currency Net Amount
             $transOrderAmount = $bookInvSuppMaster->bookingAmountTrans ?? 0;
             $transTaxAmount = $bookInvSuppMaster->VATAmount ?? 0;
-            $transWHTAmount = $bookInvSuppMaster->bookingAmountTrans * ($bookInvSuppMaster->whtPercentage / 100) ?? 0;
+            $transWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountTrans * ($bookInvSuppMaster->whtPercentage / 100) : 0;
             
             // Calculate retention amount based on frontend logic
             if ($procumentOrder->rcmActivated) {
