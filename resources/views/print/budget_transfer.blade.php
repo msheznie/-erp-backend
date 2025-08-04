@@ -89,6 +89,7 @@
 
         .table th, .table td {
             padding: 6.4px !important;
+            padding-left: 6px !important;
         }
 
         table.table-bordered {
@@ -156,6 +157,15 @@
         .border-right-dif{
          border-right: 1px solid #ffffffff !important;
         }
+
+        .border-bottom{
+             border-bottom: 1px solid #ffffff00 !important;
+        }
+
+        .tbody td {
+            padding-left: 6px;
+        }
+
     </style>
 </head>
 <body>
@@ -295,29 +305,30 @@
         <table class="table table-bordered" style="width: 100%;">
             <thead>
                 <tr style="background-color: #e9e3ec;">
-                    <th colspan="3" class="text-center border-right-dif">
+                    <th colspan="3" class="text-center border-right-dif border-bottom" style="border-bottom: 1px solid #ffffff00 !important;">
                        {{ __('custom.from') }}
                     </th>
-                    <th colspan="3" class="text-center border-right-dif">
+                    <th colspan="3" class="text-center border-right-dif" style="border-bottom: 1px solid #ffffff00 !important;">
                          {{ __('custom.to') }}</th>
-                    <th colspan="3"></th>
+                     <th colspan="3" class="text-center border-right-dif" style="border-bottom: 1px solid #ffffff00 !important;">
+                         {{ __('custom.adjustment') }}</th>
                 </tr>
                  <tr style="background-color: #e9e3ec;">
-                    <th style="width:15%">{{ __('custom.template_description') }}</th>
-                    <th style="width:15%">{{ __('custom.gl_account') }}</th>
-                    <th style="width:10%" class="border-right-dif">
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important" >{{ __('custom.template_description') }}</th>
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important">{{ __('custom.gl_account') }}</th>
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important" class="border-right-dif">
                         {{ __('custom.department') }}</th>
-                    <th style="width:15%">{{ __('custom.template_description') }}</th>
-                    <th style="width:15%">{{ __('custom.gl_account') }}</th>
-                    <th style="width:10%" class="border-right-dif">
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important">{{ __('custom.template_description') }}</th>
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important">{{ __('custom.gl_account') }}</th>
+                    <th style="width:15%;border-bottom: 1px solid #ffffff00 !important" class="border-right-dif">
                         {{ __('custom.department') }}</th>
-                    <th style="width:20% ">{{ __('custom.comments') }}</th>
-                    <th style="width:20% ">{{ __('custom.currency') }}</th>
-                    <th style="width:20">{{ __('custom.adjustment_amount') }}
+                    <th style="width:20%;border-bottom: 1px solid #ffffff00 !important ">{{ __('custom.comments') }}</th>
+                    <th style="width:20%;border-bottom: 1px solid #ffffff00 !important ">{{ __('custom.currency') }}</th>
+                    <th style="width:20%;border-bottom: 1px solid #ffffff00 !important">{{ __('custom.amount') }}
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="tbody">
                 @php
                     $sum = 0;
                 @endphp
@@ -326,35 +337,35 @@
                     $sum += floatval($item->adjustmentAmountRpt);
                  @endphp
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>
+                    <td style="padding-left: 6px">
                         @if($item->isFromContingency == 1)
                             {{ $item->contingency->contingencyBudgetNo ?? '' }} &nbsp; | &nbsp; {{ $item->contingency->comments ?? '' }}
                         @else
                             {{ $item->from_template->description ?? '' }}
                         @endif
                     </td>
-                     <td>
+                     <td style="padding-left: 6px">
                         @if($item->isFromContingency != 1)
                             {{ $item->FromGLCode }} | {{ $item->FromGLCodeDescription }}
                         @else
                             -
                         @endif
                     </td>
-                    <td class="border-right-dif">
+                    <td class="border-right-dif" style="padding-left: 6px">
                         {{ $item->from_segment->ServiceLineDes ?? '' }}
                     </td>
-                    <td>
+                    <td style="padding-left: 6px">
                         {{ $item->to_template->description ?? '' }}
                     </td>
-                    <td>
+                    <td style="padding-left: 6px">
                         {{ $item->toGLCode }} | {{ $item->toGLCodeDescription }}
                     </td>
-                    <td class="border-right-dif">
+                    <td class="border-right-dif" style="padding-left: 6px">
                         {{ $item->to_segment->ServiceLineDes ?? '' }}
                     </td>
-                    <td>{{ $item->remarks ?? '' }}
+                    <td style="padding-left: 6px">{{ $item->remarks ?? '' }}
                     </td>
-                    <td> 
+                    <td style="padding-left: 6px"> 
                         @if($budget->company->reportingcurrency)
                             {{ $budget->company->reportingcurrency->CurrencyCode }}
                         @else
@@ -362,7 +373,7 @@
                         @endif
                     
                     </td>
-                    <td class="text-right">
+                    <td class="text-right" style="padding-right: 6px">
                         {{ number_format($item->adjustmentAmountRpt, 2) }}
                     </td>
                 </tr>
@@ -370,8 +381,8 @@
 
                @if(count($budget->detail) > 0)
                 <tr>
-                    <td colspan="8" class="text-right"><b>{{ __('custom.total') }}</b></td>
-                        <td class="text-right">
+                    <td colspan="8" class="text-right" style="padding-right: 6px"><b>{{ __('custom.total') }}</b></td>
+                        <td class="text-right" style="padding-right: 6px">
                             {{ number_format($sum, 2) }}
                     </td>
                 </tr>

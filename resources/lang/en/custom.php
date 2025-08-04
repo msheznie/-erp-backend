@@ -588,7 +588,8 @@ return [
     "template_created_date" => "Template Created date",
     "template_description" => "Template Description",
     "adjustment_amount" => "Adjustment Amount",
-    "from" => "from",
-    "to" => "to",
+    "from" => "From",
+    "to" => "To",
     'template' => 'Template',
+    "adjustment" => "Adjustment"
 ];
