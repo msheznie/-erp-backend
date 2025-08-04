@@ -76,7 +76,6 @@ class AssignBudgetTemplateToAllDepartments implements ShouldQueue
                     // Check if the template is already assigned to the department
                     $departmentBudgetTemplateCheck = DepartmentBudgetTemplate::where('budgetTemplateID', $this->budgetTemplateId)
                         ->where('departmentSystemID', $department->departmentSystemID)
-                        ->where('isActive', 1)
                         ->first();
 
                     if (!$departmentBudgetTemplateCheck) {
