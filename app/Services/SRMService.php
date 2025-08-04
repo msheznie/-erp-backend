@@ -5469,7 +5469,7 @@ class SRMService
             $masterData = PaySupplierInvoiceMaster::select('BPVsupplierID as supplierID')
                 ->where('PayMasterAutoId', $id)->first();
         }
-        elseif($documentSystemID == 2 || $documentSystemID == 52)
+        elseif($documentSystemID == 2 || $documentSystemID == 52 || $documentSystemID == 5)
         {
             $masterData = ProcumentOrder::getPoSupplierData($id);
         }
