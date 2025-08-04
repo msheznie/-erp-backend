@@ -462,12 +462,15 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     ];
                 });
 
+            $companyCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)->select('companyID','companySystemID')->groupBy('companySystemID')->get();
+
             $output = array(
                 'companyFinanceYear' => $companyFinanceYear,
                 'years' => $years,
                 'companyPlanningCodes' => $companyPlanningCodes,
                 'departmentPlanningCodes' => $departmentPlanningCodes,
                 'departments' => $departments,
+                'companies' => $companyCodes,
                 'initiateBudgetPlanningAccess' => $initiateBudgetPlanningAccess,
                 'isFinanceUser' => $isFinanceUser,
                 'isHodUser' => $isHodUser
@@ -489,7 +492,21 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         if ($input['type'] == 'company') {
-            $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId'])->orderBy('id', $sort);
+            $data = CompanyBudgetPlanning::with(['financeYear'])->orderBy('id', $sort);
+
+            if (array_key_exists('from', $input)) {
+                if (!is_null($request['from']) && ($request['from'] == 'erp')) {
+                    $data->where('companySystemID', $input['companyId']);
+                }
+            }
+
+            if (array_key_exists('company', $input)) {
+                if (!is_null($request['company'])) {
+                    $company = (array)$request['company'];
+                    $company = collect($company)->pluck('id')->toArray();
+                    $data->whereIn('companySystemID', $company);
+                }
+            }
 
             if (array_key_exists('planningCode', $input)) {
                 if (!is_null($request['planningCode'])) {
@@ -532,29 +549,49 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             if ($companyBudgetPlanning) {
                 $employeeID = \Helper::getEmployeeSystemID();
                 
-                $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
-                    ->where('isHOD', 1)
-                    ->whereHas('department', function($query) use ($input) {
-                        $query->where('companySystemID', $input['companyId']);
-                    })
+                $isFinanceUser = false;
+                $financeDepartment = CompanyDepartment::with(['employees'])
+                    ->where('isFinance', 1)
+                    ->where('companySystemID', $input['companyId'])
                     ->first();
-                
-                $childDepartmentIds = [];
-                if ($hodDepartment) {
-                    $hodDeptId = $hodDepartment->departmentSystemID;
-                    $childDepartmentIds[] = $hodDeptId;
-                    
-                    $this->getChildDepartmentIds($hodDeptId, $input['companyId'], $childDepartmentIds);
+                if ($financeDepartment) {
+                    $departmentEmployee = $financeDepartment->employees
+                        ->where('employeeSystemID', $employeeID)
+                        ->first();
+                    if ($departmentEmployee) {
+                        $isFinanceUser = true;
+                    }
                 }
                 
-                $childDepartmentIds = array_unique($childDepartmentIds);
-                
-                $data = DepartmentBudgetPlanning::with(['department','financeYear'])
-                    ->where('companyBudgetPlanningID', $companyBudgetPlanning['id'])
-                    ->whereHas('department', function($query) use ($childDepartmentIds) {
-                        $query->whereIn('departmentSystemID', $childDepartmentIds);
-                    })
-                    ->orderBy('id', $sort);
+                if ($isFinanceUser) {
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        ->where('companyBudgetPlanningID', $companyBudgetPlanning['id'])
+                        ->orderBy('id', $sort);
+                } else {
+                    $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
+                        ->where('isHOD', 1)
+                        ->whereHas('department', function($query) use ($input) {
+                            $query->where('companySystemID', $input['companyId']);
+                        })
+                        ->first();
+                    
+                    $childDepartmentIds = [];
+                    if ($hodDepartment) {
+                        $hodDeptId = $hodDepartment->departmentSystemID;
+                        $childDepartmentIds[] = $hodDeptId;
+                        
+                        $this->getChildDepartmentIds($hodDeptId, $input['companyId'], $childDepartmentIds);
+                    }
+                    
+                    $childDepartmentIds = array_unique($childDepartmentIds);
+                    
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        ->where('companyBudgetPlanningID', $companyBudgetPlanning['id'])
+                        ->whereHas('department', function($query) use ($childDepartmentIds) {
+                            $query->whereIn('departmentSystemID', $childDepartmentIds);
+                        })
+                        ->orderBy('id', $sort);
+                }
 
                 if (array_key_exists('department', $input)) {
                     if (!is_null($request['department'])) {
