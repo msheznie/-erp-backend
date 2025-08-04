@@ -222,18 +222,18 @@ class CashFlowReportAPIController extends AppBaseController
                 if ($dt->logicType == 1) {
                     foreach ($dt->gllink as $gl){
                         $glLinkAutoID = $gl->glAutoID;
-                        if ($gl->categoryType == 1) {
-                            $balGlTot = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
-                            $balGlTotRpt = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
+                        // if ($gl->categoryType == 1) {
+                        //     $balGlTot = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
+                        //     $balGlTotRpt = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
 
-                            $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
-                            $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
-                            $dataCashFlow['subCategoryID'] = $dt->id;
-                            $dataCashFlow['localAmount'] = $balGlTot;
-                            $dataCashFlow['rptAmount'] = $balGlTotRpt;
-                            CashFlowSubCategoryGLCode::create($dataCashFlow);
-                        }
-                        if ($gl->categoryType == 2) {
+                        //     $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                        //     $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
+                        //     $dataCashFlow['subCategoryID'] = $dt->id;
+                        //     $dataCashFlow['localAmount'] = $balGlTot;
+                        //     $dataCashFlow['rptAmount'] = $balGlTotRpt;
+                        //     CashFlowSubCategoryGLCode::create($dataCashFlow);
+                        // }
+                        //if ($gl->categoryType == 2) {
                             if ($reportMasterData) {
                                 $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
                                 $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
@@ -246,28 +246,53 @@ class CashFlowReportAPIController extends AppBaseController
                                 CashFlowSubCategoryGLCode::create($dataCashFlow);
 
                             }
-                        }
+                        //}
 
 
                     }
                 }
                 foreach ($dt->subcategory as $da) {
-                        if ($dt->logicType == 1 || $dt->logicType == 3 || $dt->logicType == 4) {
-                            if ($dt->logicType == 1) {
-                                foreach ($da->gllink as $gl){
+                        $plGlTot = 0;
+                        $balGlTotRpt = 0;
+                        if($dt->description == 'Operating cash flows before working capital changes:' && $dt->logicType == 1 )
+                        {
+                            foreach ($da->gllink as $gl){
                                 $glLinkAutoID = $gl->glAutoID;
-                                if ($gl->categoryType == 1) {
-                                    $balGlTot = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
-                                    $balGlTotRpt = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
+                                 if ($reportMasterData) {
+                                    $plGlTotLocal = GeneralLedger::selectRaw("
+                                                    SUM(IF(documentLocalAmount >= 0, documentLocalAmount, 0)) AS documentLocalAmountDebit,
+                                                    SUM(IF(documentLocalAmount < 0, -documentLocalAmount, 0)) AS documentLocalAmountCredit
+                                                ")
+                                                ->where('documentDate', '>=', $reportMasterData->finance_year_by->bigginingDate)
+                                                ->where('documentDate', '<=', $cashFlowReport->date)
+                                                ->where('chartOfAccountSystemID', $glLinkAutoID)
+                                                ->first();
+
+                                    $plGlTotRpt = GeneralLedger::selectRaw("
+                                                    SUM(IF(documentRptAmount >= 0, documentRptAmount, 0)) AS documentLocalAmountDebit,
+                                                    SUM(IF(documentRptAmount < 0, -documentRptAmount, 0)) AS documentLocalAmountCredit
+                                                ")
+                                                ->where('documentDate', '>=', $reportMasterData->finance_year_by->bigginingDate)
+                                                ->where('documentDate', '<=', $cashFlowReport->date)
+                                                ->where('chartOfAccountSystemID', $glLinkAutoID)
+                                                ->first();
+
+                                    $plGlTot = $plGlTotLocal ? $plGlTotLocal->documentLocalAmountCredit - $plGlTotLocal->documentLocalAmountDebit : 0;
+                                    $balGlTotRpt = $plGlTotRpt ? $plGlTotRpt->documentLocalAmountCredit - $plGlTotRpt->documentLocalAmountDebit : 0;
 
                                     $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
                                     $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
                                     $dataCashFlow['subCategoryID'] = $da->id;
-                                    $dataCashFlow['localAmount'] = $balGlTot;
+                                    $dataCashFlow['localAmount'] = $plGlTot;
                                     $dataCashFlow['rptAmount'] = $balGlTotRpt;
                                     CashFlowSubCategoryGLCode::create($dataCashFlow);
-                                }
-                                if ($gl->categoryType == 2) {
+                                 }
+                            }
+                        }
+                        else if ($dt->logicType == 1 || $dt->logicType == 3 || $dt->logicType == 4) {
+                            if ($dt->logicType == 1) {
+                                foreach ($da->gllink as $gl){
+                                $glLinkAutoID = $gl->glAutoID;
                                     if ($reportMasterData) {
                                         $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
                                         $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
@@ -280,12 +305,10 @@ class CashFlowReportAPIController extends AppBaseController
                                         CashFlowSubCategoryGLCode::create($dataCashFlow);
 
                                     }
-                                }
-
                             }
                         }
 
-                    }
+                       }
                 }
             }
         }
@@ -683,26 +706,28 @@ class CashFlowReportAPIController extends AppBaseController
 	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
 	erp_grvmaster.grvAutoID AS grvAutoID,
     erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
-    SUM(erp_grvdetails.noQty * erp_grvdetails.GRVcostPerUnitLocalCur) as grvAmount,
+    SUM(erp_grvmaster.grvTotalLocalCurrency) as grvAmount,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
     SUM(erp_bookinvsupp_item_det.totLocalAmount) as bsiAmountLocal,
-    SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
+    SUM(ABS(erp_generalledger.documentLocalAmount)) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
-    erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_grvdetails.financeGLcodePLSystemID as glAutoID,
-    erp_grvdetails.financeGLcodePL as glCode
+    erp_generalledger.GeneralLedgerID as pvDetailID,
+    erp_generalledger.chartOfAccountSystemID as glAutoID,
+    erp_generalledger.glCode as glCode
 	FROM 
-    erp_grvdetails
-    LEFT JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID
+    erp_generalledger
+    LEFT JOIN erp_grvmaster ON erp_generalledger.documentSystemCode = erp_grvmaster.grvAutoID
+    LEFT JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
     LEFT JOIN erp_bookinvsupp_item_det ON erp_grvdetails.grvDetailsID = erp_bookinvsupp_item_det.grvDetailsID
     LEFT JOIN erp_bookinvsuppmaster ON erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
     LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_grvdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
-    erp_grvdetails.companySystemID = '.$companySystemID.' AND
-    erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
+    erp_generalledger.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_generalledger.documentSystemID = 3 AND
+    erp_grvmaster.companySystemID = '.$companySystemID.' AND
+    erp_grvmaster.grvPrimaryCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     )AS t1
@@ -715,21 +740,22 @@ class CashFlowReportAPIController extends AppBaseController
     erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
     NULL as grvAmount,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
-    SUM(erp_directinvoicedetails.localAmount) as bsiAmountLocal,
-    SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
+    SUM(erp_bookinvsuppmaster.bookingAmountLocal) as bsiAmountLocal,
+    SUM(ABS(erp_generalledger.documentLocalAmount)) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
-    erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID,
-    erp_directinvoicedetails.glCode as glCode
+    erp_generalledger.GeneralLedgerID as pvDetailID,
+    erp_generalledger.chartOfAccountSystemID as glAutoID,
+    erp_generalledger.glCode as glCode
 	FROM 
-    erp_directinvoicedetails
-    LEFT JOIN erp_bookinvsuppmaster ON erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+    erp_generalledger
+    LEFT JOIN erp_bookinvsuppmaster ON erp_generalledger.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
     LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
-    erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
+    erp_generalledger.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_generalledger.documentSystemID = 11 AND
+    erp_paysupplierinvoicemaster.companySystemID = '.$companySystemID.' AND
     erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
@@ -744,19 +770,20 @@ class CashFlowReportAPIController extends AppBaseController
     NULL as bsiAmountLocal,
     NULL AS grvAutoID,
     NULL as bookingSuppMasInvAutoID,
-    SUM(erp_directpaymentdetails.localAmount) as payAmountLocal,
+    SUM(ABS(erp_generalledger.documentLocalAmount)) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
-    erp_directpaymentdetails.directPaymentDetailsID as pvDetailID,
-    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID,
-    erp_directpaymentdetails.glCode as glCode
+    erp_generalledger.GeneralLedgerID as pvDetailID,
+    erp_generalledger.chartOfAccountSystemID as glAutoID,
+    erp_generalledger.glCode as glCode
 	FROM 
-    erp_directpaymentdetails
-    LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
+    erp_generalledger
+    LEFT JOIN erp_paysupplierinvoicemaster ON erp_generalledger.documentSystemCode = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_generalledger.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_generalledger.documentSystemID = 4 AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_directpaymentdetails.companySystemID = '.$companySystemID.' GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
+    erp_paysupplierinvoicemaster.companySystemID = '.$companySystemID.' GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     ) AS t3');
 
         foreach($details as $detail)
@@ -835,83 +862,55 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReportID = isset($cashFlowReportID[0]) ? $cashFlowReportID[0] : $cashFlowReportID;
 
         $details = DB::select('SELECT * FROM (SELECT
-	erp_delivery_order.deliveryOrderCode AS deliveryOrderCode,
-	erp_delivery_order.deliveryOrderID AS deliveryOrderID,
-    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
-    SUM(erp_delivery_order_detail.companyLocalAmount) as deliveryAmount,
-    erp_custinvoicedirect.bookingInvCode as bookingInvCode,
-    SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
-    SUM(erp_custreceivepaymentdet.bookingAmountLocal) as receiveAmountLocal,
-    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
-    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
-    erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID,
-    erp_delivery_order_detail.financeGLcodePL as glCode
-	FROM 
-    erp_delivery_order_detail
-    LEFT JOIN erp_delivery_order ON erp_delivery_order_detail.deliveryOrderID = erp_delivery_order.deliveryOrderID
-    LEFT JOIN erp_customerinvoiceitemdetails ON erp_delivery_order_detail.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
-    LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
-    LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
-    LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
-    WHERE
-    erp_delivery_order_detail.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
-    erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
-    erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
-    erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
-    )AS t1
-    UNION ALL
-      SELECT
-      * FROM
-      (SELECT
-	"-" AS deliveryOrderCode,
-    NULL as deliveryAmount,
-    NULL AS deliveryOrderID,
-    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
-    erp_custinvoicedirect.bookingInvCode as bookingInvCode,
-    SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
-    SUM(erp_custreceivepaymentdet.bookingAmountLocal) as receiveAmountLocal,
-    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
-    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
-    erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID,
-    erp_customerinvoiceitemdetails.financeGLcodePL as glCode
-	FROM 
-    erp_customerinvoiceitemdetails
-    LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
-    LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
-    LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
-    WHERE
-    erp_customerinvoiceitemdetails.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
-    erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
-    erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID 
-) AS t2
-  UNION ALL
-    SELECT
-      * FROM
-      (SELECT
-	"-" AS deliveryOrderCode,
-    NULL as deliveryAmount,
-    "-" as bookingInvCode,
-    NULL AS deliveryOrderID,
-    NULL as custInvoiceDirectAutoID,
-    NULL as custAmountLocal,
-    SUM(erp_directreceiptdetails.localAmount) as receiveAmountLocal,
-    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
-    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
-    erp_directreceiptdetails.directReceiptDetailsID as brvDetailID,
-    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID,
-    erp_directreceiptdetails.glCode as glCode
-	FROM 
-    erp_directreceiptdetails
-    LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
-    WHERE
-    erp_directreceiptdetails.companySystemID = '.$companySystemID.' AND
-    erp_customerreceivepayment.approved = -1 AND
-    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
-) AS t3');
+            "" AS deliveryOrderCode,
+            "" AS deliveryOrderID,
+            "" as custInvoiceDirectAutoID,
+            "" as deliveryAmount,
+            "" as bookingInvCode,
+            "" as custAmountLocal,
+            SUM(ABS(erp_generalledger.documentLocalAmount)) as receiveAmountLocal,
+            erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
+            erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
+            erp_generalledger.GeneralLedgerID as brvDetailID,
+            erp_generalledger.chartOfAccountSystemID as glAutoID,
+            erp_generalledger.glCode as glCode
+            FROM 
+            erp_generalledger
+            LEFT JOIN erp_customerreceivepayment ON erp_generalledger.documentSystemCode = erp_customerreceivepayment.custReceivePaymentAutoID
+            WHERE
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+            erp_generalledger.documentSystemID = 21 AND
+            erp_customerreceivepayment.companySystemID = '.$companySystemID.' AND
+            erp_customerreceivepayment.approved = -1 AND
+            erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
+            )AS t1
+            UNION ALL
+            SELECT * FROM (SELECT
+            "" AS deliveryOrderCode,
+            "" AS deliveryOrderID,
+            erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
+            "" as deliveryAmount,
+            erp_custinvoicedirect.bookingInvCode as bookingInvCode,
+            erp_custinvoicedirect.bookingAmountLocal as custAmountLocal,
+            SUM(ABS(erp_generalledger.documentLocalAmount)) as receiveAmountLocal,
+            erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
+            erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
+            erp_generalledger.GeneralLedgerID as brvDetailID,
+            erp_generalledger.chartOfAccountSystemID as glAutoID,
+            erp_generalledger.glCode as glCode
+            FROM 
+            erp_generalledger
+            LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID
+            LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
+            LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+            WHERE
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+            erp_generalledger.documentSystemID = 20 AND
+            erp_customerreceivepayment.companySystemID = '.$companySystemID.' AND
+            erp_customerreceivepayment.approved = -1 AND
+            erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
+            )AS t1
+            ');
 
         foreach($details as $detail)
         {
