@@ -11102,7 +11102,8 @@ GROUP BY
                     if ($request->accountType == 2) {
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
-                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                            // $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                         }
                         else if ($request->dateType == 1) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
@@ -11113,7 +11114,8 @@ GROUP BY
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
                         if ($request->dateType == 2) {
-                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                            // $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
                         }
                         else if ($request->dateType == 1) {
                             $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
