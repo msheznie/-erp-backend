@@ -699,10 +699,10 @@ class SegmentMasterAPIController extends AppBaseController
                                 ->with(['company']);
 
         if(isset($segmentId) && $segmentId !== null && $segmentId != 0)  {
-            $segmentMasters->where(function($query) use ($segmentId) {
-                $query->where('serviceLineSystemID', $segmentId)
-                    ->orWhere('masterID', $segmentId);
-            });
+            $allChild = SegmentMaster::getAllChildSegmentIds($segmentId);
+            $allSegmentIds = array_merge([$segmentId], $allChild);
+
+            $segmentMasters->whereIn('serviceLineSystemID', $allSegmentIds);
         }
 
         if(isset($isActive) && !is_null($isActive)) {
@@ -1247,10 +1247,10 @@ class SegmentMasterAPIController extends AppBaseController
             ->with(['company']);
 
         if(isset($segmentId) && $segmentId !== null && $segmentId != 0)  {
-            $segmentMasters->where(function($query) use ($segmentId) {
-                $query->where('serviceLineSystemID', $segmentId)
-                    ->orWhere('masterID', $segmentId);
-            });
+            $allChild = SegmentMaster::getAllChildSegmentIds($segmentId);
+            $allSegmentIds = array_merge([$segmentId], $allChild);
+
+            $segmentMasters->whereIn('serviceLineSystemID', $allSegmentIds);
         }
 
         if(isset($isActive) && !is_null($isActive)) {

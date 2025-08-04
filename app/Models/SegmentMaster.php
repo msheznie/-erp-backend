@@ -232,6 +232,22 @@ class SegmentMaster extends Model
         return ($segment) ? $segment->ServiceLineCode : null;
     }
 
+    public static function getAllChildSegmentIds($segmentId)
+    {
+        $ids = [];
+        $children = self::withoutGlobalScopes()
+            ->where('masterID', $segmentId)
+            ->pluck('serviceLineSystemID')
+            ->toArray();
+
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $ids = array_merge($ids, self::getAllChildSegmentIds($childId));
+        }
+
+        return $ids;
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
@@ -260,5 +276,4 @@ class SegmentMaster extends Model
     {
         return $this->hasMany('App\Models\SegmentAssigned', 'serviceLineSystemID', 'serviceLineSystemID');
     }
-
 }
