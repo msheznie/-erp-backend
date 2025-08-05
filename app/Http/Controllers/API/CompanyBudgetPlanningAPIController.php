@@ -679,16 +679,15 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         if ($input['type'] == 'company') {
-            $data = CompanyBudgetPlanning::with(['financeYear']);
+            $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId']);
 
-            if (array_key_exists('from', $input)) {
+            /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
-                    $data->where('companySystemID', $input['companyId']);
                 }
                 else if (!is_null($request['from']) && ($request['from'] == 'portal')) {
                     $data->where('companySystemID', $input['company']);
                 }
-            }
+            }*/
 
             if (array_key_exists('planningCode', $input)) {
                 if (!is_null($request['planningCode'])) {
