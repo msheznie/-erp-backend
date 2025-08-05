@@ -368,7 +368,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function getBudgetPlanningFormData(Request $request) {
         $companyId = $request['companyId'];
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))->where('companySystemID', $companyId)->get();
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+            ->where('companySystemID', $companyId)
+            ->where('isClosed', 0)
+            ->get();
 
         if (isset($request['type']) && $request['type'] == 'create') {
             $companyData = Company::where('companySystemID',$companyId)->get();
@@ -483,7 +486,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function getBudgetPlanningMasterData(Request $request) {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('planningCode', 'budgetYear', 'budgetType', 'status'));
+        $input = $this->convertArrayToSelectedValue($input, array('company','planningCode', 'budgetYear', 'budgetType', 'status'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -498,13 +501,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
                 }
-            }
-
-            if (array_key_exists('company', $input)) {
-                if (!is_null($request['company'])) {
-                    $company = (array)$request['company'];
-                    $company = collect($company)->pluck('id')->toArray();
-                    $data->whereIn('companySystemID', $company);
+                else if (!is_null($request['from']) && ($request['from'] == 'portal')) {
+                    $data->where('companySystemID', $input['company']);
                 }
             }
 
@@ -544,9 +542,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
         else {
-            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $input['companyId'])->first();
+            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $input['companyId'])->get();
             $data = collect();
             if ($companyBudgetPlanning) {
+                $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
                 $employeeID = \Helper::getEmployeeSystemID();
                 
                 $isFinanceUser = false;
@@ -565,7 +564,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 
                 if ($isFinanceUser) {
                     $data = DepartmentBudgetPlanning::with(['department','financeYear'])
-                        ->where('companyBudgetPlanningID', $companyBudgetPlanning['id'])
+                        ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
                 } else {
                     $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
@@ -586,7 +585,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     $childDepartmentIds = array_unique($childDepartmentIds);
                     
                     $data = DepartmentBudgetPlanning::with(['department','financeYear'])
-                        ->where('companyBudgetPlanningID', $companyBudgetPlanning['id'])
+                        ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->whereHas('department', function($query) use ($childDepartmentIds) {
                             $query->whereIn('departmentSystemID', $childDepartmentIds);
                         })
