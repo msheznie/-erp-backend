@@ -670,7 +670,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
     public function exportBudgetPlanning(Request $request) {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('planningCode', 'budgetYear', 'budgetType', 'status'));
+        $input = $this->convertArrayToSelectedValue($input, array('company','planningCode', 'budgetYear', 'budgetType', 'status'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -679,11 +679,22 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         if ($input['type'] == 'company') {
-            $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId']);
+            $data = CompanyBudgetPlanning::with(['financeYear']);
+
+            if (array_key_exists('from', $input)) {
+                if (!is_null($request['from']) && ($request['from'] == 'erp')) {
+                    $data->where('companySystemID', $input['companyId']);
+                }
+                else if (!is_null($request['from']) && ($request['from'] == 'portal')) {
+                    $data->where('companySystemID', $input['company']);
+                }
+            }
 
             if (array_key_exists('planningCode', $input)) {
-                if (!is_null($input['planningCode'])) {
-                    $data->where('planningCode', $input['planningCode']);
+                if (!is_null($request['planningCode'])) {
+                    $planningCode = (array)$request['planningCode'];
+                    $planningCode = collect($planningCode)->pluck('id')->toArray();
+                    $data->whereIn('id', $planningCode);
                 }
             }
 
@@ -715,23 +726,69 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
         else {
-            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $input['companyId'])->first();
+            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $input['companyId'])->get();
             $data = collect();
             if ($companyBudgetPlanning) {
-                $data = DepartmentBudgetPlanning::with(['department','financeYear'])->where('companyBudgetPlanningID', $companyBudgetPlanning['id']);
+                $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
+                $employeeID = \Helper::getEmployeeSystemID();
+
+                $isFinanceUser = false;
+                $financeDepartment = CompanyDepartment::with(['employees'])
+                    ->where('isFinance', 1)
+                    ->where('companySystemID', $input['companyId'])
+                    ->first();
+                if ($financeDepartment) {
+                    $departmentEmployee = $financeDepartment->employees
+                        ->where('employeeSystemID', $employeeID)
+                        ->first();
+                    if ($departmentEmployee) {
+                        $isFinanceUser = true;
+                    }
+                }
+
+                if ($isFinanceUser) {
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
+                        ->orderBy('id', $sort);
+                } else {
+                    $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
+                        ->where('isHOD', 1)
+                        ->whereHas('department', function($query) use ($input) {
+                            $query->where('companySystemID', $input['companyId']);
+                        })
+                        ->first();
+
+                    $childDepartmentIds = [];
+                    if ($hodDepartment) {
+                        $hodDeptId = $hodDepartment->departmentSystemID;
+                        $childDepartmentIds[] = $hodDeptId;
+
+                        $this->getChildDepartmentIds($hodDeptId, $input['companyId'], $childDepartmentIds);
+                    }
+
+                    $childDepartmentIds = array_unique($childDepartmentIds);
+
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
+                        ->whereHas('department', function($query) use ($childDepartmentIds) {
+                            $query->whereIn('departmentSystemID', $childDepartmentIds);
+                        })
+                        ->orderBy('id', $sort);
+                }
 
                 if (array_key_exists('department', $input)) {
-                    if (!is_null($input['department'])) {
-                        $department = $input['department'];
-                        $data->WhereHas('department', function ($query) use ($department) {
-                            $query->where('departmentCode', $department);
-                        });
+                    if (!is_null($request['department'])) {
+                        $department = (array)$request['department'];
+                        $department = collect($department)->pluck('id')->toArray();
+                        $data->whereIn('departmentID', $department);
                     }
                 }
 
                 if (array_key_exists('planningCode', $input)) {
-                    if (!is_null($input['planningCode'])) {
-                        $data->where('planningCode', $input['planningCode']);
+                    if (!is_null($request['planningCode'])) {
+                        $planningCode = (array)$request['planningCode'];
+                        $planningCode = collect($planningCode)->pluck('id')->toArray();
+                        $data->whereIn('companyBudgetPlanningID', $planningCode);
                     }
                 }
 
@@ -856,18 +913,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         if (!empty($departmentsWithoutHOD)) {
-            $errorMessage = 'The HODs for the departments listed below have not been assigned';
-            
+            $errorMessage = $data['from'] == 'portal'
+                ? 'hod_error|The HODs for the departments listed below have not been assigned'
+                : 'The HODs for the departments listed below have not been assigned';
+
             $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutHOD);
-            
             return $this->sendError($errorMessage, 404, ['hod_error']);
         }
 
         if (!empty($departmentsWithoutBudgetTemplate)) {
-            $errorMessage = 'The departments listed below do not have any active budget templates. Are you sure you want to initiate the budget planning?';
-            
+            $errorMessage = $data['from'] == 'portal'
+                ? 'template_error|The departments listed below do not have any active budget templates. Are you sure you want to initiate the budget planning?'
+                : 'The departments listed below do not have any active budget templates. Are you sure you want to initiate the budget planning?';
+
             $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutBudgetTemplate);
-            
             return $this->sendError($errorMessage, 404, ['template_error']);
         }
 
