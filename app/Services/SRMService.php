@@ -5419,9 +5419,32 @@ class SRMService
                         return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
                     }
                 }
+
+                $baseName = 'SRM_Attachment';
+
+                switch ($documentSystemID) {
+                    case 11:
+                        $baseName = 'Supplier_Invoice';
+                        break;
+                    case 4:
+                        $baseName = 'Payment_Voucher';
+                        break;
+                    case 52:
+                        $baseName = 'Direct_Order';
+                        break;
+                    case 2:
+                        $baseName = 'Purchase_Order';
+                        break;
+                    case 5:
+                        $baseName = 'Work_Order';
+                        break;
+                }
+
+
+
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
-                $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
+                $attachmentNameWithExtension = time() . '_' . $baseName . '.' . $extension;
                 $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
                 Storage::disk('s3')->put($path, $decodeFile);
 
@@ -5433,7 +5456,7 @@ class SRMService
                 $att['attachmentDescription'] = $description;
                 $att['path'] = $path;
                 $att['originalFileName'] = $attachment['originalFileName'];
-                $att['myFileName'] = $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension;
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_' . $baseName . '.' . $extension;
                 $att['attachmentType'] = 11;
                 $att['sizeInKbs'] = $attachment['sizeInKbs'];
                 $att['isUploaded'] = 1;
