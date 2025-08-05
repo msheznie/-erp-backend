@@ -135,11 +135,18 @@ class BankStatementMasterRepository extends BaseRepository
                 $data['systemClosingBalance'] = 0;
             }
 
-            $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
-                ->where('companySystemID', $companySystemID)
-                ->orderBy('bankRecAsOf', 'desc')
-                ->first();
-
+            if($data['details']['bankRecAutoID'] > 0) {
+                $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('bankRecAutoID', '<', $data['details']['bankRecAutoID.'])
+                    ->orderBy('bankRecAsOf', 'desc')
+                    ->first();
+            } else {
+                $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                    ->where('companySystemID', $companySystemID)
+                    ->orderBy('bankRecAsOf', 'desc')
+                    ->first();
+            }
             $data['lastBankRecAmount'] = $lastRec ? $lastRec->closingBalance : 0;
         }
 
@@ -155,21 +162,24 @@ class BankStatementMasterRepository extends BaseRepository
         $decimalPlaces = BankAccount::with('currency')->where('bankAccountAutoID', $statementDetails->bankAccountAutoID)->first()->currency->DecimalPlaces;
         
         /*** Bank Ledger Details ***/
-        $bankLedgers = BankLedger::with(['bankStatementDetail', 'paymentVoucher', 'receiptVoucher'])
-                                    ->where('bankAccountID', $statementDetails->bankAccountAutoID)
-                                    ->where('trsClearedYN', -1)
-                                    ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
-                                    ->where('companySystemID', $companySystemID)
-                                    ->where(function ($query) {
-                                        $query->where('bankClearedYN', 0)
-                                            ->orWhere(function ($q) {
-                                                $q->whereHas('bankStatementDetail', function ($q2) {
-                                                        $q2->whereColumn('bankLedgerAutoID', 'erp_bankledger.bankLedgerAutoID');
-                                                    });
-                                            });
-                                    })
-                                    ->get();
-                                
+        $bankLedgers = BankLedger::with(['bankStatementDetail' => function ($query) use ($statementId) {
+                                        $query->where('statementId', $statementId);
+                                    }, 'paymentVoucher', 'receiptVoucher'])
+                        ->where('bankAccountID', $statementDetails->bankAccountAutoID)
+                        ->where('trsClearedYN', -1)
+                        ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
+                        ->where('companySystemID', $companySystemID)
+                        ->where(function ($query) use ($statementId) {
+                            $query->where('bankClearedYN', 0)
+                                ->orWhere(function ($q) use ($statementId) {
+                                    $q->whereHas('bankStatementDetail', function ($q2) use ($statementId) {
+                                        $q2->whereColumn('bankLedgerAutoID', 'erp_bankledger.bankLedgerAutoID')
+                                            ->where('statementId', $statementId);
+                                    });
+                                });
+                        })
+                        ->get();
+
         $data['fullyMatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
             return $ledger->bankStatementDetail && $ledger->bankStatementDetail->matchType == 1;
         })->values()->toArray();
