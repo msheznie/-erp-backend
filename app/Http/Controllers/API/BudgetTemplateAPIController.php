@@ -121,7 +121,7 @@ class BudgetTemplateAPIController extends AppBaseController
 
         if (isset($input['update']) && $input['update'] == 'default') {
             //check if the template is already default for the same type
-            $isDefault = BudgetTemplate::where('type', $budgetTemplate->type)->where('isDefault', 1)->first();
+            $isDefault = BudgetTemplate::where('type', $budgetTemplate->type)->where('budgetTemplateID','!=',$input['budgetTemplateID'])->where('isDefault', 1)->first();
             if($isDefault) {
                 return $this->sendError('The default template has already been set for the selected type');
             }
