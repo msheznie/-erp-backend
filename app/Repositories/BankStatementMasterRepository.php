@@ -42,6 +42,9 @@ class BankStatementMasterRepository extends BaseRepository
         'matchingInprogress',
         'importStatus',
         'importError',
+        'bankRecAutoID',
+        'bankRecCode',
+        'generateBankRec',
         'createdDateTime',
         'timeStamp'
     ];
@@ -99,9 +102,10 @@ class BankStatementMasterRepository extends BaseRepository
     public function getBankWorkbookHeaderDetails($statementId, $companySystemID)
     {
         $data = [];
-        $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first()->toArray();
+        $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first();
         if(!empty($data['details']))
         {
+            $data['details'] = $data['details']->toArray();
             $bankAccountId = $data['details']['bankAccountAutoID'];
 
             $fromDate = new Carbon($data['details']['statementStartDate']);
@@ -132,6 +136,7 @@ class BankStatementMasterRepository extends BaseRepository
             }
 
             $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                ->where('companySystemID', $companySystemID)
                 ->orderBy('bankRecAsOf', 'desc')
                 ->first();
 
@@ -151,12 +156,19 @@ class BankStatementMasterRepository extends BaseRepository
         
         /*** Bank Ledger Details ***/
         $bankLedgers = BankLedger::with(['bankStatementDetail', 'paymentVoucher', 'receiptVoucher'])
-                                ->where('bankAccountID', $statementDetails->bankAccountAutoID)
-                                ->where('trsClearedYN', -1)
-                                ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
-                                ->where('bankClearedYN', 0)
-                                ->where('companySystemID', $companySystemID)
-                                ->get();
+                                    ->where('bankAccountID', $statementDetails->bankAccountAutoID)
+                                    ->where('trsClearedYN', -1)
+                                    ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
+                                    ->where('companySystemID', $companySystemID)
+                                    ->where(function ($query) {
+                                        $query->where('bankClearedYN', 0)
+                                            ->orWhere(function ($q) {
+                                                $q->whereHas('bankStatementDetail', function ($q2) {
+                                                        $q2->whereColumn('bankLedgerAutoID', 'erp_bankledger.bankLedgerAutoID');
+                                                    });
+                                            });
+                                    })
+                                    ->get();
                                 
         $data['fullyMatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
             return $ledger->bankStatementDetail && $ledger->bankStatementDetail->matchType == 1;

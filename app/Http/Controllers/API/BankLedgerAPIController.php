@@ -288,7 +288,11 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         /** Validate bank reconciliation auto match */
-        $ExsistsInMatching = BankStatementDetail::where('bankLedgerAutoID', $input['bankLedgerAutoID'])->first();
+        $ExsistsInMatching = BankStatementDetail::where('bankLedgerAutoID', $input['bankLedgerAutoID'])
+                                    ->whereHas('bankStatementMaster', function ($q) {
+                                        $q->where('documentStatus', 1);
+                                    })
+                                    ->first();
         if ($ExsistsInMatching) {
             return $this->sendError('Selected document in matching process', 500);
         }

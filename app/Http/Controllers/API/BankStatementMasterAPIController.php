@@ -473,6 +473,9 @@ class BankStatementMasterAPIController extends AppBaseController
             return $this->sendError('Bank statement not found');
         } else {
             $data['status'] = $bankStatementMaster->matchingInprogress == 3? 1 : 0;
+            if($bankStatementMaster->generateBankRec == 1){
+                $data['status'] = 2;
+            }
             return $this->sendResponse($data, 'Workbook job status fetched successfully.');
         }
     }

@@ -64,6 +64,7 @@ Route::group([], function() {
     Route::post('rematchWorkBook', 'BankStatementMasterAPIController@rematchWorkBook')->name('Rematch workbook');
     Route::post('updateManualMatch', 'BankStatementDetailAPIController@updateManualMatch')->name('Update manual match');
     Route::get('getWorkbookAdditionalEntries', 'BankStatementMasterAPIController@getWorkbookAdditionalEntries')->name('Get Workbook Additional Entries');
+    Route::post('generateBankReconciliation', 'BankReconciliationAPIController@generateBankReconciliation')->name('Generate bank reconciliation');
 });
 
 //Cheque Register
