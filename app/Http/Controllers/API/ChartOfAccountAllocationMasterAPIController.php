@@ -369,10 +369,12 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         $output['serviceLine'] = SegmentMaster::whereIn('companySystemID',$childCompanies)
                                         ->where('isActive',1)
                                         ->where('isServiceLine',0)
+                                        ->approved()->withAssigned($companyId)
                                         ->get();
 
         $output['productLine'] = SegmentMaster::whereIn('companySystemID',$childCompanies)
                                         ->where('isActive',1)
+                                        ->approved()->withAssigned($companyId)
                                         ->get();
 
         $output['allocation'] = ChartOfAccountAllocationMaster::where('companySystemID',$companyId)

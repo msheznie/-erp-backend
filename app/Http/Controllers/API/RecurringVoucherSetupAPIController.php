@@ -536,7 +536,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId)->where('isActive', 1)->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))->get();
 
