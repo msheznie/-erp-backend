@@ -178,8 +178,8 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $db, 
             $workflowConfiguration->id, 
             $uuid, 
-            "workflow_configurations", 
-            "Workflow Configuration '{$input['workflowName']}' has been created", 
+            "erp_workflow_configurations",
+            "Workflow Configuration ".$input['workflowName']." has been created",
             "C", 
             $newValues, 
             []
@@ -366,7 +366,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $id, 
             $uuid, 
             "erp_workflow_configurations", 
-            "Workflow Configuration '{$input['workflowName']}' has been updated", 
+            "Workflow Configuration ".$input['workflowName']." has been updated",
             "U", 
             array_merge($newValues, ['hodActions' => $newHodActions]), 
             array_merge($oldValues, ['hodActions' => $oldHodActions])
@@ -438,8 +438,8 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $db, 
             $id, 
             $uuid, 
-            "workflow_configurations", 
-            "Workflow Configuration '{$workflowConfiguration->workflowName}' has been deleted", 
+            "erp_workflow_configurations",
+            "Workflow Configuration ".$oldValues['workflowName']." has been deleted",
             "D", 
             [], 
             array_merge($oldValues, ['hodActions' => $oldHodActions])
