@@ -480,7 +480,8 @@ class ClubManagementAPIController extends AppBaseController
         if(!empty($input[2])){
             foreach ($input[2] as $dt){
 
-                $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
+                $serviceLine = SegmentMaster::withoutGlobalScope('final_level')
+                    ->select('serviceLineSystemID', 'ServiceLineCode')
                     ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
                     ->first();
                 if (empty($serviceLine)) {
@@ -490,12 +491,12 @@ class ClubManagementAPIController extends AppBaseController
                         return $this->sendError('The segment is not approved');
                     } else {
                         $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$serviceLine->serviceLineSystemID)
-                            ->where('companySystemID', $serviceLine->companySystemID)
+                            ->where('companySystemID', $dt['companySystemID'])
                             ->where('isAssigned', 1)
                             ->first();
 
                         if(!$segmentAssigned){
-                            return $this->sendError('Selected segment is not assigned to the company');
+                            return $this->sendError('The segment not assigned to selected company');
                         }
                     }
                 }

@@ -787,26 +787,26 @@ class CreateCreditNote implements ShouldQueue
 
         // Validate Segment
         if (isset($request['segment'])) {
-            $segment = SegmentMaster::where('ServiceLineCode',$request['segment'])
-                ->where('companySystemID', $companyId)
+            $segment = SegmentMaster::withoutGlobalScope('final_level')
+                ->where('ServiceLineCode',$request['segment'])
                 ->first();
 
             if ($segment) {
                 if($segment->approved_yn == 0) {
                     $errorData[] = [
                         'field' => "segment",
-                        'message' => ["Selected segment is not approved"]
+                        'message' => ["The segment is not approved"]
                     ];
                 } else {
                     $segmentAssigned = SegmentAssigned::Where('serviceLineSystemID',$segment->serviceLineSystemID)
-                        ->where('companySystemID', $segment->companySystemID)
+                        ->where('companySystemID', $companyId)
                         ->where('isAssigned', 1)
                         ->first();
 
                     if(!$segmentAssigned){
                         $errorData[] = [
                             'field' => "segment",
-                            'message' => ["Selected segment is not assigned to the company"]
+                            'message' => ["The segment not assigned to selected company"]
                         ];
                     }
                 }

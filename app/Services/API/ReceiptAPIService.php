@@ -629,7 +629,8 @@ class ReceiptAPIService
     }
 
     private function validateSegmentCodeCustomerInvoice($details,$receipt) {
-        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+        $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
+            ->where('ServiceLineCode',$details["segmentCode"])->first();
 
         if(!isset($segmentMaster))
         {
@@ -646,14 +647,14 @@ class ReceiptAPIService
             }
 
             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
-                ->where('companySystemID', $segmentMaster->companySystemID)
+                ->where('companySystemID', $details['companySystemID'])
                 ->where('isAssigned', 1)
                 ->first();
 
             if(!$segmentAssigned)
             {
                 $this->isError = true;
-                $detailsError = new Error('segmentCode','Segment is not assigned to the company');
+                $detailsError = new Error('segmentCode','The segment not assigned to selected company');
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
@@ -693,7 +694,8 @@ class ReceiptAPIService
     }
 
     private function  validateSegmentCode($details,$receipt) {
-        $segmentMaster = SegmentMaster::where('ServiceLineCode',$details["segmentCode"])->first();
+        $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
+            ->where('ServiceLineCode',$details["segmentCode"])->first();
 
         if(!isset($segmentMaster)) {
             $this->isError = true;
@@ -708,14 +710,14 @@ class ReceiptAPIService
             }
 
             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
-                ->where('companySystemID', $segmentMaster->companySystemID)
+                ->where('companySystemID', $details['companySystemID'])
                 ->where('isAssigned', 1)
                 ->first();
 
             if(!$segmentAssigned)
             {
                 $this->isError = true;
-                $detailsError = new Error('segmentCode','Segment is not assigned to the company');
+                $detailsError = new Error('segmentCode','The segment not assigned to selected company');
                 array_push($this->detailsArrayObj,$detailsError);
             }
 

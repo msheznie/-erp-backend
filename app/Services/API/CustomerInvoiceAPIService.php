@@ -60,11 +60,12 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if($invoiceType == 2) {
                         // Validate Segment Code
                         if (isset($request['segment_code'])) {
-                            $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                            $segment = SegmentMaster::withoutGlobalScope('final_level')
+                                ->where('ServiceLineCode',$request['segment_code'])
                                 ->where('isActive', 1)
                                 ->where('isDeleted', 0)
-                                ->where('companySystemID', $request['company_id'])
                                 ->first();
+
                             if(!$segment){
                                 $errorData[] = [
                                     'field' => "segment_code",
@@ -409,10 +410,10 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                 // Validate Segment Code
                 if(isset($request['segment_code'])){
-                    $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                    $segment = SegmentMaster::withoutGlobalScope('final_level')
+                        ->where('ServiceLineCode',$request['segment_code'])
                         ->where('isActive', 1)
                         ->where('isDeleted', 0)
-                        ->where('companySystemID', $masterData['company_id'])
                         ->first();
                     if(!$segment){
                         $errorData[] = [
@@ -423,18 +424,18 @@ class CustomerInvoiceAPIService extends AppBaseController
                         if($segment->approved_yn == 0) {
                             $errorData[] = [
                                 'field' => "segment",
-                                'message' => ["Selected segment is not approved"]
+                                'message' => ["The segment is not approved."]
                             ];
                         } else {
                             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
-                                ->where('companySystemID', $segment->companySystemID)
+                                ->where('companySystemID', $masterData['company_id'])
                                 ->where('isAssigned', 1)
                                 ->first();
 
                             if(!$segmentAssigned){
                                 $errorData[] = [
                                     'field' => "segment",
-                                    'message' => ["Selected segment is not assigned to the company"]
+                                    'message' => ["The segment is not assigned to the selected company."]
                                 ];
                             }
                         }
