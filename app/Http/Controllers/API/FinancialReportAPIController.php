@@ -2145,10 +2145,8 @@ class FinancialReportAPIController extends AppBaseController
                     if ($detail->unbilled_grv) {
                         if ($detail->unbilled_grv->logisticYN == 1) {
                             $hasLogisticDetails = true;
-                            $hasItemDetails = true;
                         } else {
                             $hasItemDetails = true;
-                            $hasLogisticDetails = true; 
                         }
                     }else {
                         // $hasItemDetails = true;
@@ -2232,18 +2230,20 @@ class FinancialReportAPIController extends AppBaseController
             $paymentVoucherDate = null;
             $paymentVoucherStatus = 2; // Default to 3 (not created)
             $paymentDetailsFound = false;
+            $payInvoiceTotal = 0;
             if ($bookInvSuppMaster->paysuppdetail) {
                 foreach ($bookInvSuppMaster->paysuppdetail as $payDetail) {
-                    if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
-                        $paymentVoucherDate = $payDetail->payment_master->BPVdate;
-                        $paymentVoucherStatus = ((!isset($payDetail->payment_master) || $payDetail->payment_master->approved == 0) ? 2 : 1);
-                        $paymentDetailsFound = true;
-                        break; // Get only the first BPVdate
+                    if($payDetail->payment_master->approved == -1) {
+                        $payInvoiceTotal += $payDetail->payment_master->payAmountSuppTrans;
+                        if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
+                            $paymentVoucherDate = $payDetail->payment_master->BPVdate ?? null;
+                            $paymentDetailsFound = true;
+                        }
                     }
                 }
             }
-            
-            
+
+           
             // Calculate paymentDueDate based on booking date
             $paymentDueDate = null;
             if ($bookInvSuppMaster->bookingDate) {
@@ -2281,7 +2281,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
             
-            if($paymentVoucherStatus == 1) {
+            if($bookInvSuppMaster) {
                 $tax = Tax::where('taxCategory',3)->where('isDefault',1)->where('isActive',1)->where('companySystemID', $companyID)->first();
 
                 if($tax) {
@@ -2312,7 +2312,6 @@ class FinancialReportAPIController extends AppBaseController
             $bookInvSuppMaster->additionalTax = $bookInvSuppMaster->withholdingTax * $numberOfMonthsDelay * 0.01;
             $bookInvSuppMaster->total = ($bookInvSuppMaster->withholdingTax + $bookInvSuppMaster->additionalTax);
             $bookInvSuppMaster->currency = CurrencyMaster::find($bookInvSuppMaster->supplierTransactionCurrencyID)->CurrencyCode;
-            $bookInvSuppMaster->paymentVoucherStatus = $paymentVoucherStatus;
             
             // Set supplier invoice amount based on selected currency
             if($request->currencyID == 1) {
@@ -2381,6 +2380,14 @@ class FinancialReportAPIController extends AppBaseController
             }
             
             $bookInvSuppMaster->whtPercentage = $bookInvSuppMaster->whtPercentage;
+
+            if((abs($payInvoiceTotal - $bookInvSuppMaster->bookingAmountTrans) < 0.000000001))
+            {
+                $paymentVoucherStatus = 1;
+            }else {
+                $paymentVoucherStatus = 2;
+            }
+            $bookInvSuppMaster->paymentVoucherStatus = $paymentVoucherStatus;
         }   
         
         // Consolidate supplier invoices that have the same PO and are both item-based (not logistic)
