@@ -317,6 +317,33 @@ class CompanyDepartmentAPIController extends AppBaseController
     }
 
     /**
+     * Check if department has finance team employees
+     * GET /company-departments/{id}/check-finance-employees
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function checkFinanceEmployees($id)
+    {
+        $companyDepartment = $this->companyDepartmentRepository->findWithoutFail($id);
+
+        if (empty($companyDepartment)) {
+            return $this->sendError('Company Department not found');
+        }
+
+        // Check if department has employees assigned
+        $employeeCount = \App\Models\CompanyDepartmentEmployee::where('departmentSystemID', $id)->count();
+        
+        $hasEmployees = $employeeCount > 0;
+        
+        return $this->sendResponse([
+            'hasEmployees' => $hasEmployees,
+            'employeeCount' => $employeeCount
+        ], 'Finance team employees check completed');
+    }
+
+    /**
      * Remove the specified CompanyDepartment from storage.
      * DELETE /companyDepartments/{id}
      *

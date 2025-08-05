@@ -474,6 +474,7 @@ Route::group([],function (){
 	Route::get('getCompanyDepartmentFormData', 'CompanyDepartmentAPIController@getCompanyDepartmentFormData')->name('Get company department form data');
 	Route::get('getDepartmentStructure', 'CompanyDepartmentAPIController@getDepartmentStructure')->name('Get department structure');
 	Route::post('exportCompanyDepartments', 'CompanyDepartmentAPIController@exportCompanyDepartments')->name('Export company departments to Excel');
+	Route::get('company-departments/{id}/check-finance-employees', 'CompanyDepartmentAPIController@checkFinanceEmployees')->name('Check finance employees');
 	Route::resource('company-departments', 'CompanyDepartmentAPIController', ['names' => 'Company departments']);
 
 	// Department Employee Routes
