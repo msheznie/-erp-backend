@@ -138,7 +138,7 @@ class BankStatementMasterRepository extends BaseRepository
             if($data['details']['bankRecAutoID'] > 0) {
                 $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
                     ->where('companySystemID', $companySystemID)
-                    ->where('bankRecAutoID', '<', $data['details']['bankRecAutoID.'])
+                    ->where('bankRecAutoID', '<', $data['details']['bankRecAutoID'])
                     ->orderBy('bankRecAsOf', 'desc')
                     ->first();
             } else {
