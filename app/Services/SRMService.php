@@ -6757,16 +6757,17 @@ class SRMService
             $dataInvoice = [];
             foreach ($invoices as $index => $val) {
                 $status = $this->getApprovalStatus($val['confirmedYN'], $val['approved'], $val['refferedBackYN']);
+                $paymentData = $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']);
                 $dataInvoice[$index + 1] = [
                     'Invoice Code' => $val['bookingInvCode'] ?? '-',
-                    'Invoice No' => $val['supplierInvoiceNo'] ?? '-',
-                    'Booking Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
+                    'Invoice Number' => $val['supplierInvoiceNo'] ?? '-',
+                    'Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
                     'Comments' => $val['comments'] ?? '-',
-                    'Created At' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
-                    'Approved on' => Carbon::parse($val['approvedDate'])->format('d/m/Y') ?? '-',
-                    'Payment Status' => $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']),
-                    'Status' => $status,
-                    'Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                    'Created Date' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
+                    'Invoice Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                    'Paid Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($paymentData['amountPaid'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                    'Payment Status' => $paymentData['status']
+
                 ];
             }
 
@@ -6800,25 +6801,35 @@ class SRMService
         return '-';
     }
 
-    private function supplierPaymentStatus($paymentDetails, $bookingAmountTrans): string
+    private function supplierPaymentStatus($paymentDetails, $bookingAmountTrans): array
     {
         if (empty($paymentDetails)) {
-            return 'Not Paid';
+            return [
+                'status' => 'Not Paid',
+                'amountPaid' => 0
+            ];
         }
 
         $totalPaid = 0;
         foreach ($paymentDetails as $payment) {
-            $amount = isset($payment['supplierPaymentAmount']) ? floatval($payment['supplierPaymentAmount']) : 0;
+            $amount = isset($payment['supplierPaymentAmount'])
+                ? floatval($payment['supplierPaymentAmount'])
+                : 0;
             $totalPaid += $amount;
         }
 
         if ($totalPaid >= $bookingAmountTrans) {
-            return 'Fully Paid';
+            $status = 'Fully Paid';
         } elseif ($totalPaid > 0 && $totalPaid < $bookingAmountTrans) {
-            return 'Partially Paid';
+            $status = 'Partially Paid';
         } else {
-            return 'Not Paid';
+            $status = 'Not Paid';
         }
+
+        return [
+            'status' => $status,
+            'amountPaid' => $totalPaid
+        ];
     }
 
     public function getContractList(Request $request)
