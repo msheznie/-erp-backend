@@ -92,6 +92,7 @@ class AuditRoutesTenantService
             'api/v1/postCertificate',
             'api/v1/postExperience',
             'api/v1/workflow_configurations',
+            'api/v1/workflow_configurations/{workflow_configuration}',
             'api/v1/changeWorkflowConfigurationStatus'
         ];
 
