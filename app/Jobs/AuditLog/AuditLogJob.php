@@ -10,6 +10,7 @@ use App\Services\AuditLog\DepartmentEmployeeAuditService;
 use App\Services\AuditLog\DepartmentBudgetTemplateAuditService;
 use App\Services\AuditLog\BudgetTemplateAuditService;
 use App\Services\AuditLog\BudgetTemplateColumnAuditService;
+use App\Services\AuditLog\WorkflowConfigurationAuditService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -144,6 +145,9 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'budget_template_columns':
                 $data = BudgetTemplateColumnAuditService::process($auditData);
+                break;
+            case 'erp_workflow_configurations':
+                $data = WorkflowConfigurationAuditService::process($auditData);
                 break;
             default:
                 // code...
