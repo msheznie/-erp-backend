@@ -418,7 +418,6 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $oldValues
         );
 
-
         return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration updated successfully');
     }
 
