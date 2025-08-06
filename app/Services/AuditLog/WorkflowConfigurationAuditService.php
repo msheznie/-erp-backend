@@ -14,9 +14,12 @@ class WorkflowConfigurationAuditService
         if ($auditData['crudType'] == "C") {
             // For creation, log all the new values
             $modifiedData[] = ['amended_field' => "workflow_name", 'previous_value' => '', 'new_value' => $auditData['newValue']['workflowName']];
-            $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => '', 'new_value' => $auditData['newValue']['initiateBudget']];
-            $modifiedData[] = ['amended_field' => "method", 'previous_value' => '', 'new_value' => $auditData['newValue']['method']];
-            $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => '', 'new_value' => $auditData['newValue']['allocation']];
+
+            $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => '', 'new_value' => self::getInitiateBudget($auditData['newValue']['initiateBudget'])];
+
+            $modifiedData[] = ['amended_field' => "method", 'previous_value' => '', 'new_value' => self::getMethod($auditData['newValue']['method'])];
+
+            $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => '', 'new_value' => self::getAllocation($auditData['newValue']['allocation'])];
             $modifiedData[] = ['amended_field' => "final_approval", 'previous_value' => '', 'new_value' => $auditData['newValue']['finalApproval']];
             
             // Get company name for companySystemID
@@ -33,15 +36,15 @@ class WorkflowConfigurationAuditService
             }
             
             if($auditData['previosValue']['initiateBudget'] != $auditData['newValue']['initiateBudget']) {
-                $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => $auditData['previosValue']['initiateBudget'], 'new_value' => $auditData['newValue']['initiateBudget']];
+                $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => self::getInitiateBudget($auditData['previosValue']['initiateBudget']), 'new_value' => self::getInitiateBudget($auditData['newValue']['initiateBudget'])];
             }
             
             if($auditData['previosValue']['method'] != $auditData['newValue']['method']) {
-                $modifiedData[] = ['amended_field' => "method", 'previous_value' => $auditData['previosValue']['method'], 'new_value' => $auditData['newValue']['method']];
+                $modifiedData[] = ['amended_field' => "method", 'previous_value' => self::getMethod($auditData['previosValue']['method']), 'new_value' => self::getMethod($auditData['newValue']['method'])];
             }
             
             if($auditData['previosValue']['allocation'] != $auditData['newValue']['allocation']) {
-                $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => $auditData['previosValue']['allocation'], 'new_value' => $auditData['newValue']['allocation']];
+                $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => self::getAllocation($auditData['previosValue']['allocation']), 'new_value' => self::getAllocation($auditData['newValue']['allocation'])];
             }
             
             if($auditData['previosValue']['finalApproval'] != $auditData['newValue']['finalApproval']) {
@@ -61,9 +64,9 @@ class WorkflowConfigurationAuditService
         } else if ($auditData['crudType'] == "D") {
             // For deletion, log all the previous values
             $modifiedData[] = ['amended_field' => "workflow_name", 'previous_value' => $auditData['previosValue']['workflowName'], 'new_value' => ''];
-            $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => $auditData['previosValue']['initiateBudget'], 'new_value' => ''];
-            $modifiedData[] = ['amended_field' => "method", 'previous_value' => $auditData['previosValue']['method'], 'new_value' => ''];
-            $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => $auditData['previosValue']['allocation'], 'new_value' => ''];
+            $modifiedData[] = ['amended_field' => "initiate_budget", 'previous_value' => self::getInitiateBudget($auditData['previosValue']['initiateBudget']), 'new_value' => ''];
+            $modifiedData[] = ['amended_field' => "method", 'previous_value' => self::getMethod($auditData['previosValue']['method']), 'new_value' => ''];
+            $modifiedData[] = ['amended_field' => "allocation", 'previous_value' => self::getAllocation($auditData['previosValue']['allocation']), 'new_value' => ''];
             $modifiedData[] = ['amended_field' => "final_approval", 'previous_value' => $auditData['previosValue']['finalApproval'], 'new_value' => ''];
             
             $company = Company::where('companySystemID', $auditData['previosValue']['companySystemID'])->first();
@@ -73,5 +76,43 @@ class WorkflowConfigurationAuditService
         }
 
         return $modifiedData;
+    }
+
+    public static function getInitiateBudget($data) {
+        if($data == 1) {
+            return 'Finance Team';
+        }
+        else {
+            return '';
+        }
+    }
+
+    public static function getMethod($data) {
+        if($data == 1) {
+            return 'Segment-Based';
+        }
+        else {
+            return 'GL-Based';
+        }
+    }
+
+    public static function getAllocation($data) {
+        $allocation = '';
+        switch ($data) {
+            case 1:
+                $allocation = 'Department HOD';
+                break;
+            case 2:
+                $allocation = 'Parent HOD';
+                break;
+            case 3:
+                $allocation = 'Finance Team';
+                break;
+            default:
+                $allocation = '';
+                break;
+        }
+
+        return $allocation;
     }
 }
