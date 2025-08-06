@@ -421,22 +421,6 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 $isHodUser = true;
             }
 
-            $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
-                ->where('isHOD', 1)
-                ->whereHas('department', function($query) use ($companyId) {
-                    $query->where('companySystemID', $companyId);
-                })
-                ->first();
-
-            $childDepartmentIds = [];
-            if ($hodDepartment) {
-                $hodDeptId = $hodDepartment->departmentSystemID;
-                $childDepartmentIds[] = $hodDeptId;
-
-                $this->getChildDepartmentIds($hodDeptId, $companyId, $childDepartmentIds);
-            }
-            $childDepartmentIds = array_unique($childDepartmentIds);
-
             $years = CompanyBudgetPlanning::select('yearID')->groupby('yearID')->get()->pluck('yearID')->toArray();
             $years = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,YEAR(bigginingDate) as year"))
                 ->where('companySystemID', $companyId)
@@ -445,27 +429,70 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 ->get();
 
             $companyPlanningCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)->select('planningCode','id')->get();
-            $departmentPlanningCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)
-                ->whereHas('departmentBudgetPlannings', function($query) use ($childDepartmentIds) {
-                    $query->whereIn('departmentID', $childDepartmentIds);
-                })
-                ->select('planningCode','id')->get();
-
-            $departments = DepartmentBudgetPlanning::with('department')
-                ->whereIn('departmentID', $childDepartmentIds)
-                ->whereHas('department', function($query) use ($companyId) {
-                    $query->where('companySystemID', $companyId);
-                })
-                ->groupBy('departmentID')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'departmentID' => $item->departmentID,
-                        'departmentCode' => $item->department->departmentCode ?? ''
-                    ];
-                });
-
             $companyCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)->select('companyID','companySystemID')->groupBy('companySystemID')->get();
+
+            $departmentPlanningCodes = [];
+            $departments = [];
+
+            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyId)->get();
+            if ($companyBudgetPlanning) {
+                $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
+
+                if ($isFinanceUser) {
+                    $departmentPlanningCodes = $companyPlanningCodes;
+
+                    $departments = DepartmentBudgetPlanning::with('department')
+                        ->whereHas('department', function($query) use ($companyId) {
+                            $query->where('companySystemID', $companyId);
+                        })
+                        ->groupBy('departmentID')
+                        ->get()
+                        ->map(function($item) {
+                            return [
+                                'departmentID' => $item->departmentID,
+                                'departmentCode' => $item->department->departmentCode ?? ''
+                            ];
+                        });
+                }
+                else {
+                    $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
+                        ->where('isHOD', 1)
+                        ->whereHas('department', function($query) use ($companyId) {
+                            $query->where('companySystemID', $companyId);
+                        })
+                        ->first();
+
+                    $childDepartmentIds = [];
+                    if ($hodDepartment) {
+                        $hodDeptId = $hodDepartment->departmentSystemID;
+                        $childDepartmentIds[] = $hodDeptId;
+
+                        $this->getChildDepartmentIds($hodDeptId, $companyId, $childDepartmentIds);
+                    }
+                    $childDepartmentIds = array_unique($childDepartmentIds);
+
+                    $departmentPlanningCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)
+                        ->whereIn('id', $companyBudgetPlanningID)
+                        ->whereHas('departmentBudgetPlannings', function($query) use ($childDepartmentIds) {
+                            $query->whereIn('departmentID', $childDepartmentIds);
+                        })
+                        ->select('planningCode','id')->get();
+
+                    $departments = DepartmentBudgetPlanning::with('department')
+                        ->whereIn('departmentID', $childDepartmentIds)
+                        ->whereHas('department', function($query) use ($companyId) {
+                            $query->where('companySystemID', $companyId);
+                        })
+                        ->groupBy('departmentID')
+                        ->get()
+                        ->map(function($item) {
+                            return [
+                                'departmentID' => $item->departmentID,
+                                'departmentCode' => $item->department->departmentCode ?? ''
+                            ];
+                        });
+                }
+            }
 
             $output = array(
                 'companyFinanceYear' => $companyFinanceYear,
@@ -510,7 +537,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 if (!is_null($request['planningCode'])) {
                     $planningCode = (array)$request['planningCode'];
                     $planningCode = collect($planningCode)->pluck('id')->toArray();
-                    $data->whereIn('id', $planningCode);
+                    if (count($planningCode) > 0) {
+                        $data->whereIn('id', $planningCode);
+                    }
                 }
             }
 
@@ -596,7 +625,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (!is_null($request['department'])) {
                         $department = (array)$request['department'];
                         $department = collect($department)->pluck('id')->toArray();
-                        $data->whereIn('departmentID', $department);
+                        if (count($department) > 0) {
+                            $data->whereIn('departmentID', $department);
+                        }
                     }
                 }
 
@@ -604,7 +635,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (!is_null($request['planningCode'])) {
                         $planningCode = (array)$request['planningCode'];
                         $planningCode = collect($planningCode)->pluck('id')->toArray();
-                        $data->whereIn('companyBudgetPlanningID', $planningCode);
+                        if (count($planningCode) > 0) {
+                            $data->whereIn('companyBudgetPlanningID', $planningCode);
+                        }
                     }
                 }
 
@@ -693,7 +726,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 if (!is_null($request['planningCode'])) {
                     $planningCode = (array)$request['planningCode'];
                     $planningCode = collect($planningCode)->pluck('id')->toArray();
-                    $data->whereIn('id', $planningCode);
+                    if (count($planningCode) > 0) {
+                        $data->whereIn('id', $planningCode);
+                    }
                 }
             }
 
@@ -779,7 +814,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (!is_null($request['department'])) {
                         $department = (array)$request['department'];
                         $department = collect($department)->pluck('id')->toArray();
-                        $data->whereIn('departmentID', $department);
+                        if (count($department) > 0) {
+                            $data->whereIn('departmentID', $department);
+                        }
                     }
                 }
 
@@ -787,7 +824,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (!is_null($request['planningCode'])) {
                         $planningCode = (array)$request['planningCode'];
                         $planningCode = collect($planningCode)->pluck('id')->toArray();
-                        $data->whereIn('companyBudgetPlanningID', $planningCode);
+                        if (count($planningCode) > 0) {
+                            $data->whereIn('companyBudgetPlanningID', $planningCode);
+                        }
                     }
                 }
 

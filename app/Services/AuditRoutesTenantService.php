@@ -90,7 +90,8 @@ class AuditRoutesTenantService
             'api/v1/postFieldOfStudy',
             'api/v1/postEducation',
             'api/v1/postCertificate',
-            'api/v1/postExperience'
+            'api/v1/postExperience',
+            'api/v1/workflow_configurations'
         ];
 
         return $lokiTenantRoutes;
