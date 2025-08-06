@@ -158,32 +158,47 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $data['companyID'] = $company->CompanyID;
 
         $workflowConfiguration = $this->workflowConfigurationRepository->create($data);
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+
+
+         // Get created workflow with HOD actions for audit log
+         $createdWorkflow = $this->workflowConfigurationRepository->with('hodActions')->findWithoutFail($workflowConfiguration->id);
+         $newValues = $createdWorkflow->toArray();
+         
+         $this->auditLog(
+             $db, 
+             $workflowConfiguration->id, 
+             $uuid, 
+             "erp_workflow_configurations",
+             "Workflow Configuration ".$input['workflowName']." has been created",
+             "C", 
+             $newValues, 
+             []
+         );
 
         foreach ($input['hodActions'] as $hodAction) {
             $hodAction['workflowConfigurationID'] = $workflowConfiguration->id;
             $hodAction['hodActionID'] = $hodAction['id'];
             $hodAction['parent'] = $hodAction['parentHod'];
             $hodAction['child'] = $hodAction['childHod'];
-            WorkflowConfigurationHodAction::create($hodAction);
+            $result = WorkflowConfigurationHodAction::create($hodAction);
+
+            // Add audit log
+            $this->auditLog(
+                $db, 
+                $result->id, 
+                $uuid, 
+                "erp_workflow_configuration_hod_actions",
+                "HOD Action has been Added to Workflow Configuration",
+                "C", 
+                $hodAction, 
+                [],
+                $workflowConfiguration->id,
+                "erp_workflow_configurations"
+            );
         }
-
-        // Get created workflow with HOD actions for audit log
-        $createdWorkflow = $this->workflowConfigurationRepository->with('hodActions')->findWithoutFail($workflowConfiguration->id);
-        $newValues = $createdWorkflow->toArray();
-
-        // Add audit log
-        $uuid = $request->get('tenant_uuid', 'local');
-        $db = $request->get('db', '');
-        $this->auditLog(
-            $db, 
-            $workflowConfiguration->id, 
-            $uuid, 
-            "erp_workflow_configurations",
-            "Workflow Configuration ".$input['workflowName']." has been created",
-            "C", 
-            $newValues, 
-            []
-        );
 
         return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration saved successfully');
     }
@@ -341,26 +356,57 @@ class WorkflowConfigurationAPIController extends AppBaseController
         }
         $data['companyID'] = $company->CompanyID;
 
+        // Get audit log parameters
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+
         $workflowConfiguration = $this->workflowConfigurationRepository->update($data, $id);
+        // Delete old HOD actions and audit log them as deletions
+        foreach ($oldHodActions as $oldHodAction) {
+            $this->auditLog(
+                $db, 
+                $oldHodAction['id'], 
+                $uuid, 
+                "erp_workflow_configuration_hod_actions",
+                "HOD Action has been deleted during workflow update",
+                "D", 
+                [], 
+                $oldHodAction,
+                $id,
+                "erp_workflow_configurations"
+            );
+        }
+
         $workflowConfiguration->hodActions()->delete();
 
-        
+        // Create new HOD actions and audit log them as creations
         foreach ($input['hodActions'] as $hodAction) {
             $hodAction['workflowConfigurationID'] = $id;
             $hodAction['hodActionID'] = $hodAction['id'];
             $hodAction['parent'] = $hodAction['parentHod'];
             $hodAction['child'] = $hodAction['childHod'];
-            WorkflowConfigurationHodAction::create($hodAction);
+            $newHodAction = WorkflowConfigurationHodAction::create($hodAction);
+            
+            // Audit log the new HOD action
+            $this->auditLog(
+                $db, 
+                $newHodAction->id, 
+                $uuid, 
+                "erp_workflow_configuration_hod_actions",
+                "HOD Action has been created during workflow update",
+                "C", 
+                $newHodAction->toArray(), 
+                [],
+                $id,
+                "erp_workflow_configurations"
+            );
         }
 
         // Get updated values for audit log
         $updatedWorkflow = $this->workflowConfigurationRepository->findWithoutFail($id);
         $newValues = $updatedWorkflow->toArray();
-        $newHodActions = $updatedWorkflow->hodActions()->get()->toArray();
 
-        // Add audit log
-        $uuid = $request->get('tenant_uuid', 'local');
-        $db = $request->get('db', '');
+        // Add audit log for workflow configuration changes
         $this->auditLog(
             $db, 
             $id, 
@@ -368,8 +414,8 @@ class WorkflowConfigurationAPIController extends AppBaseController
             "erp_workflow_configurations", 
             "Workflow Configuration ".$input['workflowName']." has been updated",
             "U", 
-            array_merge($newValues, ['hodActions' => $newHodActions]), 
-            array_merge($oldValues, ['hodActions' => $oldHodActions])
+            $newValues, 
+            $oldValues
         );
 
         return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration updated successfully');
@@ -427,13 +473,31 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $oldValues = $workflowConfiguration->toArray();
         $oldHodActions = $workflowConfiguration->hodActions()->get()->toArray();
 
+        // Get audit log parameters
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+
+        // Audit log individual HOD action deletions
+        foreach ($oldHodActions as $oldHodAction) {
+            $this->auditLog(
+                $db, 
+                $oldHodAction['id'], 
+                $uuid, 
+                "erp_workflow_configuration_hod_actions",
+                "HOD Action has been deleted during workflow deletion",
+                "D", 
+                [], 
+                $oldHodAction,
+                $id,
+                "erp_workflow_configurations"
+            );
+        }
+
         $workflowConfiguration->hodActions()->delete();
 
         $workflowConfiguration->delete();
 
-        // Add audit log
-        $uuid = $request->get('tenant_uuid', 'local');
-        $db = $request->get('db', '');
+        // Add audit log for workflow configuration deletion
         $this->auditLog(
             $db, 
             $id, 
@@ -442,7 +506,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             "Workflow Configuration ".$oldValues['workflowName']." has been deleted",
             "D", 
             [], 
-            array_merge($oldValues, ['hodActions' => $oldHodActions])
+            $oldValues
         );
 
         return $this->sendResponse(null,'Workflow Configuration deleted successfully');
