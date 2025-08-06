@@ -2286,7 +2286,12 @@ class FinancialReportAPIController extends AppBaseController
 
                 if($tax) {
                     $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $tax->authorityAutoID)->first();      
-                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                    if($whtSupplierInvoice->payment_master->approved == -1)
+                    {
+                        $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = isset($whtSupplierInvoice->payment_master) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                    }else {
+                        $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+                    }
                 }else {
                     $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
                 }
