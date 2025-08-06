@@ -493,9 +493,27 @@ class WorkflowConfigurationAPIController extends AppBaseController
             return $this->sendError('Workflow Configuration not found');
         }
 
+        $oldValue = $workflowConfiguration->toArray();
+
         $workflowConfiguration->isActive = $input['isActive'];
         $workflowConfiguration->save();
 
-        return $this->sendResponse($workflowConfiguration->refresh()->toArray(), 'WorkflowConfiguration updated successfully');
+        $newValue = $workflowConfiguration->refresh()->toArray();
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $input['id'],
+            $uuid,
+            "erp_workflow_configurations",
+            "Workflow Configuration ".$workflowConfiguration->workflowName." has been updated",
+            "U",
+            $newValue,
+            $oldValue
+        );
+
+        return $this->sendResponse($newValue, 'WorkflowConfiguration updated successfully');
     }
 }

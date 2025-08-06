@@ -101,7 +101,7 @@ class LokiService
             case 'budget_template_columns':
                 $table = 'budget_template_columns';
                 break;
-            case 'workflow_configuration':
+            case 'erp_workflow_configuration':
                 $table = 'erp_workflow_configurations';
                 break;
             default:
