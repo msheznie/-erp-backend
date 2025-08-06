@@ -2232,7 +2232,7 @@ class FinancialReportAPIController extends AppBaseController
             $paymentDetailsFound = false;
             $payInvoiceTotal = 0;
             if ($bookInvSuppMaster->paysuppdetail) {
-                foreach ($bookInvSuppMaster->paysuppdetail as $payDetail) {
+                foreach ($bookInvSuppMaster->paysuppdetail->sortByDesc('PayMasterAutoId') as $payDetail) {
                     if($payDetail->payment_master->approved == -1) {
                         $payInvoiceTotal += $payDetail->payment_master->payAmountSuppTrans;
                         if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
