@@ -2243,6 +2243,19 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
 
+            if($bookInvSuppMaster) {
+                $tax = Tax::where('taxCategory',3)->where('isDefault',1)->where('isActive',1)->where('companySystemID', $companyID)->first();
+
+                if($tax) {
+                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $tax->authorityAutoID)->first();      
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = (isset($whtSupplierInvoice->payment_master) && $whtSupplierInvoice->payment_master->approved == -1) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                }else {
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+                }
+            }else {
+                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+            }
+            
            
             // Calculate paymentDueDate based on booking date
             $paymentDueDate = null;
@@ -2261,9 +2274,9 @@ class FinancialReportAPIController extends AppBaseController
             
             // Calculate number of months delay
             $numberOfMonthsDelay = 0;
-            if ($paymentVoucherDate && $paymentDueDate) {
+            if (isset($bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax) && $paymentDueDate) {
                 $dueDate = \Carbon\Carbon::parse($paymentDueDate);
-                $paymentDate = \Carbon\Carbon::parse($paymentVoucherDate);
+                $paymentDate = \Carbon\Carbon::parse($bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax);
                 
                 // Calculate base months difference
                 $baseMonthsDelay = $paymentDate->diffInMonths($dueDate);
@@ -2281,18 +2294,6 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
             
-            if($bookInvSuppMaster) {
-                $tax = Tax::where('taxCategory',3)->where('isDefault',1)->where('isActive',1)->where('companySystemID', $companyID)->first();
-
-                if($tax) {
-                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $tax->authorityAutoID)->first();      
-                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = (isset($whtSupplierInvoice->payment_master) && $whtSupplierInvoice->payment_master->approved == -1) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
-                }else {
-                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
-                }
-            }else {
-                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
-            }
             
             // Add calculated fields to each BookInvSuppMaster record
             $bookInvSuppMaster->poAmount = $poAmount;
