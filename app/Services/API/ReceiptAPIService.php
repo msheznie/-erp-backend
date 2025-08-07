@@ -647,7 +647,7 @@ class ReceiptAPIService
             }
 
             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
-                ->where('companySystemID', $details['companySystemID'])
+                ->where('companySystemID', $receipt->companySystemID)
                 ->where('isAssigned', 1)
                 ->first();
 
@@ -710,7 +710,7 @@ class ReceiptAPIService
             }
 
             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segmentMaster->serviceLineSystemID)
-                ->where('companySystemID', $details['companySystemID'])
+                ->where('companySystemID', $receipt->companySystemID)
                 ->where('isAssigned', 1)
                 ->first();
 
