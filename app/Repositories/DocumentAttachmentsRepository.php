@@ -2,11 +2,14 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
+use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Services\SrmDocumentModifyService;
 
@@ -84,5 +87,43 @@ class DocumentAttachmentsRepository extends BaseRepository
             }
         }
         return $orderNumber;
+    }
+    public function getAttachmentPreview($documentAttachments): array{
+        try{
+            $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
+
+            if(!is_null($documentAttachments->path)) {
+                if (Storage::disk($disk)->exists($documentAttachments->path)) {
+                    $url = Storage::disk($disk)->temporaryUrl($documentAttachments->path, Carbon::now()->addHours(3));
+                    return [
+                        'success' => true,
+                        'message' => 'Attachment retrieved successfully',
+                        'data' => $url,
+                        'code' => 200
+                    ];
+                } else {
+                    return [
+                        'success' => true,
+                        'message' => 'Attachments not found',
+                        'data' => null,
+                        'code' => 200
+                    ];
+                }
+            }else{
+                return [
+                    'success' => false,
+                    'message' => 'Attachment is not attached',
+                    'data' => null,
+                    'code' => 404
+                ];
+            }
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'Unexpected Error: '. $exception->getMessage(),
+                'data' => null,
+                'code' => 404
+            ];
+        }
     }
 }

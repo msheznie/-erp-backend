@@ -1442,4 +1442,21 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return null;
         }
 
+    public function getAttachmentPreview(Request $request){
+        $input = $request->all();
+        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['attachmentID']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError('Document Attachments not found');
+        }
+        try{
+            $getAttachment = $this->documentAttachmentsRepository->getAttachmentPreview($documentAttachments);
+            if(!$getAttachment['success']){
+                return $this->sendError($getAttachment['message'], $getAttachment['code'] ?? 404);
+            }
+            return $this->sendResponse($getAttachment['data'], 'Attachment retrieved successfully');
+        } catch (\Exception $ex){
+            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+        }
+    }
 }

@@ -81,6 +81,8 @@ Route::group([], function() {
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
     Route::get('getItemsForOpenRequest', 'PurchaseRequestAPIController@getItemsForOpenRequest')->name('Get items for open request');
 
+    Route::post('getAttachmentPreview', 'DocumentAttachmentsAPIController@getAttachmentPreview')->name('Get attachment preview data');
+
 });
 
 //Report Open Requests
