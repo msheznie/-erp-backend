@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Services\SrmDocumentModifyService;
+use Illuminate\Support\Str;
 
 /**
  * Class DocumentAttachmentsRepository
@@ -91,10 +92,21 @@ class DocumentAttachmentsRepository extends BaseRepository
     public function getAttachmentPreview($documentAttachments): array{
         try{
             $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
+            $path = $documentAttachments->path ?? null;
+            if(!is_null($path)) {
+                if (Storage::disk($disk)->exists($path)) {
 
-            if(!is_null($documentAttachments->path)) {
-                if (Storage::disk($disk)->exists($documentAttachments->path)) {
-                    $url = Storage::disk($disk)->temporaryUrl($documentAttachments->path, Carbon::now()->addHours(3));
+                    $mime = Storage::disk($disk)->mimeType($path);
+                    if (!Str::startsWith($mime, ['image/', 'video/', 'audio/'])) {
+                        return [
+                            'success' => false,
+                            'message' => 'Invalid MIME type for preview',
+                            'data' => null,
+                            'code' => 415
+                        ];
+                    }
+
+                    $url = Storage::disk($disk)->temporaryUrl($path, Carbon::now()->addHours(3));
                     return [
                         'success' => true,
                         'message' => 'Attachment retrieved successfully',
