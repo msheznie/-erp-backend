@@ -1454,9 +1454,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if(!$getAttachment['success']){
                 return $this->sendError($getAttachment['message'], $getAttachment['code'] ?? 404);
             }
-            return $this->sendResponse($getAttachment['data'], 'Attachment retrieved successfully');
+            return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? 'Attachment retrieved successfully');
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+                return $this->sendError('Unexpected Error: ' . $ex->getMessage(), 500);
         }
     }
 }

@@ -99,10 +99,10 @@ class DocumentAttachmentsRepository extends BaseRepository
                     $mime = Storage::disk($disk)->mimeType($path);
                     if (!Str::startsWith($mime, ['image/', 'video/', 'audio/'])) {
                         return [
-                            'success' => false,
-                            'message' => 'Invalid MIME type for preview',
+                            'success' => true,
+                            'message' => 'This file cannot be previewed.',
                             'data' => null,
-                            'code' => 415
+                            'code' => 200
                         ];
                     }
 
@@ -115,10 +115,10 @@ class DocumentAttachmentsRepository extends BaseRepository
                     ];
                 } else {
                     return [
-                        'success' => true,
+                        'success' => false,
                         'message' => 'Attachments not found',
                         'data' => null,
-                        'code' => 200
+                        'code' => 404
                     ];
                 }
             }else{
@@ -134,7 +134,7 @@ class DocumentAttachmentsRepository extends BaseRepository
                 'success' => false,
                 'message' => 'Unexpected Error: '. $exception->getMessage(),
                 'data' => null,
-                'code' => 404
+                'code' => 500
             ];
         }
     }
