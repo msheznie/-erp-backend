@@ -50,7 +50,7 @@ class DocumentAttachmentTypeRepository extends BaseRepository
             ->toArray();
 
         if (empty($configuredTypes)) {
-            return DocumentAttachmentType::get();
+            return collect();
         }
 
         return DocumentAttachmentType::whereIn('travelClaimAttachmentTypeID', $configuredTypes)->get();

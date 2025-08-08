@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\helper\Helper;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
 use Carbon\Carbon;
@@ -137,5 +138,19 @@ class DocumentAttachmentsRepository extends BaseRepository
                 'code' => 500
             ];
         }
+    }
+    public function getDocumentAttachmentTypes($documentSystemID, $companySystemID)
+    {
+        $attachmentConfig = CompanyDocumentAttachment::getCompanyDocumentAttachmentList(
+            $documentSystemID,
+            $companySystemID
+        );
+
+        if(!empty($attachmentConfig) && !empty($attachmentConfig->attachmentTypeConfiguration)){
+            return collect($attachmentConfig->attachmentTypeConfiguration)
+                ->pluck('attachment_type_id')
+                ->toArray();
+        }
+        return [];
     }
 }

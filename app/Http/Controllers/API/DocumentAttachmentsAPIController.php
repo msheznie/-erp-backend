@@ -76,7 +76,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
     {
         $isFromSrmAmend = filter_var($request['isFromSrmAmend'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if(!$isFromSrmAmend){
-
+            $this->documentAttachmentsRepository->with('type');
             $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
             $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
@@ -85,9 +85,24 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments = $this->documentAttachmentsEditLogRepository->getDocumentAttachmentEditLogData($request);
         }
 
+        $documentSystemID = filter_var($request['documentSystemID'] ?? 0, FILTER_VALIDATE_INT);
+        $companySystemID = filter_var($request['companySystemID'] ?? 0, FILTER_VALIDATE_INT);
+        $documentSystemIDs = [1];
+        $configAttachmentType = [];
+        if(in_array($documentSystemIDs, $documentSystemID)){
+            $configAttachmentType = $this->documentAttachmentsRepository->getDocumentAttachmentTypes($documentSystemID, $companySystemID);
+        }
+
         foreach ($documentAttachments as $value) {
             $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
             $value->url = $url;
+            $value->isTypeDropdown = false;
+
+            if(in_array($documentSystemIDs, $documentSystemID) && !is_null($value->attachmentType)){
+                if(!empty($configAttachmentType) && !in_array($configAttachmentType, $value->attachmentType)){
+                    $value->isTypeDropdown = false;
+                }
+            }
         }
 
         return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully '. $isFromSrmAmend);
@@ -373,6 +388,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
         $masterID             = $input['id'] ?? 0;
+        unset($input['isTypeDropdown']);
+        unset($input['type']);
 
         $tenderDocumentSystemIDs = [108, 113];
         $editOrAmend = false;

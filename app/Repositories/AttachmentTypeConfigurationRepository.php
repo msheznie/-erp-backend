@@ -78,22 +78,6 @@ class AttachmentTypeConfigurationRepository extends BaseRepository
                 $toDelete = array_diff($existingTypeIDs, $newTypeIDs);
 
                 if (!empty($toDelete)) {
-                    $usedTypes = DocumentAttachments::where('documentSystemID', $documentSystemID)
-                        ->where('companySystemID', $companySystemID)
-                        ->whereIn('attachmentType', $toDelete)
-                        ->pluck('attachmentType')
-                        ->toArray();
-
-                    if (!empty($usedTypes)) {
-                        $typeDescriptions = DocumentAttachmentType::whereIn('travelClaimAttachmentTypeID', $usedTypes)
-                            ->pluck('description')
-                            ->toArray();
-
-                        return [
-                            'success' => false,
-                            'message' => 'Cannot remove the following attachment types because they are already used: ' . implode(', ', $typeDescriptions),
-                        ];
-                    }
                     AttachmentTypeConfiguration::where('document_attachment_id', $companyDocumentAttachmentID)
                         ->whereIn('attachment_type_id', $toDelete)
                         ->delete();
