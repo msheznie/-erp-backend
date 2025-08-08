@@ -124,16 +124,16 @@ class CompanyDocumentAttachment extends Model
     }
 
     public static function getCompanyDocumentAttachmentList($documentSystemID, $companySystemID){
-        return self::select('companyDocumentAttachmentID', 'companySystemID', 'documentSystemID')
-            ->with([
-                'attachmentTypeConfiguration' => function ($q) {
-                    $q->select('id', 'document_attachment_id', 'attachment_type_id');
-                }
-            ])
+        $documentAttachment = self::with(['attachmentTypeConfiguration'])
             ->where('companySystemID', $companySystemID)
             ->where('documentSystemID', $documentSystemID)
-            ->where(function ($q) use ($documentSystemID) {
-                $q->whereHas('attachmentTypeConfiguration');
-            })->first();
+            ->first();
+
+        if (isset($documentAttachment['attachmentTypeConfiguration']) && (count($documentAttachment['attachmentTypeConfiguration']) > 0)) {
+            return $documentAttachment['attachmentTypeConfiguration']->pluck('attachment_type_id')->toArray();
+        }
+        else {
+            return [];
+        }
     }
 }

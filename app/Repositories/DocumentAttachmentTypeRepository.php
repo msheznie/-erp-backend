@@ -34,26 +34,4 @@ class DocumentAttachmentTypeRepository extends BaseRepository
         return DocumentAttachmentType::class;
     }
 
-    public function documentAttachmentTypes($documentSystemID, $companySystemID)
-    {
-        $attachmentConfig = CompanyDocumentAttachment::getCompanyDocumentAttachmentList(
-            $documentSystemID,
-            $companySystemID
-        );
-
-        if (empty($attachmentConfig)) {
-            return DocumentAttachmentType::get();
-        }
-
-        $configuredTypes = collect($attachmentConfig->attachmentTypeConfiguration)
-            ->pluck('attachment_type_id')
-            ->toArray();
-
-        if (empty($configuredTypes)) {
-            return collect();
-        }
-
-        return DocumentAttachmentType::whereIn('travelClaimAttachmentTypeID', $configuredTypes)->get();
-    }
-
 }

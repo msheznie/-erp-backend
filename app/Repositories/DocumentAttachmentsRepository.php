@@ -139,18 +139,8 @@ class DocumentAttachmentsRepository extends BaseRepository
             ];
         }
     }
-    public function getDocumentAttachmentTypes($documentSystemID, $companySystemID)
-    {
-        $attachmentConfig = CompanyDocumentAttachment::getCompanyDocumentAttachmentList(
-            $documentSystemID,
-            $companySystemID
-        );
 
-        if(!empty($attachmentConfig) && !empty($attachmentConfig->attachmentTypeConfiguration)){
-            return collect($attachmentConfig->attachmentTypeConfiguration)
-                ->pluck('attachment_type_id')
-                ->toArray();
-        }
-        return [];
+    public function getDocumentAttachmentTypes($documentSystemID, $companySystemID) {
+        return CompanyDocumentAttachment::getCompanyDocumentAttachmentList($documentSystemID, $companySystemID);
     }
 }

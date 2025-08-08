@@ -267,9 +267,13 @@ class DocumentAttachmentsEditLog extends Model
     public static function getLevelNo($attachmentID){
         return max(1, (self::where('id', $attachmentID)->max('level_no') ?? 0) + 1);
     }
+    public function type(){
+        return $this->belongsTo('App\Models\DocumentAttachmentType','attachmentType','travelClaimAttachmentTypeID');
+    }
 
     public static function getDocumentAttachmentEditLog($documentSystemID, $documentSystemCode, $versionID){
         return self::where('documentSystemID', $documentSystemID)
+            ->with('type')
             ->where('documentSystemCode', $documentSystemCode)
             ->where('version_id', $versionID)
             ->where('is_deleted', 0)->get();

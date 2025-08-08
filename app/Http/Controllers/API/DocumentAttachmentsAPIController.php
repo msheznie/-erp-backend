@@ -81,26 +81,24 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
             $documentAttachments = $this->documentAttachmentsRepository->all();
-        } else {
+        }
+        else {
             $documentAttachments = $this->documentAttachmentsEditLogRepository->getDocumentAttachmentEditLogData($request);
         }
 
-        $documentSystemID = filter_var($request['documentSystemID'] ?? 0, FILTER_VALIDATE_INT);
-        $companySystemID = filter_var($request['companySystemID'] ?? 0, FILTER_VALIDATE_INT);
-        $documentSystemIDs = [1];
-        $configAttachmentType = [];
-        if(in_array($documentSystemIDs, $documentSystemID)){
-            $configAttachmentType = $this->documentAttachmentsRepository->getDocumentAttachmentTypes($documentSystemID, $companySystemID);
+        $attachmentTypes = [];
+        if (isset($request['documentSystemID']) && ($request['documentSystemID'] == 1)) {
+            $attachmentTypes = $this->documentAttachmentsRepository->getDocumentAttachmentTypes($request['documentSystemID'], $request['companySystemID']);
         }
 
         foreach ($documentAttachments as $value) {
             $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
             $value->url = $url;
-            $value->isTypeDropdown = false;
 
-            if(in_array($documentSystemIDs, $documentSystemID) && !is_null($value->attachmentType)){
-                if(!empty($configAttachmentType) && !in_array($configAttachmentType, $value->attachmentType)){
-                    $value->isTypeDropdown = false;
+            $value->isHideTypeDropdown = false;
+            if((isset($request['documentSystemID']) && $request['documentSystemID'] == 1) && !is_null($value->attachmentType)) {
+                if(!in_array($value->attachmentType, $attachmentTypes)){
+                    $value->isHideTypeDropdown = true;
                 }
             }
         }
@@ -388,7 +386,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
         $masterID             = $input['id'] ?? 0;
-        unset($input['isTypeDropdown']);
+        unset($input['isHideTypeDropdown']);
         unset($input['type']);
 
         $tenderDocumentSystemIDs = [108, 113];
