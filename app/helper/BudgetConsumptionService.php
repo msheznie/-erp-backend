@@ -6688,12 +6688,11 @@ class BudgetConsumptionService
 
 			$committedAmount = 0;
 			$actuallConsumptionAmount = 0;
-
+            $grvApprovedPoAmount = 0;
 			foreach ($consumedAmountOfPO as $key => $value) {
 				if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
 					$committedAmount += $value->consumedRptAmount;
 				} else {
-                    $grvApprovedPoAmount = 0;
                     $grvDetails =  $value->purchase_order->grv_details;
                     foreach($grvDetails as $grv) {
                         if($grv->grv_master->approved == -1) {
