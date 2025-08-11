@@ -1532,7 +1532,7 @@ class SRMService
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
         $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
-
+        $documentId = $is_rfx ? 113 : 108;
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1594,9 +1594,10 @@ class SRMService
                     'tenderSupplierAssignee' => function ($q) {
                         $q->select('id', 'tender_master_id');
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
@@ -1642,9 +1643,10 @@ class SRMService
                         $q->select('id', 'tender_master_id', 'purchased_by', 'purchased_date')
                             ->where('purchased_by', '=', $supplierRegId);
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
@@ -1708,9 +1710,10 @@ class SRMService
                         $query->select('tender_id', 'id')
                             ->where('supplier_id', $supplierRegId);
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
