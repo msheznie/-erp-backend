@@ -97,7 +97,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
             $value->isHideTypeDropdown = false;
             if((isset($request['documentSystemID']) && $request['documentSystemID'] == 1) && !is_null($value->attachmentType)) {
-                if(!in_array($value->attachmentType, $attachmentTypes)){
+                if(($value->attachmentType && $value->attachmentType != 0) && !in_array($value->attachmentType, $attachmentTypes)){
                     $value->isHideTypeDropdown = true;
                 }
             }
