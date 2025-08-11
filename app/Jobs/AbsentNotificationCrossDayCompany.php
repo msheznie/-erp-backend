@@ -35,7 +35,7 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
         $this->companyId = $companyId;
         $this->companyName = $companyName;
         $this->companyScenarioId = $companyScenarioId;
-        $debug = $this->$debug;
+        $this->debug = $debug;
     }
 
     public function handle()
