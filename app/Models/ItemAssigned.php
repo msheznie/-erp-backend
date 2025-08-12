@@ -216,4 +216,20 @@ class ItemAssigned extends Model
         return $this->hasMany('App\Models\PurchaseRequestDetails','itemCode','itemCodeSystem');
     }
 
+    public static function getItemMaster($itemCodes,$childCompanies)
+    {
+        return ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory'])
+            ->whereHas('item_master', function ($sub) {
+                $sub->where('itemApprovedYN', 1);
+            })
+            ->whereHas('item_master', function ($sub) use ($itemCodes) {
+                if (!empty($itemCodes)) {
+                    $sub->whereNotIn('primaryCode', $itemCodes);
+                }
+            })
+            ->whereIn('companySystemID', $childCompanies)
+            ->where('isPOSItem', 0)
+            ->where('isActive', 1);
+    }
+
 }

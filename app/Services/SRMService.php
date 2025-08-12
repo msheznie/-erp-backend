@@ -32,6 +32,9 @@ use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemCategorySub;
+use App\Models\ItemAssigned;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentOrder;
 use App\Models\ScheduleBidSubmission;
@@ -6886,5 +6889,98 @@ class SRMService
             'data' => $data
         ];
 
+    }
+
+    public function getItemMaster(Request $request)
+    {
+        $input = $request->all();
+        $sort = (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') ? 'asc' : 'desc';
+
+        $pulledItems = $request->input('extra.pulledItems', []);
+        $itemCodes = collect($pulledItems)->pluck('item_code')->toArray();
+
+        $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
+        $companyId = $supplierData->company_id;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $search = $request->input('search.value');
+        $filters = $request->input('extra');
+        $query = ItemAssigned::getItemMaster($itemCodes, $childCompanies);
+
+        if($filters) {
+            $mainCategory = $filters['mainCategory'] ?? [];
+            $subCategory = $filters['subCategory'] ?? [];
+
+            if ($mainCategory) {
+                $query->whereIn('financeCategoryMaster', $mainCategory);
+            }
+            if ($subCategory) {
+                $query->whereIn('financeCategorySub', $subCategory);
+            }
+            if ($mainCategory && $subCategory) {
+                $query->whereIn('financeCategoryMaster', $mainCategory)->whereIn('financeCategorySub', $subCategory);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query->where(function ($query) use ($search) {
+                $query->orWhere('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', function ($row) {
+                return 'Actions';
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+        return [
+            'success' => true,
+            'message' => 'Contract list successfully get',
+            'data' => $data
+        ];
+
+    }
+
+    public function getItemDetail(Request $request)
+    {
+        $mainCategory = FinanceItemCategoryMaster::getMainCategory();
+        $subCategory = FinanceItemCategorySub::getSubCategory();
+
+        $data = [
+            'mainCategory' => $mainCategory,
+            'subCategory' => $subCategory,
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Contract list successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function getSubcategoriesByMainCategory(Request $request)
+    {
+        $mainCategoryIds = $request->input('extra.categoryIds');
+        $subCategory = FinanceItemCategorySub::getSubcategoriesByMainCategory($mainCategoryIds);
+
+        $data = [
+            'subCategory' => $subCategory,
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Contract list successfully get',
+            'data' => $data
+        ];
     }
 }
