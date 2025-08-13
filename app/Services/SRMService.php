@@ -6945,7 +6945,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Contract list successfully get',
+            'message' => 'Item Master successfully get',
             'data' => $data
         ];
 
@@ -6963,7 +6963,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Contract list successfully get',
+            'message' => 'Item Details successfully get',
             'data' => $data
         ];
     }
@@ -6979,7 +6979,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Contract list successfully get',
+            'message' => 'Sub Categories successfully get',
             'data' => $data
         ];
     }
