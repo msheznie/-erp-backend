@@ -112,7 +112,11 @@ class FinancialReportAPIController extends AppBaseController
                                             ->where('serviceline.isDeleted', 0)
                                             ->get();
         $departments2 = collect($departments2Info);
-        $departments = $departments1->merge($departments2)->all();
+        $segmentX = SegmentMaster::getSegmentX();
+        $departments = $departments1
+            ->merge($departments2)
+            ->merge($segmentX)
+            ->all();
 
         $supplierData = SupplierAssigned::whereIn('companySystemID', $companiesByGroup)
                                         ->where('isAssigned', -1)
@@ -250,6 +254,9 @@ class FinancialReportAPIController extends AppBaseController
                                 ->approved()
                                 ->withAssigned($companiesByGroup)
                                 ->get();
+        $segmentX = SegmentMaster::getSegmentX();
+        $segment = $segment->merge($segmentX)->values();
+
 
         $output = array(
             'departments' => $departments,

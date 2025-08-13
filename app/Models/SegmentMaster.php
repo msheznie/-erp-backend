@@ -248,6 +248,11 @@ class SegmentMaster extends Model
         return $ids;
     }
 
+    public static function getSegmentX()
+    {
+        return self::where('ServiceLineCode', 'X')->get();
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
