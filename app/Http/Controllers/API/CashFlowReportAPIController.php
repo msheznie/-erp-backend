@@ -324,6 +324,7 @@ class CashFlowReportAPIController extends AppBaseController
                                 ->where('documentDate', '>=', $reportMasterData->finance_year_by->bigginingDate)
                                 ->where('documentDate', '<=', $cashFlowReport->date)
                                 ->where('chartOfAccountSystemID', $glLinkAutoID)
+                                ->where('companySystemID', $companyId)
                                 ->first();
 
                     $plGlTotLocalOpening = GeneralLedger::selectRaw("
@@ -346,6 +347,7 @@ class CashFlowReportAPIController extends AppBaseController
                                 ->where('documentDate', '>=', $reportMasterData->finance_year_by->bigginingDate)
                                 ->where('documentDate', '<=', $cashFlowReport->date)
                                 ->where('chartOfAccountSystemID', $glLinkAutoID)
+                                ->where('companySystemID', $companyId)
                                 ->first();
 
                     $plGlTotRptOpening = GeneralLedger::selectRaw("
