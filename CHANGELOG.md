@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [10.79.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.79.0...v10.79.1) (2025-08-13)
+
+
+### Bug Fixes
+
+* **Attedance:** Absent Notification - Debug [GHR-6408] ([#8577](https://github.com/pbsgears/Gears_BackEnd/issues/8577)) ([d1b5ea7](https://github.com/pbsgears/Gears_BackEnd/commit/d1b5ea7fdaec09889e14b116e5ee8717a6f2d46b))
+* **Attedance:** Absent Notification - Debug [GHR-6408] ([#8577](https://github.com/pbsgears/Gears_BackEnd/issues/8577)) ([#8581](https://github.com/pbsgears/Gears_BackEnd/issues/8581)) ([34feadc](https://github.com/pbsgears/Gears_BackEnd/commit/34feadce5ffa34c1672ef676cdc0a721f627a944))
+
 ## [10.79.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.78.0...v10.79.0) (2025-08-11)
 
 
