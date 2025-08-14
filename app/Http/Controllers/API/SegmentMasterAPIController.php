@@ -882,7 +882,10 @@ class SegmentMasterAPIController extends AppBaseController
                     $segmentUsed = true;
                 }
             }
-
+            
+            if (SegmentMaster::isSegmentUsedInDepartment($input['serviceLineSystemID'])) {
+                return $this->sendError('Cannot change final level — segment is already used in departments', 500);
+            }
 
             if ($segmentUsed) {
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
