@@ -1231,9 +1231,8 @@ class ProcumentOrderAPIController extends AppBaseController
             $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum, IFNULL(SUM(comPercentage),0) as paymentTotalPercentage'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
-
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
-            if ($paymentTotalSumComp > 0) {
+            if ($paymentTotalSumComp > 0 && ($this->truncateDecimals($poMasterSumDeductedNotRounded,$supplierCurrencyDecimalPlace) != $this->truncateDecimals($paymentTotalSum['paymentTotalSum'],$supplierCurrencyDecimalPlace))) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
                     return $this->sendError('Payment terms total is not matching with the PO total');
@@ -9430,5 +9429,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         return $this->sendResponse($paymentTermConfig, 'Payment term config updated successfully');
 
+    }
+    function truncateDecimals($value, $decimals = 3) {
+        $factor = pow(10, $decimals);
+        return floor($value * $factor) / $factor;
     }
 }
