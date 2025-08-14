@@ -1351,10 +1351,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
         $allowOtherCategory = isset($input['allowOtherCategory'])?$input['allowOtherCategory']:0;
-        if($allowOtherCategory == 1){
-            $categories = [1,2,4];
+        if(isset($input['salesType']) && $input['salesType'] != null){
+            $salesType = $input['salesType'];
+            if($salesType == 1){
+                $categories = [1,4];
+            }else if($salesType == 2){
+                $categories = [2];
+            }else if($salesType == 3){
+                $categories = [1,2,4];
+            }
         }else{
-            $categories = [1];
+            if($allowOtherCategory == 1){
+                $categories = [1,2,4];
+            }else{
+                $categories = [1];
+            }
         }
 
         if (array_key_exists('issueType', $input)) {
