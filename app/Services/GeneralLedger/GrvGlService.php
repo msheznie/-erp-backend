@@ -355,15 +355,15 @@ class GrvGlService
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
 
-                    $data['documentTransAmount'] = $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->transAmount) - $exemptVATTrans): \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
+                    $data['documentTransAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->transAmount) - $exemptVATTrans): \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] =  $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->localAmount) - $exemptVATLocal):  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
+                    $data['documentLocalAmount'] =  ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->localAmount) - $exemptVATLocal):  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = $rcmActivated && $expenseCOA->recordType == 2 ? \Helper::roundValue(ABS($val->rptAmount) - $exemptVATRpt): \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
+                    $data['documentRptAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->rptAmount) - $exemptVATRpt): \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
