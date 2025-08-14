@@ -1028,6 +1028,9 @@ class CustomerInvoiceAPIService extends AppBaseController
         $_post['PONumber'] = $input['PONumber'];
         $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
         $_post['isPerforma'] = $input['isPerforma'];
+        if(isset($input['salesType'])){
+            $_post['salesType'] = $input['salesType'];
+        }
 
         if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
             $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)

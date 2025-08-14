@@ -223,6 +223,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if (!$wareHouse) {
                 return $this->sendError('Please select a warehouse', 500);
             }
+            
+            if (!isset($input['salesType']) || empty($input['salesType'])) {
+                return $this->sendError('Please select a sales type', 500);
+            }
         }
 
         if (!isset($input['custTransactionCurrencyID']) || (isset($input['custTransactionCurrencyID']) && ($input['custTransactionCurrencyID'] == 0 || $input['custTransactionCurrencyID'] == null))) {
@@ -1804,6 +1808,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($id) {
             $output['isVATEligible'] = $master->vatRegisteredYN;
         }
+
+        $output['salesTypes'] = [
+            ['value' => 1, 'label' => 'Goods'],
+            ['value' => 2, 'label' => 'Service'],
+            ['value' => 3, 'label' => 'Subscription'],
+        ];
 
         $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);
         $output['autoGeneratePolicy'] = $autoGeneratePolicy;
