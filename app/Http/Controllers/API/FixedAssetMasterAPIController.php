@@ -1115,7 +1115,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $department = DepartmentMaster::showInCombo()->get();
 
-        $serviceline = SegmentMaster::isActive()->ofCompany($subCompanies)->get();
+        $serviceline = SegmentMaster::isActive()->ofCompany($subCompanies)->approved()->withAssigned($companyId)->get();
 
         $assetType = AssetType::all();
 

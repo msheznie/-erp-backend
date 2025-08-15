@@ -201,7 +201,8 @@
     </thead>
     <tbody>
         @foreach ($reportData as $header)
-        @if($accountType == 1 && $loop->first)
+        @if($template->columnTemplateID == null && $template->isConsolidation == 1)
+            @if($accountType == 1 && $loop->first)
             <tr>
                 <td><strong>Opening Balance</strong></td>
                 @if($firstLevel)
@@ -222,6 +223,7 @@
                     </td>
                 @endforeach
             </tr>
+        @endif
         @endif
         @if($header->hideHeader == 0)
         <tr>

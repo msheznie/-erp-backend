@@ -62,6 +62,7 @@ use App\Jobs\DocumentAttachments\PaymentReleasedToSupplierJob;
 use App\helper\CreateExcel;
 use App\Services\BankLedger\BankLedgerService;
 use App\Jobs\Report\BankLedgerPdfJob;
+use App\Models\BankStatementDetail;
 
 /**
  * Class BankLedgerController
@@ -284,6 +285,16 @@ class BankLedgerAPIController extends AppBaseController
 
         if (empty($bankLedger)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_ledgers')]));
+        }
+
+        /** Validate bank reconciliation auto match */
+        $ExsistsInMatching = BankStatementDetail::where('bankLedgerAutoID', $input['bankLedgerAutoID'])
+                                    ->whereHas('bankStatementMaster', function ($q) {
+                                        $q->where('documentStatus', 1);
+                                    })
+                                    ->first();
+        if ($ExsistsInMatching) {
+            return $this->sendError('Selected document in matching process', 500);
         }
 
         $employee = \Helper::getEmployeeInfo();

@@ -142,5 +142,13 @@ class BankStatementDetail extends Model
         
     ];
 
-    
+    public function bankLedger()
+    {
+        return $this->belongsTo('App\Models\BankLedger', 'bankLedgerAutoID', 'bankLedgerAutoID');
+    }
+
+    public function bankStatementMaster()
+    {
+        return $this->belongsTo('App\Models\BankStatementMaster', 'statementId', 'statementId');
+    }
 }

@@ -13,6 +13,8 @@ namespace App\Http\Controllers\API;
  */
 use App\Http\Requests\API\CreateDocumentAttachmentTypeAPIRequest;
 use App\Http\Requests\API\UpdateDocumentAttachmentTypeAPIRequest;
+use App\Models\AttachmentTypeConfiguration;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachmentType;
 use App\Repositories\DocumentAttachmentTypeRepository;
 use Illuminate\Http\Request;
@@ -45,9 +47,26 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->documentAttachmentTypeRepository->pushCriteria(new RequestCriteria($request));
-        $this->documentAttachmentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $documentAttachmentTypes = $this->documentAttachmentTypeRepository->all();
+        $documentSystemID = filter_var($request['documentSystemID'] ?? 0, FILTER_VALIDATE_INT);
+        $companySystemID = filter_var($request['companySystemID'] ?? 0, FILTER_VALIDATE_INT);
+
+        if($documentSystemID != 1){
+            $this->documentAttachmentTypeRepository->pushCriteria(new RequestCriteria($request));
+            $this->documentAttachmentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
+            $documentAttachmentTypes = $this->documentAttachmentTypeRepository->all();
+        }
+        else {
+            $documentAttachmentTypes = collect();
+
+            $documentAttachment = CompanyDocumentAttachment::where('companySystemID', $companySystemID)->where('documentSystemID', $documentSystemID)->first();
+            if($documentAttachment) {
+                $existsAttachmentTypes = AttachmentTypeConfiguration::where('document_attachment_id', $documentAttachment->companyDocumentAttachmentID)->get();
+                if (count($existsAttachmentTypes) > 0) {
+                    $typeArray = $existsAttachmentTypes->pluck('attachment_type_id')->toArray();
+                    $documentAttachmentTypes = DocumentAttachmentType::whereIn('travelClaimAttachmentTypeID', $typeArray)->get();
+                }
+            }
+        }
 
         return $this->sendResponse($documentAttachmentTypes->toArray(), 'Document Attachment Types retrieved successfully');
     }

@@ -644,11 +644,14 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                                     ->select(['supplierCodeSystem', 'primarySupplierCode', 'supplierName'])
                                     ->get();
 
-        $segment = SegmentMaster::ofCompany($subCompanies)->get();
+        $segments = SegmentMaster::where("companySystemID", $subCompanies)
+                    ->approved()->withAssigned($subCompanies)
+                    ->where('isActive', 1)->get();
+
         $output = array(
             'companies' => $companies,
             'suppliers' => $suppliers,
-            'segment' => $segment
+            'segment' => $segments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

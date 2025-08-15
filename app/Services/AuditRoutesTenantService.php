@@ -25,6 +25,19 @@ class AuditRoutesTenantService
             'api/v1/fixed_asset_masters/{fixed_asset_master}',
             'api/v1/updateSegmentMaster',
             'api/v1/segment/masters/{master}',
+            'api/v1/company-departments',
+            'api/v1/company-departments/{company_department}',
+            'api/v1/company-department-employees',
+            'api/v1/company-department-employees/{company_department_employee}',
+            'api/v1/company-department-segments',
+            'api/v1/company-department-segments/{company_department_segment}',
+            'api/v1/department-budget-templates',
+            'api/v1/department-budget-templates/{department_budget_template}',
+            'api/v1/budget_templates',
+            'api/v1/budget_templates/{budget_template}',
+            'api/v1/budget_template_columns',
+            'api/v1/budget_template_columns/{budget_template_column}',
+            'api/v1/saveUserBudgetControls',
             'api/v1/addDropdownData',
             'api/v1/dropdownValuesUpdate',
             'api/v1/erp_attributes_dropdowns/{erp_attributes_dropdown}',
@@ -77,7 +90,10 @@ class AuditRoutesTenantService
             'api/v1/postFieldOfStudy',
             'api/v1/postEducation',
             'api/v1/postCertificate',
-            'api/v1/postExperience'
+            'api/v1/postExperience',
+            'api/v1/workflow_configurations',
+            'api/v1/workflow_configurations/{workflow_configuration}',
+            'api/v1/changeWorkflowConfigurationStatus'
         ];
 
         return $lokiTenantRoutes;

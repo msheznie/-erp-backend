@@ -1722,7 +1722,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->get();
             }
 
-            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->approved()->withAssigned($companyId)->get();
             $output['uom'] = Unit::select('UnitID', 'UnitShortCode')->get();
 
         }
@@ -1743,7 +1743,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['isPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
-            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->approved()->withAssigned($companyId)->get();
         }
 
         $EDOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
@@ -1778,7 +1778,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if($EDOINV || $ESOINV || $EQOINV) {
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
-            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->approved()->withAssigned($companyId)->get();
         }
 
         if ($id) {

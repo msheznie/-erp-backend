@@ -1435,7 +1435,10 @@ class SupplierMasterAPIController extends AppBaseController
         $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
         $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
-        $segment = SegmentMaster::ofCompany($companyID)->get();
+        $segment = SegmentMaster::ofCompany($companyID)
+                    ->approved()
+                    ->withAssigned($companyID)
+                    ->get();
         $output = array(
             'controlAccount' => $controlAccount,
             'suppliers' => $supplierMaster,

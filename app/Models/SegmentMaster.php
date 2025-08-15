@@ -155,6 +155,19 @@ class SegmentMaster extends Model
         return $query->where('isPublic',  1);
     }
 
+    public function scopeApproved($query)
+    {
+        return $query->where('approved_yn', 1); 
+    }
+
+    public function scopeWithAssigned($query, $companyId)
+    {
+        return $query->whereHas('assignedSegments', function ($q) use ($companyId) {
+            $q->where('companySystemID', $companyId)->where('isActive', 1)
+              ->where('isAssigned', 1);
+        });
+    }
+
     /**
      * Scope a query to only include users of a given type.
      *
@@ -219,6 +232,27 @@ class SegmentMaster extends Model
         return ($segment) ? $segment->ServiceLineCode : null;
     }
 
+    public static function getAllChildSegmentIds($segmentId)
+    {
+        $ids = [];
+        $children = self::withoutGlobalScopes()
+            ->where('masterID', $segmentId)
+            ->pluck('serviceLineSystemID')
+            ->toArray();
+
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $ids = array_merge($ids, self::getAllChildSegmentIds($childId));
+        }
+
+        return $ids;
+    }
+
+    public static function getSegmentX()
+    {
+        return self::where('ServiceLineCode', 'X')->get();
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
@@ -241,5 +275,10 @@ class SegmentMaster extends Model
     public function approved_by_emp()
     {
         return $this->belongsTo('App\Models\Employee','approved_emp_system_id','employeeSystemID');
+    }
+
+    public function assignedSegments()
+    {
+        return $this->hasMany('App\Models\SegmentAssigned', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 }

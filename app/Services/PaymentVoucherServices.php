@@ -72,7 +72,8 @@ class PaymentVoucherServices
                 ];
             }
 
-            $input['BPVNarration'] = $input['narration'] . ' (' . $input['bankRecCode'] . ')';
+            $narration = isset($input['bankRecCode']) ? $input['bankRecCode'] : 'Generated from Auto Bank Reconciliation';
+            $input['BPVNarration'] = $input['narration'] . ' (' . $narration  . ')';
             $input['BPVdate'] = $input['documentDate'];
             $input['BPVchequeDate'] = $input['documentDate'];
             $input['rcmActivated'] = false;

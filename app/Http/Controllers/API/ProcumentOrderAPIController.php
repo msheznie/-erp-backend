@@ -1693,7 +1693,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $purchaseOrderID = $request['purchaseOrderID'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
         }

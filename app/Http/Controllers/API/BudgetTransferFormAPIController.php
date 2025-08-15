@@ -248,7 +248,10 @@ class BudgetTransferFormAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BudgetTransferForm $budgetTransferForm */
-        $budgetTransferForm = $this->budgetTransferFormRepository->with(['company.reportingcurrency', 'created_by', 'confirmed_by', 'from_reviews'])->findWithoutFail($id);
+        $budgetTransferForm = $this->budgetTransferFormRepository->with(['company.reportingcurrency', 'created_by', 'confirmed_by', 'from_reviews','approved_by' => function ($query) {
+                $query->with('employee')->where('rejectedYN', 0)
+                    ->whereIn('documentSystemID', [46]);
+            }])->findWithoutFail($id);
 
         if (empty($budgetTransferForm)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
@@ -306,7 +309,7 @@ class BudgetTransferFormAPIController extends AppBaseController
     public function update($id, UpdateBudgetTransferFormAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'company']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'company','approved_by']);
         $input = $this->convertArrayToValue($input);
         /** @var BudgetTransferForm $budgetTransferForm */
         $budgetTransferForm = $this->budgetTransferFormRepository->findWithoutFail($id);
@@ -645,6 +648,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         $masterTemplates = ReportTemplate::where('isActive', 1)
@@ -1301,5 +1305,52 @@ class BudgetTransferFormAPIController extends AppBaseController
             $budgetTransferMasterData->save();
         }
         return $this->sendResponse($budgetTransferMasterData->toArray(), 'Budget Transfer amend successfully');
+    }
+
+    public function printBudgetTransfer(Request $request)
+    {
+        $id = $request->get('id');
+        $companyId = $request->get('companyId');
+
+        $isFromPortal = $request->get('isFromPortal', 0);
+
+        $years = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
+        $masterTemplates = ReportTemplate::where('isActive', 1)
+            ->where('companySystemID', $companyId)
+            ->whereNotIn('reportID', [3, 4])
+            ->get();
+
+        $budgetTransfer = $this->budgetTransferFormRepository->with(['detail','company.reportingcurrency', 'created_by', 'confirmed_by', 'from_reviews', 'approved_by' => function ($query) {
+                $query->with('employee')
+                 ->where('rejectedYN', 0)
+                    ->whereIn('documentSystemID', [46]);
+            }
+        ])->findWithoutFail($id);
+
+
+        if (empty($budgetTransfer)) {
+            return $this->sendError('Purchase Request not found');
+        }
+        $budgetTransfer['template'] = $masterTemplates;
+        $budgetTransfer['years'] = $years;
+
+        $array = array('budget' => $budgetTransfer);
+
+        if($isFromPortal){
+            return $this->sendResponse($array, 'Purchase Request print data');
+        }
+
+        $time = strtotime("now");
+        $fileName = 'budget_transfer' . $id . '_' . $time . '.pdf';
+
+        $html = view('print.budget_transfer', $array);
+        $htmlFooter = view('print.budget_transfer_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 }

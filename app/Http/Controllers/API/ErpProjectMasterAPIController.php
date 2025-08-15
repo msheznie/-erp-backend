@@ -438,7 +438,7 @@ class ErpProjectMasterAPIController extends AppBaseController
     {
 
         $companySystemID = $request['companySystemID'];
-        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->get();
+        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
         return $this->sendResponse($serviceLines, 'Segments Projects retrieved successfully');
     }
 }

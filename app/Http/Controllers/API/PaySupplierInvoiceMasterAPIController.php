@@ -1790,7 +1790,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
             $payeeAll = $payeeAll->get();
 
-            $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
+            $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->approved()->withAssigned($companyId)->get();
 
             $expenseClaimType = ExpenseClaimType::all();
 

@@ -118,4 +118,22 @@ class CompanyDocumentAttachment extends Model
     {
         return $this->hasOne('App\Models\CompanyDocumentAttachmentAccess','documentSystemID','documentSystemID');
     }
+
+    public function attachmentTypeConfiguration(){
+        return $this->hasMany(AttachmentTypeConfiguration::class ,'document_attachment_id','companyDocumentAttachmentID');
+    }
+
+    public static function getCompanyDocumentAttachmentList($documentSystemID, $companySystemID){
+        $documentAttachment = self::with(['attachmentTypeConfiguration'])
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->first();
+
+        if (isset($documentAttachment['attachmentTypeConfiguration']) && (count($documentAttachment['attachmentTypeConfiguration']) > 0)) {
+            return $documentAttachment['attachmentTypeConfiguration']->pluck('attachment_type_id')->toArray();
+        }
+        else {
+            return [];
+        }
+    }
 }

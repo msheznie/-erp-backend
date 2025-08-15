@@ -98,7 +98,9 @@ class TenantEnforce
             'api/v1/quotation/add-multiple-items',
             'api/v1/exportReportOpenRequest',
             'api/v1/exportTransactionsRecord',
-            'api/v1/validateWorkbookCreation'
+            'api/v1/validateWorkbookCreation',
+            'api/v1/rematchWorkBook',
+            'api/v1/generateBankReconciliation'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

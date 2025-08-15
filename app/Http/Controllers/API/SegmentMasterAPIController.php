@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CreateExcel;
 use App\helper\Helper;
+use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -30,6 +31,8 @@ use App\Models\DeliveryOrderDetail;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectReceiptDetail;
+use App\Models\DocumentApproved;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeeDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemIssueMaster;
@@ -112,6 +115,7 @@ class SegmentMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
+            $input['masterID'] = is_array($input['masterID']) ? (int) $input['masterID'][0] : (int) $input['masterID'];
 
             if(isset($input['companySystemID']))
             {
@@ -694,8 +698,11 @@ class SegmentMasterAPIController extends AppBaseController
                                 ->whereIn('companySystemID',$childCompanies)
                                 ->with(['company']);
 
-        if(isset($segmentId) && !is_null($segmentId)) {
-            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        if(isset($segmentId) && $segmentId !== null && $segmentId != 0)  {
+            $allChild = SegmentMaster::getAllChildSegmentIds($segmentId);
+            $allSegmentIds = array_merge([$segmentId], $allChild);
+
+            $segmentMasters->whereIn('serviceLineSystemID', $allSegmentIds);
         }
 
         if(isset($isActive) && !is_null($isActive)) {
@@ -1239,8 +1246,11 @@ class SegmentMasterAPIController extends AppBaseController
             ->whereIn('companySystemID',$childCompanies)
             ->with(['company']);
 
-        if(isset($segmentId) && !is_null($segmentId)) {
-            $segmentMasters->where('serviceLineSystemID', $segmentId);
+        if(isset($segmentId) && $segmentId !== null && $segmentId != 0)  {
+            $allChild = SegmentMaster::getAllChildSegmentIds($segmentId);
+            $allSegmentIds = array_merge([$segmentId], $allChild);
+
+            $segmentMasters->whereIn('serviceLineSystemID', $allSegmentIds);
         }
 
         if(isset($isActive) && !is_null($isActive)) {
@@ -1306,5 +1316,72 @@ class SegmentMasterAPIController extends AppBaseController
         {
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }
+    }
+
+    public function segmentReopen(Request $request) {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
+        }
+    }
+
+    public function segmentReferBack(Request $request) {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $segment = SegmentMaster::withoutGlobalScope('final_level')->find($id);
+
+        if (empty($segment)) {
+            return $this->sendError('Segment master not found');
+        }
+
+        if ($segment->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this segment');
+        }
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $segment->companySystemID)
+            ->where('documentSystemID', $segment->documentSystemID)
+            ->get();
+
+        if ($fetchDocumentApproved->isEmpty()) {
+            return $this->sendError('Approval records not found');
+        }
+
+        foreach ($fetchDocumentApproved as $DocumentApproved) {
+            $DocumentApproved['refTimes'] = $segment->timesReferred;
+        }
+
+        $documentApprovedArray = $fetchDocumentApproved->toArray();
+        DocumentReferedHistory::insert($documentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $segment->companySystemID)
+            ->where('documentSystemID', $segment->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $data['confirmed_by_emp_system_id'] = null;
+            $data['confirmed_by_emp_id'] = null;
+            $data['confirmed_by_name'] = null;
+            $data['confirmed_date'] = null;
+            $data['confirmed_yn'] = 0;
+            $data['refferedBackYN'] = 0;
+            $data['RollLevForApp_curr'] = 1;
+
+           SegmentMaster::withoutGlobalScope('final_level')->where('serviceLineSystemID', $id)->update($data);
+        }
+
+        return $this->sendResponse($segment->toArray(), 'Segment Master Amend successfully');
+
+    }
+
+    public function segmentsForPoAnalysisReport(Request $request)
+    {
+        $companySystemID = $request['companySystemID'];
+        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->where('refferedBackYN', 0)->approved()->withAssigned($companySystemID)->get();
+        return $this->sendResponse($serviceLines, 'Segments retrieved successfully');
     }
 }

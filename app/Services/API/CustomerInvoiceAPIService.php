@@ -30,6 +30,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
@@ -59,16 +60,36 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if($invoiceType == 2) {
                         // Validate Segment Code
                         if (isset($request['segment_code'])) {
-                            $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                            $segment = SegmentMaster::withoutGlobalScope('final_level')
+                                ->where('ServiceLineCode',$request['segment_code'])
                                 ->where('isActive', 1)
                                 ->where('isDeleted', 0)
-                                ->where('companySystemID', $request['company_id'])
                                 ->first();
+
                             if(!$segment){
                                 $errorData[] = [
                                     'field' => "segment_code",
                                     'message' => ["Segment Not Found"]
                                 ];
+                            } else {
+                                if($segment->approved_yn == 0) {
+                                    $errorData[] = [
+                                        'field' => "segment",
+                                        'message' => ["Selected segment is not approved"]
+                                    ];
+                                } else {
+                                    $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                                        ->where('companySystemID', $segment->companySystemID)
+                                        ->where('isAssigned', 1)
+                                        ->first();
+
+                                    if(!$segmentAssigned){
+                                        $errorData[] = [
+                                            'field' => "segment",
+                                            'message' => ["Selected segment is not assigned to the company"]
+                                        ];
+                                    }
+                                }
                             }
                         }
                         else {
@@ -389,16 +410,35 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                 // Validate Segment Code
                 if(isset($request['segment_code'])){
-                    $segment = SegmentMaster::where('ServiceLineCode',$request['segment_code'])
+                    $segment = SegmentMaster::withoutGlobalScope('final_level')
+                        ->where('ServiceLineCode',$request['segment_code'])
                         ->where('isActive', 1)
                         ->where('isDeleted', 0)
-                        ->where('companySystemID', $masterData['company_id'])
                         ->first();
                     if(!$segment){
                         $errorData[] = [
                             'field' => "segment_code",
                             'message' => ["Segment Not Found"]
                         ];
+                    } else {
+                        if($segment->approved_yn == 0) {
+                            $errorData[] = [
+                                'field' => "segment",
+                                'message' => ["The segment is not approved."]
+                            ];
+                        } else {
+                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                                ->where('companySystemID', $masterData['company_id'])
+                                ->where('isAssigned', 1)
+                                ->first();
+
+                            if(!$segmentAssigned){
+                                $errorData[] = [
+                                    'field' => "segment",
+                                    'message' => ["The segment is not assigned to the selected company."]
+                                ];
+                            }
+                        }
                     }
                 }
                 else {

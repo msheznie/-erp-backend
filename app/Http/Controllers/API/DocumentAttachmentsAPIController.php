@@ -76,18 +76,31 @@ class DocumentAttachmentsAPIController extends AppBaseController
     {
         $isFromSrmAmend = filter_var($request['isFromSrmAmend'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if(!$isFromSrmAmend){
-
+            $this->documentAttachmentsRepository->with('type');
             $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
             $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
             $documentAttachments = $this->documentAttachmentsRepository->all();
-        } else {
+        }
+        else {
             $documentAttachments = $this->documentAttachmentsEditLogRepository->getDocumentAttachmentEditLogData($request);
+        }
+
+        $attachmentTypes = [];
+        if (isset($request['documentSystemID']) && ($request['documentSystemID'] == 1)) {
+            $attachmentTypes = $this->documentAttachmentsRepository->getDocumentAttachmentTypes($request['documentSystemID'], $request['companySystemID']);
         }
 
         foreach ($documentAttachments as $value) {
             $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
             $value->url = $url;
+
+            $value->isHideTypeDropdown = false;
+            if((isset($request['documentSystemID']) && $request['documentSystemID'] == 1) && !is_null($value->attachmentType)) {
+                if(($value->attachmentType && $value->attachmentType != 0) && !in_array($value->attachmentType, $attachmentTypes)){
+                    $value->isHideTypeDropdown = true;
+                }
+            }
         }
 
         return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully '. $isFromSrmAmend);
@@ -373,6 +386,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
         $masterID             = $input['id'] ?? 0;
+        unset($input['isHideTypeDropdown']);
+        unset($input['type']);
 
         $tenderDocumentSystemIDs = [108, 113];
         $editOrAmend = false;
@@ -1442,4 +1457,21 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return null;
         }
 
+    public function getAttachmentPreview(Request $request){
+        $input = $request->all();
+        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['attachmentID']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError('Document Attachments not found');
+        }
+        try{
+            $getAttachment = $this->documentAttachmentsRepository->getAttachmentPreview($documentAttachments);
+            if(!$getAttachment['success']){
+                return $this->sendError($getAttachment['message'], $getAttachment['code'] ?? 404);
+            }
+            return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? 'Attachment retrieved successfully');
+        } catch (\Exception $ex){
+                return $this->sendError('Unexpected Error: ' . $ex->getMessage(), 500);
+        }
+    }
 }

@@ -202,6 +202,11 @@ class Helper
 
         $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+            ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
+            ->where('serviceline.approved_yn', 1)
+            ->whereIn('service_line_assigned.companySystemID', $companiesByGroup)
+            ->where('service_line_assigned.isActive', 1)
+            ->where('service_line_assigned.isAssigned', 1)
             ->whereIN('serviceline.companySystemID', $companiesByGroup)
             ->where('serviceline.isFinalLevel', 1)
             ->where('serviceline.isDeleted', 0)

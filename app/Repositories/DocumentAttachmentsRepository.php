@@ -2,13 +2,18 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
+use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Services\SrmDocumentModifyService;
+use Illuminate\Support\Str;
 
 /**
  * Class DocumentAttachmentsRepository
@@ -84,5 +89,58 @@ class DocumentAttachmentsRepository extends BaseRepository
             }
         }
         return $orderNumber;
+    }
+    public function getAttachmentPreview($documentAttachments): array{
+        try{
+            $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
+            $path = $documentAttachments->path ?? null;
+            if(!is_null($path)) {
+                if (Storage::disk($disk)->exists($path)) {
+
+                    $mime = Storage::disk($disk)->mimeType($path);
+                    if (!Str::startsWith($mime, ['image/', 'video/', 'audio/'])) {
+                        return [
+                            'success' => true,
+                            'message' => 'This file cannot be previewed.',
+                            'data' => null,
+                            'code' => 200
+                        ];
+                    }
+
+                    $url = Storage::disk($disk)->temporaryUrl($path, Carbon::now()->addHours(3));
+                    return [
+                        'success' => true,
+                        'message' => 'Attachment retrieved successfully',
+                        'data' => $url,
+                        'code' => 200
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Attachments not found',
+                        'data' => null,
+                        'code' => 404
+                    ];
+                }
+            }else{
+                return [
+                    'success' => false,
+                    'message' => 'Attachment is not attached',
+                    'data' => null,
+                    'code' => 404
+                ];
+            }
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'Unexpected Error: '. $exception->getMessage(),
+                'data' => null,
+                'code' => 500
+            ];
+        }
+    }
+
+    public function getDocumentAttachmentTypes($documentSystemID, $companySystemID) {
+        return CompanyDocumentAttachment::getCompanyDocumentAttachmentList($documentSystemID, $companySystemID);
     }
 }

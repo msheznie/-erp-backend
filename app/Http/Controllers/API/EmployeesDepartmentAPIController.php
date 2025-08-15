@@ -349,7 +349,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
         $department = DepartmentMaster::where('showInCombo', -1)->get();
         $documents = DocumentMaster::all();
-        $segments = SegmentMaster::all();
+        $segments = SegmentMaster::approved()->withAssigned($companiesByGroup)->get();
         $categories = FinanceItemCategoryMaster::all();
         $yesNoSelections = YesNoSelection::all();
         $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(), 'department' => $department, 'documents' => $documents, 'segments' => $segments, 'categories' => $categories, 'yesNoSelections' => $yesNoSelections);

@@ -28,8 +28,12 @@ class ReopenDocument
             $employeeSystemID = Helper::getEmployeeSystemID();
 
             // Model name
-            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; 
-            $sourceModel = $namespacedModel::find($input["documentAutoID"]);
+            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"];
+            if ($input["documentSystemID"] == 132) {
+                $sourceModel = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentAutoID"]);
+            } else {
+                $sourceModel = $namespacedModel::find($input["documentAutoID"]);
+            }
 
             $emails = array();
             if (empty($sourceModel)) {
@@ -211,6 +215,19 @@ class ReopenDocument
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["companyColumnName"] = null;
                 $docInforArr["confirmedByName"] = 'confirmedEmpName';
+                break;
+            case 132:
+                $docInforArr["documentCodeColumnName"] = 'ServiceLineCode';
+                $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                $docInforArr["confirmedByID"] = 'confirmed_by_emp_id';
+                $docInforArr["confirmedDate"] = 'confirmed_date';
+                $docInforArr["tableName"] = 'serviceline';
+                $docInforArr["modelName"] = 'SegmentMaster';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["primarykey"] = 'serviceLineSystemID';
+                $docInforArr["companyColumnName"] = 'companySystemID';
+                $docInforArr["confirmedByName"] = 'confirmed_by_name';
                 break;
             default:
                 return [];

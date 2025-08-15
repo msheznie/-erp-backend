@@ -109,4 +109,9 @@ class SegmentAssigned extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
+
+    public function segment()
+    {
+        return $this->belongsTo(SegmentMaster::class, 'serviceLineSystemID', 'serviceLineSystemID');
+    }
 }

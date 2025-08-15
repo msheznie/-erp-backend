@@ -122,7 +122,6 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
             'bankAccountAutoID' => 'required',
             'assignToAccounts' => 'required',
             'bankName' => 'required',
-            'bankReconciliationMonth' => 'required',
             'openingBalance' => 'required',
             'bankAccountNumber' => 'required',
             'bankStatementDate' => 'required',

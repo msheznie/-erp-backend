@@ -170,6 +170,9 @@ class BankStatementMaster extends Model
         'matchingInprogress',
         'importStatus',
         'importError',
+        'bankRecAutoID',
+        'bankRecCode',
+        'generateBankRec',
         'createdDateTime',
         'timeStamp'
     ];
@@ -197,6 +200,9 @@ class BankStatementMaster extends Model
         'matchingInprogress' => 'integer',
         'importStatus' => 'integer',
         'importError' => 'string',
+        'bankRecAutoID' => 'integer',
+        'bankRecCode' => 'string',
+        'generateBankRec' => 'integer',
         'createdDateTime' => 'datetime',
         'timeStamp' => 'datetime'
     ];

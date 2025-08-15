@@ -270,7 +270,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $item['index'] = $index;
             $currencyID = ($item->supplierItemCurrencyID) ?? 3;
             $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
-            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
+            $item->netAmount = round((round($item->unitCost,$decimal) - round($item->discountAmount,$decimal)) * $item->noQty,$decimal);
             $index++;
         }
 

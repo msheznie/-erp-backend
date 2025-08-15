@@ -228,7 +228,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $segments = SegmentMaster::whereIn("companySystemID", $childCompanies);
+        $segments = SegmentMaster::whereIn("companySystemID", $childCompanies)->approved()->withAssigned($companyId);
 
         if (array_key_exists('isFilter', $input)) {
             if ($input['isFilter'] != 1) {

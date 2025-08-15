@@ -65,14 +65,20 @@ class ReceiptVoucherMatch implements ShouldQueue
                                 ->where('matchType', 1)
                                 ->where('transactionType', 2)
                                 ->first();
-            
-            $rvBankLedgerData = BankLedger::where("bankAccountID", $bankAccountID)
+
+            $rvBankLedgerDataQuery = BankLedger::with('receiptVoucher')
+                                ->where("bankAccountID", $bankAccountID)
                                 ->where("trsClearedYN", -1)
                                 ->whereDate("postedDate", '<=', $bankStatementMaster->statementEndDate)
                                 ->where("bankClearedYN", 0)
                                 ->where("companySystemID", $companySystemID)
-                                ->where('documentSystemID', 21)
-                                ->get()->toArray();
+                                ->where('documentSystemID', 21);
+
+            if (!empty($matchedLedgerIds)) {
+                $rvBankLedgerDataQuery->whereNotIn('bankLedgerAutoID', $matchedLedgerIds);
+            }
+
+            $rvBankLedgerData = $rvBankLedgerDataQuery->get()->toArray();
 
             if (!empty($rvMatchingRule)) 
             {
@@ -90,8 +96,11 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $receiptWhereCondition .= " AND (ABS(credit) >= {$minCredit} AND ABS(credit) <= {$maxCredit})";
                         }
                         if($rvMatchingRule->isMatchDate == 1) {
-                            $receiptWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $rvMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $rvMatchingRule->dateDifference . ' days')) . "')";
+                            $receiptWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $rvMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $rvMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($rvMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $rvMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
@@ -106,11 +115,14 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $receiptWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
-                        if($rvMatchingRule->isMatchChequeNo) {
+                        if($rvMatchingRule->isMatchChequeNo == 1) {
                             $chequeStatementDoc = $rvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
-                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
+                            if($bankLedgerDetail['receipt_voucher']['custChequeNo'] != null && $bankLedgerDetail['receipt_voucher']['custChequeNo'] != 0) { 
+                                $receiptWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['receipt_voucher']['custChequeNo'] . "%')";
+                            } else {
+                                $receiptWhereCondition .= " AND (1=0)";
+                            }
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -165,8 +177,11 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $receiptWhereCondition .= " AND (ABS(credit) >= {$minCredit} AND ABS(credit) <= {$maxCredit})";
                         }
                         if($rvPatialMatchingRule->isMatchDate == 1) {
-                            $receiptWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $rvPatialMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $rvPatialMatchingRule->dateDifference . ' days')) . "')";
+                            $receiptWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $rvPatialMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $rvPatialMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($rvPatialMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $rvPatialMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
@@ -181,11 +196,14 @@ class ReceiptVoucherMatch implements ShouldQueue
                             $receiptWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
     
-                        if($rvPatialMatchingRule->isMatchChequeNo) {
+                        if($rvPatialMatchingRule->isMatchChequeNo == 1) {
                             $chequeStatementDoc = $rvPatialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
     
-                            $receiptWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
-                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
+                            if($bankLedgerDetail['receipt_voucher']['custChequeNo'] != null && $bankLedgerDetail['receipt_voucher']['custChequeNo'] != 0) { 
+                                $receiptWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['receipt_voucher']['custChequeNo'] . "%')";
+                            } else {
+                                $receiptWhereCondition .= " AND (1=0)";
+                            }
                         }
     
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)

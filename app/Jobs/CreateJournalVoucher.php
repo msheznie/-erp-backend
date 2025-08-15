@@ -12,6 +12,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ErpProjectMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Services\DocumentAutoApproveService;
 use App\Services\JournalVoucherService;
@@ -634,23 +635,40 @@ class CreateJournalVoucher implements ShouldQueue
         }
 
         if (isset($request['segment'])) {
-            $segment = SegmentMaster::where('ServiceLineCode',$request['segment'])
+            $segment = SegmentMaster::withoutGlobalScope('final_level')
+                ->where('ServiceLineCode',$request['segment'])
                 ->where('isDeleted', 0)
                 ->where('isActive', 1)
-                ->where('companySystemID', $masterData['company_id'])
                 ->first();
 
             if($segment){
-                $request['segmentID'] = $segment->serviceLineSystemID;
-            }
-            else {
+                if($segment->approved_yn == 0) {
+                    $errorData[] = [
+                            'field' => "segment",
+                            'message' => ["The segment is not approved"]
+                        ];
+                } else {
+                    $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                        ->where('companySystemID', $masterData['company_id'])
+                        ->where('isAssigned', 1)
+                        ->first();
+
+                    if(!$segmentAssigned){
+                        $errorData[] = [
+                            'field' => "segment",
+                            'message' => ["The segment not assigned to selected company"]
+                        ];
+                    } else {
+                        $request['segmentID'] = $segment->serviceLineSystemID;
+                    }
+                }
+            } else {
                 $errorData[] = [
                     'field' => 'segment',
                     'message' => ['Segment not found']
                 ];
             }
-        }
-        else {
+        } else {
             $errorData[] = [
                 'field' => "segment",
                 'message' => ["segment field is required"]

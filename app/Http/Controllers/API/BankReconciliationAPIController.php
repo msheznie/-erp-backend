@@ -48,6 +48,7 @@ use App\Repositories\BankReconciliationDocumentsRepository;
 use App\Repositories\BankReconciliationRepository;
 use App\Services\CustomerReceivePaymentService;
 use App\Services\PaymentVoucherServices;
+use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -61,7 +62,8 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use PHPExcel_IOFactory;
-
+use App\Models\ApprovalLevel;
+use App\Jobs\GenerateBankReconciliation;
 /**
  * Class BankReconciliationController
  * @package App\Http\Controllers\API
@@ -166,10 +168,16 @@ class BankReconciliationAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+            $employee = UserTypeService::getSystemEmployee();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        } else {
+            $employee = \Helper::getEmployeeInfo();
+            $input['createdUserID'] = $employee->empID;
+            $input['createdUserSystemID'] = $employee->employeeSystemID;
+        }
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $employee->empID;
-        $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $validator = \Validator::make($input, [
             'description' => 'required',
@@ -513,11 +521,15 @@ class BankReconciliationAPIController extends AppBaseController
         if (empty($bankReconciliation)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
-
-        $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
-        if(!$validateAdditionalEntryApproved->isEmpty()) {
-            return $this->sendError('There are some pending additional entries to approve', 500);
+        
+        $bankStatementMaster = BankStatementMaster::where('bankRecAutoID', $id)->first();
+        if (empty($bankStatementMaster)) {
+            $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
+            if(!$validateAdditionalEntryApproved->isEmpty()) {
+                return $this->sendError('There are some pending additional entries to approve', 500);
+            }
         }
+       
 
         $bankLedgerData = BankLedger::where('bankAccountID', $bankReconciliation->bankAccountAutoID)
             ->where('companySystemID', $bankReconciliation->companySystemID)
@@ -530,6 +542,18 @@ class BankReconciliationAPIController extends AppBaseController
                 'bankClearedByEmpID' => null, 'bankClearedByEmpSystemID' => null, 'bankClearedDate' => null, 'bankRecAutoID' => null];
 
             $bankLedger = $this->bankLedgerRepository->update($updateArray, $data['bankLedgerAutoID']);
+        }
+
+        /** update bank workbook */
+        if($bankStatementMaster){
+            $bankStatementMaster->generateBankRec = 0;
+            $bankStatementMaster->documentStatus = 1;
+            $bankStatementMaster->bankRecAutoID = null;
+            $bankStatementMaster->bankRecCode = null;
+            $bankStatementMaster->save();
+            
+            BankReconciliationDocuments::where('statementId', $bankStatementMaster->statementId)
+            ->update(['bankRecAutoID' => null]);
         }
 
         $bankReconciliation->delete();
@@ -621,16 +645,29 @@ class BankReconciliationAPIController extends AppBaseController
     public function getCheckBeforeCreate(Request $request)
     {
         $input = $request->all();
-        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
-
+        $validator = \Validator::make($input, [
+            'bankAccountAutoID' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $bankAccountAutoID = $input['bankAccountAutoID'];
+        $bankAccount = BankAccount::find($bankAccountAutoID);
         if (empty($bankAccount)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        $checkPending = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
+        $matchingInProgress = BankStatementMaster::where('bankAccountAutoId', $bankAccountAutoID)
+                                                    ->where('documentStatus', 1)
+                                                    ->first();
+        if(!empty($matchingInProgress))
+        {
+            return $this->sendError('Auto bank reconciliation is in progress. Manual reconciliation is not allowed.', 500);
+        }
+
+        $checkPending = BankReconciliation::where('bankAccountAutoID', $bankAccountAutoID)
             ->where('approvedYN', 0)
             ->first();
-
 
         if (!empty($checkPending)) {
             return $this->sendError(trans('custom.there_is_a_bank_reconciliation') .' '. $checkPending->bankRecPrimaryCode .' '. trans('custom.pending_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again'), 500);
@@ -1424,17 +1461,29 @@ class BankReconciliationAPIController extends AppBaseController
     public function getAllActiveSegments(Request $request)
     {
         $companyId = isset($request['companyId']) ? $request['companyId'] : 0;
-
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
-
         if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
-        $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
+
+        $segments = SegmentMaster::where('isFinalLevel', 1)
+            ->where('isDeleted', 0)
+            ->where('isActive', 1)
+            ->where('approved_yn', 1)
+            ->whereExists(function ($query) use ($subCompanies) {
+                $query->select(DB::raw(1))
+                    ->from('service_line_assigned')
+                    ->whereRaw('service_line_assigned.serviceLineSystemID = serviceline.serviceLineSystemID')
+                    ->whereIn('service_line_assigned.companySystemID', $subCompanies)
+                    ->where('service_line_assigned.isActive', 1)
+                    ->where('service_line_assigned.isAssigned', 1);
+            })
+            ->get(['serviceLineSystemID', 'ServiceLineCode', 'ServiceLineDes']);
+
         $output = array(
-            'segments' => $segment
+            'segments' => $segments
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -1460,7 +1509,12 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('Document Date is not within the active Financial Year.',500);
         }
 
-        $document['bankRecAutoID'] = $input['bankRecAutoID'];
+        if($input['documentType'] == 1) {
+            $document['bankRecAutoID'] = $input['bankRecAutoID'];
+        } else if($input['documentType'] == 2) {
+            $document['statementId'] = $input['statementId'];
+        }
+        
         $document['documentSystemID'] = ($input['type'] == 1) ? 4 : 21;
         if ($input['type'] == 1) {
             $resultData = PaymentVoucherServices::generatePaymentVoucher($input);
@@ -1545,7 +1599,7 @@ class BankReconciliationAPIController extends AppBaseController
         $statementEndDate = self::dateValidation($statementEndDate);
 
         if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
-            return $this->sendError('Some header level dates are not in date format.',500);
+            return $this->sendError('Wrong date format - Correct format "DD/MM/YYYY"',500);
         }
 
         $statementExists = $this->bankStatementMaster->where('companySystemID', $input['companySystemID'])
@@ -1557,8 +1611,8 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         /** bank validation */
-        $bankName = $sheet->getCell($template['bankName'])->getValue();
-        $bankAccount = $sheet->getCell($template['bankAccountNumber'])->getValue();
+        $bankName = trim($sheet->getCell($template['bankName'])->getValue());
+        $bankAccount = trim($sheet->getCell($template['bankAccountNumber'])->getValue());
         if ($bankName != $template['bank_account']['bankName'] || $bankAccount != $template['bank_account']['AccountNo']) {
             return $this->sendError('Bank Account details not matched', 500);
         }
@@ -1573,7 +1627,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         /** dates validation */
-        $bankReconciliationMonth = $sheet->getCell($template['bankReconciliationMonth'])->getValue();
+        $bankReconciliationMonth = Carbon::createFromFormat('Y-m-d', $statementEndDate)->format('M');
 
         /*** create bank statement master record - tbl = bank_statement_master */
         $statementMaster['bankAccountAutoID'] = $input['uploadBankAccount'];
@@ -1618,13 +1672,10 @@ class BankReconciliationAPIController extends AppBaseController
         if (is_numeric($date)) {
             return Date::excelToDateTimeObject($date)->format('Y-m-d');
         } else {
-            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d', 'd/m/Y h:i:s A', 'd/m/Y h:i A'];
-            foreach ($dateFormats as $format) {
-                try {
-                    return Carbon::createFromFormat($format, trim($date))->format('Y-m-d');
-                } catch (\Exception $e) {
-                    continue;
-                }
+            try {
+                return Carbon::createFromFormat('d/m/Y', trim($date))->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
             }
         }
     }
@@ -1648,5 +1699,73 @@ class BankReconciliationAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($bankAccounts, trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
+    }
+
+    public function generateBankReconciliation(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'companyId' => 'required',
+            'statementId' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $companyId = $input['companyId'];
+        $statementId = $input['statementId'];
+        $includePartialMatch = $input['includePartialMatch'] ?? 0;
+
+        $bankStatement = BankStatementMaster::where('statementId', $statementId)->first();
+        if(!$bankStatement){
+            return $this->sendError('Bank statement not found', 500);
+        }
+       
+        $document = DocumentMaster::where('documentSystemID', 62)->first();
+        // get approval rolls
+        $approvalLevel = ApprovalLevel::with('approvalrole' )
+                                        ->where('companySystemID', $companyId)
+                                        ->where('documentSystemID', 62)
+                                        ->where('departmentSystemID', $document["departmentSystemID"])
+                                        ->where('isActive', -1)
+                                        ->first();
+        $approvalGroupID = [];
+        if($approvalLevel){
+            if ($approvalLevel->approvalrole) {
+                foreach ($approvalLevel->approvalrole as $val) {
+                    if ($val->approvalGroupID) {
+                        $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                    } else {
+                        $errorMsg = "'Please set the approval group.";
+                        return $this->sendError($errorMsg, 500);
+                    }
+                }
+            }
+        } else {
+            $errorMsg = "Approval setup not created for bank reconciliation";
+            return $this->sendError($errorMsg, 500);
+        }
+
+        try {
+            DB::beginTransaction();
+            $statementData = [
+                'generateBankRec' => 1
+            ];
+            BankStatementMaster::where('statementId', $statementId)->update($statementData);
+
+            $data = [
+                'companySystemID' => $companyId,
+                'statementId' => $statementId,
+                'includePartialMatch' => $includePartialMatch
+            ];
+            $db = isset($request->db) ? $request->db : "";
+            GenerateBankReconciliation::dispatch($db, $data);
+         
+            DB::commit();
+            return $this->sendResponse([], 'Bank reconciliation generate process started.');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

@@ -18,8 +18,10 @@
 namespace App\Http\Controllers\API;
 use App\Exports\GeneralLedger\Financials\ExcelColumnFormat;
 use App\Exports\GeneralLedger\GeneralLedger\GeneralLedgerReport;
+use App\Models\AccountsPayableLedger;
 use App\Models\CustomReportColumns;
 use App\Models\GroupCompanyStructure;
+use App\Models\Tax;
 use App\Models\GroupParents;
 use App\Models\ReportCustomColumn;
 use App\Services\ConsolidationReportService;
@@ -60,12 +62,15 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use App\Models\BookInvSuppMaster;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Services\Excel\ExportGeneralLedgerReportService;
 ini_set('max_execution_time', 500);
 use App\Models\ReportTemplateEquity;
+use App\Models\SupplierAssigned;
+
 class FinancialReportAPIController extends AppBaseController
 {
     protected $globalFormula; //keep whole formula ro replace
@@ -97,12 +102,25 @@ class FinancialReportAPIController extends AppBaseController
 
         $departments2Info = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
                                             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+                                            ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
+                                            ->where('serviceline.approved_yn', 1)
+                                            ->whereIn('service_line_assigned.companySystemID', $companiesByGroup)
+                                            ->where('service_line_assigned.isActive', 1)
+                                            ->where('service_line_assigned.isAssigned', 1)
                                             ->where('serviceline.serviceLineSystemID', 24)
                                             ->where('serviceline.isFinalLevel', 1)
                                             ->where('serviceline.isDeleted', 0)
                                             ->get();
         $departments2 = collect($departments2Info);
-        $departments = $departments1->merge($departments2)->all();
+        $segmentX = SegmentMaster::getSegmentX();
+        $departments = $departments1
+            ->merge($departments2)
+            ->merge($segmentX)
+            ->all();
+
+        $supplierData = SupplierAssigned::whereIn('companySystemID', $companiesByGroup)
+                                        ->where('isAssigned', -1)
+                                        ->get();
 
         $controlAccount = ChartOfAccountsAssigned::leftJoin('chartofaccounts', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
         ->whereIn('chartofaccountsassigned.companySystemID', $companiesByGroup)
@@ -196,6 +214,7 @@ class FinancialReportAPIController extends AppBaseController
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
+            'supplierData' => $supplierData,
             'controlAccount' => $controlAccount,
             'contracts' => $contracts,
             'accountType' => $accountType,
@@ -231,7 +250,13 @@ class FinancialReportAPIController extends AppBaseController
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
-        $segment = SegmentMaster::where('isActive', 1)->get();
+        $segment = SegmentMaster::where('isActive', 1)
+                                ->approved()
+                                ->withAssigned($companiesByGroup)
+                                ->get();
+        $segmentX = SegmentMaster::getSegmentX();
+        $segment = $segment->merge($segmentX)->values();
+
 
         $output = array(
             'departments' => $departments,
@@ -541,6 +566,16 @@ class FinancialReportAPIController extends AppBaseController
                     'selectedServicelines' => 'required',
                     // 'contracts' => 'required'
                 ]);
+            case 'RTD':
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'currencyID' => 'required',
+                        'suppliers' => 'required',
+                    ],[
+                        'currencyID.required' => 'The currency field is required.',
+                    ]);
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -1299,7 +1334,7 @@ class FinancialReportAPIController extends AppBaseController
                         collect($columnKeys)->each(function($colKey) use ($item,$data)
                         {
                             $key = explode('-',$colKey);
-                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD","BYTDFULL"]))
                                 $item->$colKey = collect($data)->sum($colKey);
                         });
                     }
@@ -1308,7 +1343,7 @@ class FinancialReportAPIController extends AppBaseController
                     {
                         if ((isset($item->itemType) && $item->itemType != 3)) {
                             $key = explode('-',$colKey);
-                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD"]))
+                            if(isset($key[0]) && in_array($key[0],["BCM","BYTD","BYTDFULL"]))
                                 $item->$colKey = collect($data)->sum($colKey);
                         }
                     });
@@ -1685,6 +1720,7 @@ class FinancialReportAPIController extends AppBaseController
     /*generate report according to each report id*/
     public function generateFRReport(Request $request)
     {
+
         $reportID = $request->reportID;
         if($request->glCodeWiseOption) {
            return $this->getGlCodeWiseOptionData($request);
@@ -1987,9 +2023,456 @@ class FinancialReportAPIController extends AppBaseController
                 );
 
                 break;
+            case 'RTD':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $checkIsGroup = Company::find($request->companySystemID);
+
+                $output = $this->getRTDReportQry($request);
+
+
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+
+                if($request->currencyID == 1) {
+                    $currency = $companyCurrency->localcurrency;
+                }
+                if($request->currencyID == 2) {
+                    $currency = $companyCurrency->reportingcurrency;
+                }   
+                if($request->currencyID == 3) {
+                    if(!empty($output->first()->supplierTransactionCurrencyID)) {
+                        $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
+                    } else {
+                        $currency = $companyCurrency->localcurrency;
+                    }
+                }
+   
+               
+
+                return array(
+                    'reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'decimalPlaceRpt' => $currency->DecimalPlaces,
+                    'currencyLocal' => $currency->CurrencyCode,
+                    'currencyRpt' => $currency->CurrencyCode,
+                );
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function getRTDReportQry($request) {
+
+        
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+        if(isset($request->type)) {
+            unset($request->type);
+        }
+        if(isset($request->tempType)) {
+            unset($request->tempType);
+        }
+        if(isset($request->isBS)) {
+            unset($request->isBS);
+        }
+        if(isset($request->isPL)) {
+            unset($request->isPL);
+        }
+        if(isset($request->glCodeWiseOption)) {
+            unset($request->glCodeWiseOption);
+        }
+        if(isset($request->jvType)) {
+            unset($request->jvType);
+        }
+        if(isset($request->selectedServicelines)) {
+            unset($request->selectedServicelines);
+        }
+        if(isset($request->departments)) {  
+            unset($request->departments);
+        }
+        if(isset($request->glCodes)) {
+            unset($request->glCodes);
+        }
+        if(isset($request->contracts)) {    
+            unset($request->contracts);
+        }
+        if(isset($request->selectedColumn)) {
+            unset($request->selectedColumn);
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $supplierCodeSytem = collect($request->suppliers)->pluck('supplierCodeSytem')->toArray();
+        
+        // Fix datetime issue - ensure toDate includes full day
+        $fromDatetime = \Carbon\Carbon::parse($fromDate)->startOfDay()->format('Y-m-d H:i:s');
+        $toDatetime = \Carbon\Carbon::parse($toDate)->endOfDay()->format('Y-m-d H:i:s');
+        
+
+        // Get ProcumentOrder records that have supplier invoices with documentType = 0
+        $result = BookInvSuppMaster::with('detail.unbilled_grv', 'detail.pomaster.po_logistics_details', 'paysuppdetail.payment_master', 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier')
+                     ->whereIn('companySystemID', $companyID)
+                     ->whereIn('supplierID', $supplierCodeSytem)
+                     ->where('whtApplicableYN', 1)
+                     ->where('whtType', '>', '0')
+                     ->where('whtPercentage', '>', '0')
+                     ->whereBetween('bookingDate', [$fromDatetime, $toDatetime])
+                     ->where('approved', -1)
+                     ->where('documentType', 0)
+                     ->get();
+
+        
+        // Calculate poAmount and paymentDueDate for each BookInvSuppMaster record
+        foreach ($result as $key => $bookInvSuppMaster) {
+            $poAmount = 0;
+            
+            // Add logistic amounts (reqAmount and VATAmount) for the same supplier
+            $logisticReqAmount = 0;
+            $logisticVATAmount = 0;
+            $poMasterCode = null;
+            $hasLogisticDetails = false;
+            $hasItemDetails = false;
+            $vatAmountLocal = 0;
+            $vatAmountRpt = 0;
+            $vatAmountTrans = 0;
+            // Check what types of details this invoice contains
+            if ($bookInvSuppMaster->detail) {
+                foreach ($bookInvSuppMaster->detail as $detail) {
+                    if ($detail->unbilled_grv) {
+                        if ($detail->unbilled_grv->logisticYN == 1) {
+                            $hasLogisticDetails = true;
+                        } else {
+                            $hasItemDetails = true;
+                        }
+                    }else {
+                        // $hasItemDetails = true;
+                    }
+                }
+            }
+            
+            // Get PO details from BookInvSuppDet - ensure each PO is only counted once
+            $processedPOs = []; // Track processed POs to avoid duplicates
+            if ($bookInvSuppMaster->detail) {
+                foreach ($bookInvSuppMaster->detail as $detail) {
+                    if ($detail->pomaster && !in_array($detail->purchaseOrderID, $processedPOs)) {
+                        $procumentOrder = $detail->pomaster;
+                        $processedPOs[] = $detail->purchaseOrderID; // Mark this PO as processed
+                        $poMasterCode = $procumentOrder->purchaseOrderCode;    
+                        $vatAmountLocal += $procumentOrder->VATAmountLocal ?? 0;
+                        $vatAmountRpt += $procumentOrder->VATAmountRpt ?? 0;
+                        $vatAmountTrans += $procumentOrder->VATAmount ?? 0;
+                        // Always calculate logistic amounts if logistic details exist
+                        if ($hasLogisticDetails && $procumentOrder->po_logistics_details) {
+                            foreach ($procumentOrder->po_logistics_details as $logisticDetail) {
+                                if ($logisticDetail->supplierID == $bookInvSuppMaster->supplierID) {
+                                    if($request->currencyID == 1) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPOLocalCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmountLocal ?? 0;
+                                    }
+                                    if($request->currencyID == 2) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPORptCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmountRpt ?? 0;
+                                    }
+                                    if($request->currencyID == 3) {
+                                        $logisticReqAmount += $logisticDetail->reqAmountInPOTransCur ?? 0;
+                                        $logisticVATAmount += $logisticDetail->VATAmount ?? 0;
+                                    }       
+                                }
+                            }
+                        }
+                       
+                        // Calculate PO line items amount if item details exist
+                        if ($hasItemDetails) {
+                            if($request->currencyID == 1) {
+                                if ($procumentOrder->poTotalLocalCurrency) {
+                                        $poAmount += $procumentOrder->poTotalLocalCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountLocal : 0));    
+                                }
+                            }
+                            if($request->currencyID == 2) {
+                                if ($procumentOrder->poTotalComRptCurrency) {
+                                    $poAmount += $procumentOrder->poTotalComRptCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmountRpt : 0));
+                                }
+                            }
+                            if($request->currencyID == 3) {
+                                if ($procumentOrder->poTotalSupplierTransactionCurrency) {
+                                    $poAmount += $procumentOrder->poTotalSupplierTransactionCurrency - (($procumentOrder->rcmActivated ? $procumentOrder->VATAmount : 0));
+                                }
+                            }
+                        }
+                        
+
+                    }
+                }
+            }
+
+       
+            // Store item amounts separately for retention calculation
+            $itemAmount = $poAmount;
+            
+            // Set poAmount based on invoice type
+            if ($hasLogisticDetails && $hasItemDetails) {
+                // Mixed invoice - add both logistic and item amounts
+                $poAmount = $poAmount + $logisticReqAmount + $logisticVATAmount;
+            } elseif ($hasLogisticDetails && !$hasItemDetails) {
+                // Pure logistic invoice - only logistic amounts
+                $poAmount = $logisticReqAmount + $logisticVATAmount;
+            } else {
+                // Pure item invoice - only item amounts (poAmount already calculated above)
+                // No additional calculation needed
+            }
+     
+            
+            // Get payment details from paysuppdetail
+            $paymentVoucherDate = null;
+            $paymentVoucherStatus = 2; // Default to 3 (not created)
+            $paymentDetailsFound = false;
+            $payInvoiceTotal = 0;
+            if ($bookInvSuppMaster->paysuppdetail) {
+                foreach ($bookInvSuppMaster->paysuppdetail->sortByDesc('PayMasterAutoId') as $payDetail) {
+                    if($payDetail->payment_master->approved == -1) {
+                        $payInvoiceTotal += $payDetail->payment_master->payAmountSuppTrans;
+                        if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
+                            $paymentVoucherDate = $payDetail->payment_master->BPVdate ?? null;
+                            $paymentDetailsFound = true;
+                        }
+                    }
+                }
+            }
+
+            if($bookInvSuppMaster) {
+                $tax = Tax::where('taxCategory',3)->where('isDefault',1)->where('isActive',1)->where('companySystemID', $companyID)->first();
+
+                if($tax) {
+                    $whtSupplierInvoice = $bookInvSuppMaster->paysuppdetail->where('supplierCodeSystem', $tax->authorityAutoID)->first();      
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = (isset($whtSupplierInvoice->payment_master) && $whtSupplierInvoice->payment_master->approved == -1) ? $whtSupplierInvoice->payment_master->BPVdate : null;     
+                }else {
+                    $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+                }
+            }else {
+                $bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax = null;
+            }
+            
+           
+            // Calculate paymentDueDate based on booking date
+            $paymentDueDate = null;
+            if ($bookInvSuppMaster->bookingDate) {
+                $bookingDate = \Carbon\Carbon::parse($bookInvSuppMaster->bookingDate);
+                $dayOfMonth = $bookingDate->day;
+                
+                if ($dayOfMonth <= 14) {
+                    // If invoice is created on or before the 14th, due date is 14th of same month
+                    $paymentDueDate = $bookingDate->copy()->day(14);
+                } else {
+                    // If invoice is created after the 14th, due date is 14th of next month
+                    $paymentDueDate = $bookingDate->copy()->addMonth()->day(14);
+                }
+            }
+            
+            // Calculate number of months delay
+            $numberOfMonthsDelay = 0;
+            if (isset($bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax) && $paymentDueDate) {
+                $dueDate = \Carbon\Carbon::parse($paymentDueDate);
+                $paymentDate = \Carbon\Carbon::parse($bookInvSuppMaster->actualDateOfPaymentOfWithholdingTax);
+                
+                // Calculate base months difference
+                $baseMonthsDelay = $paymentDate->diffInMonths($dueDate);
+                
+                // If payment is after the 14th, add 1 month for each month delayed
+                if ($paymentDate->day > 14) {
+                    $numberOfMonthsDelay = $baseMonthsDelay + 1;
+                } else {
+                    $numberOfMonthsDelay = $baseMonthsDelay;
+                }
+                
+                // Ensure delay is not negative (payment before due date)
+                if ($paymentDate->lt($dueDate)) {
+                    $numberOfMonthsDelay = 0;
+                }
+            }
+            
+            
+            // Add calculated fields to each BookInvSuppMaster record
+            $bookInvSuppMaster->poAmount = $poAmount;
+            $bookInvSuppMaster->supplierInvoiceNo = $bookInvSuppMaster->bookingInvCode;
+            $bookInvSuppMaster->bookingInvCode = $poMasterCode;
+            $bookInvSuppMaster->invoiceDate = $bookInvSuppMaster->bookingDate; // Date of invoice with WHT applicable
+            $bookInvSuppMaster->logisticReqAmount = $logisticReqAmount;
+            $bookInvSuppMaster->logisticVATAmount = $logisticVATAmount;
+            $bookInvSuppMaster->isLogisticInvoice = $hasLogisticDetails && !$hasItemDetails; // Pure logistic invoice
+            $bookInvSuppMaster->hasLogisticDetails = $hasLogisticDetails;
+            $bookInvSuppMaster->hasItemDetails = $hasItemDetails;
+            $bookInvSuppMaster->dueDateForPaymentOfWithholdingTax = $paymentDueDate ? $paymentDueDate->format('Y-m-d') : null;
+            $bookInvSuppMaster->paymentVoucherDate = $paymentVoucherDate;
+            $bookInvSuppMaster->hasPaymentDetails = !is_null($paymentVoucherDate);
+            $bookInvSuppMaster->numberOfMonthsDelay = $numberOfMonthsDelay;
+            $bookInvSuppMaster->withholdingTax = $poAmount * ($bookInvSuppMaster->whtPercentage / 100);
+            $bookInvSuppMaster->additionalTax = $bookInvSuppMaster->withholdingTax * $numberOfMonthsDelay * 0.01;
+            $bookInvSuppMaster->total = ($bookInvSuppMaster->withholdingTax + $bookInvSuppMaster->additionalTax);
+            $bookInvSuppMaster->currency = CurrencyMaster::find($bookInvSuppMaster->supplierTransactionCurrencyID)->CurrencyCode;
+            
+            // Set supplier invoice amount based on selected currency
+            if($request->currencyID == 1) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountLocal;
+            } elseif($request->currencyID == 2) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountRpt;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = $bookInvSuppMaster->bookingAmountTrans;
+            }
+            
+            // Calculate supplier net amount for each currency (similar to frontend calculation)
+            // Net amount = (Order Amount + Tax Amount) - WHT - Additional Tax
+            // For RCM activated: Net amount = Order Amount - WHT - Additional Tax
+            
+            // Local Currency Net Amount
+            $localOrderAmount = $bookInvSuppMaster->bookingAmountLocal ?? 0;
+            $localTaxAmount = $bookInvSuppMaster->VATAmountLocal ?? 0;
+            $localWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountLocal * ($bookInvSuppMaster->whtPercentage / 100) : 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($procumentOrder->rcmActivated) {
+                $localRetentionAmount = ($localOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $localRetentionAmount = ((($localOrderAmount + $localTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $localOrderAmount - $localWHTAmount - $localRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($localOrderAmount + $localTaxAmount) - $localWHTAmount - $localRetentionAmount;
+            }
+            
+            // Report Currency Net Amount
+            $rptOrderAmount = $bookInvSuppMaster->bookingAmountRpt ?? 0;
+            $rptTaxAmount = $bookInvSuppMaster->VATAmountRpt ?? 0;
+            $rptWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountRpt * ($bookInvSuppMaster->whtPercentage / 100) : 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($procumentOrder->rcmActivated) {
+                $rptRetentionAmount = ($rptOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $rptRetentionAmount = ((($rptOrderAmount + $rptTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $rptOrderAmount - $rptWHTAmount  - $rptRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($rptOrderAmount + $rptTaxAmount) - $rptWHTAmount  - $rptRetentionAmount;
+            }
+            
+            // Transaction Currency Net Amount
+            $transOrderAmount = $bookInvSuppMaster->bookingAmountTrans ?? 0;
+            $transTaxAmount = $bookInvSuppMaster->VATAmount ?? 0;
+            $transWHTAmount = ($bookInvSuppMaster->whtAmount > 0) ? $bookInvSuppMaster->bookingAmountTrans * ($bookInvSuppMaster->whtPercentage / 100) : 0;
+            
+            // Calculate retention amount based on frontend logic
+            if ($procumentOrder->rcmActivated) {
+                $transRetentionAmount = ($transOrderAmount * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100;
+            } else {
+                $transRetentionAmount = ((($transOrderAmount + $transTaxAmount) * ($bookInvSuppMaster->retentionPercentage ?? 0)) / 100) - ($bookInvSuppMaster->retentionVatPortion ?? 0);
+            }
+            
+            if ($procumentOrder->rcmActivated) {
+                $bookInvSuppMaster->supplierInvoiceAmount = $transOrderAmount - $transWHTAmount - $transRetentionAmount;
+            } else {
+                $bookInvSuppMaster->supplierInvoiceAmount = ($transOrderAmount + $transTaxAmount) - $transWHTAmount - $transRetentionAmount;
+            }
+            
+            $bookInvSuppMaster->whtPercentage = $bookInvSuppMaster->whtPercentage;
+
+            if((abs($payInvoiceTotal - $bookInvSuppMaster->bookingAmountTrans) < 0.000000001))
+            {
+                $paymentVoucherStatus = 1;
+            }else {
+                $paymentVoucherStatus = 2;
+            }
+            $bookInvSuppMaster->paymentVoucherStatus = $paymentVoucherStatus;
+        }   
+        
+        // Consolidate supplier invoices that have the same PO and are both item-based (not logistic)
+        $consolidatedResult = collect();
+        $groupedInvoices = $result->groupBy(function($invoice) {
+            // Group by supplier ID and PO code
+            $poCode = null;
+            if ($invoice->detail) {
+                foreach ($invoice->detail as $detail) {
+                    if ($detail->pomaster) {
+                        $poCode = $detail->pomaster->purchaseOrderCode;
+                        break; // Get the first PO code
+                    }
+                }
+            }
+            return $invoice->supplierID . '_' . $poCode;
+        });
+        
+        foreach ($groupedInvoices as $groupKey => $invoices) {
+            // Check if all invoices in this group are item-based (not logistic)
+            $allItemBased = true;
+            foreach ($invoices as $invoice) {
+                if ($invoice->hasLogisticDetails) {
+                    $allItemBased = false;
+                    break;
+                }
+            }
+            
+            if ($allItemBased && $invoices->count() > 1) {
+                // Consolidate multiple item-based invoices for the same PO
+                // Use the first invoice with PO details, don't sum up PO amounts
+                $consolidatedInvoice = $invoices->first();
+                
+                // Sum up only the supplier invoice amounts and withholding tax amounts
+                $totalSupplierInvoiceAmount = 0;
+                $totalWithholdingTax = 0;
+                $totalAdditionalTax = 0;
+                $totalTotal = 0;
+                $totalSupplierNetAmountLocal = 0;
+                $totalSupplierNetAmountRpt = 0;
+                $totalSupplierNetAmountTrans = 0;
+                
+                foreach ($invoices as $invoice) {
+                    $totalSupplierInvoiceAmount += $invoice->supplierInvoiceAmount ?? 0;
+                    $totalWithholdingTax += $invoice->withholdingTax ?? 0;
+                    $totalAdditionalTax += $invoice->additionalTax ?? 0;
+                    $totalTotal += $invoice->total ?? 0;
+                    $totalSupplierNetAmountLocal += $invoice->supplierNetAmountLocal ?? 0;
+                    $totalSupplierNetAmountRpt += $invoice->supplierNetAmountRpt ?? 0;
+                    $totalSupplierNetAmountTrans += $invoice->supplierNetAmountTrans ?? 0;
+                }
+                
+                // Update the consolidated invoice - keep original PO amount, sum only supplier amounts
+                $consolidatedInvoice->supplierInvoiceAmount = $totalSupplierInvoiceAmount;
+                $consolidatedInvoice->withholdingTax = $totalWithholdingTax;
+                $consolidatedInvoice->additionalTax = $totalAdditionalTax;
+                $consolidatedInvoice->total = $totalTotal;
+                $consolidatedInvoice->supplierNetAmountLocal = $totalSupplierNetAmountLocal;
+                $consolidatedInvoice->supplierNetAmountRpt = $totalSupplierNetAmountRpt;
+                $consolidatedInvoice->supplierNetAmountTrans = $totalSupplierNetAmountTrans;
+                
+                // Add a flag to indicate this is a consolidated invoice
+                $consolidatedInvoice->isConsolidated = true;
+                $consolidatedInvoice->originalInvoiceCount = $invoices->count();
+                
+                $consolidatedResult->push($consolidatedInvoice);
+            } else {
+                // Add individual invoices (either logistic invoices or single item-based invoices)
+                foreach ($invoices as $invoice) {
+                    $invoice->isConsolidated = false;
+                    $invoice->originalInvoiceCount = 1;
+                    $consolidatedResult->push($invoice);
+                }
+            }
+        }
+        
+        return $consolidatedResult;
     }
 
     public function processConsolidationData($request,$response) {
@@ -4199,7 +4682,80 @@ class FinancialReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
 
                 break;
-            default:
+                case 'RTD':
+                    $type = $request->type;
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $checkIsGroup = Company::find($request->companySystemID);
+
+                    $output = $this->getRTDReportQry($request);
+                    $data = array();
+
+                    $cur = null;
+                    $title = 'Report Tax Details';
+                    $company_name = $companyCurrency->CompanyName;
+                    $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
+                    $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                    $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+
+                    if($request->currencyID == 1) {
+                        $currency = $companyCurrency->localcurrency;
+                    }
+                    if($request->currencyID == 2) {
+                        $currency = $companyCurrency->reportingcurrency;
+                    }   
+                    if($request->currencyID == 3) {
+                        if(!empty($output->first()->supplierTransactionCurrencyID)) {
+                            $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
+                        } else {
+                            $currency = $companyCurrency->localcurrency;
+                        }
+                    }
+       
+                   
+
+
+                    $detail_array = array(  'type' => 1,
+                                            'fromDate'=>$fromDate,  
+                                            'toDate'=>$toDate,
+                                            'company_name'=>$company_name,
+                                            'company_code'=>$companyID,
+                                            'cur'=>$cur,
+                                            'tempType' => 'csv',
+                                            'reportViewID' => 1,
+                                            'reportData' => $output,
+                                            'taxExtraColumn' => isset($request->taxExtraColumn) ? $request->taxExtraColumn : null,
+                                            'decimalPlaceRpt' => $currency->DecimalPlaces,
+                                            'currencyRpt' => $currency->CurrencyCode,
+                    );
+
+                    $templateName = "export_report.generalLedger.rtd_details";
+                    $fileName = 'Tax Deductibility';
+                    $path = 'general-ledger/report/rtd_details/excel/';
+                    $type = "xls";
+                    $excelColumnFormat = [
+
+                    ];
+
+
+                    $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
+
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+                    break;
+                default:
                 return $this->sendError('No report ID found');
         }
     }
@@ -8805,10 +9361,12 @@ GROUP BY id
 
                 $html = view('print.financial_trial_balance', $dataArr);
 
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
 
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('financial_trial_balance.pdf', 'I');   
                 break;
 
             case 'FCT':
@@ -8878,14 +9436,18 @@ GROUP BY id
                 $reportData['CompanyName'] = $companyName;
 
                 $html = view($templateName, $reportData);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
 
-                if (count($input['companySystemID'] ) > 1) {
-                    return $pdf->setPaper('a3', 'landscape')->setWarnings(false)->stream();
+                if (count($input['companySystemID']) > 1) {
+                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A3-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 } else {
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 }
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+        
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($templateName, 'I');
+
                 break;
 
             default:
@@ -8976,6 +9538,8 @@ GROUP BY id
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $fifthLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $fifthLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -9264,6 +9828,8 @@ GROUP BY
                 $secondLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $secondLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $secondLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -9351,6 +9917,7 @@ WHERE
 ORDER BY
     erp_companyreporttemplatelinks.sortOrder) b ) a '.$whereNonZero;
 
+//        dd($sql);
         $output = \DB::select($sql);
         return $output;
     }
@@ -9441,6 +10008,8 @@ ORDER BY
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $key . '`,';
             } else if ($coloumnShortCode == "BYTD" && !$changeSelect) {
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $key . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL" && !$changeSelect) {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $key . '`,';
             } else if ($coloumnShortCode == "ELMN" && !$changeSelect) {
                 $thirdLinkedcolumnQry .= '0 AS `' . $key . '`,';
             } else if ($coloumnShortCode == "CONS" && !$changeSelect) {
@@ -9830,6 +10399,8 @@ GROUP BY
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "BYTD") {
                 $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTDFULL") {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYearFull,  0 ) AS `' . $val . '`,';
             } else if ($coloumnShortCode == "ELMN") {
                 $thirdLinkedcolumnQry .= '0 AS `' . $val . '`,';
             } else if ($coloumnShortCode == "CONS") {
@@ -10555,9 +11126,39 @@ GROUP BY
 
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
                 }
+                if ($val->shortCode == 'LYYTDFULL') {
+                    if ($request->accountType == 2) {
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                            // $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            // $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+    $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
+                }
                 if ($val->shortCode == 'LYYTD') {
                     if ($request->accountType == 2) {
-
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
@@ -10576,15 +11177,16 @@ GROUP BY
                         else if ($request->dateType == 1) {
                             $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
                         }
-
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 3) {
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     }
+
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }
+
 
                 if ($val->shortCode == 'CY-2') {
                     if ($request->accountType == 2) {
@@ -10687,6 +11289,15 @@ GROUP BY
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
                 }
 
+                if ($val->shortCode == 'BYTDFULL') {
+                    if ($changeSelect) {
+                        $columnArray[$val->shortCode] = "IFNULL(bAmountYearFull, 0)";
+                    } else {
+                        $columnArray[$val->shortCode] = "0";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                }
+
                 if (($val->shortCode == 'CMB') || ($val->shortCode == 'ELMN') || ($val->shortCode == 'CONS')) {
                     $columnArray[$val->shortCode] = "0";
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
@@ -10751,7 +11362,17 @@ GROUP BY
                                 )
                             ),
                             0
-                        ) AS `bAmountMonth`";
+                        ) AS `bAmountMonth`,
+                        IFNULL(
+                            SUM(
+                                IF(
+                                    erp_budjetdetails.Year = '" . $currentYear . "',
+                                    $budgetColumn, 
+                                    0
+                                )
+                            ),
+                            0
+                        ) AS `bAmountYearFull`";
 
 
 
@@ -10781,12 +11402,12 @@ GROUP BY
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
                         $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 2);
                     }
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD' || $val->shortCode == 'LYYTDFULL' || $val->shortCode == 'CY-2' || $val->shortCode == 'CY-3' || $val->shortCode == 'CY-4' || $val->shortCode == 'CMB') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
                     $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
-                } else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM') {
+                } else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM' || $val->shortCode == 'BYTDFULL' ) {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];

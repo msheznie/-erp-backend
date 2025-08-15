@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachmentType;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -32,4 +33,5 @@ class DocumentAttachmentTypeRepository extends BaseRepository
     {
         return DocumentAttachmentType::class;
     }
+
 }

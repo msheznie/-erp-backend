@@ -265,6 +265,7 @@ Route::group([], function(){
     Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds')->name('Post Cashflow pulled items for proceeds');
     Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport')->name('Download Employee ledger report');
     Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport')->name('Download project utilization report');
+    Route::post('updateBankBalances', 'CashFlowReportAPIController@updateBankBalances')->name('Update balance amount');
 
 });
 

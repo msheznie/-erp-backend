@@ -570,6 +570,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         if (count($companyFinanceYear) > 0) {

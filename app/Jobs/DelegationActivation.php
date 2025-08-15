@@ -54,7 +54,7 @@ class DelegationActivation implements ShouldQueue
         $deligate = Deligation::where('approved',-1)->where('end_date','<',$current_date);
         $dlegations_expire_ids = $deligate->pluck('id');
         $deligate->update(['is_active' => 0]);
-        EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0]);
+        EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0,'removedYN' => 1]);
         
         Log::info('Deactivate'. $dlegations_expire_ids);
         $this->updateHrmsApprovalUserStatus($dlegations_expire_ids, 0);

@@ -310,4 +310,28 @@ class BankStatementDetailAPIController extends AppBaseController
         $updateMatchType = $this->bankStatementDetailRepository->updateMatchType($input);
         return $this->sendResponse($updateMatchType, 'Match type updated successfully');
     }
+
+    public function updateManualMatch(Request $request)
+    {
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'companyId' => 'required',
+            'statementId' => 'required',
+            'bankLedgerSelected' => 'required',
+            'bankStatementSelected' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        $matchId = $this->bankStatementDetailRepository->where('statementId', $input['statementId'])->where('matchType', 1)->count() + 1;
+
+        $matchedDetails = [
+            'bankLedgerAutoID' => $input['bankLedgerSelected'],
+            'matchType' => 1,
+            'matchedId' => $matchId
+        ];
+        $updateMatchType = $this->bankStatementDetailRepository->update($matchedDetails, $input['bankStatementSelected']);
+        return $this->sendResponse($updateMatchType, 'Document matched successfully');
+    }
 }

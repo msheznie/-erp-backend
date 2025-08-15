@@ -830,7 +830,7 @@ class StockTransferAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
         }

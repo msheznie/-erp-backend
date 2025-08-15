@@ -9,6 +9,7 @@ use App\Models\BankStatementMaster;
 use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\Models\BankAccount;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class BankStatementMasterRepository
@@ -41,6 +42,9 @@ class BankStatementMasterRepository extends BaseRepository
         'matchingInprogress',
         'importStatus',
         'importError',
+        'bankRecAutoID',
+        'bankRecCode',
+        'generateBankRec',
         'createdDateTime',
         'timeStamp'
     ];
@@ -98,12 +102,14 @@ class BankStatementMasterRepository extends BaseRepository
     public function getBankWorkbookHeaderDetails($statementId, $companySystemID)
     {
         $data = [];
-        $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first()->toArray();
+        $data['details'] = BankStatementMaster::with('bankAccount.currency')->where('statementId', $statementId)->first();
         if(!empty($data['details']))
         {
+            $data['details'] = $data['details']->toArray();
             $bankAccountId = $data['details']['bankAccountAutoID'];
 
             $fromDate = new Carbon($data['details']['statementStartDate']);
+            $fromDate = $fromDate->format('Y-m-d');
             $openingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as opening')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
@@ -116,10 +122,11 @@ class BankStatementMasterRepository extends BaseRepository
                 $data['systemOpeningBalance'] = 0;
             }
             $toDate = new Carbon($data['details']['statementEndDate']);
+            $toDate = $toDate->format('Y-m-d');
             $closingBalance = BankLedger::selectRaw('companySystemID, documentDate, bankAccountID,trsClearedYN,bankClearedYN, SUM(payAmountBank) * -1 as closing')
                 ->where('companySystemID', $companySystemID)
                 ->where("bankAccountID", $bankAccountId)
-                ->where("documentDate", "<", $toDate)
+                ->whereDate("documentDate", "<=", $toDate)
                 ->first();
 
             if (!empty($closingBalance)) {
@@ -128,10 +135,18 @@ class BankStatementMasterRepository extends BaseRepository
                 $data['systemClosingBalance'] = 0;
             }
 
-            $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
-                ->orderBy('bankRecAsOf', 'desc')
-                ->first();
-
+            if($data['details']['bankRecAutoID'] > 0) {
+                $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('bankRecAutoID', '<', $data['details']['bankRecAutoID'])
+                    ->orderBy('bankRecAsOf', 'desc')
+                    ->first();
+            } else {
+                $lastRec = BankReconciliation::where('bankAccountAutoID', $bankAccountId)
+                    ->where('companySystemID', $companySystemID)
+                    ->orderBy('bankRecAsOf', 'desc')
+                    ->first();
+            }
             $data['lastBankRecAmount'] = $lastRec ? $lastRec->closingBalance : 0;
         }
 
@@ -141,17 +156,30 @@ class BankStatementMasterRepository extends BaseRepository
     function getBankWorkbookDetails($statementId, $companySystemID)
     {
         $statementDetails = BankStatementMaster::where('statementId', $statementId)->first();
+        if (empty($statementDetails)) {
+            throw new \Exception("Bank Statement not found");
+        }
         $decimalPlaces = BankAccount::with('currency')->where('bankAccountAutoID', $statementDetails->bankAccountAutoID)->first()->currency->DecimalPlaces;
         
         /*** Bank Ledger Details ***/
-        $bankLedgers = BankLedger::with('bankStatementDetail')
-                                ->where('bankAccountID', $statementDetails->bankAccountAutoID)
-                                ->where('trsClearedYN', -1)
-                                ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
-                                ->where('bankClearedYN', 0)
-                                ->where('companySystemID', $companySystemID)
-                                ->get();
-                                
+        $bankLedgers = BankLedger::with(['bankStatementDetail' => function ($query) use ($statementId) {
+                                        $query->where('statementId', $statementId);
+                                    }, 'paymentVoucher', 'receiptVoucher'])
+                        ->where('bankAccountID', $statementDetails->bankAccountAutoID)
+                        ->where('trsClearedYN', -1)
+                        ->whereDate('postedDate', '<=', $statementDetails->statementEndDate)
+                        ->where('companySystemID', $companySystemID)
+                        ->where(function ($query) use ($statementId) {
+                            $query->where('bankClearedYN', 0)
+                                ->orWhere(function ($q) use ($statementId) {
+                                    $q->whereHas('bankStatementDetail', function ($q2) use ($statementId) {
+                                        $q2->whereColumn('bankLedgerAutoID', 'erp_bankledger.bankLedgerAutoID')
+                                            ->where('statementId', $statementId);
+                                    });
+                                });
+                        })
+                        ->get();
+
         $data['fullyMatchedBankLedger'] = $bankLedgers->filter(function ($ledger) {
             return $ledger->bankStatementDetail && $ledger->bankStatementDetail->matchType == 1;
         })->values()->toArray();
@@ -210,5 +238,48 @@ class BankStatementMasterRepository extends BaseRepository
         $data['totalValues']['partiallyMatchedStatementTotal'] = number_format($creditPartialTotal + $debitPartialTotal, $decimalPlaces);
 
         return $data;
+    }
+
+    function getWorkbookAdditionalEntries($statementId, $companySystemID)
+    {        
+        $query = "
+            SELECT
+                bank_reconciliation_documents.*,
+                custPaymentReceiveCode AS documentCode,
+                custPaymentReceiveDate AS postedDate,
+                netAmount AS payAmountBank,
+                narration as documentNarration,
+                custChequeNo AS chequeNo,
+                'Deposit' as category
+                FROM
+                    bank_reconciliation_documents
+                    JOIN erp_customerreceivepayment ON erp_customerreceivepayment.custReceivePaymentAutoID = bank_reconciliation_documents.documentAutoId 
+                    AND bank_reconciliation_documents.documentSystemID = erp_customerreceivepayment.documentSystemID 
+                WHERE
+                    companySystemID = {$companySystemID}
+                    AND statementId = {$statementId}
+                    AND approved != -1
+            UNION ALL
+            SELECT
+                    bank_reconciliation_documents.*,
+                    BPVcode AS documentCode,
+                    BPVdate AS postedDate,
+                    ( netAmount + VATAmount ) AS payAmountBank,
+                    BPVNarration AS documentNarration,
+                    BPVchequeNo AS chequeNo,
+                    'Withdraw' as category
+                FROM
+                    bank_reconciliation_documents
+                    JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = bank_reconciliation_documents.documentAutoId 
+                    AND bank_reconciliation_documents.documentSystemID = erp_paysupplierinvoicemaster.documentSystemID 
+                WHERE
+                    companySystemID = {$companySystemID}
+                    AND statementId = {$statementId}
+                    AND approved != -1
+        ";
+
+        $result = DB::select($query);
+
+        return $result;
     }
 }

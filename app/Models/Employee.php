@@ -386,5 +386,11 @@ class Employee extends Model
     {
         return $this->hasMany('App\Models\CustomerReceivePayment','createdUserSystemID','employeeSystemID');;
     }
+
+    public static function getEmployeeCode($employeeSystemID)
+    {
+        $data = self::where('employeeSystemID', $employeeSystemID)->first();
+        return $data ? $data->empID : '';
+    }
     
 }

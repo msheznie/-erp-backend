@@ -9,6 +9,17 @@
 //supplier master
 use Illuminate\Support\Facades\Route;
 
+// Department Budget Template routes
+Route::get('departmentBudgetTemplates/form-data', 'DepartmentBudgetTemplateAPIController@getFormData')->name('Get department budget template form data');
+Route::get('departmentBudgetTemplates/templates-by-type/{type}', 'DepartmentBudgetTemplateAPIController@getBudgetTemplatesByType')->name('Get budget templates by type');
+Route::post('departmentBudgetTemplates/datatable/{departmentSystemID}', 'DepartmentBudgetTemplateAPIController@getDepartmentBudgetTemplates')->name('Get department budget templates for datatable');
+Route::get('departmentBudgetTemplates/chart-of-accounts/{templateType}', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsForTemplate')->name('Get chart of accounts for template type');
+Route::get('departmentBudgetTemplates/chart-of-accounts/{templateType}/{accountType}', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsByType')->name('Get chart of accounts by type');
+Route::post('departmentBudgetTemplates/assign-gl', 'DepartmentBudgetTemplateAPIController@assignGLCodes')->name('Assign GL codes to template');
+Route::post('departmentBudgetTemplates/assigned-gl', 'DepartmentBudgetTemplateAPIController@getAssignedGLCodes')->name('Get assigned GL codes');
+Route::post('getChartOfAccountsByBudgetTemplate', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsByBudgetTemplate');
+Route::resource('departmentBudgetTemplates', 'DepartmentBudgetTemplateAPIController');
+
 Route::group([], function(){
 	Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData')->name('Supplier Form Data');
 	Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount')->name("Advance accounts for selected company");
@@ -440,7 +451,7 @@ Route::group([],function (){
 	Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees')->name('Get segment assigned employees');
 	Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees')->name('Get segment right employees');
 	Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster')->name('Update segment master');
-	
+
 	Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany')->name('Get serviceline by company');
 	Route::get('getServiceLineByparent', 'ServiceLineAPIController@getServiceLineByparent')->name('Get serviceline parent');
 	Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData')->name('Get segment master form data');
@@ -451,10 +462,32 @@ Route::group([],function (){
     Route::get('assignedCompaniesBySegment', 'SegmentMasterAPIController@assignedCompaniesBySegment')->name("Get company assigened segment");;
     Route::post('rejectSegmentMaster', 'SegmentMasterAPIController@rejectSegmentMaster')->name("Reject segment master");
     Route::post('exportSegmentMaster', 'SegmentMasterAPIController@exportSegmentMaster')->name("All segments Export to Excel");
-
+    Route::post('segmentReopen', 'SegmentMasterAPIController@segmentReopen')->name("Reopen Segment");
+    Route::post('segmentReferBack', 'SegmentMasterAPIController@segmentReferBack')->name("Refferback Segment");
+    Route::get('segments_for_po_analysis_report', 'SegmentMasterAPIController@segmentsForPoAnalysisReport')->name('Get segments for PO analysis report');
 
 	Route::resource('segment_rights', 'SegmentRightsAPIController');
 	Route::resource('segment/masters', 'SegmentMasterAPIController', ['names' => 'Segment masters']);
 
+	// Company Department Routes
+	Route::post('getAllCompanyDepartments', 'CompanyDepartmentAPIController@getAllCompanyDepartments')->name('Get all company departments');
+	Route::get('getCompanyDepartmentFormData', 'CompanyDepartmentAPIController@getCompanyDepartmentFormData')->name('Get company department form data');
+	Route::get('getDepartmentStructure', 'CompanyDepartmentAPIController@getDepartmentStructure')->name('Get department structure');
+	Route::post('exportCompanyDepartments', 'CompanyDepartmentAPIController@exportCompanyDepartments')->name('Export company departments to Excel');
+	Route::get('company-departments/{id}/check-finance-employees', 'CompanyDepartmentAPIController@checkFinanceEmployees')->name('Check finance employees');
+	Route::resource('company-departments', 'CompanyDepartmentAPIController', ['names' => 'Company departments']);
 
+	// Department Employee Routes
+Route::post('getAllDepartmentEmployees', 'CompanyDepartmentEmployeeAPIController@getAllDepartmentEmployees')->name('Get all department employees');
+Route::get('getDepartmentEmployeeFormData', 'CompanyDepartmentEmployeeAPIController@getDepartmentEmployeeFormData')->name('Get department employee form data');
+Route::resource('company-department-employees', 'CompanyDepartmentEmployeeAPIController', ['names' => 'Company department employees']);
+
+// Department Segment Routes
+Route::post('getAllDepartmentSegments', 'CompanyDepartmentSegmentAPIController@getAllDepartmentSegments')->name('Get all department segments');
+Route::get('getDepartmentSegmentFormData', 'CompanyDepartmentSegmentAPIController@getDepartmentSegmentFormData')->name('Get department segment form data');
+Route::resource('company-department-segments', 'CompanyDepartmentSegmentAPIController', ['names' => 'Company department segments']);
+
+// Department User Budget Control Routes
+Route::get('getUserBudgetControls', 'DepartmentUserBudgetControlAPIController@getUserBudgetControls')->name('Get user budget controls');
+Route::post('saveUserBudgetControls', 'DepartmentUserBudgetControlAPIController@saveUserBudgetControls')->name('Save user budget controls');
 });

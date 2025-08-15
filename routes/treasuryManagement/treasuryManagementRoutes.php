@@ -61,6 +61,10 @@ Route::group([], function() {
     Route::get('getUnmatchedDetails', 'BankStatementMasterAPIController@getUnmatchedDetails')->name('Get workbook details');
     Route::get('fetchWorkbookJobStatus', 'BankStatementMasterAPIController@fetchWrkbookJobStatus')->name('Fetch workbook job status');
     Route::post('moveStatementMatchDetail', 'BankStatementDetailAPIController@moveStatementMatchDetail')->name('Update statement match type');
+    Route::post('rematchWorkBook', 'BankStatementMasterAPIController@rematchWorkBook')->name('Rematch workbook');
+    Route::post('updateManualMatch', 'BankStatementDetailAPIController@updateManualMatch')->name('Update manual match');
+    Route::get('getWorkbookAdditionalEntries', 'BankStatementMasterAPIController@getWorkbookAdditionalEntries')->name('Get Workbook Additional Entries');
+    Route::post('generateBankReconciliation', 'BankReconciliationAPIController@generateBankReconciliation')->name('Generate bank reconciliation');
 });
 
 //Cheque Register

@@ -108,7 +108,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => 'Transaction date is not in date format'
+                                'importError' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY'
                             ]);
                         DB::commit();
                         return;
@@ -158,14 +158,11 @@ class UploadBankStatement implements ShouldQueue
         if (is_numeric($date)) {
             return Date::excelToDateTimeObject($date)->format('Y-m-d');
         } else {
-            $dateFormats = ['d/m/Y', 'm/d/Y', 'm-d-Y', 'Y-m-d', 'Y/m/d'];
-            foreach ($dateFormats as $format) {
-                try {
-                    return Carbon::createFromFormat($format, trim($date))->format('Y-m-d');
-                } catch (\Exception $e) {
-                    continue;
-                }
+            try {
+                return Carbon::createFromFormat('d/m/Y', trim($date))->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
             }
-        }
+        }     
     }
 }

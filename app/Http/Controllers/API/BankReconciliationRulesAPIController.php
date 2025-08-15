@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\BankStatementMaster;
 
 /**
  * Class BankReconciliationRulesController
@@ -298,6 +299,13 @@ class BankReconciliationRulesAPIController extends AppBaseController
             return $this->sendError('Bank Reconciliation Rules not found');
         }
 
+        $isMatchingInProgress = BankStatementMaster::where('bankAccountAutoId', $bankReconciliationRules->bankAccountAutoID)
+                                                ->where('documentStatus', 1)
+                                                ->whereIn('matchingInprogress', [1, 2, 4])
+                                                ->first();
+        if(!empty($isMatchingInProgress)) {
+            return $this->sendError('Matching is in progress.');
+        }
         $bankReconciliationRules->delete();
 
         return $this->sendResponse($id, 'Bank Reconciliation Rule deleted successfully');
@@ -367,6 +375,14 @@ class BankReconciliationRulesAPIController extends AppBaseController
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->findWithoutFail($ruleId);
         if (empty($bankReconciliationRules)) {
             return $this->sendError('Bank Reconciliation Rules not found');
+        }
+
+        $matchingInProgress = BankStatementMaster::where('bankAccountAutoID', $bankReconciliationRules->bankAccountAutoID)
+                                                ->where('documentStatus', 1)
+                                                ->whereIn('matchingInprogress', [1, 2, 4])
+                                                ->first();
+        if(!empty($matchingInProgress)) {
+            return $this->sendError('Matching is in progress.');
         }
 
         $isDefault['isDefault'] = !$bankReconciliationRules->isDefault;

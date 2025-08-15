@@ -236,6 +236,25 @@ class ReportAPIController extends AppBaseController
                         }
                     }
 
+                    if (isset($request->lcc)) {
+                        if (!empty($request->lcc)) {
+                            $output = $output->having('isLcc', $request->lcc);
+                        }
+                    }
+
+                    if (isset($request->sme)) {
+                        if (!empty($request->sme)) {
+                            $output = $output->having('isSme', $request->sme);
+                        }
+                    }
+
+                    if (isset($request->segment)) {
+                        if (!empty($request->segment) && is_array($request->segment)) {
+                            $segmentIds = array_column($request->segment, 'id');
+                            $output = $output->whereIN('erp_purchaseorderdetails.serviceLineSystemID', $segmentIds);
+                        }
+                    }
+
                     $output->orderBy('podet.approvedDate', 'ASC');
 
                     $data['order'] = [];

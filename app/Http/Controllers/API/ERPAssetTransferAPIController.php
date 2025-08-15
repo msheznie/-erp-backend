@@ -616,7 +616,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $request['companyId'];
         $data['locations'] = Location::all();
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId);
         $segments = $segments->where('isActive', 1);
         $data['segments'] = $segments->get();
 

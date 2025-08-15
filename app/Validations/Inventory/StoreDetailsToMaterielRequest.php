@@ -70,6 +70,9 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
             return $this->sendError('Issuing quantity cannot be empty');
 
+        if (!is_numeric($detail['qtyIssued']) || fmod($detail['qtyIssued'], 1) !== 0.0 || $detail['qtyIssued'] > 999999999) {
+            return $this->sendError('Invalid qtyIssued');
+        }
 
         if((isset($detail['mappingItemCode']) && $detail['mappingItemCode'] != 0) || (isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0))
         {

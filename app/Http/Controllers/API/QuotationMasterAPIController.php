@@ -795,6 +795,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)
                                   ->where('isActive', 1)
+                                  ->approved()->withAssigned($companyId)
                                   ->get();
         $soPaymentTermsDrop = PoPaymentTermTypes::all();
 

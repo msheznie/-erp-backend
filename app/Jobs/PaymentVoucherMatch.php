@@ -66,14 +66,20 @@ class PaymentVoucherMatch implements ShouldQueue
                                         ->where('transactionType', 1)
                                         ->first();
 
-            $pvBankLedgerData = BankLedger::where("bankAccountID", $bankAccountID)
-                                        ->where("trsClearedYN", -1)
-                                        ->whereDate("postedDate", '<=', $bankStatementMaster->statementEndDate)
-                                        ->where("bankClearedYN", 0)
-                                        ->where("companySystemID", $companySystemID)
-                                        ->where('documentSystemID', 4)
-                                        ->get()->toArray();
-            if (!empty($pvMatchingRule)) 
+            $matchedLedgerIds = BankStatementDetail::where('statementId', $statementId)->wherenotNull('bankLedgerAutoID')->pluck('bankLedgerAutoID')->toArray();
+            $pvBankLedgerDataQuery = BankLedger::with('paymentVoucher')
+                ->where("bankAccountID", $bankAccountID)
+                ->where("trsClearedYN", -1)
+                ->whereDate("postedDate", '<=', $bankStatementMaster->statementEndDate)
+                ->where("bankClearedYN", 0)
+                ->where("companySystemID", $companySystemID)
+                ->where("documentSystemID", 4);
+            if (!empty($matchedLedgerIds)) {
+                $pvBankLedgerDataQuery->whereNotIn('bankLedgerAutoID', $matchedLedgerIds);
+            }
+            $pvBankLedgerData = $pvBankLedgerDataQuery->get()->toArray();
+
+            if (!empty($pvMatchingRule))
             {
                 collect($pvBankLedgerData)->chunk(100)->each(function ($chunk) use ($pvMatchingRule, $statementId, $exactMatchId) {
                     foreach ($chunk as $bankLedgerDetail) {
@@ -88,8 +94,11 @@ class PaymentVoucherMatch implements ShouldQueue
                             $pvWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvMatchingRule->isMatchDate == 1) {
-                            $pvWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $pvMatchingRule->dateDifference . ' days')) . "')";
+                            $pvWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $pvMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $pvMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($pvMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $pvMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
@@ -103,11 +112,14 @@ class PaymentVoucherMatch implements ShouldQueue
                             $pvWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
-                        if($pvMatchingRule->isMatchChequeNo) {
+                        if($pvMatchingRule->isMatchChequeNo == 1) {
                             $chequeStatementDoc = $pvMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $pvWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
-                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
+                            if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
+                                $pvWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
+                            } else {
+                                $pvWhereCondition .= " AND (1=0)";
+                            }
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)
@@ -162,8 +174,11 @@ class PaymentVoucherMatch implements ShouldQueue
                             $partialWhereCondition .= " AND (ABS(debit) >= {$minCredit} AND ABS(debit) <= {$maxCredit})";
                         }
                         if($pvPartialMatchingRule->isMatchDate == 1) {
-                            $partialWhereCondition .= " AND (transactionDate >= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' - ' . $pvPartialMatchingRule->dateDifference . ' days')) . "' 
-                                            OR transactionDate <= '" . date('Y-m-d', strtotime($bankLedgerDetail['postedDate'] . ' + ' . $pvPartialMatchingRule->dateDifference . ' days')) . "')";
+                            $partialWhereCondition .= " AND transactionDate BETWEEN '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' - ' . $pvPartialMatchingRule->dateDifference . ' days')) . 
+                                                            "' AND '" . 
+                                                            date('Y-m-d', strtotime(date('Y-m-d', strtotime($bankLedgerDetail['postedDate'])) . ' + ' . $pvPartialMatchingRule->dateDifference . ' days')) . 
+                                                        "'";
                         }
                         if($pvPartialMatchingRule->isMatchDocument == 1) {
                             $bankledgerDocument = $pvPartialMatchingRule->systemDocumentColumn == 1? $bankLedgerDetail['documentCode'] : $bankLedgerDetail['documentNarration'];
@@ -178,11 +193,14 @@ class PaymentVoucherMatch implements ShouldQueue
                             $partialWhereCondition .= " AND (`$statementDocument` LIKE '%{$safeBankledgerDocument}%')";
                         }
 
-                        if($pvPartialMatchingRule->isMatchChequeNo) {
+                        if($pvPartialMatchingRule->isMatchChequeNo == 1) {
                             $chequeStatementDoc = $pvPartialMatchingRule->statementChqueColumn == 1? 'transactionNumber' : 'description';
 
-                            $partialWhereCondition .= " AND (".$chequeStatementDoc." LIKE '%" . $bankLedgerDetail['documentChequeNo'] . "%') 
-                                        AND (". $bankLedgerDetail['documentChequeNo'] ." IS NOT NULL OR ". $bankLedgerDetail['documentChequeNo'] ." != 0)";
+                            if($bankLedgerDetail['payment_voucher']['BPVchequeNo'] != null && $bankLedgerDetail['payment_voucher']['BPVchequeNo'] != 0) {
+                                $partialWhereCondition .= " AND (". $chequeStatementDoc ." LIKE '%" . $bankLedgerDetail['payment_voucher']['BPVchequeNo'] . "%')";
+                            } else {
+                                $partialWhereCondition .= " AND (1=0)";
+                            }
                         }
 
                         $pvMatchedBankStatement = BankStatementDetail::where('statementId', $statementId)

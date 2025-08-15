@@ -54,7 +54,8 @@ class BankReconciliationDocuments extends Model
     public $fillable = [
         'bankRecAutoID',
         'documentSystemID',
-        'documentAutoId'
+        'documentAutoId',
+        'statementId'
     ];
 
     /**
@@ -66,7 +67,8 @@ class BankReconciliationDocuments extends Model
         'id' => 'integer',
         'bankRecAutoID' => 'integer',
         'documentSystemID' => 'integer',
-        'documentAutoId' => 'integer'
+        'documentAutoId' => 'integer',
+        'statementId' => 'integer'
     ];
 
     /**

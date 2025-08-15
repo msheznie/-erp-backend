@@ -19,6 +19,7 @@ use App\Models\DocumentAttachmentType;
 use App\Models\FinanceItemCategorySub;
 use App\Models\ItemAssigned;
 use App\Models\ItemCategoryTypeMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -187,10 +188,10 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         'message' => 'Segment field is required'
                                     ];
                                 } else {
-                                    $segment = SegmentMaster::where('ServiceLineCode',$invMaster['segment'])
+                                    $segment = SegmentMaster::withoutGlobalScope('final_level')
+                                        ->where('ServiceLineCode',$invMaster['segment'])
                                         ->where('isActive', 1)
                                         ->where('isDeleted', 0)
-                                        ->where('companySystemID', $compId)
                                         ->first();
                                     if(!$segment){
                                         $headerDataError[] = [
@@ -198,7 +199,26 @@ class SupplierInvoiceCreation implements ShouldQueue
                                             'message' => 'Segment not found'
                                         ];
                                     } else {
-                                        $invMaster['serviceLineSystemID'] = $segment['serviceLineSystemID'];
+                                        if($segment->approved_yn == 0) {
+                                            $validationError[] = [
+                                                'field' => "segment",
+                                                'message' => ["The segment is not approved."]
+                                            ];
+                                        } else {
+                                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
+                                                ->where('companySystemID', $compId)
+                                                ->where('isAssigned', 1)
+                                                ->first();
+
+                                            if(!$segmentAssigned){
+                                                $validationError[] = [
+                                                    'field' => "segment",
+                                                    'message' => ["The segment not assigned to selected company "]
+                                                ];
+                                            } else {
+                                                $invMaster['serviceLineSystemID'] = $segment['serviceLineSystemID'];
+                                            }
+                                        }
                                     }
                                 }
 
@@ -402,16 +422,35 @@ class SupplierInvoiceCreation implements ShouldQueue
                                                 'message' => 'Segment field is required'
                                             ];
                                         } else {
-                                            $detSegment = SegmentMaster::where('ServiceLineCode',$detail['segment'])
+                                            $detSegment = SegmentMaster::withoutGlobalScope('final_level')
+                                                ->where('ServiceLineCode',$detail['segment'])
                                                 ->where('isActive', 1)
                                                 ->where('isDeleted', 0)
-                                                ->where('companySystemID', $compId)
                                                 ->first();
                                             if(!$detSegment){
                                                 $detailsDataError[] = [
                                                     'field' => 'segment',
                                                     'message' => 'Segment not found'
                                                 ];
+                                            } else {
+                                                if($detSegment->approved_yn == 0) {
+                                                    $detailsDataError[] = [
+                                                        'field' => "segment",
+                                                        'message' => ["The segment is not approved"]
+                                                    ];
+                                                } else {
+                                                    $segmentAssigned = SegmentAssigned::where('serviceLineSystemID', $detSegment->serviceLineSystemID)
+                                                        ->where('companySystemID', $compId)
+                                                        ->where('isAssigned', 1)
+                                                        ->first();
+
+                                                    if (!$segmentAssigned) {
+                                                        $detailsDataError[] = [
+                                                            'field' => "segment",
+                                                            'message' => ["The segment not assigned to selected company "]
+                                                        ];
+                                                    }
+                                                }
                                             }
                                         }
 

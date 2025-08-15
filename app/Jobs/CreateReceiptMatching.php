@@ -730,8 +730,9 @@ class CreateReceiptMatching implements ShouldQueue
                 $invoice = CustomerInvoice::where('bookingInvCode', $bookingInvCode)
                                             ->where('companySystemID', $companySystemID)
                                             ->first();
-                $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->first();
                 if ($invoice) {
+                    $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->first();
+
                     // Check approval 
                     if ($invoice->approved != -1){
                         $err[] = 'Customer invoice not approved.';

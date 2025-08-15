@@ -51,6 +51,8 @@ use App\helper\CreateExcel;
 use App\Services\AuditLog\ChartOfAccountAuditService;
 use App\Traits\AuditLogsTrait;
 use App\Models\ReportTemplate;
+use App\Models\CashFlowTemplateDetail;
+
 /**
  * Class ChartOfAccountController
  * @package App\Http\Controllers\API
@@ -991,8 +993,19 @@ class ChartOfAccountAPIController extends AppBaseController
 
 
         if(isset($input['isCashFlowReport']) && $input['isCashFlowReport']){ 
-            $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
-            $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+            if(isset($input['logicType']) && $input['logicType'] == 3) 
+            {
+                $templateDetails = CashFlowTemplateDetail::where('cashFlowTemplateID', $input['templateMasterID'])->where('logicType',3)->where('id','!=',$input['id'])->pluck('id');
+                $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->whereIn('templateDetailID',$templateDetails)->pluck('glAutoID')->toArray();       
+                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+
+            }
+            else
+            {
+                $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+            }
+
         } else { 
             if (isset($input['templateMasterID'])) {
                 $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();

@@ -461,6 +461,7 @@ class JvMasterAPIController extends AppBaseController
             ->get();
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
