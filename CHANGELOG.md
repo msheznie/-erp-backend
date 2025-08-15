@@ -1,6 +1,45 @@
 # Changelog
 
 
+## [10.80.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.79.1...v10.80.0) (2025-08-15)
+
+
+### Features
+
+* budget planning template and department [GCP-9422] ([#8477](https://github.com/pbsgears/Gears_BackEnd/issues/8477)) ([6da68c8](https://github.com/pbsgears/Gears_BackEnd/commit/6da68c83b36ed427dbd80a436be662d3f9bf0aad))
+* **budget planning:** budget planning configuration changes [GCP-9427] ([#8511](https://github.com/pbsgears/Gears_BackEnd/issues/8511)) ([33a4796](https://github.com/pbsgears/Gears_BackEnd/commit/33a4796ae4a4adebe06a70080af6df804b769e12))
+* **budget planning:** Budget planning workflow configuration changes [GCP-9426] ([#8486](https://github.com/pbsgears/Gears_BackEnd/issues/8486)) ([ad35322](https://github.com/pbsgears/Gears_BackEnd/commit/ad35322634757b1c9a435bdfc9cbae20ba52b354))
+* **common:** Budget Transfer Print Option  [GCP-8987] ([#8474](https://github.com/pbsgears/Gears_BackEnd/issues/8474)) ([65f500c](https://github.com/pbsgears/Gears_BackEnd/commit/65f500c2c42e101f6294ac3f28eb9a069a5a2858))
+* **common:** Load approved & assigned segments to reports [GCP-8772] ([#8479](https://github.com/pbsgears/Gears_BackEnd/issues/8479)) ([546049b](https://github.com/pbsgears/Gears_BackEnd/commit/546049b20eb22133b401d7c48647ee55a5c635a4))
+* **common:** Segment  logic changes  Transaction level [GCP-8771] ([#8471](https://github.com/pbsgears/Gears_BackEnd/issues/8471)) ([ee732f0](https://github.com/pbsgears/Gears_BackEnd/commit/ee732f08eab738ad82fd2a3ab3159d73cb3d5d7e))
+* **common:** Segment filter logic changes added [GCP-8775] ([#8470](https://github.com/pbsgears/Gears_BackEnd/issues/8470)) ([84b9ee8](https://github.com/pbsgears/Gears_BackEnd/commit/84b9ee8edcca64d52eb6cb65003ed327eede3ad3))
+* **configuration:** attachment type configuration [GCP-9549] ([#8481](https://github.com/pbsgears/Gears_BackEnd/issues/8481)) ([9f7f7da](https://github.com/pbsgears/Gears_BackEnd/commit/9f7f7da7011056c456695d3dc7151959b89d2a9d))
+* **general ledger:** Cashflow statement Report Modification [GCP-9927] ([#8525](https://github.com/pbsgears/Gears_BackEnd/issues/8525)) ([bdc9e4c](https://github.com/pbsgears/Gears_BackEnd/commit/bdc9e4cbcfe489bf80d5ca01215c92edd841ee94))
+* **general ledger:** financial report addional column added [GCP-9358] ([#8509](https://github.com/pbsgears/Gears_BackEnd/issues/8509)) ([f145c3a](https://github.com/pbsgears/Gears_BackEnd/commit/f145c3af7d92d705bce17fa8732c381c85a10200))
+* **general ledger:** TAX deductibility Report [GCP-9475] ([#8476](https://github.com/pbsgears/Gears_BackEnd/issues/8476)) ([2dfe55a](https://github.com/pbsgears/Gears_BackEnd/commit/2dfe55a4245dc5a513eb79f90c11f217b0e04b3b))
+* **genereal ledger:** Showing arabic letters in Export PDF in reports [GCP-9384] ([#8467](https://github.com/pbsgears/Gears_BackEnd/issues/8467)) ([901f7ed](https://github.com/pbsgears/Gears_BackEnd/commit/901f7ed6929ab53a9e6fd599dbc4105abcb96e29))
+* **inventory:** Added a validation to material request and material issue [GCP-8820] ([#8502](https://github.com/pbsgears/Gears_BackEnd/issues/8502)) ([d59ae6a](https://github.com/pbsgears/Gears_BackEnd/commit/d59ae6a98bb01ee1e91c57ab6d9e0ccd4443b3e2))
+* **procurement:** added new filters to po analysis report [GCP-9078] ([#8460](https://github.com/pbsgears/Gears_BackEnd/issues/8460)) ([2cfe3f1](https://github.com/pbsgears/Gears_BackEnd/commit/2cfe3f12727793dbda26619e2bddd3ccd728aab6))
+* **procurement:** Validate and restrict decimal quantity in MR to PR conversion [GCP-8823] ([#8505](https://github.com/pbsgears/Gears_BackEnd/issues/8505)) ([30bdd3d](https://github.com/pbsgears/Gears_BackEnd/commit/30bdd3ddf4ea00415c4a2bfd80a4971c83527a4a))
+* **system admin:** Common changes in segment [GCP-9343] ([#8457](https://github.com/pbsgears/Gears_BackEnd/issues/8457)) ([eae5b7a](https://github.com/pbsgears/Gears_BackEnd/commit/eae5b7a7188c36dafe50695ac3e0202dff21ca15))
+* **system admin:** Common changes in segment [GCP-9343] ([#8466](https://github.com/pbsgears/Gears_BackEnd/issues/8466)) ([6f6167f](https://github.com/pbsgears/Gears_BackEnd/commit/6f6167fb957d1513ed41402931bc6ce02bac4a75))
+* **system admin:** Segment validation & logic changes in API [GCP-8776] ([#8488](https://github.com/pbsgears/Gears_BackEnd/issues/8488)) ([b359fc7](https://github.com/pbsgears/Gears_BackEnd/commit/b359fc749739dae3395da445a714556e01e51d40))
+* **treasury management:** b2b intergration template changes [GCP-9077] ([#8478](https://github.com/pbsgears/Gears_BackEnd/issues/8478)) ([01bfb60](https://github.com/pbsgears/Gears_BackEnd/commit/01bfb60549db4aecc0f7c7d717883bcb021bf8d6))
+* **treasury management:** Bank Reconciliation common changes [GCP-9345] ([#8461](https://github.com/pbsgears/Gears_BackEnd/issues/8461)) ([ffcf5eb](https://github.com/pbsgears/Gears_BackEnd/commit/ffcf5ebb66aea9842932d283fc8375d51839da5a))
+* **treasury management:** Bank Reconciliation workbook review and generation [GCP-8768] ([#8529](https://github.com/pbsgears/Gears_BackEnd/issues/8529)) ([198d737](https://github.com/pbsgears/Gears_BackEnd/commit/198d7370b9a95ee081e692aefbe7b8a0e2f3d4a4))
+* **treasury management:** Logic added for matching unmatched statements [GCP-8766] ([#8484](https://github.com/pbsgears/Gears_BackEnd/issues/8484)) ([9d82ae3](https://github.com/pbsgears/Gears_BackEnd/commit/9d82ae3c5804231afa970a825cf2d74d6832f356))
+
+
+### Bug Fixes
+
+* **common:** Delete function not clearing details [GCP-8324] ([#8482](https://github.com/pbsgears/Gears_BackEnd/issues/8482)) ([8947df5](https://github.com/pbsgears/Gears_BackEnd/commit/8947df5cb0457554ab69e968c4da295c51cfdbbb))
+* **common:** Fixed Budget widget loading full amount when partially pulled [GCP-8769] ([#8528](https://github.com/pbsgears/Gears_BackEnd/issues/8528)) ([2ed0858](https://github.com/pbsgears/Gears_BackEnd/commit/2ed0858004a916573fc4548bccef07dad11abf4c))
+* **common:** Fixed X segemnt not loading in reports[GCP-10824]] ([#8585](https://github.com/pbsgears/Gears_BackEnd/issues/8585)) ([f509d3c](https://github.com/pbsgears/Gears_BackEnd/commit/f509d3c7d01d2ebdf8e9f80a1a107d35379bacc7))
+* **general ledger:** Balance sheet export issue fixed[GCP-9782] ([#8557](https://github.com/pbsgears/Gears_BackEnd/issues/8557)) ([2406163](https://github.com/pbsgears/Gears_BackEnd/commit/2406163da2f453c1fb5e15a9ffac27674c3231dc))
+* **procurement:** fixed netamount issue on po items [GCP-8980] ([#8468](https://github.com/pbsgears/Gears_BackEnd/issues/8468)) ([5305bf4](https://github.com/pbsgears/Gears_BackEnd/commit/5305bf44a6d79afa4b2021e2fa5fe95668b2e72f))
+* **treasury management:** Fixed bank reconciliation auto match doesn't match exact date [GCP-9443] ([#8463](https://github.com/pbsgears/Gears_BackEnd/issues/8463)) ([2172598](https://github.com/pbsgears/Gears_BackEnd/commit/217259840171f7f248acb143572665b2e7771b1b))
+* **treasury management:** Handled error exception in bank reconciliation [GCP-9166] ([#8508](https://github.com/pbsgears/Gears_BackEnd/issues/8508)) ([4f2a492](https://github.com/pbsgears/Gears_BackEnd/commit/4f2a492f1b32b9e4bca6fb77e0a12bd6b8ada264))
+
 ## [10.79.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.79.0...v10.79.1) (2025-08-13)
 
 
