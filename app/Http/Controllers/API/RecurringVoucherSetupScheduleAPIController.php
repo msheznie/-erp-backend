@@ -174,9 +174,11 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
     }
 
     public function dateCalculate($oldDate,$newDate){
-        $tempDate = explode("-",explode(" ",$oldDate)[0]);
-        $tempDate[2] = explode("/",$newDate)[1];
-        return implode("-",$tempDate);
+        $new = Carbon::createFromFormat('m/d/Y', $newDate);
+        $oldDate->day = $new->day;
+        $oldDate->month = $new->month;
+
+        return $oldDate->format('Y-m-d');
     }
 
     /**
