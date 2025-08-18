@@ -27,7 +27,8 @@ class DepartmentBudgetPlanningRepository extends BaseRepository
         'yearID',
         'typeID',
         'submissionDate',
-        'workflowID'
+        'workflowID',
+        'workStatus'
     ];
 
     /**

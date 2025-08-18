@@ -50,6 +50,7 @@ class CompanyDepartmentEmployeeRepository extends BaseRepository
     public function getDepartmentEmployees($departmentSystemID)
     {
         return $this->model()::where('departmentSystemID', $departmentSystemID)
+                              ->where('isHOD', 0)
                               ->with(['employee', 'department'])
                               ->get();
     }
