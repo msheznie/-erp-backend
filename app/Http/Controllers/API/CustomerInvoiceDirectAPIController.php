@@ -4061,7 +4061,7 @@ WHERE
     public function amendCustomerInvoiceReview(Request $request)
     {
         $input = $request->all();
-
+            
         $id = $input['custInvoiceDirectAutoID'];
 
         $employee = \Helper::getEmployeeInfo();
@@ -4132,8 +4132,6 @@ WHERE
             if ($checkForInventoryItems) {
                 return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
             }
-        }elseif ($masterData->isPerforma == 4){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
         }elseif ($masterData->isPerforma == 5){
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
         }
@@ -4145,10 +4143,8 @@ WHERE
         try {
 
              $amendCI = $this->customerInvoiceService->amendCustomerInvoice($input,$id,$masterData);
-
              if(isset($amendCI['status']) && $amendCI['status'] == false){
-                $errorMessage = "Customer Invoice " . $amendCI['message'];
-                return $this->sendError($errorMessage);
+                return $this->sendError($amendCI['message']);
             }
              $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
              $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';
