@@ -82,7 +82,7 @@ Route::group([], function() {
     Route::get('getItemsForOpenRequest', 'PurchaseRequestAPIController@getItemsForOpenRequest')->name('Get items for open request');
 
     Route::post('getAttachmentPreview', 'DocumentAttachmentsAPIController@getAttachmentPreview')->name('Get attachment preview data');
-
+    Route::get('notifyPRFinancialYear', 'PurchaseRequestAPIController@notifyPRFinancialYear')->name('Notify purchase request financial year');
 });
 
 //Report Open Requests

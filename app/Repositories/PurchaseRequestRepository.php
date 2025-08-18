@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\BudgetMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequest;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
@@ -358,5 +360,40 @@ class PurchaseRequestRepository extends BaseRepository
         $this->data[] = $totalRow;
             $this->data[] = [];
          }
+    }
+    public function notifyPRFinancialYear($companySystemID)
+    {
+        try{
+            $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companySystemID);
+            if(empty($currentFinancialYear)){
+                return [
+                    'success' => true,
+                    'message' => 'No current active financial year found.',
+                    'data' => ['notifyYN' => false]
+                ];
+            }
+            $budgetMaster = BudgetMaster::getBudgetMasterByFYear($currentFinancialYear->companyFinanceYearID, $companySystemID);
+            if(empty($budgetMaster)){
+                return [
+                    'success' => true,
+                    'message' => 'No budget found for the current financial year.',
+                    'data' => ['notifyYN' => false]
+                ];
+            }
+            $yearStartDate = $currentFinancialYear->startDate;
+            $yearEndDate = $currentFinancialYear->endDate;
+            $year = (int) date('Y', strtotime($yearStartDate));
+            $message = "<span>Current active financial period: <strong>{$yearStartDate}</strong> - <strong>{$yearEndDate}</strong></span>
+                        <br> This will be selected as the budget year <strong> {$year} </strong> <br><br>
+                        <span>Do you wish to proceed ?</span>";
+            return [
+                'success' => true,
+                'message' => $message,
+                'data' => ['notifyYN' => true]
+            ];
+
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+        }
     }
 }

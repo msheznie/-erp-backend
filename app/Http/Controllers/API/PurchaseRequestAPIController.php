@@ -3658,4 +3658,23 @@ class PurchaseRequestAPIController extends AppBaseController
 
             return $purchaseRequests;
     }
+    public function notifyPRFinancialYear(Request $request)
+    {
+        $validated = $request->validate([
+            'companySystemID'   => 'required|integer',
+        ], [
+            'companySystemID.required'   => 'Company System ID is required.'
+        ]);
+        $companySystemID   = $validated['companySystemID'];
+
+        try{
+            $notifyPR = $this->purchaseRequestRepository->notifyPRFinancialYear($companySystemID);
+            if(!$notifyPR['success']){
+                return $this->sendError($notifyPR['message'] ?? 'An error occurred while retrieving notification message');
+            }
+            return $this->sendResponse($notifyPR['data'], $notifyPR['message']);
+        } catch (\Exception $ex) {
+            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+        }
+    }
 }
