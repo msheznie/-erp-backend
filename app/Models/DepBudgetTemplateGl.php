@@ -60,4 +60,12 @@ class DepBudgetTemplateGl extends Model
     {
         return $this->belongsTo(\App\Models\ChartOfAccount::class, 'chartOfAccountSystemID', 'chartOfAccountSystemID');
     }
+
+    /**
+     * Relationship to GeneralLedger (alias for chartOfAccount)
+     */
+    public function generalLedger()
+    {
+        return $this->belongsTo(\App\Models\ChartOfAccount::class, 'chartOfAccountSystemID', 'chartOfAccountSystemID');
+    }
 } 

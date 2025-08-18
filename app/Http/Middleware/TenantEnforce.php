@@ -100,7 +100,8 @@ class TenantEnforce
             'api/v1/exportTransactionsRecord',
             'api/v1/validateWorkbookCreation',
             'api/v1/rematchWorkBook',
-            'api/v1/generateBankReconciliation'
+            'api/v1/generateBankReconciliation',
+            'api/v1/updateBudgetPlanningStatus'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

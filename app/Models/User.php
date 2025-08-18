@@ -94,4 +94,12 @@ class User extends Authenticatable
     {
         return $this->hasOne('App\Models\UserType','id','userType');
     }
+
+    /**
+     * Get the comments created by this user.
+     */
+    public function comments()
+    {
+        return $this->hasMany(\App\Models\BudgetTemplateComment::class, 'user_id', 'id');
+    }
 }

@@ -162,5 +162,11 @@ class CompanyBudgetPlanning extends Model
         return $this->belongsTo(CompanyFinanceYear::class, 'yearID', 'companyFinanceYearID');
     }
 
-    
+    public function company() {
+        return $this->belongsTo(Company::class, 'companySystemID', 'companySystemID');
+    }
+
+    public function workflow() {
+        return $this->belongsTo(WorkflowConfiguration::class, 'workflowID', 'id');
+    }
 }
