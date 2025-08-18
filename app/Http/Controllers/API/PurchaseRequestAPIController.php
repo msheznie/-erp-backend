@@ -2144,6 +2144,7 @@ class PurchaseRequestAPIController extends AppBaseController
             } else {
                 $input['budgetBlockYN'] = 0;
             }
+            $input['refferedBackYN'] = 0;
         }
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
