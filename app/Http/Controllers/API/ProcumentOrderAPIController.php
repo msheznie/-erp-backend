@@ -156,6 +156,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -5438,6 +5439,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ExportDetailedPoList::dispatch($db, $request->all());
 
             return $this->sendResponse('', 'PO Detailed report Export in progress, you will be notified once ready !!');
+        }
+
+        $validator = \Validator::make($input, [
+            'documentId' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
         }
 
         $supplierID = $request['supplierID'];
