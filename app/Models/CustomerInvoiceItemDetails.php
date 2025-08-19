@@ -306,7 +306,8 @@ class CustomerInvoiceItemDetails extends Model
         'vatMasterCategoryID',
         'vatSubCategoryID',
         'timestamp',
-        'part_no'
+        'part_no',
+        'userQty'
     ];
 
     /**
@@ -377,7 +378,8 @@ class CustomerInvoiceItemDetails extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
-        'VATApplicableOn' => 'integer'
+        'VATApplicableOn' => 'integer',
+        'userQty' => 'integer'
     ];
 
     /**

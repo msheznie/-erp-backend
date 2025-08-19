@@ -1358,7 +1358,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }else if($salesType == 2){
                 $categories = [2];
             }else if($salesType == 3){
-                $categories = [1,2,4];
+                $categories = [2];
             }
         }else{
             if($allowOtherCategory == 1){
