@@ -353,7 +353,8 @@ class CustomerInvoiceItemDetailsRefferedback extends Model
         'quotationDetailsID',
         'timesReferred',
         'timestamp',
-        'part_no'
+        'part_no',
+        'userQty'
     ];
 
     /**
@@ -411,7 +412,8 @@ class CustomerInvoiceItemDetailsRefferedback extends Model
         'quotationMasterID' => 'integer',
         'quotationDetailsID' => 'integer',
         'timesReferred' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'userQty' => 'integer'
     ];
 
     /**

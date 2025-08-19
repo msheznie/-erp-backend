@@ -841,6 +841,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
+        $salesType = $customerInvoiceDirect->salesType;
 
         if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
@@ -1232,7 +1233,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {
-            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            if($salesType == 3){
+                $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin * userQty),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal * userQty),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt * userQty),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            }else{
+                $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            }
         } else {
             $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
         }
@@ -1412,6 +1417,22 @@ class CustomerInvoiceAPIService extends AppBaseController
                             ];
                         }
 
+                        if($salesType == 3){
+                            $checkUserQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                                ->where(function ($q) {
+                                    $q->where('userQty', '<=', 0)
+                                        ->orWhereNull('userQty');
+                                })
+                                ->count();
+                            if($checkUserQuantity > 0){
+                                return [
+                                    'status' => false,
+                                    'code' => 500,
+                                    'message' => 'Every Item should have at least one minimum User Qty Requested'
+                                ];
+                            }
+                        }
+
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
                         $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
@@ -1493,8 +1514,11 @@ class CustomerInvoiceAPIService extends AppBaseController
                             } else {
                                 $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
                             }
-
-                            $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+                            if($salesType == 3){
+                                $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure * $updateItem->userQty;
+                            }else{
+                                $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+                            }
 
                             /*round to 7 decimal*/
 
@@ -2502,7 +2526,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
-        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        if($is_pref == 2 && $customerInvoiceDirect->salesType == 3){
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'] * $input['userQty'];
+        }else{
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        }
 
         /*round to 7 decimals*/
         $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
@@ -3154,8 +3182,13 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         $input['issueCostLocalTotal'] = $customerInvoiceItemDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $customerInvoiceItemDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
-        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
+
+        if($customerDirectInvoice->isPerforma == 2 && $customerDirectInvoice->salesType == 3){
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'] * $input['userQty'];
+        }else{
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        }
 
         if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
             $input['qtyIssued'] = 0;
@@ -3217,7 +3250,11 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         foreach ($invoiceDetails as $key => $value) {
             if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
-                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
+                if($invoice->salesType == 3 && isset($value->userQty) && $value->userQty != null){
+                    $totalVATAmount += $value->qtyIssued * $value->VATAmount * $value->userQty;
+                }else{
+                    $totalVATAmount += $value->qtyIssued * $value->VATAmount;
+                }
             } else {
                 $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
             }
