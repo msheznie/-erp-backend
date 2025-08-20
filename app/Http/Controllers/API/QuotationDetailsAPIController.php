@@ -678,7 +678,7 @@ class QuotationDetailsAPIController extends AppBaseController
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,quotationDetailsID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY customerItemDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,quotationDetailsID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY quotationDetailsID ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
