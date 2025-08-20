@@ -33,6 +33,7 @@ use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -719,7 +720,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         foreach ($items as $item) {
             /** @var Budjetdetails $budgetDetail */
-            $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID']);
+            $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID'] ?? null);
 
             if (empty($budgetDetail)) {
                 return $this->sendError('Budget details not found');
