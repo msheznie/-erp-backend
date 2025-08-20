@@ -591,5 +591,15 @@ return [
     "from" => "From",
     "to" => "To",
     'template' => 'Template',
-    "adjustment" => "Adjustment"
+    "adjustment" => "Adjustment",
+    "amount_in_words" => "Amount in words",
+    'swift_code' => "SWIFT Code",
+    'quantity' => "Quantity",
+    'unit_price' => "Unit Price",
+    'tax' => "Tax",
+    'bank_details' => "Bank Details",
+    'prepared_by' => "Prepared By",
+    'vatin' => "VATIN",
+    'name_of_customer' => "Name of Customer",
+    "taxable_rate" => "Taxable Rate",
 ];
