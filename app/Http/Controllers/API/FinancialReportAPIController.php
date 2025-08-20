@@ -1448,7 +1448,9 @@ class FinancialReportAPIController extends AppBaseController
                             $detailsArray = array();
                             foreach (ReportTemplateDetails::find($val->detID)->gl_codes as $glCodeData)
                             {
-                                $detailsArray[] = $glCodeData->subcategory->detID;
+                                if ($glCodeData->subcategory) {
+                                    $detailsArray[] = $glCodeData->subcategory->detID;
+                                }
                             }
 
                             $outputData = $outputDetail->whereIn('templateDetailID', $detailsArray)->sortBy('sortOrder')->values();
