@@ -602,4 +602,13 @@ return [
     'vatin' => "VATIN",
     'name_of_customer' => "Name of Customer",
     "taxable_rate" => "Taxable Rate",
+
+    //segment Master
+    'segment_not_found' => 'Segment not found',
+    'segment_code_exists' => 'Segment code already exists',
+    'segment_used' => 'This segment is used in some documents. Therefore, Final level status cannot be changed',
+    'segment_used_in_departments' => 'Cannot change final level — segment is already used in departments',
+    'cannot_change_parent' => 'Parent type cannot be changed, as it has sub levels',
+    'public_segment_configured' => 'Public segment is configured already! (:code - :desc)',
+    'segment_updated' => 'Segment master updated successfully'
 ];
