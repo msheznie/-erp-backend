@@ -417,6 +417,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->rawColumns(['name','description','Actions'])
             ->with('orderCondition', $sort)
             ->make(true);
         
@@ -519,10 +520,15 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
 
+       
         $items = ChartOfAccountsAssigned::with(['controlAccount', 'accountType', 'allocation'])
                 ->where('CompanySystemID', $input['companyID'])
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
+
+        if (isset($input['catId']) && $input['catId'] === "true") {
+                $items = $items->where('catogaryBLorPLID', 2);
+        }
 
         $templateDetails = FinalReturnIncomeTemplateLinks::ofTemplate($input['masterId'])
                 ->where('templateDetailID', $input['detailId'])->pluck('glAutoID')->toArray();
