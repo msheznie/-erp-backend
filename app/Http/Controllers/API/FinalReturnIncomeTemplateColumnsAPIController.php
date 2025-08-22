@@ -8,6 +8,7 @@ use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Repositories\FinalReturnIncomeTemplateColumnsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -112,13 +113,38 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateFinalReturnIncomeTemplateColumnsAPIRequest $request)
+    public function store(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+               'description' => 'required|string|max:200',
+               'colType' => 'required',
+               'sortOrder' => 'required'
+            ]);
 
-        $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->create($input);
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+            $input['templateMasterID'] = $input['templateMasterID'];
+            $input['type'] = $input['colType'];
+            $input['isHide'] = 0;
+            $input['isDefault'] = 0;
+            $input['companySystemID'] = $input['companySystemID'];
+            $input['createdPCID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
-        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'Final Return Income Template Columns saved successfully');
+             $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->create($input);
+           
+            DB::commit();
+              return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'Final Return Income Template Columns saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     /**
@@ -293,6 +319,15 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
 
         $finalReturnIncomeTemplateColumns->delete();
 
-        return $this->sendSuccess('Final Return Income Template Columns deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateColumns,'Final Return Income Template Columns deleted successfully');
+    }
+
+    public function templateColumnsLink(Request $request) {
+        $templateColumns = $this->finalReturnIncomeTemplateColumnsRepository->orderBy('sortOrder', 'asc')->findWhere([
+                                            'templateMasterID'  => $request->templateID,
+                                            'companySystemID'   => $request->companyID,
+                                        ]);
+
+        return $this->sendResponse($templateColumns->toArray(), 'Final Return Income Template Columns retrieved successfully');
     }
 }

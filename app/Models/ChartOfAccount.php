@@ -254,9 +254,11 @@ class ChartOfAccount extends Model
 
     public function scopePLaccounts($query, $companySystemID)
     {
-        return $query->where('catogaryBLorPLID', 2)
-                    ->where('isApproved', 1)
-                    ->where('isActive', 1)
-                    ->where('primaryCompanySystemID', $companySystemID);
+         return $query->with(['chartofaccount_assigned' => function ($q) use ($companySystemID) {
+                        $q->where('companySystemID', $companySystemID);
+                    }])
+                 ->where('catogaryBLorPLID', 2)
+                 ->where('isApproved', 1)
+                 ->where('isActive', 1);
     }
 }
