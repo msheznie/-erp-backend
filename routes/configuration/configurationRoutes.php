@@ -235,11 +235,13 @@ Route::group([], function() {
      Route::resource('templateDetail', 'FinalReturnIncomeTemplateDetailsAPIController');
      Route::resource('templateLinks', 'FinalReturnIncomeTemplateLinksAPIController');
      Route::resource('templateRaws', 'FinalReturnIncomeTemplateDefaultsAPIController');
+     Route::resource('finalReportTemplateColumn', 'FinalReturnIncomeTemplateColumnsAPIController');
 
 
      Route::post('getTemplateList', 'FinalReturnIncomeTemplateAPIController@getTemplateList');
      Route::get('chartOfAccountsTemplate', 'FinalReturnIncomeTemplateAPIController@chartOfAccountsTemplate');
      Route::get('getTemplateDetail/{id}', 'FinalReturnIncomeTemplateDetailsAPIController@getReportTemplateDetail')->name("Get report template detail by report template id");
      Route::post('templateDetailRaw', 'FinalReturnIncomeTemplateDetailsAPIController@templateDetailRaw');
+     Route::get('templateColumnsLink', 'FinalReturnIncomeTemplateColumnsAPIController@templateColumnsLink');
 
     });

@@ -143,6 +143,7 @@ class FinalReturnIncomeTemplateColumns extends Model
 {
 
     public $table = 'final_return_income_template_columns';
+    public $timestamps = false;
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -153,6 +154,7 @@ class FinalReturnIncomeTemplateColumns extends Model
     public $fillable = [
         'templateMasterID',
         'description',
+        'type',
         'sortOrder',
         'isHide',
         'isDefault',
@@ -179,6 +181,7 @@ class FinalReturnIncomeTemplateColumns extends Model
         'id' => 'integer',
         'templateMasterID' => 'integer',
         'description' => 'string',
+        'type' => 'integer',
         'sortOrder' => 'integer',
         'isHide' => 'boolean',
         'isDefault' => 'boolean',
@@ -204,6 +207,7 @@ class FinalReturnIncomeTemplateColumns extends Model
     public static $rules = [
         'templateMasterID' => 'required',
         'description' => 'required',
+        'type' => 'required',
         'sortOrder' => 'required',
         'isHide' => 'required'
     ];

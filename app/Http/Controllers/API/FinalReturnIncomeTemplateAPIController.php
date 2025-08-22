@@ -356,9 +356,24 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             return $this->sendError('Final Return Income Template not found');
         }
 
+        FinalReturnIncomeTemplateDetails::where(
+        ['templateMasterID' => $finalReturnIncomeTemplate->id,
+        'companySystemID' => $finalReturnIncomeTemplate->companySystemID])
+        ->delete();
+
+        FinalReturnIncomeTemplateLinks::where(
+        ['templateMasterID' => $finalReturnIncomeTemplate->id,
+        'companySystemID' => $finalReturnIncomeTemplate->companySystemID])
+        ->delete();
+
+        FinalReturnIncomeTemplateColumns::where(
+        ['templateMasterID' => $finalReturnIncomeTemplate->id,
+        'companySystemID' => $finalReturnIncomeTemplate->companySystemID])
+        ->delete();
+
         $finalReturnIncomeTemplate->delete();
 
-        return $this->sendSuccess('Final Return Income Template deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplate,'Final Return Income Template deleted successfully');
     }
 
     public function getTemplateList(Request $request) {

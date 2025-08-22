@@ -333,7 +333,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         return $this->sendSuccess('Final Return Income Template Details deleted successfully');
     }
 
-    public function getReportTemplateDetail($templateId) {
+    public function getReportTemplateDetail($templateId, Request $request) {
         $templateDetails = FinalReturnIncomeTemplateDetails::selectRaw('*,0 as expanded')
             ->with([
                 'raws' => function ($q) {
@@ -394,10 +394,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 ->orderBy('sortOrder')
                 ->get();
 
+            $companySystemID = $request->query('companySystemID');
+            $localCurrency = \Helper::companyCurrency($companySystemID);
 
             $output = [
                 'templateDetails' => $templateDetails->toArray(), 
-                'columns' => $templateColumns->toArray()
+                'columns' => $templateColumns->toArray(),
+                'localCurrency' => $localCurrency->localcurrency->CurrencyCode
             ];
 
         return $this->sendResponse($output, 'Final Return Income Template Details retrieved successfully');
