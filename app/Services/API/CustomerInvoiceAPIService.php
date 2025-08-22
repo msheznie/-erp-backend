@@ -58,6 +58,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                     $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
 
                     if($invoiceType == 2) {
+                        // Validate Sales Type
+                        if (isset($request['salesType'])) {
+                            if(!in_array($request['salesType'], [1,2,3])) {
+                                $errorData[] = [
+                                    'field' => "salesType",
+                                    'message' => ["Invalid value selected for Sales Type"]
+                                ];
+                            }
+                        } else {
+                            $errorData[] = [
+                                'field' => "segment_code",
+                                'message' => ["The sales type is mandatory"]
+                            ];
+                        }
+
                         // Validate Segment Code
                         if (isset($request['segment_code'])) {
                             $segment = SegmentMaster::withoutGlobalScope('final_level')
@@ -348,6 +363,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'data' => [
                     'bookingDate' => $documentDate->toDateString(),
                     'comments' => $request['comment'],
+                    'salesType' => $request['salesType'],
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
                     'companyID' => $request['company_id'],
@@ -450,6 +466,32 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
 
             if($masterData['invoice_type'] == 2) {
+                // Validate user qty
+                if($masterData['salesType'] == 3){
+                    if(isset($request['userQty'])){
+                        if(gettype($request['userQty']) != 'string'){
+                            if($request['userQty'] < 0){
+                                $errorData[] = [
+                                    'field' => "userQty",
+                                    'message' => ["The quantity field value entered by the user should be a positive number"]
+                                ];
+                            }
+                        } else {
+                            $errorData[] = [
+                                'field' => "userQty",
+                                'message' => ["The quantity field value entered by the user should be a positive number"]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "userQty",
+                            'message' => ["User Qty field is required"]
+                        ];
+                    }
+                }
+
+
                 // Validate Service Code
                 if(isset($request['service_code'])){
                     $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
@@ -463,6 +505,18 @@ class CustomerInvoiceAPIService extends AppBaseController
                             'field' => "service_code",
                             'message' => ["Service Code Not Found"]
                         ];
+                    } else {
+                        if($masterData['salesType'] == 1 && $serviceCode->financeCategoryMaster == 2){
+                            $errorData[] = [
+                                'field' => "service_code",
+                                'message' => ["Item category should be inventory or non-inventory"]
+                            ];
+                        } else if(($masterData['salesType'] == 2 || $masterData['salesType'] == 3) && $serviceCode->financeCategoryMaster != 2){
+                            $errorData[] = [
+                                'field' => "service_code",
+                                'message' => ["Item category should be service "]
+                            ];
+                        }
                     }
                 }
                 else {
@@ -660,6 +714,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     $returnData['data']['qtyIssued'] = $request['quantity'];
                     $returnData['data']['discountAmount'] = $request['discount_amount'] ?? 0;
                     $returnData['data']['marginPercentage'] = $request['margin_percentage'] ?? 0;
+                    $returnData['data']['userQty'] = $request['userQty'] ?? 0;
                 }
             }
         }
