@@ -1007,7 +1007,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 ];
             }
             else{
-                return $this->sendError($approve["message"]);
+                return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
             }
         } else {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
