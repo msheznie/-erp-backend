@@ -93,3 +93,10 @@ Route::post('budgetDetTemplateEntryData/byEntryIds', 'BudgetDetTemplateEntryData
 Route::apiResource('budget-template-comments', 'BudgetTemplateCommentAPIController');
 Route::get('budget-template-comments-by-detail/{budgetDetailId}', 'BudgetTemplateCommentAPIController@getByBudgetDetail');
 Route::get('budget-template-comment-replies/{commentId}', 'BudgetTemplateCommentAPIController@getReplies');
+
+
+
+//Budget Control Routes
+Route::post('getBudgetControl', 'BudgetControlInfoAPIController@getBudgetControl')->name("Get budget control");
+Route::resource('budget_control_infos', 'BudgetControlInfoAPIController');
+Route::resource('budget_control_links', 'BudgetControlLinkAPIController');

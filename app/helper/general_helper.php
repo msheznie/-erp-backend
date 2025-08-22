@@ -4766,6 +4766,16 @@ class Helper
                                         return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
                                     }
                                 } else {
+                                    if ($budgetCheck['status'] && isset($budgetCheck['warning']) && $budgetCheck['warning'] && isset($input['isBudgetCheck']) && $input['isBudgetCheck']) {
+                                            return [
+                                                'success' => false,
+                                                'code' => 500,
+                                                'message' => 'Some GL codes are not assigned for budget with relevant segment and finance period , Are you sure you want to approve this document?',
+                                                'type' => 'budgetDefined',
+                                            ];
+                                    }
+
+
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         // update PR master table
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
