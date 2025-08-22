@@ -76,13 +76,12 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
              ->where('companySystemID', $details->companySystemID)
             ->pluck('rawId');
 
-        $usedRaws->push(1);
         $usedRaws = collect($usedRaws)->merge($usedLinks)->unique()->toArray();
 
           $this->finalReturnIncomeTemplateDefaultsRepository->scopeQuery(function($query) use ($input, $usedRaws) {
             if (isset($input['type']) && isset($input['itemType']) 
                 && $input['type'] == 3 && $input['itemType'] == 3) {
-                
+            
                 return $query->whereIn('type', [1, 2])
                             ->where('sectionType', 1)
                             ->whereNotIn('id', $usedRaws);
@@ -104,8 +103,23 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
                             ->whereNotIn('id', $usedRaws);
             }
 
+            if (isset($input['type']) && $input['type'] == 3 && $input['itemType'] == 2) {
+                $usedRaws = [20,21,34];
+                return $query->whereIn('type', [1,2])
+                 ->whereNotIn('id', $usedRaws);
+            }
+
+            if (isset($input['type']) && $input['itemType'] == 2) {
+                $usedRaws = [20,21,34];
+                return $query->where('type', $input['type'])
+                 ->whereNotIn('id', $usedRaws);
+            }
+
             if (isset($input['type'])) {
-                return $query->where('type', $input['type'])->whereNotIn('id', $usedRaws);
+                $usedRaws[] = 1;
+
+                return $query->where('type', $input['type'])
+                 ->whereNotIn('id', $usedRaws);
             }
 
             return $query;
