@@ -328,9 +328,23 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
             return $this->sendError('Final Return Income Template Details not found');
         }
 
+        $templateMasterID = $finalReturnIncomeTemplateDetails->templateMasterID;
+        $masterID         = $finalReturnIncomeTemplateDetails->masterID;
+        $companySystemID  = $finalReturnIncomeTemplateDetails->companySystemID;
+
         $finalReturnIncomeTemplateDetails->delete();
 
-        return $this->sendSuccess('Final Return Income Template Details deleted successfully');
+        $records = FinalReturnIncomeTemplateDetails::where('templateMasterID', $templateMasterID)
+            ->where('masterID', $masterID)
+            ->where('companySystemID', $companySystemID)
+            ->orderBy('sortOrder')
+            ->get();
+
+        foreach ($records as $index => $record) {
+            $record->update(['sortOrder' => $index + 1]);
+        }
+
+        return $this->sendResponse($finalReturnIncomeTemplateDetails, 'Final Return Income Template Details deleted successfully');
     }
 
     public function getReportTemplateDetail($templateId, Request $request) {
@@ -408,7 +422,14 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
     public function templateDetailRaw(Request $request) {
         $input = $request->all();
-    
+
+        $maxSortOrder = FinalReturnIncomeTemplateDetails::where('templateMasterID', $input['templateMasterID'])
+            ->where('masterID', $input['masterID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->max('sortOrder');
+
+        $maxSortOrder = $maxSortOrder ? $maxSortOrder : 0;
+
         DB::beginTransaction();
         try {
            if ($input['itemType'] == 2 || 
@@ -431,18 +452,19 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 }
             } else {
                 foreach ($input['rawID'] as $key => $rawTemplate) {
+                    $maxSortOrder++;
                     $detailData = [
                         'templateMasterID'      => $input['templateMasterID'],
                         'masterID'              => $input['masterID'],
                         'itemType'              => 3,
                         'sectionType'           => $input['sectionType'],
                         'description'           => $rawTemplate['description'],
-                        'sortOrder'             => $key + 1,
+                        'sortOrder'             => $maxSortOrder,
                         'rawId'                 => $rawTemplate['id'],
                         'rawIdType'             => $rawTemplate['sectionType'],
                         'companySystemID'       => $input['companySystemID'],
                         'fontColor'             => '#000000',
-                        'bgColor'               => '#ffffff',
+                        'bgColor'               => null,
                         'createdPCID'           => gethostname(),
                         'createdUserID'         => \Helper::getEmployeeID(),
                         'createdUserSystemID'   => \Helper::getEmployeeSystemID(),

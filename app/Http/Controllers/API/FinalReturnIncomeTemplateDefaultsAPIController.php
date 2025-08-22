@@ -8,6 +8,8 @@ use App\Models\FinalReturnIncomeTemplateDefaults;
 use App\Repositories\FinalReturnIncomeTemplateDefaultsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\FinalReturnIncomeTemplateDetails;
+use App\Models\FinalReturnIncomeTemplateLinks;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -64,31 +66,46 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
         
         $this->finalReturnIncomeTemplateDefaultsRepository->pushCriteria(new RequestCriteria($request));
         $this->finalReturnIncomeTemplateDefaultsRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $details = FinalReturnIncomeTemplateDetails::where('id', $input['id'])->first();
+        $usedLinks = FinalReturnIncomeTemplateLinks::where('templateDetailID', $input['id'])
+            ->where('templateMasterID', $details->templateMasterID)
+            ->where('companySystemID', $details->companySystemID)
+            ->pluck('rawId');
+        $usedRaws = FinalReturnIncomeTemplateDetails::where('masterID', $input['id'])
+            ->where('templateMasterID', $details->templateMasterID)
+             ->where('companySystemID', $details->companySystemID)
+            ->pluck('rawId');
 
-          $this->finalReturnIncomeTemplateDefaultsRepository->scopeQuery(function($query) use ($input) {
+        $usedRaws->push(1);
+        $usedRaws = collect($usedRaws)->merge($usedLinks)->unique()->toArray();
+
+          $this->finalReturnIncomeTemplateDefaultsRepository->scopeQuery(function($query) use ($input, $usedRaws) {
             if (isset($input['type']) && isset($input['itemType']) 
                 && $input['type'] == 3 && $input['itemType'] == 3) {
                 
                 return $query->whereIn('type', [1, 2])
-                            ->where('sectionType', 1);
+                            ->where('sectionType', 1)
+                            ->whereNotIn('id', $usedRaws);
             }
 
             if (isset($input['rawIdType']) && isset($input['itemType']) && isset($input['type'])
                 && $input['rawIdType'] == 2 && $input['itemType'] == 3 && $input['type'] == 2) {
 
                 return $query->whereIn('type', [2])
-                            ->where('sectionType', 1);
+                            ->where('sectionType', 1)
+                            ->whereNotIn('id', $usedRaws);
             }
 
             if (isset($input['rawIdType']) && isset($input['itemType']) && isset($input['type'])
                 && $input['rawIdType'] == 2 && $input['itemType'] == 3 && $input['type'] == 1) {
 
                 return $query->whereIn('type', [1])
-                            ->where('sectionType', 1);
+                            ->where('sectionType', 1)
+                            ->whereNotIn('id', $usedRaws);
             }
 
             if (isset($input['type'])) {
-                return $query->where('type', $input['type']);
+                return $query->where('type', $input['type'])->whereNotIn('id', $usedRaws);
             }
 
             return $query;

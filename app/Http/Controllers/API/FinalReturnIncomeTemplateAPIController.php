@@ -9,12 +9,14 @@ use App\Repositories\FinalReturnIncomeTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDetails;
 use App\Models\FinalReturnIncomeTemplateLinks;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Response;
 
 /**
@@ -124,7 +126,15 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $validator = \Validator::make($request->all(), [
-               'name' => 'required|string|max:50|unique:final_return_income_templates,name',
+                'name' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    Rule::unique('final_return_income_templates', 'name')
+                        ->where(function ($query) use ($request) {
+                            return $query->where('companySystemID', $request->companySystemID);
+                        }),
+                ],
                'description' => 'required|string|max:100',
             ],
             [
@@ -509,7 +519,11 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1);
+        $items = ChartOfAccountsAssigned::with(['controlAccount', 'accountType', 'allocation'])
+                ->where('CompanySystemID', $input['companyID'])
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+
         $templateDetails = FinalReturnIncomeTemplateLinks::ofTemplate($input['masterId'])
                 ->where('templateDetailID', $input['detailId'])->pluck('glAutoID')->toArray();
 

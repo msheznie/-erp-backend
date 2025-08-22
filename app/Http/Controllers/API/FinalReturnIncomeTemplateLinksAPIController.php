@@ -325,6 +325,6 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
 
         $finalReturnIncomeTemplateLinks->delete();
 
-        return $this->sendSuccess('Final Return Income Template Links deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks,'Final Return Income Template Links deleted successfully');
     }
 }
