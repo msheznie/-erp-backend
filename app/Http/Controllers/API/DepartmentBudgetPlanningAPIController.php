@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDepartmentBudgetPlanningAPIRequest;
 use App\Http\Requests\API\UpdateDepartmentBudgetPlanningAPIRequest;
+use App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DeptBudgetPlanningTimeRequest;
 use App\Repositories\DepartmentBudgetPlanningRepository;
@@ -404,15 +405,17 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $updateData = ['workStatus' => $input['workStatus']];
             $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
 
-            // Get database from request (added by TenantEnforce middleware)
-            $db = $request->input('db', '');
+            if ($input['workStatus'] == 2) {
+                // Get database from request (added by TenantEnforce middleware)
+                $db = $request->input('db', '');
 
-            // Dispatch job to process department budget planning details
-            \App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob::dispatch(
-                $db,
-                $departmentBudgetPlanning->id,
-                auth()->id()
-            );
+                // Dispatch job to process department budget planning details
+                \App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob::dispatch(
+                    $db,
+                    $departmentBudgetPlanning->id,
+                    auth()->id()
+                );
+            }
 
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
@@ -951,8 +954,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             // Check if GL accounts are assigned to this template
-            $budgetTemplateGls = DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplate->departmentBudgetTemplateID)
-                ->count();
+            $budgetTemplateGls = DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplate->departmentBudgetTemplateID)->count();
 
             if ($budgetTemplateGls == 0) {
                 return [

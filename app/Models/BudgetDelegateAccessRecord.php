@@ -52,7 +52,7 @@ class BudgetDelegateAccessRecord extends Model
         'delegatee_id' => 'integer',
         'submission_time' => 'date',
         'access_permissions' => 'array',
-        'status' => 'string',
+        'status' => 'integer',
         'work_status' => 'string',
         'created_by' => 'integer'
     ];

@@ -90,7 +90,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
             }
 
             DB::commit();
-            
+
             Log::info('Department Budget Planning Details processed successfully', [
                 'department_planning_id' => $this->departmentBudgetPlanningId,
                 'user_id' => $this->userId
@@ -99,7 +99,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         } catch (\Exception $e) {
             Log::warning($e->getMessage());
             DB::rollBack();
-            
+
             Log::error('Error processing Department Budget Planning Details', [
                 'department_planning_id' => $this->departmentBudgetPlanningId,
                 'error' => $e->getMessage(),
@@ -107,10 +107,6 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
             ]);
         }
     }
-
-
-
-
 
     /**
      * Get budget template GLs
@@ -159,10 +155,10 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
             $existingDetail = DepartmentBudgetPlanningDetail::where('department_planning_id', $departmentBudgetPlanning->id)
                 ->where('budget_template_gl_id', $templateGl->depBudgetTemplateGlID)
                 ->first();
-    
+
             if (!$existingDetail) {
                 $this->createNewDetail($departmentBudgetPlanning, $templateGl);
-            } 
+            }
         }
 
     }
@@ -184,7 +180,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
             'budget_template_id' => $templateGl->departmentBudgetTemplate->budgetTemplateID,
             'department_segment_id' => $companyDepartmentSegment->departmentSegmentSystemID ?? null,
             'budget_template_gl_id' => $templateGl->depBudgetTemplateGlID,
-            'request_amount' => 0.00, 
+            'request_amount' => 0.00,
             'responsible_person' => $responsiblePerson['id'] ?? null,
             'responsible_person_type' => $responsiblePerson['type'] ?? 1,
             'time_for_submission' => $departmentBudgetPlanning->masterBudgetPlannings->submissionDate,
@@ -244,7 +240,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
         // Calculate previous year budget (you may need to adjust this query based on your actual budget data structure)
         $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear);
-        
+
         // Calculate current year budget
         $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear);
 
@@ -263,22 +259,18 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * This method should be adjusted based on your actual budget data structure
      */
     private function getBudgetAmountForYear($departmentId, $glCode, $year)
-    { 
+    {
         try {
 
             if($year) {
                 //get the sum of request_amount from the department budget planning details table
-                $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId) {
-                        $query->where('departmentID', $departmentId);
-                    })
-                    ->whereHas('budgetTemplateGl', function($query) use ($glCode) {
+                $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId, $year) {
+                    $query->where('departmentID', $departmentId)
+                        ->where('yearID', $year->companyFinanceYearID);
+                })->whereHas('budgetTemplateGl', function($query) use ($glCode) {
                         $query->where('chartOfAccountSystemID', $glCode);
-                    })
-                    ->whereHas('departmentBudgetPlanning', function($query) use ($year) {
-                        $query->where('yearID', $year->companyFinanceYearID);
-                    })
-                    ->sum('request_amount');
-    
+                })->sum('request_amount');
+
                 return $budgetAmount ?? 0.00;
             } else {
                 return 0;
@@ -290,7 +282,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
                 'year' => $year,
                 'error' => $e->getMessage()
             ]);
-            
+
             return 0.00;
         }
     }
@@ -327,7 +319,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
             return [
                 'id' => $this->userId,
-                'type' => 1 
+                'type' => 1
             ];
         }
     }

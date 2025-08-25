@@ -8,6 +8,8 @@ class DepartmentBudgetPlanningDetail extends Model
 {
     protected $table = 'department_budget_planning_details';
 
+    protected $appends = ['internal_status_text'];
+
     protected $fillable = [
         'department_planning_id',
         'budget_template_id',
