@@ -39,10 +39,10 @@ use App\Models\BudgetControlLink;
 
 class BudgetConsumptionService
 {
-	public static function checkBudget($documentSystemID, $documentSystemCode)
+	public static function checkBudget($documentSystemID, $documentSystemCode,$companySystemID = null)
 	{
 		$budgetData = self::getConsumptionData($documentSystemID, $documentSystemCode, true);
-	    $existingIds =  BudgetControlService::checkControl($budgetData["companySystemID"]);
+	    $existingIds =  BudgetControlService::checkControl($companySystemID);
 
 		if ($budgetData['status']) {
 			if (sizeof($budgetData['data']) > 0) {
@@ -58,7 +58,7 @@ class BudgetConsumptionService
 						continue;
 					}
 
-					$ignoreBudget =  BudgetControlService::checkIgnoreGL($value['templateDetailID'],$budgetData["companySystemID"],'ignoreBudget',1);
+					$ignoreBudget =  BudgetControlService::checkIgnoreGL($value['templateDetailID'],$companySystemID,'ignoreBudget',1);
 
 					if ($reportingAmount == 0 && $balanceAmount == 0 && $ignoreBudget) {
 						continue;
@@ -121,7 +121,7 @@ class BudgetConsumptionService
 						$code = explode(' - ', $value)[0];  
 						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->select('chartOfAccountSystemID')->first();
 						$chartOfAccountSystemID = isset($chartOfAccuntInfo->chartOfAccountSystemID) ? $chartOfAccuntInfo->chartOfAccountSystemID : null;
-						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$budgetData["companySystemID"],'definedBehavior',2);
+						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$companySystemID,'definedBehavior',2);
 						if($definedBehaviour)
 						{
 							$isDefinedBehaviour = true;
@@ -152,7 +152,7 @@ class BudgetConsumptionService
 						$code = explode(' - ', $value)[0];  
 						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->select('chartOfAccountSystemID')->first();
 						$chartOfAccountSystemID = isset($chartOfAccuntInfo->chartOfAccountSystemID) ? $chartOfAccuntInfo->chartOfAccountSystemID : null;
-						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$budgetData["companySystemID"],'definedBehavior',2);
+						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$companySystemID,'definedBehavior',2);
 						if($definedBehaviour)
 						{
 							$isDefinedBehaviour = true;
@@ -465,7 +465,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => (isset($budgetData['finalResData']) ? $budgetData['finalResData'] : []), 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency, 'budgetmasterIDs' => (isset($budgetData['budgetmasterIDs']) ? $budgetData['budgetmasterIDs'] : []),'companySystemID' => $budgetFormData["companySystemID"]];
+	    return ['status' => true, 'data' => (isset($budgetData['finalResData']) ? $budgetData['finalResData'] : []), 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency, 'budgetmasterIDs' => (isset($budgetData['budgetmasterIDs']) ? $budgetData['budgetmasterIDs'] : [])];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
