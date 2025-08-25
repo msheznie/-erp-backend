@@ -144,4 +144,30 @@ class ContractMaster extends Model
             ->where('id', $contractId)
             ->first();
     }
+
+    public static function getContractDataBySupplier($supplierId)
+    {
+        return self::with(['contractTypes'])
+            ->with(['contractUsers' => function ($q) use ($supplierId) {
+                $q->where('contractUserId', $supplierId)
+                    ->with(['contractSupplierUser']);
+            }])
+            ->where('approved_yn', 1)
+            ->where('counterParty', 1)
+            ->whereHas('contractUsers', function ($q) use ($supplierId) {
+                $q->where('contractUserId', $supplierId);
+            });
+    }
+
+    public function contractTypes()
+    {
+        return $this->belongsTo(ContractTypes::class, 'contractType', 'contract_typeId');
+    }
+
+    public function contractUsers()
+    {
+        return $this->belongsTo(ContractUsers::class, 'counterPartyName', 'id');
+    }
+
+
 }

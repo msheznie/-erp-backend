@@ -19,6 +19,7 @@ use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ContractMaster;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
@@ -31,6 +32,9 @@ use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemCategorySub;
+use App\Models\ItemAssigned;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentOrder;
 use App\Models\ScheduleBidSubmission;
@@ -184,7 +188,7 @@ class SRMService
         $query = ProcumentOrder::select('purchaseOrderCode', 'referenceNumber', 'expectedDeliveryDate', 'supplierName',
             'narration', 'createdDateTime', 'poConfirmedDate', 'approvedDate', 'poTotalSupplierTransactionCurrency',
             'grvRecieved', 'invoicedBooked', 'createdUserSystemID', 'serviceLineSystemID', 'supplierID',
-            'supplierTransactionCurrencyID', 'purchaseOrderID')
+            'supplierTransactionCurrencyID', 'purchaseOrderID', 'documentSystemID', 'companySystemID')
             ->where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
@@ -1531,7 +1535,7 @@ class SRMService
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
         $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
-
+        $documentId = $is_rfx ? 113 : 108;
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1593,9 +1597,10 @@ class SRMService
                     'tenderSupplierAssignee' => function ($q) {
                         $q->select('id', 'tender_master_id');
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
@@ -1641,9 +1646,10 @@ class SRMService
                         $q->select('id', 'tender_master_id', 'purchased_by', 'purchased_date')
                             ->where('purchased_by', '=', $supplierRegId);
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
@@ -1707,9 +1713,10 @@ class SRMService
                         $query->select('tender_id', 'id')
                             ->where('supplier_id', $supplierRegId);
                     },
-                    'DocumentAttachments' => function ($q) {
+                    'DocumentAttachments' => function ($q) use ($documentId) {
                         $q->select('attachmentID', 'attachmentType', 'path', 'originalFileName', 'myFileName',
                             'attachmentDescription', 'documentSystemCode')
+                            ->where('documentSystemID', $documentId)
                             ->whereHas('tender_document_types', function ($t) {
                                 $t->where('system_generated', 1)
                                     ->where('sort_order', 1);
@@ -5418,9 +5425,32 @@ class SRMService
                         return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
                     }
                 }
+
+                $baseName = 'SRM_Attachment';
+
+                switch ($documentSystemID) {
+                    case 11:
+                        $baseName = 'Supplier_Invoice';
+                        break;
+                    case 4:
+                        $baseName = 'Payment_Voucher';
+                        break;
+                    case 52:
+                        $baseName = 'Direct_Order';
+                        break;
+                    case 2:
+                        $baseName = 'Purchase_Order';
+                        break;
+                    case 5:
+                        $baseName = 'Work_Order';
+                        break;
+                }
+
+
+
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
-                $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
+                $attachmentNameWithExtension = time() . '_' . $baseName . '.' . $extension;
                 $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
                 Storage::disk('s3')->put($path, $decodeFile);
 
@@ -5432,7 +5462,7 @@ class SRMService
                 $att['attachmentDescription'] = $description;
                 $att['path'] = $path;
                 $att['originalFileName'] = $attachment['originalFileName'];
-                $att['myFileName'] = $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension;
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_' . $baseName . '.' . $extension;
                 $att['attachmentType'] = 11;
                 $att['sizeInKbs'] = $attachment['sizeInKbs'];
                 $att['isUploaded'] = 1;
@@ -5467,6 +5497,10 @@ class SRMService
         {
             $masterData = PaySupplierInvoiceMaster::select('BPVsupplierID as supplierID')
                 ->where('PayMasterAutoId', $id)->first();
+        }
+        elseif($documentSystemID == 2 || $documentSystemID == 52 || $documentSystemID == 5)
+        {
+            $masterData = ProcumentOrder::getPoSupplierData($id);
         }
 
         if($supplierID != $masterData['supplierID'])
@@ -6707,5 +6741,246 @@ class SRMService
         } catch (\Exception $ex) {
             return $this->generateResponse(false, 'Failed to check: '. $ex->getMessage());
         }
+    }
+
+    public function generateSupplierInvoiceExcel($request)
+        {
+            $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+            $search = $request->input('extra.search');
+            $filter = $request->input('extra.filters');
+            $query = $this->invoiceService->buildInvoiceQuery($supplierID, $search, $filter);
+            $type = 'xlsx';
+            $invoices = $query->get();
+
+            if (empty($invoices)) {
+                return [
+                    'success' => false,
+                    'message' => 'There are no records to download',
+                    'data' => [],
+                ];
+            }
+
+            $dataInvoice = [];
+            foreach ($invoices as $index => $val) {
+                $status = $this->getApprovalStatus($val['confirmedYN'], $val['approved'], $val['refferedBackYN']);
+                $paymentData = $this->supplierPaymentStatus($val['paymentDetail'],$val['bookingAmountTrans']);
+                $dataInvoice[$index + 1] = [
+                    'Invoice Code' => $val['bookingInvCode'] ?? '-',
+                    'Invoice Number' => $val['supplierInvoiceNo'] ?? '-',
+                    'Invoice Date' => Carbon::parse($val['bookingDate'])->format('d/m/Y') ?? '-',
+                    'Comments' => $val['comments'] ?? '-',
+                    'Created Date' => Carbon::parse($val['createdDateAndTime'])->format('d/m/Y') ?? '-',
+                    'Invoice Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($val['bookingAmountTrans'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                    'Paid Amount' => $val['transactioncurrency']['CurrencyCode'].': '.number_format($paymentData['amountPaid'], $val['transactioncurrency']['DecimalPlaces']) ?? '-',
+                    'Payment Status' => $paymentData['status']
+
+                ];
+            }
+
+            $fileName = 'supplier_invoice_summary';
+            $path = 'srm/invoice/report/excel/';
+            $reportConfig = [
+                'origin' => 'SRM',
+                'faq_data' => [],
+                'prebid_data' => $dataInvoice,
+                'parentIdList' => [],
+                'nonParentIdList' => [],
+            ];
+
+        $basePath = $this->encryptUrl(CreateExcel::process($dataInvoice, $type, $fileName, $path, $reportConfig));
+
+        return $basePath
+            ? ['success' => true, 'message' => 'Successfully retrieved', 'data' => $basePath]
+            : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
+    }
+
+   private function getApprovalStatus($co, $ap, $tr)
+    {
+        if ($co === 1 && $ap === 0 && $tr === 0) {
+            return 'Pending Approval';
+        } elseif ($co === 1 && ($ap === -1 || $ap === 1)) {
+            return 'Fully Approved';
+        } elseif ($co === 1 && $ap === 0 && $tr === -1) {
+            return 'Referred Back';
+        }
+
+        return '-';
+    }
+
+    private function supplierPaymentStatus($paymentDetails, $bookingAmountTrans): array
+    {
+        if (empty($paymentDetails)) {
+            return [
+                'status' => 'Not Paid',
+                'amountPaid' => 0
+            ];
+        }
+
+        $totalPaid = 0;
+        foreach ($paymentDetails as $payment) {
+            $amount = isset($payment['supplierPaymentAmount'])
+                ? floatval($payment['supplierPaymentAmount'])
+                : 0;
+            $totalPaid += $amount;
+        }
+
+        if ($totalPaid >= $bookingAmountTrans) {
+            $status = 'Fully Paid';
+        } elseif ($totalPaid > 0 && $totalPaid < $bookingAmountTrans) {
+            $status = 'Partially Paid';
+        } else {
+            $status = 'Not Paid';
+        }
+
+        return [
+            'status' => $status,
+            'amountPaid' => $totalPaid
+        ];
+    }
+
+    public function getContractList(Request $request)
+    {
+        $input = $request->all();
+        $sort = (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') ? 'asc' : 'desc';
+        $supplierId = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $query = ContractMaster::getContractDataBySupplier($supplierId);
+        $contractRecords = $query->get();
+
+        $formattedRecords = $contractRecords->map(function ($item) {
+            return [
+                'contractCode' => $item->contractCode,
+                'contractType' => $item->contractTypes->cm_type_name ?? '-',
+                'title' => $item->title ?? '-',
+                'referenceCode' => $item->referenceCode ?? '-',
+                'supplierName' => $item->contractUsers->contractSupplierUser->supplierName ?? '-',
+                'startDate' => $item->startDate,
+                'endDate' => $item->endDate,
+                'approve' => $item->approved_yn,
+                'confirm' => $item->confirmed_yn,
+                'status' => $item->status,
+            ];
+        });
+
+        $data = DataTables::collection($formattedRecords)
+            ->filter(function ($instance) use ($input) {
+                $search = $input['search']['value'] ?? null;
+                if (!empty($search)) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $instance->collection = $instance->collection->filter(function ($item) use ($search) {
+                        return stripos($item['contractCode'] ?? '', $search) !== false
+                            || stripos($item['contractType'] ?? '', $search) !== false
+                            || stripos($item['title'] ?? '', $search) !== false
+                            || stripos($item['referenceCode'] ?? '', $search) !== false
+                            || stripos($item['supplierName'] ?? '', $search) !== false;
+                    });
+                }
+            })
+            ->addColumn('Actions', function ($row) {
+                return 'Actions';
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+
+        return [
+            'success' => true,
+            'message' => 'Contract list successfully get',
+            'data' => $data
+        ];
+
+    }
+
+    public function getItemMaster(Request $request)
+    {
+        $input = $request->all();
+        $sort = (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') ? 'asc' : 'desc';
+
+        $pulledItems = $request->input('extra.pulledItems', []);
+        $itemCodes = collect($pulledItems)->pluck('item_code')->toArray();
+
+        $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
+        $companyId = $supplierData->company_id;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $search = $request->input('search.value');
+        $filters = $request->input('extra');
+        $query = ItemAssigned::getItemMaster($itemCodes, $childCompanies);
+
+        if($filters) {
+            $mainCategory = $filters['mainCategory'] ?? [];
+            $subCategory = $filters['subCategory'] ?? [];
+
+            if ($mainCategory) {
+                $query->whereIn('financeCategoryMaster', $mainCategory);
+            }
+            if ($subCategory) {
+                $query->whereIn('financeCategorySub', $subCategory);
+            }
+            if ($mainCategory && $subCategory) {
+                $query->whereIn('financeCategoryMaster', $mainCategory)->whereIn('financeCategorySub', $subCategory);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query->where(function ($query) use ($search) {
+                $query->orWhere('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', function ($row) {
+                return 'Actions';
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+        return [
+            'success' => true,
+            'message' => 'Item Master successfully get',
+            'data' => $data
+        ];
+
+    }
+
+    public function getItemDetail(Request $request)
+    {
+        $mainCategory = FinanceItemCategoryMaster::getMainCategory();
+        $subCategory = FinanceItemCategorySub::getSubCategory();
+
+        $data = [
+            'mainCategory' => $mainCategory,
+            'subCategory' => $subCategory,
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Item Details successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function getSubcategoriesByMainCategory(Request $request)
+    {
+        $mainCategoryIds = $request->input('extra.categoryIds');
+        $subCategory = FinanceItemCategorySub::getSubcategoriesByMainCategory($mainCategoryIds);
+
+        $data = [
+            'subCategory' => $subCategory,
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Sub Categories successfully get',
+            'data' => $data
+        ];
     }
 }

@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class FinanceItemCategoryMaster
@@ -95,6 +96,12 @@ class FinanceItemCategoryMaster extends Model
     public function item_sub_category()
     {
         return $this->hasMany('App\Models\FinanceItemCategorySub', 'itemCategoryID', 'itemCategoryID');
+    }
+
+    public static function getMainCategory()
+    {
+        return FinanceItemCategoryMaster::select(DB::raw("itemCategoryID as value, categoryDescription as label"))
+            ->get();
     }
 
     

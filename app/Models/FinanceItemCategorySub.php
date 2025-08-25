@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class FinanceItemCategorySub
@@ -146,6 +147,21 @@ class FinanceItemCategorySub extends Model
 
     public function finance_item_category_type() {
         return $this->hasMany('App\Models\FinanceItemCategoryTypes','itemCategorySubID','itemCategorySubID');
+    }
+
+    public static function getSubCategory()
+    {
+        return FinanceItemCategorySub::select(DB::raw("itemCategorySubID as value,categoryDescription as label"))
+            ->where('isActive',1)
+            ->get();
+    }
+
+    public static function getSubcategoriesByMainCategory($mainCategoryIds)
+    {
+        return FinanceItemCategorySub::select(DB::raw("itemCategorySubID as value,categoryDescription as label"))
+            ->whereIn('itemCategoryID', $mainCategoryIds)
+            ->where('isActive',1)
+            ->get();
     }
     
 }

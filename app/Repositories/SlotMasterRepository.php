@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\helper\Helper;
+use App\Models\Appointment;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SlotMasterWeekDays;
@@ -80,6 +81,16 @@ class SlotMasterRepository extends AppBaseController
                 return ($item['isActive']) == true;
             }
         });
+
+        if ($slotMasterID > 0) {
+            $slotDetailIDs = SlotDetails::getSlotDetailIDs($slotMasterID, $input['companyId']);
+            $countConfirmedAppointment = Appointment::countConfirmedAppointment($slotDetailIDs, $input['companyId']);
+
+            if($countConfirmedAppointment > 0){
+                return ['status' => false, 'message' => 'You cannot update this slot, because there are pending approve,
+             approve, reject, or cancel records associated with other relevant slots'];
+            }
+        }
 
         if($toTime <= $fromTime){
             return ['status' => false, 'message' => 'Time To cannot be less than or equal to Time From'];

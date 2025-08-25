@@ -202,4 +202,12 @@ class Appointment extends Model
         return Appointment::select('id')->where('slot_detail_id', $slotDetailID)->where('confirmed_yn', 1)->exists();
     }
 
+    public static function countConfirmedAppointment($slotDetailIds, $companyId)
+    {
+        return Appointment::whereIn('slot_detail_id', $slotDetailIds)
+            ->where('company_id', $companyId)
+            ->where('confirmed_yn', 1)
+            ->count();
+    }
+
 }

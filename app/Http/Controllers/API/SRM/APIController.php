@@ -107,6 +107,11 @@ define('DELETE_PAYMENT_PROOF_ATTACHMENT', 'DELETE_PAYMENT_PROOF_ATTACHMENT');
 define('PO_REPORT', 'PO_REPORT');
 define('GET_PAYMENT_DETAILS', 'GET_PAYMENT_DETAILS');
 define('CHECK_TENDER_READY_TO_PURCHASE', 'CHECK_TENDER_READY_TO_PURCHASE');
+define('SUPPLIER_INVOICE_EXCEL', 'SUPPLIER_INVOICE_EXCEL');
+define('GET_CONTRACT_LIST', 'GET_CONTRACT_LIST');
+define('GET_ITEM_MASTER', 'GET_ITEM_MASTER');
+define('GET_ITEM_DETAIL', 'GET_ITEM_DETAIL');
+define('GET_SUB_CATEGORIES_BY_MAIN_CATEGORY', 'GET_SUB_CATEGORIES_BY_MAIN_CATEGORY');
 
 
 class APIController extends Controller
@@ -302,6 +307,16 @@ class APIController extends Controller
                 return $this->SRMService->getPaymentDetails($request);
             case CHECK_TENDER_READY_TO_PURCHASE:
                 return $this->SRMService->checkTenderReadyToPurchase($request);
+            case SUPPLIER_INVOICE_EXCEL:
+                return $this->SRMService->generateSupplierInvoiceExcel($request);
+            case GET_CONTRACT_LIST :
+                return $this->SRMService->getContractList($request);
+            case GET_ITEM_MASTER :
+                return $this->SRMService->getItemMaster($request);
+            case GET_ITEM_DETAIL :
+                return $this->SRMService->getItemDetail($request);
+            case GET_SUB_CATEGORIES_BY_MAIN_CATEGORY :
+                return $this->SRMService->getSubcategoriesByMainCategory($request);
             default:
                 return [
                     'success'   => false,

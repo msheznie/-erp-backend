@@ -15,7 +15,13 @@ class CreateExcel
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
                 $faqFile = "FAQ";
-                $prebidFile = ($fileName == 'purchase_order_summary_report') ? "Purchase Order" : "Pre-bid Clarifications";
+
+                $lookup = [
+                    'purchase_order_summary_report' => 'Purchase Order',
+                    'supplier_invoice_summary' => 'Supplier Invoice',
+                ];
+
+                $prebidFile = $lookup[$fileName] ?? 'Pre-bid Clarifications';
 
                 if (!empty($dataNew) && count($dataNew) > 0) {
                     $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {

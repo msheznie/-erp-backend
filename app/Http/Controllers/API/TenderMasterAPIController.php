@@ -4862,7 +4862,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $documentType = ($isTender) ? [0] : [1,2,3];
 
-        $tenderPurchaseList = TenderMasterSupplier::select('id','tender_master_id','purchased_by')
+        $tenderPurchaseList = TenderMasterSupplier::select('id','tender_master_id','purchased_by', 'purchased_date')
             ->with(['supplierDetails'])
             ->with(['tender_master' => function ($q) use ($tenderMasterId,$documentType){
                 $q->select('id','title')
