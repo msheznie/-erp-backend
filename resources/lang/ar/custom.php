@@ -579,5 +579,11 @@ return [
     'segment_used_in_departments' => 'لا يمكن تعديل المستوى النهائي، حيث تم استخدام المركز المالي في القسم',
     'cannot_change_parent' => 'لا يمكن تغيير النوع الأصل لأنه يحتوي على مستويات فرعية',
     'public_segment_configured' => 'تم تكوين المقطع العام بالفعل! (:code - :desc)',
-    'segment_updated' => 'تم تحديث المقطع الرئيسي بنجاح'
+    'segment_updated' => 'تم تحديث المقطع الرئيسي بنجاح',
+
+    'no_active_financial_year' => 'لم يتم العثور على سنة مالية نشطة حالية.',
+    'no_budget_found' => 'لم يتم العثور على ميزانية للسنة المالية الحالية.',
+    'current_active_period' => 'الفترة المالية النشطة الحالية: :start - :end',
+    'selected_budget_year' => 'سيتم اختيار هذه كسنة الميزانية :year',
+    'proceed_question' => 'هل ترغب في المتابع؟',
 ];
