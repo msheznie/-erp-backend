@@ -12,8 +12,17 @@ class BudgetControlService
 {
 	public static function checkControl($comapnySystemId)
 	{
-		$ids = BudgetControlInfo::where('companySystemID', $comapnySystemId)
-                                 ->where('isChecked', 1)->pluck('id')->toArray();
+		if(!isset($comapnySystemId))
+        {
+            return [];
+        }
+
+        $ids = BudgetControlInfo::where('companySystemID', $comapnySystemId)
+                                ->where('isChecked', 1)->pluck('id')->toArray();
+
+        if (empty($ids)) {
+            return [];
+        }
 
         $existIds = BudgetControlLink::whereIn('controlId', $ids)->pluck('glAutoID')->toArray();
         return $existIds;
@@ -21,6 +30,11 @@ class BudgetControlService
 
     public static function checkIgnoreGL($id,$comapnySystemId,$name,$value)
 	{
+        if(!isset($comapnySystemId))
+        {
+            return false;
+        }
+
 		return BudgetControlLink::where('companySystemID', $comapnySystemId)
                                  ->where('glAutoID', $id)->with('master')->whereHas('master', function($query) use($name, $value) {
                                         $query->where($name, $value)->where('isChecked', 1);
