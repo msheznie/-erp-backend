@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyDepartmentEmployeeAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDepartmentEmployeeAPIRequest;
 use App\Models\CompanyDepartmentEmployee;
+use App\Models\DepBudgetPlDetColumn;
+use App\Models\DepBudgetPlDetEmpColumn;
 use App\Models\Employee;
 use App\Models\CompanyDepartment;
 use App\Models\BudgetControl;
 use App\Models\DepartmentUserBudgetControl;
+use App\Models\User;
 use App\Repositories\CompanyDepartmentEmployeeRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -154,6 +158,8 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     
                     // Auto-assign budget controls if finance department
                     $this->autoAssignBudgetControlsForFinance($companyDepartmentEmployee->departmentEmployeeSystemID);
+
+                    $this->autoAssignDepartmentBudgetPlanningColumnData($processedData, $employeeData['companyID']);
                     
                     // Audit log
                     $uuid = $request->get('tenant_uuid', 'local');
@@ -170,7 +176,8 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 DB::commit();
 
                 return $this->sendResponse($results, count($results) . ' employee(s) assigned to department successfully');
-            } else {
+            }
+            else {
                 // Handle single employee assignment (backward compatibility)
                 $processedData = $this->processUpdateData($input);
 
@@ -192,6 +199,8 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 // Auto-assign budget controls if finance department
                 $this->autoAssignBudgetControlsForFinance($companyDepartmentEmployee->departmentEmployeeSystemID);
 
+                $this->autoAssignDepartmentBudgetPlanningColumnData($processedData, $input['companyID']);
+
                 // Audit log
                 $uuid = $request->get('tenant_uuid', 'local');
                 $db = $request->get('db', '');
@@ -205,6 +214,34 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError('Error assigning employee to department - '.$e->getMessage());
+        }
+    }
+
+    public function autoAssignDepartmentBudgetPlanningColumnData($data, $companyID) {
+        $companyDepartment = CompanyDepartment::find($data['departmentSystemID']);
+        if ($companyDepartment->isFinance == 1) {
+            $this->storeTableColumns($data['employeeSystemID'], $companyID);
+        }
+        else {
+            if ($data['isHOD'] == 1) {
+                $this->storeTableColumns($data['employeeSystemID'], $companyID);
+            }
+        }
+    }
+
+    public function storeTableColumns($data, $companyID) {
+        $insertData = [];
+        $defaultColumns = DepBudgetPlDetColumn::where('isDefault', 1)->get();
+        foreach ($defaultColumns as $defaultColumn) {
+            $insertData[] = [
+                'companySystemID' => $companyID,
+                'empID' => $data,
+                'columnID' => $defaultColumn->id
+            ];
+        }
+
+        if (count($insertData) > 0) {
+            DepBudgetPlDetEmpColumn::insert($insertData);
         }
     }
 
@@ -232,6 +269,8 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             // Process array inputs to single values
             $processedData = $this->processUpdateData($input);
 
+            $user = User::with(['employee'])->find(Auth::id());
+
             // Handle HOD logic
             if ($processedData['isHOD'] == 1) {
                 // Check if employee is already HOD in another department (excluding current)
@@ -239,11 +278,27 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     return $this->sendError('This employee is already HOD in another department');
                 }
 
+                $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->pluck('employeeSystemID')->toArray();
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+
                 // Remove HOD status from any existing HOD in this department
                 CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
                     ->where('isHOD', 1)
                     ->where('departmentEmployeeSystemID', '!=', $id)
                     ->update(['isHOD' => 0]);
+
+                $this->storeTableColumns($companyDepartmentEmployee->employeeSystemID,$user->employee->empCompanySystemID);
+            }
+            else {
+                if ($companyDepartmentEmployee->isHOD == 1) {
+                    DepBudgetPlDetEmpColumn::where('empID', $companyDepartmentEmployee->employeeSystemID)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
             }
 
             $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->update($processedData, $id);
@@ -259,7 +314,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error updating department employee', ['error' => $e->getMessage()]);
+            return $this->sendError('Error updating department employee', 404,['error' => $e->getMessage()]);
         }
     }
 
@@ -279,6 +334,14 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
         try {
             $previousValue = $companyDepartmentEmployee->toArray();
+
+            if ($companyDepartmentEmployee->isHOD == 1) {
+                $user = User::with(['employee'])->find(Auth::id());
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::where('empID', $companyDepartmentEmployee->employeeSystemID)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+            }
             
             $companyDepartmentEmployee->delete();
 

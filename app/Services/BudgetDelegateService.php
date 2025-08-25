@@ -104,7 +104,7 @@ class BudgetDelegateService
             $recordData = [
                 'budget_planning_detail_id' => $data['budget_planning_detail_id'],
                 'delegatee_id' => $data['delegatee_id'],
-                'submission_time' => \Carbon\Carbon::parse($data['submission_time'])->format('Y-m-d H:i:s'),
+                'submission_time' => \Carbon\Carbon::parse($data['submission_time'])->format('Y-m-d'),
                 'access_permissions' => json_encode($data['access_permissions']),
                 'created_by' => Auth::id()
             ];

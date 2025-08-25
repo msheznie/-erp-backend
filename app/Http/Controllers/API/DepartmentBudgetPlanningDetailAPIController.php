@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateDepartmentBudgetPlanningDetailAPIRequest;
 use App\Http\Requests\API\UpdateDepartmentBudgetPlanningDetailAPIRequest;
 use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\DepBudgetPlDetEmpColumn;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use Response;
 
 /**
@@ -137,7 +139,15 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      */
     public function getByDepartmentPlanning(Request $request)
     {
+        $input = $request->all();
+
         $departmentPlanningId = $request->input('budgetPlanningId');
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
         
         if (!$departmentPlanningId) {
             return $this->sendError('Department Planning ID is required');
@@ -168,7 +178,28 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'internal_status',
                 'difference_current_request',
                 'created_at'
-            ]);
+            ])->orderBy('id', $sort);
+
+            $search = $request->input('search.value');
+
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $query = $query->where(function ($query) use ($search) {
+                    $query->whereHas('budgetTemplateGl', function ($q1) use ($search) {
+                        $q1->whereHas('chartOfAccount', function ($q2) use ($search) {
+                            $q2->where('controlAccounts', 'LIKE', "%{$search}%")
+                                ->orWhere('AccountCode', 'LIKE', "%{$search}%")
+                                ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+                        });
+                    })
+                    ->orWhereHas('departmentSegment', function ($q3) use ($search) {
+                        $q3->whereHas('segment', function ($q4) use ($search) {
+                            $q4->where('ServiceLineCode', 'LIKE', "%{$search}%")
+                                ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+                        });
+                    });
+                });
+            }
 
             return \DataTables::eloquent($query)
                 ->addIndexColumn()
@@ -252,32 +283,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving summary - ' . $e->getMessage(), 500);
         }
-    }
-
-    public function getBudgetPlanningChartOfAccounts(Request $request)
-    {
-        $budgetPlanningId = $request->input('budget_planning_id');
-        
-        if (!$budgetPlanningId) {
-            return $this->sendError('Budget Planning ID is required');
-        }
-
-        // below should be unique chart of accounts , unique by budget_template_gl_id
-        $chartOfAccounts = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('budgetTemplateGl.chartOfAccount')->groupBy('budget_template_gl_id')->get();
-        return $this->sendResponse($chartOfAccounts, 'Chart of Accounts retrieved successfully');
-    }
-
-    public function getBudgetPlanningSegments(Request $request)
-    {
-        $budgetPlanningId = $request->input('budget_planning_id');
-        
-        if (!$budgetPlanningId) {
-            return $this->sendError('Budget Planning ID is required');
-        }
-
-        $segments = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('departmentSegment.segment')->groupBy('department_segment_id')->get();
-
-        return $this->sendResponse($segments, 'Segments retrieved successfully');
     }
 
     /**
