@@ -1,6 +1,24 @@
 # Changelog
 
 
+## [10.81.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.80.0...v10.81.0) (2025-08-25)
+
+
+### Features
+
+* **Contract:** Show Supplier Contracts in the Supplier Portal [GSUP-… ([#8500](https://github.com/pbsgears/Gears_BackEnd/issues/8500)) ([07cd02d](https://github.com/pbsgears/Gears_BackEnd/commit/07cd02d80e34fe0987fb7fa5f50f56bc71372377))
+* **Invoice:** Supplier Portal Invoice to Payment Details Export Excel [GSUP-2373] ([#8480](https://github.com/pbsgears/Gears_BackEnd/issues/8480)) ([913c14b](https://github.com/pbsgears/Gears_BackEnd/commit/913c14b3ca10dccf2a080c4691140b7b29458259))
+* **srm:** Show Tender Purchase or Proceed Date and Time [GSUP-3487] ([#8489](https://github.com/pbsgears/Gears_BackEnd/issues/8489)) ([c13ff3c](https://github.com/pbsgears/Gears_BackEnd/commit/c13ff3cbad5fc1fb43869a1ee91c42971a4476fa))
+* **srm:** Supplier PO Documents attachment option in Supplier portal [GSUP-2218] ([#8501](https://github.com/pbsgears/Gears_BackEnd/issues/8501)) ([141e24d](https://github.com/pbsgears/Gears_BackEnd/commit/141e24d09964683934dc316c9cb830b357502bc2))
+* **srm:** Supplier Price List | Edit/View Price Lists [GSUP-3416] ([#8583](https://github.com/pbsgears/Gears_BackEnd/issues/8583)) ([048b6e9](https://github.com/pbsgears/Gears_BackEnd/commit/048b6e995085b8fb3effdf744f00af975e65380c))
+* **srm:** Supplier Price List | Pull Items to Price List [GSUP-3418] ([#8579](https://github.com/pbsgears/Gears_BackEnd/issues/8579)) ([297bf22](https://github.com/pbsgears/Gears_BackEnd/commit/297bf22ed26185f1bfa24e0c6fd3d78cceb5455a))
+
+
+### Bug Fixes
+
+* **srm:** ERP user displays empty records in the Supplier Appointments Approvals page [GSUP-3393] ([#8504](https://github.com/pbsgears/Gears_BackEnd/issues/8504)) ([3648250](https://github.com/pbsgears/Gears_BackEnd/commit/3648250d673409b37c9c89a8796390273d36f405))
+* **Tender:** Unuploaded files are appearing in Tender View [GSUP-2836] ([266cb52](https://github.com/pbsgears/Gears_BackEnd/commit/266cb527f8302b1544d3949f9f15d517232e07dd))
+
 ## [10.80.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.79.1...v10.80.0) (2025-08-15)
 
 
