@@ -37,7 +37,7 @@ class DepartmentBudgetPlanningAuditService
             // For updates, compare old and new values
             if ($auditData['parentID'] == 0) {
                 if($auditData['previosValue']['workStatus'] != $auditData['newValue']['workStatus']) {
-                    $modifiedData[] = ['amended_field' => "work_status", 'previous_value' => $auditData['previosValue']['workStatus'], 'new_value' => $auditData['newValue']['workStatus']];
+                    $modifiedData[] = ['amended_field' => "work_status", 'previous_value' => self::getWorkStatus($auditData['previosValue']['workStatus']), 'new_value' => self::getWorkStatus($auditData['newValue']['workStatus'])];
                 }
             }
             else {
@@ -66,6 +66,20 @@ class DepartmentBudgetPlanningAuditService
             case 4:
                 return "Cancelled";
             default:
+                return "";
+        }
+    }
+
+    public static function getWorkStatus($status)
+    {
+        switch ($status) {
+            case 1 :
+                return "Not Started";
+            case 2 :
+                return "In Progress";
+            case 3 :
+                return "Submitted to HOD";
+            default :
                 return "";
         }
     }
