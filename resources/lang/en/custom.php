@@ -610,5 +610,11 @@ return [
     'segment_used_in_departments' => 'Cannot change final level — segment is already used in departments',
     'cannot_change_parent' => 'Parent type cannot be changed, as it has sub levels',
     'public_segment_configured' => 'Public segment is configured already! (:code - :desc)',
-    'segment_updated' => 'Segment master updated successfully'
+    'segment_updated' => 'Segment master updated successfully',
+
+    'no_active_financial_year' => 'No current active financial year found.',
+    'no_budget_found' => 'No budget found for the current financial year.',
+    'current_active_period' => 'Current active financial period: :start - :end',
+    'selected_budget_year' => 'This will be selected as the budget year :year',
+    'proceed_question' => 'Do you wish to proceed ?',
 ];

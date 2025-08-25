@@ -368,7 +368,7 @@ class PurchaseRequestRepository extends BaseRepository
             if(empty($currentFinancialYear)){
                 return [
                     'success' => true,
-                    'message' => 'No current active financial year found.',
+                    'message' => trans('custom.no_active_financial_year'),
                     'data' => ['notifyYN' => false]
                 ];
             }
@@ -376,16 +376,20 @@ class PurchaseRequestRepository extends BaseRepository
             if(empty($budgetMaster)){
                 return [
                     'success' => true,
-                    'message' => 'No budget found for the current financial year.',
+                    'message' => trans('custom.no_budget_found'),
                     'data' => ['notifyYN' => false]
                 ];
             }
             $yearStartDate = $currentFinancialYear->startDate;
             $yearEndDate = $currentFinancialYear->endDate;
             $year = (int) date('Y', strtotime($yearStartDate));
-            $message = "<span>Current active financial period: <strong>{$yearStartDate}</strong> - <strong>{$yearEndDate}</strong></span>
-                        <br> This will be selected as the budget year <strong> {$year} </strong> <br><br>
-                        <span>Do you wish to proceed ?</span>";
+            $message = "<span>" . trans('custom.current_active_period', [
+                    'start' => $yearStartDate,
+                    'end' => $yearEndDate
+                ]) . "</span>
+            <br>" . trans('custom.selected_budget_year', ['year' => $year]) . "<br><br>
+            <span>" . trans('custom.proceed_question') . "</span>";
+
             return [
                 'success' => true,
                 'message' => $message,

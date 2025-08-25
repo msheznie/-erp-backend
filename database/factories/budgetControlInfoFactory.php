@@ -2,10 +2,10 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\Models\budgetControlInfo;
+use App\Models\BudgetControlInfo;
 use Faker\Generator as Faker;
 
-$factory->define(budgetControlInfo::class, function (Faker $faker) {
+$factory->define(BudgetControlInfo::class, function (Faker $faker) {
 
     return [
         'companySystemID' => $faker->randomDigitNotNull,

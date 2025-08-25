@@ -2,10 +2,10 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\Models\budgetControlLink;
+use App\Models\BudgetControlLink;
 use Faker\Generator as Faker;
 
-$factory->define(budgetControlLink::class, function (Faker $faker) {
+$factory->define(BudgetControlLink::class, function (Faker $faker) {
 
     return [
         'companySystemID' => $faker->randomDigitNotNull,
