@@ -413,7 +413,7 @@ class CustomerInvoiceItemDetailsRefferedback extends Model
         'quotationDetailsID' => 'integer',
         'timesReferred' => 'integer',
         'timestamp' => 'datetime',
-        'userQty' => 'integer'
+        'userQty' => 'float'
     ];
 
     /**

@@ -379,7 +379,7 @@ class CustomerInvoiceItemDetails extends Model
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
         'VATApplicableOn' => 'integer',
-        'userQty' => 'integer'
+        'userQty' => 'float'
     ];
 
     /**
