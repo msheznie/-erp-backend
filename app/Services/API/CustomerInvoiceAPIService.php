@@ -68,7 +68,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             }
                         } else {
                             $errorData[] = [
-                                'field' => "segment_code",
+                                'field' => "salesType",
                                 'message' => ["The sales type is mandatory"]
                             ];
                         }
@@ -466,11 +466,24 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
 
             if($masterData['invoice_type'] == 2) {
-                // Validate user qty
-                if($masterData['salesType'] == 3){
-                    if(isset($request['userQty'])){
-                        if(gettype($request['userQty']) != 'string'){
-                            if($request['userQty'] < 0){
+                // Validate salesType exists before using it
+                if (!isset($masterData['salesType'])) {
+                    $errorData[] = [
+                        'field' => "salesType",
+                        'message' => ["The sales type is mandatory"]
+                    ];
+                } else {
+                    // Validate user qty
+                    if($masterData['salesType'] == 3){
+                        if(isset($request['userQty'])){
+                            if(gettype($request['userQty']) != 'string'){
+                                if($request['userQty'] < 0){
+                                    $errorData[] = [
+                                        'field' => "userQty",
+                                        'message' => ["The quantity field value entered by the user should be a positive number"]
+                                    ];
+                                }
+                            } else {
                                 $errorData[] = [
                                     'field' => "userQty",
                                     'message' => ["The quantity field value entered by the user should be a positive number"]
@@ -479,68 +492,61 @@ class CustomerInvoiceAPIService extends AppBaseController
                         } else {
                             $errorData[] = [
                                 'field' => "userQty",
-                                'message' => ["The quantity field value entered by the user should be a positive number"]
+                                'message' => ["User Qty field is required"]
                             ];
                         }
                     }
-                    else {
-                        $errorData[] = [
-                            'field' => "userQty",
-                            'message' => ["User Qty field is required"]
-                        ];
+
+                    // Validate Service Code
+                    if(isset($request['service_code'])){
+                        $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
+                            ->where('companySystemID', $masterData['company_id'])
+                            ->where('isActive', 1)
+                            ->where('isAssigned', -1)
+                            ->whereIn('financeCategoryMaster', [1,2,4])
+                            ->first();
+                        if(!$serviceCode){
+                            $errorData[] = [
+                                'field' => "service_code",
+                                'message' => ["Service Code Not Found"]
+                            ];
+                        } else {
+                            if($masterData['salesType'] == 1 && $serviceCode->financeCategoryMaster == 2){
+                                $errorData[] = [
+                                    'field' => "service_code",
+                                    'message' => ["Item category should be inventory or non-inventory"]
+                                ];
+                            } else if(($masterData['salesType'] == 2 || $masterData['salesType'] == 3) && $serviceCode->financeCategoryMaster != 2){
+                                $errorData[] = [
+                                    'field' => "service_code",
+                                    'message' => ["Item category should be service "]
+                                ];
+                            }
+                        }
                     }
-                }
-
-
-                // Validate Service Code
-                if(isset($request['service_code'])){
-                    $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
-                        ->where('companySystemID', $masterData['company_id'])
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1)
-                        ->whereIn('financeCategoryMaster', [1,2,4])
-                        ->first();
-                    if(!$serviceCode){
+                    else {
                         $errorData[] = [
                             'field' => "service_code",
-                            'message' => ["Service Code Not Found"]
+                            'message' => ["service_code field is required"]
                         ];
-                    } else {
-                        if($masterData['salesType'] == 1 && $serviceCode->financeCategoryMaster == 2){
-                            $errorData[] = [
-                                'field' => "service_code",
-                                'message' => ["Item category should be inventory or non-inventory"]
-                            ];
-                        } else if(($masterData['salesType'] == 2 || $masterData['salesType'] == 3) && $serviceCode->financeCategoryMaster != 2){
-                            $errorData[] = [
-                                'field' => "service_code",
-                                'message' => ["Item category should be service "]
-                            ];
-                        }
                     }
-                }
-                else {
-                    $errorData[] = [
-                        'field' => "service_code",
-                        'message' => ["service_code field is required"]
-                    ];
-                }
 
-                // Validate Margin Percentage
-                if (isset($request['margin_percentage'])) {
-                    if (gettype($request['margin_percentage']) != 'string') {
-                        if ($request['margin_percentage'] < 0) {
+                    // Validate Margin Percentage
+                    if (isset($request['margin_percentage'])) {
+                        if (gettype($request['margin_percentage']) != 'string') {
+                            if ($request['margin_percentage'] < 0) {
+                                $errorData[] = [
+                                    'field' => "margin_percentage",
+                                    'message' => ["margin_percentage must be at least 0"]
+                                ];
+                            }
+                        }
+                        else {
                             $errorData[] = [
                                 'field' => "margin_percentage",
-                                'message' => ["margin_percentage must be at least 0"]
+                                'message' => ["margin_percentage must be a numeric"]
                             ];
                         }
-                    }
-                    else {
-                        $errorData[] = [
-                            'field' => "margin_percentage",
-                            'message' => ["margin_percentage must be a numeric"]
-                        ];
                     }
                 }
             }
