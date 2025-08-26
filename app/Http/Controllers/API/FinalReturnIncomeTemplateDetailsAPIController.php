@@ -267,6 +267,8 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 'fontColor',
                 'companySystemID',
             ]);
+            
+        $input = $this->convertArrayToValue($input);
 
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
