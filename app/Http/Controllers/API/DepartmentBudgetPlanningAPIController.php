@@ -8,6 +8,7 @@ use App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DeptBudgetPlanningTimeRequest;
 use App\Repositories\DepartmentBudgetPlanningRepository;
+use App\Rules\NoEmoji;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -531,7 +532,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             'requestCode' => 'required|string|max:20|unique:dept_budget_planning_time_requests,request_code',
             'currentSubmissionDate' => 'required|date',
             'dateOfRequest' => 'required|date|after:currentSubmissionDate',
-            'reasonForExtension' => 'required|string',
+            'reasonForExtension' => ['required', 'string', new NoEmoji()],
             'attachments' => 'nullable|array',
             'attachments.*.fileName' => 'required_with:attachments|string',
             'attachments.*.originalFileName' => 'required_with:attachments|string',
