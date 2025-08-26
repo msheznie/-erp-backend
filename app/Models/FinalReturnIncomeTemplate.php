@@ -151,8 +151,9 @@ class FinalReturnIncomeTemplate extends Model
         'description' => 'required'
     ];
 
-    public function scopeOfCompany($query, $type)
+    public function scopeOfCompany($query, $id)
     {
-        return $query->where('companySystemID',  $type);
+        return $query->where('companySystemID',  $id)
+                        ->where('isActive', 1);
     }
 }
