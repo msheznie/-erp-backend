@@ -656,7 +656,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
                     // Store the file using policy-wise disk (S3 or local based on company policy)
                     $disk = \Helper::policyWiseDisk($companySystemID, 'public');
-                    // \Storage::disk($disk)->put($filePath, $decodedFile);
+                     \Storage::disk($disk)->put($filePath, $decodedFile);
 
                     // Update attachment record with file details
                     $attachmentRecord->update([
@@ -878,9 +878,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     /**
      * Download time extension request attachment
      */
-    public function downloadTimeExtensionAttachment($attachmentId)
+    public function downloadTimeExtensionAttachment(Request $request)
     {
         try {
+            $attachmentId = $request->input('id');
             $attachment = \App\Models\DeptBudgetPlanningTimeRequestAttachment::find($attachmentId);
 
             if (!$attachment) {
