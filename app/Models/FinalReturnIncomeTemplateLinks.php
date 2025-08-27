@@ -217,5 +217,10 @@ class FinalReturnIncomeTemplateLinks extends Model
     {
         return $this->belongsTo(FinalReturnIncomeTemplateDefaults::class, 'rawId', 'id');
     }
+
+    public function linkedDetail()
+    {
+        return $this->hasOne(FinalReturnIncomeTemplateDetails::class, 'rawId', 'rawId');
+    }
     
 }
