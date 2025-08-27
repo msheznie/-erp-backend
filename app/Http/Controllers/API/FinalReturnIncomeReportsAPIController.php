@@ -20,6 +20,7 @@ use App\Models\SMECompany;
 use App\Models\YesNoSelection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -127,6 +128,15 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
     public function store(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = Validator::make($request->all(), [
+            'report_name' => 'required|string|max:100'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        } 
 
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->create($input);
 
@@ -416,7 +426,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
             ->with('values')
             ->get();
 
-        $company = SMECompany::find($incomeReportMaster->companySystemID);
+        $company = Company::with('localcurrency')->find($incomeReportMaster->companySystemID);
         $yesNoSelection = YesNoSelection::all();
 
         $data =[
