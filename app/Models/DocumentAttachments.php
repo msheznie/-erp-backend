@@ -430,7 +430,7 @@ class DocumentAttachments extends Model
 
     public function document_attachments()
     {
-        return $this->hasOne('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
+        return $this->hasMany('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
     }
 
     public function document_parent()
