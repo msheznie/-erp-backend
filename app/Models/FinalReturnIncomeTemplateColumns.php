@@ -216,4 +216,9 @@ class FinalReturnIncomeTemplateColumns extends Model
     {
         return $query->where('templateMasterID',  $templateMasterID);
     }
+
+    public function values()
+    {
+        return $this->hasMany(FinalReturnIncomeReportDetailValues::class, 'column_id', 'id');
+    }
 }

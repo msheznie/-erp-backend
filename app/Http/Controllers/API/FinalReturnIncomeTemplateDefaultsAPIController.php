@@ -104,13 +104,16 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
             }
 
             if (isset($input['type']) && $input['type'] == 3 && $input['itemType'] == 2) {
-                $usedRaws = [20,21,34];
+                $usedRaws = array_merge($usedRaws, [20,21,34]);
+                $usedRaws = array_unique($usedRaws);
                 return $query->whereIn('type', [1,2])
                  ->whereNotIn('id', $usedRaws);
             }
 
             if (isset($input['type']) && $input['itemType'] == 2) {
-                $usedRaws = [20,21,34];
+                $usedRaws = array_merge($usedRaws, [20,21,34]);
+                $usedRaws = array_unique($usedRaws);
+
                 return $query->where('type', $input['type'])
                  ->whereNotIn('id', $usedRaws);
             }

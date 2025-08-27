@@ -112,11 +112,20 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateFinalReturnIncomeReportDetailValuesAPIRequest $request)
+    public function store(Request $request)
     {
         $input = $request->all();
 
-        $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->create($input);
+        $finalReturnIncomeReportDetailValues = \App\Models\FinalReturnIncomeReportDetailValues::updateOrCreate(
+                [
+                    'report_detail_id' => $input['report_detail_id'],
+                    'column_id' => $input['column_id'] 
+                ],
+                [
+                    'amount' => $input['amount'] ? $input['amount'] : null,
+                    'timestamp' => now()
+                ]
+            );
 
         return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), 'Final Return Income Report Detail Values saved successfully');
     }

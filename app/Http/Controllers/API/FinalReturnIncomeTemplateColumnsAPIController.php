@@ -9,6 +9,7 @@ use App\Repositories\FinalReturnIncomeTemplateColumnsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -256,6 +257,14 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
     public function update($id, UpdateFinalReturnIncomeTemplateColumnsAPIRequest $request)
     {
         $input = $request->all();
+
+         $validator = Validator::make($input, [
+            'description' => 'nullable|string|max:200',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         /** @var FinalReturnIncomeTemplateColumns $finalReturnIncomeTemplateColumns */
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->findWithoutFail($id);
