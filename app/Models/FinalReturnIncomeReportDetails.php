@@ -123,6 +123,11 @@ class FinalReturnIncomeReportDetails extends Model
         return $this->belongsTo('App\Models\FinalReturnIncomeTemplateDetails', 'template_detail_id','id');
     }
 
+    public function values()
+    {
+        return $this->hasMany(FinalReturnIncomeReportDetailValues::class,'report_detail_id', 'id');
+    }
+
 
     public function scopeWithoutMaster($query)
     {

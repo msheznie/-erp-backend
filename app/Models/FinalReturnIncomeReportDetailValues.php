@@ -107,5 +107,9 @@ class FinalReturnIncomeReportDetailValues extends Model
         'column_id' => 'required'
     ];
 
+    public function reportDetail()
+    {
+        return $this->belongsTo(FinalReturnIncomeReportDetails::class, 'report_detail_id', 'id');
+    }
     
 }

@@ -413,6 +413,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
             ->get();
 
         $columnDetails = FinalReturnIncomeTemplateColumns::where('templateMasterID', $incomeReportMaster->template_id)
+            ->with('values')
             ->get();
 
         $company = SMECompany::find($incomeReportMaster->companySystemID);
@@ -486,7 +487,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
 
                 FinalReturnIncomeReportDetails::updateOrCreate(
                     [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
-                    [ 'amount' => $amount01, 'is_manual' => $amount01 == 0 ? 1 : 0] );
+                    [ 'amount' => $amount01, 'is_manual' => $templateDetail->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0] );
 
             }
 
@@ -499,7 +500,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
 
                     FinalReturnIncomeReportDetails::updateOrCreate(
                         [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $raw->id],
-                        [ 'amount' => $amount, 'is_manual' => $amount == 0 ? 1 : 0]
+                        [ 'amount' => $amount, 'is_manual' => $raw->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0]
                     );
                 }
             }
@@ -515,7 +516,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
 
                 FinalReturnIncomeReportDetails::updateOrCreate(
                     [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
-                    [ 'amount' => $amount02, 'is_manual' => $amount02 == 0 ? 1 : 0]
+                    [ 'amount' => $amount02, 'is_manual' =>  $rawIds->isEmpty() ? 1 : 0]
                 );
             }
                 

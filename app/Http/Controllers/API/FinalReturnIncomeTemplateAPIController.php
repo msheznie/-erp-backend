@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\FinalReturnIncomeReports;
 use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDetails;
 use App\Models\FinalReturnIncomeTemplateLinks;
@@ -364,6 +365,14 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
 
         if (empty($finalReturnIncomeTemplate)) {
             return $this->sendError('Final Return Income Template not found');
+        }
+
+        $IsExits = FinalReturnIncomeReports::where('template_id', $finalReturnIncomeTemplate->id)
+            ->where('companySystemID', $finalReturnIncomeTemplate->companySystemID)
+            ->exists();
+
+        if ($IsExits) {
+            return $this->sendError('Final Return Income Reports exist for this template');
         }
 
         FinalReturnIncomeTemplateDetails::where(
