@@ -230,6 +230,7 @@ class FinalReturnIncomeReportDetailsAPIController extends AppBaseController
     public function update($id, UpdateFinalReturnIncomeReportDetailsAPIRequest $request)
     {
         $input = $request->all();
+         $input = $this->convertArrayToValue(array_except($input, 'template_detail'));
 
         /** @var FinalReturnIncomeReportDetails $finalReturnIncomeReportDetails */
         $finalReturnIncomeReportDetails = $this->finalReturnIncomeReportDetailsRepository->findWithoutFail($id);

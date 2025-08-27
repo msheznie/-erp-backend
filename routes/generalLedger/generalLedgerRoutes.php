@@ -275,6 +275,7 @@ Route::group([], function(){
     Route::post('checkYearExists', 'FinalReturnIncomeReportsAPIController@checkYearExists');
     Route::get('incomeReportDetails/{id}', 'FinalReturnIncomeReportsAPIController@getIncomeReportDetails');
     Route::post('confirmReturnIncomeReport', 'FinalReturnIncomeReportsAPIController@confirmReturnIncomeReport');
+    Route::post('syncGLrecords', 'FinalReturnIncomeReportsAPIController@syncGLrecords');
 });
 
 

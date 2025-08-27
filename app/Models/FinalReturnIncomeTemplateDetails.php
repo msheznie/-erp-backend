@@ -247,15 +247,49 @@ class FinalReturnIncomeTemplateDetails extends Model
     }
 
     public function raws() {
-        return $this->hasMany('App\Models\FinalReturnIncomeTemplateDetails', 'masterID', 'id');
+        return $this->hasMany(FinalReturnIncomeTemplateDetails::class, 'masterID', 'id');
     }
 
     public function gl_link() {
-        return $this->hasMany('App\Models\FinalReturnIncomeTemplateLinks', 'templateDetailID', 'id');
+        return $this->hasMany(FinalReturnIncomeTemplateLinks::class, 'templateDetailID', 'id');
     }
 
     public function raw_defaults() {
-        return $this->belongsTo('App\Models\FinalReturnIncomeTemplateDefaults', 'rawId', 'id');
+        return $this->belongsTo(FinalReturnIncomeTemplateDefaults::class, 'rawId', 'id');
+    }
+
+    public function glAccounts()
+    {
+        return $this->hasMany(FinalReturnIncomeTemplateLinks::class, 'templateDetailID', 'id')
+                    ->whereNotNull('glAutoID');
+    }
+
+    public function rawLinks()
+    {
+        return $this->hasMany(FinalReturnIncomeTemplateLinks::class, 'templateDetailID', 'id')
+                    ->whereNotNull('rawId');
+    }
+
+    public function report_details()
+    {
+        return $this->hasOne(FinalReturnIncomeReportDetails::class, 'template_detail_id', 'id');
+    }
+
+    public function getAmountAttribute()
+    {
+        return isset($this->report_detail->amount) ? $this->report_detail->amount : 0;
+    }
+
+    public function linkedDetails()
+    {
+        return $this->hasManyThrough(
+            FinalReturnIncomeTemplateDetails::class,
+            FinalReturnIncomeTemplateLinks::class,
+            'templateDetailID',   
+            'rawId',              
+            'id',                 
+            'rawId'         
+        );
     }
     
 }

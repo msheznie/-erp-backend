@@ -15,9 +15,11 @@ use App\Models\FinalReturnIncomeTemplate;
 use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDetails;
 use App\Models\FinalReturnIncomeReportDetailValues;
+use App\Models\GeneralLedger;
 use App\Models\SMECompany;
 use App\Models\YesNoSelection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -125,25 +127,23 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
     public function store(Request $request)
     {
         $input = $request->all();
-        $details = 0;
 
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->create($input);
 
         $reportID = $finalReturnIncomeReports->id;
         $templateRows = FinalReturnIncomeTemplateDetails::Where('templateMasterID', $input['template_id'])
             ->where('companySystemID', $input['companySystemID'])->get();
-        $templateColumns = FinalReturnIncomeTemplateColumns::where('templateMasterID', $input['template_id'])
-            ->where('companySystemID', $input['companySystemID'])->get();
 
         foreach($templateRows as $row) {
-           if (is_null($row->masterID)) {
-                $data['report_id'] = $reportID;
-                $data['template_detail_id'] = $row->id;
-                $data['amount'] = 0;
+            $data['report_id'] = $reportID;
+            $data['template_detail_id'] = $row->id;
+            $data['amount'] = 0;
 
-                FinalReturnIncomeReportDetails::create($data);
-            }
+            FinalReturnIncomeReportDetails::create($data); 
         }
+
+        $tempRequest = new Request(['id' => $reportID]);
+        $this->syncGLrecords($tempRequest);
 
         return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports saved successfully');
     }
@@ -254,9 +254,10 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateFinalReturnIncomeReportsAPIRequest $request)
+    public function update($id, Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var FinalReturnIncomeReports $finalReturnIncomeReports */
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
@@ -397,15 +398,18 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                                             ->with('finance_year_by', 'template', 'confirmed_by')->first();
 
         $rowDetails = FinalReturnIncomeReportDetails::where('report_id', $id)
+            ->withoutMaster()
             ->with([
-                'template_detail.raws',
+                'template_detail' => function ($q) {
+                    $q->orderBy('sortOrder', 'asc');
+                },
+                'template_detail.raws.report_details' => function ($q) use ($id) {
+                    $q->select('id', 'report_id', 'template_detail_id', 'amount', 'is_manual')
+                    ->where('report_id', $id);
+                },
                 'template_detail.raw_defaults',
                 'template_detail.raws.raw_defaults'
             ])
-            ->whereHas('template_detail')
-            ->with(['template_detail' => function ($q) {
-                $q->orderBy('sortOrder', 'asc');
-            }])
             ->get();
 
         $columnDetails = FinalReturnIncomeTemplateColumns::where('templateMasterID', $incomeReportMaster->template_id)
@@ -440,11 +444,84 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
             $input['submittedDate'] = now();
         }
         
+      
+      
         $input = $this->convertArrayToValue($input);
         FinalReturnIncomeReports::where('id', $input['id'])
             ->update($input);
 
         return $this->sendResponse([], "Income report confirmed successfully");
+    }
+
+    public function syncGLrecords(Request $request) {
+        $input = $request->all();
+        $reportID = $input['id'];
+
+        $reportMasterData = FinalReturnIncomeReports::with(['finance_year_by'])
+            ->where('id', $reportID)
+            ->first();
+        
+        $companyId = $reportMasterData->companySystemID;
+        $startDate = $reportMasterData->finance_year_by->bigginingDate;
+        $endDate = $reportMasterData->finance_year_by->endingDate;
+
+        $all_gl_records = GeneralLedger::where('companySystemID', $companyId)
+                ->whereBetween('documentDate', [$startDate, $endDate])
+                ->select('chartOfAccountSystemID', DB::raw('SUM(documentLocalAmount) as total'))
+                ->groupBy('chartOfAccountSystemID')
+                ->pluck('total', 'chartOfAccountSystemID');
+
+        $templateDetails = FinalReturnIncomeTemplateDetails::with([
+            'gl_link', 'linkedDetails.gl_link', 'raws.gl_link'
+        ])
+        ->where('templateMasterID', $reportMasterData->template_id)
+        ->where('companySystemID', $reportMasterData->companySystemID)
+        ->get();
+
+        foreach($templateDetails as $templateDetail) {
+            $amount01 = 0;
+            if($templateDetail->itemType == 3 && $templateDetail->isFinalLevel == 1) {
+
+                $amount01 += $all_gl_records->only($templateDetail->gl_link->pluck('glAutoID'))->sum();
+
+                FinalReturnIncomeReportDetails::updateOrCreate(
+                    [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
+                    [ 'amount' => $amount01, 'is_manual' => $amount01 == 0 ? 1 : 0] );
+
+            }
+
+            if($templateDetail->itemType == 1 && $templateDetail->sectionType != 3) {
+                foreach($templateDetail->raws as $raw) {
+                    $amount = 0;
+                    if($raw->rawIdType == 1) {
+                        $amount += $all_gl_records->only($raw->gl_link->pluck('glAutoID'))->sum();
+                    }
+
+                    FinalReturnIncomeReportDetails::updateOrCreate(
+                        [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $raw->id],
+                        [ 'amount' => $amount, 'is_manual' => $amount == 0 ? 1 : 0]
+                    );
+                }
+            }
+
+            $amount02 = 0;
+            if($templateDetail->itemType == 2 || $templateDetail->rawIdType == 2) {
+                $rawIds = $templateDetail->gl_link->pluck('rawId');
+                $ids = FinalReturnIncomeTemplateDetails::whereIn('rawId', $rawIds)->pluck('id');
+
+                $amount02 += FinalReturnIncomeReportDetails::whereIn('template_detail_id', $ids)
+                    ->where('report_id', $reportMasterData->id)
+                    ->sum('amount');
+
+                FinalReturnIncomeReportDetails::updateOrCreate(
+                    [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
+                    [ 'amount' => $amount02, 'is_manual' => $amount02 == 0 ? 1 : 0]
+                );
+            }
+                
+        }
+
+        return $this->sendResponse([], "GL data synchronized successfully");
     }
 
 }
