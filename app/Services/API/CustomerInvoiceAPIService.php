@@ -363,7 +363,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'data' => [
                     'bookingDate' => $documentDate->toDateString(),
                     'comments' => $request['comment'],
-                    'salesType' => $request['salesType'],
+                    'salesType' => $request['salesType'] ?? null,
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
                     'companyID' => $request['company_id'],
