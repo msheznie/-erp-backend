@@ -35,10 +35,11 @@ class BudgetControlService
             return false;
         }
 
-		return BudgetControlLink::where('companySystemID', $comapnySystemId)
-                                 ->where('glAutoID', $id)->with('master')->whereHas('master', function($query) use($name, $value) {
-                                        $query->where($name, $value)->where('isChecked', 1);
-                                    })->exists();
+		return BudgetControlInfo::where('companySystemID', $comapnySystemId)
+                                        ->where($name, $value)
+                                        ->where('isChecked', 1)
+                                        ->where('controlType', $id)
+                                        ->exists();
    
 	}
 

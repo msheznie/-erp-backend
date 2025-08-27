@@ -58,9 +58,12 @@ class BudgetConsumptionService
 						continue;
 					}
 
-					$ignoreBudget =  BudgetControlService::checkIgnoreGL($value['templateDetailID'],$companySystemID,'ignoreBudget',1);
+					$chartOfAcData = ChartOfAccount::find($value['templateDetailID']);
+					$cateGoryType = ($chartOfAcData->catogaryBLorPLID == 2) ? 1 : 2;
 
-					if ($reportingAmount == 0 && $balanceAmount == 0 && $ignoreBudget) {
+					$ignoreBudget =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'ignoreBudget',1);
+
+					if ($reportingAmount == 0  && $ignoreBudget) {
 						continue;
 					}
 
@@ -116,12 +119,12 @@ class BudgetConsumptionService
 					$validateMessageE .= "<br>";
 					$validateMessageE .= "Budget not configured for below GL codes";
 					$validateMessageE .= "<br>";
-					
+						
 					foreach ($budgetData['validateArray'] as $key => $value) {
 						$code = explode(' - ', $value)[0];  
-						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->select('chartOfAccountSystemID')->first();
-						$chartOfAccountSystemID = isset($chartOfAccuntInfo->chartOfAccountSystemID) ? $chartOfAccuntInfo->chartOfAccountSystemID : null;
-						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$companySystemID,'definedBehavior',2);
+						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+						$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
+						$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
 						if($definedBehaviour)
 						{
 							$isDefinedBehaviour = true;
@@ -150,9 +153,10 @@ class BudgetConsumptionService
 					foreach ($budgetData['validateArray'] as $key => $value) 
 					{
 						$code = explode(' - ', $value)[0];  
-						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->select('chartOfAccountSystemID')->first();
-						$chartOfAccountSystemID = isset($chartOfAccuntInfo->chartOfAccountSystemID) ? $chartOfAccuntInfo->chartOfAccountSystemID : null;
-						$definedBehaviour =  BudgetControlService::checkIgnoreGL($chartOfAccountSystemID,$companySystemID,'definedBehavior',2);
+						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+						$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
+						$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
+
 						if($definedBehaviour)
 						{
 							$isDefinedBehaviour = true;
