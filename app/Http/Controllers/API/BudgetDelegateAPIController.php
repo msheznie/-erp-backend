@@ -85,9 +85,9 @@ class BudgetDelegateAPIController extends AppBaseController
                     'chart_of_accounts' => 'required|array|min:1',
                     'segments' => 'array'
                 ]);
-
+                $submissionDate = \Carbon\Carbon::createFromFormat('Y-m-d', date('Y-m-d', strtotime($input['submission_time'])));
                 // validate submission time is not in the past
-                if (\Carbon\Carbon::parse($input['submission_time'])->isPast()) {
+                if ($submissionDate->isBefore(today())) {
                     throw new Exception('Submission time cannot be in the past');
                 }
 
