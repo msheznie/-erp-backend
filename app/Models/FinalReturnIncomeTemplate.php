@@ -153,6 +153,11 @@ class FinalReturnIncomeTemplate extends Model
 
     public function scopeOfCompany($query, $id)
     {
+        return $query->where('companySystemID',  $id);
+    }
+
+    public function scopeOfCompanyActive($query, $id)
+    {
         return $query->where('companySystemID',  $id)
                         ->where('isActive', 1);
     }
