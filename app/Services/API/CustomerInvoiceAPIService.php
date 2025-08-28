@@ -58,6 +58,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                     $invoiceType = ($request['invoice_type'] == 1) ? 0 : 2;
 
                     if($invoiceType == 2) {
+                        // Validate Sales Type
+                        if (isset($request['salesType'])) {
+                            if(!in_array($request['salesType'], [1,2,3])) {
+                                $errorData[] = [
+                                    'field' => "salesType",
+                                    'message' => ["Invalid value selected for Sales Type"]
+                                ];
+                            }
+                        } else {
+                            $errorData[] = [
+                                'field' => "salesType",
+                                'message' => ["The sales type is mandatory"]
+                            ];
+                        }
+
                         // Validate Segment Code
                         if (isset($request['segment_code'])) {
                             $segment = SegmentMaster::withoutGlobalScope('final_level')
@@ -348,6 +363,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 'data' => [
                     'bookingDate' => $documentDate->toDateString(),
                     'comments' => $request['comment'],
+                    'salesType' => $request['salesType'] ?? null,
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
                     'companyID' => $request['company_id'],
@@ -450,43 +466,87 @@ class CustomerInvoiceAPIService extends AppBaseController
             }
 
             if($masterData['invoice_type'] == 2) {
-                // Validate Service Code
-                if(isset($request['service_code'])){
-                    $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
-                        ->where('companySystemID', $masterData['company_id'])
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1)
-                        ->whereIn('financeCategoryMaster', [1,2,4])
-                        ->first();
-                    if(!$serviceCode){
-                        $errorData[] = [
-                            'field' => "service_code",
-                            'message' => ["Service Code Not Found"]
-                        ];
-                    }
-                }
-                else {
+                // Validate salesType exists before using it
+                if (!isset($masterData['salesType'])) {
                     $errorData[] = [
-                        'field' => "service_code",
-                        'message' => ["service_code field is required"]
+                        'field' => "salesType",
+                        'message' => ["The sales type is mandatory"]
                     ];
-                }
-
-                // Validate Margin Percentage
-                if (isset($request['margin_percentage'])) {
-                    if (gettype($request['margin_percentage']) != 'string') {
-                        if ($request['margin_percentage'] < 0) {
+                } else {
+                    // Validate user qty
+                    if($masterData['salesType'] == 3){
+                        if(isset($request['userQty'])){
+                            if(gettype($request['userQty']) != 'string'){
+                                if($request['userQty'] < 0){
+                                    $errorData[] = [
+                                        'field' => "userQty",
+                                        'message' => ["The quantity field value entered by the user should be a positive number"]
+                                    ];
+                                }
+                            } else {
+                                $errorData[] = [
+                                    'field' => "userQty",
+                                    'message' => ["The quantity field value entered by the user should be a positive number"]
+                                ];
+                            }
+                        } else {
                             $errorData[] = [
-                                'field' => "margin_percentage",
-                                'message' => ["margin_percentage must be at least 0"]
+                                'field' => "userQty",
+                                'message' => ["User Qty field is required"]
                             ];
+                        }
+                    }
+
+                    // Validate Service Code
+                    if(isset($request['service_code'])){
+                        $serviceCode = ItemAssigned::where('itemPrimaryCode',$request['service_code'])
+                            ->where('companySystemID', $masterData['company_id'])
+                            ->where('isActive', 1)
+                            ->where('isAssigned', -1)
+                            ->whereIn('financeCategoryMaster', [1,2,4])
+                            ->first();
+                        if(!$serviceCode){
+                            $errorData[] = [
+                                'field' => "service_code",
+                                'message' => ["Service Code Not Found"]
+                            ];
+                        } else {
+                            if($masterData['salesType'] == 1 && $serviceCode->financeCategoryMaster == 2){
+                                $errorData[] = [
+                                    'field' => "service_code",
+                                    'message' => ["Item category should be inventory or non-inventory"]
+                                ];
+                            } else if(($masterData['salesType'] == 2 || $masterData['salesType'] == 3) && $serviceCode->financeCategoryMaster != 2){
+                                $errorData[] = [
+                                    'field' => "service_code",
+                                    'message' => ["Item category should be service "]
+                                ];
+                            }
                         }
                     }
                     else {
                         $errorData[] = [
-                            'field' => "margin_percentage",
-                            'message' => ["margin_percentage must be a numeric"]
+                            'field' => "service_code",
+                            'message' => ["service_code field is required"]
                         ];
+                    }
+
+                    // Validate Margin Percentage
+                    if (isset($request['margin_percentage'])) {
+                        if (gettype($request['margin_percentage']) != 'string') {
+                            if ($request['margin_percentage'] < 0) {
+                                $errorData[] = [
+                                    'field' => "margin_percentage",
+                                    'message' => ["margin_percentage must be at least 0"]
+                                ];
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "margin_percentage",
+                                'message' => ["margin_percentage must be a numeric"]
+                            ];
+                        }
                     }
                 }
             }
@@ -660,6 +720,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     $returnData['data']['qtyIssued'] = $request['quantity'];
                     $returnData['data']['discountAmount'] = $request['discount_amount'] ?? 0;
                     $returnData['data']['marginPercentage'] = $request['margin_percentage'] ?? 0;
+                    $returnData['data']['userQty'] = $request['userQty'] ?? 0;
                 }
             }
         }
@@ -841,6 +902,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
+        $salesType = $customerInvoiceDirect->salesType;
 
         if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
@@ -1028,6 +1090,9 @@ class CustomerInvoiceAPIService extends AppBaseController
         $_post['PONumber'] = $input['PONumber'];
         $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
         $_post['isPerforma'] = $input['isPerforma'];
+        if(isset($input['salesType'])){
+            $_post['salesType'] = $input['salesType'];
+        }
 
         if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
             $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)
@@ -1229,7 +1294,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         }
 
         if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {
-            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            if($salesType == 3){
+                $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin * userQty),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal * userQty),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt * userQty),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            }else{
+                $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+            }
         } else {
             $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
         }
@@ -1409,6 +1478,22 @@ class CustomerInvoiceAPIService extends AppBaseController
                             ];
                         }
 
+                        if($salesType == 3){
+                            $checkUserQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                                ->where(function ($q) {
+                                    $q->where('userQty', '<=', 0)
+                                        ->orWhereNull('userQty');
+                                })
+                                ->count();
+                            if($checkUserQuantity > 0){
+                                return [
+                                    'status' => false,
+                                    'code' => 500,
+                                    'message' => 'Every Item should have at least one minimum User Qty Requested'
+                                ];
+                            }
+                        }
+
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
                         $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
@@ -1490,8 +1575,11 @@ class CustomerInvoiceAPIService extends AppBaseController
                             } else {
                                 $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
                             }
-
-                            $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+                            if($salesType == 3){
+                                $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure * $updateItem->userQty;
+                            }else{
+                                $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+                            }
 
                             /*round to 7 decimal*/
 
@@ -2499,7 +2587,11 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
-        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        if($is_pref == 2 && $customerInvoiceDirect->salesType == 3){
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'] * $input['userQty'];
+        }else{
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        }
 
         /*round to 7 decimals*/
         $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
@@ -3151,8 +3243,13 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         $input['issueCostLocalTotal'] = $customerInvoiceItemDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $customerInvoiceItemDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
-        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
+
+        if($customerDirectInvoice->isPerforma == 2 && $customerDirectInvoice->salesType == 3){
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'] * $input['userQty'];
+        }else{
+            $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        }
 
         if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
             $input['qtyIssued'] = 0;
@@ -3214,7 +3311,11 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         foreach ($invoiceDetails as $key => $value) {
             if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
-                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
+                if($invoice->salesType == 3 && isset($value->userQty) && $value->userQty != null){
+                    $totalVATAmount += $value->qtyIssued * $value->VATAmount * $value->userQty;
+                }else{
+                    $totalVATAmount += $value->qtyIssued * $value->VATAmount;
+                }
             } else {
                 $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
             }

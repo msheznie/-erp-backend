@@ -591,5 +591,30 @@ return [
     "from" => "From",
     "to" => "To",
     'template' => 'Template',
-    "adjustment" => "Adjustment"
+    "adjustment" => "Adjustment",
+    "amount_in_words" => "Amount in words",
+    'swift_code' => "SWIFT Code",
+    'quantity' => "Quantity",
+    'unit_price' => "Unit Price",
+    'tax' => "Tax",
+    'bank_details' => "Bank Details",
+    'prepared_by' => "Prepared By",
+    'vatin' => "VATIN",
+    'name_of_customer' => "Name of Customer",
+    "taxable_rate" => "Taxable Rate",
+
+    //segment Master
+    'segment_not_found' => 'Segment not found',
+    'segment_code_exists' => 'Segment code already exists',
+    'segment_used' => 'This segment is used in some documents. Therefore, Final level status cannot be changed',
+    'segment_used_in_departments' => 'Cannot change final level — segment is already used in departments',
+    'cannot_change_parent' => 'Parent type cannot be changed, as it has sub levels',
+    'public_segment_configured' => 'Public segment is configured already! (:code - :desc)',
+    'segment_updated' => 'Segment master updated successfully',
+
+    'no_active_financial_year' => 'No current active financial year found.',
+    'no_budget_found' => 'No budget found for the current financial year.',
+    'current_active_period' => 'Current active financial period: :start - :end',
+    'selected_budget_year' => 'This will be selected as the budget year :year',
+    'proceed_question' => 'Do you wish to proceed ?',
 ];

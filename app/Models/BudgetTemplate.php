@@ -72,4 +72,12 @@ class BudgetTemplate extends Model
     {
         return is_string($value) ? htmlspecialchars_decode($value) : $value;
     }
+
+    /**
+     * Get the columns associated with this template
+     */
+    public function columns()
+    {
+        return $this->hasMany(BudgetTemplateColumn::class, 'budgetTemplateID', 'budgetTemplateID');
+    }
 } 

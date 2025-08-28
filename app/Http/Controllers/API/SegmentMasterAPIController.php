@@ -810,7 +810,7 @@ class SegmentMasterAPIController extends AppBaseController
                 ];
             }
             else {
-                return $this->sendError("Segment not found", 500);
+                return $this->sendError(trans('custom.segment_not_found'), 500);
             }
         }
 
@@ -840,11 +840,11 @@ class SegmentMasterAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     'status' => false,
-                    'message' => 'Segment code already exists'
+                    'message' => trans('custom.segment_code_exists')
                 ];
             }
             else {
-                return $this->sendError("Segment code already exists", 500);
+                return $this->sendError(trans('custom.segment_code_exists'), 500);
             }
         }
 
@@ -882,22 +882,25 @@ class SegmentMasterAPIController extends AppBaseController
                     $segmentUsed = true;
                 }
             }
-
+            
+            if (SegmentMaster::isSegmentUsedInDepartment($input['serviceLineSystemID'])) {
+                return $this->sendError(trans('custom.segment_used_in_departments'), 500);
+            }
 
             if ($segmentUsed) {
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         'status' => false,
-                        'message' => 'This segment is used in some documents. Therefore, Final level status cannot be changed'
+                        'message' => trans('custom.segment_used')
                     ];
                 }
                 else {
-                    return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+                    return $this->sendError(trans('custom.segment_used'), 500);
                 }
             }
 
             if($input['sub_levels_count'] > 0) {
-                return $this->sendError("Parent type cannot be changed, as it has sub levels", 500);
+                return $this->sendError(trans('custom.cannot_change_parent'), 500);
             }
         }
 
@@ -912,11 +915,17 @@ class SegmentMasterAPIController extends AppBaseController
                     if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             'status' => false,
-                            'message' => "Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "
+                            'message' => trans('custom.public_segment_configured', [
+                                'code' => $companyPublicCheck->ServiceLineCode,
+                                'desc' => $companyPublicCheck->ServiceLineDes
+                            ])
                         ];
                     }
                     else {
-                        return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                        return $this->sendError(trans('custom.public_segment_configured', [
+                            'code' => $companyPublicCheck->ServiceLineCode,
+                            'desc' => $companyPublicCheck->ServiceLineDes
+                        ]), 500);
                     }
                 }
             }
@@ -1001,7 +1010,7 @@ class SegmentMasterAPIController extends AppBaseController
             return ['status' => true];
         }
         else {
-            return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
+            return $this->sendResponse($segmentMaster, trans('custom.segment_updated'));
         }
     }
 

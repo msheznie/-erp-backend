@@ -461,7 +461,7 @@ class ReportTemplateAPIController extends AppBaseController
                                 $query->with(['gllink'=>function($query){
                                     $query->with(['chartofaccount']);
                                 }]);
-                            }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
+                            }])->where('reportID', $input['reportID'])->where('companySystemID', $input['companySystemID'])->where('isDefault', 1)->get();
 
 
                             $isCOA = false;

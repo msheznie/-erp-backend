@@ -34,16 +34,36 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
      */
     public function getAllDepartmentSegments(Request $request)
     {
+        $input = $request->all();
+
         $departmentSystemID = $request->get('departmentSystemID');
         
         if (!$departmentSystemID) {
             return $this->sendError('Department ID is required');
         }
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
                  ->with(['segment', 'department'])
-                 ->orderBy('departmentSegmentSystemID', 'desc')
-                 ->get();
+                 ->orderBy('departmentSegmentSystemID', $sort);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->whereHas('segment', function ($query) use ($search) {
+                $query->where('ServiceLineCode', 'LIKE', "%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
+        else {
+            $query = $query->get();
+        }
 
         return DataTables::of($query)
             ->addIndexColumn()

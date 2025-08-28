@@ -223,6 +223,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if (!$wareHouse) {
                 return $this->sendError('Please select a warehouse', 500);
             }
+            
+            if (!isset($input['salesType']) || empty($input['salesType'])) {
+                return $this->sendError('Please select a sales type', 500);
+            }
         }
 
         if (!isset($input['custTransactionCurrencyID']) || (isset($input['custTransactionCurrencyID']) && ($input['custTransactionCurrencyID'] == 0 || $input['custTransactionCurrencyID'] == null))) {
@@ -388,10 +392,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
         if ($isPerforma == 1) {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID','isPerforma'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID','isPerforma', 'salesType'));
         }
         else {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID', 'isPerforma'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID', 'isPerforma', 'salesType'));
         }
 
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
@@ -1804,6 +1808,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($id) {
             $output['isVATEligible'] = $master->vatRegisteredYN;
         }
+
+        $output['salesTypes'] = [
+            ['value' => 1, 'label' => 'Goods'],
+            ['value' => 2, 'label' => 'Service'],
+            ['value' => 3, 'label' => 'Subscription'],
+        ];
 
         $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);
         $output['autoGeneratePolicy'] = $autoGeneratePolicy;
@@ -4051,7 +4061,7 @@ WHERE
     public function amendCustomerInvoiceReview(Request $request)
     {
         $input = $request->all();
-
+            
         $id = $input['custInvoiceDirectAutoID'];
 
         $employee = \Helper::getEmployeeInfo();
@@ -4122,8 +4132,6 @@ WHERE
             if ($checkForInventoryItems) {
                 return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
             }
-        }elseif ($masterData->isPerforma == 4){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
         }elseif ($masterData->isPerforma == 5){
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
         }
@@ -4135,10 +4143,8 @@ WHERE
         try {
 
              $amendCI = $this->customerInvoiceService->amendCustomerInvoice($input,$id,$masterData);
-
              if(isset($amendCI['status']) && $amendCI['status'] == false){
-                $errorMessage = "Customer Invoice " . $amendCI['message'];
-                return $this->sendError($errorMessage);
+                return $this->sendError($amendCI['message']);
             }
              $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
              $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';

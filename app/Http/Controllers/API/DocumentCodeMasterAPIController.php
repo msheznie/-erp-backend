@@ -322,22 +322,23 @@ class DocumentCodeMasterAPIController extends AppBaseController
             foreach ($documentCodeMasters as $documentCodeMaster) {
                 switch ($documentCodeMaster->document_code_transactions->document_system_id) {
                     case 1:
-                            $lastSerial = PurchaseRequest::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                            $lastSerialRecord = PurchaseRequest::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
                             ->where('companySystemID', $company_id)
                             ->latest('serialNumber')
-                            ->first()
-                            ->serialNumber;
+                            ->first();
 
+                            $lastSerial = $lastSerialRecord ? $lastSerialRecord->serialNumber : 0;
                             $documentCodeMaster->last_serial = $lastSerial;
                             $documentCodeMaster->save();
 
                         break;
                     case 2:
-                        $lastSerial = ProcumentOrder::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
+                        $lastSerialRecord = ProcumentOrder::where('documentSystemID', $documentCodeMaster->document_code_transactions->document_system_id)
                         ->where('companySystemID', $company_id)
                         ->latest('serialNumber')
-                        ->first()
-                        ->serialNumber;
+                        ->first();
+                        
+                        $lastSerial = $lastSerialRecord ? $lastSerialRecord->serialNumber : 0;
 
                         $documentCodeMaster->last_serial = $lastSerial;
                         $documentCodeMaster->save();

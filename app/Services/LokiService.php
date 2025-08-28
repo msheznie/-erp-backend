@@ -104,6 +104,9 @@ class LokiService
             case 'erp_workflow_configuration':
                 $table = 'erp_workflow_configurations';
                 break;
+            case 'department_budget_plannings':
+                $table = 'department_budget_plannings';
+                break;
             default:
                 $table = null;
                 break;

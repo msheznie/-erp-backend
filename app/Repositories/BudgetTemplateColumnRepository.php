@@ -31,7 +31,6 @@ class BudgetTemplateColumnRepository extends BaseRepository
         return BudgetTemplateColumn::with('preColumn')
             ->where('budgetTemplateID', $budgetTemplateID)
             ->orderBy('sortOrder')
-            ->orderBy('templateColumnID')
             ->get();
     }
 

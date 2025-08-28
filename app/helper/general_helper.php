@@ -3286,7 +3286,7 @@ class Helper
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
 
-                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'refferedBackYN' => 0]);
 
                             //get the policy
                             $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->first();
@@ -4756,7 +4756,7 @@ class Helper
                         //Budget check on the 1st level approval for PR/DR/WR
                         if ($input["rollLevelOrder"] == 1) {
                             if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"]) && !$budgetBlockOveride) {
-                                $budgetCheck = BudgetConsumptionService::checkBudget($input["documentSystemID"], $input["documentSystemCode"]);
+                                $budgetCheck = BudgetConsumptionService::checkBudget($input["documentSystemID"], $input["documentSystemCode"],$docApproved->companySystemID);
                                 if ($budgetCheck['status'] && $budgetCheck['message'] != "") {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
@@ -4766,6 +4766,16 @@ class Helper
                                         return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
                                     }
                                 } else {
+                                    if ($budgetCheck['status'] && isset($budgetCheck['warning']) && $budgetCheck['warning'] && isset($input['isBudgetCheck']) && $input['isBudgetCheck']) {
+                                            return [
+                                                'success' => false,
+                                                'code' => 500,
+                                                'message' => 'Some GL codes are not assigned for budget with relevant segment and finance period , Are you sure you want to approve this document?',
+                                                'type' => 'budgetDefined',
+                                            ];
+                                    }
+
+
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         // update PR master table
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);

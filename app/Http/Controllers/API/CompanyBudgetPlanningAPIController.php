@@ -185,7 +185,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->create($data);
 
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id);
+        $uuid = $request->get('tenant_uuid', 'local');
+
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), 'Budget Planning initiated successfully');
     }

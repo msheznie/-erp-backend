@@ -243,6 +243,8 @@ class BudgetMaster extends Model
     {
         return $this->hasMany('App\Models\Budjetdetails', 'budgetmasterID','budgetmasterID');
     }
-
+    public static function getBudgetMasterByFYear($financialYearID, $companySystemID){
+        return self::where('companyFinanceYearID', $financialYearID)->where('companySystemID', $companySystemID)->first();
+    }
 
 }

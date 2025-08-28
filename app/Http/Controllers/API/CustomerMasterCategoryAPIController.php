@@ -136,11 +136,15 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 return $this->sendError(trans('custom.category_description_already_exists'));
             } else {
 
-                $categosryMasterUpdate = CustomerMasterCategory::find($request->categoryID);
-                $categosryMasterUpdate->categoryDescription = $input["categoryDescription"];
-                $categosryMasterUpdate->modifiedPCID = gethostname();
-                $categosryMasterUpdate->modifiedUserID = $employee->empID;
-                $categosryMasterUpdate->save();
+                $categoryMasterUpdate = CustomerMasterCategory::find($request->categoryID);
+                if (!$categoryMasterUpdate) {
+                    return $this->sendError('Customer category not found');
+                }
+
+                $categoryMasterUpdate->categoryDescription = $input["categoryDescription"];
+                $categoryMasterUpdate->modifiedPCID = gethostname();
+                $categoryMasterUpdate->modifiedUserID = $employee->empID;
+                $categoryMasterUpdate->save();
             }
         } else {
             $companyMaster = Company::find($input['companySystemID']);
