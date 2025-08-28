@@ -124,4 +124,9 @@ class TenderDocumentTypeAssign extends Model
             ->where('company_id', $company_id)
             ->first();
     }
+
+    public static function getTenderDocumentType($tenderId)
+    {
+        return TenderDocumentTypeAssign::where('tender_id',$tenderId)->get();
+    }
 }
