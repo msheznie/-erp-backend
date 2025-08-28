@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
+use App\Models\TenderDocumentTypeAssign;
 use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
 use Illuminate\Http\Request;
@@ -142,5 +143,21 @@ class DocumentAttachmentsRepository extends BaseRepository
 
     public function getDocumentAttachmentTypes($documentSystemID, $companySystemID) {
         return CompanyDocumentAttachment::getCompanyDocumentAttachmentList($documentSystemID, $companySystemID);
+    }
+
+    public static function getAttachmentLists($id, $documentSystemId, $envelopType, $parentId, $tenderId, $bidListView)
+    {
+        $query = DocumentAttachments::getBidMultipleAttachmentList($id, $documentSystemId, $envelopType, $parentId);
+
+        $assignDocumentTypesDeclared = [1,2,3];
+        $assignDocumentTypes = TenderDocumentTypeAssign::getTenderDocumentType($tenderId)->pluck('document_type_id')->toArray();
+        $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
+
+        if($bidListView)
+        {
+            $query = DocumentAttachments::getBidAttachmentList($doucments, $tenderId, $documentSystemId, $envelopType);
+        }
+
+        return $query;
     }
 }
