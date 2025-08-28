@@ -379,7 +379,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                                                 ->where('companySystemID', $companyID)
                                                 ->get();
 
-        $templates = FinalReturnIncomeTemplate::OfCompany($companyID)
+        $templates = FinalReturnIncomeTemplate::OfCompanyActive($companyID)
                                      ->get();
 
         $data = [
