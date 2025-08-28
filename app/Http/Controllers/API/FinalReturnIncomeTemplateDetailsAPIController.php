@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDefaults;
+use App\Models\FinalReturnIncomeReports;
 use App\Models\FinalReturnIncomeTemplateLinks;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -412,11 +413,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
             $companySystemID = $request->query('companySystemID');
             $localCurrency = \Helper::companyCurrency($companySystemID);
+            $isTemplateUsed = FinalReturnIncomeReports::where('template_id', $templateId)->exists();
 
             $output = [
                 'templateDetails' => $templateDetails->toArray(), 
                 'columns' => $templateColumns->toArray(),
-                'localCurrency' => $localCurrency->localcurrency->CurrencyCode
+                'localCurrency' => $localCurrency->localcurrency->CurrencyCode,
+                'isTemplateUsed' => $isTemplateUsed
             ];
 
         return $this->sendResponse($output, 'Final Return Income Template Details retrieved successfully');

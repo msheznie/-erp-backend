@@ -16,10 +16,8 @@ use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDetails;
 use App\Models\FinalReturnIncomeReportDetailValues;
 use App\Models\GeneralLedger;
-use App\Models\SMECompany;
 use App\Models\YesNoSelection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -132,7 +130,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
 
         $validator = Validator::make($request->all(), [
             'report_name' => 'required|string|max:100'
-        ]);
+        ],[],['report_name' => 'description']);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -352,6 +350,11 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $finalReturnIncomeReports = $finalReturnIncomeReports->where(function ($query) use ($search) {
                  $query->where('report_name', 'LIKE', "%{$search}%");
+                 $query->where('report_name', 'LIKE', "%{$search}%")
+                    ->orWhereHas('finance_year_by', function ($q) use ($search) {
+                        $q->where('bigginingDate', 'LIKE', "%{$search}%")
+                            ->orWhere('endingDate', 'LIKE', "%{$search}%");
+                });
             });
         }
 
@@ -495,9 +498,12 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
 
                 $amount01 += $all_gl_records->only($templateDetail->gl_link->pluck('glAutoID'))->sum();
 
-                FinalReturnIncomeReportDetails::updateOrCreate(
-                    [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
-                    [ 'amount' => $amount01, 'is_manual' => $templateDetail->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0] );
+                $this->updateOrAccumulate(
+                    $reportMasterData->id,
+                    $templateDetail->id,
+                    $amount01,
+                    $templateDetail->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0
+                );
 
             }
 
@@ -508,9 +514,11 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                         $amount += $all_gl_records->only($raw->gl_link->pluck('glAutoID'))->sum();
                     }
 
-                    FinalReturnIncomeReportDetails::updateOrCreate(
-                        [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $raw->id],
-                        [ 'amount' => $amount, 'is_manual' => $raw->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0]
+                    $this->updateOrAccumulate(
+                        $reportMasterData->id,
+                        $raw->id,
+                        $amount,
+                        $raw->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0
                     );
                 }
             }
@@ -524,9 +532,11 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                     ->where('report_id', $reportMasterData->id)
                     ->sum('amount');
 
-                FinalReturnIncomeReportDetails::updateOrCreate(
-                    [ 'report_id' => $reportMasterData->id, 'template_detail_id' => $templateDetail->id],
-                    [ 'amount' => $amount02, 'is_manual' =>  $rawIds->isEmpty() ? 1 : 0]
+                $this->updateOrAccumulate(
+                    $reportMasterData->id,
+                    $templateDetail->id,
+                    $amount02,
+                    $rawIds->isEmpty() ? 1 : 0
                 );
             }
                 
@@ -535,4 +545,35 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         return $this->sendResponse([], "GL data synchronized successfully");
     }
 
+    private function updateOrAccumulate($reportId, $templateDetailId, $newAmount, $isManual) {
+        $existing = FinalReturnIncomeReportDetails::where([
+            'report_id' => $reportId,
+            'template_detail_id' => $templateDetailId
+        ])->first();
+
+        if ($existing) {
+            if($newAmount != 0) {
+                $oldAmount = $existing->amount;
+
+                if ($oldAmount == 0) {
+                    $existing->amount = $newAmount;
+                } elseif ($oldAmount != $newAmount) {
+                    $diff = $newAmount - $oldAmount;
+                    $existing->amount = $oldAmount + $diff;
+                } else {
+                    $existing->amount = $newAmount;
+                }
+            }
+
+            $existing->is_manual = $isManual;
+            $existing->save();
+        } else {
+            FinalReturnIncomeReportDetails::create([
+                'report_id' => $reportId,
+                'template_detail_id' => $templateDetailId,
+                'amount' => $newAmount,
+                'is_manual' => $isManual
+            ]);
+        }
+    }
 }
