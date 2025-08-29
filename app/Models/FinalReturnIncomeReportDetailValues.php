@@ -93,7 +93,7 @@ class FinalReturnIncomeReportDetailValues extends Model
         'id' => 'integer',
         'report_detail_id' => 'integer',
         'column_id' => 'integer',
-        'amount' => 'float',
+        'amount' => 'varchar',
         'timestamp' => 'datetime'
     ];
 
