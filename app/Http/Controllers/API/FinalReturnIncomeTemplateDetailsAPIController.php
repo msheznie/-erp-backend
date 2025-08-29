@@ -273,9 +273,14 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
-
+        $isTemplateUsed = FinalReturnIncomeReports::where('template_id',  $finalReturnIncomeTemplateDetails->templateMasterID)->exists();
+      
         if (empty($finalReturnIncomeTemplateDetails)) {
             return $this->sendError('Final Return Income Template Details not found');
+        }
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be updated', 500);
         }
 
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->update($input, $id);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateFinalReturnIncomeTemplateColumnsAPIRequest;
 use App\Http\Requests\API\UpdateFinalReturnIncomeTemplateColumnsAPIRequest;
 use App\Models\FinalReturnIncomeTemplateColumns;
+use App\Models\FinalReturnIncomeReports;
 use App\Repositories\FinalReturnIncomeTemplateColumnsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -268,10 +269,16 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
 
         /** @var FinalReturnIncomeTemplateColumns $finalReturnIncomeTemplateColumns */
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->findWithoutFail($id);
-
+        $isTemplateUsed = FinalReturnIncomeReports::where('template_id',  $finalReturnIncomeTemplateColumns->templateMasterID)->exists();
+        
         if (empty($finalReturnIncomeTemplateColumns)) {
             return $this->sendError('Final Return Income Template Columns not found');
         }
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be updated', 500);
+        }
+
 
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->update($input, $id);
 

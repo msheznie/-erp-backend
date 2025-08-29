@@ -411,22 +411,45 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                                             ->with('finance_year_by', 'template', 'confirmed_by')->first();
 
         $rowDetails = FinalReturnIncomeReportDetails::where('report_id', $id)
-            ->withoutMaster()
-            ->with([
-                'template_detail' => function ($q) {
-                    $q->orderBy('sortOrder', 'asc');
-                },
-                'template_detail.raws.report_details' => function ($q) use ($id) {
-                    $q->select('id', 'report_id', 'template_detail_id', 'amount', 'is_manual')
-                    ->where('report_id', $id);
-                },
-                'template_detail.raw_defaults',
-                'template_detail.raws.raw_defaults'
-            ])
-            ->get();
+                        ->withoutMaster()
+                        ->with([
+                            'template_detail' => function ($q) {
+                                $q->with([
+                                    'raws' => function ($r1) {
+                                        $r1->with([
+                                            'raws' => function ($r2) {
+                                                $r2->with([
+                                                    'raws' => function ($r3) {
+                                                        $r3->with([
+                                                            'raws' => function ($r4) {
+                                                                $r4->orderBy('sortOrder', 'asc');
+                                                            }
+                                                        ])->orderBy('sortOrder', 'asc');
+                                                    }
+                                                ])->orderBy('sortOrder', 'asc');
+                                            }
+                                        ])->orderBy('sortOrder', 'asc');
+                                    }
+                                ])->orderBy('sortOrder', 'asc');
+                            },
+                            'template_detail.raws.report_details' => function ($q) use ($id) {
+                                $q->select('id', 'report_id', 'template_detail_id', 'amount', 'is_manual')
+                                    ->where('report_id', $id);
+                            },
+                            'template_detail.raw_defaults',
+                            'template_detail.raws.raw_defaults'
+                        ])
+                        ->orderBy(DB::raw("(
+                                SELECT sortOrder 
+                                FROM final_return_income_template_details 
+                                WHERE final_return_income_template_details.id = final_return_income_report_details.template_detail_id 
+                                LIMIT 1
+                            )"), 'asc')
+                        ->get();
 
         $columnDetails = FinalReturnIncomeTemplateColumns::where('templateMasterID', $incomeReportMaster->template_id)
             ->with('values')
+            ->orderBy('sortOrder')
             ->get();
 
         $company = Company::with('localcurrency')->find($incomeReportMaster->companySystemID);
