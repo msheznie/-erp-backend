@@ -41,6 +41,14 @@ class DeptBudgetPlanningTimeRequest extends Model
     }
 
     /**
+     * Get the company system ID for this time request.
+     */
+    public function getCompanySystemID()
+    {
+        return $this->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? null;
+    }
+
+    /**
      * Get the attachments for the time request.
      */
     public function attachments()
