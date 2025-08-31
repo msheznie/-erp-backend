@@ -273,8 +273,8 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
-        $isTemplateUsed = FinalReturnIncomeReports::where('template_id',  $finalReturnIncomeTemplateDetails->templateMasterID)->exists();
-      
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($finalReturnIncomeTemplateDetails->templateMasterID);
+
         if (empty($finalReturnIncomeTemplateDetails)) {
             return $this->sendError('Final Return Income Template Details not found');
         }
@@ -332,13 +332,19 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
 
+        $templateMasterID = $finalReturnIncomeTemplateDetails->templateMasterID;
+        $masterID         = $finalReturnIncomeTemplateDetails->masterID;
+        $companySystemID  = $finalReturnIncomeTemplateDetails->companySystemID;
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateMasterID);
+
         if (empty($finalReturnIncomeTemplateDetails)) {
             return $this->sendError('Final Return Income Template Details not found');
         }
 
-        $templateMasterID = $finalReturnIncomeTemplateDetails->templateMasterID;
-        $masterID         = $finalReturnIncomeTemplateDetails->masterID;
-        $companySystemID  = $finalReturnIncomeTemplateDetails->companySystemID;
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be deleted', 500);
+        }
+       
 
         $finalReturnIncomeTemplateDetails->delete();
 
@@ -418,7 +424,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
             $companySystemID = $request->query('companySystemID');
             $localCurrency = \Helper::companyCurrency($companySystemID);
-            $isTemplateUsed = FinalReturnIncomeReports::where('template_id', $templateId)->exists();
+            $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateId);
 
             $output = [
                 'templateDetails' => $templateDetails->toArray(), 
