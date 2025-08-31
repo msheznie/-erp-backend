@@ -54,6 +54,14 @@ class BudgetTemplateColumn extends Model
     }
 
     /**
+     * Relationship with entry data
+     */
+    public function entryData()
+    {
+        return $this->hasMany(BudgetDetTemplateEntryData::class, 'templateColumnID', 'templateColumnID');
+    }
+
+    /**
      * Get formula column IDs as array
      */
     public function getFormulaColumnIDsArray()

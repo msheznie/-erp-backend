@@ -107,6 +107,9 @@ class LokiService
             case 'department_budget_plannings':
                 $table = 'department_budget_plannings';
                 break;
+            case 'department_budget_planning_details_template_data':
+                $table = 'department_budget_planning_details_template_data';
+                break;
             default:
                 $table = null;
                 break;
