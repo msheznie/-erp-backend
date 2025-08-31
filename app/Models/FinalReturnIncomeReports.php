@@ -289,6 +289,10 @@ class FinalReturnIncomeReports extends Model
         'submittedYN' => 'required'
     ];
 
+    public static function isTemplateUsed($templateId)
+    {
+        return self::where('template_id', $templateId)->exists();
+    }
 
     public function scopeOfCompany($query, $type)
     {

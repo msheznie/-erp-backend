@@ -116,8 +116,9 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $finalReturnIncomeReportDetailValues = \App\Models\FinalReturnIncomeReportDetailValues::updateOrCreate(
+        $finalReturnIncomeReportDetailValues = FinalReturnIncomeReportDetailValues::updateOrCreate(
                 [
+                    'reportId' => $input['report_id'],
                     'report_detail_id' => $input['report_detail_id'],
                     'column_id' => $input['column_id'] 
                 ],
