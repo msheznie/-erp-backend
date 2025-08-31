@@ -78,7 +78,7 @@ class DepartmentBudgetPlanningAuditService
             case 2 :
                 return "In Progress";
             case 3 :
-                return "Submitted to HOD";
+                return "Submitted";
             default :
                 return "";
         }
