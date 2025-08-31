@@ -178,5 +178,11 @@ class DepartmentBudgetPlanningDetail extends Model
             $model->calculateDifferences();
         });
     }
+
+    public static function getBudgetPlaningCompany($budgetPlaningDetID)
+    {
+        return self::with('departmentBudgetPlanning.masterBudgetPlannings.company')
+            ->find($budgetPlaningDetID);
+    }
 }
 

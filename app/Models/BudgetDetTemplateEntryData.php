@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BudgetDetTemplateEntryData extends Model
 {
-    use SoftDeletes;
 
     protected $table = 'budget_det_template_entry_data';
     protected $primaryKey = 'dataID';
@@ -24,13 +23,6 @@ class BudgetDetTemplateEntryData extends Model
         'templateColumnID' => 'integer',
         'value' => 'string',
         'timestamp' => 'datetime'
-    ];
-
-    protected $dates = [
-        'timestamp',
-        'created_at',
-        'updated_at',
-        'deleted_at'
     ];
 
     /**
@@ -64,4 +56,4 @@ class BudgetDetTemplateEntryData extends Model
     {
         return $query->where('templateColumnID', $templateColumnID);
     }
-} 
+}

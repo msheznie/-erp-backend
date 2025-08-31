@@ -339,7 +339,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         }
 
         $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->get();
-        
+
         return $this->sendResponse($empColumns, 'Employee columns saved successfully');
     }
 
@@ -357,5 +357,4 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
 
         return $this->sendResponse($empColumns, 'Available columns retrieved successfully');
     }
-
 }

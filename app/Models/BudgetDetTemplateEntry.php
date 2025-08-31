@@ -3,34 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BudgetDetTemplateEntry extends Model
 {
-    use SoftDeletes;
 
     protected $table = 'budget_det_template_entries';
     protected $primaryKey = 'entryID';
 
     protected $fillable = [
         'budget_detail_id',
-        'rowNumber',
         'created_by',
-        'timestamp'
+        'created_at',
+        'updated_at'
     ];
 
     protected $casts = [
         'budget_detail_id' => 'integer',
-        'rowNumber' => 'integer',
         'created_by' => 'integer',
-        'timestamp' => 'datetime'
-    ];
-
-    protected $dates = [
-        'timestamp',
-        'created_at',
-        'updated_at',
-        'deleted_at'
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     /**
@@ -66,10 +57,10 @@ class BudgetDetTemplateEntry extends Model
     }
 
     /**
-     * Scope to get entries by row number
+     * Scope to order entries by row number
      */
-    public function scopeByRowNumber($query, $rowNumber)
+    public function scopeOrderByEntryID($query)
     {
-        return $query->where('rowNumber', $rowNumber);
+        return $query->orderBy('entryID', 'asc');
     }
 } 

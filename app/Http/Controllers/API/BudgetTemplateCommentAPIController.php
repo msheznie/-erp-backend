@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetTemplateComment;
 use App\Http\Requests\API\CreateBudgetTemplateCommentAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTemplateCommentAPIRequest;
@@ -11,7 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class BudgetTemplateCommentAPIController extends Controller
+class BudgetTemplateCommentAPIController extends AppBaseController
 {
     /**
      * Display a listing of the resource.
@@ -24,10 +24,7 @@ class BudgetTemplateCommentAPIController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $comments
-        ]);
+        return $this->sendResponse($comments->toArray(), 'Comments retrieved successfully');
     }
 
     /**
@@ -40,7 +37,6 @@ class BudgetTemplateCommentAPIController extends Controller
     {
         try {
             DB::beginTransaction();
-
             $comment = BudgetTemplateComment::create([
                 'budget_detail_id' => $request->budget_detail_id,
                 'user_id' => Auth::id(),
@@ -53,18 +49,11 @@ class BudgetTemplateCommentAPIController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment created successfully',
-                'data' => $comment
-            ], Response::HTTP_CREATED);
+            return $this->sendResponse($comment->toArray(), 'Comment saved successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error creating comment: ' . $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->sendError('Error saving comment: ' . $e->getMessage());
         }
     }
 
@@ -80,16 +69,10 @@ class BudgetTemplateCommentAPIController extends Controller
             ->find($id);
 
         if (!$comment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], Response::HTTP_NOT_FOUND);
+            return $this->sendError('Comment not found');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $comment
-        ]);
+        return $this->sendResponse($comment->toArray(), 'Comment retrieved successfully');
     }
 
     /**
@@ -101,42 +84,7 @@ class BudgetTemplateCommentAPIController extends Controller
      */
     public function update(UpdateBudgetTemplateCommentAPIRequest $request, $id)
     {
-        $comment = BudgetTemplateComment::find($id);
 
-        if (!$comment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], Response::HTTP_NOT_FOUND);
-        }
-
-        // Check if user can edit this comment
-        if ($comment->user_id !== Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You can only edit your own comments'
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        try {
-            $comment->update([
-                'comment_text' => $request->comment_text
-            ]);
-
-            $comment->load(['user', 'budgetDetail']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment updated successfully',
-                'data' => $comment
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating comment: ' . $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
     }
 
     /**
@@ -147,36 +95,29 @@ class BudgetTemplateCommentAPIController extends Controller
      */
     public function destroy($id)
     {
-        $comment = BudgetTemplateComment::find($id);
+    }
+
+    public function deleteBudgetTemplateComment(Request $request) {
+        $input = $request->all();
+
+        $comment = BudgetTemplateComment::find($input['id']);
 
         if (!$comment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment not found'
-            ], Response::HTTP_NOT_FOUND);
+            return $this->sendError('Comment not found');
         }
 
         // Check if user can delete this comment
         if ($comment->user_id !== Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You can only delete your own comments'
-            ], Response::HTTP_FORBIDDEN);
+            return $this->sendError('You can only delete your own comments');
         }
 
         try {
             $comment->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment deleted successfully'
-            ]);
+            BudgetTemplateComment::where('parent_comment_id', $input['id'])->delete();
+            return $this->sendResponse([], 'Comment deleted successfully');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting comment: ' . $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->sendError('Error deleting comment: ' . $e->getMessage());
         }
     }
 
@@ -202,10 +143,10 @@ class BudgetTemplateCommentAPIController extends Controller
                 ->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $comments
-        ]);
+        $detail['comments'] = $comments;
+        $detail['currentUserId'] = Auth::id();
+
+        return $this->sendResponse($detail, 'BudgetTemplateComments retrieved successfully.');
     }
 
     /**
@@ -221,9 +162,34 @@ class BudgetTemplateCommentAPIController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $replies
-        ]);
+        return $this->sendResponse($replies, "Replies get success");
+    }
+
+    public function updateBudgetTemplateComment(Request $request) {
+        $input = $request->all();
+
+        $comment = BudgetTemplateComment::find($input['id']);
+
+        if (!$comment) {
+            return $this->sendError('Comment not found');
+        }
+
+        // Check if user can edit this comment
+        if ($comment->user_id !== Auth::id()) {
+            return $this->sendError("You can only edit your own comments");
+        }
+
+        try {
+            $comment->update([
+                'comment_text' => $input['comment_text']
+            ]);
+
+            $comment->load(['user', 'budgetDetail']);
+
+            return $this->sendResponse($comment, "Comment updated successfully");
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error updating comment: ' . $e->getMessage());
+        }
     }
 }

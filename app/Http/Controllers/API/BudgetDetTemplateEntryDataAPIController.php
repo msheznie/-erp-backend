@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBudgetDetTemplateEntryDataAPIRequest;
 use App\Http\Requests\API\UpdateBudgetDetTemplateEntryDataAPIRequest;
 use App\Models\BudgetDetTemplateEntryData;
+use App\Models\ItemMaster;
 use App\Repositories\BudgetDetTemplateEntryDataRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -198,5 +199,13 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
         $data = $this->budgetDetTemplateEntryDataRepository->getByEntryIds($request->entryIDs);
 
         return $this->sendResponse($data->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+    }
+
+    public function getItemsForBudgetPlanningTemplateDetails(Request $request) {
+        $input = $request->all();
+
+        $items = ItemMaster::where('primaryCompanySystemID', $input['companyId'])->where('unit', $input['unitId'])->where('isActive', 1)->where('itemApprovedYN', 1)->get();
+
+        return $this->sendResponse($items->toArray(), 'Items retrieved successfully');
     }
 } 

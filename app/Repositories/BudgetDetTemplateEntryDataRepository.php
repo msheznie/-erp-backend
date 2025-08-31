@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BudgetDetTemplateEntryData;
+use InfyOm\Generator\Common\BaseRepository;
 
 /**
  * Class BudgetDetTemplateEntryDataRepository
@@ -76,28 +77,6 @@ class BudgetDetTemplateEntryDataRepository extends BaseRepository
     public function deleteByEntryId($entryID)
     {
         return $this->model->forEntry($entryID)->delete();
-    }
-
-    /**
-     * Update or create data for a specific entry and template column
-     *
-     * @param int $entryID
-     * @param int $templateColumnID
-     * @param string $value
-     * @return BudgetDetTemplateEntryData
-     */
-    public function updateOrCreate($entryID, $templateColumnID, $value)
-    {
-        return $this->model->updateOrCreate(
-            [
-                'entryID' => $entryID,
-                'templateColumnID' => $templateColumnID
-            ],
-            [
-                'value' => $value,
-                'timestamp' => now()
-            ]
-        );
     }
 
     /**
