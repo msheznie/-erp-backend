@@ -400,7 +400,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             if ($state == "insert") {
                 $this->auditLog(
                     $db,
-                    $entryID,
+                    $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
                     "Budget planning detail record has been created",
@@ -414,7 +414,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $db = $request->get('db', '');
                 $this->auditLog(
                     $db,
-                    $entryID,
+                    $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
                     "Budget planning detail record has been updated",
@@ -537,6 +537,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // delete entry attachments
             BudgetPlanningDetailTempAttachment::where('entry_id',$entry['entryID'])->delete();
 
+            $budgetDetailId = $entry['budget_detail_id'];
+
             $entry->delete();
 
             // Add audit log
@@ -544,7 +546,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $db = $request->get('db', '');
             $this->auditLog(
                 $db,
-                $input['entryID'],
+                $budgetDetailId,
                 $uuid,
                 "department_budget_planning_details_template_data",
                 "Budget planning detail record has been deleted",
