@@ -566,6 +566,10 @@ class FinancialReportAPIController extends AppBaseController
                     'selectedServicelines' => 'required',
                     // 'contracts' => 'required'
                 ]);
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             case 'RTD':
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
@@ -576,11 +580,10 @@ class FinancialReportAPIController extends AppBaseController
                     ],[
                         'currencyID.required' => 'The currency field is required.',
                     ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
             default:
                 return $this->sendError('No report ID found');
         }
