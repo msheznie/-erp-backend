@@ -121,6 +121,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
+
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
         DB::beginTransaction();
         try {
             $validator = \Validator::make($request->all(), [
@@ -438,6 +445,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
     public function templateDetailRaw(Request $request) {
         $input = $request->all();
+
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
 
         $maxSortOrder = FinalReturnIncomeTemplateDetails::where('templateMasterID', $input['templateMasterID'])
             ->where('masterID', $input['masterID'])

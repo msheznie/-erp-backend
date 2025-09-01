@@ -110,4 +110,7 @@ class FinalReturnIncomeReportDetailValues extends Model
         'column_id' => 'required'
     ];
     
+    public function scopeOfReport($query, $reportId) {
+        return $query->where('reportId', $reportId);
+    }
 }
