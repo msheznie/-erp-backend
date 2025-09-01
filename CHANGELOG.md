@@ -1,6 +1,7 @@
 # Changelog
 
 
+
 ## [10.84.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.83.0...v10.84.0) (2025-09-16)
 
 
@@ -29,6 +30,7 @@
 ### Features
 
 * **treasury management:** b2B file format double quotation mark replaced with empty [GCP-11669] ([#8685](https://github.com/pbsgears/Gears_BackEnd/issues/8685)) ([b3ae859](https://github.com/pbsgears/Gears_BackEnd/commit/b3ae8597d274273bf73bc19e74af35a023db43e1))
+
 
 ## [10.81.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.0...v10.81.1) (2025-09-01)
 
