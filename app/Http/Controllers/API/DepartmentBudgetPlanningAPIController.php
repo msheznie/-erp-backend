@@ -529,7 +529,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Validate required fields
         $validator = \Validator::make($input, [
             'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
-            'requestCode' => 'required|string|max:20|unique:dept_budget_planning_time_requests,request_code',
+            'requestCode' => 'required|string|max:20',
             'currentSubmissionDate' => 'required|date_format:d/m/Y',
             'dateOfRequest' => 'required|date|after:currentSubmissionDate',
             'reasonForExtension' => ['required', 'string', new NoEmoji()],
