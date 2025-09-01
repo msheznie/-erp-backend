@@ -51,7 +51,7 @@ class DepartmentBudgetPlanningDetailsTemplateDataAuditService
             // For updates, compare old and new values
 
             $oldValues = $auditData['previosValue'];
-            $newValues = $auditData['newValue'];
+            $newValues = collect($auditData['newValue']);
 
             foreach ($oldValues as $entryData) {
                 $newData = $newValues->where('templateColumnID', $entryData['templateColumnID'])->first();
