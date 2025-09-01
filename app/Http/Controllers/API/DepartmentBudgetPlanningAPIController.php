@@ -846,7 +846,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         // Get the last request code for this budget planning using Eloquent model
-        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::whereHas('departmentBudgetPlanning.masterBudgetPlannings', function($query) use ($companySystemID) {
+        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::forBudgetPlanning($budgetPlanningId)->whereHas('departmentBudgetPlanning.masterBudgetPlannings', function($query) use ($companySystemID) {
                 $query->where('companySystemID', $companySystemID);
             })
             ->orderBy('id', 'desc')
