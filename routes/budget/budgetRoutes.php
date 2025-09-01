@@ -43,7 +43,7 @@ Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
-Route::get('generateTimeExtensionRequestCode/{budgetPlanningId}', 'DepartmentBudgetPlanningAPIController@generateTimeExtensionRequestCode')->name('Generate time extension request code');
+Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPIController@generateTimeExtensionRequestCode')->name('Generate time extension request code');
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');
 Route::post('getReversions', 'DepartmentBudgetPlanningAPIController@getReversions')->name('Get reversions');
