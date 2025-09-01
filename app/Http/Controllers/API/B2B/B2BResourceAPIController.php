@@ -284,8 +284,7 @@ class B2BResourceAPIController extends AppBaseController
 
             $name = "BTVENPAYMEOI_" . Carbon::now()->format('dmY') . "_" . str_pad($result->latest_downloaded_id, 3, '0', STR_PAD_LEFT) . ".txt";
 
-
-            return Response::make($this->getTextFileDataFormat($reportData), 200, [
+            return Response::make(str_replace('""','',$this->getTextFileDataFormat($reportData)), 200, [
                 'Content-Type' => 'text/plain',
                 'Content-Disposition' => "attachment; filename={$name}",
             ]);
@@ -365,7 +364,7 @@ class B2BResourceAPIController extends AppBaseController
 
                 $remotePath = $pathDetails->details[0]['upload_path'] . "/" . $fileName;
                 if (($remotePath)) {
-                    $disk->put($remotePath, $this->getTextFileDataFormat($reportData));
+                    $disk->put($remotePath, str_replace('""','',$this->getTextFileDataFormat($reportData)));
                     $this->bankTransferService->updateStatus($this->bankTransferID, 'success');
                 } else {
                     $this->bankTransferService->updateStatus($this->bankTransferID, 'failed');
