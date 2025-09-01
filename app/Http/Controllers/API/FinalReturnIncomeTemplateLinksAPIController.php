@@ -117,6 +117,13 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
+
         $validator = \Validator::make($request->all(), [
             'glAutoID' => 'required'
         ]);

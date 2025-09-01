@@ -448,7 +448,9 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
                         ->get();
 
         $columnDetails = FinalReturnIncomeTemplateColumns::where('templateMasterID', $incomeReportMaster->template_id)
-            ->with('values')
+            ->with(['values' => function ($q) use ($id) {
+                $q->where('reportId', $id);
+            }])
             ->orderBy('sortOrder')
             ->get();
 
