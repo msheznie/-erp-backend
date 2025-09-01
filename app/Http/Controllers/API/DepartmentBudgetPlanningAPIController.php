@@ -822,17 +822,33 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
      *      )
      * )
      */
-    public function generateTimeExtensionRequestCode($budgetPlanningId)
+    public function generateTimeExtensionRequestCode(Request $request)
     {
+
+        $budgetPlanningId = $request->input('id');
         // Check if budget planning exists using Eloquent model
         $budgetPlanning = \App\Models\DepartmentBudgetPlanning::find($budgetPlanningId);
+
+        $companySystemID = $request->input('companySystemID');
+
+        // Handle case where companySystemID might be an array
+        if (is_array($companySystemID)) {
+            $companySystemID = $companySystemID[0] ?? null;
+        }
+
+        if (!$companySystemID) {
+            return $this->sendError('Company not found');
+        }
+
 
         if (!$budgetPlanning) {
             return $this->sendError('Department Budget Planning not found');
         }
 
         // Get the last request code for this budget planning using Eloquent model
-        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::forBudgetPlanning($budgetPlanningId)
+        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::whereHas('departmentBudgetPlanning.masterBudgetPlannings', function($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID);
+            })
             ->orderBy('id', 'desc')
             ->first();
 

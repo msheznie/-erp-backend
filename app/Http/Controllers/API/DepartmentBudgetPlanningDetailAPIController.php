@@ -197,7 +197,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $search = $request->input('search');
 
-            if ($search) {
+            // Handle case where search might be an array
+            if (is_array($search)) {
+                $search = $search['value'] ?? '';
+            }
+
+            if ($search && is_string($search)) {
                 $search = str_replace("\\", "\\\\", $search);
                 $query = $query->where(function ($query) use ($search) {
                     $query->whereHas('budgetTemplateGl', function ($q1) use ($search) {
