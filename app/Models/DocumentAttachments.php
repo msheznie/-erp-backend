@@ -430,7 +430,7 @@ class DocumentAttachments extends Model
 
     public function document_attachments()
     {
-        return $this->hasOne('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
+        return $this->hasMany('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
     }
 
     public function document_parent()
@@ -502,5 +502,27 @@ class DocumentAttachments extends Model
     }
     public static function getNotUsedAttachmentForCirculars($circularAttachmentIDs){
         return self::whereIn('attachmentID', $circularAttachmentIDs)->get();
+    }
+
+    public static function getBidAttachmentList($doucments, $tenderId, $documentSystemId, $envelopType){
+        return DocumentAttachments::select('attachmentID', 'attachmentType',
+            'parent_id', 'attachmentDescription')
+            ->whereHas('tender_document_types', function ($q) use ($doucments){
+                $q->whereIn('id',$doucments);
+                $q->where('srm_action', 1);
+            })
+            ->where('documentSystemCode', $tenderId)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('parent_id', null)
+            ->where('envelopType', $envelopType);
+    }
+
+    public static function getBidMultipleAttachmentList($id, $documentSystemId, $envelopType, $parentId){
+        return DocumentAttachments::with(['bid_verify', 'document_parent'])
+            ->where('documentSystemCode', $id)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('attachmentType',0)
+            ->where('envelopType', $envelopType)
+            ->where('parent_id',$parentId);
     }
 }

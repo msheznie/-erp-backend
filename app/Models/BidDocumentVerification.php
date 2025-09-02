@@ -143,5 +143,10 @@ class BidDocumentVerification extends Model
         'status' => 'required'
     ];
 
+    public static function BidDocumentVerification($attachmentID)
+    {
+        return BidDocumentVerification::where('attachment_id',$attachmentID)->first();
+    }
+
     
 }
