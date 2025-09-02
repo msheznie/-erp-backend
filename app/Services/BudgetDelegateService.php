@@ -91,7 +91,10 @@ class BudgetDelegateService
             }
 
             // validate submission time is not in the past
-            if (\Carbon\Carbon::parse($data['submission_time'])->isPast()) {
+
+            $submissionDate = \Carbon\Carbon::createFromFormat('Y-m-d', date('Y-m-d', strtotime($data['submission_time'])));
+
+           if ($submissionDate->isBefore(today())) {
                 throw new Exception('Submission time cannot be in the past');
             }
             
