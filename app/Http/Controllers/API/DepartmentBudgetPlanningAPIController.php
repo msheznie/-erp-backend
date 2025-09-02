@@ -531,7 +531,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
             'requestCode' => 'required|string|max:20',
             'currentSubmissionDate' => 'required|date_format:d/m/Y',
-            'dateOfRequest' => 'required|date|after:currentSubmissionDate',
+            'dateOfRequest' => 'required|date_format:d/m/Y|after:currentSubmissionDate',
             'reasonForExtension' => ['required', 'string', new NoEmoji()],
             'attachments' => 'nullable|array',
             'attachments.*.fileName' => 'required_with:attachments|string',
@@ -553,13 +553,14 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             try {
                 $currentSubmissionDate = \Carbon\Carbon::createFromFormat('d/m/Y', $input['currentSubmissionDate'])->format('Y-m-d');
                 $dateOfRequest = \Carbon\Carbon::createFromFormat('d/m/Y', $input['dateOfRequest'])->format('Y-m-d');
+
             } catch (\Exception $dateError) {
                 // Fallback to generic parse if the format doesn't match
                 try {
                     $currentSubmissionDate = \Carbon\Carbon::parse($input['currentSubmissionDate'])->format('Y-m-d');
                     $dateOfRequest = \Carbon\Carbon::parse($input['dateOfRequest'])->format('Y-m-d');
                 } catch (\Exception $secondError) {
-                    return $this->sendError('Date parsing error', 'Invalid date format - Expected MM/dd/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
+                    return $this->sendError('Date parsing error', 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
                 }
             }
 
