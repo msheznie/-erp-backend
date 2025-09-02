@@ -8,3 +8,5 @@ Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController')
 Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees')->name('Get unassigned employee by report');
 Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee')->name('Get custom report assigned employee');
 Route::post('customReportView', 'CustomUserReportsAPIController@customReportView')->name('Custom report view');
+
+Route::get('authenticateCustomReport', 'CustomReportEmployeesAPIController@authenticateCustomReport');

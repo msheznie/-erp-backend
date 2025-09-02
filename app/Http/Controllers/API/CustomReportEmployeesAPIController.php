@@ -12,6 +12,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Services\BoldReport\BoldReportsService;
 
 /**
  * Class CustomReportEmployeesController
@@ -22,10 +23,17 @@ class CustomReportEmployeesAPIController extends AppBaseController
 {
     /** @var  CustomReportEmployeesRepository */
     private $customReportEmployeesRepository;
-
-    public function __construct(CustomReportEmployeesRepository $customReportEmployeesRepo)
+    private $boldReports;
+    public function __construct(CustomReportEmployeesRepository $customReportEmployeesRepo, BoldReportsService $boldReports)
     {
         $this->customReportEmployeesRepository = $customReportEmployeesRepo;
+        $this->boldReports = $boldReports;
+    }
+
+    public function authenticateCustomReport()
+    {
+        $response = $this->boldReports->getUserKey();
+        return $this->sendResponse($response, 'Token generated successfully');
     }
 
     /**
