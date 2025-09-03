@@ -10,9 +10,11 @@ use App\Models\SrpEmployeeDetails;
 use App\Services\hrms\attendance\computation\SMFixedShiftComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftCrossDayComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftDayComputation;
+use App\Services\hrms\attendance\computation\SMRotaShiftIndividualPunchesComputation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\hrms\feature\FeatureFlagService;
 use Exception;
 
 class SMAttendancePullingService{
@@ -87,6 +89,7 @@ class SMAttendancePullingService{
             if(!$this->isFromShift){
             }
 
+            Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
             return true;
 
         }
@@ -209,11 +212,11 @@ class SMAttendancePullingService{
                       ->where('r.attendanceDate', $this->pullingDate)
                       ->whereColumn('r.empID', 'l.empID');
             });
-    
+
         if($this->isFromShift && !empty($this->empIdList)){
             $query->whereIn('l.empID', $this->empIdList);
         }
-    
+
         $query->orderBy('autoID')
               ->chunk($this->chunkSize, function ($tempAttData) {
                   if (empty($tempAttData)) {
@@ -358,7 +361,7 @@ class SMAttendancePullingService{
         t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime,
         emv_sec.id AS external_secondment_movement_id,
         emv_assign.id AS external_assignment_movement_id,
-        IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId
+        IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId, work_hour_calc_method
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
@@ -425,13 +428,8 @@ class SMAttendancePullingService{
                 $this->allEmpArr[] = $empId;
                 $isCrossDay = $row['is_cross_day'];
 
-                if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
-                    $obj = new SMFixedShiftComputation($row, $this->companyId);
-                } elseif ($isCrossDay) {
-                    $obj = new SMRotaShiftCrossDayComputation($row, $this->companyId);
-                } else {
-                    $obj = new SMRotaShiftDayComputation($row, $this->companyId);
-                }
+            $className = $this->getComputationClassName($row, $isCrossDay);
+            $obj = new $className($row, $this->companyId);
 
                 $obj->calculate();
 
@@ -695,5 +693,23 @@ class SMAttendancePullingService{
                     'att_pulled_at' => null,
                 ]);
         }
+    }
+
+    function getComputationClassName($row, $isCrossDay)
+    {
+        $isFeatureEnabled = FeatureFlagService::isFeatureEnabled('shift_work_hr_cal');
+        if ($row['work_hour_calc_method'] == 2 && $isFeatureEnabled) {
+            return $isCrossDay
+                ? SMRotaShiftIndividualPunchesComputation::class
+                : SMFixedShiftIndividualPunchesComputation::class;
+        }
+
+        if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
+            return SMFixedShiftComputation::class;
+        }
+
+        return $isCrossDay
+            ? SMRotaShiftCrossDayComputation::class
+            : SMRotaShiftDayComputation::class;
     }
 }
