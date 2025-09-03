@@ -34,6 +34,7 @@ Route::get('budget_template_columns/template/{templateId}/formula-references/{ex
 Route::resource('budget_template_columns', 'BudgetTemplateColumnAPIController');
 
 // Budget Planning Routes
+Route::post('getBudgetPlanningUserPermissions', 'CompanyBudgetPlanningAPIController@getBudgetPlanningUserPermissions')->name('Get budget planning user permissions');
 Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
 Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
 Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
