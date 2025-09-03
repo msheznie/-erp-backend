@@ -8,9 +8,11 @@ use App\Models\SrpEmployeeDetails;
 use App\Services\hrms\attendance\computation\SMFixedShiftComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftCrossDayComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftDayComputation;
+use App\Services\hrms\attendance\computation\SMRotaShiftIndividualPunchesComputation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\hrms\feature\FeatureFlagService;
 
 class SMAttendancePullingService{
 
@@ -318,7 +320,7 @@ class SMAttendancePullingService{
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, {$this->weekendColumn} AS isWeekend, shd.gracePeriod,
         shd.isFlexyHour, shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
         t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime,
-        IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId
+        IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId, work_hour_calc_method
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
@@ -367,13 +369,8 @@ class SMAttendancePullingService{
             $this->allEmpArr[] = $empId;
             $isCrossDay = $row['is_cross_day'];
 
-            if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
-                $obj = new SMFixedShiftComputation($row, $this->companyId);
-            } elseif ($isCrossDay) {
-                $obj = new SMRotaShiftCrossDayComputation($row, $this->companyId);
-            } else {
-                $obj = new SMRotaShiftDayComputation($row, $this->companyId);
-            }
+            $className = $this->getComputationClassName($row, $isCrossDay);
+            $obj = new $className($row, $this->companyId);
 
             $obj->calculate();
 
@@ -554,7 +551,7 @@ class SMAttendancePullingService{
 
         $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
                 sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
-                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id, sm.work_hour_calc_method
                 FROM hr_shift_schedule_details AS she 
                 JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
                 JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
@@ -565,7 +562,7 @@ class SMAttendancePullingService{
         $rotaUnion = " UNION ALL 
                 SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
                 sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
-                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id, sm.work_hour_calc_method 
                 FROM hr_shift_schedule_details AS she 
                 JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
                 JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
@@ -577,7 +574,7 @@ class SMAttendancePullingService{
                 WEEKDAY(she.schedule_date) AS weekDayNo, 1 AS isWeekend, 
                 '' AS gracePeriod, 1 AS isFlexyHour, '' AS flexyHrFrom, '' AS flexyHrTo, -1 AS shiftType, 
                 0 AS workingHour, 0 AS is_cross_day,
-                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id 
+                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id, 1 AS work_hour_calc_method 
                 FROM hr_shift_schedule_details AS she
                 WHERE she.company_id = {$this->companyId} 
                 AND she.shift_id = 0 
@@ -594,5 +591,23 @@ class SMAttendancePullingService{
         $this->weekendColumn = (SME::policy($this->companyId, 'LCW', 'LA'))
             ? "IFNULL(shd.isWeekend, 0)"
             : "IFNULL(calenders.weekend_flag, 0)";
+    }
+
+    function getComputationClassName($row, $isCrossDay)
+    {
+        $isFeatureEnabled = FeatureFlagService::isFeatureEnabled('shift_work_hr_cal');
+        if ($row['work_hour_calc_method'] == 2 && $isFeatureEnabled) {
+            return $isCrossDay
+                ? SMRotaShiftIndividualPunchesComputation::class
+                : SMFixedShiftIndividualPunchesComputation::class;
+        }
+
+        if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
+            return SMFixedShiftComputation::class;
+        }
+
+        return $isCrossDay
+            ? SMRotaShiftCrossDayComputation::class
+            : SMRotaShiftDayComputation::class;
     }
 }

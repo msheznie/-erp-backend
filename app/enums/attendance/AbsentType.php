@@ -14,4 +14,6 @@ class AbsentType{
     const MANDATE = 12;
     const SECONDMENT = 13;
     const ON_TRIP = 14;
+    const MISSED_PUNCH = 15;
+    const EXCEPTION = 16;
 }

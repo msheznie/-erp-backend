@@ -476,4 +476,29 @@ trait AttendanceComputationTrait{
             $this->nonSalCatId = $abDayDeductionCalc['nonPay']['salaryCategoryId'];
         }
     }
+
+    public function configMissedPunch() {
+        if (count($this->attTempRecords) == 1) {
+            $this->presentAbsentType = AbsentType::MISSED_PUNCH;
+        }
+    }
+
+    public function calculateRotaShiftHours(){
+        if (empty($this->onDutyTime) || empty($this->offDutyTime)) {
+            return false;
+        }
+
+        $this->isShiftHoursSet = true;
+        $onDutyDate = date('Y-m-d', strtotime($this->data['att_date']));
+        $OffDutyDate = date('Y-m-d', strtotime($this->data['att_date'] . ' +1 day'));
+
+        $this->onDutyDateTime = new DateTime($onDutyDate . ' ' . $this->onDutyTime);
+        $this->offDutyDateTime = new DateTime($OffDutyDate . ' ' . $this->offDutyTime);
+        $this->shiftHoursObj = $this->offDutyDateTime->diff($this->onDutyDateTime);
+
+        $hours = $this->shiftHoursObj->format('%h');
+        $minutes = $this->shiftHoursObj->format('%i');
+        $this->shiftHours = ($hours * 60) + $minutes;
+
+    }
 }
