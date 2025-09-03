@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\ActiveTrait;
 use Eloquent as Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @SWG\Definition(
