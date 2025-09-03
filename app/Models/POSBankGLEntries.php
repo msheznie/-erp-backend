@@ -89,5 +89,5 @@ class POSBankGLEntries extends Model
         
     ];
 
-    
+   
 }

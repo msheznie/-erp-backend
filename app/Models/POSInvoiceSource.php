@@ -656,4 +656,8 @@ class POSInvoiceSource extends Model
     public function employee(){ 
         return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
     }
+
+    public function bankGLEntries() {
+        return $this->hasMany(POSBankGLEntries::class, 'invoiceID', 'invoiceID');
+    }
 }

@@ -335,53 +335,62 @@ class BankLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 110: // GPOS
-                        $gl = POSGLEntries::where('shiftId', $masterModel["autoID"])->first();
-                        $bankGL = POSBankGLEntries::where('shiftId', $masterModel["autoID"])->first();
-                        if ($gl && $bankGL) {
-                            $data['companySystemID'] = $masterModel['companySystemID'];
-                            $data['companyID'] = $masterModel["companyID"];
-                            $data['documentSystemID'] = 110;
-                            $data['documentID'] = 'GPOS';
-                            $data['documentSystemCode'] = $gl->documentSystemId;
-                            $data['documentCode'] = $gl->documentCode;
-                            $data['documentDate'] = date('Y-m-d H:i:s');
-                            $data['postedDate'] = date('Y-m-d H:i:s');
-                            $data['documentNarration'] = null;
-                            $data['bankID'] = $bankGL->bankAccId;
-                            $bank = BankAccount::find($bankGL->bankAccId);
-                            if($bank){
-                                $data['bankAccountID'] = $bank->bankmasterAutoID;
-                            }
-                            $posInvoiceMaster = POSInvoiceSource::where('shiftID', $masterModel["autoID"])->first();
+                        $treasuryClearPolicy = CompanyPolicyMaster::where('companySystemID', $masterModel['companySystemID'])
+                                ->where('companyPolicyCategoryID', 96)
+                                ->where('isYesNO', 1)
+                                ->first();
 
-//                            $data['bankCurrency'] = $custReceivePayment->bankCurrency;
-//                            $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
-//                            $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
-//                            $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
-//                            $data['payeeID'] = $custReceivePayment->customerID;
-//
-//                            $payee = CustomerMaster::find($custReceivePayment->customerID);
-//                            if ($payee) {
-//                                $data['payeeCode'] = $payee->CutomerCode;
-//                            }
-//                            $data['payeeName'] = $custReceivePayment->PayeeName;
-//                            $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
-//                            $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
-                            $data['supplierTransCurrencyID'] = $posInvoiceMaster->transactionCurrencyID;
-                            $data['supplierTransCurrencyER'] = $posInvoiceMaster->transactionExchangeRate;
-                            $data['localCurrencyID'] = $posInvoiceMaster->companyLocalCurrencyID;
-                            $data['localCurrencyER'] = $posInvoiceMaster->companyLocalExchangeRate;
-                            $data['companyRptCurrencyID'] = $posInvoiceMaster->companyReportingCurrencyID;
-                            $data['companyRptCurrencyER'] = $posInvoiceMaster->companyReportingExchangeRate;
-                            $data['payAmountBank'] = $bankGL->amount;
-                            $data['payAmountSuppTrans'] = $bankGL->amount;
-                            $data['payAmountCompLocal'] = $bankGL->amount;
-                            $data['payAmountCompRpt'] = $bankGL->amount / $posInvoiceMaster->companyReportingExchangeRate;
-                            $data['createdUserID'] = $empID->empID;
-                            $data['createdUserSystemID'] = $empID->employeeSystemID;
-                            $data['createdPcID'] = gethostname();
-                            $data['timestamp'] = NOW();
-                            array_push($finalData, $data);
+                        $exists = POSBankGLEntries::where('shiftId', $masterModel["autoID"])->exists();
+                        $bankGL = POSGLEntries::where('shiftId', $masterModel["autoID"])
+                                    ->whereHas('bankAccount')
+                                    ->with(['bankAccount', 'invoice'])
+                                    ->get();
+
+                        if (!$exists || $bankGL->isEmpty()) {
+                            throw new \Exception("No Aapproved bank account found for this shift.");
+                        }
+
+                        if ($exists && $bankGL) {
+
+                            if (!empty($treasuryClearPolicy)) {
+                                $data['trsClearedYN'] = -1;
+                                $data['trsClearedDate'] = NOW();
+                                $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;
+                                $data['trsClearedByEmpName'] = $empID->empFullName;
+                                $data['trsClearedByEmpID'] = $empID->empID;
+                            }
+
+                            foreach($bankGL as $gl) {
+                                $data['companySystemID'] = $masterModel['companySystemID'];
+                                $data['companyID'] = $masterModel["companyID"];
+                                $data['documentSystemID'] = $gl->documentSystemId;
+                                $data['documentID'] = 'GPOS';
+                                $data['documentSystemCode'] = $masterModel["autoID"];
+                                $data['documentCode'] = $gl->documentCode;
+                                $data['documentDate'] = date('Y-m-d H:i:s');
+                                $data['postedDate'] = date('Y-m-d H:i:s');
+                                $data['documentNarration'] = null;
+                                $data['payeeName'] = 'POS Transaction';
+                                $data['bankID'] = $gl->bankAccount->bankmasterAutoID;
+                                $data['bankAccountID'] = $gl->bankAccount->bankAccountAutoID;
+                                $data['bankCurrency'] = $gl->bankAccount->accountCurrencyID;
+                                $data['supplierTransCurrencyID'] = $gl->invoice->transactionCurrencyID;
+                                $data['supplierTransCurrencyER'] = $gl->invoice->transactionExchangeRate;
+                                $data['localCurrencyID'] = $gl->invoice->companyLocalCurrencyID;
+                                $data['localCurrencyER'] = $gl->invoice->companyLocalExchangeRate;
+                                $data['companyRptCurrencyID'] = $gl->invoice->companyReportingCurrencyID;
+                                $data['companyRptCurrencyER'] = $gl->invoice->companyReportingExchangeRate;
+                                $data['payAmountBank']       = -1 * $gl->amount;
+                                $data['trsClearedAmount']    = $treasuryClearPolicy ? -1 * $gl->amount : 0;
+                                $data['payAmountSuppTrans']  = -1 * $gl->amount;
+                                $data['payAmountCompLocal']  = -1 * $gl->amount;
+                                $data['payAmountCompRpt']    = -1 * ($gl->amount / $gl->invoice->companyReportingExchangeRate);
+                                $data['createdUserID'] = $empID->empID;
+                                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data['createdPcID'] = gethostname();
+                                $data['timestamp'] = NOW();
+                                array_push($finalData, $data); 
+                            }
                         }
                         break;
                     case 111: // RPOS
