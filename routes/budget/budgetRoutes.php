@@ -47,6 +47,7 @@ Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPICont
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');
 Route::post('getReversions', 'DepartmentBudgetPlanningAPIController@getReversions')->name('Get reversions');
+Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIController@getOptionsForSelectedUnit')->name('Get options for selected unit');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
