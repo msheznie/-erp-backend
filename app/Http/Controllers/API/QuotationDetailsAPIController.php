@@ -820,7 +820,7 @@ WHERE
                     ->where('companySystemID', $itemExist['companySystemID'])
                     ->first();
 
-                if (!empty($QuoDetailExist)) {
+                if (!empty($QuoDetailExist) && !empty($item)) {
                     if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         foreach ($QuoDetailExist as $row) {

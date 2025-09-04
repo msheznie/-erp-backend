@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDefaults;
+use App\Models\FinalReturnIncomeReports;
 use App\Models\FinalReturnIncomeTemplateLinks;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -120,6 +121,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
+
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
         DB::beginTransaction();
         try {
             $validator = \Validator::make($request->all(), [
@@ -272,9 +280,14 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($finalReturnIncomeTemplateDetails->templateMasterID);
 
         if (empty($finalReturnIncomeTemplateDetails)) {
             return $this->sendError('Final Return Income Template Details not found');
+        }
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be updated', 500);
         }
 
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->update($input, $id);
@@ -326,13 +339,19 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         /** @var FinalReturnIncomeTemplateDetails $finalReturnIncomeTemplateDetails */
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
 
+        $templateMasterID = $finalReturnIncomeTemplateDetails->templateMasterID;
+        $masterID         = $finalReturnIncomeTemplateDetails->masterID;
+        $companySystemID  = $finalReturnIncomeTemplateDetails->companySystemID;
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateMasterID);
+
         if (empty($finalReturnIncomeTemplateDetails)) {
             return $this->sendError('Final Return Income Template Details not found');
         }
 
-        $templateMasterID = $finalReturnIncomeTemplateDetails->templateMasterID;
-        $masterID         = $finalReturnIncomeTemplateDetails->masterID;
-        $companySystemID  = $finalReturnIncomeTemplateDetails->companySystemID;
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be deleted', 500);
+        }
+       
 
         $finalReturnIncomeTemplateDetails->delete();
 
@@ -412,11 +431,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
             $companySystemID = $request->query('companySystemID');
             $localCurrency = \Helper::companyCurrency($companySystemID);
+            $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateId);
 
             $output = [
                 'templateDetails' => $templateDetails->toArray(), 
                 'columns' => $templateColumns->toArray(),
-                'localCurrency' => $localCurrency->localcurrency->CurrencyCode
+                'localCurrency' => $localCurrency->localcurrency->CurrencyCode,
+                'isTemplateUsed' => $isTemplateUsed
             ];
 
         return $this->sendResponse($output, 'Final Return Income Template Details retrieved successfully');
@@ -424,6 +445,13 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
 
     public function templateDetailRaw(Request $request) {
         $input = $request->all();
+
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
 
         $maxSortOrder = FinalReturnIncomeTemplateDetails::where('templateMasterID', $input['templateMasterID'])
             ->where('masterID', $input['masterID'])

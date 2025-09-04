@@ -123,6 +123,14 @@ class BudgetConsumptionService
 					foreach ($budgetData['validateArray'] as $key => $value) {
 						$code = explode(' - ', $value)[0];  
 						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+
+						$budgetChartOfAccountSystemId = $chartOfAccuntInfo->chartOfAccountSystemID;
+					
+						if (in_array($budgetChartOfAccountSystemId, $existingIds)) {
+							continue;
+						}
+
+
 						$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
 						$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
 						if($definedBehaviour)
@@ -154,6 +162,12 @@ class BudgetConsumptionService
 					{
 						$code = explode(' - ', $value)[0];  
 						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+						$budgetChartOfAccountSystemId = $chartOfAccuntInfo->chartOfAccountSystemID;
+					
+						if (in_array($budgetChartOfAccountSystemId, $existingIds)) {
+							continue;
+						}
+
 						$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
 						$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
 

@@ -78,6 +78,7 @@ class FinalReturnIncomeReportDetailValues extends Model
 
 
     public $fillable = [
+        'reportId',
         'report_detail_id',
         'column_id',
         'amount',
@@ -91,9 +92,10 @@ class FinalReturnIncomeReportDetailValues extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'reportId' => 'integer',
         'report_detail_id' => 'integer',
         'column_id' => 'integer',
-        'amount' => 'float',
+        'amount' => 'varchar',
         'timestamp' => 'datetime'
     ];
 
@@ -103,13 +105,12 @@ class FinalReturnIncomeReportDetailValues extends Model
      * @var array
      */
     public static $rules = [
+        'reportId' => 'required',
         'report_detail_id' => 'required',
         'column_id' => 'required'
     ];
-
-    public function reportDetail()
-    {
-        return $this->belongsTo(FinalReturnIncomeReportDetails::class, 'report_detail_id', 'id');
-    }
     
+    public function scopeOfReport($query, $reportId) {
+        return $query->where('reportId', $reportId);
+    }
 }

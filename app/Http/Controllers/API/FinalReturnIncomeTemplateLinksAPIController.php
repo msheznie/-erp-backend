@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\FinalReturnIncomeReports;
 
 /**
  * Class FinalReturnIncomeTemplateLinksController
@@ -115,6 +116,13 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
     public function store(Request $request)
     {
         $input = $request->all();
+
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+        }
+       
 
         $validator = \Validator::make($request->all(), [
             'glAutoID' => 'required'
@@ -318,9 +326,14 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
     {
         /** @var FinalReturnIncomeTemplateLinks $finalReturnIncomeTemplateLinks */
         $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->findWithoutFail($id);
+        $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($finalReturnIncomeTemplateLinks->templateMasterID);
 
         if (empty($finalReturnIncomeTemplateLinks)) {
             return $this->sendError('Final Return Income Template Links not found');
+        }
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be deleted', 500);
         }
 
         $finalReturnIncomeTemplateLinks->delete();

@@ -529,9 +529,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Validate required fields
         $validator = \Validator::make($input, [
             'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
-            'requestCode' => 'required|string|max:20|unique:dept_budget_planning_time_requests,request_code',
-            'currentSubmissionDate' => 'required|date',
-            'dateOfRequest' => 'required|date|after:currentSubmissionDate',
+            'requestCode' => 'required|string|max:20',
+            'currentSubmissionDate' => 'required|date_format:d/m/Y',
+            'dateOfRequest' => 'required|date_format:d/m/Y|after:currentSubmissionDate',
             'reasonForExtension' => ['required', 'string', new NoEmoji()],
             'attachments' => 'nullable|array',
             'attachments.*.fileName' => 'required_with:attachments|string',
@@ -551,15 +551,16 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             // Prepare the data array with proper date formatting
             // Frontend sends dates in MM/dd/yyyy format from transformDate method
             try {
-                $currentSubmissionDate = \Carbon\Carbon::createFromFormat('m/d/Y', $input['currentSubmissionDate'])->format('Y-m-d');
-                $dateOfRequest = \Carbon\Carbon::createFromFormat('m/d/Y', $input['dateOfRequest'])->format('Y-m-d');
+                $currentSubmissionDate = \Carbon\Carbon::createFromFormat('d/m/Y', $input['currentSubmissionDate'])->format('Y-m-d');
+                $dateOfRequest = \Carbon\Carbon::createFromFormat('d/m/Y', $input['dateOfRequest'])->format('Y-m-d');
+
             } catch (\Exception $dateError) {
                 // Fallback to generic parse if the format doesn't match
                 try {
                     $currentSubmissionDate = \Carbon\Carbon::parse($input['currentSubmissionDate'])->format('Y-m-d');
                     $dateOfRequest = \Carbon\Carbon::parse($input['dateOfRequest'])->format('Y-m-d');
                 } catch (\Exception $secondError) {
-                    return $this->sendError('Date parsing error', 'Invalid date format - Expected MM/dd/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
+                    return $this->sendError('Date parsing error', 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
                 }
             }
 
@@ -799,17 +800,33 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
      *      )
      * )
      */
-    public function generateTimeExtensionRequestCode($budgetPlanningId)
+    public function generateTimeExtensionRequestCode(Request $request)
     {
+
+        $budgetPlanningId = $request->input('id');
         // Check if budget planning exists using Eloquent model
         $budgetPlanning = \App\Models\DepartmentBudgetPlanning::find($budgetPlanningId);
+
+        $companySystemID = $request->input('companySystemID');
+
+        // Handle case where companySystemID might be an array
+        if (is_array($companySystemID)) {
+            $companySystemID = $companySystemID[0] ?? null;
+        }
+
+        if (!$companySystemID) {
+            return $this->sendError('Company not found');
+        }
+
 
         if (!$budgetPlanning) {
             return $this->sendError('Department Budget Planning not found');
         }
 
         // Get the last request code for this budget planning using Eloquent model
-        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::forBudgetPlanning($budgetPlanningId)
+        $lastRequest = \App\Models\DeptBudgetPlanningTimeRequest::forBudgetPlanning($budgetPlanningId)->whereHas('departmentBudgetPlanning.masterBudgetPlannings', function($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID);
+            })
             ->orderBy('id', 'desc')
             ->first();
 

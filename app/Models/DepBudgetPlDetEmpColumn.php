@@ -83,5 +83,5 @@ class DepBudgetPlDetEmpColumn extends Model
     {
         return $this->belongsTo('App\Models\DepBudgetPlDetColumn', 'columnID', 'id');
     }
-    
+
 }
