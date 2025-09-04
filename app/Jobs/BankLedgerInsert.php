@@ -370,6 +370,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['documentDate'] = date('Y-m-d H:i:s');
                                 $data['postedDate'] = date('Y-m-d H:i:s');
                                 $data['documentNarration'] = null;
+                                $data['trsCollectedYN'] = -1;
                                 $data['payeeName'] = 'POS Transaction';
                                 $data['bankID'] = $gl->bankAccount->bankmasterAutoID;
                                 $data['bankAccountID'] = $gl->bankAccount->bankAccountAutoID;

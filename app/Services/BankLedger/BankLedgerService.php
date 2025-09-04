@@ -52,21 +52,21 @@ class BankLedgerService
                         erp_bankledger.localCurrencyID,
                         companymaster.CompanyName,
                     IF
-                        ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountCompLocal * -1), 0 ) AS localDebit,
+                        ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountCompLocal * -1), 0 ) AS localDebit,
                     IF
                         ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountCompLocal, 0 ) AS localCredit,
                         erp_bankledger.companyRptCurrencyID,
                     IF
-                        ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountCompRpt * -1), 0 ) AS rptDebit,
+                        ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountCompRpt * -1), 0 ) AS rptDebit,
                     IF
                         ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountCompRpt, 0 ) AS rptCredit,
                     IF
-                        ( erp_bankledger.documentSystemID = 21, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
+                        ( erp_bankledger.documentSystemID IN (21, 110), customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
                         erp_bankaccount.bankName,
                         erp_bankaccount.AccountNo,
                         chartofaccounts.AccountDescription,
                     IF
-                        ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountBank * -1), 0 ) AS bankDebit,
+                        ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountBank * -1), 0 ) AS bankDebit,
                     IF
                         ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountBank, 0 ) AS bankCredit,
                         currencymaster.CurrencyCode as bankCurrency,
@@ -115,16 +115,16 @@ class BankLedgerService
                         "" AS payeeID,
                         erp_bankledger.localCurrencyID,
                         companymaster.CompanyName,
-                        sum( IF ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountCompLocal * -1), 0 ) ) AS localDebit,
+                        sum( IF ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountCompLocal * -1), 0 ) ) AS localDebit,
                         sum( IF ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountCompLocal, 0 ) ) AS localCredit,
                         erp_bankledger.companyRptCurrencyID,
-                        sum( IF ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountCompRpt * -1), 0 ) ) AS rptDebit,
+                        sum( IF ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountCompRpt * -1), 0 ) ) AS rptDebit,
                         sum( IF ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountCompRpt, 0 ) ) AS rptCredit,
                         "" AS partyName,
                         erp_bankaccount.bankName,
                         erp_bankaccount.AccountNo,
                         chartofaccounts.AccountDescription,
-                        sum( IF ( erp_bankledger.documentSystemID = 21, (erp_bankledger.payAmountBank * -1), 0 ) ) AS bankDebit,
+                        sum( IF ( erp_bankledger.documentSystemID IN (21, 110), (erp_bankledger.payAmountBank * -1), 0 ) ) AS bankDebit,
                         sum( IF ( erp_bankledger.documentSystemID = 4, erp_bankledger.payAmountBank, 0 ) ) AS bankCredit,
                         currencymaster.CurrencyCode as bankCurrency,
                         currencymaster.DecimalPlaces as bankCurrencyDecimal,
