@@ -634,5 +634,16 @@ return [
     'attachment_not_found' => 'Attachment not found',
     'file_not_found_on_storage' => 'File not found on storage',
     'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
+
+    //AR Export Excel
+    'approved_date' => 'Approved Date',
+    'invoice_type' => 'Invoice Type',
+    'transaction_currency' => 'Transaction Currency',
+    'transaction_amount' => 'Transaction Amount',
+    'local_currency' => 'Local Currency',
+    'local_amount' => 'Local Amount',
+    'reporting_currency' => 'Reporting Currency',
+    'reporting_amount' => 'Reporting Amount',
+    'status' => 'Status'
 ];

@@ -10,6 +10,7 @@ use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /**
  * Class CustomerInvoiceDirectRepository
@@ -373,30 +374,34 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $invMaster;
     }
 
-    public function setExportExcelData($dataSet) {
+    public function setExportExcelData($dataSet, Request $request) {
 
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Invoice Code'] = $val->bookingInvCode;
-                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
-                $data[$x]['Invoice Type'] = StatusService::getCustomerInvoiceType($val->isPerforma);
-                $data[$x]['Customer'] = $val->CustomerName;
-                $data[$x]['Invoice'] = $val->customerInvoiceNo;
-                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->customerInvoiceDate);
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->empName;
-                $data[$x]['Transaction Currency'] = $val->CurrencyCode;
-                $data[$x]['Transaction Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
+                $data[$x][__('custom.invoice_code')] = $val->bookingInvCode;
+                $data[$x][__('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][__('custom.invoice_type')] = StatusService::getCustomerInvoiceType($val->isPerforma);
+                $data[$x][__('custom.customer')] = $val->CustomerName;
+                $data[$x][__('custom.invoice')] = $val->customerInvoiceNo;
+                $data[$x][__('custom.invoice_date')] = \Helper::dateFormat($val->customerInvoiceDate);
+                $data[$x][__('custom.comments')] = $val->comments;
+                $data[$x][__('custom.created_by')] = $val->empName;
+                $data[$x][__('custom.transaction_currency')] = $val->CurrencyCode;
+                $data[$x][__('custom.transaction_amount')] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
 
-                $data[$x]['Local Currency'] = $val->LocalCurrencyCode? $val->LocalCurrencyCode : '';
-                $data[$x]['Local Amount'] = $val->LocalCurrencyCode? number_format($val->bookingAmountLocal + $val->VATAmountLocal,  $val->LocalCurrencyDecimalPlaces, ".", "") : '';
-                $data[$x]['Reporting Currency'] = $val->ReportingCurrencyCode? $val->ReportingCurrencyCode : '';
-                $data[$x]['Reporting Amount'] = $val->ReportingCurrencyCode? number_format($val->bookingAmountRpt + $val->VATAmountRpt,  $val->ReportingCurrencyDecimalPlaces, ".", "") : '';
+                $data[$x][__('custom.local_currency')] = $val->LocalCurrencyCode? $val->LocalCurrencyCode : '';
+                $data[$x][__('custom.local_amount')] = $val->LocalCurrencyCode? number_format($val->bookingAmountLocal + $val->VATAmountLocal,  $val->LocalCurrencyDecimalPlaces, ".", "") : '';
+                $data[$x][__('custom.reporting_currency')] = $val->ReportingCurrencyCode? $val->ReportingCurrencyCode : '';
+                $data[$x][__('custom.reporting_amount')] = $val->ReportingCurrencyCode? number_format($val->bookingAmountRpt + $val->VATAmountRpt,  $val->ReportingCurrencyDecimalPlaces, ".", "") : '';
                 
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][__('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

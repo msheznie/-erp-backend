@@ -602,5 +602,16 @@ return [
     'description_string' => 'The description must be a string AR',
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
+
+    //AR Export Excel
+    'approved_date' => 'تاريخ الموافقة',
+    'invoice_type' => 'نوع الفاتورة',
+    'transaction_currency' => 'عملة المعاملة',
+    'transaction_amount' => 'مبلغ المعاملة',
+    'local_currency' => 'العملة المحلية',
+    'local_amount' => 'المبلغ المحلي',
+    'reporting_currency' => 'عملة الإبلاغ',
+    'reporting_amount' => 'مبلغ التقرير',
+    'status' => 'حالة'
 ];
