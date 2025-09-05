@@ -380,7 +380,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Company ID not found');
         }
 
-        $employeeID = \Helper::getEmployeeSystemID();
+
+        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] :  \Helper::getEmployeeSystemID();
 
         $userPermissions = [
             'financeUser' => [
@@ -442,7 +443,6 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 });
             }
 
-            $input['departmentSystemID'] = 13;
 
             // check if user is delegate & assign permissions
             if (isset($input['departmentSystemID'])) {
@@ -649,7 +649,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
                 $employeeID = \Helper::getEmployeeSystemID();
-                
+
                 $isFinanceUser = false;
                 $financeDepartment = CompanyDepartment::with(['employees'])
                     ->where('isFinance', 1)
@@ -682,16 +682,30 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                         $childDepartmentIds[] = $hodDeptId;
                         
                         $this->getChildDepartmentIds($hodDeptId, $input['companyId'], $childDepartmentIds);
+
+                        $childDepartmentIds = array_unique($childDepartmentIds);
+
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                            ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
+                            ->whereHas('department', function($query) use ($childDepartmentIds) {
+                                $query->whereIn('departmentSystemID', $childDepartmentIds);
+                            })
+                            ->orderBy('id', $sort);
+                    }else {
+                        // delegate
+
+                        $uniqueIds = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning','delegatee'=> function ($query) use ($employeeID) {
+                            $query->where('employeeSystemID',$employeeID)->where('isActive',true);
+                        }])->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
+
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                            ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
+                            ->whereIn('id', $uniqueIds)
+                            ->orderBy('id', $sort);
+
                     }
                     
-                    $childDepartmentIds = array_unique($childDepartmentIds);
-                    
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
-                        ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
-                        ->whereHas('department', function($query) use ($childDepartmentIds) {
-                            $query->whereIn('departmentSystemID', $childDepartmentIds);
-                        })
-                        ->orderBy('id', $sort);
+
                 }
 
                 if (array_key_exists('department', $input)) {
