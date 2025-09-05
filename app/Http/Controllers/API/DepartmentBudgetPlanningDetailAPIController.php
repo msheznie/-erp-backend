@@ -170,9 +170,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError('Department Planning ID is required');
         }
 
+        $employeeID =  \Helper::getEmployeeSystemID();;
         try {
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
+                'budgetDelegateAccessDetails' => function ($query) use ($employeeID) {
+                    $query->where('delegatee_id',$employeeID);
+                },
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
                 'responsiblePerson'
             ])
@@ -194,7 +198,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'amount_given_by_hod',
                 'internal_status',
                 'difference_current_request',
-                'created_at'
+                'created_at',
             ])->orderBy('id', $sort);
 
             $search = $request->input('search');
@@ -344,6 +348,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      */
     public function saveBudgetDetailTemplateEntries(Request $request)
     {
+
+
         try {
             $validator = \Validator::make($request->all(), [
                 'budgetDetailId' => 'required|numeric|exists:department_budget_planning_details,id',
@@ -361,6 +367,31 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $entryID = $input['entryID'] ?? null;
             $data = $input['data'];
 
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => 1,
+                'departmentBudgetPlanningDetailID' => 18445,
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                if(empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                {
+                    $this->sendError("no Aaccess");
+                }
+
+            }
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
             $entryID = null;
             $state = null;
