@@ -3792,6 +3792,7 @@ ORDER BY
     public function printPaymentMatching(Request $request)
     {
         $id = $request->get('matchDocumentMasterAutoID');
+        $lang = $request->get('lang', 'en');
 
         $MatchDocumentMasterData = MatchDocumentMaster::find($id);
 
@@ -3811,19 +3812,37 @@ ORDER BY
             $transDecimal = $matchDocumentRecord->transactioncurrency->DecimalPlaces;
         }
 
-
         $order = array(
             'masterdata' => $matchDocumentRecord,
-            'transDecimal' => $transDecimal
+            'transDecimal' => $transDecimal,
+            'lang' => $lang
         );
 
         $time = strtotime("now");
         $fileName = 'payment_matching_' . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.payment_matching', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function deleteAllRVMDetails(Request $request)

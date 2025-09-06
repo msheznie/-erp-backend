@@ -19,6 +19,7 @@
     Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
     Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
+    Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
@@ -48,7 +49,6 @@ Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 
 
-Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
 Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
 
