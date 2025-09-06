@@ -356,7 +356,7 @@ class TransactionsExportExcel extends AppBaseController
                 $customerID = collect($customerID)->pluck('id');
 
                 $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
-                $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry, $request);
+                $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry);
                 break;
 
             case '21':

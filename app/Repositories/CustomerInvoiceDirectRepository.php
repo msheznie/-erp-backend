@@ -10,7 +10,6 @@ use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 /**
  * Class CustomerInvoiceDirectRepository
@@ -374,12 +373,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $invMaster;
     }
 
-    public function setExportExcelData($dataSet, Request $request) {
-
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
+    public function setExportExcelData($dataSet) {
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
