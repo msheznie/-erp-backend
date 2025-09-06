@@ -664,5 +664,23 @@ return [
     'reviewed_by' => 'Reviewed By',
     
     // Stock Receive
-    'stock_received_voucher' => 'Stock Received Voucher'
+    'stock_received_voucher' => 'Stock Received Voucher',
+    
+    // Purchase Return
+    'purchase_return_voucher' => 'Purchase Return Voucher',
+    'return_by' => 'Return By',
+    
+    // Expense Claim
+    'expense_claim' => 'Expense Claim',
+    'document_code' => 'Document Code',
+    'document_date' => 'Document Date',
+    'gl_description' => 'GL Description',
+    'description' => 'Description',
+    'currency' => 'Currency',
+    'amount' => 'Amount',
+    'local_amount' => 'Local Amount',
+    'total_payment' => 'Total Payment',
+    'claimed_by' => 'Claimed By',
+    'checked_by' => 'Checked By',
+    'approved_by' => 'Approved By'
 ];

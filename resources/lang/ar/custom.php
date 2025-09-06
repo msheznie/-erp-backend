@@ -632,5 +632,23 @@ return [
     'reviewed_by' => 'مراجع بواسطة',
     
     // Stock Receive
-    'stock_received_voucher' => 'سند استلام المخزون'
+    'stock_received_voucher' => 'سند استلام المخزون',
+    
+    // Purchase Return
+    'purchase_return_voucher' => 'سند إرجاع المشتريات',
+    'return_by' => 'مرجع بواسطة',
+    
+    // Expense Claim
+    'expense_claim' => 'مطالبة المصروفات',
+    'document_code' => 'رمز المستند',
+    'document_date' => 'تاريخ المستند',
+    'gl_description' => 'وصف الحساب العام',
+    'description' => 'الوصف',
+    'currency' => 'العملة',
+    'amount' => 'المبلغ',
+    'local_amount' => 'المبلغ المحلي',
+    'total_payment' => 'إجمالي الدفع',
+    'claimed_by' => 'مطالب بواسطة',
+    'checked_by' => 'متحقق بواسطة',
+    'approved_by' => 'معتمد بواسطة'
 ];
