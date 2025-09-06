@@ -651,5 +651,18 @@ return [
     'uom_iss' => 'UOM Iss',
     'electronically_approved_by' => 'Electronically Approved By',
     'not_confirmed' => 'Not Confirmed',
-    'pending_approval' => 'Pending Approval'
+    'pending_approval' => 'Pending Approval',
+    
+    // Item Return
+    'item_return_voucher' => 'Item Return Voucher',
+    'warehouse' => 'Warehouse',
+    'returned_by' => 'Returned By',
+    'uom_issues' => 'UOM Issues',
+    'qty' => 'QTY',
+    'cost_usd' => 'Cost(USD)',
+    'issued_by' => 'Issued By',
+    'reviewed_by' => 'Reviewed By',
+    
+    // Stock Receive
+    'stock_received_voucher' => 'Stock Received Voucher'
 ];

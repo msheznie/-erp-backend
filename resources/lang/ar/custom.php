@@ -619,5 +619,18 @@ return [
     'uom_iss' => 'وحدة القياس المصدرة',
     'electronically_approved_by' => 'معتمد إلكترونياً بواسطة',
     'not_confirmed' => 'غير مؤكد',
-    'pending_approval' => 'في انتظار الموافقة'
+    'pending_approval' => 'في انتظار الموافقة',
+    
+    // Item Return
+    'item_return_voucher' => 'سند إرجاع الصنف',
+    'warehouse' => 'المستودع',
+    'returned_by' => 'مرجع بواسطة',
+    'uom_issues' => 'وحدات القياس المصدرة',
+    'qty' => 'الكمية',
+    'cost_usd' => 'التكلفة (دولار)',
+    'issued_by' => 'صادر بواسطة',
+    'reviewed_by' => 'مراجع بواسطة',
+    
+    // Stock Receive
+    'stock_received_voucher' => 'سند استلام المخزون'
 ];
