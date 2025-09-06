@@ -1,4 +1,4 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
     <title>{{ __('custom.expense_claim') }}</title>
     <style>
@@ -10,7 +10,7 @@
         }
 
         /* RTL Support for Arabic */
-        @if(app()->getLocale() == 'ar')
+        @if(isset($lang) && $lang === 'ar')
         body {
             direction: rtl;
             text-align: right;
