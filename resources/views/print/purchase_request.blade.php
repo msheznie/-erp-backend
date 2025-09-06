@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Purchase Request</title>
+    <title> __('custom.purchase_request') </title>
     <style>
         @page {
             margin-left: 30px;
