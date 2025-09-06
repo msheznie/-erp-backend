@@ -634,5 +634,22 @@ return [
     'attachment_not_found' => 'Attachment not found',
     'file_not_found_on_storage' => 'File not found on storage',
     'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
+    
+    // Stock Transfer
+    'stock_transfer_voucher' => 'Stock Transfer Voucher',
+    'location_to' => 'Location To',
+    'location_from' => 'Location From',
+    'ref_no' => 'Ref No',
+    'comments' => 'Comments',
+    'document_no' => 'Document No',
+    'date' => 'Date',
+    'item_code' => 'Item Code',
+    'item_description' => 'Item Description',
+    'part_no_ref_number' => 'Part No / Ref.Number',
+    'uom' => 'UOM',
+    'uom_iss' => 'UOM Iss',
+    'electronically_approved_by' => 'Electronically Approved By',
+    'not_confirmed' => 'Not Confirmed',
+    'pending_approval' => 'Pending Approval'
 ];

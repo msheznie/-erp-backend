@@ -602,5 +602,22 @@ return [
     'description_string' => 'The description must be a string AR',
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
+    
+    // Stock Transfer
+    'stock_transfer_voucher' => 'سند تحويل المخزون',
+    'location_to' => 'الموقع إلى',
+    'location_from' => 'الموقع من',
+    'ref_no' => 'رقم المرجع',
+    'comments' => 'التعليقات',
+    'document_no' => 'رقم المستند',
+    'date' => 'التاريخ',
+    'item_code' => 'رمز الصنف',
+    'item_description' => 'وصف الصنف',
+    'part_no_ref_number' => 'رقم القطعة / المرجع',
+    'uom' => 'وحدة القياس',
+    'uom_iss' => 'وحدة القياس المصدرة',
+    'electronically_approved_by' => 'معتمد إلكترونياً بواسطة',
+    'not_confirmed' => 'غير مؤكد',
+    'pending_approval' => 'في انتظار الموافقة'
 ];

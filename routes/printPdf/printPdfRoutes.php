@@ -11,6 +11,7 @@
     Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
     Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     Route::get('printBudgetTransfer', 'BudgetTransferFormAPIController@printBudgetTransfer');
+    Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
@@ -36,7 +37,6 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
 
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
-Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
 
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
