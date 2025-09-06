@@ -276,7 +276,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = collect($projectID)->pluck('id');
 
                 $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID, $projectID);
-                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry);
+                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '12':

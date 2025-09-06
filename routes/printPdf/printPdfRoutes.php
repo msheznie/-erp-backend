@@ -11,6 +11,7 @@
     Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
     Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     Route::get('printBudgetTransfer', 'BudgetTransferFormAPIController@printBudgetTransfer');
+    Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
@@ -28,7 +29,6 @@ Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
-        Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
         Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
         Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     });

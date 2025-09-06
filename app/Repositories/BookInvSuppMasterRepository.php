@@ -6,7 +6,7 @@ use App\Models\BookInvSuppMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
-
+use Illuminate\Http\Request;
 /**
  * Class BookInvSuppMasterRepository
  * @package App\Repositories
@@ -206,15 +206,20 @@ class BookInvSuppMasterRepository extends BaseRepository
         return $invMaster;
     }
 
-    public function setExportExcelData($dataSet) {
+    public function setExportExcelData($dataSet,Request $request) {
+
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
 
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Invoice Code'] = $val->bookingInvCode;
-                $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
+                $data[$x][__('custom.invoice_code')] = $val->bookingInvCode;
+                $data[$x][__('custom.type')] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
                 $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
                 $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
