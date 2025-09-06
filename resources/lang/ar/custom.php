@@ -1198,7 +1198,7 @@ return [
     'e_reporting_currency' => 'عملة التقرير',
     'e_reporting_amount' => 'قيمة التقرير',
     'e_status' => 'الحالة',
-    'registration_number' => 'رقم التسجيل'
+    'registration_number' => 'رقم التسجيل',
     "estimated_unit_cost" => "التكلفة المقدرة للوحدة",
     
     // Purchase Order specific translations
