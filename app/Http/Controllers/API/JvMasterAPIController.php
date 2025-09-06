@@ -1616,6 +1616,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function printJournalVoucher(Request $request)
     {
         $id = $request->get('jvMasterAutoId');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $jvMasterData = jvMaster::find($id);
         if (empty($jvMasterData)) {
@@ -1659,18 +1660,39 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             'transDecimal' => $transDecimal,
             'debitTotal' => $debitTotal,
             'isProject_base' => $isProject_base,
-            'creditTotal' => $creditTotal
+            'creditTotal' => $creditTotal,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'journal_voucher_' . $id . '_' . $time . '.pdf';
-        $html = view('print.journal_voucher', $order);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.journal_voucher', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
-        $mpdf->WriteHTML($html);
-        return $mpdf->Output($fileName, 'I');
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printJournalVoucher: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
     public function approvalPreCheckJV(Request $request)

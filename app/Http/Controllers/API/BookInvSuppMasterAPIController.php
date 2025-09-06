@@ -2909,6 +2909,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function printSupplierInvoice(Request $request)
     {
         $id = $request->get('bookingSuppMasInvAutoID');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $bookInvSuppMaster = BookInvSuppMaster::find($id);
         if (empty($bookInvSuppMaster)) {
@@ -3030,25 +3031,39 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt,
             'retentionVatPortion' => $retentionVatPortion,
-            'directAmountReport' => $directAmountReport
+            'directAmountReport' => $directAmountReport,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'supplier_invoice_' . $id . '_' . $time . '.pdf';
         
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
         $html = view('print.supplier_invoice', $order);
-        // $pdf = \App::make('dompdf.wrapper');
-        // $pdf->loadHTML($html);
-
-        // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
-
-        // $html = view('print.APMC_customer_invoice', $order);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
 
-        $mpdf->WriteHTML($html);
-        return $mpdf->Output($fileName, 'I');
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printSupplierInvoice: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
     public function supplierInvoiceCancel(Request $request)

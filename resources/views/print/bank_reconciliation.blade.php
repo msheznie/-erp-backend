@@ -229,10 +229,10 @@
                      </tr>--}}
                     <tr>
                         <td>
-                            <span class="font-weight-bold">{{ __('custom.document_code') }}</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->bankRecPrimaryCode}}</span>
@@ -240,10 +240,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold">Currency</span>
+                            <span style="font-weight: bold;">Currency</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -257,10 +257,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> As of</span>
+                            <span style="font-weight: bold;"> As of</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{ \App\helper\Helper::dateFormat($entity->bankRecAsOf)}}
@@ -268,10 +268,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold">Month</span>
+                            <span style="font-weight: bold;">Month</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->month_by)
@@ -281,10 +281,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Year </span>
+                            <span style="font-weight: bold;"> Year </span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->year}}
@@ -292,9 +292,9 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Bank </span>
+                            <span style="font-weight: bold;"> Bank </span>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->bank_account)
@@ -306,9 +306,9 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Account No. </span>
+                            <span style="font-weight: bold;"> Account No. </span>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->bank_account)
@@ -412,7 +412,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Confirmed By :</span>
+                                <span style="font-weight: bold;">Confirmed By :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -429,7 +429,7 @@
                     <table>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                                <span style="font-weight: bold;">Reviewed By :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -441,7 +441,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold;">Electronically Approved By :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

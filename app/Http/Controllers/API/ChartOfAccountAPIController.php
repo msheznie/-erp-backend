@@ -1154,17 +1154,40 @@ class ChartOfAccountAPIController extends AppBaseController
     public function printChartOfAccount(Request $request)
     {
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en'); // Added to capture language
         $chartOfAccount = $this->chartOfAccountRepository->with(['primaryCompany', 'controlAccount', 'allocation', 'accountType', 'templateCategoryDetails'])->findWithoutFail($id);
         $array = [
-            'chartOfAccount' => $chartOfAccount
+            'chartOfAccount' => $chartOfAccount,
+            'lang' => $lang // Pass lang to view
         ];
         $time = strtotime("now");
         $fileName = 'chart_of_account_' . $id . '_' . $time . '.pdf';
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
         $html = view('print.chart_of_account', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
-        $mpdf->WriteHTML($html);
-        return $mpdf->Output($fileName, 'I');
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printChartOfAccount: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 }

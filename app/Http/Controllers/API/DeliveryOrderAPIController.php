@@ -1252,6 +1252,7 @@ WHERE
 
     function printDeliveryOrder(Request $request){
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'tax','approved_by' => function ($query) {
             $query->with('employee')
@@ -1281,14 +1282,36 @@ WHERE
             $do->companyLogo = $companyLogo;
         }      
         
-        $array = array('entity' => $do);
+        $array = array('entity' => $do, 'lang' => $lang); // Pass lang to view
         $time = strtotime("now");
         $fileName = 'delivery_order_' . $id . '_' . $time . '.pdf';
-        $html = view('print.delivery_order', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.delivery_order', $array);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printDeliveryOrder: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
 

@@ -621,6 +621,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
     public function printRecurringVoucher(Request $request)
     {
         $id = $request->get('recurringVoucherAutoId');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $rrvMasterData = RecurringVoucherSetup::find($id);
         if (empty($rrvMasterData)) {
@@ -662,16 +663,39 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             'transDecimal' => $transDecimal,
             'debitTotal' => $debitTotal,
             'isProject_base' => $isProject_base,
-            'creditTotal' => $creditTotal
+            'creditTotal' => $creditTotal,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'recurring_voucher_' . $id . '_' . $time . '.pdf';
-        $html = view('print.recurring_voucher', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.recurring_voucher', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printRecurringVoucher: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
     public function getRecurringVoucherMasterApproval(Request $request)

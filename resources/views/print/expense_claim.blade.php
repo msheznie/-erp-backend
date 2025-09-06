@@ -257,10 +257,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">{{ __('custom.document_code') }}</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->expenseClaimCode}}</span>
@@ -268,10 +268,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">{{ __('custom.document_date') }} </span>
+                            <span style="font-weight: bold;">{{ __('custom.document_date') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -281,10 +281,10 @@
                     </tr>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">{{ __('custom.comments') }}</span>
+                            <span style="font-weight: bold;">{{ __('custom.comments') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->comments}}</span>
@@ -356,7 +356,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="70px">
-                                <span class="font-weight-bold">{{ __('custom.claimed_by') }} :</span>
+                                <span style="font-weight: bold;">{{ __('custom.claimed_by') }} :</span>
                             </td>
                             <td>
                                 @if($entity->confirmed_by)
@@ -373,7 +373,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="75px">
-                                <span class="font-weight-bold">{{ __('custom.checked_by') }} :</span>
+                                <span style="font-weight: bold;">{{ __('custom.checked_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width:200px;margin-top: 7px;"></div>
@@ -388,7 +388,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="80px">
-                                <span class="font-weight-bold" style="">{{ __('custom.approved_by') }} :</span>
+                                <span style="font-weight: bold;" style="">{{ __('custom.approved_by') }} :</span>
                             </td>
                             <td style="padding-left: 2px" valign="top">
                                 <br><br>

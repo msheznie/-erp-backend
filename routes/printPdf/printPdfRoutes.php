@@ -20,12 +20,18 @@
     Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+    Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
+    Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
+    Route::get('printRecurringVoucher', 'RecurringVoucherSetupAPIController@printRecurringVoucher');
+    Route::get('printChartOfAccount', 'ChartOfAccountAPIController@printChartOfAccount');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
             Route::get('printEvaluationTemplate', 'SupplierEvaluationTemplateAPIController@printEvaluationTemplate');
             Route::get('supplierEvaluationPrintPDF', 'SupplierEvaluationController@printSupplierEvaluation');
-
+            Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
+            Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
         });
     });
 });
@@ -37,8 +43,6 @@ Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
-        Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
-        Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
         Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     });
 });
@@ -49,12 +53,9 @@ Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 
 
-Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
 
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
-Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
-Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
 
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
@@ -66,5 +67,3 @@ Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSh
 Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
 
 Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
-Route::get('printRecurringVoucher', 'RecurringVoucherSetupAPIController@printRecurringVoucher');
-Route::get('printChartOfAccount', 'ChartOfAccountAPIController@printChartOfAccount');
