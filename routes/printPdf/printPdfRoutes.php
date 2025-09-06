@@ -16,6 +16,7 @@
     Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
     Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
     Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
+    Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
@@ -42,7 +43,6 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
 
 Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
-Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
