@@ -6104,4 +6104,6 @@ return [
     'yes' => 'Yes',
     'no' => 'No',
     'other' => 'Other',
+    'cn_date' => 'CN Date',
+    'credit_note_code' => 'Credit Note Code'
 ];
