@@ -635,6 +635,28 @@ return [
     'file_not_found_on_storage' => 'File not found on storage',
     'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
     'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
+
+    //AR Export Excel
+    'approved_date' => 'Approved Date',
+    'invoice_type' => 'Invoice Type',
+    'transaction_currency' => 'Transaction Currency',
+    'transaction_amount' => 'Transaction Amount',
+    'local_currency' => 'Local Currency',
+    'local_amount' => 'Local Amount',
+    'reporting_currency' => 'Reporting Currency',
+    'reporting_amount' => 'Reporting Amount',
+    'status' => 'Status',
+    //AR Download CI Template
+    'cr_number' => 'CR Number',
+    'customer_invoice_no' => 'Customer Invoice No',
+    'header' => 'Header',
+    'instructions_to_populate_data' => 'Instructions to Populate Data',
+    'm_refers_to_mandatory_field' => '"M" refers to Mandatory field. If mandatory field is empty in any row, the upload will not be successful',
+    'do_not_modify' => 'Do not amend (delete, move, edit, rename) any of the columns or rows in the provided template',
+    'to_add_multiple_details' => 'To add multiple details to a single invoice use "Customer invoice number" column and repeat the same invoice number multiple times to have more than one details in a single invoice',
+    'the_invoice_header_details_will_be_extracted_from_initial_invoice' => 'The invoice header details will be extracted from the initial invoice in the upload template for invoices containing multiple line items.',
+    'system_will_automatically_use_uploader_name' => "Confirmed by and Approved by columns are optional; if not updated, the system will automatically use the uploader's name.",
+    'both_cr_number_fields_cannot_be_blank' => 'In Customer Code, CR Number at least one field should have a value in any given row. Both fields cannot be blank.',
     
     // Stock Transfer
     'stock_transfer_voucher' => 'Stock Transfer Voucher',

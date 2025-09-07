@@ -603,6 +603,28 @@ return [
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
     'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
+
+    //AR Export Excel
+    'approved_date' => 'تاريخ الموافقة',
+    'invoice_type' => 'نوع الفاتورة',
+    'transaction_currency' => 'عملة المعاملة',
+    'transaction_amount' => 'مبلغ المعاملة',
+    'local_currency' => 'العملة المحلية',
+    'local_amount' => 'المبلغ المحلي',
+    'reporting_currency' => 'عملة الإبلاغ',
+    'reporting_amount' => 'مبلغ التقرير',
+    'status' => 'حالة',
+    //AR Download CI Template
+    'cr_number' => 'رقم CR',
+    'customer_invoice_no' => 'رقم فاتورة العميل',
+    'header' => 'رأس الصفحة',
+    'instructions_to_populate_data' => 'تعليمات لتعبئة البيانات',
+    'm_refers_to_mandatory_field' => 'يشير الحرف ”M“ إلى الحقل الإلزامي. إذا كان الحقل الإلزامي فارغًا في أي صف، فلن يتم التحميل بنجاح.',
+    'do_not_modify' => 'لا تقم بتعديل (حذف، نقل، تحرير، إعادة تسمية) أي من الأعمدة أو الصفوف في القالب المقدم',
+    'to_add_multiple_details' => 'لإضافة تفاصيل متعددة إلى فاتورة واحدة، استخدم عمود "رقم فاتورة العميل" وكرر نفس رقم الفاتورة عدة مرات للحصول على أكثر من تفاصيل في فاتورة واحدة',
+    'the_invoice_header_details_will_be_extracted_from_initial_invoice' => 'سيتم استخراج تفاصيل رأس الفاتورة من الفاتورة الأولية في نموذج التحميل للفواتير التي تحتوي على عدة بنود.',
+    'system_will_automatically_use_uploader_name' => 'تعد أعمدة التأكيد والموافقة اختيارية؛ إذا لم يتم تحديثها، فسيستخدم النظام اسم الشخص الذي قام بالتحميل تلقائيًا.',
+    'both_cr_number_fields_cannot_be_blank' => 'في رمز العميل، يجب أن يحتوي حقل رقم CR على الأقل على قيمة في أي صف معين. لا يمكن أن يكون كلا الحقلين فارغين.',
     
     // Stock Transfer
     'stock_transfer_voucher' => 'سند تحويل المخزون',
