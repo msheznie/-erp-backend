@@ -185,7 +185,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = collect($projectID)->pluck('id');
 
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID, $projectID);
-                $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
+                $data = $this->gRVMasterRepository->setExportExcelData($dataQry, $request);
                 break;
 
             case '4':
