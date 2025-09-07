@@ -3558,7 +3558,22 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
         $time = strtotime("now");
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        
+        // Configure mPDF for RTL support
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-P', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        // Add RTL support for Arabic
+        if (app()->getLocale() == 'ar') {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->WriteHTML($html);

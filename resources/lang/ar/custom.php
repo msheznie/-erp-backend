@@ -768,6 +768,7 @@ return [
     'amount_in_words' => 'المبلغ بالكلمات',
     'company_name' => 'اسم الشركة',
     'company_address' => 'عنوان الشركة',
+    'address' => 'عنوان',
     'phone' => 'الهاتف',
     'email' => 'البريد الإلكتروني',
     'website' => 'الموقع الإلكتروني',
