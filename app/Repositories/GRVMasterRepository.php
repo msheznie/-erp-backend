@@ -16,6 +16,7 @@ use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
+use Illuminate\Http\Request;
 
 /**
  * Class GRVMasterRepository
@@ -453,33 +454,38 @@ class GRVMasterRepository extends BaseRepository
             return $grvMaster;
     }
 
-    public function setExportExcelData($dataSet) {
+    public function setExportExcelData($dataSet, Request $request) {
 
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
+        
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['GRV Code'] = $val->grvPrimaryCode;
-                $data[$x]['Type'] = $val->grvtype_by? $val->grvtype_by->des : '';
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->grvDoRefNo;
-                $data[$x]['GRV Date'] = \Helper::dateFormat($val->grvDate);
-                $data[$x]['Supplier Code'] = $val->supplier_by? $val->supplier_by->primarySupplierCode : '';
-                $data[$x]['Supplier Name'] = $val->supplier_by? $val->supplier_by->supplierName : '';
-                $data[$x]['Location'] = $val->location_by? $val->location_by->wareHouseDescription : '';
-                $data[$x]['Narration'] = $val->grvNarration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created Date'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed Date'] = \Helper::convertDateWithTime($val->grvConfirmedDate);
-                $data[$x]['Approved Date'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Transaction Currency'] = $val->supplierTransactionCurrencyID? ($val->currency_by? $val->currency_by->CurrencyCode : '') : '';
-                $data[$x]['Transaction Amount'] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by? $val->currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->local_currency_by? $val->local_currency_by->CurrencyCode : '') : '';
-                $data[$x]['Local Amount'] = number_format($val->grvTotalLocalCurrency, $val->local_currency_by? $val->local_currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Reporting Currency'] = $val->companyReportingCurrencyID? ($val->reporting_currency_by? $val->reporting_currency_by->CurrencyCode : '') : '';
-                $data[$x]['Reporting Amount'] = number_format($val->grvTotalComRptCurrency, $val->reporting_currency_by? $val->reporting_currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus($val->grvCancelledYN, NULL, $val->grvConfirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][__('custom.e_type')] = $val->grvtype_by ? $val->grvtype_by->des : '';
+                $data[$x][__('custom.e_grv_code')] = $val->grvPrimaryCode;
+                $data[$x][__('custom.e_segment')] = $val->segment_by ? $val->segment_by->ServiceLineDes : '';
+                $data[$x][__('custom.e_reference_no')] = $val->grvDoRefNo;
+                $data[$x][__('custom.e_grv_date')] = Helper::dateFormat($val->grvDate);
+                $data[$x][__('custom.e_supplier_code')] = $val->supplier_by ? $val->supplier_by->primarySupplierCode : '';
+                $data[$x][__('custom.e_supplier_name')] = $val->supplier_by ? $val->supplier_by->supplierName : '';
+                $data[$x][__('custom.e_location')] = $val->location_by ? $val->location_by->wareHouseDescription : '';
+                $data[$x][__('custom.e_narration')] = $val->grvNarration;
+                $data[$x][__('custom.e_created_by')] = $val->created_by ? $val->created_by->empName : '';
+                $data[$x][__('custom.e_created_date')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][__('custom.e_confirmed_date')] = Helper::convertDateWithTime($val->grvConfirmedDate);
+                $data[$x][__('custom.e_approved_date')] = Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][__('custom.e_transaction_currency')] = $val->supplierTransactionCurrencyID ? ($val->currency_by ? $val->currency_by->CurrencyCode : '') : '';
+                $data[$x][__('custom.e_transaction_amount')] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by ? $val->currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][__('custom.e_local_currency')] = $val->localCurrencyID ? ($val->local_currency_by ? $val->local_currency_by->CurrencyCode : '') : '';
+                $data[$x][__('custom.e_local_amount')] = number_format($val->grvTotalLocalCurrency, $val->local_currency_by ? $val->local_currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][__('custom.e_reporting_currency')] = $val->companyReportingCurrencyID ? ($val->reporting_currency_by ? $val->reporting_currency_by->CurrencyCode : '') : '';
+                $data[$x][__('custom.e_reporting_amount')] = number_format($val->grvTotalComRptCurrency, $val->reporting_currency_by ? $val->reporting_currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][__('custom.e_status')] = StatusService::getStatus($val->grvCancelledYN, null, $val->grvConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

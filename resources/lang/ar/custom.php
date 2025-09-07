@@ -1007,5 +1007,27 @@ return [
     'phone' => 'الهاتف',
     'website' => 'الموقع الإلكتروني',
     'tax_id' => 'الرقم الضريبي',
-    'registration_number' => 'رقم التسجيل'
+    'registration_number' => 'رقم التسجيل',
+
+      //GRV Excel
+    'e_grv_code' => 'كود إيصال الاستلام',
+    'e_type' => 'النوع',
+    'e_segment' => 'القطاع',
+    'e_reference_no' => 'رقم المرجع',
+    'e_grv_date' => 'تاريخ إيصال الاستلام',
+    'e_supplier_code' => 'كود المورد',
+    'e_supplier_name' => 'اسم المورد',
+    'e_location' => 'الموقع',
+    'e_narration' => 'الوصف',
+    'e_created_by' => 'أنشأه',
+    'e_created_date' => 'تاريخ الإنشاء',
+    'e_confirmed_date' => 'تاريخ التأكيد',
+    'e_approved_date' => 'تاريخ الموافقة',
+    'e_transaction_currency' => 'عملة المعاملة',
+    'e_transaction_amount' => 'قيمة المعاملة',
+    'e_local_currency' => 'العملة المحلية',
+    'e_local_amount' => 'القيمة المحلية',
+    'e_reporting_currency' => 'عملة التقرير',
+    'e_reporting_amount' => 'قيمة التقرير',
+    'e_status' => 'الحالة',
 ];
