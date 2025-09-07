@@ -190,14 +190,14 @@ class CreditNoteRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['CN Date'] = \Helper::dateFormat($val->creditNoteDate);
-                $data[$x]['Credit Note Code'] = $val->creditNoteCode;
-                $data[$x]['Customer'] = $val->CutomerCode;
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->empName;
-                $data[$x]['Currency'] =$val->CurrencyCode? $val->CurrencyCode : '';
-                $data[$x]['Amount'] = number_format($val->creditAmountTrans, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][__('custom.cn_date')] = \Helper::dateFormat($val->creditNoteDate);
+                $data[$x][__('custom.credit_note_code')] = $val->creditNoteCode;
+                $data[$x][__('custom.customer')] = $val->CutomerCode;
+                $data[$x][__('custom.comments')] = $val->comments;
+                $data[$x][__('custom.created_by')] = $val->empName;
+                $data[$x][__('custom.currency')] =$val->CurrencyCode? $val->CurrencyCode : '';
+                $data[$x][__('custom.amount')] = number_format($val->creditAmountTrans, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
+                $data[$x][__('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }
