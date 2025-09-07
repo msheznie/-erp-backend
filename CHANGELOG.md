@@ -2,6 +2,7 @@
 
 
 
+
 ## [10.84.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.83.0...v10.84.0) (2025-09-16)
 
 
@@ -23,6 +24,7 @@
 ### Bug Fixes
 
 * **Commercial Bid Opening:** Commercial bid records are visible before approval of bid opening [GSUP-4064] ([#8651](https://github.com/pbsgears/Gears_BackEnd/issues/8651)) ([5b26359](https://github.com/pbsgears/Gears_BackEnd/commit/5b263593ecfced44f76e120d170af022509e88b6))
+
 
 ## [10.82.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.1...v10.82.0) (2025-09-07)
 
