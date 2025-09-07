@@ -887,7 +887,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 13px;"><h4  style="font-weight: bold" style=" text-decoration: underline;">Specifications</h4></td>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4  style="font-weight: bold" style=" text-decoration: underline;">{{ __('custom.specifications') }}</h4></td>
             </tr>
         </table>
         <br>
@@ -929,7 +929,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">Payment Terms and Conditions</h3></td>
+                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">{{ __('custom.payment_terms_and_conditions') }}</h3></td>
             </tr>
         </table>
         <br>
