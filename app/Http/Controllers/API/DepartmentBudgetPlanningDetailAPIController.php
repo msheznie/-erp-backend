@@ -8,6 +8,7 @@ use App\Models\BudgetDetTemplateEntry;
 use App\Models\BudgetDetTemplateEntryData;
 use App\Models\BudgetPlanningDetailTempAttachment;
 use App\Models\BudgetTemplateColumn;
+use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\Employee;
@@ -170,17 +171,36 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError('Department Planning ID is required');
         }
 
-        $employeeID =  \Helper::getEmployeeSystemID();;
+        $employeeID =  \Helper::getEmployeeSystemID();
+
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $departmentPlanningId,
+            'delegateUser' =>  $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
         try {
+
+            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
-                'budgetDelegateAccessDetails' => function ($query) use ($employeeID) {
-                    $query->where('delegatee_id',$employeeID);
-                },
+                'budgetDelegateAccessDetails',
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
                 'responsiblePerson'
-            ])
-            ->forDepartmentPlanning($departmentPlanningId)
+            ]);
+
+            if($userPermission['success'] && $userPermission['data']['delegateUser']['status'])
+            {
+                $query ->whereHas('budgetDelegateAccessDetails' , function ($q)use ($delegateIDs) {
+                    $q->whereIn('delegatee_id',$delegateIDs);
+                });
+
+            }
+
+            $query->forDepartmentPlanning($departmentPlanningId)
             ->select([
                 'id',
                 'department_planning_id',
@@ -370,8 +390,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest = new Request();
             $newRequest->replace([
                 'companyId' => 1,
-                'departmentBudgetPlanningDetailID' => 18445,
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'departmentBudgetPlanningDetailID' => $budgetDetailId,
+                'delegateUser' =>  Auth::user()->employee_id
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
