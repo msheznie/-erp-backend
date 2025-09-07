@@ -240,14 +240,14 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
                 DB::rollBack();
-                return $this->sendError('Please select a supplier', 500);
+                return $this->sendError(trans('custom.please_select_supplier'), 500);
             }
 
             if (isset($input['preCheck']) && $input['preCheck']) {
                 $company = Company::where('companySystemID', $input['companySystemID'])->first();
                 if (!empty($company) && $company->vatRegisteredYN == 1 && !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                     DB::rollBack();
-                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
+                    return $this->sendError(trans('custom.activate_reverse_charge_mechanism'), 500, array('type' => 'rcm_confirm'));
                 }
             }
 
@@ -271,7 +271,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if ($input['documentSystemID'] == 5) {
                 if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
                     DB::rollBack();
-                    return $this->sendError(trans('custom.wo_period_from_cannot_be_greater_than_wo_period_to'), 500);
+                    return $this->sendError(trans('custom.wo_period_from_greater_than_to'), 500);
                 }
             }
 
@@ -636,7 +636,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
             if(abs(100 - $advancedPaymentPercentage) > $epsilon) {
-                return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+                return $this->sendError(trans('custom.total_payment_terms_not_equal_po_amount'));
             }
         }
 
@@ -668,7 +668,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
             if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
-                return $this->sendError(trans('custom.wo_period_from_cannot_be_greater_than_wo_period_to'));
+                return $this->sendError(trans('custom.wo_period_from_greater_than_to'));
             }
         }
 
@@ -680,15 +680,15 @@ class ProcumentOrderAPIController extends AppBaseController
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID != $employee->empID) {
-            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende_1') . $procumentOrder->WO_amendRequestedByEmpID, 500);
+            return $this->sendError(trans('custom.cannot_amend_order_already_amended') . ' ' . $procumentOrder->WO_amendRequestedByEmpID, 500);
         }
 
         if ($procumentOrder->poCancelledYN == -1) {
-            return $this->sendError(trans('custom.this_purchase_order_closed_you_cannot_edit'), 500);
+            return $this->sendError(trans('custom.purchase_order_closed_cannot_edit'), 500);
         }
 
         if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
-            return $this->sendError(trans('custom.this_purchase_order_fully_approved_you_cannot_edit'), 500);
+            return $this->sendError(trans('custom.purchase_order_fully_approved_cannot_edit'), 500);
         }
 
         //checking segment is active
@@ -699,7 +699,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_not_active'));
         }
 
         $purchaseOrderID = $input['purchaseOrderID'];
@@ -763,7 +763,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
-            return $this->sendError('Discount Amount should be less than order amount.', 500);
+            return $this->sendError(trans('custom.discount_amount_less_than_order'), 500);
         }
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
@@ -1048,7 +1048,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $validatorResult = \Helper::checkBlockSuppliers($block_date,$input['supplierID']);
 
                 if (!$validatorResult['success']) {
-                    return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+                    return $this->sendError(trans('custom.supplier_blocked_proceed'), 500,['type' => 'blockSupplier']);
 
                 }
             }
@@ -1066,11 +1066,11 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->get();
                 if ($policy == 0) {
                     if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
-                        return $this->sendError(trans('custom.category_is_not_found'), 500);
+                        return $this->sendError(trans('custom.category_not_found'), 500);
                     }
 
                     if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
+                        return $this->sendError(trans('custom.cannot_add_different_category_item'), 500);
                     }
                 } else {
                     if (sizeof($pRDetailExistSameItem) == 1) {
@@ -1091,7 +1091,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (empty($poDetailExist)) {
-                return $this->sendError(trans('custom.order_cannot_be_confirmed_without_any_details'));
+                return $this->sendError(trans('custom.order_cannot_confirm_without_details'));
             }
 
             $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -1161,7 +1161,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
-                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
+                return $this->sendError(trans('custom.alternative_uom_should_have_qty'), 500);
             }
 
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
@@ -1175,7 +1175,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum qty requested', 500);
+                return $this->sendError(trans('custom.item_should_have_minimum_qty'), 500);
             }
 
             //check unit cost should be greater than zero
@@ -1191,12 +1191,12 @@ class ProcumentOrderAPIController extends AppBaseController
             foreach ($details as $detail) {
                 $PRMaster = PurchaseRequest::find($detail['purchaseRequestID']);
                 if ($PRMaster && ($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID)) {
-                    return $this->sendError("Added Request department is different from order");
+                    return $this->sendError(trans('custom.added_request_department_different'));
                 }
             }
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item unit cost should be greater than zero ', 500);
+                return $this->sendError(trans('custom.item_unit_cost_greater_than_zero'), 500);
             }
 
             //checking atleast one po payment terms should exist
@@ -1204,7 +1204,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (empty($PoPaymentTerms)) {
-                return $this->sendError('PO should have at least one payment term');
+                return $this->sendError(trans('custom.po_should_have_payment_term'));
             }
 
             // checking payment term amount value 0
@@ -1224,7 +1224,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (!empty($PoPaymentTerms)) {
-                return $this->sendError('Advance payment request is pending');
+                return $this->sendError(trans('custom.advance_payment_request_pending'));
             }
 
 
@@ -1236,7 +1236,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if ($paymentTotalSumComp > 0 && ($this->truncateDecimals($poMasterSumDeductedNotRounded,$supplierCurrencyDecimalPlace) != $this->truncateDecimals($paymentTotalSum['paymentTotalSum'],$supplierCurrencyDecimalPlace))) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
-                    return $this->sendError('Payment terms total is not matching with the PO total');
+                    return $this->sendError(trans('custom.payment_terms_total_not_matching'));
                 }
             }
 
@@ -1261,7 +1261,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     if ($paymentPercentageAmount > 0) {
                         if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                         } else {
-                            return $this->sendError('Payment term calculation is mismatched');
+                            return $this->sendError(trans('custom.payment_term_calculation_mismatched'));
                         }
                     }
                 }
@@ -1436,7 +1436,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         TaxService::updatePOVAT($id);
 
-        return $this->sendReponseWithDetails($procumentOrder->toArray(), 'Procurement Order updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($procumentOrder->toArray(), trans('custom.procurement_order_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -1465,7 +1465,7 @@ class ProcumentOrderAPIController extends AppBaseController
     {
 
         if(empty($purchaseOrderID))
-            return $this->sendError("Procument Order not found");
+            return $this->sendError(trans('custom.procurement_order_not_found'));
 
         $procumentOrder = ProcumentOrder::where('purchaseOrderID',$purchaseOrderID)->with('paymentTerms_by')->first();
 
@@ -1828,7 +1828,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             if (empty($purchaseOrder)) {
-                return $this->sendError(trans('custom.purchase_order_not_found_1'));
+                return $this->sendError(trans('custom.purchase_order_not_found'));
             }
             
             $sup = SupplierMaster::find($purchaseOrder->supplierID);
@@ -1894,7 +1894,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'contractEnablePolicy' => $contractEnablePolicy
         );
 
-        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully'));
     }
 
 
@@ -2435,7 +2435,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             if($fullyRetuned) {
                 return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
             }else {
-                return $this->sendError(trans('custom.cannot_cancel_grv_is_created_for_this_po'));
+                return $this->sendError(trans('custom.cannot_cancel_grv_created'));
             }
         }
         if (!empty($detailExistGRV)) {
@@ -2446,22 +2446,22 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 if($fullyRetuned) {
                     return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
                 }else {
-                    return $this->sendError(trans('custom.cannot_cancel_grv_is_created_for_this_po'));
+                    return $this->sendError(trans('custom.cannot_cancel_grv_created'));
                 }
             } else {
-                return $this->sendError(trans('custom.cannot_revert_it_back_to_amend_grv_is_created_for_'));
+                return $this->sendError(trans('custom.cannot_revert_grv_created'));
             }
         }
 
         // check main work order has subwork order
         if ($type != 1) {
             if ($purchaseOrder->poType_N == 6) {
-                return $this->sendError(trans('custom.sub_work_order_cannot_revert_it_back_to_amend'));
+                return $this->sendError(trans('custom.sub_work_order_cannot_revert'));
             } elseif ($purchaseOrder->poType_N == 5) {
                 $hasSubWorkOrder = ProcumentOrder::where('poType_N', 6)->where('WO_purchaseOrderID', $purchaseOrder->purchaseOrderID)
                     ->count();
                 if ($hasSubWorkOrder > 0) {
-                    return $this->sendError(trans('custom.cannot_revert_it_back_to_amend_sub_work_order_is_c'));
+                    return $this->sendError(trans('custom.cannot_revert_sub_work_order_created'));
                 }
             }
         }
@@ -2471,7 +2471,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError(trans('custom.cannot') . $comment . '. Advance payment is created for this PO', 404, ['advancePaymentError' => true]);
+            return $this->sendError(trans('custom.cannot_advance_payment_created') . ' ' . $comment . '. ' . trans('custom.advance_payment_created_for_po'), 404, ['advancePaymentError' => true]);
         }
 
         return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
@@ -2597,7 +2597,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         if ($purchaseOrder->manuallyClosed == 1) {
-            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close_1'));
+            return $this->sendError(trans('custom.cannot_revert_request_closed_manually'));
         }
 
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
@@ -2695,7 +2695,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
 
-        return $this->sendResponse($purchaseOrderID, trans('custom.po_return_back_to_amend_successfully'));
+        return $this->sendResponse($purchaseOrderID, trans('custom.po_return_back_amend_successfully'));
     }
 
     public function reportSpentAnalysisBySupplierFilter(Request $request)
@@ -2731,7 +2731,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             'currency' => $currency
         );
 
-        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully'));
     }
 
     public function reportSpentAnalysisHeader(Request $request)
@@ -3230,7 +3230,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        return $this->sendResponse(array(), trans('custom.successfully_export'));
     }
 
     /**
@@ -3251,19 +3251,19 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_is_already_fully_'));
+            return $this->sendError(trans('custom.cannot_close_order_fully_received'));
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_already_man'));
+            return $this->sendError(trans('custom.cannot_close_order_manually_closed'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_is_only_app'));
+            return $this->sendError(trans('custom.cannot_close_order_only_approved'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_you_can_only_close_par'));
+            return $this->sendError(trans('custom.cannot_close_order_partially_received'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3615,7 +3615,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_not_active'));
         }
 
         return $this->sendResponse($purchaseOrderID, 'sucess');
@@ -4004,19 +4004,19 @@ WHERE
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_is_already_fully_'));
+            return $this->sendError(trans('custom.cannot_close_order_fully_received'));
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_already_man'));
+            return $this->sendError(trans('custom.cannot_close_order_manually_closed'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_is_only_app'));
+            return $this->sendError(trans('custom.cannot_close_order_only_approved'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError(trans('custom.you_cannot_close_this_order_you_can_only_close_par'));
+            return $this->sendError(trans('custom.cannot_close_order_partially_received'));
         }
 
 
@@ -4365,7 +4365,7 @@ WHERE
             }
         } else if (isset($input['preCheck']) && $input['preCheck']) {
             if ($purchaseOrder->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
-                return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
+                return $this->sendError(trans('custom.activate_reverse_charge_mechanism'), 500, array('type' => 'rcm_confirm'));
             }
         }
 
@@ -4779,7 +4779,7 @@ ORDER BY
             ->first();
 
         if (empty($grvMaster)) {
-            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found'));
         }
 
         //checking segment is active
@@ -4789,7 +4789,7 @@ ORDER BY
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_not_active'));
         }
 
         $ProcumentOrder = ProcumentOrder::where('companySystemID', $companyID)
@@ -4910,15 +4910,15 @@ ORDER BY
         }
 
         if ($purchaseOrder->RollLevForApp_curr > 1) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_already_partially_'));
+            return $this->sendError(trans('custom.cannot_reopen_po_partially_approved'));
         }
 
         if ($purchaseOrder->approved == -1) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_already_fully_appr'));
+            return $this->sendError(trans('custom.cannot_reopen_po_fully_approved'));
         }
 
         if ($purchaseOrder->poConfirmedYN == 0) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_not_confirmed'));
+            return $this->sendError(trans('custom.cannot_reopen_po_not_confirmed'));
         }
 
         // updating fields
@@ -5062,7 +5062,7 @@ ORDER BY
             }
         }
         if ($attachmentFound == 0) {
-            return $this->sendError('No Attachments Found', 500);
+            return $this->sendError(trans('custom.no_attachments_found'), 500);
         } else {
             return $this->sendResponse($purchaseOrderID, trans('custom.pr_attachments_pulled_successfully'));
         }
@@ -5114,9 +5114,9 @@ ORDER BY
 
 
         if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, trans('custom.supplier_email_is_not_updated_email_notification_i'));
+            return $this->sendResponse($emailSentTo, trans('custom.supplier_email_not_updated'));
         } else {
-            return $this->sendResponse($emailSentTo, 'Supplier notification email sent');
+            return $this->sendResponse($emailSentTo, trans('custom.supplier_notification_email_sent'));
         }
     }
 
@@ -5132,7 +5132,7 @@ ORDER BY
         }
 
         if ($purchaseOrder->refferedBackYN != -1) {
-            return $this->sendError(trans('custom.you_cannot_refer_back_this_po'));
+            return $this->sendError(trans('custom.cannot_refer_back_po'));
         }
 
         $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess', 'isVatEligible', 'rcmAvailable']);
@@ -5254,7 +5254,7 @@ ORDER BY
         $sumMonthWise = '';
         $countMonthWise = '';
 
-        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dece');
+        $monthArray = array(1 => trans('custom.jan'), 2 => trans('custom.feb'), 3 => trans('custom.mar'), 4 => trans('custom.apr'), 5 => trans('custom.may'), 6 => trans('custom.jun'), 7 => trans('custom.jul'), 8 => trans('custom.aug'), 9 => trans('custom.sep'), 10 => trans('custom.oct'), 11 => trans('custom.nov'), 12 => trans('custom.dec'));
 
         foreach ($monthArray as $key => $mon) {
             $sumMonthWise .= " SUM(IF(DocMONTH = $key, POValue , 0)) as Tot$mon ,";
@@ -5310,6 +5310,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function exportPoEmployeePerformance(Request $request)
     {
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+        
+        // Set locale based on user's language preference
+        $this->setUserLocale();
 
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
@@ -5326,7 +5329,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $sumMonthWise = '';
         $countMonthWise = '';
 
-        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dece');
+        $monthArray = array(1 => trans('custom.jan'), 2 => trans('custom.feb'), 3 => trans('custom.mar'), 4 => trans('custom.apr'), 5 => trans('custom.may'), 6 => trans('custom.jun'), 7 => trans('custom.jul'), 8 => trans('custom.aug'), 9 => trans('custom.sep'), 10 => trans('custom.oct'), 11 => trans('custom.nov'), 12 => trans('custom.dec'));
 
         foreach ($monthArray as $key => $mon) {
             $sumMonthWise .= " SUM(IF(DocMONTH = $key, POValue , 0)) as Tot$mon ,";
@@ -5379,36 +5382,36 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             if ($output) {
                 $x = 0;
                 foreach ($output as $val) {
-                    $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
-                    $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
-                    $data[$x]['Designation'] = $val->designation;
-                    $data[$x]['Year'] = $year;
-                    $data[$x]['Jan-Count'] = $val->CouJan;
-                    $data[$x]['Jan-Amt'] = $val->TotJan;
-                    $data[$x]['Feb-Count'] = $val->CouFeb;
-                    $data[$x]['Feb-Amt'] = $val->TotFeb;
-                    $data[$x]['Mar-Count'] = $val->CouMar;
-                    $data[$x]['Mar-Amt'] = $val->TotMar;
-                    $data[$x]['Apr-Count'] = $val->CouApr;
-                    $data[$x]['Apr-Amt'] = $val->TotApr;
-                    $data[$x]['May-Count'] = $val->CouMay;
-                    $data[$x]['May-Amt'] = $val->TotMay;
-                    $data[$x]['Jun-Count'] = $val->CouJun;
-                    $data[$x]['Jun-Amt'] = $val->TotJun;
-                    $data[$x]['Jul-Count'] = $val->CouJul;
-                    $data[$x]['Jul-Amt'] = $val->TotJul;
-                    $data[$x]['Aug-Count'] = $val->CouAug;
-                    $data[$x]['Aug-Amt'] = $val->TotAug;
-                    $data[$x]['Sept-Count'] = $val->CouSep;
-                    $data[$x]['Sept-Amt'] = $val->TotSep;
-                    $data[$x]['Oct-Count'] = $val->CouOct;
-                    $data[$x]['Oct-Amt'] = $val->TotOct;
-                    $data[$x]['Nov-Count'] = $val->CouNov;
-                    $data[$x]['Nov-Amt'] = $val->TotNov;
-                    $data[$x]['Dec-Count'] = $val->CouDece;
-                    $data[$x]['Dec-Amt'] = $val->TotDece;
-                    $data[$x]['Total Count'] = $val->totalCount;
-                    $data[$x]['Total Amount'] = $val->totalValue;
+                    $data[$x][trans('custom.emp_id')] = $val->poConfirmedByEmpID;
+                    $data[$x][trans('custom.employee_name')] = $val->POConfirmedEmpName;
+                    $data[$x][trans('custom.designation')] = $val->designation;
+                    $data[$x][trans('custom.year')] = $year;
+                    $data[$x][trans('custom.jan_count')] = $val->CouJan;
+                    $data[$x][trans('custom.jan_amt')] = $val->TotJan;
+                    $data[$x][trans('custom.feb_count')] = $val->CouFeb;
+                    $data[$x][trans('custom.feb_amt')] = $val->TotFeb;
+                    $data[$x][trans('custom.mar_count')] = $val->CouMar;
+                    $data[$x][trans('custom.mar_amt')] = $val->TotMar;
+                    $data[$x][trans('custom.apr_count')] = $val->CouApr;
+                    $data[$x][trans('custom.apr_amt')] = $val->TotApr;
+                    $data[$x][trans('custom.may_count')] = $val->CouMay;
+                    $data[$x][trans('custom.may_amt')] = $val->TotMay;
+                    $data[$x][trans('custom.jun_count')] = $val->CouJun;
+                    $data[$x][trans('custom.jun_amt')] = $val->TotJun;
+                    $data[$x][trans('custom.jul_count')] = $val->CouJul;
+                    $data[$x][trans('custom.jul_amt')] = $val->TotJul;
+                    $data[$x][trans('custom.aug_count')] = $val->CouAug;
+                    $data[$x][trans('custom.aug_amt')] = $val->TotAug;
+                    $data[$x][trans('custom.sept_count')] = $val->CouSep;
+                    $data[$x][trans('custom.sept_amt')] = $val->TotSep;
+                    $data[$x][trans('custom.oct_count')] = $val->CouOct;
+                    $data[$x][trans('custom.oct_amt')] = $val->TotOct;
+                    $data[$x][trans('custom.nov_count')] = $val->CouNov;
+                    $data[$x][trans('custom.nov_amt')] = $val->TotNov;
+                    $data[$x][trans('custom.dec_count')] = $val->CouDece;
+                    $data[$x][trans('custom.dec_amt')] = $val->TotDece;
+                    $data[$x][trans('custom.total_count')] = $val->totalCount;
+                    $data[$x][trans('custom.total_amount')] = $val->totalValue;
                     $x++;
                 }
             } else {
@@ -5418,12 +5421,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             if ($output) {
                 $x = 0;
                 foreach ($output as $val) {
-                    $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
-                    $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
-                    $data[$x]['Designation'] = $val->designation;
-                    $data[$x]['Year'] = $year;
-                    $data[$x]['Count'] = $val->totalCount;
-                    $data[$x]['Total'] = $val->totalValue;
+                    $data[$x][trans('custom.emp_id')] = $val->poConfirmedByEmpID;
+                    $data[$x][trans('custom.employee_name')] = $val->POConfirmedEmpName;
+                    $data[$x][trans('custom.designation')] = $val->designation;
+                    $data[$x][trans('custom.year')] = $year;
+                    $data[$x][trans('custom.count')] = $val->totalCount;
+                    $data[$x][trans('custom.total')] = $val->totalValue;
                     $x++;
                 }
             } else {
@@ -5440,7 +5443,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        return $this->sendResponse(array(), trans('custom.successfully_export'));
     }
 
     public function exportProcumentOrderMaster(Request $request)
@@ -5449,11 +5452,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
         $request->merge(['userId' => Helper::getEmployeeSystemID()]);
 
+        // Set locale based on user's language preference
+        $this->setUserLocale();
+
         if(isset($input['stat']) && $input['stat']) {
             $db = $input['db'] ?? "";
             ExportDetailedPoList::dispatch($db, $request->all());
 
-            return $this->sendResponse('', 'PO Detailed report Export in progress, you will be notified once ready !!');
+            return $this->sendResponse('', trans('custom.po_detailed_report_export_progress'));
         }
 
         $validator = \Validator::make($input, [
@@ -5461,7 +5467,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+            return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
         $supplierID = $request['supplierID'];
@@ -5590,109 +5596,109 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if ($output) {
             $x = 0;
             foreach ($output as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
                 if ($val->company) {
-                    $data[$x]['Company Name'] = $val->company->CompanyName;
+                    $data[$x][trans('custom.company_name')] = $val->company->CompanyName;
                 } else {
-                    $data[$x]['Company Name'] = "";
+                    $data[$x][trans('custom.company_name')] = "";
                 }
 
-                $data[$x]['Order Code'] = $val->purchaseOrderCode;
+                $data[$x][trans('custom.order_code')] = $val->purchaseOrderCode;
                 if ($val->segment) {
-                    $data[$x]['Segment'] = $val->segment->ServiceLineDes;
+                    $data[$x][trans('custom.segment')] = $val->segment->ServiceLineDes;
                 } else {
-                    $data[$x]['Segment'] = "";
+                    $data[$x][trans('custom.segment')] = "";
                 }
 
-                $data[$x]['Created at'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateTime);
                 if ($val->created_by) {
-                    $data[$x]['Created By'] = $val->created_by->empName;
+                    $data[$x][trans('custom.created_by')] = $val->created_by->empName;
                 } else {
-                    $data[$x]['Created By'] = "";
+                    $data[$x][trans('custom.created_by')] = "";
                 }
 
                 if ($val->fcategory) {
-                    $data[$x]['Category'] = $val->fcategory->categoryDescription;
+                    $data[$x][trans('custom.category')] = $val->fcategory->categoryDescription;
                 } else {
-                    $data[$x]['Category'] = "Other";
+                    $data[$x][trans('custom.category')] = trans('custom.other');  
                 }
 
-                $data[$x]['Narration'] = ($val->narration == "" || $val->narration == null) ? "-" : $val->narration;
-                $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
-                $data[$x]['Supplier Name'] = $val->supplierName;
-                $data[$x]['Credit Period'] = $val->creditPeriod;
+                $data[$x][trans('custom.narration')] = ($val->narration == "" || $val->narration == null) ? "-" : $val->narration;
+                $data[$x][trans('custom.supplier_code')] = $val->supplierPrimaryCode;
+                $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                $data[$x][trans('custom.credit_period')] = $val->creditPeriod;
 
                 if ($val->supplier) {
-                    $data[$x][' Supplier Country'] = $val->supplier->country->countryName;
+                    $data[$x][trans('custom.supplier_country')] = $val->supplier->country->countryName;
                 } else {
-                    $data[$x]['Supplier Country'] = "";
+                    $data[$x][trans('custom.supplier_country')] = "";
                 }
 
-                $data[$x]['Expected Delivery Date'] = \Helper::dateFormat($val->expectedDeliveryDate);
-                $data[$x]['Delivery Terms'] = $val->deliveryTerms;
-                $data[$x]['Penalty Terms'] = $val->panaltyTerms;
+                $data[$x][trans('custom.expected_delivery_date')] = \Helper::dateFormat($val->expectedDeliveryDate);
+                $data[$x][trans('custom.delivery_terms')] = $val->deliveryTerms;
+                $data[$x][trans('custom.penalty_terms')] = $val->panaltyTerms;
                 if ($val->poConfirmedYN == 1) {
-                    $data[$x]['Confirmed Status'] = 'Yes';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Confirmed Status'] = 'No';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.no');
                 }
-                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->poConfirmedDate);
-                $data[$x]['Confirmed By'] = $val->poConfirmedByName;
+                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->poConfirmedDate);
+                $data[$x][trans('custom.confirmed_by')] = $val->poConfirmedByName;
                 if ($val->approved == -1) {
-                    $data[$x]['Approved Status'] = 'Yes';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Approved Status'] = 'No';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.no');
                 }
-                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
 
                 if ($val->currency) {
-                    $data[$x]['Transaction Currency'] = $val->currency->CurrencyCode;
+                    $data[$x][trans('custom.transaction_currency')] = $val->currency->CurrencyCode;
                 } else {
-                    $data[$x]['Transaction Currency'] = "";
+                    $data[$x][trans('custom.transaction_currency')] = "";
                 }
 
                 if ($val->currency) {
-                    $data[$x]['Transaction Amount'] = $val->poTotalSupplierTransactionCurrency;
+                    $data[$x][trans('custom.transaction_amount')] = $val->poTotalSupplierTransactionCurrency;
                 } else {
-                    $data[$x]['Transaction Amount'] = "";
+                    $data[$x][trans('custom.transaction_amount')] = "";
                 }
 
                 if ($val->localcurrency) {
-                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;
+                    $data[$x][ trans('custom.local_amount') . ' (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;
                 } else {
-                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = 0;
+                    $data[$x][ trans('custom.local_amount') . ' (' . $val->localcurrency->CurrencyCode . ')'] = 0;
                 }
 
                 if ($val->reportingcurrency) {
-                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;
+                    $data[$x][ trans('custom.reporting_amount') . ' (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;
                 } else {
-                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = 0;
+                    $data[$x][ trans('custom.reporting_amount') . ' (' . $val->reportingcurrency->CurrencyCode . ')'] = 0;
                 }
 
                 if ($val->advance_detail) {
                     if (isset($val->advance_detail[0]->advanceSum)) {
-                        $data[$x]['Advance Payment Available'] = 'Yes';
+                            $data[$x][trans('custom.advance_payment_available')] = trans('custom.yes');
                     } else {
-                        $data[$x]['Advance Payment Available'] = 'No';
+                        $data[$x][trans('custom.advance_payment_available')] = trans('custom.no');
                     }
                 }
                 if ($val->advance_detail) {
                     if (isset($val->advance_detail[0]->advanceSum)) {
-                        $data[$x]['Total Advance Payment Amount'] = $val->advance_detail[0]->advanceSum;
+                        $data[$x][trans('custom.total_advance_payment_amount')] = $val->advance_detail[0]->advanceSum;
                     } else {
-                        $data[$x]['Total Advance Payment Amount'] = '0';
+                        $data[$x][trans('custom.total_advance_payment_amount')] = '0';
                     }
                 }
 
                 /*              if ($val->detail) {
-                                  $data[$x]['Transaction Total'] = $val->detail[0]->transactionSum;
+                                  $data[$x][trans('custom.transaction_total')] = $val->detail[0]->transactionSum;
                               }*/
 
                 /*       if ($val->detail) {
-                           $data[$x]['Local Total'] = $val->detail[0]->localSum;
+                           $data[$x][trans('custom.local_total')] = $val->detail[0]->localSum;
                        }*/
                 /*  if ($val->detail) {
-                      $data[$x]['Reporting Total'] = $val->detail[0]->rptSum;
+                      $data[$x][trans('custom.reporting_total')] = $val->detail[0]->rptSum;
                   }*/
                 $x++;
             }
@@ -5710,7 +5716,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         // })->download($type);
 
-        // return $this->sendResponse(array(), trans('custom.success_export'));
+        // return $this->sendResponse(array(), trans('custom.successfully_export'));
 
         $doc_name = 'purchase_order';
         $doc_name_path = 'purchase_order/';
@@ -5736,7 +5742,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -6120,7 +6126,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->generateExcel();
 
         if(!$exportToExcel['success'])
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
 
         return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -6147,7 +6153,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
         $output = array('suppliers' => $suppliers, 'categories' => $categories);
 
-        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully'));
     }
 
     public function getReportSavingFliterData(Request $request)
@@ -6174,7 +6180,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $output = array('suppliers' => $supplierMaster, 'categories' => $categories, 'years' => $years, 'subCategories' => $subCategories);
 
-        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully'));
     }
 
     public function getAdvancePaymentRequestStatusHistory(Request $request)
@@ -6270,7 +6276,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         if (!$purchaseOrder->isWoAmendAccess) {
-            return $this->sendError(trans('custom.you_cannot_amend_this_sub_work_order'));
+            return $this->sendError(trans('custom.cannot_amend_sub_work_order'));
         }
 
         $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
@@ -6280,7 +6286,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->sum('netAmount');
 
         if ($subWoTotal > $mainWoTotal) {
-            return $this->sendError(trans('custom.sub_work_order_is_exceeding_the_main_work_order_to_1'));
+            return $this->sendError(trans('custom.sub_work_order_exceeding_main_total'));
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
@@ -6301,7 +6307,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $newlyUpdatedPoTotalAmount = $poMasterSumRounded + $poAddonMasterSumRounded;
 
         if ($purchaseOrder->poDiscountAmount > $newlyUpdatedPoTotalAmount) {
-            return $this->sendError('Discount Amount should be less than order amount.', 500);
+            return $this->sendError(trans('custom.discount_amount_less_than_order'), 500);
         }
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $purchaseOrder->poDiscountAmount);
@@ -6333,25 +6339,25 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->where('poType_N', 6)
             ->where('purchaseOrderID', $id)
             ->first();
-        $documentName = "Sub Work Order";
+        $documentName = trans('custom.sub_work_order');
 
         if (empty($masterData)) {
-            return $this->sendError($documentName . ' not found');
+            return $this->sendError($documentName . ' ' . trans('custom.not_found'));
         }
 
         if ($masterData->poConfirmedYN == 0 || $masterData->approved == 0) {
-            return $this->sendError($documentName . ' is not approved. You cannot amend.');
+            return $this->sendError($documentName . ' ' . trans('custom.is_not_approved_cannot_amend'));
         }
 
         if ($masterData->poConfirmedYN == 1 && $masterData->approved == -1 && $masterData->poCancelledYN == -1) {
-            return $this->sendError($documentName . ' is cancelled. You cannot amend.');
+            return $this->sendError($documentName . ' ' . trans('custom.is_cancelled_cannot_amend'));
         }
 
         if (
             $masterData->poConfirmedYN == 1 && $masterData->approved == -1 &&
             $masterData->poCancelledYN == 0 && $masterData->grvRecieved != 0
         ) {
-            return $this->sendError($documentName . ' is received. You cannot amend');
+            return $this->sendError($documentName . ' ' . trans('custom.is_received_cannot_amend'));
         }
 
 
@@ -6415,14 +6421,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
 
-            $message = "Logistic " . $array['text'];
+            $message = trans('custom.logistic') . ' ' . $array['text'];
             $update_array = array(
                 'logisticsAvailable' => $array['value']
             );
         } else if ($input['type'] == 2) { //grv
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
-            $message = "Partially GRV Allowed " . $array['text'];
+            $message = trans('custom.partially_grv_allowed') . ' ' . $array['text'];
             $update_array = array(
                 'partiallyGRVAllowed' => $array['value']
             );
@@ -6432,15 +6438,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         // Don't allow user to update above option, if Purchase order \ Work order \ Direct order added partially or fully in the GRV
         if ($procumentOrder->grvRecieved == 1) { // Default 0, partially received =1 and fully received 2
-            return $this->sendError("Selected order partially grv received. Cannot be " . $array['text'], 500);
+            return $this->sendError(trans('custom.selected_order_partially_grv_received') . ' ' . $array['text'], 500);
         } elseif ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError("Selected order fully grv received. Cannot be " . $array['text'], 500);
+            return $this->sendError(trans('custom.selected_order_fully_grv_received') . ' ' . $array['text'], 500);
         }
 
         if ($update_array != null) {
             $is_update = $this->procumentOrderRepository->update($update_array, $input['purchaseOrderID']);
             AuditTrial::createAuditTrial($procumentOrder->documentSystemID, $input['purchaseOrderID'], '', $message);
-            return $this->sendResponse($is_update, $message . " successfully");
+            return $this->sendResponse($is_update, $message . ' ' . trans('custom.successfully'));
         }
     }
 
@@ -6529,7 +6535,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $output = array('isEEOSSPolicy' => $hasEEOSSPolicy);
-        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully'));
     }
 
     public function generateWorkOrder(Request $request)
@@ -6570,7 +6576,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $workOrderLogRes = WorkOrderGenerationLog::create($logData);
                 if (!$workOrderLogRes) {
-                    return $this->sendError("Error occured while generating work order");
+                    return $this->sendError(trans('custom.error_occurred_generating_work_order'));
                 }
             }
 
@@ -6986,7 +6992,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     break;
             }
 
-            return $this->sendResponse($tracingData, trans('custom.document_tracing_data_retrived_successfully'));
+            return $this->sendResponse($tracingData, trans('custom.document_tracing_data_retrieved_successfully'));
 
         }  catch (\Exception $exception) {
             return $this->sendError($exception->getMessage(), 500);
@@ -7005,19 +7011,19 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $issueArray = $issues->toArray();
 
-        $tracingData['name'] = "Material Request";
+        $tracingData['name'] = trans('custom.material_request');
         $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         $tracingData['documentSystemID'] = $materialRequest->documentSystemID;
         $tracingData['docAutoID'] = $materialRequest->RequestID;
-        $tracingData['title'] = "{Doc Code :} " . $materialRequest->RequestCode . " -- {Doc Date :} " . Carbon::parse($materialRequest->RequestedDate)->format('Y-m-d') . " -- {Currency :} - -- {Amount :} -";
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $materialRequest->RequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($materialRequest->RequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} - -- {" . trans('custom.amount') . " :} -";
 
         foreach ($issueArray as $key2 => $value2) {
             $temp2 = [];
-            $temp2['name'] = "Material Issue";
+            $temp2['name'] = trans('custom.material_issue');
             $temp2['cssClass'] = "ngx-org-step-two";
             $temp2['documentSystemID'] = $value2['documentSystemID'];
             $temp2['docAutoID'] = $value2['itemIssueAutoID'];
-            $temp2['title'] = "{Doc Code :} " . $value2['itemIssueCode'] . " -- {Doc Date :} " . Carbon::parse($value2['issueDate'])->format('Y-m-d') . " -- {Currency :} - -- {Amount :} -";
+            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['itemIssueCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['issueDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} - -- {" . trans('custom.amount') . " :} -";
 
             $tracingData['childs'][] = $temp2;
         }
@@ -7050,10 +7056,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? " -- @Cancelled@" : "";
-            $temp2['name'] = "Payment Voucher";
+            $temp2['name'] = trans('custom.payment_voucher');
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
-            $temp2['title'] = "{Doc Code :} " . $paymount_vaoucher->BPVcode . " -- {Doc Date :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
+            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $paymount_vaoucher->BPVcode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
 
             $tracingData[] = $temp2;
             return $tracingData;
@@ -7132,11 +7138,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         } else {
             $debitNoteData = DebitNote::with(['transactioncurrency'])->find($debitNoteID);
 
-            $tracingData['name'] = "Debit Note";
+            $tracingData['name'] = trans('custom.debit_note');
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
             $tracingData['documentSystemID'] = $debitNoteData->documentSystemID;
             $tracingData['docAutoID'] = $debitNoteData->debitNoteAutoID;
-            $tracingData['title'] = "{Doc Code :} " . $debitNoteData->debitNoteCode . " -- {Doc Date :} " . Carbon::parse($debitNoteData->debitNoteDate)->format('Y-m-d') . " -- {Currency :} " . $debitNoteData->transactioncurrency->CurrencyCode . "-- {Amount :} " . number_format($debitNoteData->debitAmountTrans, $debitNoteData->transactioncurrency->DecimalPlaces);
+            $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $debitNoteData->debitNoteCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($debitNoteData->debitNoteDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $debitNoteData->transactioncurrency->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format($debitNoteData->debitAmountTrans, $debitNoteData->transactioncurrency->DecimalPlaces);
 
             return [$tracingData];
         }
@@ -7177,7 +7183,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $poData = $poMasters->toArray();
 
         $cancelStatus = ($purchaseRequest->cancelledYN == -1) ? " -- @Cancelled@" : "";
-        $tracingData['name'] = "Purchase Request";
+        $tracingData['name'] = trans('custom.purchase_request');
         if ($type == 'pr' && ($purchaseRequest->purchaseRequestID == $purchaseRequestID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         } else {
@@ -7185,7 +7191,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {
@@ -7195,7 +7201,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             // }
             $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? " -- @Cancelled@" : "";
             $tempPo = [];
-            $tempPo['name'] = "Purchase Order";
+            $tempPo['name'] = trans('custom.purchase_order');
             if ($type == 'po' && ($valuePo['order']['purchaseOrderID'] == $purchaseOrderID)) {
                 $tempPo['cssClass'] = "ngx-org-step-two root-tracing-node";
             } else {
@@ -7204,7 +7210,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $tempPo['documentSystemID'] = $valuePo['order']['documentSystemID'];
             $tempPo['docAutoID'] = $valuePo['order']['purchaseOrderID'];
-            $tempPo['title'] = "{Doc Code :} " . $valuePo['order']['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces'])." -- {Total Amount :} " . number_format($totalPo, $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
+            $tempPo['title'] = "{" . trans('custom.doc_code') . " :} " . $valuePo['order']['purchaseOrderCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {" . trans('custom.document_amount') . " :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces'])." -- {" . trans('custom.total_amount') . " :} " . number_format($totalPo, $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
 
             $grvTototal = 0;
 
@@ -7212,7 +7218,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
 
                 $temp = [];
-                $temp['name'] = "Good Receipt Voucher";
+                $temp['name'] = trans('custom.good_receipt_voucher');
                 if ($type == 'grv' && ($value['grv_master']['grvAutoID'] == $grvAutoID)) {
                     $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
                 } else {
@@ -7230,13 +7236,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                 $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
-                $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount  :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
+                $temp['title'] = "{" . trans('custom.doc_code') . " :} " . $value['grv_master']['grvPrimaryCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.document_amount') . " :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {" . trans('custom.total_amount') . " :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
 
                 foreach ($value['invoices'] as $key1 => $value1) {
 
                     $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                     $temp1 = [];
-                    $temp1['name'] = "Supplier Invoice";
+                    $temp1['name'] = trans('custom.supplier_invoice');
                     if ($type == 'supInv' && ($value1['suppinvmaster']['bookingSuppMasInvAutoID'] == $bookingSuppMasInvAutoID)) {
                         $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
                     } else {
@@ -7253,7 +7259,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     }
                     $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                     $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-                    $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . " -- {Total Amount  :} " . number_format($value1['suppinvmaster']['bookingAmountLocal'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
+                    $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.document_amount') . " :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . " -- {" . trans('custom.total_amount') . " :} " . number_format($value1['suppinvmaster']['bookingAmountLocal'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
 
 
                     foreach ($value1['payments'] as $key2 => $value2) {
@@ -7265,10 +7271,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $temp2['cssClass'] = "ngx-org-step-five";
                             }
                             $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
-                            $temp2['name'] = "Payment";
+                            $temp2['name'] = trans('custom.payment');
                             $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                            $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
 
                             $debitNotes = PaySupplierInvoiceDetail::selectRaw('sum(supplierDefaultAmount) as supplierDefaultAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID, bookingInvDocCode, bookingInvoiceDate')
                                 ->where('PayMasterAutoId', $value2['payment_master']['PayMasterAutoId'])
@@ -7289,10 +7295,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 } else {
                                     $tempDeb['cssClass'] = "ngx-org-step-six";
                                 }
-                                $tempDeb['name'] = "Debit Note";
+                                $tempDeb['name'] = trans('custom.debit_note');
                                 $tempDeb['documentSystemID'] = 15;
                                 $tempDeb['docAutoID'] = $value->bookingInvSystemCode;
-                                $tempDeb['title'] = "{Doc Code :} " . $value->bookingInvDocCode . " -- {Doc Date :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {Currency :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
+                                $tempDeb['title'] = "{" . trans('custom.doc_code') . " :} " . $value->bookingInvDocCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
 
                                 $temp2['childs'][] = $tempDeb;
                             }
@@ -7304,10 +7310,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             } else {
                                 $temp2['cssClass'] = "ngx-org-step-five";
                             }
-                            $temp2['name'] = "Debit Note";
+                            $temp2['name'] = trans('custom.debit_note');
                             $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                            $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
                         }
 
                         $temp1['childs'][] = $temp2;
@@ -7330,11 +7336,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 foreach ($returnes as $key1 => $value1) {
                     if (isset($value1['master'])) {
                         $temp1 = [];
-                        $temp1['name'] = "Purchase Return";
+                        $temp1['name'] = trans('custom.purchase_return');
                         $temp1['cssClass'] = "ngx-org-step-four";
                         $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
                         $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
-                        $temp1['title'] = "{Doc Code :} " . $value1['master']['purchaseReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
+                        $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['master']['purchaseReturnCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
 
                         $temp['childs'][] = $temp1;
                     }
@@ -7357,7 +7363,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $advancePayments = $advancePayments->get();
 
             foreach ($advancePayments as $keyAd => $valueAd) {
-                $tempAdPay['name'] = "Payment Voucher";
+                $tempAdPay['name'] = trans('custom.payment_voucher');
                 if ($type == 'pv' && ($valueAd->PayMasterAutoId == $PayMasterAutoId)) {
                     $tempAdPay['cssClass'] = "ngx-org-step-three root-tracing-node";
                 } else {
@@ -7366,7 +7372,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $tempAdPay['documentSystemID'] = $valueAd->pay_invoice->documentSystemID;
                 $tempAdPay['docAutoID'] = $valueAd->pay_invoice->PayMasterAutoId;
-                $tempAdPay['title'] = "{Doc Code :} " . $valueAd->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
+                $tempAdPay['title'] = "{" . trans('custom.doc_code') . " :} " . $valueAd->pay_invoice->BPVcode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueAd->supplier_currency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
 
                 $tempPo['childs'][] = $tempAdPay;
             }
@@ -7433,7 +7439,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     ->toArray();
                 $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
                 $tempPo = [];
-                $tempPo['name'] = "Purchase Order";
+                $tempPo['name'] = trans('custom.purchase_order');
                 if ($type == 'po' && ($procumentOrder->purchaseOrderID == $purchaseOrderID)) {
                     $tempPo['cssClass'] = "ngx-org-step-two root-tracing-node";
                 } else {
@@ -7442,7 +7448,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $tempPo['documentSystemID'] = $procumentOrderData['documentSystemID'];
                 $tempPo['docAutoID'] = $procumentOrderData['purchaseOrderID'];
-                $tempPo['title'] = "{Doc Code :} " . $procumentOrderData['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
+                $tempPo['title'] = "{" . trans('custom.doc_code') . " :} " . $procumentOrderData['purchaseOrderCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
 
                 $grvData = $this->getPOtoPaymentChainForTracing($procumentOrder, $grvAutoID, $bookingSuppMasInvAutoID, $type, $debitNoteID);
                 if (sizeof($grvData) > 0) {
@@ -7450,7 +7456,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
 
                         $temp = [];
-                        $temp['name'] = "Good Receipt Voucher";
+                        $temp['name'] = trans('custom.good_receipt_voucher');
                         if ($type == 'grv' && ($value['grv_master']['grvAutoID'] == $grvAutoID)) {
                             $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
                         } else {
@@ -7468,12 +7474,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                         $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
                         $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
-                        $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Document Amount :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']). $cancelStatus;
+                        $temp['title'] = "{" . trans('custom.doc_code') . " :} " . $value['grv_master']['grvPrimaryCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.document_amount') . " :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {" . trans('custom.total_amount') . " :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']). $cancelStatus;
 
                         foreach ($value['invoices'] as $key1 => $value1) {
                             $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                             $temp1 = [];
-                            $temp1['name'] = "Supplier Invoice";
+                            $temp1['name'] = trans('custom.supplier_invoice');
                             if ($type == 'supInv' && ($value1['suppinvmaster']['bookingSuppMasInvAutoID'] == $bookingSuppMasInvAutoID)) {
                                 $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
                             } else {
@@ -7491,7 +7497,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                             $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                             $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-                            $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) ." -- {Total Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']). $cancelStatus;
+                            $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($detailInvoiceTotalAmount, $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) ." -- {" . trans('custom.total_amount') . " :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']). $cancelStatus;
 
                             foreach ($value1['payments'] as $key2 => $value2) {
                                 $temp2 = [];
@@ -7503,10 +7509,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     }
 
                                     $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
-                                    $temp2['name'] = "Payment";
+                                    $temp2['name'] = trans('custom.payment');
                                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                                    $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                                    $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
 
 
                                     $debitNotes = PaySupplierInvoiceDetail::selectRaw('sum(supplierDefaultAmount) as supplierDefaultAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID, bookingInvDocCode, bookingInvoiceDate')
@@ -7528,10 +7534,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         } else {
                                             $tempDeb['cssClass'] = "ngx-org-step-six";
                                         }
-                                        $tempDeb['name'] = "Debit Note";
+                                        $tempDeb['name'] = trans('custom.debit_note');
                                         $tempDeb['documentSystemID'] = 15;
                                         $tempDeb['docAutoID'] = $value->bookingInvSystemCode;
-                                        $tempDeb['title'] = "{Doc Code :} " . $value->bookingInvDocCode . " -- {Doc Date :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {Currency :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
+                                        $tempDeb['title'] = "{" . trans('custom.doc_code') . " :} " . $value->bookingInvDocCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
 
                                         $temp2['childs'][] = $tempDeb;
                                     }
@@ -7543,10 +7549,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     } else {
                                         $temp2['cssClass'] = "ngx-org-step-five";
                                     }
-                                    $temp2['name'] = "Payment Matching";
+                                    $temp2['name'] = trans('custom.payment_matching');
                                     $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                                     $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                                    $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['matchingDocCode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchingAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                                    $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['matchingDocCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['matching_master']['matchingAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
                                 }
 
                                 $temp1['childs'][] = $temp2;
@@ -7569,11 +7575,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         foreach ($returnes as $key1 => $value1) {
                             if (isset($value1['master'])) {
                                 $temp1 = [];
-                                $temp1['name'] = "Purchase Return";
+                                $temp1['name'] = trans('custom.purchase_return');
                                 $temp1['cssClass'] = "ngx-org-step-four";
                                 $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
                                 $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
-                                $temp1['title'] = "{Doc Code :} " . $value1['master']['purchaseReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
+                                $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['master']['purchaseReturnCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
 
                                 $temp['childs'][] = $temp1;
                             }
@@ -7597,7 +7603,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $advancePayments = $advancePayments->get();
 
                 foreach ($advancePayments as $keyAd => $valueAd) {
-                    $tempAdPay['name'] = "Payment Voucher";
+                    $tempAdPay['name'] = trans('custom.payment_voucher');
                     if ($type == 'pv' && ($valueAd->PayMasterAutoId == $PayMasterAutoId)) {
                         $tempAdPay['cssClass'] = "ngx-org-step-three root-tracing-node";
                     } else {
@@ -7606,7 +7612,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     $tempAdPay['documentSystemID'] = $valueAd->pay_invoice->documentSystemID;
                     $tempAdPay['docAutoID'] = $valueAd->pay_invoice->PayMasterAutoId;
-                    $tempAdPay['title'] = "{Doc Code :} " . $valueAd->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
+                    $tempAdPay['title'] = "{" . trans('custom.doc_code') . " :} " . $valueAd->pay_invoice->BPVcode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueAd->supplier_currency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
 
                     $tempPo['childs'][] = $tempAdPay;
                 }
@@ -7628,10 +7634,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? " -- @Cancelled@" : "";
-            $temp2['name'] = "Payment Voucher";
+            $temp2['name'] = trans('custom.payment_voucher');
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
-            $temp2['title'] = "{Doc Code :} " . $paymount_vaoucher->BPVcode . " -- {Doc Date :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
+            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $paymount_vaoucher->BPVcode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
 
             if ($paymount_vaoucher->invoiceType == 7) {
                 $matchingData = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
@@ -7642,10 +7648,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $tempDeb = [];
 
                     $tempDeb['cssClass'] = "ngx-org-step-four";
-                    $tempDeb['name'] = "Payment Voucher Matching";
+                    $tempDeb['name'] = trans('custom.payment_voucher_matching');
                     $tempDeb['documentSystemID'] = 70;
                     $tempDeb['docAutoID'] = $matchValue->matchDocumentMasterAutoID;
-                    $tempDeb['title'] = "{Doc Code :} " . $matchValue->matchingDocCode . " -- {Doc Date :} " . Carbon::parse($matchValue->matchingDocdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format(ABS($matchValue->matchingAmount), $paymount_vaoucher->transactioncurrency->DecimalPlaces);
+                    $tempDeb['title'] = "{" . trans('custom.doc_code') . " :} " . $matchValue->matchingDocCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($matchValue->matchingDocdate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format(ABS($matchValue->matchingAmount), $paymount_vaoucher->transactioncurrency->DecimalPlaces);
 
                     $paySupplierInvoiceDetail = PaySupplierInvoiceDetail::where('matchingDocID', $matchValue->matchDocumentMasterAutoID)->get();
 
@@ -7878,21 +7884,21 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $invoiceData = $invoices->toArray();
         $cancelStatus = ($grvMaster->grvCancelledYN == -1) ? " -- @Cancelled@" : "";
 
-        $tracingData['name'] = "Good Received Voucher";
+        $tracingData['name'] = trans('custom.good_received_voucher');
         $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         $tracingData['documentSystemID'] = $grvMaster->documentSystemID;
         $tracingData['docAutoID'] = $grvMaster->grvAutoID;
-        $tracingData['title'] = "{Doc Code :} " . $grvMaster->grvPrimaryCode . " -- {Doc Date :} " . Carbon::parse($grvMaster->grvDate)->format('Y-m-d') . " -- {Currency :} " . $grvMaster->currency_by->CurrencyCode . "-- {Amount :} " . number_format($grvMaster->grvTotalSupplierTransactionCurrency, $grvMaster->currency_by->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $grvMaster->grvPrimaryCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($grvMaster->grvDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $grvMaster->currency_by->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format($grvMaster->grvTotalSupplierTransactionCurrency, $grvMaster->currency_by->DecimalPlaces) . $cancelStatus;
 
 
         foreach ($invoiceData as $key1 => $value1) {
             $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
             $temp1 = [];
-            $temp1['name'] = "Supplier Invoice";
+            $temp1['name'] = trans('custom.supplier_invoice');
             $temp1['cssClass'] = "ngx-org-step-two";
             $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
             $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-            $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+            $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
 
             foreach ($value1['payments'] as $key2 => $value2) {
                 $temp2 = [];
@@ -7902,10 +7908,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     } else {
                         $temp2['cssClass'] = "ngx-org-step-three";
                     }
-                    $temp2['name'] = "Payment";
+                    $temp2['name'] = trans('custom.payment');
                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                    $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+                    $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
 
 
                     $debitNotes = PaySupplierInvoiceDetail::selectRaw('sum(supplierDefaultAmount) as supplierDefaultAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID, bookingInvDocCode, bookingInvoiceDate')
@@ -7927,10 +7933,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         } else {
                             $tempDeb['cssClass'] = "ngx-org-step-four";
                         }
-                        $tempDeb['name'] = "Debit Note";
+                        $tempDeb['name'] = trans('custom.debit_note');
                         $tempDeb['documentSystemID'] = 15;
                         $tempDeb['docAutoID'] = $value->bookingInvSystemCode;
-                        $tempDeb['title'] = "{Doc Code :} " . $value->bookingInvDocCode . " -- {Doc Date :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {Currency :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
+                        $tempDeb['title'] = "{" . trans('custom.doc_code') . " :} " . $value->bookingInvDocCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
 
                         $temp2['childs'][] = $tempDeb;
                     }
@@ -7942,10 +7948,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     } else {
                         $temp2['cssClass'] = "ngx-org-step-three";
                     }
-                    $temp2['name'] = "Debit Note";
+                    $temp2['name'] = trans('custom.debit_note');
                     $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                    $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                    $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
                 }
 
                 $temp1['childs'][] = $temp2;
@@ -7968,11 +7974,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         foreach ($returnes as $key1 => $value1) {
             if (isset($value1['master'])) {
                 $temp1 = [];
-                $temp1['name'] = "Purchase Return";
+                $temp1['name'] = trans('custom.purchase_return');
                 $temp1['cssClass'] = "ngx-org-step-two";
                 $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
                 $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
-                $temp1['title'] = "{Doc Code :} " . $value1['master']['purchaseReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
+                $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['master']['purchaseReturnCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
 
                 $tracingData['childs'][] = $temp1;
             }
@@ -8022,7 +8028,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         //$totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
         $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
-        $tracingData['name'] = "Supplier Invoice";
+        $tracingData['name'] = trans('custom.supplier_invoice');
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         } else {
@@ -8030,7 +8036,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $invoiceMaster->documentSystemID;
         $tracingData['docAutoID'] = $invoiceMaster->bookingSuppMasInvAutoID;
-        $tracingData['title'] = "{Doc Code :} " . $invoiceMaster->bookingInvCode . " -- {Doc Date :} " . Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d') . " -- {Currency :} " . $invoiceMaster->transactioncurrency->CurrencyCode . "-- {Amount :} " . number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $invoiceMaster->bookingInvCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $invoiceMaster->transactioncurrency->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces) . $cancelStatus;
 
         foreach ($totalInvoices as $key2 => $value2) {
             $temp2 = [];
@@ -8040,10 +8046,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 } else {
                     $temp2['cssClass'] = "ngx-org-step-two";
                 }
-                $temp2['name'] = "Payment";
+                $temp2['name'] = trans('custom.payment');
                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
 
 
                 $debitNotes = PaySupplierInvoiceDetail::selectRaw('sum(supplierDefaultAmount) as supplierDefaultAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID, bookingInvDocCode, bookingInvoiceDate')
@@ -8063,10 +8069,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     } else {
                         $tempDeb['cssClass'] = "ngx-org-step-three";
                     }
-                    $tempDeb['name'] = "Debit Note";
+                    $tempDeb['name'] = trans('custom.debit_note');
                     $tempDeb['documentSystemID'] = 15;
                     $tempDeb['docAutoID'] = $value->bookingInvSystemCode;
-                    $tempDeb['title'] = "{Doc Code :} " . $value->bookingInvDocCode . " -- {Doc Date :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {Currency :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
+                    $tempDeb['title'] = "{" . trans('custom.doc_code') . " :} " . $value->bookingInvDocCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value->bookingInvoiceDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(ABS($value->supplierDefaultAmount), $value['payment_master']['transactioncurrency']['DecimalPlaces']);
 
                     $temp2['childs'][] = $tempDeb;
                 }
@@ -8080,15 +8086,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
                 if($value2['matching_master']['documentSystemID'] == 4)
                 {
-                    $temp2['name'] = "Payment";
+                    $temp2['name'] = trans('custom.payment');
                 }
                 else if($value2['matching_master']['documentSystemID'] == 15)
                 {
-                    $temp2['name'] = "Debit Note";
+                    $temp2['name'] = trans('custom.debit_note');
                 }
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
 
             $tracingData['childs'][] = $temp2;
@@ -8137,7 +8143,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         // $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
         $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
-        $tracingData['name'] = "Supplier Invoice";
+        $tracingData['name'] = trans('custom.supplier_invoice');
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         } else {
@@ -8145,7 +8151,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $invoiceMaster->documentSystemID;
         $tracingData['docAutoID'] = $invoiceMaster->bookingSuppMasInvAutoID;
-        $tracingData['title'] = "{Doc Code :} " . $invoiceMaster->bookingInvCode . " -- {Doc Date :} " . Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d') . " -- {Currency :} " . $invoiceMaster->transactioncurrency->CurrencyCode . "-- {Amount :} " . number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $invoiceMaster->bookingInvCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $invoiceMaster->transactioncurrency->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces) . $cancelStatus;
 
         foreach ($totalInvoices as $key2 => $value2) {
             $temp2 = [];
@@ -8155,10 +8161,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 } else {
                     $temp2['cssClass'] = "ngx-org-step-two";
                 }
-                $temp2['name'] = "Payment";
+                $temp2['name'] = trans('custom.payment');
                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
 
             }
 
@@ -8172,16 +8178,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 if($value2['matching_master']['documentSystemID'] == 4)
                 {
-                    $temp2['name'] = "Payment";
+                    $temp2['name'] = trans('custom.payment');
                 }
                 else if($value2['matching_master']['documentSystemID'] == 15)
                 {
-                    $temp2['name'] = "Debit Note";
+                    $temp2['name'] = trans('custom.debit_note');
                 }
 
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
 
             $tracingData['childs'][] = $temp2;
@@ -8538,7 +8544,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $salesOrderData = $salesOrderDeatils->toArray() + $deliveryOrderData + $customerInvoiceData;
 
         $cancelStatus = ($quotationMaster->isDeleted != 0) ? " -- @Cancelled@" : "";
-        $tracingData['name'] = ($documentSystemID == 67) ? "Quotation" : "Sales Order";
+        $tracingData['name'] = ($documentSystemID == 67) ? trans('custom.quotation') : trans('custom.sales_order');
         if (($type == 'quo' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 67)) || ($type == 'so' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 68))) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         } else {
@@ -8546,7 +8552,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $quotationMaster->documentSystemID;
         $tracingData['docAutoID'] = $quotationMaster->quotationMasterID;
-        $tracingData['title'] = "{Doc Code :} " . $quotationMaster->quotationCode . " -- {Doc Date :} " . Carbon::parse($quotationMaster->documentDate)->format('Y-m-d') . " -- {Currency :} " . $quotationMaster->transaction_currency->CurrencyCode . "-- {Amount :} " . number_format(($quotationMaster->detail[0]->transAmount + $quotationMaster->detail[0]->transVATAmount), $quotationMaster->transaction_currency->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $quotationMaster->quotationCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($quotationMaster->documentDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $quotationMaster->transaction_currency->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format(($quotationMaster->detail[0]->transAmount + $quotationMaster->detail[0]->transVATAmount), $quotationMaster->transaction_currency->DecimalPlaces) . $cancelStatus;
 
 
         foreach ($salesOrderData as $keySo => $valueSo) {
@@ -8581,7 +8587,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $advancePayments = $advancePayments->get();
         $tempAdbv = [];
         foreach ($advancePayments as $keyAd => $valueAd) {
-            $tempAdPay['name'] = "Receipt Voucher";
+            $tempAdPay['name'] = trans('custom.receipt_voucher');
             if ($type == 'reciptVoucher' && ($valueAd->custReceivePaymentAutoID == $custReceivePaymentAutoID)) {
                 $tempAdPay['cssClass'] = "ngx-org-step-four root-tracing-node";
             } else {
@@ -8590,7 +8596,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $tempAdPay['documentSystemID'] = $valueAd->master->documentSystemID;
             $tempAdPay['docAutoID'] = $valueAd->master->custReceivePaymentAutoID;
-            $tempAdPay['title'] = "{Doc Code :} " . $valueAd->master->custPaymentReceiveCode . " -- {Doc Date :} " . Carbon::parse($valueAd->master->custPaymentReceiveDate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->customer_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->customer_currency->DecimalPlaces);
+            $tempAdPay['title'] = "{" . trans('custom.doc_code') . " :} " . $valueAd->master->custPaymentReceiveCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueAd->master->custPaymentReceiveDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueAd->customer_currency->CurrencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($valueAd->transAmount, $valueAd->customer_currency->DecimalPlaces);
 
             $tracingData['childs'][] = $tempAdPay;
         }
@@ -8603,7 +8609,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $tempSo = [];
         $cancelStatus = ($valueSo['master']['isDeleted'] != 0) ? " -- @Cancelled@" : "";
-        $tempSo['name'] = "Sales Order";
+        $tempSo['name'] = trans('custom.sales_order');
         if ($type == 'so' && ($valueSo['master']['quotationMasterID'] == $salesOrderID)) {
             $tempSo['cssClass'] = "ngx-org-step-two root-tracing-node";
         } else {
@@ -8612,7 +8618,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $tempSo['documentSystemID'] = $valueSo['master']['documentSystemID'];
         $tempSo['docAutoID'] = $valueSo['master']['quotationMasterID'];
-        $tempSo['title'] = "{Doc Code :} " . $valueSo['master']['quotationCode'] . " -- {Doc Date :} " . Carbon::parse($valueSo['master']['documentDate'])->format('Y-m-d') . " -- {Currency :} " . $valueSo['master']['transaction_currency']['CurrencyCode'] . " -- {Amount :} " . number_format(($valueSo['transAmount'] + $valueSo['transVATAmount']), $valueSo['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
+        $tempSo['title'] = "{" . trans('custom.doc_code') . " :} " . $valueSo['master']['quotationCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueSo['master']['documentDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueSo['master']['transaction_currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(($valueSo['transAmount'] + $valueSo['transVATAmount']), $valueSo['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
 
         foreach ($valueSo['delivery_order'] as $key => $value) {
             $temp = [];
@@ -8636,7 +8642,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $temp = [];
         $cancelStatus = "";
-        $temp['name'] = "Delivery Order";
+        $temp['name'] = trans('custom.delivery_order');
         if ($type == 'do' && ($value['master']['deliveryOrderID'] == $deliveryOrderID)) {
             $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
         } else {
@@ -8644,7 +8650,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $temp['documentSystemID'] = $value['master']['documentSystemID'];
         $temp['docAutoID'] = $value['master']['deliveryOrderID'];
-        $temp['title'] = "{Doc Code :} " . $value['master']['deliveryOrderCode'] . " -- {Doc Date :} " . Carbon::parse($value['master']['deliveryOrderDate'])->format('Y-m-d') . " -- {Currency :} " . $value['master']['transaction_currency']['CurrencyCode'] . " -- {Amount :} " . number_format(($value['transAmount'] + $value['master']['VATAmount']), $value['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
+        $temp['title'] = "{" . trans('custom.doc_code') . " :} " . $value['master']['deliveryOrderCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['master']['deliveryOrderDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['master']['transaction_currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(($value['transAmount'] + $value['master']['VATAmount']), $value['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
 
 
         $salesReturnDetails = SalesReturnDetail::selectRaw('sum(companyLocalAmount) as localAmount,
@@ -8683,7 +8689,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $temp1 = [];
         $cancelStatus = "";
-        $temp1['name'] = "Sales Return";
+        $temp1['name'] = trans('custom.sales_return');
         if ($type == 'sr' && ($value1['master']['id'] == $salesReturnID)) {
             $temp1['cssClass'] = ($from == 1) ? "ngx-org-step-four root-tracing-node" : "ngx-org-step-five root-tracing-node";
         } else {
@@ -8691,7 +8697,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
         $temp1['docAutoID'] = $value1['master']['id'];
-        $temp1['title'] = "{Doc Code :} " . $value1['master']['salesReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['salesReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['transaction_currency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
+        $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['master']['salesReturnCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['master']['salesReturnDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['master']['transaction_currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['transAmount'], $value1['master']['transaction_currency']['DecimalPlaces']) . $cancelStatus;
 
         return $temp1;
     }
@@ -8700,7 +8706,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $temp1 = [];
         $cancelStatus = ($value1['master']['canceledYN'] != 0) ? " -- @Cancelled@" : "";
-        $temp1['name'] = "Customer Invoice";
+        $temp1['name'] = trans('custom.customer_invoice');
         if ($type == 'inv' && ($value1['master']['custInvoiceDirectAutoID'] == $custInvoiceDirectAutoID)) {
             $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
         } else {
@@ -8708,7 +8714,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $temp1['documentSystemID'] = $value1['master']['documentSystemiD'];
         $temp1['docAutoID'] = $value1['master']['custInvoiceDirectAutoID'];
-        $temp1['title'] = "{Doc Code :} " . $value1['master']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format(($value1['transAmount'] + $value1['master']['VATAmount']), $value1['master']['currency']['DecimalPlaces']) . $cancelStatus;
+        $temp1['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['master']['bookingInvCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['master']['bookingDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['master']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format(($value1['transAmount'] + $value1['master']['VATAmount']), $value1['master']['currency']['DecimalPlaces']) . $cancelStatus;
 
         foreach ($value1['payments'] as $key2 => $value2) {
             $temp2 = [];
@@ -8774,10 +8780,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         if (isset($value2['master'])) {
             $cancelStatus = ($value2['master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
-            $temp2['name'] = "Receipt Voucher";
+            $temp2['name'] = trans('custom.receipt_voucher');
             $temp2['documentSystemID'] = $value2['master']['documentSystemID'];
             $temp2['docAutoID'] = $value2['master']['custReceivePaymentAutoID'];
-            $temp2['title'] = "{Doc Code :} " . $value2['master']['custPaymentReceiveCode'] . " -- {Doc Date :} " . Carbon::parse($value2['master']['custPaymentReceiveDate'])->format('Y-m-d') . " -- {Currency :} " . $value2['master']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['transAmount'], $value2['master']['currency']['DecimalPlaces']) . $cancelStatus;
+            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['master']['custPaymentReceiveCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['master']['custPaymentReceiveDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['master']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['transAmount'], $value2['master']['currency']['DecimalPlaces']) . $cancelStatus;
 
             $creditNotes = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $value2['master']['custReceivePaymentAutoID'])
                 ->where('addedDocumentSystemID', 19)
@@ -8795,7 +8801,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             foreach ($creditNotes as $keyCN => $valueCN) {
                 if (isset($valueCN['credit_note'])) {
                     $tempCN = [];
-                    $tempCN['name'] = "Credit Note";
+                    $tempCN['name'] = trans('custom.credit_note');
                     if ($type == 'cn' && ($valueCN['credit_note']['creditNoteAutoID'] == $creditNoteAutoID)) {
                         $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
                     } else {
@@ -8803,7 +8809,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     }
                     $tempCN['documentSystemID'] = $valueCN['credit_note']['documentSystemiD'];
                     $tempCN['docAutoID'] = $valueCN['credit_note']['creditNoteAutoID'];
-                    $tempCN['title'] = "{Doc Code :} " . $valueCN['credit_note']['creditNoteCode'] . " -- {Doc Date :} " . Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d') . " -- {Currency :} " . $valueCN['credit_note']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
+                    $tempCN['title'] = "{" . trans('custom.doc_code') . " :} " . $valueCN['credit_note']['creditNoteCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueCN['credit_note']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
 
                     $temp2['childs'][] = $tempCN;
                 }
@@ -8823,10 +8829,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['cssClass'] = "ngx-org-step-five";
             }
             $cancelStatus = "";
-            $temp2['name'] = "Receipt Matching";
+            $temp2['name'] = trans('custom.receipt_matching');
             $temp2['documentSystemID'] = 70;
             $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
-            $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['matchingDocCode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['transAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+            $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['matching_master']['matchingDocCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['transAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
 
             $creditNotes = MatchDocumentMaster::where('matchDocumentMasterAutoID', $value2['matching_master']['matchDocumentMasterAutoID'])
                 ->where('documentSystemID', 19)
@@ -8843,7 +8849,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             foreach ($creditNotes as $keyCN => $valueCN) {
                 if (isset($valueCN['credit_note'])) {
                     $tempCN = [];
-                    $tempCN['name'] = "Credit Note";
+                    $tempCN['name'] = trans('custom.credit_note');
                     if ($type == 'cn' && ($valueCN['credit_note']['creditNoteAutoID'] == $creditNoteAutoID)) {
                         $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
                     } else {
@@ -8851,7 +8857,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     }
                     $tempCN['documentSystemID'] = $valueCN['credit_note']['documentSystemiD'];
                     $tempCN['docAutoID'] = $valueCN['credit_note']['creditNoteAutoID'];
-                    $tempCN['title'] = "{Doc Code :} " . $valueCN['credit_note']['creditNoteCode'] . " -- {Doc Date :} " . Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d') . " -- {Currency :} " . $valueCN['credit_note']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
+                    $tempCN['title'] = "{" . trans('custom.doc_code') . " :} " . $valueCN['credit_note']['creditNoteCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueCN['credit_note']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
 
                     $temp2['childs'][] = $tempCN;
                 }
@@ -8872,7 +8878,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             foreach ($reciptVouchers as $keyCN => $valueCN) {
                 if (isset($valueCN['reciept_voucher'])) {
                     $tempCN = [];
-                    $tempCN['name'] = "Receipt Voucher";
+                    $tempCN['name'] = trans('custom.receipt_voucher');
                     if ($type == 'reciptVoucher' && ($valueCN['reciept_voucher']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
                         $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
                     } else {
@@ -8880,7 +8886,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     }
                     $tempCN['documentSystemID'] = $valueCN['reciept_voucher']['documentSystemID'];
                     $tempCN['docAutoID'] = $valueCN['reciept_voucher']['custReceivePaymentAutoID'];
-                    $tempCN['title'] = "{Doc Code :} " . $valueCN['reciept_voucher']['custPaymentReceiveCode'] . " -- {Doc Date :} " . Carbon::parse($valueCN['reciept_voucher']['custPaymentReceiveDate'])->format('Y-m-d') . " -- {Currency :} " . $valueCN['reciept_voucher']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valueCN['reciept_voucher']['netAmount'], $valueCN['reciept_voucher']['currency']['DecimalPlaces']);
+                    $tempCN['title'] = "{" . trans('custom.doc_code') . " :} " . $valueCN['reciept_voucher']['custPaymentReceiveCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valueCN['reciept_voucher']['custPaymentReceiveDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valueCN['reciept_voucher']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($valueCN['reciept_voucher']['netAmount'], $valueCN['reciept_voucher']['currency']['DecimalPlaces']);
 
                     // $temp2['childs'][] = $tempCN;
                 }
@@ -8966,7 +8972,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $assetTransfer = ERPAssetTransfer::where('id', $assetTransferID)->first();
 
         $tracingData = [];
-        $tracingData['name'] = "Asset Transfer";
+        $tracingData['name'] = trans('custom.asset_transfer');
         $tracingData['documentSystemID'] = 103;
         $tracingData['docAutoID'] = $assetTransferID;
         if (($assetTransfer->id == $assetTransferID)) {
@@ -8974,7 +8980,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         } else {
             $tracingData['cssClass'] = "ngx-org-step-one";
         }
-        $tracingData['title'] = "{Doc Code :} " . $assetTransfer->document_code . " -- {Doc Date :} " . Carbon::parse($assetTransfer->document_date)->format('Y-m-d') . " -- {Currency :} " . "-- {Amount :} ";
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $assetTransfer->document_code . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($assetTransfer->document_date)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . "-- {" . trans('custom.amount') . " :} ";
 
         $purchaseRequestID = $assetTransfer->purchaseRequestID;
 
@@ -8984,12 +8990,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (!empty($purchaseRequest)) {
             $cancelStatus =   (isset($purchaseRequest->cancelledYN) && $purchaseRequest->cancelledYN == -1)  ? " -- @Cancelled@" : "";
-            $tempPR['name'] = "Purchase Request";
+            $tempPR['name'] = trans('custom.purchase_request');
             $tempPR['cssClass'] = "ngx-org-step-two";
 
             $tempPR['documentSystemID'] = $purchaseRequest->documentSystemID;
             $tempPR['docAutoID'] = $purchaseRequest->purchaseRequestID;
-            $tempPR['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by->CurrencyCode . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces) . $cancelStatus;
+            $tempPR['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $purchaseRequest->currency_by->CurrencyCode . "-- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces) . $cancelStatus;
 
             $poMasters = PurchaseOrderDetails::selectRaw('sum(netAmount) as totalAmount,
              purchaseRequestID,purchaseOrderMasterID')
@@ -9008,39 +9014,39 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             foreach ($poData as $keyPo => $valuePo) {
                 $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? " -- @Cancelled@" : "";
                 $tempPO = [];
-                $tempPO['name'] = "Purchase Order";
+                $tempPO['name'] = trans('custom.purchase_order');
                 $tempPO['cssClass'] = "ngx-org-step-three";
                 $tempPO['documentSystemID'] = $valuePo['order']['documentSystemID'];
                 $tempPO['docAutoID'] = $valuePo['order']['purchaseOrderID'];
-                $tempPO['title'] = "{Doc Code :} " . $valuePo['order']['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
+                $tempPO['title'] = "{" . trans('custom.doc_code') . " :} " . $valuePo['order']['purchaseOrderCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
 
                 foreach ($valuePo['grv'] as $key => $value) {
                     $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
                     $tempGRV = [];
-                    $tempGRV['name'] = "Good Receipt Voucher";
+                    $tempGRV['name'] = trans('custom.good_receipt_voucher');
                     $tempGRV['cssClass'] = "ngx-org-step-four";
                     $tempGRV['documentSystemID'] = $value['grv_master']['documentSystemID'];
                     $tempGRV['docAutoID'] = $value['grv_master']['grvAutoID'];
-                    $tempGRV['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
+                    $tempGRV['title'] = "{" . trans('custom.doc_code') . " :} " . $value['grv_master']['grvPrimaryCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
 
                     foreach ($value['invoices'] as $key1 => $value1) {
                         $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                         $suppINV = [];
-                        $suppINV['name'] = "Supplier Invoice";
+                        $suppINV['name'] = trans('custom.supplier_invoice');
                         $suppINV['cssClass'] = "ngx-org-step-five";
                         $suppINV['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
                         $suppINV['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
-                        $suppINV['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                        $suppINV['title'] = "{" . trans('custom.doc_code') . " :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
 
                         foreach ($value1['payments'] as $key2 => $value2) {
                             $temp2 = [];
                             if (isset($value2['payment_master'])) {
                                 $temp2['cssClass'] = "ngx-org-step-six";
                                 $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
-                                $temp2['name'] = "Payment";
+                                $temp2['name'] = trans('custom.payment');
                                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
-                                $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                                $temp2['title'] = "{" . trans('custom.doc_code') . " :} " . $value2['payment_master']['BPVcode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
                             }
                             $suppINV['childs'][] = $temp2;
                         }
@@ -9175,11 +9181,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
 
             if ($purchaseOrder->cancelledYN == -1) {
-                return $this->sendError(trans('custom.this_purchase_order_already_closed_you_can_not_add'), 500);
+                return $this->sendError(trans('custom.purchase_order_already_closed_cannot_add'), 500);
             }
 
             if ($purchaseOrder->approved == 1) {
-                return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.purchase_order_fully_approved_cannot_add'), 500);
             }
 
             if (count($record) > 0) {
@@ -9193,7 +9199,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             DB::commit();
-            return $this->sendResponse([], trans('custom.items_uploaded_successfully_1'));
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -9364,7 +9370,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrder = ProcumentOrder::find($input['purchaseOrderID']);
 
         if (!$purchaseOrder) {
-            return $this->sendError("Purchase Order not found");
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
@@ -9395,7 +9401,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-        return $this->sendResponse(['notifyCutOffDate' => $notifyCutOffDate, 'messages' => $notifyCutOffDateMessages], 'cut off date checked successfully!!');
+        return $this->sendResponse(['notifyCutOffDate' => $notifyCutOffDate, 'messages' => $notifyCutOffDateMessages], trans('custom.cut_off_date_checked_successfully'));
     }
 
     public function procumentOrderTotals(Request $request)
@@ -9454,6 +9460,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $this->sendResponse($paymentTermConfig, trans('custom.payment_term_config_updated_successfully'));
 
     }
+
     function truncateDecimals($value, $decimals = 3) {
         $factor = pow(10, $decimals);
         return floor($value * $factor) / $factor;
