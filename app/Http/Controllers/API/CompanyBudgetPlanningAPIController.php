@@ -383,6 +383,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] :  \Helper::getEmployeeSystemID();
 
+//        $employeeID = 110;
         $userPermissions = [
             'financeUser' => [
                 'status' => false,
@@ -649,6 +650,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
                 $employeeID = \Helper::getEmployeeSystemID();
+//                $employeeID = 110;
 
                 $isFinanceUser = false;
                 $financeDepartment = CompanyDepartment::with(['employees'])
