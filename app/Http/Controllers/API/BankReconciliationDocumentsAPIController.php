@@ -64,7 +64,7 @@ class BankReconciliationDocumentsAPIController extends AppBaseController
         $this->bankReconciliationDocumentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->all();
 
-        return $this->sendResponse($bankReconciliationDocuments->toArray(), 'Bank Reconciliation Documents retrieved successfully');
+        return $this->sendResponse($bankReconciliationDocuments->toArray(), trans('custom.bank_reconciliation_documents_retrieved_successful'));
     }
 
     /**
@@ -118,7 +118,7 @@ class BankReconciliationDocumentsAPIController extends AppBaseController
 
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->create($input);
 
-        return $this->sendResponse($bankReconciliationDocuments->toArray(), 'Bank Reconciliation Documents saved successfully');
+        return $this->sendResponse($bankReconciliationDocuments->toArray(), trans('custom.bank_reconciliation_documents_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class BankReconciliationDocumentsAPIController extends AppBaseController
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationDocuments)) {
-            return $this->sendError('Bank Reconciliation Documents not found');
+            return $this->sendError(trans('custom.bank_reconciliation_documents_not_found'));
         }
 
-        return $this->sendResponse($bankReconciliationDocuments->toArray(), 'Bank Reconciliation Documents retrieved successfully');
+        return $this->sendResponse($bankReconciliationDocuments->toArray(), trans('custom.bank_reconciliation_documents_retrieved_successful'));
     }
 
     /**
@@ -235,12 +235,12 @@ class BankReconciliationDocumentsAPIController extends AppBaseController
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationDocuments)) {
-            return $this->sendError('Bank Reconciliation Documents not found');
+            return $this->sendError(trans('custom.bank_reconciliation_documents_not_found'));
         }
 
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliationDocuments->toArray(), 'BankReconciliationDocuments updated successfully');
+        return $this->sendResponse($bankReconciliationDocuments->toArray(), trans('custom.bankreconciliationdocuments_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class BankReconciliationDocumentsAPIController extends AppBaseController
         $bankReconciliationDocuments = $this->bankReconciliationDocumentsRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationDocuments)) {
-            return $this->sendError('Bank Reconciliation Documents not found');
+            return $this->sendError(trans('custom.bank_reconciliation_documents_not_found'));
         }
 
         $bankReconciliationDocuments->delete();

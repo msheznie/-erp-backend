@@ -65,7 +65,7 @@ class SMEReligionAPIController extends AppBaseController
         $this->sMEReligionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEReligions = $this->sMEReligionRepository->all();
 
-        return $this->sendResponse($sMEReligions->toArray(), 'S M E Religions retrieved successfully');
+        return $this->sendResponse($sMEReligions->toArray(), trans('custom.s_m_e_religions_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEReligionAPIController extends AppBaseController
 
         $sMEReligion = $this->sMEReligionRepository->create($input);
 
-        return $this->sendResponse($sMEReligion->toArray(), 'S M E Religion saved successfully');
+        return $this->sendResponse($sMEReligion->toArray(), trans('custom.s_m_e_religion_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEReligionAPIController extends AppBaseController
         $sMEReligion = $this->sMEReligionRepository->findWithoutFail($id);
 
         if (empty($sMEReligion)) {
-            return $this->sendError('S M E Religion not found');
+            return $this->sendError(trans('custom.s_m_e_religion_not_found'));
         }
 
-        return $this->sendResponse($sMEReligion->toArray(), 'S M E Religion retrieved successfully');
+        return $this->sendResponse($sMEReligion->toArray(), trans('custom.s_m_e_religion_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEReligionAPIController extends AppBaseController
         $sMEReligion = $this->sMEReligionRepository->findWithoutFail($id);
 
         if (empty($sMEReligion)) {
-            return $this->sendError('S M E Religion not found');
+            return $this->sendError(trans('custom.s_m_e_religion_not_found'));
         }
 
         $sMEReligion = $this->sMEReligionRepository->update($input, $id);
 
-        return $this->sendResponse($sMEReligion->toArray(), 'SMEReligion updated successfully');
+        return $this->sendResponse($sMEReligion->toArray(), trans('custom.smereligion_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEReligionAPIController extends AppBaseController
         $sMEReligion = $this->sMEReligionRepository->findWithoutFail($id);
 
         if (empty($sMEReligion)) {
-            return $this->sendError('S M E Religion not found');
+            return $this->sendError(trans('custom.s_m_e_religion_not_found'));
         }
 
         $sMEReligion->delete();

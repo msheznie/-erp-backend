@@ -65,7 +65,7 @@ class POSStagMenuSalesServiceChargeAPIController extends AppBaseController
         $this->pOSStagMenuSalesServiceChargeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagMenuSalesServiceCharges = $this->pOSStagMenuSalesServiceChargeRepository->all();
 
-        return $this->sendResponse($pOSStagMenuSalesServiceCharges->toArray(), 'P O S Stag Menu Sales Service Charges retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesServiceCharges->toArray(), trans('custom.p_o_s_stag_menu_sales_service_charges_retrieved_su'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagMenuSalesServiceChargeAPIController extends AppBaseController
 
         $pOSStagMenuSalesServiceCharge = $this->pOSStagMenuSalesServiceChargeRepository->create($input);
 
-        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), 'P O S Stag Menu Sales Service Charge saved successfully');
+        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), trans('custom.p_o_s_stag_menu_sales_service_charge_saved_success'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSStagMenuSalesServiceCharge = $this->pOSStagMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Stag Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_service_charge_not_found'));
         }
 
-        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), 'P O S Stag Menu Sales Service Charge retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), trans('custom.p_o_s_stag_menu_sales_service_charge_retrieved_suc'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSStagMenuSalesServiceCharge = $this->pOSStagMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Stag Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_service_charge_not_found'));
         }
 
         $pOSStagMenuSalesServiceCharge = $this->pOSStagMenuSalesServiceChargeRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), 'POSStagMenuSalesServiceCharge updated successfully');
+        return $this->sendResponse($pOSStagMenuSalesServiceCharge->toArray(), trans('custom.posstagmenusalesservicecharge_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSStagMenuSalesServiceCharge = $this->pOSStagMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Stag Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_service_charge_not_found'));
         }
 
         $pOSStagMenuSalesServiceCharge->delete();

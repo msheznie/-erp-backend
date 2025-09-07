@@ -82,7 +82,7 @@ class CashFlowReportAPIController extends AppBaseController
         $this->cashFlowReportRepository->pushCriteria(new LimitOffsetCriteria($request));
         $cashFlowReports = $this->cashFlowReportRepository->all();
 
-        return $this->sendResponse($cashFlowReports->toArray(), 'Cash Flow Reports retrieved successfully');
+        return $this->sendResponse($cashFlowReports->toArray(), trans('custom.cash_flow_reports_retrieved_successfully'));
     }
 
     /**
@@ -419,10 +419,10 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReport = $this->cashFlowReportRepository->findWithoutFail($id);
 
         if (empty($cashFlowReport)) {
-            return $this->sendError('Cash Flow Report not found');
+            return $this->sendError(trans('custom.cash_flow_report_not_found'));
         }
 
-        return $this->sendResponse($cashFlowReport->toArray(), 'Cash Flow Report retrieved successfully');
+        return $this->sendResponse($cashFlowReport->toArray(), trans('custom.cash_flow_report_retrieved_successfully'));
     }
 
     /**
@@ -479,7 +479,7 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReport = $this->cashFlowReportRepository->findWithoutFail($id);
 
         if (empty($cashFlowReport)) {
-            return $this->sendError('Cash Flow Report not found');
+            return $this->sendError(trans('custom.cash_flow_report_not_found'));
         }
 
         $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
@@ -513,7 +513,7 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReport = $this->cashFlowReportRepository->update($input, $id);
 
 
-        return $this->sendResponse($cashFlowReport->toArray(), 'CashFlowReport updated successfully');
+        return $this->sendResponse($cashFlowReport->toArray(), trans('custom.cashflowreport_updated_successfully'));
     }
 
     /**
@@ -560,7 +560,7 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReport = $this->cashFlowReportRepository->findWithoutFail($id);
 
         if (empty($cashFlowReport)) {
-            return $this->sendError('Cash Flow Report not found');
+            return $this->sendError(trans('custom.cash_flow_report_not_found'));
         }
         $cashFlowReport->delete();
         CashFlowSubCategoryGLCode::where('cashFlowReportID',$id)->delete();
@@ -745,7 +745,7 @@ class CashFlowReportAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($output, 'Report Template Details retrieved successfully');   
+        return $this->sendResponse($output, trans('custom.report_template_details_retrieved_successfully'));   
     }
 
     public function getCashFlowPullingItems(Request $request){
@@ -903,7 +903,7 @@ class CashFlowReportAPIController extends AppBaseController
         $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
 
 
-        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.report_template_details_retrieved_successfully'));
 
     }
 
@@ -999,7 +999,7 @@ class CashFlowReportAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.report_template_details_retrieved_successfully'));
 
     }
 
@@ -1090,7 +1090,7 @@ class CashFlowReportAPIController extends AppBaseController
                 $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
             }
         }
-        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.report_template_details_retrieved_successfully'));
     }
 
     public function postCashFlowPulledItemsForProceeds(Request $request){
@@ -1177,7 +1177,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($reportTemplateDetails, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($reportTemplateDetails, trans('custom.report_template_details_retrieved_successfully'));
 
     }
 
@@ -1189,7 +1189,7 @@ class CashFlowReportAPIController extends AppBaseController
         $cashFlowReport = $this->cashFlowReportRepository->update($input, $input['id']);
 
 
-        return $this->sendResponse($cashFlowReport, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($cashFlowReport, trans('custom.report_template_details_retrieved_successfully'));
     }
 
     public function updateGroupTotalOfCashFlowTemplate($templateDetails, $cashFlowReportID)
@@ -1262,7 +1262,7 @@ class CashFlowReportAPIController extends AppBaseController
         $input = $request->all();
 
         if (empty($input['companySystemID']) || empty($input['id']) || empty($input['data']['id']) || !isset($input['data']['amount'])) {
-            return $this->sendError('Missing required parameters');
+            return $this->sendError(trans('custom.missing_required_parameters'));
         }
         
         $companySystemID = $input['companySystemID'];
@@ -1271,14 +1271,14 @@ class CashFlowReportAPIController extends AppBaseController
 
         $companyMaster = Company::where('companySystemID', $companySystemID)->first();
          if (!$companyMaster) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
           }
         $currencyConversionVAT = \Helper::currencyConversion($companySystemID, $companyMaster->localCurrencyID,$companyMaster->localCurrencyID, $amount);
 
         CashFlowSubCategoryGLCode::where('subCategoryID',$input['data']['id'])->where('chartOfAccountID',null)->where('cashFlowReportID',$id)->update(['localAmount'=>$amount, 'rptAmount'=>$currencyConversionVAT['reportingAmount']]);
  
 
-        return $this->sendResponse(true, 'update successfully');
+        return $this->sendResponse(true, trans('custom.update_successfully'));
 
     }
 }

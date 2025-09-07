@@ -64,7 +64,7 @@ class SupplierEvaluationMasterDetailsAPIController extends AppBaseController
         $this->supplierEvaluationMasterDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->all();
 
-        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), 'Supplier Evaluation Master Details retrieved successfully');
+        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), trans('custom.supplier_evaluation_master_details_retrieved_succe'));
     }
 
     /**
@@ -119,7 +119,7 @@ class SupplierEvaluationMasterDetailsAPIController extends AppBaseController
 
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), 'Supplier Evaluation Master Details saved successfully');
+        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), trans('custom.supplier_evaluation_master_details_saved_successfu'));
     }
 
     public function getAllSupplierEvaluationDetails(Request $request)
@@ -205,10 +205,10 @@ class SupplierEvaluationMasterDetailsAPIController extends AppBaseController
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasterDetails)) {
-            return $this->sendError('Supplier Evaluation Master Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_master_details_not_found'));
         }
 
-        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), 'Supplier Evaluation Master Details retrieved successfully');
+        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), trans('custom.supplier_evaluation_master_details_retrieved_succe'));
     }
 
     /**
@@ -275,12 +275,12 @@ class SupplierEvaluationMasterDetailsAPIController extends AppBaseController
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasterDetails)) {
-            return $this->sendError('Supplier Evaluation Master Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_master_details_not_found'));
         }
 
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), 'SupplierEvaluationMasterDetails updated successfully');
+        return $this->sendResponse($supplierEvaluationMasterDetails->toArray(), trans('custom.supplierevaluationmasterdetails_updated_successful'));
     }
 
     /**
@@ -328,11 +328,11 @@ class SupplierEvaluationMasterDetailsAPIController extends AppBaseController
         $supplierEvaluationMasterDetails = $this->supplierEvaluationMasterDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasterDetails)) {
-            return $this->sendError('Supplier Evaluation Master Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_master_details_not_found'));
         }
 
         $supplierEvaluationMasterDetails->delete();
 
-        return $this->sendResponse($id,'Supplier Evaluation Master Details deleted successfully');
+        return $this->sendResponse($id,trans('custom.supplier_evaluation_master_details_deleted_success'));
     }
 }

@@ -32,7 +32,7 @@ class DepartmentUserBudgetControlAPIController extends AppBaseController
         $departmentEmployeeSystemID = $request->get('departmentEmployeeSystemID');
         
         if (!$departmentEmployeeSystemID) {
-            return $this->sendError('Department Employee ID is required');
+            return $this->sendError(trans('custom.department_employee_id_is_required'));
         }
 
         // Get all budget controls
@@ -58,7 +58,7 @@ class DepartmentUserBudgetControlAPIController extends AppBaseController
 
         return $this->sendResponse([
             'budgetControls' => $budgetControlsWithAssignment
-        ], 'Budget controls retrieved successfully');
+        ], trans('custom.budget_controls_retrieved_successfully'));
     }
 
     /**
@@ -85,11 +85,11 @@ class DepartmentUserBudgetControlAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse([], 'Budget controls saved successfully');
+            return $this->sendResponse([], trans('custom.budget_controls_saved_successfully'));
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error saving budget controls - '.$e->getMessage());
+            return $this->sendError(trans('custom.error_saving_budget_controls').$e->getMessage());
         }
     }
 } 

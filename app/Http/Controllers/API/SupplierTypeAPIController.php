@@ -49,7 +49,7 @@ class SupplierTypeAPIController extends AppBaseController
         $this->supplierTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierTypes = $this->supplierTypeRepository->all();
 
-        return $this->sendResponse($supplierTypes->toArray(), 'Supplier Types retrieved successfully');
+        return $this->sendResponse($supplierTypes->toArray(), trans('custom.supplier_types_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class SupplierTypeAPIController extends AppBaseController
 
         $supplierTypes = $this->supplierTypeRepository->create($input);
 
-        return $this->sendResponse($supplierTypes->toArray(), 'Supplier Type saved successfully');
+        return $this->sendResponse($supplierTypes->toArray(), trans('custom.supplier_type_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class SupplierTypeAPIController extends AppBaseController
         $supplierType = $this->supplierTypeRepository->findWithoutFail($id);
 
         if (empty($supplierType)) {
-            return $this->sendError('Supplier Type not found');
+            return $this->sendError(trans('custom.supplier_type_not_found'));
         }
 
-        return $this->sendResponse($supplierType->toArray(), 'Supplier Type retrieved successfully');
+        return $this->sendResponse($supplierType->toArray(), trans('custom.supplier_type_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class SupplierTypeAPIController extends AppBaseController
         $supplierType = $this->supplierTypeRepository->findWithoutFail($id);
 
         if (empty($supplierType)) {
-            return $this->sendError('Supplier Type not found');
+            return $this->sendError(trans('custom.supplier_type_not_found'));
         }
 
         $supplierType = $this->supplierTypeRepository->update($input, $id);
 
-        return $this->sendResponse($supplierType->toArray(), 'SupplierType updated successfully');
+        return $this->sendResponse($supplierType->toArray(), trans('custom.suppliertype_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class SupplierTypeAPIController extends AppBaseController
         $supplierType = $this->supplierTypeRepository->findWithoutFail($id);
 
         if (empty($supplierType)) {
-            return $this->sendError('Supplier Type not found');
+            return $this->sendError(trans('custom.supplier_type_not_found'));
         }
 
         $supplierType->delete();
 
-        return $this->sendResponse($id, 'Supplier Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_type_deleted_successfully'));
     }
 }

@@ -64,7 +64,7 @@ class CompanyDocumentAttachmentAccessAPIController extends AppBaseController
         $this->companyDocumentAttachmentAccessRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyDocumentAttachmentAccesses = $this->companyDocumentAttachmentAccessRepository->all();
 
-        return $this->sendResponse($companyDocumentAttachmentAccesses->toArray(), 'Company Document Attachment Accesses retrieved successfully');
+        return $this->sendResponse($companyDocumentAttachmentAccesses->toArray(), trans('custom.company_document_attachment_accesses_retrieved_suc'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CompanyDocumentAttachmentAccessAPIController extends AppBaseController
 
         $companyDocumentAttachmentAccess = $this->companyDocumentAttachmentAccessRepository->create($input);
 
-        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), 'Company Document Attachment Access saved successfully');
+        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), trans('custom.company_document_attachment_access_saved_successfu'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CompanyDocumentAttachmentAccessAPIController extends AppBaseController
         $companyDocumentAttachmentAccess = $this->companyDocumentAttachmentAccessRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachmentAccess)) {
-            return $this->sendError('Company Document Attachment Access not found');
+            return $this->sendError(trans('custom.company_document_attachment_access_not_found'));
         }
 
-        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), 'Company Document Attachment Access retrieved successfully');
+        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), trans('custom.company_document_attachment_access_retrieved_succe'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CompanyDocumentAttachmentAccessAPIController extends AppBaseController
         $companyDocumentAttachmentAccess = $this->companyDocumentAttachmentAccessRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachmentAccess)) {
-            return $this->sendError('Company Document Attachment Access not found');
+            return $this->sendError(trans('custom.company_document_attachment_access_not_found'));
         }
 
         $companyDocumentAttachmentAccess = $this->companyDocumentAttachmentAccessRepository->update($input, $id);
 
-        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), 'CompanyDocumentAttachmentAccess updated successfully');
+        return $this->sendResponse($companyDocumentAttachmentAccess->toArray(), trans('custom.companydocumentattachmentaccess_updated_successful'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CompanyDocumentAttachmentAccessAPIController extends AppBaseController
         $companyDocumentAttachmentAccess = $this->companyDocumentAttachmentAccessRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachmentAccess)) {
-            return $this->sendError('Company Document Attachment Access not found');
+            return $this->sendError(trans('custom.company_document_attachment_access_not_found'));
         }
 
         $companyDocumentAttachmentAccess->delete();

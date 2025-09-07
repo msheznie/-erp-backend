@@ -51,7 +51,7 @@ class UnitConversionAPIController extends AppBaseController
         $this->unitConversionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $unitConversions = $this->unitConversionRepository->all();
 
-        return $this->sendResponse($unitConversions->toArray(), 'Unit Conversions retrieved successfully');
+        return $this->sendResponse($unitConversions->toArray(), trans('custom.unit_conversions_retrieved_successfully'));
     }
 
     /**
@@ -76,7 +76,7 @@ class UnitConversionAPIController extends AppBaseController
 
         $unitConversions = $this->unitConversionRepository->create($input);
 
-        return $this->sendResponse($unitConversions->toArray(), 'Unit Conversion saved successfully');
+        return $this->sendResponse($unitConversions->toArray(), trans('custom.unit_conversion_saved_successfully'));
     }
 
     /**
@@ -93,10 +93,10 @@ class UnitConversionAPIController extends AppBaseController
         $unitConversion = $this->unitConversionRepository->findWithoutFail($id);
 
         if (empty($unitConversion)) {
-            return $this->sendError('Unit Conversion not found');
+            return $this->sendError(trans('custom.unit_conversion_not_found'));
         }
 
-        return $this->sendResponse($unitConversion->toArray(), 'Unit Conversion retrieved successfully');
+        return $this->sendResponse($unitConversion->toArray(), trans('custom.unit_conversion_retrieved_successfully'));
     }
 
     /**
@@ -116,12 +116,12 @@ class UnitConversionAPIController extends AppBaseController
         $unitConversion = $this->unitConversionRepository->findWithoutFail($id);
 
         if (empty($unitConversion)) {
-            return $this->sendError('Unit Conversion not found');
+            return $this->sendError(trans('custom.unit_conversion_not_found'));
         }
 
         $unitConversion = $this->unitConversionRepository->update($input, $id);
 
-        return $this->sendResponse($unitConversion->toArray(), 'UnitConversion updated successfully');
+        return $this->sendResponse($unitConversion->toArray(), trans('custom.unitconversion_updated_successfully'));
     }
 
     /**
@@ -138,12 +138,12 @@ class UnitConversionAPIController extends AppBaseController
         $unitConversion = $this->unitConversionRepository->findWithoutFail($id);
 
         if (empty($unitConversion)) {
-            return $this->sendError('Unit Conversion not found');
+            return $this->sendError(trans('custom.unit_conversion_not_found'));
         }
 
         $unitConversion->delete();
 
-        return $this->sendResponse($id, 'Unit Conversion deleted successfully');
+        return $this->sendResponse($id, trans('custom.unit_conversion_deleted_successfully'));
     }
 
     /**
@@ -163,7 +163,7 @@ class UnitConversionAPIController extends AppBaseController
             'conversionData' => $conversionData
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -192,6 +192,6 @@ class UnitConversionAPIController extends AppBaseController
 
         $unitConversion = $this->unitConversionRepository->update($data, $input['unitsConversionAutoID']);
 
-        return $this->sendResponse($unitConversion->toArray(), 'Unit Conversion updated successfully');
+        return $this->sendResponse($unitConversion->toArray(), trans('custom.unit_conversion_updated_successfully'));
     }
 }

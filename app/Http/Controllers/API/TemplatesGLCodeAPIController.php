@@ -65,7 +65,7 @@ class TemplatesGLCodeAPIController extends AppBaseController
         $this->templatesGLCodeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $templatesGLCodes = $this->templatesGLCodeRepository->all();
 
-        return $this->sendResponse($templatesGLCodes->toArray(), 'Templates G L Codes retrieved successfully');
+        return $this->sendResponse($templatesGLCodes->toArray(), trans('custom.templates_g_l_codes_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TemplatesGLCodeAPIController extends AppBaseController
 
         $templatesGLCodes = $this->templatesGLCodeRepository->create($input);
 
-        return $this->sendResponse($templatesGLCodes->toArray(), 'Templates G L Code saved successfully');
+        return $this->sendResponse($templatesGLCodes->toArray(), trans('custom.templates_g_l_code_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TemplatesGLCodeAPIController extends AppBaseController
         $templatesGLCode = $this->templatesGLCodeRepository->findWithoutFail($id);
 
         if (empty($templatesGLCode)) {
-            return $this->sendError('Templates G L Code not found');
+            return $this->sendError(trans('custom.templates_g_l_code_not_found'));
         }
 
-        return $this->sendResponse($templatesGLCode->toArray(), 'Templates G L Code retrieved successfully');
+        return $this->sendResponse($templatesGLCode->toArray(), trans('custom.templates_g_l_code_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TemplatesGLCodeAPIController extends AppBaseController
         $templatesGLCode = $this->templatesGLCodeRepository->findWithoutFail($id);
 
         if (empty($templatesGLCode)) {
-            return $this->sendError('Templates G L Code not found');
+            return $this->sendError(trans('custom.templates_g_l_code_not_found'));
         }
 
         $templatesGLCode = $this->templatesGLCodeRepository->update($input, $id);
 
-        return $this->sendResponse($templatesGLCode->toArray(), 'TemplatesGLCode updated successfully');
+        return $this->sendResponse($templatesGLCode->toArray(), trans('custom.templatesglcode_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class TemplatesGLCodeAPIController extends AppBaseController
         $templatesGLCode = $this->templatesGLCodeRepository->findWithoutFail($id);
 
         if (empty($templatesGLCode)) {
-            return $this->sendError('Templates G L Code not found');
+            return $this->sendError(trans('custom.templates_g_l_code_not_found'));
         }
 
         $templatesGLCode->delete();
 
-        return $this->sendResponse($id, 'Templates G L Code deleted successfully');
+        return $this->sendResponse($id, trans('custom.templates_g_l_code_deleted_successfully'));
     }
 }

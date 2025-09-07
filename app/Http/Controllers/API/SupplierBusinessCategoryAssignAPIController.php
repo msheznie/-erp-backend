@@ -67,7 +67,7 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
         $this->supplierBusinessCategoryAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierBusinessCategoryAssigns = $this->supplierBusinessCategoryAssignRepository->all();
 
-        return $this->sendResponse($supplierBusinessCategoryAssigns->toArray(), 'Supplier Business Category Assigns retrieved successfully');
+        return $this->sendResponse($supplierBusinessCategoryAssigns->toArray(), trans('custom.supplier_business_category_assigns_retrieved_succe'));
     }
 
     /**
@@ -121,7 +121,7 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
 
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->create($input);
 
-        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), 'Supplier Business Category Assign saved successfully');
+        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), trans('custom.supplier_business_category_assign_saved_successful'));
     }
 
     /**
@@ -169,10 +169,10 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($supplierBusinessCategoryAssign)) {
-            return $this->sendError('Supplier Business Category Assign not found');
+            return $this->sendError(trans('custom.supplier_business_category_assign_not_found'));
         }
 
-        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), 'Supplier Business Category Assign retrieved successfully');
+        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), trans('custom.supplier_business_category_assign_retrieved_succes'));
     }
 
     /**
@@ -238,12 +238,12 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($supplierBusinessCategoryAssign)) {
-            return $this->sendError('Supplier Business Category Assign not found');
+            return $this->sendError(trans('custom.supplier_business_category_assign_not_found'));
         }
 
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->update($input, $id);
 
-        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), 'SupplierBusinessCategoryAssign updated successfully');
+        return $this->sendResponse($supplierBusinessCategoryAssign->toArray(), trans('custom.supplierbusinesscategoryassign_updated_successfull'));
     }
 
     /**
@@ -287,13 +287,13 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
+        return $this->sendResponse([],trans('custom.supplier_business_category_assign_deleted_successf'));
         
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->find($id);
 
         $supplierBusinessCategoryAssign->delete();
 
-        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
+        return $this->sendResponse([],trans('custom.supplier_business_category_assign_deleted_successf'));
     }
     
     public function removeSupplierBusinessCategory(Request $request){
@@ -312,6 +312,6 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
             SupplierSubCategoryAssign::where('supplierSubCategoryAssignID',$businessSubCategoryAssignID)->delete();
         }
 
-        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
+        return $this->sendResponse([],trans('custom.supplier_business_category_assign_deleted_successf'));
     }
 }

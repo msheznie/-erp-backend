@@ -65,7 +65,7 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
         $this->purchaseReturnMasterRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseReturnMasterRefferedBacks = $this->purchaseReturnMasterRefferedBackRepository->all();
 
-        return $this->sendResponse($purchaseReturnMasterRefferedBacks->toArray(), 'Purchase Return Master Reffered Backs retrieved successfully');
+        return $this->sendResponse($purchaseReturnMasterRefferedBacks->toArray(), trans('custom.purchase_return_master_reffered_backs_retrieved_su'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
 
         $purchaseReturnMasterRefferedBack = $this->purchaseReturnMasterRefferedBackRepository->create($input);
 
-        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), 'Purchase Return Master Reffered Back saved successfully');
+        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), trans('custom.purchase_return_master_reffered_back_saved_success'));
     }
 
     /**
@@ -163,10 +163,10 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($purchaseReturnMasterRefferedBack)) {
-            return $this->sendError('Purchase Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_master_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), 'Purchase Return Master Reffered Back retrieved successfully');
+        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), trans('custom.purchase_return_master_reffered_back_retrieved_suc'));
     }
 
     /**
@@ -223,12 +223,12 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
         $purchaseReturnMasterRefferedBack = $this->purchaseReturnMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnMasterRefferedBack)) {
-            return $this->sendError('Purchase Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_master_reffered_back_not_found'));
         }
 
         $purchaseReturnMasterRefferedBack = $this->purchaseReturnMasterRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), 'PurchaseReturnMasterRefferedBack updated successfully');
+        return $this->sendResponse($purchaseReturnMasterRefferedBack->toArray(), trans('custom.purchasereturnmasterrefferedback_updated_successfu'));
     }
 
     /**
@@ -275,7 +275,7 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
         $purchaseReturnMasterRefferedBack = $this->purchaseReturnMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnMasterRefferedBack)) {
-            return $this->sendError('Purchase Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_master_reffered_back_not_found'));
         }
 
         $purchaseReturnMasterRefferedBack->delete();
@@ -292,6 +292,6 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
                         ->with(['created_by','confirmed_by','modified_by','supplier_by','segment_by', 'currency_by', 'location_by'])
                         ->get();
 
-        return $this->sendResponse($prHistory, ' purchase return reffered back data retrieved successfully');
+        return $this->sendResponse($prHistory, trans('custom.purchase_return_reffered_back_data_retrieved_succe'));
     }
 }

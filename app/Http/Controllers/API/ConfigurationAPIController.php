@@ -58,7 +58,7 @@ class ConfigurationAPIController extends AppBaseController
 
         $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
 
-        return $this->sendResponse($configuration, 'Configurations retrieved successfully');
+        return $this->sendResponse($configuration, trans('custom.configurations_retrieved_successfully'));
 
     }
 

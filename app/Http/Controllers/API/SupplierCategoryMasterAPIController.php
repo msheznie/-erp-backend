@@ -59,7 +59,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $this->supplierCategoryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategoryMasters = $this->supplierCategoryMasterRepository->all();
 
-        return $this->sendResponse($supplierCategoryMasters->toArray(), 'Supplier Category Masters retrieved successfully');
+        return $this->sendResponse($supplierCategoryMasters->toArray(), trans('custom.supplier_category_masters_retrieved_successfully'));
     }
 
     /**

@@ -172,7 +172,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $companyPolicyMasters = $this->companyPolicyMasterRepository->create($input);
 
-        return $this->sendResponse($companyPolicyMasters->toArray(), 'Company Policy Master saved successfully');
+        return $this->sendResponse($companyPolicyMasters->toArray(), trans('custom.company_policy_master_saved_successfully'));
     }
 
     /**

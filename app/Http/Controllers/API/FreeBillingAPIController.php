@@ -65,7 +65,7 @@ class FreeBillingAPIController extends AppBaseController
         $this->freeBillingRepository->pushCriteria(new LimitOffsetCriteria($request));
         $freeBillings = $this->freeBillingRepository->all();
 
-        return $this->sendResponse($freeBillings->toArray(), 'Free Billings retrieved successfully');
+        return $this->sendResponse($freeBillings->toArray(), trans('custom.free_billings_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FreeBillingAPIController extends AppBaseController
 
         $freeBillings = $this->freeBillingRepository->create($input);
 
-        return $this->sendResponse($freeBillings->toArray(), 'Free Billing saved successfully');
+        return $this->sendResponse($freeBillings->toArray(), trans('custom.free_billing_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FreeBillingAPIController extends AppBaseController
         $freeBilling = $this->freeBillingRepository->findWithoutFail($id);
 
         if (empty($freeBilling)) {
-            return $this->sendError('Free Billing not found');
+            return $this->sendError(trans('custom.free_billing_not_found'));
         }
 
-        return $this->sendResponse($freeBilling->toArray(), 'Free Billing retrieved successfully');
+        return $this->sendResponse($freeBilling->toArray(), trans('custom.free_billing_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FreeBillingAPIController extends AppBaseController
         $freeBilling = $this->freeBillingRepository->findWithoutFail($id);
 
         if (empty($freeBilling)) {
-            return $this->sendError('Free Billing not found');
+            return $this->sendError(trans('custom.free_billing_not_found'));
         }
 
         $freeBilling = $this->freeBillingRepository->update($input, $id);
 
-        return $this->sendResponse($freeBilling->toArray(), 'FreeBilling updated successfully');
+        return $this->sendResponse($freeBilling->toArray(), trans('custom.freebilling_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class FreeBillingAPIController extends AppBaseController
         $freeBilling = $this->freeBillingRepository->findWithoutFail($id);
 
         if (empty($freeBilling)) {
-            return $this->sendError('Free Billing not found');
+            return $this->sendError(trans('custom.free_billing_not_found'));
         }
 
         $freeBilling->delete();
 
-        return $this->sendResponse($id, 'Free Billing deleted successfully');
+        return $this->sendResponse($id, trans('custom.free_billing_deleted_successfully'));
     }
 }

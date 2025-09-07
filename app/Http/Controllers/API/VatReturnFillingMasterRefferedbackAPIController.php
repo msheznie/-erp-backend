@@ -65,7 +65,7 @@ class VatReturnFillingMasterRefferedbackAPIController extends AppBaseController
         $this->vatReturnFillingMasterRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFillingMasterRefferedbacks = $this->vatReturnFillingMasterRefferedbackRepository->all();
 
-        return $this->sendResponse($vatReturnFillingMasterRefferedbacks->toArray(), 'Vat Return Filling Master Refferedbacks retrieved successfully');
+        return $this->sendResponse($vatReturnFillingMasterRefferedbacks->toArray(), trans('custom.vat_return_filling_master_refferedbacks_retrieved_'));
     }
 
     /**
@@ -112,7 +112,7 @@ class VatReturnFillingMasterRefferedbackAPIController extends AppBaseController
 
         $vatReturnFillingMasterRefferedback = $this->vatReturnFillingMasterRefferedbackRepository->create($input);
 
-        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), 'Vat Return Filling Master Refferedback saved successfully');
+        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), trans('custom.vat_return_filling_master_refferedback_saved_succe'));
     }
 
     /**
@@ -159,10 +159,10 @@ class VatReturnFillingMasterRefferedbackAPIController extends AppBaseController
         $vatReturnFillingMasterRefferedback = $this->vatReturnFillingMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMasterRefferedback)) {
-            return $this->sendError('Vat Return Filling Master Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_refferedback_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), 'Vat Return Filling Master Refferedback retrieved successfully');
+        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), trans('custom.vat_return_filling_master_refferedback_retrieved_s'));
     }
 
     /**
@@ -219,12 +219,12 @@ class VatReturnFillingMasterRefferedbackAPIController extends AppBaseController
         $vatReturnFillingMasterRefferedback = $this->vatReturnFillingMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMasterRefferedback)) {
-            return $this->sendError('Vat Return Filling Master Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_refferedback_not_found'));
         }
 
         $vatReturnFillingMasterRefferedback = $this->vatReturnFillingMasterRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), 'VatReturnFillingMasterRefferedback updated successfully');
+        return $this->sendResponse($vatReturnFillingMasterRefferedback->toArray(), trans('custom.vatreturnfillingmasterrefferedback_updated_success'));
     }
 
     /**
@@ -271,7 +271,7 @@ class VatReturnFillingMasterRefferedbackAPIController extends AppBaseController
         $vatReturnFillingMasterRefferedback = $this->vatReturnFillingMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMasterRefferedback)) {
-            return $this->sendError('Vat Return Filling Master Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_refferedback_not_found'));
         }
 
         $vatReturnFillingMasterRefferedback->delete();

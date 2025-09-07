@@ -36,7 +36,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($budgetTemplateColumns->toArray(), 'Budget Template Columns retrieved successfully');
+        return $this->sendResponse($budgetTemplateColumns->toArray(), trans('custom.budget_template_columns_retrieved_successfully'));
     }
 
     /**
@@ -54,7 +54,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $budgetTemplateColumn->templateColumnID, $uuid, "budget_template_columns", "Budget template column added", "C", $budgetTemplateColumn->toArray(), [], $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
 
-        return $this->sendResponse($budgetTemplateColumn->toArray(), 'Budget Template Column saved successfully');
+        return $this->sendResponse($budgetTemplateColumn->toArray(), trans('custom.budget_template_column_saved_successfully'));
     }
 
     /**
@@ -66,12 +66,12 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $budgetTemplateColumn = $this->budgetTemplateColumnRepository->find($id);
 
         if (empty($budgetTemplateColumn)) {
-            return $this->sendError('Budget Template Column not found');
+            return $this->sendError(trans('custom.budget_template_column_not_found'));
         }
 
         $budgetTemplateColumn->load('preColumn');
 
-        return $this->sendResponse($budgetTemplateColumn->toArray(), 'Budget Template Column retrieved successfully');
+        return $this->sendResponse($budgetTemplateColumn->toArray(), trans('custom.budget_template_column_retrieved_successfully'));
     }
 
     /**
@@ -83,7 +83,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $budgetTemplateColumn = $this->budgetTemplateColumnRepository->find($id);
 
         if (empty($budgetTemplateColumn)) {
-            return $this->sendError('Budget Template Column not found');
+            return $this->sendError(trans('custom.budget_template_column_not_found'));
         }
 
         $oldValues = $budgetTemplateColumn->toArray();
@@ -95,7 +95,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "budget_template_columns", "Budget template column updated", "U", $budgetTemplateColumn->toArray(), $oldValues, $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
 
-        return $this->sendResponse($budgetTemplateColumn->toArray(), 'Budget Template Column updated successfully');
+        return $this->sendResponse($budgetTemplateColumn->toArray(), trans('custom.budget_template_column_updated_successfully'));
     }
 
     /**
@@ -107,7 +107,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $budgetTemplateColumn = $this->budgetTemplateColumnRepository->find($id);
 
         if (empty($budgetTemplateColumn)) {
-            return $this->sendError('Budget Template Column not found');
+            return $this->sendError(trans('custom.budget_template_column_not_found'));
         }
 
         $previousValue = $budgetTemplateColumn->toArray();
@@ -135,7 +135,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "budget_template_columns", "Budget template column deleted", "D", [], $previousValue, $previousValue['budgetTemplateID'], 'budget_templates');
 
-        return $this->sendResponse($id, 'Budget Template Column deleted successfully');
+        return $this->sendResponse($id, trans('custom.budget_template_column_deleted_successfully'));
     }
 
     /**
@@ -146,7 +146,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
     {
         $columns = $this->budgetTemplateColumnRepository->getTemplateColumns($templateId);
 
-        return $this->sendResponse($columns->toArray(), 'Template columns retrieved successfully');
+        return $this->sendResponse($columns->toArray(), trans('custom.template_columns_retrieved_successfully'));
     }
 
     /**
@@ -159,7 +159,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
 
         $this->budgetTemplateColumnRepository->updateSortOrder($templateId, $sortOrderData);
 
-        return $this->sendResponse([], 'Sort order updated successfully');
+        return $this->sendResponse([], trans('custom.sort_order_updated_successfully'));
     }
 
     /**
@@ -175,7 +175,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
             ->first();
 
         if (!$templateColumn) {
-            return $this->sendError('Column not found in template');
+            return $this->sendError(trans('custom.column_not_found_in_template'));
         }
 
         // Check if this column is referenced in any formulas within the same template
@@ -199,7 +199,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
                                         ->first();
 
         if ($budgetTemplate) {
-            return $this->sendError('Cannot delete this column because it is linked to a link request amount');
+            return $this->sendError(trans('custom.cannot_delete_this_column_because_it_is_linked_to_'));
         }
 
         $result = $this->budgetTemplateColumnRepository->removeFromTemplate($templateId, $preColumnId);
@@ -210,10 +210,10 @@ class BudgetTemplateColumnAPIController extends AppBaseController
             $db = $request->get('db', '');
             $this->auditLog($db, $templateColumn->templateColumnID, $uuid, "budget_template_columns", "Budget template column removed from template", "D", [], $templateColumn->toArray(), $templateColumn->budgetTemplateID, 'budget_templates');
 
-            return $this->sendResponse([], 'Column removed from template successfully');
+            return $this->sendResponse([], trans('custom.column_removed_from_template_successfully'));
         }
 
-        return $this->sendError('Failed to remove column from template');
+        return $this->sendError(trans('custom.failed_to_remove_column_from_template'));
     }
 
     /**
@@ -224,6 +224,6 @@ class BudgetTemplateColumnAPIController extends AppBaseController
     {
         $columns = $this->budgetTemplateColumnRepository->getFormulaReferenceColumns($templateId, $excludeColumnId);
 
-        return $this->sendResponse($columns->toArray(), 'Formula reference columns retrieved successfully');
+        return $this->sendResponse($columns->toArray(), trans('custom.formula_reference_columns_retrieved_successfully'));
     }
 } 

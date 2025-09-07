@@ -65,7 +65,7 @@ class POSStagPaymentGlConfigAPIController extends AppBaseController
         $this->pOSStagPaymentGlConfigRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagPaymentGlConfigs = $this->pOSStagPaymentGlConfigRepository->all();
 
-        return $this->sendResponse($pOSStagPaymentGlConfigs->toArray(), 'P O S Stag Payment Gl Configs retrieved successfully');
+        return $this->sendResponse($pOSStagPaymentGlConfigs->toArray(), trans('custom.p_o_s_stag_payment_gl_configs_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagPaymentGlConfigAPIController extends AppBaseController
 
         $pOSStagPaymentGlConfig = $this->pOSStagPaymentGlConfigRepository->create($input);
 
-        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), 'P O S Stag Payment Gl Config saved successfully');
+        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), trans('custom.p_o_s_stag_payment_gl_config_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagPaymentGlConfigAPIController extends AppBaseController
         $pOSStagPaymentGlConfig = $this->pOSStagPaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSStagPaymentGlConfig)) {
-            return $this->sendError('P O S Stag Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_stag_payment_gl_config_not_found'));
         }
 
-        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), 'P O S Stag Payment Gl Config retrieved successfully');
+        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), trans('custom.p_o_s_stag_payment_gl_config_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagPaymentGlConfigAPIController extends AppBaseController
         $pOSStagPaymentGlConfig = $this->pOSStagPaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSStagPaymentGlConfig)) {
-            return $this->sendError('P O S Stag Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_stag_payment_gl_config_not_found'));
         }
 
         $pOSStagPaymentGlConfig = $this->pOSStagPaymentGlConfigRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), 'POSStagPaymentGlConfig updated successfully');
+        return $this->sendResponse($pOSStagPaymentGlConfig->toArray(), trans('custom.posstagpaymentglconfig_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagPaymentGlConfigAPIController extends AppBaseController
         $pOSStagPaymentGlConfig = $this->pOSStagPaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSStagPaymentGlConfig)) {
-            return $this->sendError('P O S Stag Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_stag_payment_gl_config_not_found'));
         }
 
         $pOSStagPaymentGlConfig->delete();

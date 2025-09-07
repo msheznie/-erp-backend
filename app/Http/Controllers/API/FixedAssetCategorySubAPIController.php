@@ -73,7 +73,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $this->fixedAssetCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetCategorySubs = $this->fixedAssetCategorySubRepository->all();
 
-        return $this->sendResponse($fixedAssetCategorySubs->toArray(), 'Fixed Asset Category Subs retrieved successfully');
+        return $this->sendResponse($fixedAssetCategorySubs->toArray(), trans('custom.fixed_asset_category_subs_retrieved_successfully'));
     }
 
     /**
@@ -131,7 +131,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($input['faCatID']);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+            return $this->sendError(trans('custom.asset_category_not_found'));
         }
 
         $assetCatCodeSubExist = FixedAssetCategorySub::select('faCatSubID')
@@ -157,7 +157,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
 
         $fixedAssetCategorySubs = $this->fixedAssetCategorySubRepository->create($input);
 
-        return $this->sendResponse($fixedAssetCategorySubs->toArray(), 'Fixed Asset Category Sub saved successfully');
+        return $this->sendResponse($fixedAssetCategorySubs->toArray(), trans('custom.fixed_asset_category_sub_saved_successfully'));
     }
 
     /**
@@ -204,10 +204,10 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $fixedAssetCategorySub =  FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategorySub)) {
-            return $this->sendError('Asset Category Sub not found');
+            return $this->sendError(trans('custom.asset_category_sub_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetCategorySub->toArray(), 'Asset Category Sub retrieved successfully');
+        return $this->sendResponse($fixedAssetCategorySub->toArray(), trans('custom.asset_category_sub_retrieved_successfully'));
     }
 
     /**
@@ -264,7 +264,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $fixedAssetCategorySub =  FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategorySub)) {
-            return $this->sendError('Asset Sub Category not found');
+            return $this->sendError(trans('custom.asset_sub_category_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -281,7 +281,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($input['faCatID']);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+            return $this->sendError(trans('custom.asset_category_not_found'));
         }
 
         $assetCatCodeSubExist = FixedAssetCategorySub::select('faCatSubID')
@@ -307,7 +307,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $input['modifiedUser'] = Helper::getEmployeeID();
         $fixedAssetCategorySub = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->where('faCatSubID', $id)->update($input);
 
-        return $this->sendResponse($fixedAssetCategorySub, 'Asset Sub Category updated successfully');
+        return $this->sendResponse($fixedAssetCategorySub, trans('custom.asset_sub_category_updated_successfully'));
     }
 
     /**
@@ -354,24 +354,24 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         $fixedAssetCategorySub =  FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategorySub)) {
-            return $this->sendError('Asset Category Sub not found');
+            return $this->sendError(trans('custom.asset_category_sub_not_found'));
         }
 
         $checkInItems = ItemMaster::where('faSubCatID', $id)->first();
 
         if ($checkInItems) {
-            return $this->sendError('This Asset sub category is already assigned to assets. you cannot delete this record');
+            return $this->sendError(trans('custom.this_asset_sub_category_is_already_assigned_to_ass'));
         }
 
         $checkInCostings = FixedAssetMaster::where('faSubCatID', $id)->first();
 
         if ($checkInCostings) {
-            return $this->sendError('This Asset sub category is already assigned to assets. you cannot delete this record');
+            return $this->sendError(trans('custom.this_asset_sub_category_is_already_assigned_to_ass'));
         }
 
         $fixedAssetCategorySub->delete();
 
-        return $this->sendResponse($id, 'Asset Sub Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.asset_sub_category_deleted_successfully'));
     }
 
     public function getAllAssetSubCategoryByMain(Request $request)
@@ -428,7 +428,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
                 })
                 ->get();
 
-            return $this->sendResponse($assetCategories, 'Asset Sub Category fetched successfully');
+            return $this->sendResponse($assetCategories, trans('custom.asset_sub_category_fetched_successfully'));
         }
     }
 }

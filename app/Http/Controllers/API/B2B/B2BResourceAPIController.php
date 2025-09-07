@@ -438,7 +438,7 @@ class B2BResourceAPIController extends AppBaseController
                 $htmlData .= "</tbody></table>";
 
 
-                return $this->sendResponse($htmlData, 'Date reterived successfully');
+                return $this->sendResponse($htmlData, trans('custom.date_reterived_successfully'));
             } catch (\Exception $exception) {
                 return response()->json([
                     'success' => false,

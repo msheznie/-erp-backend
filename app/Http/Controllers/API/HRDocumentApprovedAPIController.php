@@ -64,7 +64,7 @@ class HRDocumentApprovedAPIController extends AppBaseController
         $this->hRDocumentApprovedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRDocumentApproveds = $this->hRDocumentApprovedRepository->all();
 
-        return $this->sendResponse($hRDocumentApproveds->toArray(), 'H R Document Approveds retrieved successfully');
+        return $this->sendResponse($hRDocumentApproveds->toArray(), trans('custom.h_r_document_approveds_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HRDocumentApprovedAPIController extends AppBaseController
 
         $hRDocumentApproved = $this->hRDocumentApprovedRepository->create($input);
 
-        return $this->sendResponse($hRDocumentApproved->toArray(), 'H R Document Approved saved successfully');
+        return $this->sendResponse($hRDocumentApproved->toArray(), trans('custom.h_r_document_approved_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HRDocumentApprovedAPIController extends AppBaseController
         $hRDocumentApproved = $this->hRDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($hRDocumentApproved)) {
-            return $this->sendError('H R Document Approved not found');
+            return $this->sendError(trans('custom.h_r_document_approved_not_found'));
         }
 
-        return $this->sendResponse($hRDocumentApproved->toArray(), 'H R Document Approved retrieved successfully');
+        return $this->sendResponse($hRDocumentApproved->toArray(), trans('custom.h_r_document_approved_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HRDocumentApprovedAPIController extends AppBaseController
         $hRDocumentApproved = $this->hRDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($hRDocumentApproved)) {
-            return $this->sendError('H R Document Approved not found');
+            return $this->sendError(trans('custom.h_r_document_approved_not_found'));
         }
 
         $hRDocumentApproved = $this->hRDocumentApprovedRepository->update($input, $id);
 
-        return $this->sendResponse($hRDocumentApproved->toArray(), 'HRDocumentApproved updated successfully');
+        return $this->sendResponse($hRDocumentApproved->toArray(), trans('custom.hrdocumentapproved_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HRDocumentApprovedAPIController extends AppBaseController
         $hRDocumentApproved = $this->hRDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($hRDocumentApproved)) {
-            return $this->sendError('H R Document Approved not found');
+            return $this->sendError(trans('custom.h_r_document_approved_not_found'));
         }
 
         $hRDocumentApproved->delete();

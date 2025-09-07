@@ -64,7 +64,7 @@ class YesNoMinusSelectionLanguageAPIController extends AppBaseController
         $this->yesNoMinusSelectionLanguageRepository->pushCriteria(new LimitOffsetCriteria($request));
         $yesNoMinusSelectionLanguages = $this->yesNoMinusSelectionLanguageRepository->all();
 
-        return $this->sendResponse($yesNoMinusSelectionLanguages->toArray(), 'Yes No Minus Selection Languages retrieved successfully');
+        return $this->sendResponse($yesNoMinusSelectionLanguages->toArray(), trans('custom.yes_no_minus_selection_languages_retrieved_success'));
     }
 
     /**
@@ -118,7 +118,7 @@ class YesNoMinusSelectionLanguageAPIController extends AppBaseController
 
         $yesNoMinusSelectionLanguage = $this->yesNoMinusSelectionLanguageRepository->create($input);
 
-        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), 'Yes No Minus Selection Language saved successfully');
+        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), trans('custom.yes_no_minus_selection_language_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class YesNoMinusSelectionLanguageAPIController extends AppBaseController
         $yesNoMinusSelectionLanguage = $this->yesNoMinusSelectionLanguageRepository->findWithoutFail($id);
 
         if (empty($yesNoMinusSelectionLanguage)) {
-            return $this->sendError('Yes No Minus Selection Language not found');
+            return $this->sendError(trans('custom.yes_no_minus_selection_language_not_found'));
         }
 
-        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), 'Yes No Minus Selection Language retrieved successfully');
+        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), trans('custom.yes_no_minus_selection_language_retrieved_successf'));
     }
 
     /**
@@ -235,12 +235,12 @@ class YesNoMinusSelectionLanguageAPIController extends AppBaseController
         $yesNoMinusSelectionLanguage = $this->yesNoMinusSelectionLanguageRepository->findWithoutFail($id);
 
         if (empty($yesNoMinusSelectionLanguage)) {
-            return $this->sendError('Yes No Minus Selection Language not found');
+            return $this->sendError(trans('custom.yes_no_minus_selection_language_not_found'));
         }
 
         $yesNoMinusSelectionLanguage = $this->yesNoMinusSelectionLanguageRepository->update($input, $id);
 
-        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), 'YesNoMinusSelectionLanguage updated successfully');
+        return $this->sendResponse($yesNoMinusSelectionLanguage->toArray(), trans('custom.yesnominusselectionlanguage_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class YesNoMinusSelectionLanguageAPIController extends AppBaseController
         $yesNoMinusSelectionLanguage = $this->yesNoMinusSelectionLanguageRepository->findWithoutFail($id);
 
         if (empty($yesNoMinusSelectionLanguage)) {
-            return $this->sendError('Yes No Minus Selection Language not found');
+            return $this->sendError(trans('custom.yes_no_minus_selection_language_not_found'));
         }
 
         $yesNoMinusSelectionLanguage->delete();

@@ -99,7 +99,7 @@ class SegmentMasterAPIController extends AppBaseController
         $this->segmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $segmentMasters = $this->segmentMasterRepository->all();
 
-        return $this->sendResponse($segmentMasters->toArray(), 'Segment Masters retrieved successfully');
+        return $this->sendResponse($segmentMasters->toArray(), trans('custom.segment_masters_retrieved_successfully'));
     }
 
     /**
@@ -178,7 +178,7 @@ class SegmentMasterAPIController extends AppBaseController
                                         ->update($data);
             }
             DB::commit();
-            return $this->sendResponse($segmentMasters->toArray(), 'Segment Master saved successfully');
+            return $this->sendResponse($segmentMasters->toArray(), trans('custom.segment_master_saved_successfully'));
         } catch (\Exception $e) {
         DB::rollBack(); 
         return $this->sendError($e->getMessage(), 500);
@@ -202,10 +202,10 @@ class SegmentMasterAPIController extends AppBaseController
             ->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
-            return $this->sendError('Segment Master not found');
+            return $this->sendError(trans('custom.segment_master_not_found_1'));
         }
 
-        return $this->sendResponse($segmentMaster->toArray(), 'Segment Master retrieved successfully');
+        return $this->sendResponse($segmentMaster->toArray(), trans('custom.segment_master_retrieved_successfully'));
     }
 
     /**
@@ -225,7 +225,7 @@ class SegmentMasterAPIController extends AppBaseController
         $segmentMaster = $this->segmentMasterRepository->findWithoutFail($id);
 
         if (empty($segmentMaster)) {
-            return $this->sendError('Segment Master not found');
+            return $this->sendError(trans('custom.segment_master_not_found_1'));
         }
 
         $userId = Auth::id();
@@ -236,7 +236,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         $segmentMaster = $this->segmentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($segmentMaster->toArray(), 'SegmentMaster updated successfully');
+        return $this->sendResponse($segmentMaster->toArray(), trans('custom.segmentmaster_updated_successfully'));
     }
 
     /**
@@ -256,11 +256,11 @@ class SegmentMasterAPIController extends AppBaseController
         $previousValue = $segmentMaster ? $segmentMaster->toArray() : [];
 
         if (empty($segmentMaster)) {
-            return $this->sendError('Segment Master not found');
+            return $this->sendError(trans('custom.segment_master_not_found_1'));
         }
 
         if ($segmentMaster->isPublic){
-            return $this->sendError('Cannot delete this segment. This segment is a public segment.');
+            return $this->sendError(trans('custom.cannot_delete_this_segment_this_segment_is_a_publi'));
         }
 
         //delete validation 
@@ -337,11 +337,11 @@ class SegmentMasterAPIController extends AppBaseController
             $this->auditLog($db, $id,$uuid, "serviceline", "Segment master ".$segmentMaster->ServiceLineDes." has been deleted", "D", [], $previousValue);
 
             DB::commit();
-            return $this->sendResponse($id, 'Segment Master deleted successfully');
+            return $this->sendResponse($id, trans('custom.segment_master_deleted_successfully'));
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error occred while deleting segments'.$e->getMessage());
+            return $this->sendError(trans('custom.error_occred_while_deleting_segments').$e->getMessage());
         }
     }
 
@@ -658,7 +658,7 @@ class SegmentMasterAPIController extends AppBaseController
             $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($value->serviceLineSystemID);
 
             if (empty($segmentMaster)) {
-                return $this->sendError('Segment Master not found');
+                return $this->sendError(trans('custom.segment_master_not_found_1'));
             }
 
             $segmentMaster->isDeleted = 1;
@@ -775,7 +775,7 @@ class SegmentMasterAPIController extends AppBaseController
             'yesNoSelectionMaster' => $yesNoSelectionMaster
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -1072,7 +1072,7 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         if (empty($orgStructure)) {
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
         return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully');
@@ -1102,7 +1102,7 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         if (empty($orgStructure)) {
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
         return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully with deleted segments');
@@ -1202,10 +1202,10 @@ class SegmentMasterAPIController extends AppBaseController
             ->find($id);
 
         if (empty($segmentMaster)) {
-            return $this->sendError('Segment Master not found');
+            return $this->sendError(trans('custom.segment_master_not_found_1'));
         }
 
-        return $this->sendResponse($segmentMaster->toArray(), 'Segment Master retrieved successfully');
+        return $this->sendResponse($segmentMaster->toArray(), trans('custom.segment_master_retrieved_successfully'));
     }
 
     public function rejectSegmentMaster(Request $request)
@@ -1225,7 +1225,7 @@ class SegmentMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $segmentId)
             ->get();
 
-        return $this->sendResponse($assignedCompanies, 'Segment assigned companies retrieved successfully.');
+        return $this->sendResponse($assignedCompanies, trans('custom.segment_assigned_companies_retrieved_successfully'));
     }
 
     public function exportSegmentMaster(Request $request) {
@@ -1343,11 +1343,11 @@ class SegmentMasterAPIController extends AppBaseController
         $segment = SegmentMaster::withoutGlobalScope('final_level')->find($id);
 
         if (empty($segment)) {
-            return $this->sendError('Segment master not found');
+            return $this->sendError(trans('custom.segment_master_not_found'));
         }
 
         if ($segment->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this segment');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_segment'));
         }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -1356,7 +1356,7 @@ class SegmentMasterAPIController extends AppBaseController
             ->get();
 
         if ($fetchDocumentApproved->isEmpty()) {
-            return $this->sendError('Approval records not found');
+            return $this->sendError(trans('custom.approval_records_not_found'));
         }
 
         foreach ($fetchDocumentApproved as $DocumentApproved) {
@@ -1383,7 +1383,7 @@ class SegmentMasterAPIController extends AppBaseController
            SegmentMaster::withoutGlobalScope('final_level')->where('serviceLineSystemID', $id)->update($data);
         }
 
-        return $this->sendResponse($segment->toArray(), 'Segment Master Amend successfully');
+        return $this->sendResponse($segment->toArray(), trans('custom.segment_master_amend_successfully'));
 
     }
 
@@ -1391,6 +1391,6 @@ class SegmentMasterAPIController extends AppBaseController
     {
         $companySystemID = $request['companySystemID'];
         $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->where('refferedBackYN', 0)->approved()->withAssigned($companySystemID)->get();
-        return $this->sendResponse($serviceLines, 'Segments retrieved successfully');
+        return $this->sendResponse($serviceLines, trans('custom.segments_retrieved_successfully'));
     }
 }

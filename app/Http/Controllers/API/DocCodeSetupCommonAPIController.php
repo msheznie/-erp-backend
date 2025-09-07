@@ -74,7 +74,7 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $this->docCodeSetupCommonRepository->pushCriteria(new LimitOffsetCriteria($request));
         $docCodeSetupCommons = $this->docCodeSetupCommonRepository->all();
 
-        return $this->sendResponse($docCodeSetupCommons->toArray(), 'Doc Code Setup Commons retrieved successfully');
+        return $this->sendResponse($docCodeSetupCommons->toArray(), trans('custom.doc_code_setup_commons_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class DocCodeSetupCommonAPIController extends AppBaseController
 
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->create($input);
 
-        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common saved successfully');
+        return $this->sendResponse($docCodeSetupCommon->toArray(), trans('custom.doc_code_setup_common_saved_successfully'));
     }
 
     /**
@@ -176,10 +176,10 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupCommon)) {
-            return $this->sendError('Doc Code Setup Common not found');
+            return $this->sendError(trans('custom.doc_code_setup_common_not_found'));
         }
 
-        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common retrieved successfully');
+        return $this->sendResponse($docCodeSetupCommon->toArray(), trans('custom.doc_code_setup_common_retrieved_successfully'));
     }
 
     /**
@@ -245,12 +245,12 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupCommon)) {
-            return $this->sendError('Doc Code Setup Common not found');
+            return $this->sendError(trans('custom.doc_code_setup_common_not_found'));
         }
 
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->update($input, $id);
 
-        return $this->sendResponse($docCodeSetupCommon->toArray(), 'DocCodeSetupCommon updated successfully');
+        return $this->sendResponse($docCodeSetupCommon->toArray(), trans('custom.doccodesetupcommon_updated_successfully'));
     }
 
     /**
@@ -298,7 +298,7 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupCommon)) {
-            return $this->sendError('Doc Code Setup Common not found');
+            return $this->sendError(trans('custom.doc_code_setup_common_not_found'));
         }
 
         $docCodeSetupCommon->delete();
@@ -365,7 +365,7 @@ class DocCodeSetupCommonAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common retrieved successfully');
+        return $this->sendResponse($docCodeSetupCommon->toArray(), trans('custom.doc_code_setup_common_retrieved_successfully'));
     }
 
     public function updateCommonFormat(Request $request)
@@ -379,12 +379,12 @@ class DocCodeSetupCommonAPIController extends AppBaseController
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupCommon)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
 
         $docCodeSetupCommon = $this->docCodeSetupCommonRepository->update($input, $id);
 
-        return $this->sendResponse($docCodeSetupCommon->toArray(), 'Doc Code Setup Common updated successfully');
+        return $this->sendResponse($docCodeSetupCommon->toArray(), trans('custom.doc_code_setup_common_updated_successfully'));
     }
 
 }

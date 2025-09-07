@@ -72,7 +72,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $this->tenderMainWorksRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMainWorks = $this->tenderMainWorksRepository->all();
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works retrieved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class TenderMainWorksAPIController extends AppBaseController
 
         $tenderMainWorks = $this->tenderMainWorksRepository->create($input);
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works saved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works retrieved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_retrieved_successfully'));
     }
 
     /**
@@ -226,12 +226,12 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
         $tenderMainWorks = $this->tenderMainWorksRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'TenderMainWorks updated successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tendermainworks_updated_successfully'));
     }
 
     /**
@@ -278,7 +278,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
         $tenderMainWorks->delete();
@@ -348,7 +348,7 @@ class TenderMainWorksAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('main_works_item_upload_template/main_works_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('main_works_item_upload_template/main_works_item_upload_template.xlsx', 'main_works_item_upload_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -411,7 +411,7 @@ class TenderMainWorksAPIController extends AppBaseController
             }
 
             if (!$validateItem || !$validateDescription) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -445,7 +445,7 @@ class TenderMainWorksAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully_1'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

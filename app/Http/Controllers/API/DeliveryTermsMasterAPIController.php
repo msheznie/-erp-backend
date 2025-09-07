@@ -65,7 +65,7 @@ class DeliveryTermsMasterAPIController extends AppBaseController
         $this->deliveryTermsMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $deliveryTermsMasters = $this->deliveryTermsMasterRepository->all();
 
-        return $this->sendResponse($deliveryTermsMasters->toArray(), 'Delivery Terms Masters retrieved successfully');
+        return $this->sendResponse($deliveryTermsMasters->toArray(), trans('custom.delivery_terms_masters_retrieved_successfully'));
     }
 
     /**
@@ -114,12 +114,12 @@ class DeliveryTermsMasterAPIController extends AppBaseController
 
         if(isset($input['id'])){
             $deliveryTermsMaster = DeliveryTermsMaster::where('id', $input['id'])->update($masterData);
-            return $this->sendResponse($deliveryTermsMaster, 'Delivery Terms Master updated successfully');
+            return $this->sendResponse($deliveryTermsMaster, trans('custom.delivery_terms_master_updated_successfully'));
         }
 
         $deliveryTermsMaster = $this->deliveryTermsMasterRepository->create($input);
 
-        return $this->sendResponse($deliveryTermsMaster->toArray(), 'Delivery Terms Master saved successfully');
+        return $this->sendResponse($deliveryTermsMaster->toArray(), trans('custom.delivery_terms_master_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DeliveryTermsMasterAPIController extends AppBaseController
         $deliveryTermsMaster = $this->deliveryTermsMasterRepository->findWithoutFail($id);
 
         if (empty($deliveryTermsMaster)) {
-            return $this->sendError('Delivery Terms Master not found');
+            return $this->sendError(trans('custom.delivery_terms_master_not_found'));
         }
 
-        return $this->sendResponse($deliveryTermsMaster->toArray(), 'Delivery Terms Master retrieved successfully');
+        return $this->sendResponse($deliveryTermsMaster->toArray(), trans('custom.delivery_terms_master_retrieved_successfully'));
     }
 
     /**
@@ -226,12 +226,12 @@ class DeliveryTermsMasterAPIController extends AppBaseController
         $deliveryTermsMaster = $this->deliveryTermsMasterRepository->findWithoutFail($id);
 
         if (empty($deliveryTermsMaster)) {
-            return $this->sendError('Delivery Terms Master not found');
+            return $this->sendError(trans('custom.delivery_terms_master_not_found'));
         }
 
         $deliveryTermsMaster = $this->deliveryTermsMasterRepository->update($input, $id);
 
-        return $this->sendResponse($deliveryTermsMaster->toArray(), 'DeliveryTermsMaster updated successfully');
+        return $this->sendResponse($deliveryTermsMaster->toArray(), trans('custom.deliverytermsmaster_updated_successfully'));
     }
 
     /**
@@ -278,7 +278,7 @@ class DeliveryTermsMasterAPIController extends AppBaseController
         $deliveryTermsMaster = $this->deliveryTermsMasterRepository->findWithoutFail($id);
 
         if (empty($deliveryTermsMaster)) {
-            return $this->sendError('Delivery Terms Master not found');
+            return $this->sendError(trans('custom.delivery_terms_master_not_found'));
         }
 
         $deliveryTermsMaster->delete();
@@ -319,7 +319,7 @@ class DeliveryTermsMasterAPIController extends AppBaseController
 
         $deleteData = ['is_deleted'=>1];
         $deliveryTermsMaster = DeliveryTermsMaster::where('id',$deliveryTermsID )->update($deleteData);
-        return $this->sendResponse($deliveryTermsMaster, 'Delivery Terms deleted successfully');
+        return $this->sendResponse($deliveryTermsMaster, trans('custom.delivery_terms_deleted_successfully'));
     }
 
 }

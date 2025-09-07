@@ -41,7 +41,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), trans('custom.budget_det_template_entry_data_retrieved_successfu'));
     }
 
     /**
@@ -58,7 +58,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
 
         $budgetDetTemplateEntryData = $this->budgetDetTemplateEntryDataRepository->create($input);
 
-        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), 'Budget Det Template Entry Data saved successfully');
+        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), trans('custom.budget_det_template_entry_data_saved_successfully'));
     }
 
     /**
@@ -75,10 +75,10 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
         $budgetDetTemplateEntryData = $this->budgetDetTemplateEntryDataRepository->find($id);
 
         if (empty($budgetDetTemplateEntryData)) {
-            return $this->sendError('Budget Det Template Entry Data not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_data_not_found'));
         }
 
-        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), trans('custom.budget_det_template_entry_data_retrieved_successfu'));
     }
 
     /**
@@ -98,12 +98,12 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
         $budgetDetTemplateEntryData = $this->budgetDetTemplateEntryDataRepository->find($id);
 
         if (empty($budgetDetTemplateEntryData)) {
-            return $this->sendError('Budget Det Template Entry Data not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_data_not_found'));
         }
 
         $budgetDetTemplateEntryData = $this->budgetDetTemplateEntryDataRepository->update($input, $id);
 
-        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), 'BudgetDetTemplateEntryData updated successfully');
+        return $this->sendResponse($budgetDetTemplateEntryData->toArray(), trans('custom.budgetdettemplateentrydata_updated_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
         $budgetDetTemplateEntryData = $this->budgetDetTemplateEntryDataRepository->find($id);
 
         if (empty($budgetDetTemplateEntryData)) {
-            return $this->sendError('Budget Det Template Entry Data not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_data_not_found'));
         }
 
         $budgetDetTemplateEntryData->delete();
@@ -141,7 +141,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
     {
         $data = $this->budgetDetTemplateEntryDataRepository->getByEntryId($entryID);
 
-        return $this->sendResponse($data->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.budget_det_template_entry_data_retrieved_successfu'));
     }
 
     /**
@@ -155,7 +155,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
     {
         $data = $this->budgetDetTemplateEntryDataRepository->getByTemplateColumnId($templateColumnID);
 
-        return $this->sendResponse($data->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.budget_det_template_entry_data_retrieved_successfu'));
     }
 
     /**
@@ -179,7 +179,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
             $request->value
         );
 
-        return $this->sendResponse($data->toArray(), 'Budget Det Template Entry Data updated/created successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.budget_det_template_entry_data_updatedcreated_succ'));
     }
 
     /**
@@ -198,7 +198,7 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
 
         $data = $this->budgetDetTemplateEntryDataRepository->getByEntryIds($request->entryIDs);
 
-        return $this->sendResponse($data->toArray(), 'Budget Det Template Entry Data retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.budget_det_template_entry_data_retrieved_successfu'));
     }
 
     public function getItemsForBudgetPlanningTemplateDetails(Request $request) {
@@ -206,6 +206,6 @@ class BudgetDetTemplateEntryDataAPIController extends AppBaseController
 
         $items = ItemMaster::where('primaryCompanySystemID', $input['companyId'])->where('unit', $input['unitId'])->where('isActive', 1)->where('itemApprovedYN', 1)->get();
 
-        return $this->sendResponse($items->toArray(), 'Items retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.items_retrieved_successfully'));
     }
 } 

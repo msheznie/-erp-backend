@@ -115,7 +115,7 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
             if (Storage::disk('s3')->exists($filePath)) {
                 return Storage::disk('s3')->download($filePath, 'File');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             return $this->sendError('Attachment is not attached', 404);

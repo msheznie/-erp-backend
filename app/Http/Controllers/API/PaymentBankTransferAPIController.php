@@ -98,7 +98,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $this->paymentBankTransferRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentBankTransfers = $this->paymentBankTransferRepository->all();
 
-        return $this->sendResponse($paymentBankTransfers->toArray(), 'Payment Bank Transfers retrieved successfully');
+        return $this->sendResponse($paymentBankTransfers->toArray(), trans('custom.payment_bank_transfers_retrieved_successfully'));
     }
 
     /**
@@ -165,7 +165,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $end = (new Carbon())->endOfMonth();
         if ($input['documentDate'] > $end) {
-            return $this->sendError('You cannot select a date greater than the current month last day', 500);
+            return $this->sendError(trans('custom.you_cannot_select_a_date_greater_than_the_current_'), 500);
         }
 
         $input['documentSystemID'] = 64;
@@ -177,7 +177,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             $input['bankMasterID'] = $bankAccount->bankmasterAutoID;
             $input['companySystemID'] = $bankAccount->companySystemID;
         } else {
-            return $this->sendError('bank Account not found.!', 500);
+            return $this->sendError(trans('custom.bank_account_not_found_3'), 500);
         }
 
 
@@ -194,7 +194,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->max('documentDate');
 
         if ($maxAsOfDate > $input['documentDate']) {
-            return $this->sendError('You cannot create bank transfer, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
+            return $this->sendError(trans('custom.you_cannot_create_bank_transfer_please_select_the_') . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -218,7 +218,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $paymentBankTransfers = $this->paymentBankTransferRepository->create($input);
 
-        return $this->sendResponse($paymentBankTransfers->toArray(), 'Payment Bank Transfer saved successfully');
+        return $this->sendResponse($paymentBankTransfers->toArray(), trans('custom.payment_bank_transfer_saved_successfully'));
     }
 
     /**
@@ -265,7 +265,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer = $this->paymentBankTransferRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_not_found'));
         }
 
         if (!empty($paymentBankTransfer)) {
@@ -321,7 +321,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount->sum('payAmountBank');
         $paymentBankTransfer->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
-        return $this->sendResponse($paymentBankTransfer->toArray(), 'Payment Bank Transfer retrieved successfully');
+        return $this->sendResponse($paymentBankTransfer->toArray(), trans('custom.payment_bank_transfer_retrieved_successfully'));
     }
 
     /**
@@ -380,11 +380,11 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_not_found'));
         }
 
         if ($paymentBankTransfer->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_1'), 500);
         }
 
         if ($paymentBankTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -460,7 +460,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_not_found'));
         }
 
         $payments = BankLedger::where('paymentBankTransferID', $paymentBankTransfer->paymentBankTransferID)
@@ -476,7 +476,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $paymentBankTransfer->delete();
 
-        return $this->sendResponse($id, 'Payment Bank Transfer deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_bank_transfer_deleted_successfully'));
     }
 
     public function getCheckBeforeCreate(Request $request)
@@ -485,7 +485,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $bankAccount = BankAccount::find($input['bankAccountAutoID']);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.bank_account_not_found_2'));
         }
 
         $checkPending = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
@@ -497,7 +497,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             return $this->sendError("There is a bank transfer (" . $checkPending->bankTransferDocumentCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
         }
 
-        return $this->sendResponse($bankAccount->toArray(), 'Successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.successfully_1'));
     }
 
     public function getAllBankTransferByBankAccount(Request $request)
@@ -731,11 +731,11 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found', 500);
+            return $this->sendError(trans('custom.payment_bank_transfer_not_found'), 500);
         }
 
         if ($paymentBankTransfer->exportedYN == 1) {
-            return $this->sendError('This document is already exported.', 500);
+            return $this->sendError(trans('custom.this_document_is_already_exported'), 500);
         }
 
         if ($paymentBankTransfer->approvedYN != -1) {
@@ -746,7 +746,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
-        return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
+        return $this->sendResponse([], trans('custom.payment_bank_transfer_export_to_csv_successfully'));
     }
 
     function getSupplierBankMemoByCurrency ($row){
@@ -790,11 +790,11 @@ class PaymentBankTransferAPIController extends AppBaseController
         $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found', 500);
+            return $this->sendError(trans('custom.payment_bank_transfer_not_found'), 500);
         }
 
         if ($paymentBankTransfer->exportedYN == 1) {
-            return $this->sendError('This document is already exported.', 500);
+            return $this->sendError(trans('custom.this_document_is_already_exported'), 500);
         }
 
         if ($paymentBankTransfer->approvedYN != -1) {
@@ -1104,7 +1104,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download('xls');
 
-        return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
+        return $this->sendResponse([], trans('custom.payment_bank_transfer_export_to_csv_successfully'));
     }
 
     public function paymentBankTransferReopen(Request $request)
@@ -1115,19 +1115,19 @@ class PaymentBankTransferAPIController extends AppBaseController
         $bankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
         $emails = array();
         if (empty($bankTransfer)) {
-            return $this->sendError('Bank Transfer not found');
+            return $this->sendError(trans('custom.bank_transfer_not_found'));
         }
 
         if ($bankTransfer->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Bank Transfer it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_transfer_it_is_already_1'));
         }
 
         if ($bankTransfer->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Bank Transfer it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_transfer_it_is_already'));
         }
 
         if ($bankTransfer->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Bank Transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_transfer_it_is_not_con'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1201,7 +1201,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($bankTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer reopened successfully');
+        return $this->sendResponse($bankTransfer->toArray(), trans('custom.bank_transfer_reopened_successfully'));
     }
 
     public function paymentBankTransferReferBack(Request $request)
@@ -1212,11 +1212,11 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $bankTransfer = $this->paymentBankTransferRepository->find($id);
         if (empty($bankTransfer)) {
-            return $this->sendError('Bank Transfer not found');
+            return $this->sendError(trans('custom.bank_transfer_not_found'));
         }
 
         if ($bankTransfer->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this bank transfer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_bank_transfer'));
         }
 
         $bankTransferArray = $bankTransfer->toArray();
@@ -1266,7 +1266,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             $this->paymentBankTransferRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer Amend successfully');
+        return $this->sendResponse($bankTransfer->toArray(), trans('custom.bank_transfer_amend_successfully'));
     }
 
     public function getAllBankTransferSubmissionList(Request $request)

@@ -65,7 +65,7 @@ class ScheduleBidFormatDetailsAPIController extends AppBaseController
         $this->scheduleBidFormatDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->all();
 
-        return $this->sendResponse($scheduleBidFormatDetails->toArray(), 'Schedule Bid Format Details retrieved successfully');
+        return $this->sendResponse($scheduleBidFormatDetails->toArray(), trans('custom.schedule_bid_format_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ScheduleBidFormatDetailsAPIController extends AppBaseController
 
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->create($input);
 
-        return $this->sendResponse($scheduleBidFormatDetails->toArray(), 'Schedule Bid Format Details saved successfully');
+        return $this->sendResponse($scheduleBidFormatDetails->toArray(), trans('custom.schedule_bid_format_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ScheduleBidFormatDetailsAPIController extends AppBaseController
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetails)) {
-            return $this->sendError('Schedule Bid Format Details not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_not_found'));
         }
 
-        return $this->sendResponse($scheduleBidFormatDetails->toArray(), 'Schedule Bid Format Details retrieved successfully');
+        return $this->sendResponse($scheduleBidFormatDetails->toArray(), trans('custom.schedule_bid_format_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ScheduleBidFormatDetailsAPIController extends AppBaseController
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetails)) {
-            return $this->sendError('Schedule Bid Format Details not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_not_found'));
         }
 
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($scheduleBidFormatDetails->toArray(), 'ScheduleBidFormatDetails updated successfully');
+        return $this->sendResponse($scheduleBidFormatDetails->toArray(), trans('custom.schedulebidformatdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ScheduleBidFormatDetailsAPIController extends AppBaseController
         $scheduleBidFormatDetails = $this->scheduleBidFormatDetailsRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetails)) {
-            return $this->sendError('Schedule Bid Format Details not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_not_found'));
         }
 
         $scheduleBidFormatDetails->delete();

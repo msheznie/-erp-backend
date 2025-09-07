@@ -69,7 +69,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $this->finalReturnIncomeTemplateDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), 'Final Return Income Template Details retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), trans('custom.final_return_income_template_details_retrieved_suc'));
     }
 
     /**
@@ -125,7 +125,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be modified', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_mo'), 500);
         }
        
         DB::beginTransaction();
@@ -148,7 +148,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->create($input);
             DB::commit();
-            return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), 'Final Return Income Template Details saved successfully');
+            return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), trans('custom.final_return_income_template_details_saved_success'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -200,10 +200,10 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateDetails)) {
-            return $this->sendError('Final Return Income Template Details not found');
+            return $this->sendError(trans('custom.final_return_income_template_details_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), 'Final Return Income Template Details retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), trans('custom.final_return_income_template_details_retrieved_suc'));
     }
 
     /**
@@ -283,16 +283,16 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($finalReturnIncomeTemplateDetails->templateMasterID);
 
         if (empty($finalReturnIncomeTemplateDetails)) {
-            return $this->sendError('Final Return Income Template Details not found');
+            return $this->sendError(trans('custom.final_return_income_template_details_not_found'));
         }
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be updated', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_up'), 500);
         }
 
         $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), 'FinalReturnIncomeTemplateDetails updated successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), trans('custom.finalreturnincometemplatedetails_updated_successfu'));
     }
 
     /**
@@ -345,11 +345,11 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateMasterID);
 
         if (empty($finalReturnIncomeTemplateDetails)) {
-            return $this->sendError('Final Return Income Template Details not found');
+            return $this->sendError(trans('custom.final_return_income_template_details_not_found'));
         }
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be deleted', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_de'), 500);
         }
        
 
@@ -365,7 +365,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
             $record->update(['sortOrder' => $index + 1]);
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateDetails, 'Final Return Income Template Details deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDetails, trans('custom.final_return_income_template_details_deleted_succe'));
     }
 
     public function getReportTemplateDetail($templateId, Request $request) {
@@ -440,7 +440,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 'isTemplateUsed' => $isTemplateUsed
             ];
 
-        return $this->sendResponse($output, 'Final Return Income Template Details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.final_return_income_template_details_retrieved_suc'));
     }
 
     public function templateDetailRaw(Request $request) {
@@ -449,7 +449,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be modified', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_mo'), 500);
         }
        
 
@@ -507,7 +507,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
              DB::commit();
             return $this->sendResponse(
                 $record->toArray(),
-                'Final Return Income Template record(s) saved successfully'
+                trans('custom.final_return_income_template_records_saved_success')
             );
         } catch (\Exception $exception) {
             DB::rollBack();

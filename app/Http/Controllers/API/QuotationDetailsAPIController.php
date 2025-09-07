@@ -87,7 +87,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $this->quotationDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationDetails = $this->quotationDetailsRepository->all();
 
-        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details retrieved successfully');
+        return $this->sendResponse($quotationDetails->toArray(), trans('custom.quotation_details_retrieved_successfully'));
     }
 
     /**
@@ -162,7 +162,7 @@ class QuotationDetailsAPIController extends AppBaseController
             if(($category != 2 )&& ($category != 4 ))
             {
                 if (!empty($itemExist)) {
-                    return $this->sendError('Added item already exist');
+                    return $this->sendError(trans('custom.added_item_already_exist'));
                 }
             }
         }
@@ -175,7 +175,7 @@ class QuotationDetailsAPIController extends AppBaseController
             if(($category != 2 )&& ($category != 4 ))
             {
                 if (!empty($itemExist)) {
-                    return $this->sendError('Added item already exist');
+                    return $this->sendError(trans('custom.added_item_already_exist'));
                 }
             }
         }
@@ -184,14 +184,14 @@ class QuotationDetailsAPIController extends AppBaseController
         $quotationMasterData = QuotationMaster::find($input['quotationMasterID']);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
 
         if($item) {
             $unitMasterData = Unit::find($item->itemUnitOfMeasure);
             if (empty($unitMasterData)) {
-                return $this->sendError('Unit of Measure not found');
+                return $this->sendError(trans('custom.unit_of_measure_not_found'));
             }
             $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
         }
@@ -199,7 +199,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['companyID'] = $company->CompanyID;
@@ -256,7 +256,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $quotationDetails = $this->quotationDetailsRepository->create($input);
 
-        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details saved successfully');
+        return $this->sendResponse($quotationDetails->toArray(), trans('custom.quotation_details_saved_successfully'));
     }
 
     /**
@@ -303,10 +303,10 @@ class QuotationDetailsAPIController extends AppBaseController
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
 
         if (empty($quotationDetails)) {
-            return $this->sendError('Quotation Details not found');
+            return $this->sendError(trans('custom.quotation_details_not_found'));
         }
 
-        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details retrieved successfully');
+        return $this->sendResponse($quotationDetails->toArray(), trans('custom.quotation_details_retrieved_successfully'));
     }
 
     /**
@@ -366,13 +366,13 @@ class QuotationDetailsAPIController extends AppBaseController
 
         
         if (empty($quotationDetails)) {
-            return $this->sendError('Quotation Details not found');
+            return $this->sendError(trans('custom.quotation_details_not_found'));
         }
 
         $quotationMasterData = QuotationMaster::find($input['quotationMasterID']);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
 
@@ -424,10 +424,10 @@ class QuotationDetailsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($quotationDetailss->toArray(), 'Quotation Details updated successfully');
+            return $this->sendResponse($quotationDetailss->toArray(), trans('custom.quotation_details_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
     }
 
@@ -497,10 +497,10 @@ class QuotationDetailsAPIController extends AppBaseController
             $this->updateSalesQuotationOrderStatus($soQuotationMasterID);
 
             DB::commit();
-            return $this->sendResponse([], 'Sales Order Details saved successfully');
+            return $this->sendResponse([], trans('custom.sales_order_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -548,7 +548,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
 
         if (empty($quotationDetails)) {
-            return $this->sendError('Quotation Details not found');
+            return $this->sendError(trans('custom.quotation_details_not_found'));
         }
 
         $quotationMaster = QuotationMaster::find($quotationDetails->quotationMasterID);
@@ -587,7 +587,7 @@ class QuotationDetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($id, 'Quotation Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_details_deleted_successfully_1'));
     }
 
     public function getSalesQuotationDetails(Request $request)
@@ -604,7 +604,7 @@ class QuotationDetailsAPIController extends AppBaseController
             $index++;
         }
         
-        return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.quotation_details_retrieved_successfully'));
     }
 
     public function salesQuotationDetailsDeleteAll(Request $request)
@@ -662,7 +662,7 @@ class QuotationDetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($quotationMasterID, 'Quotation details deleted successfully');
+        return $this->sendResponse($quotationMasterID, trans('custom.quotation_details_deleted_successfully'));
     }
 
     public function getSalesQuotationDetailForInvoice(Request $request){
@@ -683,7 +683,7 @@ WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
 
-        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.quotation_details_retrieved_successfully'));
     }
 
 
@@ -697,7 +697,7 @@ WHERE
                                          ->first();
 
         if ($checkItem) {
-            return $this->sendError('This item has already maped with another item of this purchase request');
+            return $this->sendError(trans('custom.this_item_has_already_maped_with_another_item_of_t'));
         }
 
         $checkForPoItem = QuotationDetails::where('quotationDetailsID', $input['quotationDetailsID'])
@@ -709,13 +709,13 @@ WHERE
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $qoMaster = QuotationMaster::find($input['quotationMasterID']);
 
         if (empty($qoMaster)) {
-            return $this->sendError('Quotation Details not found');
+            return $this->sendError(trans('custom.quotation_details_not_found'));
         }
 
 
@@ -753,10 +753,10 @@ WHERE
         try {
             $quotationDetailss = $this->quotationDetailsRepository->update($input, $input['quotationDetailsID']);
             DB::commit();
-            return $this->sendResponse($input, 'Quotation item maped successfully');
+            return $this->sendResponse($input, trans('custom.quotation_item_maped_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
 
@@ -880,7 +880,7 @@ WHERE
 
 
                                 if (empty($item)) {
-                                    return $this->sendError('Added item not found in item master');
+                                    return $this->sendError(trans('custom.added_item_not_found_in_item_master'));
                                 }
                             }
 
@@ -977,10 +977,10 @@ WHERE
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Sales Order Details saved successfully');
+            return $this->sendResponse([], trans('custom.sales_order_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -1016,7 +1016,7 @@ WHERE
 
         $quotationMaster = QuotationMaster::find($input['quotationId']);
         if (empty($quotationMaster)) {
-            return $this->sendError('Quotation not found');
+            return $this->sendError(trans('custom.quotation_not_found'));
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
@@ -1024,7 +1024,7 @@ WHERE
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         // Check if item is already added to this quotation
@@ -1033,7 +1033,7 @@ WHERE
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Selected item is already added. Please check again.');
+            return $this->sendError(trans('custom.selected_item_is_already_added_please_check_again_1'));
         }
 
         // Check if item has sales category type
@@ -1047,7 +1047,7 @@ WHERE
 
         // Check if fixed asset (category 3) - not allowed in quotations
         if ($item->financeCategoryMaster == 3) {
-            return $this->sendError('Fixed assets cannot be added to quotations.');
+            return $this->sendError(trans('custom.fixed_assets_cannot_be_added_to_quotations'));
         }
 
         // Check finance category assignment
@@ -1083,7 +1083,7 @@ WHERE
                 ->first();
 
             if (empty($quotationMaster)) {
-                return $this->sendError('Quotation not found', 500);
+                return $this->sendError(trans('custom.quotation_not_found'), 500);
             }
 
             $data['isBulkItemJobRun'] = 1;
@@ -1102,7 +1102,7 @@ WHERE
         // Handle individual items
         $quotationMaster = QuotationMaster::find($input['quotationId']);
         if (empty($quotationMaster)) {
-            return $this->sendError('Quotation not found');
+            return $this->sendError(trans('custom.quotation_not_found'));
         }
 
         if (!isset($input['itemArray']) || empty($input['itemArray'])) {
@@ -1145,10 +1145,10 @@ WHERE
         ];
 
         if (count($errorItems) > 0 && count($successItems) == 0) {
-            return $this->sendError('Failed to add any items', 500, $response);
+            return $this->sendError(trans('custom.failed_to_add_any_items'), 500, $response);
         }
 
-        return $this->sendResponse($response, 'Items processed successfully');
+        return $this->sendResponse($response, trans('custom.items_processed_successfully'));
     }
 
     /**
@@ -1161,7 +1161,7 @@ WHERE
             ->first();
 
         if (empty($item)) {
-            return ['status' => false, 'message' => 'Item not found'];
+            return ['status' => false, 'message' => trans('custom.item_not_found')];
         }
 
         // Check if item is already added to this quotation

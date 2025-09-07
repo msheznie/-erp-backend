@@ -65,7 +65,7 @@ class POSSTAGShiftDetailsAPIController extends AppBaseController
         $this->pOSSTAGShiftDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->all();
 
-        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), 'P O S S T A G Shift Details retrieved successfully');
+        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), trans('custom.p_o_s_s_t_a_g_shift_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSTAGShiftDetailsAPIController extends AppBaseController
 
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->create($input);
 
-        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), 'P O S S T A G Shift Details saved successfully');
+        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), trans('custom.p_o_s_s_t_a_g_shift_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSTAGShiftDetailsAPIController extends AppBaseController
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGShiftDetails)) {
-            return $this->sendError('P O S S T A G Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_shift_details_not_found'));
         }
 
-        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), 'P O S S T A G Shift Details retrieved successfully');
+        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), trans('custom.p_o_s_s_t_a_g_shift_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSTAGShiftDetailsAPIController extends AppBaseController
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGShiftDetails)) {
-            return $this->sendError('P O S S T A G Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_shift_details_not_found'));
         }
 
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), 'POSSTAGShiftDetails updated successfully');
+        return $this->sendResponse($pOSSTAGShiftDetails->toArray(), trans('custom.posstagshiftdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSTAGShiftDetailsAPIController extends AppBaseController
         $pOSSTAGShiftDetails = $this->pOSSTAGShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGShiftDetails)) {
-            return $this->sendError('P O S S T A G Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_shift_details_not_found'));
         }
 
         $pOSSTAGShiftDetails->delete();

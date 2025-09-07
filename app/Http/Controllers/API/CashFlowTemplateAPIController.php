@@ -67,7 +67,7 @@ class CashFlowTemplateAPIController extends AppBaseController
         $this->cashFlowTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $cashFlowTemplates = $this->cashFlowTemplateRepository->all();
 
-        return $this->sendResponse($cashFlowTemplates->toArray(), 'Cash Flow Templates retrieved successfully');
+        return $this->sendResponse($cashFlowTemplates->toArray(), trans('custom.cash_flow_templates_retrieved_successfully'));
     }
 
     /**
@@ -351,7 +351,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails16 = CashFlowTemplateDetail::create($data16);
 
             DB::commit();
-            return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
+            return $this->sendResponse($reportTemplates->toArray(), trans('custom.report_template_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -402,10 +402,10 @@ class CashFlowTemplateAPIController extends AppBaseController
         $cashFlowTemplate = $this->cashFlowTemplateRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplate)) {
-            return $this->sendError('Cash Flow Template not found');
+            return $this->sendError(trans('custom.cash_flow_template_not_found'));
         }
 
-        return $this->sendResponse($cashFlowTemplate->toArray(), 'Cash Flow Template retrieved successfully');
+        return $this->sendResponse($cashFlowTemplate->toArray(), trans('custom.cash_flow_template_retrieved_successfully'));
     }
 
     /**
@@ -462,12 +462,12 @@ class CashFlowTemplateAPIController extends AppBaseController
         $cashFlowTemplate = $this->cashFlowTemplateRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplate)) {
-            return $this->sendError('Cash Flow Template not found');
+            return $this->sendError(trans('custom.cash_flow_template_not_found'));
         }
 
         $cashFlowTemplate = $this->cashFlowTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($cashFlowTemplate->toArray(), 'CashFlowTemplate updated successfully');
+        return $this->sendResponse($cashFlowTemplate->toArray(), trans('custom.cashflowtemplate_updated_successfully'));
     }
 
     /**
@@ -514,14 +514,14 @@ class CashFlowTemplateAPIController extends AppBaseController
         $cashFlowTemplate = $this->cashFlowTemplateRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplate)) {
-            return $this->sendError('Cash Flow Template not found');
+            return $this->sendError(trans('custom.cash_flow_template_not_found'));
         }
 
         CashFlowTemplateDetail::where('cashFlowTemplateID', $id)->delete();
 
         $cashFlowTemplate->delete();
 
-        return $this->sendResponse([], 'Cash Flow Template deleted successfully');
+        return $this->sendResponse([], trans('custom.cash_flow_template_deleted_successfully'));
     }
 
 
@@ -573,6 +573,6 @@ class CashFlowTemplateAPIController extends AppBaseController
                                                       ->orderBy('sortOrder');
                                             }])->find($input['templateDetailID']);
 
-        return $this->sendResponse($templateData, 'Report Template retrieved successfully');
+        return $this->sendResponse($templateData, trans('custom.report_template_retrieved_successfully'));
     }
 }

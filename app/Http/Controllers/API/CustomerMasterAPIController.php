@@ -119,7 +119,7 @@ class CustomerMasterAPIController extends AppBaseController
         $this->customerMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerMasters = $this->customerMasterRepository->all();
 
-        return $this->sendResponse($customerMasters->toArray(), 'Customer Masters retrieved successfully');
+        return $this->sendResponse($customerMasters->toArray(), trans('custom.customer_masters_retrieved_successfully'));
     }
 
 
@@ -322,14 +322,14 @@ class CustomerMasterAPIController extends AppBaseController
             'isCustomerCatalogPolicyOn'=>$hasPolicy
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getApprovedCustomers(Request $request){
 
         $customers = CustomerMaster::where('primaryCompanySystemID', $request['companySystemID'])->where('approvedYN',1)->get();
 
-        return $this->sendResponse($customers, 'Record retrieved successfully');
+        return $this->sendResponse($customers, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -337,7 +337,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         $supplier = SupplierMaster::where('primaryCompanySystemID', $request['selectedCompanyId'])->where('linkCustomerID',$request['customerID'])->where('linkCustomerYN',1)->first();
 
-        return $this->sendResponse($supplier, 'Record retrieved successfully');
+        return $this->sendResponse($supplier, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -397,7 +397,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $selectedCompanyId)
                                     ->get();
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -426,7 +426,7 @@ class CustomerMasterAPIController extends AppBaseController
                                                     })
                                                     ->get();
 
-        return $this->sendResponse($customerCategories, 'Record retrieved successfully');
+        return $this->sendResponse($customerCategories, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -460,7 +460,7 @@ class CustomerMasterAPIController extends AppBaseController
             $customerCompanies = [];
         }
 
-        return $this->sendResponse($customerCompanies, 'customer companies retrieved successfully');
+        return $this->sendResponse($customerCompanies, trans('custom.customer_companies_retrieved_successfully'));
     }
 
     /**
@@ -497,7 +497,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
             if(!$input['customer_registration_expiry_date']){
-                return $this->sendError('Registration expiry date is required.');
+                return $this->sendError(trans('custom.registration_expiry_date_is_required'));
             }
         }
    
@@ -522,7 +522,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
-                return $this->sendError('Linked company is required',500);
+                return $this->sendError(trans('custom.linked_company_is_required'),500);
             }
 
             $checkCustomerForInterCompany = CustomerMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
@@ -532,7 +532,7 @@ class CustomerMasterAPIController extends AppBaseController
                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->CustomerName,500);
+                return $this->sendError(trans('custom.the_selected_company_is_already_assigned_to') .$checkCustomerForInterCompany->CustomerName,500);
             }
 
 
@@ -611,10 +611,10 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy', 'gl_account', 'unbilled_account'])->findWithoutFail($id);
         // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
-        return $this->sendResponse($customerMaster->toArray(), 'Customer Master retrieved successfully');
+        return $this->sendResponse($customerMaster->toArray(), trans('custom.customer_master_retrieved_successfully'));
     }
 
     /**
@@ -635,7 +635,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
 
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         if (array_key_exists('custUnbilledAccountSystemID', $input)) {
@@ -647,7 +647,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customerMaster = $this->customerMasterRepository->update($input, $id);
 
-        return $this->sendResponse($customerMaster->toArray(), 'CustomerMaster updated successfully');
+        return $this->sendResponse($customerMaster->toArray(), trans('custom.customermaster_updated_successfully'));
     }
 
     /**
@@ -664,12 +664,12 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
 
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         $customerMaster->delete();
 
-        return $this->sendResponse($id, 'Customer Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_master_deleted_successfully'));
     }
 
     public function approveCustomer(Request $request)
@@ -730,7 +730,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($customers->toArray(), 'Customer Master retrieved successfully');
+        return $this->sendResponse($customers->toArray(), trans('custom.customer_master_retrieved_successfully'));
     }
 
     public function getJobsByContractAndCustomer(Request $request)
@@ -758,7 +758,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get(['ticketidAtuto', 'ticketNo']);
 
 
-        return $this->sendResponse($jobs->toArray(), 'Jobs by Customer retrieved successfully');
+        return $this->sendResponse($jobs->toArray(), trans('custom.jobs_by_customer_retrieved_successfully'));
     }
 
     public function getContractByCustomer(Request $request)
@@ -784,7 +784,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get(['ContractNumber', 'contractUID']);
 
 
-        return $this->sendResponse($contract->toArray(), 'Contracts by Customer retrieved successfully');
+        return $this->sendResponse($contract->toArray(), trans('custom.contracts_by_customer_retrieved_successfully'));
     }
 
     public function getCustomerByCompany(Request $request)
@@ -821,7 +821,7 @@ class CustomerMasterAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');
+        return $this->sendResponse($customerCompanies->toArray(), trans('custom.customer_companies_retrieved_successfully'));
     }
 
     public function customerReferBack(Request $request)
@@ -832,11 +832,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customer = $this->customerMasterRepository->find($id);
         if (empty($customer)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         if ($customer->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this customer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_customer'));
         }
 
         $customerArray = $customer->toArray();
@@ -875,7 +875,7 @@ class CustomerMasterAPIController extends AppBaseController
             $this->customerMasterRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($customer->toArray(), 'Customer Master Amend successfully');
+        return $this->sendResponse($customer->toArray(), trans('custom.customer_master_amend_successfully'));
     }
 
     public function exportCustomerMaster(Request $request)
@@ -971,7 +971,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     $customers = $customers->take(10)->get();
 
-    return $this->sendResponse($customers->toArray(), 'Data retrieved successfully');
+    return $this->sendResponse($customers->toArray(), trans('custom.data_retrieved_successfully'));
 }
 
     public function getSelectedCompanyReportingCurrencyData(Request $request)
@@ -999,7 +999,7 @@ class CustomerMasterAPIController extends AppBaseController
         ];
 
 
-        return $this->sendResponse($resData, 'Data retrieved successfully');
+        return $this->sendResponse($resData, trans('custom.data_retrieved_successfully'));
     }
 
      public function customerReOpen(Request $request)
@@ -1025,14 +1025,14 @@ class CustomerMasterAPIController extends AppBaseController
             if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/item_pos_template.xlsx')) {
                 return Storage::disk($disk)->download('Master_Template/'.$document_id.'/item_pos_template.xlsx', 'item_pos_template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
 
             if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
                 return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
 
         }
@@ -2972,7 +2972,7 @@ class CustomerMasterAPIController extends AppBaseController
                     ->exists();
 
 
-        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], 'Record retrieved successfully');
+        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateCustomerAmend(Request $request)
@@ -2982,7 +2982,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = CustomerMaster::find($input['customerID']);
 
         if (!$customerMaster) {
-            return $this->sendError('Customer Data not found');
+            return $this->sendError(trans('custom.customer_data_not_found'));
         }
       
 
@@ -3109,7 +3109,7 @@ class CustomerMasterAPIController extends AppBaseController
             })
             ->get();
 
-        return $this->sendResponse($customers, 'Customer Master retrieved successfully');
+        return $this->sendResponse($customers, trans('custom.customer_master_retrieved_successfully'));
     }
 
 }

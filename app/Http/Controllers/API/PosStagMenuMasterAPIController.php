@@ -65,7 +65,7 @@ class PosStagMenuMasterAPIController extends AppBaseController
         $this->posStagMenuMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $posStagMenuMasters = $this->posStagMenuMasterRepository->all();
 
-        return $this->sendResponse($posStagMenuMasters->toArray(), 'Pos Stag Menu Masters retrieved successfully');
+        return $this->sendResponse($posStagMenuMasters->toArray(), trans('custom.pos_stag_menu_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PosStagMenuMasterAPIController extends AppBaseController
 
         $posStagMenuMaster = $this->posStagMenuMasterRepository->create($input);
 
-        return $this->sendResponse($posStagMenuMaster->toArray(), 'Pos Stag Menu Master saved successfully');
+        return $this->sendResponse($posStagMenuMaster->toArray(), trans('custom.pos_stag_menu_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PosStagMenuMasterAPIController extends AppBaseController
         $posStagMenuMaster = $this->posStagMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posStagMenuMaster)) {
-            return $this->sendError('Pos Stag Menu Master not found');
+            return $this->sendError(trans('custom.pos_stag_menu_master_not_found'));
         }
 
-        return $this->sendResponse($posStagMenuMaster->toArray(), 'Pos Stag Menu Master retrieved successfully');
+        return $this->sendResponse($posStagMenuMaster->toArray(), trans('custom.pos_stag_menu_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PosStagMenuMasterAPIController extends AppBaseController
         $posStagMenuMaster = $this->posStagMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posStagMenuMaster)) {
-            return $this->sendError('Pos Stag Menu Master not found');
+            return $this->sendError(trans('custom.pos_stag_menu_master_not_found'));
         }
 
         $posStagMenuMaster = $this->posStagMenuMasterRepository->update($input, $id);
 
-        return $this->sendResponse($posStagMenuMaster->toArray(), 'PosStagMenuMaster updated successfully');
+        return $this->sendResponse($posStagMenuMaster->toArray(), trans('custom.posstagmenumaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PosStagMenuMasterAPIController extends AppBaseController
         $posStagMenuMaster = $this->posStagMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posStagMenuMaster)) {
-            return $this->sendError('Pos Stag Menu Master not found');
+            return $this->sendError(trans('custom.pos_stag_menu_master_not_found'));
         }
 
         $posStagMenuMaster->delete();

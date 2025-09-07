@@ -65,7 +65,7 @@ class SMECountryAPIController extends AppBaseController
         $this->sMECountryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMECountries = $this->sMECountryRepository->all();
 
-        return $this->sendResponse($sMECountries->toArray(), 'S M E Countries retrieved successfully');
+        return $this->sendResponse($sMECountries->toArray(), trans('custom.s_m_e_countries_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMECountryAPIController extends AppBaseController
 
         $sMECountry = $this->sMECountryRepository->create($input);
 
-        return $this->sendResponse($sMECountry->toArray(), 'S M E Country saved successfully');
+        return $this->sendResponse($sMECountry->toArray(), trans('custom.s_m_e_country_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMECountryAPIController extends AppBaseController
         $sMECountry = $this->sMECountryRepository->findWithoutFail($id);
 
         if (empty($sMECountry)) {
-            return $this->sendError('S M E Country not found');
+            return $this->sendError(trans('custom.s_m_e_country_not_found'));
         }
 
-        return $this->sendResponse($sMECountry->toArray(), 'S M E Country retrieved successfully');
+        return $this->sendResponse($sMECountry->toArray(), trans('custom.s_m_e_country_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMECountryAPIController extends AppBaseController
         $sMECountry = $this->sMECountryRepository->findWithoutFail($id);
 
         if (empty($sMECountry)) {
-            return $this->sendError('S M E Country not found');
+            return $this->sendError(trans('custom.s_m_e_country_not_found'));
         }
 
         $sMECountry = $this->sMECountryRepository->update($input, $id);
 
-        return $this->sendResponse($sMECountry->toArray(), 'SMECountry updated successfully');
+        return $this->sendResponse($sMECountry->toArray(), trans('custom.smecountry_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMECountryAPIController extends AppBaseController
         $sMECountry = $this->sMECountryRepository->findWithoutFail($id);
 
         if (empty($sMECountry)) {
-            return $this->sendError('S M E Country not found');
+            return $this->sendError(trans('custom.s_m_e_country_not_found'));
         }
 
         $sMECountry->delete();

@@ -705,7 +705,7 @@ class BankLedgerAPIController extends AppBaseController
         $PaySupplierInvoiceMasterData = PaySupplierInvoiceMaster::find($id);
 
         if (empty($PaySupplierInvoiceMasterData)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
@@ -783,7 +783,7 @@ class BankLedgerAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in pvSupplierPrint: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
 
     }
@@ -818,7 +818,7 @@ class BankLedgerAPIController extends AppBaseController
 
                 $bankAccountAutoID = $entity->BPVAccount;
             } else {
-                return $this->sendError('Error', 500);
+                return $this->sendError(trans('custom.error'), 500);
             }
 
 
@@ -879,7 +879,7 @@ class BankLedgerAPIController extends AppBaseController
                 $this->paySupplierInvoiceMasterRepository->update($updateArray, $id);
                 $entity = $this->paySupplierInvoiceMasterRepository->find($id);
             }
-            return $this->sendResponse($entity->toArray(), 'Successfully updated');
+            return $this->sendResponse($entity->toArray(), trans('custom.successfully_updated'));
         } else {
             return $this->sendError(trans('custom.error'), 500);
         }
@@ -2258,7 +2258,7 @@ class BankLedgerAPIController extends AppBaseController
             DB::rollback();
             return ['success' => false, 'message' => $e . trans('custom.error')];
         }
-        // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+        // return $this->sendResponse($bankLedger->toArray(), trans('custom.updated_successfully'));
     }
 
     public function printChequeItems(Request $request)

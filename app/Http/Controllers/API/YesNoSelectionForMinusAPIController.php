@@ -49,7 +49,7 @@ class YesNoSelectionForMinusAPIController extends AppBaseController
         $this->yesNoSelectionForMinusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $yesNoSelectionForMinuses = $this->yesNoSelectionForMinusRepository->all();
 
-        return $this->sendResponse($yesNoSelectionForMinuses->toArray(), 'Yes No Selection For Minuses retrieved successfully');
+        return $this->sendResponse($yesNoSelectionForMinuses->toArray(), trans('custom.yes_no_selection_for_minuses_retrieved_successfull'));
     }
 
     /**
@@ -66,7 +66,7 @@ class YesNoSelectionForMinusAPIController extends AppBaseController
 
         $yesNoSelectionForMinuses = $this->yesNoSelectionForMinusRepository->create($input);
 
-        return $this->sendResponse($yesNoSelectionForMinuses->toArray(), 'Yes No Selection For Minus saved successfully');
+        return $this->sendResponse($yesNoSelectionForMinuses->toArray(), trans('custom.yes_no_selection_for_minus_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class YesNoSelectionForMinusAPIController extends AppBaseController
         $yesNoSelectionForMinus = $this->yesNoSelectionForMinusRepository->findWithoutFail($id);
 
         if (empty($yesNoSelectionForMinus)) {
-            return $this->sendError('Yes No Selection For Minus not found');
+            return $this->sendError(trans('custom.yes_no_selection_for_minus_not_found'));
         }
 
-        return $this->sendResponse($yesNoSelectionForMinus->toArray(), 'Yes No Selection For Minus retrieved successfully');
+        return $this->sendResponse($yesNoSelectionForMinus->toArray(), trans('custom.yes_no_selection_for_minus_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class YesNoSelectionForMinusAPIController extends AppBaseController
         $yesNoSelectionForMinus = $this->yesNoSelectionForMinusRepository->findWithoutFail($id);
 
         if (empty($yesNoSelectionForMinus)) {
-            return $this->sendError('Yes No Selection For Minus not found');
+            return $this->sendError(trans('custom.yes_no_selection_for_minus_not_found'));
         }
 
         $yesNoSelectionForMinus = $this->yesNoSelectionForMinusRepository->update($input, $id);
 
-        return $this->sendResponse($yesNoSelectionForMinus->toArray(), 'YesNoSelectionForMinus updated successfully');
+        return $this->sendResponse($yesNoSelectionForMinus->toArray(), trans('custom.yesnoselectionforminus_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class YesNoSelectionForMinusAPIController extends AppBaseController
         $yesNoSelectionForMinus = $this->yesNoSelectionForMinusRepository->findWithoutFail($id);
 
         if (empty($yesNoSelectionForMinus)) {
-            return $this->sendError('Yes No Selection For Minus not found');
+            return $this->sendError(trans('custom.yes_no_selection_for_minus_not_found'));
         }
 
         $yesNoSelectionForMinus->delete();
 
-        return $this->sendResponse($id, 'Yes No Selection For Minus deleted successfully');
+        return $this->sendResponse($id, trans('custom.yes_no_selection_for_minus_deleted_successfully'));
     }
 }

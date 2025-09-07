@@ -82,7 +82,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $this->debitNoteDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $debitNoteDetails = $this->debitNoteDetailsRepository->all();
 
-        return $this->sendResponse($debitNoteDetails->toArray(), 'Debit Note Details retrieved successfully');
+        return $this->sendResponse($debitNoteDetails->toArray(), trans('custom.debit_note_details_retrieved_successfully'));
     }
 
     /**
@@ -135,7 +135,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
      
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
   
@@ -191,7 +191,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         if ($debitNote->projectID) {
@@ -205,7 +205,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_1'));
         }
 
         $input['glCode'] = $chartOfAccount->AccountCode;
@@ -253,7 +253,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         $debitNoteDetails = $this->debitNoteDetailsRepository->create($input);
 
-        return $this->sendResponse($debitNoteDetails->toArray(), 'Debit Note Details saved successfully');
+        return $this->sendResponse($debitNoteDetails->toArray(), trans('custom.debit_note_details_saved_successfully'));
     }
 
     /**
@@ -300,10 +300,10 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $debitNoteDetails = $this->debitNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetails)) {
-            return $this->sendError('Debit Note Details not found');
+            return $this->sendError(trans('custom.debit_note_details_not_found'));
         }
 
-        return $this->sendResponse($debitNoteDetails->toArray(), 'Debit Note Details retrieved successfully');
+        return $this->sendResponse($debitNoteDetails->toArray(), trans('custom.debit_note_details_retrieved_successfully'));
     }
 
     /**
@@ -363,13 +363,13 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $debitNoteDetails = $this->debitNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetails)) {
-            return $this->sendError('Debit Note Details not found');
+            return $this->sendError(trans('custom.debit_note_details_not_found'));
         }
 
         $debitNote = DebitNote::find($input['debitNoteAutoID']);
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if(isset($input['detail_project_id'])){
@@ -383,7 +383,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    return $this->sendError(trans('custom.department_not_found'));
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
@@ -504,7 +504,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
 
         $debitNote->save();
-        return $this->sendResponse($debitNoteDetails->toArray(), 'DebitNoteDetails updated successfully');
+        return $this->sendResponse($debitNoteDetails->toArray(), trans('custom.debitnotedetails_updated_successfully'));
     }
 
     /**
@@ -551,12 +551,12 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $debitNoteDetails = $this->debitNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetails)) {
-            return $this->sendError('Debit Note Details not found');
+            return $this->sendError(trans('custom.debit_note_details_not_found'));
         }
 
         $debitNoteDetails->delete();
 
-        return $this->sendResponse($id, 'Debit Note Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.debit_note_details_deleted_successfully'));
     }
 
     public function getDetailsByDebitNote(Request $request)
@@ -568,7 +568,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
             ->with(['segment'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Debit Note Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.debit_note_details_retrieved_successfully'));
     }
 
 }

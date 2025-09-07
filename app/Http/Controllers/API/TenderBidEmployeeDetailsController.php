@@ -39,7 +39,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
 
     public function getEmployees(Request $request) {
         $data = $this->tenderBidEmployeeService->getEmployees($request);
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
     }
 
     public function deleteEmp(Request $request) {
@@ -51,28 +51,28 @@ class TenderBidEmployeeDetailsController extends AppBaseController
                 return $this->sendResponse([], $response['message']);
             }
         } catch(\Exception $exception){
-            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
         }
     }
 
     public function getEmployeesApproval(Request $request) {
         
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('status', true)->count();
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
 
     }
 
     public function getEmployeesCommercialApproval(Request $request) {
         
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('commercial_eval_status', true)->count();
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
 
     }
 
     public function getEmployeesTenderAwardinglApproval(Request $request) {
         
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('tender_award_commite_mem_status', true)->count();
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
 
     }
 
@@ -83,7 +83,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
             if(!$response['success']){
                 return $this->sendError($response['message']);
             } else {
-                return $this->sendResponse([], 'User access details deleted successfully');
+                return $this->sendResponse([], trans('custom.user_access_details_deleted_successfully'));
             }
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage());

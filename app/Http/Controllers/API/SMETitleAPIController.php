@@ -65,7 +65,7 @@ class SMETitleAPIController extends AppBaseController
         $this->sMETitleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMETitles = $this->sMETitleRepository->all();
 
-        return $this->sendResponse($sMETitles->toArray(), 'S M E Titles retrieved successfully');
+        return $this->sendResponse($sMETitles->toArray(), trans('custom.s_m_e_titles_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMETitleAPIController extends AppBaseController
 
         $sMETitle = $this->sMETitleRepository->create($input);
 
-        return $this->sendResponse($sMETitle->toArray(), 'S M E Title saved successfully');
+        return $this->sendResponse($sMETitle->toArray(), trans('custom.s_m_e_title_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMETitleAPIController extends AppBaseController
         $sMETitle = $this->sMETitleRepository->findWithoutFail($id);
 
         if (empty($sMETitle)) {
-            return $this->sendError('S M E Title not found');
+            return $this->sendError(trans('custom.s_m_e_title_not_found'));
         }
 
-        return $this->sendResponse($sMETitle->toArray(), 'S M E Title retrieved successfully');
+        return $this->sendResponse($sMETitle->toArray(), trans('custom.s_m_e_title_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMETitleAPIController extends AppBaseController
         $sMETitle = $this->sMETitleRepository->findWithoutFail($id);
 
         if (empty($sMETitle)) {
-            return $this->sendError('S M E Title not found');
+            return $this->sendError(trans('custom.s_m_e_title_not_found'));
         }
 
         $sMETitle = $this->sMETitleRepository->update($input, $id);
 
-        return $this->sendResponse($sMETitle->toArray(), 'SMETitle updated successfully');
+        return $this->sendResponse($sMETitle->toArray(), trans('custom.smetitle_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMETitleAPIController extends AppBaseController
         $sMETitle = $this->sMETitleRepository->findWithoutFail($id);
 
         if (empty($sMETitle)) {
-            return $this->sendError('S M E Title not found');
+            return $this->sendError(trans('custom.s_m_e_title_not_found'));
         }
 
         $sMETitle->delete();

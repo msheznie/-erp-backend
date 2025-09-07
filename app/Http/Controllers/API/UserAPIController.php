@@ -61,7 +61,7 @@ class UserAPIController extends AppBaseController
         $this->userRepository->pushCriteria(new LimitOffsetCriteria($request));
         $users = $this->userRepository->all();
 
-        return $this->sendResponse($users->toArray(), 'Users retrieved successfully');
+        return $this->sendResponse($users->toArray(), trans('custom.users_retrieved_successfully'));
     }
 
     /**
@@ -79,12 +79,12 @@ class UserAPIController extends AppBaseController
             $id = Auth::id();
             $user = Auth::user();
             if (empty($user)) {
-                return $this->sendError('User not found');
+                return $this->sendError(trans('custom.user_not_found'));
             }
-            return $this->sendResponse([], 'User retrieved successfully');
+            return $this->sendResponse([], trans('custom.user_retrieved_successfully'));
 
         } catch (\Exception $exception) {
-            return $this->sendError('User not found');
+            return $this->sendError(trans('custom.user_not_found'));
         }
     }
 
@@ -150,7 +150,7 @@ class UserAPIController extends AppBaseController
             return $ex->getMessage();
         }
 
-        return $this->sendResponse($user->toArray(), 'User compnies retrieved successfully');
+        return $this->sendResponse($user->toArray(), trans('custom.user_compnies_retrieved_successfully'));
     }
 
     /**
@@ -167,7 +167,7 @@ class UserAPIController extends AppBaseController
 
         $users = $this->userRepository->create($input);
 
-        return $this->sendResponse($users->toArray(), 'User saved successfully');
+        return $this->sendResponse($users->toArray(), trans('custom.user_saved_successfully'));
     }
 
     /**
@@ -184,10 +184,10 @@ class UserAPIController extends AppBaseController
         $user = $this->userRepository->findWithoutFail($id);
 
         if (empty($user)) {
-            return $this->sendError('User not found');
+            return $this->sendError(trans('custom.user_not_found'));
         }
 
-        return $this->sendResponse($user->toArray(), 'User retrieved successfully');
+        return $this->sendResponse($user->toArray(), trans('custom.user_retrieved_successfully'));
     }
 
     /**
@@ -207,12 +207,12 @@ class UserAPIController extends AppBaseController
         $user = $this->userRepository->findWithoutFail($id);
 
         if (empty($user)) {
-            return $this->sendError('User not found');
+            return $this->sendError(trans('custom.user_not_found'));
         }
 
         $user = $this->userRepository->update($input, $id);
 
-        return $this->sendResponse($user->toArray(), 'User updated successfully');
+        return $this->sendResponse($user->toArray(), trans('custom.user_updated_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class UserAPIController extends AppBaseController
         $user = $this->userRepository->findWithoutFail($id);
 
         if (empty($user)) {
-            return $this->sendError('User not found');
+            return $this->sendError(trans('custom.user_not_found'));
         }
 
         $user->delete();
 
-        return $this->sendResponse($id, 'User deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_deleted_successfully'));
     }
 
     public function loginwithToken(request $request){
@@ -243,7 +243,7 @@ class UserAPIController extends AppBaseController
           $data['uname'] = $users->email;
           $data['pw'] = null;
           $this->userRepository->update(['login_token'=>NULL],$users->id);
-          return $this->sendResponse($data, 'User retrieved successfully');
+          return $this->sendResponse($data, trans('custom.user_retrieved_successfully'));
       }else{
           return $this->sendError('', 500);
       }

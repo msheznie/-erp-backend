@@ -67,7 +67,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
         $this->taxVatMainCategoriesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->all();
 
-        return $this->sendResponse($taxVatMainCategories->toArray(), 'Tax Vat Main Categories retrieved successfully');
+        return $this->sendResponse($taxVatMainCategories->toArray(), trans('custom.tax_vat_main_categories_retrieved_successfully'));
     }
 
     /**
@@ -113,7 +113,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
         $input = $request->all();
 
         if(!(isset($input['taxMasterAutoID']) && $input['taxMasterAutoID'])){
-            return $this->sendError('Tax Master Auto ID is not found',500);
+            return $this->sendError(trans('custom.tax_master_auto_id_is_not_found'),500);
         }
 
         $validator = \Validator::make($input, [
@@ -126,7 +126,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
 
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->create($input);
 
-        return $this->sendResponse($taxVatMainCategories->toArray(), 'Tax Vat Main Categories saved successfully');
+        return $this->sendResponse($taxVatMainCategories->toArray(), trans('custom.tax_vat_main_categories_saved_successfully'));
     }
 
     /**
@@ -173,10 +173,10 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatMainCategories)) {
-            return $this->sendError('Tax Vat Main Categories not found');
+            return $this->sendError(trans('custom.tax_vat_main_categories_not_found'));
         }
 
-        return $this->sendResponse($taxVatMainCategories->toArray(), 'Tax Vat Main Categories retrieved successfully');
+        return $this->sendResponse($taxVatMainCategories->toArray(), trans('custom.tax_vat_main_categories_retrieved_successfully'));
     }
 
     /**
@@ -233,7 +233,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatMainCategories)) {
-            return $this->sendError('Tax Vat Main Categories not found');
+            return $this->sendError(trans('custom.tax_vat_main_categories_not_found'));
         }
 
         $validator = \Validator::make($input, [
@@ -246,7 +246,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
 
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->update($input, $id);
 
-        return $this->sendResponse($taxVatMainCategories->toArray(), 'TaxVatMainCategories updated successfully');
+        return $this->sendResponse($taxVatMainCategories->toArray(), trans('custom.taxvatmaincategories_updated_successfully'));
     }
 
     /**
@@ -293,17 +293,17 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatMainCategories)) {
-            return $this->sendError('Tax Vat Main Categories not found');
+            return $this->sendError(trans('custom.tax_vat_main_categories_not_found'));
         }
 
         $isExists = TaxVatCategories::where('mainCategory',$id)->exists();
         if ($isExists) {
-            return $this->sendError('You cannot delete. This main category has assigned sub categories');
+            return $this->sendError(trans('custom.you_cannot_delete_this_main_category_has_assigned_'));
         }
 
         $taxVatMainCategories->delete();
 
-        return $this->sendResponse([],'Tax Vat Main Categories deleted successfully');
+        return $this->sendResponse([],trans('custom.tax_vat_main_categories_deleted_successfully'));
     }
 
     public function getAllVatMainCategories(Request $request){

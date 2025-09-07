@@ -78,7 +78,7 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $this->documentEmailNotificationDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentEmailNotificationDetails = $this->documentEmailNotificationDetailRepository->all();
 
-        return $this->sendResponse($documentEmailNotificationDetails->toArray(), 'Document Email Notification Details retrieved successfully');
+        return $this->sendResponse($documentEmailNotificationDetails->toArray(), trans('custom.document_email_notification_details_retrieved_succ'));
     }
 
     /**
@@ -129,7 +129,7 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if ($validate) {
-            return $this->sendError('Selected employee already exists in the selected policy category');
+            return $this->sendError(trans('custom.selected_employee_already_exists_in_the_selected_p'));
         } else {
             if ($employees) {
                 foreach ($employees as $val) {
@@ -147,7 +147,7 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($employeeEmailPolicy->toArray(), 'Document Email Notification Detail saved successfully');
+        return $this->sendResponse($employeeEmailPolicy->toArray(), trans('custom.document_email_notification_detail_saved_successfu'));
     }
 
     /**
@@ -194,10 +194,10 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $documentEmailNotificationDetail = $this->documentEmailNotificationDetailRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationDetail)) {
-            return $this->sendError('Document Email Notification Detail not found');
+            return $this->sendError(trans('custom.document_email_notification_detail_not_found'));
         }
 
-        return $this->sendResponse($documentEmailNotificationDetail->toArray(), 'Document Email Notification Detail retrieved successfully');
+        return $this->sendResponse($documentEmailNotificationDetail->toArray(), trans('custom.document_email_notification_detail_retrieved_succe'));
     }
 
     /**
@@ -266,12 +266,12 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $documentEmailNotificationDetail = $this->documentEmailNotificationDetailRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationDetail)) {
-            return $this->sendError('Document Email Notification Detail not found');
+            return $this->sendError(trans('custom.document_email_notification_detail_not_found'));
         }
 
         $documentEmailNotificationDetail = $this->documentEmailNotificationDetailRepository->update($input, $id);
 
-        return $this->sendResponse($documentEmailNotificationDetail->toArray(), 'DocumentEmailNotificationDetail updated successfully');
+        return $this->sendResponse($documentEmailNotificationDetail->toArray(), trans('custom.documentemailnotificationdetail_updated_successful'));
     }
 
     /**
@@ -318,12 +318,12 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $documentEmailNotificationDetail = $this->documentEmailNotificationDetailRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationDetail)) {
-            return $this->sendError('Document Email Notification Detail not found');
+            return $this->sendError(trans('custom.document_email_notification_detail_not_found'));
         }
 
         $documentEmailNotificationDetail->delete();
 
-        return $this->sendResponse($id, 'Document Email Notification Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_email_notification_detail_deleted_success'));
     }
 
     public function getAllCompanyEmailSendingPolicy(Request $request)

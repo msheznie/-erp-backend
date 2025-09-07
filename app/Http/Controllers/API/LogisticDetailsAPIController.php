@@ -82,7 +82,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $this->logisticDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logisticDetails = $this->logisticDetailsRepository->all();
 
-        return $this->sendResponse($logisticDetails->toArray(), 'Logistic Details retrieved successfully');
+        return $this->sendResponse($logisticDetails->toArray(), trans('custom.logistic_details_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class LogisticDetailsAPIController extends AppBaseController
 
         $logisticDetails = $this->logisticDetailsRepository->create($input);
 
-        return $this->sendResponse($logisticDetails->toArray(), 'Logistic Details saved successfully');
+        return $this->sendResponse($logisticDetails->toArray(), trans('custom.logistic_details_saved_successfully'));
     }
 
     /**
@@ -176,10 +176,10 @@ class LogisticDetailsAPIController extends AppBaseController
         $logisticDetails = $this->logisticDetailsRepository->findWithoutFail($id);
 
         if (empty($logisticDetails)) {
-            return $this->sendError('Logistic Details not found');
+            return $this->sendError(trans('custom.logistic_details_not_found'));
         }
 
-        return $this->sendResponse($logisticDetails->toArray(), 'Logistic Details retrieved successfully');
+        return $this->sendResponse($logisticDetails->toArray(), trans('custom.logistic_details_retrieved_successfully'));
     }
 
     /**
@@ -236,12 +236,12 @@ class LogisticDetailsAPIController extends AppBaseController
         $logisticDetails = $this->logisticDetailsRepository->findWithoutFail($id);
 
         if (empty($logisticDetails)) {
-            return $this->sendError('Logistic Details not found');
+            return $this->sendError(trans('custom.logistic_details_not_found'));
         }
 
         $logisticDetails = $this->logisticDetailsRepository->update(array_only($input, ['itemShippingQty']), $id);
 
-        return $this->sendResponse($logisticDetails->toArray(), 'Logistic Details updated successfully');
+        return $this->sendResponse($logisticDetails->toArray(), trans('custom.logistic_details_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $logisticDetails = $this->logisticDetailsRepository->findWithoutFail($id);
 
         if (empty($logisticDetails)) {
-            return $this->sendError('Logistic Details not found');
+            return $this->sendError(trans('custom.logistic_details_not_found'));
         }
 
         $poDetail = PurchaseOrderDetails::find($logisticDetails->POdetailID);
@@ -312,7 +312,7 @@ class LogisticDetailsAPIController extends AppBaseController
 
         $logisticDetails->delete();
 
-        return $this->sendResponse($id, 'Logistic Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.logistic_details_deleted_successfully'));
     }
 
     /**
@@ -331,7 +331,7 @@ class LogisticDetailsAPIController extends AppBaseController
             ->with(['uom', 'supplier_by', 'warehouse_by', 'po'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Logistic Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.logistic_details_retrieved_successfully'));
     }
 
     public function getPurchaseOrdersForLogistic(Request $request)
@@ -342,7 +342,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $logistic = Logistic::find($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
         $validator = \Validator::make($logistic->toArray(), [
@@ -366,7 +366,7 @@ class LogisticDetailsAPIController extends AppBaseController
             ->where('approved', -1)
             ->get();
 
-        return $this->sendResponse($purchaseOrders->toArray(), 'Purchase Orders retrieved successfully');
+        return $this->sendResponse($purchaseOrders->toArray(), trans('custom.purchase_orders_retrieved_successfully'));
     }
 
     public function getGrvByPOForLogistic(Request $request)
@@ -377,7 +377,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $purchaseOrder = ProcumentOrder::with('detail')->find($id);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $grvs = GRVMaster::where('companySystemID', $purchaseOrder->companySystemID)
@@ -394,7 +394,7 @@ class LogisticDetailsAPIController extends AppBaseController
             })
             ->get();
 
-        return $this->sendResponse($grvs->toArray(), 'GRV  retrieved successfully');
+        return $this->sendResponse($grvs->toArray(), trans('custom.grv_retrieved_successfully_1'));
     }
 
     public function getGrvDetailsByGrvForLogistic(Request $request)
@@ -416,10 +416,10 @@ class LogisticDetailsAPIController extends AppBaseController
         }])->find($id);
 
         if (empty($grv)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
-        return $this->sendResponse($grv->details, 'Good Receipt Voucher Details retrieved successfully');
+        return $this->sendResponse($grv->details, trans('custom.good_receipt_voucher_details_retrieved_successfull'));
     }
 
     public function addLogisticDetails(Request $request)
@@ -431,7 +431,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $logistic = $this->logisticRepository->findWithoutFail($input['logisticMasterID']);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found', 500);
+            return $this->sendError(trans('custom.logistic_not_found'), 500);
         }
 
         $finalError = array('same_item' => array());
@@ -517,7 +517,7 @@ class LogisticDetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($logistic, 'Logistic Details added successfully');
+        return $this->sendResponse($logistic, trans('custom.logistic_details_added_successfully'));
 
     }
 

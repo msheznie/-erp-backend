@@ -66,7 +66,7 @@ class ERPAssetTransferDetailsRefferedbackAPIController extends AppBaseController
         $this->eRPAssetTransferDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetTransferDetailsRefferedbacks = $this->eRPAssetTransferDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($eRPAssetTransferDetailsRefferedbacks->toArray(), 'E R P Asset Transfer Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($eRPAssetTransferDetailsRefferedbacks->toArray(), trans('custom.e_r_p_asset_transfer_details_refferedbacks_retriev'));
     }
 
     /**
@@ -113,7 +113,7 @@ class ERPAssetTransferDetailsRefferedbackAPIController extends AppBaseController
 
         $eRPAssetTransferDetailsRefferedback = $this->eRPAssetTransferDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), 'E R P Asset Transfer Details Refferedback saved successfully');
+        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), trans('custom.e_r_p_asset_transfer_details_refferedback_saved_su'));
     }
 
     /**
@@ -160,10 +160,10 @@ class ERPAssetTransferDetailsRefferedbackAPIController extends AppBaseController
         $eRPAssetTransferDetailsRefferedback = $this->eRPAssetTransferDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetailsRefferedback)) {
-            return $this->sendError('E R P Asset Transfer Details Refferedback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_details_refferedback_not_foun'));
         }
 
-        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), 'E R P Asset Transfer Details Refferedback retrieved successfully');
+        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), trans('custom.e_r_p_asset_transfer_details_refferedback_retrieve'));
     }
 
     /**
@@ -220,12 +220,12 @@ class ERPAssetTransferDetailsRefferedbackAPIController extends AppBaseController
         $eRPAssetTransferDetailsRefferedback = $this->eRPAssetTransferDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetailsRefferedback)) {
-            return $this->sendError('E R P Asset Transfer Details Refferedback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_details_refferedback_not_foun'));
         }
 
         $eRPAssetTransferDetailsRefferedback = $this->eRPAssetTransferDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), 'ERPAssetTransferDetailsRefferedback updated successfully');
+        return $this->sendResponse($eRPAssetTransferDetailsRefferedback->toArray(), trans('custom.erpassettransferdetailsrefferedback_updated_succes'));
     }
 
     /**
@@ -272,7 +272,7 @@ class ERPAssetTransferDetailsRefferedbackAPIController extends AppBaseController
         $eRPAssetTransferDetailsRefferedback = $this->eRPAssetTransferDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetailsRefferedback)) {
-            return $this->sendError('E R P Asset Transfer Details Refferedback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_details_refferedback_not_foun'));
         }
 
         $eRPAssetTransferDetailsRefferedback->delete();

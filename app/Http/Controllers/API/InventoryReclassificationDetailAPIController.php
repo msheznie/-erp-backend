@@ -84,7 +84,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $this->inventoryReclassificationDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $inventoryReclassificationDetails = $this->inventoryReclassificationDetailRepository->all();
 
-        return $this->sendResponse($inventoryReclassificationDetails->toArray(), 'Inventory Reclassification Details retrieved successfully');
+        return $this->sendResponse($inventoryReclassificationDetails->toArray(), trans('custom.inventory_reclassification_details_retrieved_succe'));
     }
 
     /**
@@ -133,13 +133,13 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $reclassification = InventoryReclassification::find($input['inventoryreclassificationID']);
 
         if (empty($reclassification)) {
-            return $this->sendError('Reclassification not found', 500);
+            return $this->sendError(trans('custom.reclassification_not_found'), 500);
         }
 
         if ($reclassification->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($reclassification->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
+                return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
                 return $this->sendError('Please select a active department', 500);
@@ -151,7 +151,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         if ($reclassification->wareHouseSystemCode) {
             $checkWarehouseActive = WarehouseMaster::find($reclassification->wareHouseSystemCode);
             if (empty($checkWarehouseActive)) {
-                return $this->sendError('Warehouse not found');
+                return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
                 return $this->sendError('Please select an active warehouse', 500);
@@ -166,13 +166,13 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['itemSystemCode'] = $item->itemCodeSystem;
@@ -290,7 +290,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
 
         $inventoryReclassificationDetails = $this->inventoryReclassificationDetailRepository->create($input);
 
-        return $this->sendResponse($inventoryReclassificationDetails->toArray(), 'Inventory Reclassification Detail saved successfully');
+        return $this->sendResponse($inventoryReclassificationDetails->toArray(), trans('custom.inventory_reclassification_detail_saved_successful'));
     }
 
     /**
@@ -337,10 +337,10 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $inventoryReclassificationDetail = $this->inventoryReclassificationDetailRepository->findWithoutFail($id);
 
         if (empty($inventoryReclassificationDetail)) {
-            return $this->sendError('Inventory Reclassification Detail not found');
+            return $this->sendError(trans('custom.inventory_reclassification_detail_not_found'));
         }
 
-        return $this->sendResponse($inventoryReclassificationDetail->toArray(), 'Inventory Reclassification Detail retrieved successfully');
+        return $this->sendResponse($inventoryReclassificationDetail->toArray(), trans('custom.inventory_reclassification_detail_retrieved_succes'));
     }
 
     /**
@@ -397,12 +397,12 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $inventoryReclassificationDetail = $this->inventoryReclassificationDetailRepository->findWithoutFail($id);
 
         if (empty($inventoryReclassificationDetail)) {
-            return $this->sendError('Inventory Reclassification Detail not found');
+            return $this->sendError(trans('custom.inventory_reclassification_detail_not_found'));
         }
 
         $inventoryReclassificationDetail = $this->inventoryReclassificationDetailRepository->update($input, $id);
 
-        return $this->sendResponse($inventoryReclassificationDetail->toArray(), 'InventoryReclassificationDetail updated successfully');
+        return $this->sendResponse($inventoryReclassificationDetail->toArray(), trans('custom.inventoryreclassificationdetail_updated_successful'));
     }
 
     /**
@@ -449,12 +449,12 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $inventoryReclassificationDetail = $this->inventoryReclassificationDetailRepository->findWithoutFail($id);
 
         if (empty($inventoryReclassificationDetail)) {
-            return $this->sendError('Inventory Reclassification Detail not found');
+            return $this->sendError(trans('custom.inventory_reclassification_detail_not_found'));
         }
 
         $inventoryReclassificationDetail->delete();
 
-        return $this->sendResponse($id, 'Inventory Reclassification Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.inventory_reclassification_detail_deleted_successf'));
     }
 
 
@@ -462,6 +462,6 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $items = InventoryReclassificationDetail::with(['unit', 'itemmaster','localcurrency','reportingcurrency'])->where('inventoryreclassificationID', $input["inventoryreclassificationID"])->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

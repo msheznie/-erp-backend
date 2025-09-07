@@ -75,7 +75,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $this->bidEvaluationSelectionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidEvaluationSelections = $this->bidEvaluationSelectionRepository->all();
 
-        return $this->sendResponse($bidEvaluationSelections->toArray(), 'Bid Evaluation Selections retrieved successfully');
+        return $this->sendResponse($bidEvaluationSelections->toArray(), trans('custom.bid_evaluation_selections_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
 
-        return $this->sendResponse($bids, 'Bid Evaluation Selection saved successfully');
+        return $this->sendResponse($bids, trans('custom.bid_evaluation_selection_saved_successfully'));
     }
 
     /**
@@ -186,10 +186,10 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError('Bid Evaluation Selection not found');
+            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
         }
 
-        return $this->sendResponse($bidEvaluationSelection->toArray(), 'Bid Evaluation Selection retrieved successfully');
+        return $this->sendResponse($bidEvaluationSelection->toArray(), trans('custom.bid_evaluation_selection_retrieved_successfully'));
     }
 
     /**
@@ -283,7 +283,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError('Bid Evaluation Selection not found');
+            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
         }
 
         if($type == 1){
@@ -349,7 +349,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
+        return $this->sendResponse($bidEvaluationSelection->toArray(), trans('custom.bidevaluationselection_updated_successfully'));
     }
 
     /**
@@ -397,7 +397,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError('Bid Evaluation Selection not found');
+            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
         }
 
         $bidEvaluationSelection->delete();

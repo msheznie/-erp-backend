@@ -64,7 +64,7 @@ class ItemCategoryTypeMasterAPIController extends AppBaseController
         $this->itemCategoryTypeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemCategoryTypeMasters = $this->itemCategoryTypeMasterRepository->all();
 
-        return $this->sendResponse($itemCategoryTypeMasters->toArray(), 'Item Category Type Masters retrieved successfully');
+        return $this->sendResponse($itemCategoryTypeMasters->toArray(), trans('custom.item_category_type_masters_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ItemCategoryTypeMasterAPIController extends AppBaseController
 
         $itemCategoryTypeMaster = $this->itemCategoryTypeMasterRepository->create($input);
 
-        return $this->sendResponse($itemCategoryTypeMaster->toArray(), 'Item Category Type Master saved successfully');
+        return $this->sendResponse($itemCategoryTypeMaster->toArray(), trans('custom.item_category_type_master_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ItemCategoryTypeMasterAPIController extends AppBaseController
         $itemCategoryTypeMaster = $this->itemCategoryTypeMasterRepository->findWithoutFail($id);
 
         if (empty($itemCategoryTypeMaster)) {
-            return $this->sendError('Item Category Type Master not found');
+            return $this->sendError(trans('custom.item_category_type_master_not_found'));
         }
 
-        return $this->sendResponse($itemCategoryTypeMaster->toArray(), 'Item Category Type Master retrieved successfully');
+        return $this->sendResponse($itemCategoryTypeMaster->toArray(), trans('custom.item_category_type_master_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ItemCategoryTypeMasterAPIController extends AppBaseController
         $itemCategoryTypeMaster = $this->itemCategoryTypeMasterRepository->findWithoutFail($id);
 
         if (empty($itemCategoryTypeMaster)) {
-            return $this->sendError('Item Category Type Master not found');
+            return $this->sendError(trans('custom.item_category_type_master_not_found'));
         }
 
         $itemCategoryTypeMaster = $this->itemCategoryTypeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemCategoryTypeMaster->toArray(), 'ItemCategoryTypeMaster updated successfully');
+        return $this->sendResponse($itemCategoryTypeMaster->toArray(), trans('custom.itemcategorytypemaster_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ItemCategoryTypeMasterAPIController extends AppBaseController
         $itemCategoryTypeMaster = $this->itemCategoryTypeMasterRepository->findWithoutFail($id);
 
         if (empty($itemCategoryTypeMaster)) {
-            return $this->sendError('Item Category Type Master not found');
+            return $this->sendError(trans('custom.item_category_type_master_not_found'));
         }
 
         $itemCategoryTypeMaster->delete();

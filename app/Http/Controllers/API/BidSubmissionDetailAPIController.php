@@ -65,7 +65,7 @@ class BidSubmissionDetailAPIController extends AppBaseController
         $this->bidSubmissionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidSubmissionDetails = $this->bidSubmissionDetailRepository->all();
 
-        return $this->sendResponse($bidSubmissionDetails->toArray(), 'Bid Submission Details retrieved successfully');
+        return $this->sendResponse($bidSubmissionDetails->toArray(), trans('custom.bid_submission_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BidSubmissionDetailAPIController extends AppBaseController
 
         $bidSubmissionDetail = $this->bidSubmissionDetailRepository->create($input);
 
-        return $this->sendResponse($bidSubmissionDetail->toArray(), 'Bid Submission Detail saved successfully');
+        return $this->sendResponse($bidSubmissionDetail->toArray(), trans('custom.bid_submission_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BidSubmissionDetailAPIController extends AppBaseController
         $bidSubmissionDetail = $this->bidSubmissionDetailRepository->findWithoutFail($id);
 
         if (empty($bidSubmissionDetail)) {
-            return $this->sendError('Bid Submission Detail not found');
+            return $this->sendError(trans('custom.bid_submission_detail_not_found'));
         }
 
-        return $this->sendResponse($bidSubmissionDetail->toArray(), 'Bid Submission Detail retrieved successfully');
+        return $this->sendResponse($bidSubmissionDetail->toArray(), trans('custom.bid_submission_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BidSubmissionDetailAPIController extends AppBaseController
         $bidSubmissionDetail = $this->bidSubmissionDetailRepository->findWithoutFail($id);
 
         if (empty($bidSubmissionDetail)) {
-            return $this->sendError('Bid Submission Detail not found');
+            return $this->sendError(trans('custom.bid_submission_detail_not_found'));
         }
 
         $bidSubmissionDetail = $this->bidSubmissionDetailRepository->update($input, $id);
 
-        return $this->sendResponse($bidSubmissionDetail->toArray(), 'BidSubmissionDetail updated successfully');
+        return $this->sendResponse($bidSubmissionDetail->toArray(), trans('custom.bidsubmissiondetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BidSubmissionDetailAPIController extends AppBaseController
         $bidSubmissionDetail = $this->bidSubmissionDetailRepository->findWithoutFail($id);
 
         if (empty($bidSubmissionDetail)) {
-            return $this->sendError('Bid Submission Detail not found');
+            return $this->sendError(trans('custom.bid_submission_detail_not_found'));
         }
 
         $bidSubmissionDetail->delete();

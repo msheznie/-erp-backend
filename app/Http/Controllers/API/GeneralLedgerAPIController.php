@@ -136,7 +136,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $this->generalLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $generalLedgers = $this->generalLedgerRepository->all();
 
-        return $this->sendResponse($generalLedgers->toArray(), 'General Ledgers retrieved successfully');
+        return $this->sendResponse($generalLedgers->toArray(), trans('custom.general_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -183,7 +183,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $generalLedgers = $this->generalLedgerRepository->create($input);
 
-        return $this->sendResponse($generalLedgers->toArray(), 'General Ledger saved successfully');
+        return $this->sendResponse($generalLedgers->toArray(), trans('custom.general_ledger_saved_successfully'));
     }
 
     /**
@@ -230,10 +230,10 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger = $this->generalLedgerRepository->findWithoutFail($id);
 
         if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+            return $this->sendError(trans('custom.general_ledger_not_found'));
         }
 
-        return $this->sendResponse($generalLedger->toArray(), 'General Ledger retrieved successfully');
+        return $this->sendResponse($generalLedger->toArray(), trans('custom.general_ledger_retrieved_successfully'));
     }
 
     /**
@@ -290,12 +290,12 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger = $this->generalLedgerRepository->findWithoutFail($id);
 
         if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+            return $this->sendError(trans('custom.general_ledger_not_found'));
         }
 
         $generalLedger = $this->generalLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($generalLedger->toArray(), 'GeneralLedger updated successfully');
+        return $this->sendResponse($generalLedger->toArray(), trans('custom.generalledger_updated_successfully'));
     }
 
     /**
@@ -342,12 +342,12 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger = $this->generalLedgerRepository->findWhere($id);
 
         if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+            return $this->sendError(trans('custom.general_ledger_not_found'));
         }
 
         $generalLedger->delete();
 
-        return $this->sendResponse($id, 'General Ledger deleted successfully');
+        return $this->sendResponse($id, trans('custom.general_ledger_deleted_successfully'));
     }
 
     public function updateNotPostedGLEntries(Request $request)
@@ -381,7 +381,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
     }
 
 
@@ -427,7 +427,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
     }
 
     public function updateNotPostedRVGLEntries(Request $request)
@@ -477,7 +477,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
     }
 
     public function updateNotPostedFAGLEntries(Request $request)
@@ -526,7 +526,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
     }
 
      public function updateNotPostedFADepGLEntries(Request $request)
@@ -575,7 +575,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
     }
 
     public function updateNotPostedBSIGLEntries(Request $request)
@@ -622,7 +622,7 @@ class GeneralLedgerAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'General Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
 
     }
 
@@ -633,7 +633,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger = $this->generalLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['companySystemID' => $request->companySystemID,'documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
 
         if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+            return $this->sendError(trans('custom.general_ledger_not_found'));
         }
 
         $accountPaybaleLedgerData = AccountsPayableLedger::with(['supplier','local_currency', 'transaction_currency', 'reporting_currency'])
@@ -699,7 +699,7 @@ class GeneralLedgerAPIController extends AppBaseController
                 'bankLedgerData' => $bankLedgerData
             ];
 
-        return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
+        return $this->sendResponse($generalLedger, trans('custom.general_ledger_retrieved_successfully'));
     }
 
     public function getNotApprovedGlData($documentSystemID, $autoID, $companySystemID)
@@ -944,7 +944,7 @@ class GeneralLedgerAPIController extends AppBaseController
             'documents'=>$documents,
         ];
 
-        return $this->sendResponse($output, 'Document Amend Form Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.document_amend_form_data_retrieved_successfully'));
     }
 
     public function getDocumentAmendFromGL(Request $request){
@@ -1034,7 +1034,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $gl = GeneralLedger::find($id);
         if(count((array)$gl)==0){
-            return $this->sendError('GL Entries Not Found');
+            return $this->sendError(trans('custom.gl_entries_not_found'));
         }
 
         $companySystemID = $gl->companySystemID;
@@ -1387,7 +1387,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse([],'Posting date changed successfully');
+            return $this->sendResponse([],trans('custom.posting_date_changed_successfully'));
         }catch (\Exception $e){
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -1430,12 +1430,12 @@ class GeneralLedgerAPIController extends AppBaseController
                                         ->count();
 
                 if ($count > 0 && $unbilledCount > 0) {
-                    return $this->sendError('GL entries and unbilled ledger entries are already passed for this document',500);
+                    return $this->sendError(trans('custom.gl_entries_and_unbilled_ledger_entries_are_already'),500);
                 }
 
             } else {
                 if($count > 0){
-                    return $this->sendError('GL entries are already passed for this document',500);
+                    return $this->sendError(trans('custom.gl_entries_are_already_passed_for_this_document'),500);
                 }
             }
 
@@ -1461,15 +1461,15 @@ class GeneralLedgerAPIController extends AppBaseController
 
                 DB::commit();
                 if ($count == 0) {
-                    return $this->sendResponse([],'GL and unbilled ledger entries posted successfully');
+                    return $this->sendResponse([],trans('custom.gl_and_unbilled_ledger_entries_posted_successfully'));
                 } else {
-                    return $this->sendResponse([],'Unbilled ledger entries posted successfully');
+                    return $this->sendResponse([],trans('custom.unbilled_ledger_entries_posted_successfully'));
                 }
             }
 
 
             DB::commit();
-            return $this->sendResponse([],'GL posted successfully');
+            return $this->sendResponse([],trans('custom.gl_posted_successfully'));
         }catch (\Exception $e){
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -1489,7 +1489,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $company = $request->company;
         $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
 
-        return $this->sendResponse($details,'Posting date changed successfully');
+        return $this->sendResponse($details,trans('custom.posting_date_changed_successfully'));
 
         
     }
@@ -1701,6 +1701,6 @@ class GeneralLedgerAPIController extends AppBaseController
             ApprovePendingSegments::dispatch($tenantDb);
         }
 
-        return $this->sendResponse([], 'Segments fully approved successfully');
+        return $this->sendResponse([], trans('custom.segments_fully_approved_successfully'));
     }
 }

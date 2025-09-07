@@ -194,7 +194,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $end = (new Carbon())->endOfMonth();
         if ($input['bankRecAsOf'] > $end) {
-            // return $this->sendError('You cannot select a date greater than the current month last day', 500);
+            // return $this->sendError(trans('custom.you_cannot_select_a_date_greater_than_the_current_'), 500);
         }
 
         $input['documentSystemID'] = 62;
@@ -446,7 +446,7 @@ class BankReconciliationAPIController extends AppBaseController
         if ($bankReconciliation->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
             if(!$validateAdditionalEntryApproved->isEmpty()) {
-                return $this->sendError('There are some manually created documents pending approval', 500);
+                return $this->sendError(trans('custom.there_are_some_manually_created_documents_pending_'), 500);
             }
 
             $checkItems = BankLedger::where('bankRecAutoID', $id)
@@ -1157,7 +1157,7 @@ class BankReconciliationAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
@@ -1505,7 +1505,7 @@ class BankReconciliationAPIController extends AppBaseController
         $output = array(
             'segments' => $segments
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function saveAdditionalEntry(Request $request)
@@ -1554,7 +1554,7 @@ class BankReconciliationAPIController extends AppBaseController
             }
         }
         $DataReturn = $this->bankReconciliationDocument->create($document);
-        return $this->sendResponse($DataReturn->toArray(), 'Additional entry created successfully.');
+        return $this->sendResponse($DataReturn->toArray(), trans('custom.additional_entry_created_successfully'));
     }
 
     public function uploadBankStatement(Request $request)
@@ -1589,7 +1589,7 @@ class BankReconciliationAPIController extends AppBaseController
             $size = $excelUpload['size'];
             $allowedExtensions = ['xlsx','xls'];
         } else {
-            return $this->sendError('Invalid File',500);
+            return $this->sendError(trans('custom.invalid_file'),500);
         }
 
 
@@ -1627,7 +1627,7 @@ class BankReconciliationAPIController extends AppBaseController
                                     ->where('importStatus', 1)
                                     ->where('bankStatementDate', $bankStatementDate)->first();
         if($statementExists) {
-            return $this->sendError('Bank Statement already uploaded!', 500);
+            return $this->sendError(trans('custom.bank_statement_already_uploaded'), 500);
         }
 
         /** bank validation */
@@ -1683,7 +1683,7 @@ class BankReconciliationAPIController extends AppBaseController
             UploadBankStatement::dispatch($db, $uploadData);
             return $this->sendResponse([], 'Statement Upload send to queue.');
         } else {
-            return $this->sendError('Bank statement master not created', 500);
+            return $this->sendError(trans('custom.bank_statement_master_not_created'), 500);
         }
     }
 
@@ -1738,7 +1738,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $bankStatement = BankStatementMaster::where('statementId', $statementId)->first();
         if(!$bankStatement){
-            return $this->sendError('Bank statement not found', 500);
+            return $this->sendError(trans('custom.bank_statement_not_found'), 500);
         }
        
         $document = DocumentMaster::where('documentSystemID', 62)->first();

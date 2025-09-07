@@ -65,7 +65,7 @@ class PerformaMasterAPIController extends AppBaseController
         $this->performaMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $performaMasters = $this->performaMasterRepository->all();
 
-        return $this->sendResponse($performaMasters->toArray(), 'Performa Masters retrieved successfully');
+        return $this->sendResponse($performaMasters->toArray(), trans('custom.performa_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PerformaMasterAPIController extends AppBaseController
 
         $performaMasters = $this->performaMasterRepository->create($input);
 
-        return $this->sendResponse($performaMasters->toArray(), 'Performa Master saved successfully');
+        return $this->sendResponse($performaMasters->toArray(), trans('custom.performa_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PerformaMasterAPIController extends AppBaseController
         $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
         if (empty($performaMaster)) {
-            return $this->sendError('Performa Master not found');
+            return $this->sendError(trans('custom.performa_master_not_found'));
         }
 
-        return $this->sendResponse($performaMaster->toArray(), 'Performa Master retrieved successfully');
+        return $this->sendResponse($performaMaster->toArray(), trans('custom.performa_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PerformaMasterAPIController extends AppBaseController
         $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
         if (empty($performaMaster)) {
-            return $this->sendError('Performa Master not found');
+            return $this->sendError(trans('custom.performa_master_not_found'));
         }
 
         $performaMaster = $this->performaMasterRepository->update($input, $id);
 
-        return $this->sendResponse($performaMaster->toArray(), 'PerformaMaster updated successfully');
+        return $this->sendResponse($performaMaster->toArray(), trans('custom.performamaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class PerformaMasterAPIController extends AppBaseController
         $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
         if (empty($performaMaster)) {
-            return $this->sendError('Performa Master not found');
+            return $this->sendError(trans('custom.performa_master_not_found'));
         }
 
         $performaMaster->delete();
 
-        return $this->sendResponse($id, 'Performa Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.performa_master_deleted_successfully'));
     }
 }

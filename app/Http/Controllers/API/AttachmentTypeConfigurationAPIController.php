@@ -64,7 +64,7 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
         $this->attachmentTypeConfigurationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $attachmentTypeConfigurations = $this->attachmentTypeConfigurationRepository->all();
 
-        return $this->sendResponse($attachmentTypeConfigurations->toArray(), 'Attachment Type Configurations retrieved successfully');
+        return $this->sendResponse($attachmentTypeConfigurations->toArray(), trans('custom.attachment_type_configurations_retrieved_successfu'));
     }
 
     /**
@@ -120,9 +120,9 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
             if(!$saveConfiguration['success']){
                 return $this->sendError($saveConfiguration['message']);
             }
-            return $this->sendResponse([], 'Attachment configuration saved successfully.');
+            return $this->sendResponse([], trans('custom.attachment_configuration_saved_successfully'));
         } catch (\Exception $exception){
-            return $this->sendError('Failed to save attachment configuration: ' . $exception->getMessage());
+            return $this->sendError(trans('custom.failed_to_save_attachment_configuration') . $exception->getMessage());
         }
     }
 
@@ -171,10 +171,10 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
         $attachmentTypeConfiguration = $this->attachmentTypeConfigurationRepository->findWithoutFail($id);
 
         if (empty($attachmentTypeConfiguration)) {
-            return $this->sendError('Attachment Type Configuration not found');
+            return $this->sendError(trans('custom.attachment_type_configuration_not_found'));
         }
 
-        return $this->sendResponse($attachmentTypeConfiguration->toArray(), 'Attachment Type Configuration retrieved successfully');
+        return $this->sendResponse($attachmentTypeConfiguration->toArray(), trans('custom.attachment_type_configuration_retrieved_successful'));
     }
 
     /**
@@ -240,12 +240,12 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
         $attachmentTypeConfiguration = $this->attachmentTypeConfigurationRepository->findWithoutFail($id);
 
         if (empty($attachmentTypeConfiguration)) {
-            return $this->sendError('Attachment Type Configuration not found');
+            return $this->sendError(trans('custom.attachment_type_configuration_not_found'));
         }
 
         $attachmentTypeConfiguration = $this->attachmentTypeConfigurationRepository->update($input, $id);
 
-        return $this->sendResponse($attachmentTypeConfiguration->toArray(), 'AttachmentTypeConfiguration updated successfully');
+        return $this->sendResponse($attachmentTypeConfiguration->toArray(), trans('custom.attachmenttypeconfiguration_updated_successfully'));
     }
 
     /**
@@ -293,7 +293,7 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
         $attachmentTypeConfiguration = $this->attachmentTypeConfigurationRepository->findWithoutFail($id);
 
         if (empty($attachmentTypeConfiguration)) {
-            return $this->sendError('Attachment Type Configuration not found');
+            return $this->sendError(trans('custom.attachment_type_configuration_not_found'));
         }
 
         $attachmentTypeConfiguration->delete();
@@ -307,9 +307,9 @@ class AttachmentTypeConfigurationAPIController extends AppBaseController
             if(!$attachmentTypes['success']){
                 return $this->sendError($attachmentTypes['message'] ?? 'Failed to load attachment types.');
             }
-            return $this->sendResponse($attachmentTypes['data'], 'Document attachment types retrieved successfully');
+            return $this->sendResponse($attachmentTypes['data'], trans('custom.document_attachment_types_retrieved_successfully'));
         } catch(\Exception $exception){
-            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
         }
     }
 }

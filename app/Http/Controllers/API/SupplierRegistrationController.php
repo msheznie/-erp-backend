@@ -96,7 +96,7 @@ class SupplierRegistrationController extends Controller
             }
             return $this->sendSuccessResponse($matchingData['message'], $matchingData['data']);
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: '. $ex->getMessage());
+            return $this->sendError(trans('custom.unexpected_error'). $ex->getMessage());
         }
     }
 

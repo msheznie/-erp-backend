@@ -846,7 +846,7 @@ class ReportAPIController extends AppBaseController
                 //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 // })->download($type);
 
-                // return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), trans('custom.success_export'));
 
 
 
@@ -1265,7 +1265,7 @@ class ReportAPIController extends AppBaseController
         $input = $request->all();
         $output = $this->getSavingReportData($input);
 
-        return $this->sendResponse($output, 'successfully generated report');
+        return $this->sendResponse($output, trans('custom.successfully_generated_report'));
     }
 
     public function exportExcelSavingReport(Request $request)

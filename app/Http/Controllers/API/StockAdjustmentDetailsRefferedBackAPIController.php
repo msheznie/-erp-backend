@@ -75,7 +75,7 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
         $this->stockAdjustmentDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockAdjustmentDetailsRefferedBacks = $this->stockAdjustmentDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($stockAdjustmentDetailsRefferedBacks->toArray(), 'Stock Adjustment Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($stockAdjustmentDetailsRefferedBacks->toArray(), trans('custom.stock_adjustment_details_reffered_backs_retrieved_'));
     }
 
     /**
@@ -122,7 +122,7 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
 
         $stockAdjustmentDetailsRefferedBacks = $this->stockAdjustmentDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($stockAdjustmentDetailsRefferedBacks->toArray(), 'Stock Adjustment Details Reffered Back saved successfully');
+        return $this->sendResponse($stockAdjustmentDetailsRefferedBacks->toArray(), trans('custom.stock_adjustment_details_reffered_back_saved_succe'));
     }
 
     /**
@@ -169,10 +169,10 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
         $stockAdjustmentDetailsRefferedBack = $this->stockAdjustmentDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockAdjustmentDetailsRefferedBack)) {
-            return $this->sendError('Stock Adjustment Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_adjustment_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($stockAdjustmentDetailsRefferedBack->toArray(), 'Stock Adjustment Details Reffered Back retrieved successfully');
+        return $this->sendResponse($stockAdjustmentDetailsRefferedBack->toArray(), trans('custom.stock_adjustment_details_reffered_back_retrieved_s'));
     }
 
     /**
@@ -229,12 +229,12 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
         $stockAdjustmentDetailsRefferedBack = $this->stockAdjustmentDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockAdjustmentDetailsRefferedBack)) {
-            return $this->sendError('Stock Adjustment Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_adjustment_details_reffered_back_not_found'));
         }
 
         $stockAdjustmentDetailsRefferedBack = $this->stockAdjustmentDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($stockAdjustmentDetailsRefferedBack->toArray(), 'StockAdjustmentDetailsRefferedBack updated successfully');
+        return $this->sendResponse($stockAdjustmentDetailsRefferedBack->toArray(), trans('custom.stockadjustmentdetailsrefferedback_updated_success'));
     }
 
     /**
@@ -281,12 +281,12 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
         $stockAdjustmentDetailsRefferedBack = $this->stockAdjustmentDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockAdjustmentDetailsRefferedBack)) {
-            return $this->sendError('Stock Adjustment Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_adjustment_details_reffered_back_not_found'));
         }
 
         $stockAdjustmentDetailsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Stock Adjustment Details Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_adjustment_details_reffered_back_deleted_suc'));
     }
 
     public function getSADetailsReferBack(Request $request)
@@ -299,6 +299,6 @@ class StockAdjustmentDetailsRefferedBackAPIController extends AppBaseController
             ->with(['uom', 'local_currency', 'rpt_currency'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.request_details_retrieved_successfully'));
     }
 }

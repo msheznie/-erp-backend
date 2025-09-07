@@ -97,7 +97,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $this->monthlyAdditionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $monthlyAdditionDetails = $this->monthlyAdditionDetailRepository->all();
 
-        return $this->sendResponse($monthlyAdditionDetails->toArray(), 'Monthly Addition Details retrieved successfully');
+        return $this->sendResponse($monthlyAdditionDetails->toArray(), trans('custom.monthly_addition_details_retrieved_successfully'));
     }
 
     /**
@@ -144,7 +144,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
         $monthlyAdditionDetails = $this->monthlyAdditionDetailRepository->create($input);
 
-        return $this->sendResponse($monthlyAdditionDetails->toArray(), 'Monthly Addition Detail saved successfully');
+        return $this->sendResponse($monthlyAdditionDetails->toArray(), trans('custom.monthly_addition_detail_saved_successfully'));
     }
 
     /**
@@ -191,10 +191,10 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $monthlyAdditionDetail = $this->monthlyAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($monthlyAdditionDetail)) {
-            return $this->sendError('Monthly Addition Detail not found');
+            return $this->sendError(trans('custom.monthly_addition_detail_not_found'));
         }
 
-        return $this->sendResponse($monthlyAdditionDetail->toArray(), 'Monthly Addition Detail retrieved successfully');
+        return $this->sendResponse($monthlyAdditionDetail->toArray(), trans('custom.monthly_addition_detail_retrieved_successfully'));
     }
 
     /**
@@ -251,12 +251,12 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $monthlyAdditionDetail = $this->monthlyAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($monthlyAdditionDetail)) {
-            return $this->sendError('Monthly Addition Detail not found');
+            return $this->sendError(trans('custom.monthly_addition_detail_not_found'));
         }
 
         $monthlyAdditionDetail = $this->monthlyAdditionDetailRepository->update($input, $id);
 
-        return $this->sendResponse($monthlyAdditionDetail->toArray(), 'MonthlyAdditionDetail updated successfully');
+        return $this->sendResponse($monthlyAdditionDetail->toArray(), trans('custom.monthlyadditiondetail_updated_successfully'));
     }
 
     /**
@@ -303,12 +303,12 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $monthlyAdditionDetail = $this->monthlyAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($monthlyAdditionDetail)) {
-            return $this->sendError('Monthly Addition Detail not found');
+            return $this->sendError(trans('custom.monthly_addition_detail_not_found'));
         }
 
         $monthlyAdditionDetail->delete();
 
-        return $this->sendResponse($id, 'Monthly Addition Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.monthly_addition_detail_deleted_successfully'));
     }
 
     public function getItemsByMonthlyAddition(Request $request)
@@ -320,7 +320,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             ->with(['employee', 'department', 'currency_ma', 'expense_claim', 'chart_of_account'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Monthly Addition Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.monthly_addition_details_retrieved_successfully'));
     }
 
     public function checkPullFromExpenseClaim(Request $request)
@@ -331,11 +331,11 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
         if (empty($monthlyAddition)) {
-            return $this->sendError('Monthly Addition not found');
+            return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
         if ($monthlyAddition->confirmedYN == 1) {
-            return $this->sendError('You cannot add items as the document is already confirmed.', 500);
+            return $this->sendError(trans('custom.you_cannot_add_items_as_the_document_is_already_co'), 500);
         }
 
         $validator = \Validator::make($monthlyAddition->toArray(), [
@@ -349,7 +349,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition retrieved successfully');
+        return $this->sendResponse($monthlyAddition->toArray(), trans('custom.monthly_addition_retrieved_successfully'));
     }
 
     public function getECForMonthlyAddition(Request $request)
@@ -365,11 +365,11 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
                 if (empty($monthlyAddition)) {
-                    return $this->sendError('Monthly Addition not found');
+                    return $this->sendError(trans('custom.monthly_addition_not_found'));
                 }
 
                 if ($monthlyAddition->confirmedYN == 1) {
-                    return $this->sendError('You cannot add items as the document is already confirmed.', 500);
+                    return $this->sendError(trans('custom.you_cannot_add_items_as_the_document_is_already_co'), 500);
                 }
 
                 $validator = \Validator::make($monthlyAddition->toArray(), [
@@ -388,11 +388,11 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 $paySupplierInvoice = $this->paySupplierInvoiceMasterRepository->find($id);
 
                 if (empty($paySupplierInvoice)) {
-                    return $this->sendError('Pay Supplier Invoice not found');
+                    return $this->sendError(trans('custom.pay_supplier_invoice_not_found'));
                 }
 
                 if ($paySupplierInvoice->confirmedYN == 1) {
-                    return $this->sendError('You cannot add items as the document is already confirmed.', 500);
+                    return $this->sendError(trans('custom.you_cannot_add_items_as_the_document_is_already_co'), 500);
                 }
 
                 $companySystemID =  $paySupplierInvoice->companySystemID;
@@ -413,9 +413,9 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             $expenseClaims = $expenseClaims->orderBy('expenseClaimDate', 'desc')
                 ->get();
 
-            return $this->sendResponse($expenseClaims, 'Monthly Addition retrieved successfully');
+            return $this->sendResponse($expenseClaims, trans('custom.monthly_addition_retrieved_successfully'));
         }else{
-            return $this->sendError('Error', 500);
+            return $this->sendError(trans('custom.error'), 500);
         }
     }
 
@@ -429,7 +429,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $voucher = PaySupplierInvoiceMaster::select('PayMasterAutoId','supplierTransCurrencyID')->with('transactioncurrency')->find($voucher_id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
         $data = SMECompany::where('company_id', $expenseClaim->companyID)->select('company_default_decimal')->first();
@@ -448,7 +448,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 $det['voucher_currency'] = $voucher->transactioncurrency->CurrencyCode;
             }
 
-        return $this->sendResponse($expenseClaimDetails, 'Expense Claim Details retrieved successfully');
+        return $this->sendResponse($expenseClaimDetails, trans('custom.expense_claim_details_retrieved_successfully'));
     }
 
     public function addMonthlyAdditionDetails(Request $request)
@@ -460,12 +460,12 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $expenseClaim = $this->expenseClaimRepository->find($id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($monthlyAdditionId);
         if (empty($monthlyAddition)) {
-            return $this->sendError('Monthly Addition not found');
+            return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
         $expenseClaimDetails = ExpenseClaimDetailsMaster::where('companyID', $expenseClaim->companyID)
@@ -523,7 +523,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             $this->expenseClaimRepository->update(['addedForPayment' => -1, 'addedToSalary' => -1], $id);
         }
 
-        return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');
+        return $this->sendResponse($expenseClaimDetails, trans('custom.monthly_addition_details_added_successfully'));
     }
 
     public function deleteAllMonthlyAdditionDetails(Request $request)
@@ -534,11 +534,11 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
         if (empty($monthlyAddition)) {
-            return $this->sendError('Monthly Addition not found');
+            return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
         if ($monthlyAddition->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot delete items.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_delete_'), 500);
         }
 
         $monthlyAdditionDetails = $this->monthlyAdditionDetailRepository->findWhere(['monthlyAdditionsMasterID' => $id]);
@@ -555,7 +555,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($monthlyAdditionDetails, 'Monthly Addition Details deleted successfully');
+        return $this->sendResponse($monthlyAdditionDetails, trans('custom.monthly_addition_details_deleted_successfully'));
     }
 
 }

@@ -131,7 +131,7 @@ class QuotationMasterAPIController extends AppBaseController
         $this->quotationMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationMasters = $this->quotationMasterRepository->all();
 
-        return $this->sendResponse($quotationMasters->toArray(), 'Quotation Masters retrieved successfully');
+        return $this->sendResponse($quotationMasters->toArray(), trans('custom.quotation_masters_retrieved_successfully'));
     }
 
     /**
@@ -194,7 +194,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if ($input['documentExpDate'] < $input['documentDate']) {
 
-            return $this->sendError('Document expiry date cannot be less than document date!');
+            return $this->sendError(trans('custom.document_expiry_date_cannot_be_less_than_document_'));
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -323,7 +323,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMasters = $this->quotationMasterRepository->create($input);
 
-        return $this->sendResponse($quotationMasters->toArray(), 'Quotation Master saved successfully');
+        return $this->sendResponse($quotationMasters->toArray(), trans('custom.quotation_master_saved_successfully'));
     }
 
     /**
@@ -370,10 +370,10 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by','customer','segment'])->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
-        return $this->sendResponse($quotationMaster->toArray(), 'Quotation Master retrieved successfully');
+        return $this->sendResponse($quotationMaster->toArray(), trans('custom.quotation_master_retrieved_successfully'));
     }
 
     /**
@@ -487,7 +487,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if ($input['documentExpDate'] < $input['documentDate']) {
 
-            return $this->sendError('Document expiry date cannot be less than document date!');
+            return $this->sendError(trans('custom.document_expiry_date_cannot_be_less_than_document_'));
         }
 
         $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
@@ -630,7 +630,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
 
                 if ($checkPoPaymentTermsAmount > 0) {
-                    return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                    return $this->sendError(trans('custom.you_cannot_confirm_payment_term_with_0_amount'), 500);
                 }
 
                 //po payment terms exist
@@ -741,12 +741,12 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
         $quotationMaster->delete();
 
-        return $this->sendResponse($id, 'Quotation Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_master_deleted_successfully'));
     }
 
     public function getSalesQuotationFormData(Request $request)
@@ -826,7 +826,7 @@ class QuotationMasterAPIController extends AppBaseController
             'isEQOINVPolicyOn' => ($isEQOINVPolicyOn) ? $isEQOINVPolicyOn : false
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAllSalesQuotation(Request $request)
@@ -884,7 +884,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getSalesQuotationApprovals(Request $request)
@@ -1076,7 +1076,7 @@ class QuotationMasterAPIController extends AppBaseController
             $query->with(['term_description']);
         }])->first();
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function getSalesQuotationPrintPDF(Request $request)
@@ -1087,7 +1087,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
         $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
@@ -1153,7 +1153,7 @@ class QuotationMasterAPIController extends AppBaseController
         } catch (\Exception $e) {
             // Log the error for debugging
             \Log::error('mPDF Error in getSalesQuotationPrintPDF: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 
@@ -1163,7 +1163,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData = QuotationMaster::find($id);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
         $emailSentTo = 0;
@@ -1184,7 +1184,7 @@ class QuotationMasterAPIController extends AppBaseController
 
 
         if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+            return $this->sendResponse($emailSentTo, trans('custom.customer_email_is_not_updated_report_is_not_sent'));
         } else {
             SoSentToCustomerJob::dispatch($request->db, $input);
             return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
@@ -1200,19 +1200,19 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData = QuotationMaster::find($quotationMasterID);
         $emails = array();
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found_1'));
         }
 
         if ($quotationMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this sales quotation it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_quotation_it_is_alrea'));
         }
 
         if ($quotationMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this sales quotation it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_quotation_it_is_alrea_1'));
         }
 
         if ($quotationMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this sales quotation, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_quotation_it_is_not_c'));
         }
 
         // updating fields
@@ -1290,7 +1290,7 @@ class QuotationMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($quotationMasterData->documentSystemID,$quotationMasterID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse('s', 'Sales quotation reopened successfully');
+        return $this->sendResponse('s', trans('custom.sales_quotation_reopened_successfully'));
 
     }
 
@@ -1307,7 +1307,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData = QuotationMaster::find($quotationMasterID);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found_1'));
         }
 
         /*check order is already added to invoice or delivery order*/
@@ -1409,7 +1409,7 @@ class QuotationMasterAPIController extends AppBaseController
             $quotationMasterData->save();
         }
 
-        return $this->sendResponse($quotationMasterData->toArray(), 'Quotation version created successfully');
+        return $this->sendResponse($quotationMasterData->toArray(), trans('custom.quotation_version_created_successfully'));
     }
 
     public function salesQuotationAmend(Request $request)
@@ -1421,11 +1421,11 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData = QuotationMaster::find($quotationMasterID);
 
         if (empty($quotationMasterData)) {
-            return $this->sendError('Sales quotation not found');
+            return $this->sendError(trans('custom.sales_quotation_not_found'));
         }
 
         if ($quotationMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this Sales quotation');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_sales_quotation'));
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
@@ -1477,7 +1477,7 @@ class QuotationMasterAPIController extends AppBaseController
             $quotationMasterData->save();
         }
 
-        return $this->sendResponse($quotationMasterData->toArray(), 'Sales quotation amend successfully');
+        return $this->sendResponse($quotationMasterData->toArray(), trans('custom.sales_quotation_amend_successfully'));
     }
 
     public function salesQuotationAudit(Request $request)
@@ -1491,10 +1491,10 @@ class QuotationMasterAPIController extends AppBaseController
 
 
         if (empty($quotationMasterdata)) {
-            return $this->sendError('Sales quotation not found');
+            return $this->sendError(trans('custom.sales_quotation_not_found'));
         }
 
-        return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
+        return $this->sendResponse($quotationMasterdata->toArray(), trans('custom.sales_quotation_retrieved_successfully'));
     }
 
     public function salesQuotationForCustomerInvoice(Request $request){
@@ -1525,7 +1525,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+        return $this->sendResponse($master->toArray(), trans('custom.quotations_retrieved_successfully'));
     }
 
     public function getSalesQuotationRecord(Request $request){
@@ -1542,10 +1542,10 @@ class QuotationMasterAPIController extends AppBaseController
         }])->find($id);
 
         if (empty($deliveryOrder)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
-        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');*/
+        return $this->sendResponse($deliveryOrder->toArray(), trans('custom.delivery_order_retrieved_successfully'));*/
     }
 
     function getInvoiceDetailsForSQ(Request $request)
@@ -1559,7 +1559,7 @@ class QuotationMasterAPIController extends AppBaseController
                 $query->with(['currency']);
             },'sales_quotation_detail','uom_issuing'])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
 
@@ -1596,7 +1596,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($master->merge($existsSo)->toArray(), 'Quotations retrieved successfully');
+        return $this->sendResponse($master->merge($existsSo)->toArray(), trans('custom.quotations_retrieved_successfully'));
     }
 
     public function getSalesQuoatationDetailForSO(Request $request){
@@ -1617,7 +1617,7 @@ class QuotationMasterAPIController extends AppBaseController
                                 quotationdetails.quotationMasterID = ' . $id . ' 
                                 AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInDOorCI != 1');
 
-        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.quotation_details_retrieved_successfully'));
     }
 
 
@@ -1633,7 +1633,7 @@ class QuotationMasterAPIController extends AppBaseController
                     $query->with(['transaction_currency']);
                 }])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
 
@@ -1650,36 +1650,36 @@ class QuotationMasterAPIController extends AppBaseController
         $masterData = QuotationMaster::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
         $quotOrSales = ($masterData->documentSystemID == 68)?'Sales Order':'Quotation';
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', it is not confirmed');
         }
 
         /*check order is already added to invoice or delivery order*/
 
         if(CustomerInvoiceItemDetails::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 2){
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a customer invoice',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a customer invoice',500);
         }
 
         if(DeliveryOrderDetail::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 1){
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a delivery order',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a delivery order',500);
         }
 
         if(QuotationDetails::where('soQuotationMasterID',$id)->exists() || $masterData->isInSO == 1){
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a sales order',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a sales order',500);
         }
 
 
         if(QuotationMasterVersion::where('quotationMasterID',$id)->exists()){
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', versions created for it');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', versions created for it');
         }
 
         if(AdvanceReceiptDetails::where('salesOrderID',$id)->exists()){
-            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', It is added to advance receipt voucher');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', It is added to advance receipt voucher');
         }
 
         $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -1747,7 +1747,7 @@ class QuotationMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Return back to amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.return_back_to_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1948,7 +1948,7 @@ class QuotationMasterAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
             return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -1970,7 +1970,7 @@ class QuotationMasterAPIController extends AppBaseController
 
 
             if (empty($masterData)) {
-                return $this->sendError('Quotation not found', 500);
+                return $this->sendError(trans('custom.quotation_not_found'), 500);
             }
 
 
@@ -2016,7 +2016,7 @@ class QuotationMasterAPIController extends AppBaseController
             foreach ($uniqueData as $key => $value) {
                 
                 if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
-                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                     return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
                 }
 
                 if (isset($value['item_code'])) {
@@ -2046,7 +2046,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
             if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
 
@@ -2054,7 +2054,7 @@ class QuotationMasterAPIController extends AppBaseController
             })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
             if ($masterData->cancelledYN == -1) {
-                return $this->sendError('This Quotation already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_quotation_already_closed_you_can_not_add'), 500);
             }
 
             if ($masterData->approvedYN == 1) {

@@ -57,7 +57,7 @@ class TaxAPIController extends AppBaseController
         $this->taxRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxes = $this->taxRepository->all();
 
-        return $this->sendResponse($taxes->toArray(), 'VATes retrieved successfully');
+        return $this->sendResponse($taxes->toArray(), trans('custom.vates_retrieved_successfully'));
     }
 
     /**
@@ -76,7 +76,7 @@ class TaxAPIController extends AppBaseController
         $taxCategory = isset($input['taxCategory'])?$input['taxCategory']:0;
 
         if($taxCategory==0){
-            return $this->sendError('Tax Category is required');
+            return $this->sendError(trans('custom.tax_category_is_required'));
         }
         if($taxCategory == 2) {
             $messages = [
@@ -143,7 +143,7 @@ class TaxAPIController extends AppBaseController
 
             if(!empty($alreadyTaxDefined)){
                 if($taxCategory == 2){
-                    return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
+                    return $this->sendError(trans('custom.vat_is_already_defined_you_cannot_create_more_than'), 500);
                 }
             }
         }
@@ -153,7 +153,7 @@ class TaxAPIController extends AppBaseController
                                 ->where('taxDescription',$input['taxDescription'])
                                 ->exists();
             if($isTaxExists){
-                return $this->sendError('Tax description already exists', 500);
+                return $this->sendError(trans('custom.tax_description_already_exists'), 500);
             }
 
             $isWhtTypeExists = Tax::where('taxCategory',3)
@@ -168,7 +168,7 @@ class TaxAPIController extends AppBaseController
             }
 
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
-                return $this->sendError('Default WHT cannot inactive', 500);
+                return $this->sendError(trans('custom.default_wht_cannot_inactive'), 500);
             }
 
             if($input['isDefault'] == 1){
@@ -215,7 +215,7 @@ class TaxAPIController extends AppBaseController
 
         $taxes = $this->taxRepository->create($input);
 
-        return $this->sendResponse($taxes->toArray(), 'VAT saved successfully');
+        return $this->sendResponse($taxes->toArray(), trans('custom.vat_saved_successfully'));
     }
 
     /**
@@ -232,10 +232,10 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('VAT not found');
+            return $this->sendError(trans('custom.vat_not_found'));
         }
 
-        return $this->sendResponse($tax->toArray(), 'VAT retrieved successfully');
+        return $this->sendResponse($tax->toArray(), trans('custom.vat_retrieved_successfully'));
     }
 
     /**
@@ -256,13 +256,13 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('tax master not found');
+            return $this->sendError(trans('custom.tax_master_not_found_1'));
         }
 
         $taxCategory = isset($input['taxCategory'])?$input['taxCategory']:0;
 
         if($taxCategory==0){
-            return $this->sendError('Tax Category is required');
+            return $this->sendError(trans('custom.tax_category_is_required'));
         }
         if($taxCategory == 2) {
             $messages = [
@@ -332,13 +332,13 @@ class TaxAPIController extends AppBaseController
             if($vatFilling && $authorityRecord && isset($newAuthorityAutoID))
             {
                 if ($authorityRecord->authorityAutoID !== $newAuthorityAutoID) {
-                    return $this->sendError('A VAT return filing document has been created. Changes to the authority are not allowed', 500);
+                    return $this->sendError(trans('custom.a_vat_return_filing_document_has_been_created_chan'), 500);
 
                 }
             }
             if($alreadyTaxDefined){
                 if($taxCategory == 2){
-                    return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
+                    return $this->sendError(trans('custom.vat_is_already_defined_you_cannot_create_more_than'), 500);
                 }
             }
             $input = $inputData;
@@ -364,22 +364,22 @@ class TaxAPIController extends AppBaseController
 
             $isTaxExists = Tax::where('companySystemID',$input['companySystemID'])->where('taxMasterAutoID', '!=' , $id)->where('taxDescription',$input['taxDescription'])->exists();
             if($isTaxExists){
-                return $this->sendError('Tax description already exists', 500);
+                return $this->sendError(trans('custom.tax_description_already_exists'), 500);
             }
 
             if ($input['isActive'] == 0){
                 $isPullSupplier = SupplierMaster::where('primaryCompanySystemID',$tax->companySystemID)->where('whtType',$id)->exists();
                 if($isPullSupplier){
-                    return $this->sendError('Tax already use in supplier master. Cannot Inactive');
+                    return $this->sendError(trans('custom.tax_already_use_in_supplier_master_cannot_inactive'));
                 }
             }
 
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
-                return $this->sendError('Default WHT cannot inactive', 500);
+                return $this->sendError(trans('custom.default_wht_cannot_inactive'), 500);
             }
 
             if(($tax->isDefault == 1) && ($input['isActive'] == 0)){
-                return $this->sendError('Default WHT cannot change inactive', 500);
+                return $this->sendError(trans('custom.default_wht_cannot_change_inactive'), 500);
             }
 
             if(($tax->isDefault == 0) && ($input['isDefault'] == 1)){
@@ -422,7 +422,7 @@ class TaxAPIController extends AppBaseController
 
         $tax = $this->taxRepository->update($input, $id);
 
-        return $this->sendResponse($tax->toArray(), 'TAX updated successfully');
+        return $this->sendResponse($tax->toArray(), trans('custom.tax_updated_successfully'));
     }
 
     /**
@@ -439,25 +439,25 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('VAT not found');
+            return $this->sendError(trans('custom.vat_not_found'));
         }
 
         if($tax->taxCategory == 3){
             $isPullSupplier = SupplierMaster::where('primaryCompanySystemID',$tax->companySystemID)->where('whtType',$id)->exists();
             if($isPullSupplier){
-                return $this->sendError('Tax already use in supplier master. Cannot Delete');
+                return $this->sendError(trans('custom.tax_already_use_in_supplier_master_cannot_delete'));
             }
         }
 
         $isAssigned = Tax::where('taxMasterAutoID',$id)->whereHas('formula_detail')->exists();
 
         if($isAssigned){
-            return $this->sendError('Cannot delete. Tax master is added to a tax formula.');
+            return $this->sendError(trans('custom.cannot_delete_tax_master_is_added_to_a_tax_formula'));
         }
 
         $tax->delete();
 
-        return $this->sendResponse($id, 'VAT deleted successfully');
+        return $this->sendResponse($id, trans('custom.vat_deleted_successfully'));
     }
 
 
@@ -540,6 +540,6 @@ class TaxAPIController extends AppBaseController
             'defaultState' => $isDefaultState ? 0 : 1
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

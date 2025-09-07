@@ -156,7 +156,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                             ->first();
 
                         if (empty($advanceReceiptDetail)) {
-                            return $this->sendError('Advance payment detail not found');
+                            return $this->sendError(trans('custom.advance_payment_detail_not_found'));
                         }
 
                         $advancePaymentAmount = $advanceReceiptDetail->paymentAmount;

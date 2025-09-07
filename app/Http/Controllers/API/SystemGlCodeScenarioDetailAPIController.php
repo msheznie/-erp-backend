@@ -76,7 +76,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         $this->systemGlCodeScenarioDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $systemGlCodeScenarioDetails = $this->systemGlCodeScenarioDetailRepository->all();
 
-        return $this->sendResponse($systemGlCodeScenarioDetails->toArray(), 'System Gl Code Scenario Details retrieved successfully');
+        return $this->sendResponse($systemGlCodeScenarioDetails->toArray(), trans('custom.system_gl_code_scenario_details_retrieved_successf'));
     }
 
     /**
@@ -123,7 +123,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
         $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->create($input);
 
-        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'System Gl Code Scenario Detail saved successfully');
+        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), trans('custom.system_gl_code_scenario_detail_saved_successfully'));
     }
 
     /**
@@ -176,12 +176,12 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             ->findWithoutFail($id);
 
         if (empty($systemGlCodeScenarioDetail)) {
-            return $this->sendError('System Gl Code Scenario Detail not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_detail_not_found'));
         }
 
         $data['company_scenario'] = $systemGlCodeScenarioDetail->toArray();
 
-        return $this->sendResponse($data, 'System Gl Code Scenario Detail retrieved successfully');
+        return $this->sendResponse($data, trans('custom.system_gl_code_scenario_detail_retrieved_successfu'));
     }
 
     /**
@@ -239,7 +239,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->findWithoutFail($id);
 
         if (empty($systemGlCodeScenarioDetail)) {
-            return $this->sendError('System Gl Code Scenario Detail not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_detail_not_found'));
         }
 
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
@@ -287,7 +287,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
             $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", "{$input['departmentName']} - {$systemGlCodeScenarioDetail->master->description} has updated", "U", $newValue, $previousValue);
 
-            return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'Gl code updated successfully');
+            return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), trans('custom.gl_code_updated_successfully'));
         }catch(\Exception $e){
             DB::rollBack();
             return $this->sendError($e->getMessage(), 500);
@@ -383,7 +383,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->findWithoutFail($id);
 
         if (empty($systemGlCodeScenarioDetail)) {
-            return $this->sendError('System Gl Code Scenario Detail not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_detail_not_found'));
         }
 
         $systemGlCodeScenarioDetail->delete();

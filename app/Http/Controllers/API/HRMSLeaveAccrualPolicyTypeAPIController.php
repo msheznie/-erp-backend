@@ -65,7 +65,7 @@ class HRMSLeaveAccrualPolicyTypeAPIController extends AppBaseController
         $this->hRMSLeaveAccrualPolicyTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSLeaveAccrualPolicyTypes = $this->hRMSLeaveAccrualPolicyTypeRepository->all();
 
-        return $this->sendResponse($hRMSLeaveAccrualPolicyTypes->toArray(), 'H R M S Leave Accrual Policy Types retrieved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualPolicyTypes->toArray(), trans('custom.h_r_m_s_leave_accrual_policy_types_retrieved_succe'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRMSLeaveAccrualPolicyTypeAPIController extends AppBaseController
 
         $hRMSLeaveAccrualPolicyType = $this->hRMSLeaveAccrualPolicyTypeRepository->create($input);
 
-        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), 'H R M S Leave Accrual Policy Type saved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), trans('custom.h_r_m_s_leave_accrual_policy_type_saved_successful'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRMSLeaveAccrualPolicyTypeAPIController extends AppBaseController
         $hRMSLeaveAccrualPolicyType = $this->hRMSLeaveAccrualPolicyTypeRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualPolicyType)) {
-            return $this->sendError('H R M S Leave Accrual Policy Type not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_policy_type_not_found'));
         }
 
-        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), 'H R M S Leave Accrual Policy Type retrieved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), trans('custom.h_r_m_s_leave_accrual_policy_type_retrieved_succes'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRMSLeaveAccrualPolicyTypeAPIController extends AppBaseController
         $hRMSLeaveAccrualPolicyType = $this->hRMSLeaveAccrualPolicyTypeRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualPolicyType)) {
-            return $this->sendError('H R M S Leave Accrual Policy Type not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_policy_type_not_found'));
         }
 
         $hRMSLeaveAccrualPolicyType = $this->hRMSLeaveAccrualPolicyTypeRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), 'HRMSLeaveAccrualPolicyType updated successfully');
+        return $this->sendResponse($hRMSLeaveAccrualPolicyType->toArray(), trans('custom.hrmsleaveaccrualpolicytype_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class HRMSLeaveAccrualPolicyTypeAPIController extends AppBaseController
         $hRMSLeaveAccrualPolicyType = $this->hRMSLeaveAccrualPolicyTypeRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualPolicyType)) {
-            return $this->sendError('H R M S Leave Accrual Policy Type not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_policy_type_not_found'));
         }
 
         $hRMSLeaveAccrualPolicyType->delete();
 
-        return $this->sendResponse($id, 'H R M S Leave Accrual Policy Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_leave_accrual_policy_type_deleted_successf'));
     }
 }

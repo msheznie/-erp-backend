@@ -72,7 +72,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $this->documentApprovedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentApproveds = $this->documentApprovedRepository->all();
 
-        return $this->sendResponse($documentApproveds->toArray(), 'Document Approveds retrieved successfully');
+        return $this->sendResponse($documentApproveds->toArray(), trans('custom.document_approveds_retrieved_successfully'));
     }
 
     /**
@@ -89,7 +89,7 @@ class DocumentApprovedAPIController extends AppBaseController
 
         $documentApproveds = $this->documentApprovedRepository->create($input);
 
-        return $this->sendResponse($documentApproveds->toArray(), 'Document Approved saved successfully');
+        return $this->sendResponse($documentApproveds->toArray(), trans('custom.document_approved_saved_successfully'));
     }
 
     /**
@@ -106,10 +106,10 @@ class DocumentApprovedAPIController extends AppBaseController
         $documentApproved = $this->documentApprovedRepository->findWithoutFail($id);
 
         if (empty($documentApproved)) {
-            return $this->sendError('Document Approved not found');
+            return $this->sendError(trans('custom.document_approved_not_found'));
         }
 
-        return $this->sendResponse($documentApproved->toArray(), 'Document Approved retrieved successfully');
+        return $this->sendResponse($documentApproved->toArray(), trans('custom.document_approved_retrieved_successfully'));
     }
 
     /**
@@ -129,12 +129,12 @@ class DocumentApprovedAPIController extends AppBaseController
         $documentApproved = $this->documentApprovedRepository->findWithoutFail($id);
 
         if (empty($documentApproved)) {
-            return $this->sendError('Document Approved not found');
+            return $this->sendError(trans('custom.document_approved_not_found'));
         }
 
         $documentApproved = $this->documentApprovedRepository->update($input, $id);
 
-        return $this->sendResponse($documentApproved->toArray(), 'DocumentApproved updated successfully');
+        return $this->sendResponse($documentApproved->toArray(), trans('custom.documentapproved_updated_successfully'));
     }
 
     /**
@@ -151,12 +151,12 @@ class DocumentApprovedAPIController extends AppBaseController
         $documentApproved = $this->documentApprovedRepository->findWithoutFail($id);
 
         if (empty($documentApproved)) {
-            return $this->sendError('Document Approved not found');
+            return $this->sendError(trans('custom.document_approved_not_found'));
         }
 
         $documentApproved->delete();
 
-        return $this->sendResponse($id, 'Document Approved deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_approved_deleted_successfully'));
     }
 
     public function getAllDocumentApproval(request $request)
@@ -3553,7 +3553,7 @@ WHERE
         $output = DB::select($qry);
 
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
-            return $this->sendResponse($output,'data retrived successfully');
+            return $this->sendResponse($output,trans('custom.data_retrived_successfully_1'));
         }
 
 
@@ -3793,7 +3793,7 @@ WHERE
             ->whereIn('documentSystemID',[1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19,17])
             ->count('documentApprovedID');*/
 
-        return $this->sendResponse(0, 'Document approved count retrieved successfully');
+        return $this->sendResponse(0, trans('custom.document_approved_count_retrieved_successfully'));
 
     }
 

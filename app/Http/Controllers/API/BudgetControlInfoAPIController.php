@@ -64,7 +64,7 @@ class BudgetControlInfoAPIController extends AppBaseController
         $this->budgetControlInfoRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetControlInfos = $this->budgetControlInfoRepository->all();
 
-        return $this->sendResponse($budgetControlInfos->toArray(), 'Budget Control Infos retrieved successfully');
+        return $this->sendResponse($budgetControlInfos->toArray(), trans('custom.budget_control_infos_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class BudgetControlInfoAPIController extends AppBaseController
 
         $budgetControlInfo = $this->budgetControlInfoRepository->create($input);
 
-        return $this->sendResponse($budgetControlInfo->toArray(), 'Budget Control Info saved successfully');
+        return $this->sendResponse($budgetControlInfo->toArray(), trans('custom.budget_control_info_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class BudgetControlInfoAPIController extends AppBaseController
         $budgetControlInfo = $this->budgetControlInfoRepository->findWithoutFail($id);
 
         if (empty($budgetControlInfo)) {
-            return $this->sendError('Budget Control Info not found');
+            return $this->sendError(trans('custom.budget_control_info_not_found'));
         }
 
-        return $this->sendResponse($budgetControlInfo->toArray(), 'Budget Control Info retrieved successfully');
+        return $this->sendResponse($budgetControlInfo->toArray(), trans('custom.budget_control_info_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class BudgetControlInfoAPIController extends AppBaseController
         $budgetControlInfo = $this->budgetControlInfoRepository->findWithoutFail($id);
 
         if (empty($budgetControlInfo)) {
-            return $this->sendError('Budget Control Info not found');
+            return $this->sendError(trans('custom.budget_control_info_not_found'));
         }
 
         $budgetControlInfo = $this->budgetControlInfoRepository->update($input, $id);
 
-        return $this->sendResponse($budgetControlInfo->toArray(), 'BudgetControlInfo updated successfully');
+        return $this->sendResponse($budgetControlInfo->toArray(), trans('custom.budgetcontrolinfo_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class BudgetControlInfoAPIController extends AppBaseController
         $budgetControlInfo = $this->budgetControlInfoRepository->findWithoutFail($id);
 
         if (empty($budgetControlInfo)) {
-            return $this->sendError('Budget Control Info not found');
+            return $this->sendError(trans('custom.budget_control_info_not_found'));
         }
 
         $budgetControlInfo->delete();
@@ -306,6 +306,6 @@ class BudgetControlInfoAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

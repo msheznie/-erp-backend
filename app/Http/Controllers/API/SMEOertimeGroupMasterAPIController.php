@@ -65,7 +65,7 @@ class SMEOertimeGroupMasterAPIController extends AppBaseController
         $this->sMEOertimeGroupMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEOertimeGroupMasters = $this->sMEOertimeGroupMasterRepository->all();
 
-        return $this->sendResponse($sMEOertimeGroupMasters->toArray(), 'S M E Oertime Group Masters retrieved successfully');
+        return $this->sendResponse($sMEOertimeGroupMasters->toArray(), trans('custom.s_m_e_oertime_group_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEOertimeGroupMasterAPIController extends AppBaseController
 
         $sMEOertimeGroupMaster = $this->sMEOertimeGroupMasterRepository->create($input);
 
-        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), 'S M E Oertime Group Master saved successfully');
+        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), trans('custom.s_m_e_oertime_group_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEOertimeGroupMasterAPIController extends AppBaseController
         $sMEOertimeGroupMaster = $this->sMEOertimeGroupMasterRepository->findWithoutFail($id);
 
         if (empty($sMEOertimeGroupMaster)) {
-            return $this->sendError('S M E Oertime Group Master not found');
+            return $this->sendError(trans('custom.s_m_e_oertime_group_master_not_found'));
         }
 
-        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), 'S M E Oertime Group Master retrieved successfully');
+        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), trans('custom.s_m_e_oertime_group_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEOertimeGroupMasterAPIController extends AppBaseController
         $sMEOertimeGroupMaster = $this->sMEOertimeGroupMasterRepository->findWithoutFail($id);
 
         if (empty($sMEOertimeGroupMaster)) {
-            return $this->sendError('S M E Oertime Group Master not found');
+            return $this->sendError(trans('custom.s_m_e_oertime_group_master_not_found'));
         }
 
         $sMEOertimeGroupMaster = $this->sMEOertimeGroupMasterRepository->update($input, $id);
 
-        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), 'SMEOertimeGroupMaster updated successfully');
+        return $this->sendResponse($sMEOertimeGroupMaster->toArray(), trans('custom.smeoertimegroupmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEOertimeGroupMasterAPIController extends AppBaseController
         $sMEOertimeGroupMaster = $this->sMEOertimeGroupMasterRepository->findWithoutFail($id);
 
         if (empty($sMEOertimeGroupMaster)) {
-            return $this->sendError('S M E Oertime Group Master not found');
+            return $this->sendError(trans('custom.s_m_e_oertime_group_master_not_found'));
         }
 
         $sMEOertimeGroupMaster->delete();

@@ -78,7 +78,7 @@ class MobileNoPoolAPIController extends AppBaseController
         $this->mobileNoPoolRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mobileNoPools = $this->mobileNoPoolRepository->all();
 
-        return $this->sendResponse($mobileNoPools->toArray(), 'Mobile No Pools retrieved successfully');
+        return $this->sendResponse($mobileNoPools->toArray(), trans('custom.mobile_no_pools_retrieved_successfully'));
     }
 
     /**
@@ -147,7 +147,7 @@ class MobileNoPoolAPIController extends AppBaseController
 
             $mobileNoPool = $this->mobileNoPoolRepository->findWithoutFail($input['mobilenopoolID']);
             if (empty($mobileNoPool)) {
-                return $this->sendError('Mobile No Pool not found');
+                return $this->sendError(trans('custom.mobile_no_pool_not_found'));
             }
             $mobileNoPool = $this->mobileNoPoolRepository->update($input, $input['mobilenopoolID']);
 
@@ -169,7 +169,7 @@ class MobileNoPoolAPIController extends AppBaseController
             $mobileNoPool = $this->mobileNoPoolRepository->create($input);
         }
 
-        return $this->sendResponse($mobileNoPool->toArray(), 'Mobile No Pool saved successfully');
+        return $this->sendResponse($mobileNoPool->toArray(), trans('custom.mobile_no_pool_saved_successfully'));
     }
 
     /**
@@ -216,10 +216,10 @@ class MobileNoPoolAPIController extends AppBaseController
         $mobileNoPool = $this->mobileNoPoolRepository->findWithoutFail($id);
 
         if (empty($mobileNoPool)) {
-            return $this->sendError('Mobile No Pool not found');
+            return $this->sendError(trans('custom.mobile_no_pool_not_found'));
         }
 
-        return $this->sendResponse($mobileNoPool->toArray(), 'Mobile No Pool retrieved successfully');
+        return $this->sendResponse($mobileNoPool->toArray(), trans('custom.mobile_no_pool_retrieved_successfully'));
     }
 
     /**
@@ -276,12 +276,12 @@ class MobileNoPoolAPIController extends AppBaseController
         $mobileNoPool = $this->mobileNoPoolRepository->findWithoutFail($id);
 
         if (empty($mobileNoPool)) {
-            return $this->sendError('Mobile No not found');
+            return $this->sendError(trans('custom.mobile_no_not_found'));
         }
 
         $mobileNoPool = $this->mobileNoPoolRepository->update($input, $id);
 
-        return $this->sendResponse($mobileNoPool->toArray(), 'Mobile No Pool updated successfully');
+        return $this->sendResponse($mobileNoPool->toArray(), trans('custom.mobile_no_pool_updated_successfully'));
     }
 
     /**
@@ -328,18 +328,18 @@ class MobileNoPoolAPIController extends AppBaseController
         $mobileNoPool = $this->mobileNoPoolRepository->findWithoutFail($id);
 
         if (empty($mobileNoPool)) {
-            return $this->sendError('Mobile No not found');
+            return $this->sendError(trans('custom.mobile_no_not_found'));
         }
 
         $isExist = MobileMaster::where('mobileNoPoolID',$mobileNoPool->mobilenopoolID)->exists();
 
         if ($isExist) {
-            return $this->sendError('You cannot delete. Mobile No has already assigned');
+            return $this->sendError(trans('custom.you_cannot_delete_mobile_no_has_already_assigned'));
         }
 
         $mobileNoPool->delete();
 
-        return $this->sendResponse([],'Mobile No Pool deleted successfully');
+        return $this->sendResponse([],trans('custom.mobile_no_pool_deleted_successfully'));
     }
 
     public function getAllMobileNo(Request $request){

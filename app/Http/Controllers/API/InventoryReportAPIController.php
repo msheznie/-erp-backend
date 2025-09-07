@@ -199,7 +199,7 @@ class InventoryReportAPIController extends AppBaseController
             'company_name' => $company_name
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getScarpInventoryFilterData(Request $request)
@@ -231,7 +231,7 @@ class InventoryReportAPIController extends AppBaseController
             'item' => $item,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
     private function itemSummaryReport($from, $toDate, $warhouse,$category,$items,$currency)
     {
@@ -364,7 +364,7 @@ class InventoryReportAPIController extends AppBaseController
                     'company' => $company,
                     'currencyID' => $currency_id,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
 
@@ -388,7 +388,7 @@ class InventoryReportAPIController extends AppBaseController
                     'company' => $company,
                     'currencyID' => $currency_id,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
 
@@ -430,7 +430,7 @@ class InventoryReportAPIController extends AppBaseController
                     'currencyID' => $currency_id,
                     'grandClosing' => $GrandClosing,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
             case 'INVST': //Stock Transaction Report
@@ -543,14 +543,14 @@ class InventoryReportAPIController extends AppBaseController
                     $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
 
                     $output = $this->stockAgingQry($input, 0);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+                    return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVSD':
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SD') {
                     $output = $this->stockDetailQry($request);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+                    return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVMMA':
@@ -564,7 +564,7 @@ class InventoryReportAPIController extends AppBaseController
                     $detail['output'] = $output;
                     $detail['company_name'] = $company_name;
 
-                    return $this->sendResponse($detail, 'Items retrieved successfully');
+                    return $this->sendResponse($detail, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVIM':
@@ -580,7 +580,7 @@ class InventoryReportAPIController extends AppBaseController
                 }else if($reportTypeID == 'IMSM'){
 
                 }
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -1815,7 +1815,7 @@ FROM
                 //     $lastrow = $excel->getActiveSheet()->getHighestRow();
                 //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 // })->download('csv');
-                // return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), trans('custom.success_export'));
 
                     
                 $company = Company::find($request->companySystemID);
@@ -1887,7 +1887,7 @@ FROM
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download('csv');
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
                 return $this->sendError('No report ID found');

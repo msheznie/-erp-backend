@@ -103,7 +103,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully '. $isFromSrmAmend);
+        return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_retrieved_successfully_1'). $isFromSrmAmend);
     }
 
     /**
@@ -125,7 +125,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         if (!is_null($documentAttachments->path)) {
@@ -138,13 +138,13 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $sanitizedFileName = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $documentAttachments->myFileName);
                 return Storage::disk($disk)->download($documentAttachments->path, $sanitizedFileName);
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
 
           /*  if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
                 return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }*/
         } else {
             return $this->sendError('Attachment is not attached', 404);
@@ -159,7 +159,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         $fileName = "Desktop/upload/" . $documentAttachments->path;
@@ -332,7 +332,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+                return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_saved_successfully'));
             }
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -362,10 +362,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully');
+        return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_retrieved_successfully'));
     }
 
     /**
@@ -410,7 +410,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         );
 
         if(!$isExist['success']){
-            return $this->sendError('Description already exists', 400);
+            return $this->sendError(trans('custom.description_already_exists'), 400);
         } else {
             if (isset($input['docExpirtyDate'])) {
                 if ($input['docExpirtyDate']) {
@@ -426,14 +426,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $this->documentAttachmentsRepository->findWithoutFail($id);
 
             if (empty($documentAttachments)) {
-                return $this->sendError('Document Attachments not found');
+                return $this->sendError(trans('custom.document_attachments_not_found'));
             }
 
             $documentAttachments = $editOrAmend ?
                 $this->documentAttachmentsEditLogRepository->update($input, $id) :
                 $this->documentAttachmentsRepository->update($input, $id);
 
-            return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
+            return $this->sendResponse($documentAttachments->toArray(), trans('custom.documentattachments_updated_successfully'));
         }
     }
 
@@ -451,7 +451,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         $attachmentDeleteData = self::deleteAttachmentData($documentAttachments);
@@ -1128,7 +1128,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $output['documents'] = DocumentMaster::all();
         $output['attachmentTypes'] = DocumentAttachmentType::all();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function downloadFileSRM(Request $request)
@@ -1138,7 +1138,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         if (Storage::disk('s3SRM')->exists($input['fileName'])) {
             return Storage::disk('s3SRM')->download($input['fileName'], 'Attachment');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
     public function downloadFileTender(Request $request){ 
@@ -1150,7 +1150,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if ($exists = Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->exists($filePath)) {
                 return Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->download($filePath, 'File');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             return $this->sendError('Attachment is not attached', 404);
@@ -1216,7 +1216,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $query = DocumentAttachments::with(['bid_verify', 'document_parent'])->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType', $envelopType);
 
-       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+       // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1253,7 +1253,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $attachmentId = $details['attachmentId'];
 
-       // return $this->sendResponse($details['tenderId'], 'Consolidated view data Successfully get');
+       // return $this->sendResponse($details['tenderId'], trans('custom.consolidated_view_data_successfully_get'));
 
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
@@ -1263,7 +1263,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
         $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
 
-        return $this->sendResponse($data, 'Consolidated view data Successfully get');
+        return $this->sendResponse($data, trans('custom.consolidated_view_data_successfully_get'));
  
     }
 
@@ -1462,7 +1462,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['attachmentID']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
         try{
             $getAttachment = $this->documentAttachmentsRepository->getAttachmentPreview($documentAttachments);
@@ -1471,7 +1471,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             }
             return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? 'Attachment retrieved successfully');
         } catch (\Exception $ex){
-                return $this->sendError('Unexpected Error: ' . $ex->getMessage(), 500);
+                return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage(), 500);
         }
     }
 }

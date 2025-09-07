@@ -65,7 +65,7 @@ class SubModuleMasterAPIController extends AppBaseController
         $this->subModuleMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $subModuleMasters = $this->subModuleMasterRepository->all();
 
-        return $this->sendResponse($subModuleMasters->toArray(), 'Sub Module Masters retrieved successfully');
+        return $this->sendResponse($subModuleMasters->toArray(), trans('custom.sub_module_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SubModuleMasterAPIController extends AppBaseController
 
         $subModuleMaster = $this->subModuleMasterRepository->create($input);
 
-        return $this->sendResponse($subModuleMaster->toArray(), 'Sub Module Master saved successfully');
+        return $this->sendResponse($subModuleMaster->toArray(), trans('custom.sub_module_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SubModuleMasterAPIController extends AppBaseController
         $subModuleMaster = $this->subModuleMasterRepository->findWithoutFail($id);
 
         if (empty($subModuleMaster)) {
-            return $this->sendError('Sub Module Master not found');
+            return $this->sendError(trans('custom.sub_module_master_not_found'));
         }
 
-        return $this->sendResponse($subModuleMaster->toArray(), 'Sub Module Master retrieved successfully');
+        return $this->sendResponse($subModuleMaster->toArray(), trans('custom.sub_module_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SubModuleMasterAPIController extends AppBaseController
         $subModuleMaster = $this->subModuleMasterRepository->findWithoutFail($id);
 
         if (empty($subModuleMaster)) {
-            return $this->sendError('Sub Module Master not found');
+            return $this->sendError(trans('custom.sub_module_master_not_found'));
         }
 
         $subModuleMaster = $this->subModuleMasterRepository->update($input, $id);
 
-        return $this->sendResponse($subModuleMaster->toArray(), 'SubModuleMaster updated successfully');
+        return $this->sendResponse($subModuleMaster->toArray(), trans('custom.submodulemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SubModuleMasterAPIController extends AppBaseController
         $subModuleMaster = $this->subModuleMasterRepository->findWithoutFail($id);
 
         if (empty($subModuleMaster)) {
-            return $this->sendError('Sub Module Master not found');
+            return $this->sendError(trans('custom.sub_module_master_not_found'));
         }
 
         $subModuleMaster->delete();

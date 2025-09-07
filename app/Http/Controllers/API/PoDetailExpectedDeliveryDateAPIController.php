@@ -68,7 +68,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
         $this->poDetailExpectedDeliveryDateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poDetailExpectedDeliveryDates = $this->poDetailExpectedDeliveryDateRepository->all();
 
-        return $this->sendResponse($poDetailExpectedDeliveryDates->toArray(), 'Po Detail Expected Delivery Dates retrieved successfully');
+        return $this->sendResponse($poDetailExpectedDeliveryDates->toArray(), trans('custom.po_detail_expected_delivery_dates_retrieved_succes'));
     }
 
     /**
@@ -115,7 +115,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
 
         $poDetailExpectedDeliveryDate = $this->poDetailExpectedDeliveryDateRepository->create($input);
 
-        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), 'Po Detail Expected Delivery Date saved successfully');
+        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), trans('custom.po_detail_expected_delivery_date_saved_successfull'));
     }
 
     /**
@@ -162,10 +162,10 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
         $poDetailExpectedDeliveryDate = $this->poDetailExpectedDeliveryDateRepository->findWithoutFail($id);
 
         if (empty($poDetailExpectedDeliveryDate)) {
-            return $this->sendError('Po Detail Expected Delivery Date not found');
+            return $this->sendError(trans('custom.po_detail_expected_delivery_date_not_found'));
         }
 
-        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), 'Po Detail Expected Delivery Date retrieved successfully');
+        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), trans('custom.po_detail_expected_delivery_date_retrieved_success'));
     }
 
     /**
@@ -244,7 +244,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
         $poDetailExpectedDeliveryDate = $this->poDetailExpectedDeliveryDateRepository->findWithoutFail($id);
 
         if (empty($poDetailExpectedDeliveryDate)) {
-            return $this->sendError('Po Detail Expected Delivery Date not found');
+            return $this->sendError(trans('custom.po_detail_expected_delivery_date_not_found'));
         }
 
         $poDetailExpectedDeliveryDate = $this->poDetailExpectedDeliveryDateRepository->update($input, $id);
@@ -253,7 +253,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
             $poDetailExpectedDeliveryDate->delete();
         }
 
-        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), 'PoDetailExpectedDeliveryDate updated successfully');
+        return $this->sendResponse($poDetailExpectedDeliveryDate->toArray(), trans('custom.podetailexpecteddeliverydate_updated_successfully'));
     }
 
     /**
@@ -300,12 +300,12 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
         $poDetailExpectedDeliveryDate = $this->poDetailExpectedDeliveryDateRepository->findWithoutFail($id);
 
         if (empty($poDetailExpectedDeliveryDate)) {
-            return $this->sendError('Po Detail Expected Delivery Date not found');
+            return $this->sendError(trans('custom.po_detail_expected_delivery_date_not_found'));
         }
 
         $poDetailExpectedDeliveryDate->delete();
 
-        return $this->sendResponse($poDetailExpectedDeliveryDate,'Po Detail Expected Delivery Date deleted successfully');
+        return $this->sendResponse($poDetailExpectedDeliveryDate,trans('custom.po_detail_expected_delivery_date_deleted_successfu'));
     }
 
     public function getAllocatedExpectedDeliveryDates(Request $request)
@@ -316,7 +316,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
                                                         ->where('po_detail_auto_id', $input['docDetailID'])
                                                         ->get();
         
-        return $this->sendResponse($allocatedItems, 'Po Detail Expected Delivery Dates retrieved successfully');
+        return $this->sendResponse($allocatedItems, trans('custom.po_detail_expected_delivery_dates_retrieved_succes'));
     }
 
     public function allocateExpectedDeliveryDates(Request $request)
@@ -324,7 +324,7 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['docDetailID'])) {
-            return $this->sendError('Item line not found');
+            return $this->sendError(trans('custom.item_line_not_found'));
 
         }
 
@@ -337,12 +337,12 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
                                                      ->first();
 
         if ($checkAlreadyAllocated) {
-            return $this->sendError('This expected delivery date already allocated');
+            return $this->sendError(trans('custom.this_expected_delivery_date_already_allocated'));
         }
 
         $itemData = PurchaseOrderDetails::find($input['docDetailID']);
         if (!$itemData) {
-            return $this->sendError('Item detail not found');
+            return $this->sendError(trans('custom.item_detail_not_found'));
         }
 
         $allocatedQty = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $input['docDetailID'])
@@ -361,10 +361,10 @@ class PoDetailExpectedDeliveryDateAPIController extends AppBaseController
 
         $createExpectedDeliveryDate = PoDetailExpectedDeliveryDate::create($allocationData);
         if (!$createExpectedDeliveryDate) {
-            return $this->sendError('Error occured while allocating');
+            return $this->sendError(trans('custom.error_occured_while_allocating'));
         }
 
-        return $this->sendResponse($createExpectedDeliveryDate, 'Po Detail Expected Delivery Date created successfully');
+        return $this->sendResponse($createExpectedDeliveryDate, trans('custom.po_detail_expected_delivery_date_created_successfu'));
 
     }
 

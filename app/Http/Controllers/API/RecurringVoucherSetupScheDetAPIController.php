@@ -73,7 +73,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $this->recurringVoucherSetupScheDetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $recurringVoucherSetupScheDets = $this->recurringVoucherSetupScheDetRepository->all();
 
-        return $this->sendResponse($recurringVoucherSetupScheDets->toArray(), 'Recurring Voucher Setup Sche Dets retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupScheDets->toArray(), trans('custom.recurring_voucher_setup_sche_dets_retrieved_succes'));
     }
 
     /**
@@ -126,12 +126,12 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $input = $request->all();
             
         if (!isset($input['details']) || !is_array($input['details'])) {
-            return $this->sendError('Invalid input: details is required and should be an array');
+            return $this->sendError(trans('custom.invalid_input_details_is_required_and_should_be_an'));
         }
         $details = $input['details'];
 
         if (!isset($input['items']) || !is_array($input['items'])) {
-            return $this->sendError('Invalid input: items is required and should be an array');
+            return $this->sendError(trans('custom.invalid_input_items_is_required_and_should_be_an_a'));
         }
         $items = $input['items'];
         
@@ -143,7 +143,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $rrvMaster = RecurringVoucherSetup::find($items['recurringVoucherAutoId']);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
 
         $data['recurringVoucherAutoId'] = $items['recurringVoucherAutoId'];
@@ -186,7 +186,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
              $this->updateShedule($data,$details);
         }
 
-        return $this->sendResponse(true, 'Recurring Voucher Setup Sche Det saved successfully');
+        return $this->sendResponse(true, trans('custom.recurring_voucher_setup_sche_det_saved_successfull'));
     }
 
     /**
@@ -234,10 +234,10 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $recurringVoucherSetupScheDet = $this->recurringVoucherSetupScheDetRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupScheDet)) {
-            return $this->sendError('Recurring Voucher Setup Sche Det not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_sche_det_not_found'));
         }
 
-        return $this->sendResponse($recurringVoucherSetupScheDet->toArray(), 'Recurring Voucher Setup Sche Det retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupScheDet->toArray(), trans('custom.recurring_voucher_setup_sche_det_retrieved_success'));
     }
 
     /**
@@ -304,13 +304,13 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $recurringVoucherSetupScheDet = $this->recurringVoucherSetupScheDetRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupScheDet)) {
-            return $this->sendError('Recurring Voucher Setup Sche Det not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_sche_det_not_found'));
         }
 
          $rrvMaster = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
 
         $data['isChecked'] = $input['isChecked'];
@@ -329,7 +329,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    return $this->sendError(trans('custom.department_not_found'));
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
@@ -342,7 +342,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
 
         $recurringVoucherSetupScheDet = $this->recurringVoucherSetupScheDetRepository->update($data, $id);
 
-        return $this->sendResponse($recurringVoucherSetupScheDet->toArray(), 'Recurring Voucher Setup  updated successfully');
+        return $this->sendResponse($recurringVoucherSetupScheDet->toArray(), trans('custom.recurring_voucher_setup_updated_successfully'));
     }
 
     /**
@@ -390,7 +390,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
         $recurringVoucherSetupScheDet = $this->recurringVoucherSetupScheDetRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupScheDet)) {
-            return $this->sendError('Recurring Voucher Setup Sche Det not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_sche_det_not_found'));
         }
 
         $recurringVoucherSetupScheDet->delete();
@@ -424,7 +424,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
             $data =  RecurringVoucherSetupScheDet::where('recurringVoucherAutoId',($input['voucherId']))->where('recurringVoucherSheduleAutoId',($input['sheduleId']))->where('companySystemID',($input['companySystemID']))->get();
         }
 
-        return $this->sendResponse($data->toArray(), 'RecurringVoucherSetupScheDet updated successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.recurringvouchersetupschedet_updated_successfully'));
     }
 
     public function updateShedule($data,$details)

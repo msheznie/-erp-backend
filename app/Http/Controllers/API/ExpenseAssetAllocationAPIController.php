@@ -72,7 +72,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $this->expenseAssetAllocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseAssetAllocations = $this->expenseAssetAllocationRepository->all();
 
-        return $this->sendResponse($expenseAssetAllocations->toArray(), 'Expense Asset Allocations retrieved successfully');
+        return $this->sendResponse($expenseAssetAllocations->toArray(), trans('custom.expense_asset_allocations_retrieved_successfully'));
     }
 
     /**
@@ -294,7 +294,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->create($input);
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'Expense Asset Allocation saved successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expense_asset_allocation_saved_successfully'));
     }
 
     /**
@@ -341,10 +341,10 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'Expense Asset Allocation retrieved successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expense_asset_allocation_retrieved_successfully'));
     }
 
     /**
@@ -401,12 +401,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->update($input, $id);
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'ExpenseAssetAllocation updated successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expenseassetallocation_updated_successfully'));
     }
 
     /**
@@ -453,12 +453,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
         $expenseAssetAllocation->delete();
 
-        return $this->sendResponse([], 'Expense Asset Allocation deleted successfully');
+        return $this->sendResponse([], trans('custom.expense_asset_allocation_deleted_successfully'));
     }
 
      public function getCompanyAsset(Request $request)
@@ -483,7 +483,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     } 
 
     public function getAllocatedAssetsForExpense(Request $request)
@@ -495,7 +495,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                   ->with(['asset'])
                                                   ->get();
 
-        return $this->sendResponse($allocatedAsssets, 'Data retrieved successfully');
+        return $this->sendResponse($allocatedAsssets, trans('custom.data_retrieved_successfully'));
     }
 
     public function checkAssetAllocation(Request $request)
@@ -558,7 +558,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $data['exit'] = false;
         }
 
-        return $this->sendResponse($data, 'Data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
     }
 
     public function validateDirectItemWithAssetExpense(Request $request)
@@ -583,6 +583,6 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
              }
         }
 
-        return $this->sendResponse($validationSuccess, 'Data retrieved successfully');
+        return $this->sendResponse($validationSuccess, trans('custom.data_retrieved_successfully'));
     }
 }

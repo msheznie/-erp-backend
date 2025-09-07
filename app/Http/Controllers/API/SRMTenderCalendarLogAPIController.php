@@ -64,7 +64,7 @@ class SRMTenderCalendarLogAPIController extends AppBaseController
         $this->sRMTenderCalendarLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sRMTenderCalendarLogs = $this->sRMTenderCalendarLogRepository->all();
 
-        return $this->sendResponse($sRMTenderCalendarLogs->toArray(), 'S R M Tender Calendar Logs retrieved successfully');
+        return $this->sendResponse($sRMTenderCalendarLogs->toArray(), trans('custom.s_r_m_tender_calendar_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SRMTenderCalendarLogAPIController extends AppBaseController
 
         $sRMTenderCalendarLog = $this->sRMTenderCalendarLogRepository->create($input);
 
-        return $this->sendResponse($sRMTenderCalendarLog->toArray(), 'S R M Tender Calendar Log saved successfully');
+        return $this->sendResponse($sRMTenderCalendarLog->toArray(), trans('custom.s_r_m_tender_calendar_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SRMTenderCalendarLogAPIController extends AppBaseController
         $sRMTenderCalendarLog = $this->sRMTenderCalendarLogRepository->findWithoutFail($id);
 
         if (empty($sRMTenderCalendarLog)) {
-            return $this->sendError('S R M Tender Calendar Log not found');
+            return $this->sendError(trans('custom.s_r_m_tender_calendar_log_not_found'));
         }
 
-        return $this->sendResponse($sRMTenderCalendarLog->toArray(), 'S R M Tender Calendar Log retrieved successfully');
+        return $this->sendResponse($sRMTenderCalendarLog->toArray(), trans('custom.s_r_m_tender_calendar_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SRMTenderCalendarLogAPIController extends AppBaseController
         $sRMTenderCalendarLog = $this->sRMTenderCalendarLogRepository->findWithoutFail($id);
 
         if (empty($sRMTenderCalendarLog)) {
-            return $this->sendError('S R M Tender Calendar Log not found');
+            return $this->sendError(trans('custom.s_r_m_tender_calendar_log_not_found'));
         }
 
         $sRMTenderCalendarLog = $this->sRMTenderCalendarLogRepository->update($input, $id);
 
-        return $this->sendResponse($sRMTenderCalendarLog->toArray(), 'SRMTenderCalendarLog updated successfully');
+        return $this->sendResponse($sRMTenderCalendarLog->toArray(), trans('custom.srmtendercalendarlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SRMTenderCalendarLogAPIController extends AppBaseController
         $sRMTenderCalendarLog = $this->sRMTenderCalendarLogRepository->findWithoutFail($id);
 
         if (empty($sRMTenderCalendarLog)) {
-            return $this->sendError('S R M Tender Calendar Log not found');
+            return $this->sendError(trans('custom.s_r_m_tender_calendar_log_not_found'));
         }
 
         $sRMTenderCalendarLog->delete();

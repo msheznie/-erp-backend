@@ -64,7 +64,7 @@ class BudgetControlLinkAPIController extends AppBaseController
         $this->budgetControlLinkRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetControlLinks = $this->budgetControlLinkRepository->all();
 
-        return $this->sendResponse($budgetControlLinks->toArray(), 'Budget Control Links retrieved successfully');
+        return $this->sendResponse($budgetControlLinks->toArray(), trans('custom.budget_control_links_retrieved_successfully'));
     }
 
     /**
@@ -163,7 +163,7 @@ class BudgetControlLinkAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($budgetControlLink->toArray(), 'Budget Control Link saved successfully');
+        return $this->sendResponse($budgetControlLink->toArray(), trans('custom.budget_control_link_saved_successfully'));
     }
 
     /**
@@ -211,10 +211,10 @@ class BudgetControlLinkAPIController extends AppBaseController
         $budgetControlLink = $this->budgetControlLinkRepository->findWithoutFail($id);
 
         if (empty($budgetControlLink)) {
-            return $this->sendError('Budget Control Link not found');
+            return $this->sendError(trans('custom.budget_control_link_not_found'));
         }
 
-        return $this->sendResponse($budgetControlLink->toArray(), 'Budget Control Link retrieved successfully');
+        return $this->sendResponse($budgetControlLink->toArray(), trans('custom.budget_control_link_retrieved_successfully'));
     }
 
     /**
@@ -280,12 +280,12 @@ class BudgetControlLinkAPIController extends AppBaseController
         $budgetControlLink = $this->budgetControlLinkRepository->findWithoutFail($id);
 
         if (empty($budgetControlLink)) {
-            return $this->sendError('Budget Control Link not found');
+            return $this->sendError(trans('custom.budget_control_link_not_found'));
         }
 
         $budgetControlLink = $this->budgetControlLinkRepository->update($input, $id);
 
-        return $this->sendResponse($budgetControlLink->toArray(), 'BudgetControlLink updated successfully');
+        return $this->sendResponse($budgetControlLink->toArray(), trans('custom.budgetcontrollink_updated_successfully'));
     }
 
     /**
@@ -333,11 +333,11 @@ class BudgetControlLinkAPIController extends AppBaseController
         $budgetControlLink = $this->budgetControlLinkRepository->findWithoutFail($id);
 
         if (empty($budgetControlLink)) {
-            return $this->sendError('Budget Control Link not found');
+            return $this->sendError(trans('custom.budget_control_link_not_found'));
         }
 
         $budgetControlLink->delete();
         
-        return $this->sendResponse(true,'Budget Control Link deleted successfully');
+        return $this->sendResponse(true,trans('custom.budget_control_link_deleted_successfully'));
     }
 }

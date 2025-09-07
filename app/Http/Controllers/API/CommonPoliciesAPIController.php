@@ -25,7 +25,7 @@ class CommonPoliciesAPIController extends AppBaseController
 
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-        return $this->sendResponse($policy, 'Policy details retrieved successfully');
+        return $this->sendResponse($policy, trans('custom.policy_details_retrieved_successfully'));
 
     }
 }

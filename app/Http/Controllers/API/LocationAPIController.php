@@ -49,7 +49,7 @@ class LocationAPIController extends AppBaseController
         $this->locationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $locations = $this->locationRepository->all();
 
-        return $this->sendResponse($locations->toArray(), 'Locations retrieved successfully');
+        return $this->sendResponse($locations->toArray(), trans('custom.locations_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class LocationAPIController extends AppBaseController
 
         $locations = $this->locationRepository->create($input);
 
-        return $this->sendResponse($locations->toArray(), 'Location saved successfully');
+        return $this->sendResponse($locations->toArray(), trans('custom.location_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class LocationAPIController extends AppBaseController
         $location = $this->locationRepository->findWithoutFail($id);
 
         if (empty($location)) {
-            return $this->sendError('Location not found');
+            return $this->sendError(trans('custom.location_not_found'));
         }
 
-        return $this->sendResponse($location->toArray(), 'Location retrieved successfully');
+        return $this->sendResponse($location->toArray(), trans('custom.location_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class LocationAPIController extends AppBaseController
         $location = $this->locationRepository->findWithoutFail($id);
 
         if (empty($location)) {
-            return $this->sendError('Location not found');
+            return $this->sendError(trans('custom.location_not_found'));
         }
 
         $location = $this->locationRepository->update($input, $id);
 
-        return $this->sendResponse($location->toArray(), 'Location updated successfully');
+        return $this->sendResponse($location->toArray(), trans('custom.location_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class LocationAPIController extends AppBaseController
         $location = $this->locationRepository->findWithoutFail($id);
 
         if (empty($location)) {
-            return $this->sendError('Location not found');
+            return $this->sendError(trans('custom.location_not_found'));
         }
 
         $location->delete();
 
-        return $this->sendResponse($id, 'Location deleted successfully');
+        return $this->sendResponse($id, trans('custom.location_deleted_successfully'));
     }
 }

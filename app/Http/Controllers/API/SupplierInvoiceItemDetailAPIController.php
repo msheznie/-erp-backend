@@ -74,7 +74,7 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $this->supplierInvoiceItemDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierInvoiceItemDetails = $this->supplierInvoiceItemDetailRepository->all();
 
-        return $this->sendResponse($supplierInvoiceItemDetails->toArray(), 'Supplier Invoice Item Details retrieved successfully');
+        return $this->sendResponse($supplierInvoiceItemDetails->toArray(), trans('custom.supplier_invoice_item_details_retrieved_successful'));
     }
 
     /**
@@ -121,7 +121,7 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
 
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->create($input);
 
-        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), 'Supplier Invoice Item Detail saved successfully');
+        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), trans('custom.supplier_invoice_item_detail_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->findWithoutFail($id);
 
         if (empty($supplierInvoiceItemDetail)) {
-            return $this->sendError('Supplier Invoice Item Detail not found');
+            return $this->sendError(trans('custom.supplier_invoice_item_detail_not_found'));
         }
 
-        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), 'Supplier Invoice Item Detail retrieved successfully');
+        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), trans('custom.supplier_invoice_item_detail_retrieved_successfull'));
     }
 
     /**
@@ -228,12 +228,12 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->findWithoutFail($id);
 
         if (empty($supplierInvoiceItemDetail)) {
-            return $this->sendError('Supplier Invoice Item Detail not found');
+            return $this->sendError(trans('custom.supplier_invoice_item_detail_not_found'));
         }
 
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->update($input, $id);
 
-        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), 'SupplierInvoiceItemDetail updated successfully');
+        return $this->sendResponse($supplierInvoiceItemDetail->toArray(), trans('custom.supplierinvoiceitemdetail_updated_successfully'));
     }
 
     /**
@@ -280,7 +280,7 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->findWithoutFail($id);
 
         if (empty($supplierInvoiceItemDetail)) {
-            return $this->sendError('Supplier Invoice Item Detail not found');
+            return $this->sendError(trans('custom.supplier_invoice_item_detail_not_found'));
         }
 
         $supplierInvoiceItemDetail->delete();
@@ -295,9 +295,9 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $supplierInvoiceItemDetail = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
 
         if ($supplierInvoiceItemDetail['status']) {
-            return $this->sendResponse($supplierInvoiceItemDetail['data'], 'Supplier Invoice Item Detail retrieved successfully');
+            return $this->sendResponse($supplierInvoiceItemDetail['data'], trans('custom.supplier_invoice_item_detail_retrieved_successfull'));
         } else {
-            return $this->sendError('Error occured while retriving supplier item details');
+            return $this->sendError(trans('custom.error_occured_while_retriving_supplier_item_detail'));
         }
     }
 }

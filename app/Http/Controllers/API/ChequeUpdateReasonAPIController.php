@@ -64,7 +64,7 @@ class ChequeUpdateReasonAPIController extends AppBaseController
         $this->chequeUpdateReasonRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chequeUpdateReasons = $this->chequeUpdateReasonRepository->all();
 
-        return $this->sendResponse($chequeUpdateReasons->toArray(), 'Cheque Update Reasons retrieved successfully');
+        return $this->sendResponse($chequeUpdateReasons->toArray(), trans('custom.cheque_update_reasons_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ChequeUpdateReasonAPIController extends AppBaseController
 
         $chequeUpdateReason = $this->chequeUpdateReasonRepository->create($input);
 
-        return $this->sendResponse($chequeUpdateReason->toArray(), 'Cheque Update Reason saved successfully');
+        return $this->sendResponse($chequeUpdateReason->toArray(), trans('custom.cheque_update_reason_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ChequeUpdateReasonAPIController extends AppBaseController
         $chequeUpdateReason = $this->chequeUpdateReasonRepository->findWithoutFail($id);
 
         if (empty($chequeUpdateReason)) {
-            return $this->sendError('Cheque Update Reason not found');
+            return $this->sendError(trans('custom.cheque_update_reason_not_found'));
         }
 
-        return $this->sendResponse($chequeUpdateReason->toArray(), 'Cheque Update Reason retrieved successfully');
+        return $this->sendResponse($chequeUpdateReason->toArray(), trans('custom.cheque_update_reason_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ChequeUpdateReasonAPIController extends AppBaseController
         $chequeUpdateReason = $this->chequeUpdateReasonRepository->findWithoutFail($id);
 
         if (empty($chequeUpdateReason)) {
-            return $this->sendError('Cheque Update Reason not found');
+            return $this->sendError(trans('custom.cheque_update_reason_not_found'));
         }
 
         $chequeUpdateReason = $this->chequeUpdateReasonRepository->update($input, $id);
 
-        return $this->sendResponse($chequeUpdateReason->toArray(), 'ChequeUpdateReason updated successfully');
+        return $this->sendResponse($chequeUpdateReason->toArray(), trans('custom.chequeupdatereason_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ChequeUpdateReasonAPIController extends AppBaseController
         $chequeUpdateReason = $this->chequeUpdateReasonRepository->findWithoutFail($id);
 
         if (empty($chequeUpdateReason)) {
-            return $this->sendError('Cheque Update Reason not found');
+            return $this->sendError(trans('custom.cheque_update_reason_not_found'));
         }
 
         $chequeUpdateReason->delete();

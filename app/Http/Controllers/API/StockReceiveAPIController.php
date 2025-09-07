@@ -101,7 +101,7 @@ class StockReceiveAPIController extends AppBaseController
         $this->stockReceiveRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockReceives = $this->stockReceiveRepository->all();
 
-        return $this->sendResponse($stockReceives->toArray(), 'Stock Receives retrieved successfully');
+        return $this->sendResponse($stockReceives->toArray(), trans('custom.stock_receives_retrieved_successfully'));
     }
 
     /**
@@ -210,7 +210,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (!$warehouse) {
             DB::rollBack();
-            return $this->sendError('Location To not found', 500);
+            return $this->sendError(trans('custom.location_to_not_found_1'), 500);
         }
 
         if ($warehouse->manufacturingYN == 1) {
@@ -251,7 +251,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if ($input['locationFrom'] == $input['locationTo']) {
             DB::rollBack();
-            return $this->sendError('Location From and Location To  cannot be same', 500);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -307,7 +307,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceives = $this->stockReceiveRepository->create($input);
 
         DB::commit();
-        return $this->sendResponse($stockReceives->toArray(), 'Stock Receive saved successfully');
+        return $this->sendResponse($stockReceives->toArray(), trans('custom.stock_receive_saved_successfully'));
     }
 
     /**
@@ -358,10 +358,10 @@ class StockReceiveAPIController extends AppBaseController
         },'location_to_by','location_from_by','company_from','company_to'])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_receive_retrieved_successfully'));
     }
 
     /**
@@ -422,7 +422,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -455,7 +455,7 @@ class StockReceiveAPIController extends AppBaseController
         if (isset($input['locationFrom'])) {
             $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
             if (empty($checkWareHouseActiveFrom)) {
-                return $this->sendError('Location from not found', 500, $wareHouseFromError);
+                return $this->sendError(trans('custom.location_from_not_found'), 500, $wareHouseFromError);
             }
 
             if ($checkWareHouseActiveFrom->isActive == 0) {
@@ -467,7 +467,7 @@ class StockReceiveAPIController extends AppBaseController
         if (isset($input['locationTo'])) {
             $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
             if (empty($checkWareHouseActiveTo)) {
-                return $this->sendError('Location to not found', 500, $wareHouseToError);
+                return $this->sendError(trans('custom.location_to_not_found'), 500, $wareHouseToError);
             }
 
             if ($checkWareHouseActiveTo->isActive == 0) {
@@ -489,7 +489,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if ($input['locationFrom'] == $input['locationTo']) {
             $this->stockReceiveRepository->update(['locationTo' => null], $id);
-            return $this->sendError('Location From and Location To  cannot be same',500,$wareHouseToError);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'),500,$wareHouseToError);
         }
 
         if (isset($input['companyFromSystemID'])) {
@@ -536,7 +536,7 @@ class StockReceiveAPIController extends AppBaseController
                 ->count();
 
             if ($stockReceiveDetailExist == 0) {
-                return $this->sendError('Stock Receive document cannot confirm without details',500);
+                return $this->sendError(trans('custom.stock_receive_document_cannot_confirm_without_deta'),500);
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
@@ -678,12 +678,12 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockReceive->delete();
 
-        return $this->sendResponse($id, 'Stock Receive deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_receive_deleted_successfully'));
     }
 
     public function getAllStockReceiveByCompany(Request $request)
@@ -769,7 +769,7 @@ class StockReceiveAPIController extends AppBaseController
             'companies' => $companies
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function stockReceiveAudit(Request $request)
@@ -778,12 +778,12 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_receive_retrieved_successfully'));
     }
 
     public function printStockReceive(Request $request)
@@ -792,7 +792,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
@@ -821,7 +821,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = StockReceive::find($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $validator = \Validator::make($stockReceive->toArray(), [
@@ -849,7 +849,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $checkWareHouseActiveFrom = WarehouseMaster::find($stockReceive->locationFrom);
         if (empty($checkWareHouseActiveFrom)) {
-            return $this->sendError('Location from not found', 500);
+            return $this->sendError(trans('custom.location_from_not_found'), 500);
         }
 
         if ($checkWareHouseActiveFrom->isActive == 0) {
@@ -858,7 +858,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $checkWareHouseActiveTo = WarehouseMaster::find($stockReceive->locationTo);
         if (empty($checkWareHouseActiveTo)) {
-            return $this->sendError('Location to not found', 500);
+            return $this->sendError(trans('custom.location_to_not_found'), 500);
         }
 
         if ($checkWareHouseActiveTo->isActive == 0) {
@@ -1032,19 +1032,19 @@ class StockReceiveAPIController extends AppBaseController
         $stockTransfer = $this->stockReceiveRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         if ($stockTransfer->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Receive it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_already'));
         }
 
         if ($stockTransfer->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Receive it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_already_1'));
         }
 
         if ($stockTransfer->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Receive, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_not_con'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1118,7 +1118,7 @@ class StockReceiveAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($stockTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Receive reopened successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_receive_reopened_successfully'));
     }
 
     public function stockReceiveReferBack(Request $request)
@@ -1129,11 +1129,11 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->find($id);
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         if ($stockReceive->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this stock receive');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_stock_receive'));
         }
 
         $stockReceiveArray = $stockReceive->toArray();
@@ -1181,7 +1181,7 @@ class StockReceiveAPIController extends AppBaseController
             $this->stockReceiveRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Transfer Amend successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_transfer_amend_successfully'));
     }
 
 }

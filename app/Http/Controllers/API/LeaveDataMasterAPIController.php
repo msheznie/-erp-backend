@@ -104,7 +104,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $this->leaveDataMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveDataMasters = $this->leaveDataMasterRepository->all();
 
-        return $this->sendResponse($leaveDataMasters->toArray(), 'Leave Data Masters retrieved successfully');
+        return $this->sendResponse($leaveDataMasters->toArray(), trans('custom.leave_data_masters_retrieved_successfully'));
     }
 
     /**
@@ -225,10 +225,10 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found',200);
+            return $this->sendError(trans('custom.leave_data_master_not_found'),200);
         }
 
-        return $this->sendResponse($leaveDataMaster->toArray(), 'Leave Data Master retrieved successfully');
+        return $this->sendResponse($leaveDataMaster->toArray(), trans('custom.leave_data_master_retrieved_successfully'));
     }
 
     /**
@@ -285,12 +285,12 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found',200);
+            return $this->sendError(trans('custom.leave_data_master_not_found'),200);
         }
 
         $leaveDataMaster = $this->leaveDataMasterRepository->update($input, $id);
 
-        return $this->sendResponse($leaveDataMaster->toArray(), 'LeaveDataMaster updated successfully');
+        return $this->sendResponse($leaveDataMaster->toArray(), trans('custom.leavedatamaster_updated_successfully'));
     }
 
     /**
@@ -338,7 +338,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found',200);
+            return $this->sendError(trans('custom.leave_data_master_not_found'),200);
         }
 
         if($leaveDataMaster->confirmedYN == 1){
@@ -356,7 +356,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
         $leaveDataMaster->delete();
 
-        return $this->sendResponse($id, 'Leave Data Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.leave_data_master_deleted_successfully'));
     }
 
     public function getLeaveHistory()
@@ -395,7 +395,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($leaveHistory->toArray(), 'Leave history details retrieved successfully');
+        return $this->sendResponse($leaveHistory->toArray(), trans('custom.leave_history_details_retrieved_successfully'));
     }
 
     public function getLeaveAvailability(Request $request)
@@ -405,7 +405,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveMasterID = isset($request['leaveMasterID']) ? $request['leaveMasterID'] : null;
 
         if ($leaveMasterID == null) {
-            return $this->sendError('Leave details not found',200);
+            return $this->sendError(trans('custom.leave_details_not_found'),200);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -454,7 +454,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             'balance' => $balance,
             'day_type' => $day_type
         );
-        return $this->sendResponse($output, 'Leave details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.leave_details_retrieved_successfully'));
     }
 
     private function getLeaveAvailableForEmployee($empID, $leaveMasterID = null, $date = null, $policy=null)
@@ -577,11 +577,11 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveDataMaster = LeaveDataMaster::with(['detail','application_type','approved','hrapproved'])->find($input['leavedatamasterID']);
             if (empty($leaveDataMaster)) {
-                return $this->sendError('Leave Data Not Found');
+                return $this->sendError(trans('custom.leave_data_not_found'));
             }
 
             if(empty($leaveDataMaster->detail)){
-                return $this->sendError('Leave Details Not Found');
+                return $this->sendError(trans('custom.leave_details_not_found_1'));
             }
 
             $leaveDataDetail = $leaveDataMaster->detail;
@@ -604,9 +604,9 @@ class LeaveDataMasterAPIController extends AppBaseController
             //set leave availability details to output array
             $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
 
-            return $this->sendResponse($output, 'Leave details retrieved successfully');
+            return $this->sendResponse($output, trans('custom.leave_details_retrieved_successfully'));
         }
-        return $this->sendError('leavedatamasterID Not Found', 200);
+        return $this->sendError(trans('custom.leavedatamasterid_not_found'), 200);
     }
 
     public function getLeaveDetails(Request $request)
@@ -618,7 +618,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveDataMaster = LeaveDataMaster::find($input['leavedatamasterID']);
             if (collect($leaveDataMaster)->count() == 0) {
-                return $this->sendError('Leave Details Not Found', 200);
+                return $this->sendError(trans('custom.leave_details_not_found_1'), 200);
             }
 
             $leaveArray = $leaveDataMaster->toArray();
@@ -714,9 +714,9 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $output['policy'] = null;
             }
 
-            return $this->sendResponse($output, 'Leave details retrieved successfully');
+            return $this->sendResponse($output, trans('custom.leave_details_retrieved_successfully'));
         }
-        return $this->sendError('leavedatamasterID Not Found', 200);
+        return $this->sendError(trans('custom.leavedatamasterid_not_found'), 200);
     }
 
     private function getAttachments($company_id, $document_code, $documentSystemCode)
@@ -767,7 +767,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError('Policy type is required', 200);
+                return $this->sendError(trans('custom.policy_type_is_required'), 200);
             }
         }
 
@@ -850,19 +850,19 @@ class LeaveDataMasterAPIController extends AppBaseController
                                 })
                                 ->count();
             if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16,21])) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave for past days',200);
+                return $this->sendError(trans('custom.you_cannot_apply_leave_for_past_days'),200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
                 return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
             } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
-                return $this->sendError('You cannot obtain any leave in your probation period',200);
+                return $this->sendError(trans('custom.you_cannot_obtain_any_leave_in_your_probation_peri'),200);
             } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
                 return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave',200);
             } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
-                return $this->sendError('Attachment is required',200);
+                return $this->sendError(trans('custom.attachment_is_required'),200);
             } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
+                return $this->sendError(trans('custom.you_cannot_apply_leave_more_than') . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
-                return $this->sendError('You have already taken leave in this period',200);
+                return $this->sendError(trans('custom.you_have_already_taken_leave_in_this_period'),200);
             }
 
             if(isset($input['totBalance']) && $input['totBalance']){
@@ -921,16 +921,16 @@ class LeaveDataMasterAPIController extends AppBaseController
                             $hrApprovalLevels = isset($department->hrLeaveApprovalLevels) ? $department->hrLeaveApprovalLevels : 0;
                             $this->approveAndSendMails($hrApprovalLevels, $employee, $input, $leaveDataMasters);
                             DB::commit();
-                            return $this->sendResponse((object)[], 'Successfully leave application applied');
+                            return $this->sendResponse((object)[], trans('custom.successfully_leave_application_applied'));
                         }
 
                     } else {
                         DB::commit();
-                        return $this->sendResponse((object)[], 'Successfully leave application applied');
+                        return $this->sendResponse((object)[], trans('custom.successfully_leave_application_applied'));
                     }
                 }
             } else {
-                return $this->sendError('You cannot create  leave Application there are pending leave application to be approved',200);
+                return $this->sendError(trans('custom.you_cannot_create_leave_application_there_are_pend'),200);
             }
 
             DB::commit();
@@ -1096,7 +1096,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError('Policy type is required', 200);
+                return $this->sendError(trans('custom.policy_type_is_required'), 200);
             }
         }
         if(!isset($input['policytype'])){
@@ -1177,19 +1177,19 @@ class LeaveDataMasterAPIController extends AppBaseController
                 ->count();
 
             if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16])) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave for past days',200);
+                return $this->sendError(trans('custom.you_cannot_apply_leave_for_past_days'),200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
                 return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
             } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
-                return $this->sendError('You cannot obtain any leave in your probation period',200);
+                return $this->sendError(trans('custom.you_cannot_obtain_any_leave_in_your_probation_peri'),200);
             } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
                 return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave',200);
             } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
-                return $this->sendError('Attachment is required',200);
+                return $this->sendError(trans('custom.attachment_is_required'),200);
             } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
+                return $this->sendError(trans('custom.you_cannot_apply_leave_more_than') . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
-                return $this->sendError('You have already taken leave in this period',200);
+                return $this->sendError(trans('custom.you_have_already_taken_leave_in_this_period'),200);
             }
             if(isset($input['totBalance']) && $input['totBalance']){
                 if(!in_array($leaveMasterID, [1,10]) && $input['totBalance']<0){
@@ -1205,7 +1205,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                     return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
 
                 } else if (($restrictDays != -1) && $startDate != date("Y-m-d", strtotime($leaveDataDetail->startDate)) && (date("Y-m-d", strtotime($leaveDataDetail->startDate)) > $startDate) && ($leaveMasterID == 1) && ($leaveType == 1)) {
-                    return $this->sendError('You cannot apply leave for past days');
+                    return $this->sendError(trans('custom.you_cannot_apply_leave_for_past_days'));
 
                 }
                 $input['startDate'] = $startDate;
@@ -1233,12 +1233,12 @@ class LeaveDataMasterAPIController extends AppBaseController
                             $hrApprovalLevels = isset($department->hrLeaveApprovalLevels) ? $department->hrLeaveApprovalLevels : 0;
                             $this->approveAndSendMails($hrApprovalLevels, $employee, $input, $leaveDataMasters);
                             DB::commit();
-                            return $this->sendResponse((object)[], 'Successfully leave application applied');
+                            return $this->sendResponse((object)[], trans('custom.successfully_leave_application_applied'));
                         }
 
                     } else {
                         DB::commit();
-                        return $this->sendResponse((object)[], 'Successfully leave application applied');
+                        return $this->sendResponse((object)[], trans('custom.successfully_leave_application_applied'));
                     }
                 }
             }
@@ -1326,7 +1326,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
+        return $this->sendResponse($output, trans('custom.leave_type_with_balance_retrieved_successfully'));
     }
 
     function leaveType_dropDown($emp_data){
@@ -1408,7 +1408,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $policy = $this->policyType($emp_data);
         $drop_down[] = [ 'leavemasterID'=> 15, 'leavetype'=> $lType, 'balance'=> 0, 'policy'=> $policy];
 
-        return $this->sendResponse($drop_down, 'Leave Type with balance retrieved successfully');
+        return $this->sendResponse($drop_down, trans('custom.leave_type_with_balance_retrieved_successfully'));
     }
 
     function employee_leave_acc($empID, $leaveType, $makeDecision=0){

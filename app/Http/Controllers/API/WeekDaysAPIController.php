@@ -65,7 +65,7 @@ class WeekDaysAPIController extends AppBaseController
         $this->weekDaysRepository->pushCriteria(new LimitOffsetCriteria($request));
         $weekDays = $this->weekDaysRepository->all();
 
-        return $this->sendResponse($weekDays->toArray(), 'Week Days retrieved successfully');
+        return $this->sendResponse($weekDays->toArray(), trans('custom.week_days_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class WeekDaysAPIController extends AppBaseController
 
         $weekDays = $this->weekDaysRepository->create($input);
 
-        return $this->sendResponse($weekDays->toArray(), 'Week Days saved successfully');
+        return $this->sendResponse($weekDays->toArray(), trans('custom.week_days_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class WeekDaysAPIController extends AppBaseController
         $weekDays = $this->weekDaysRepository->findWithoutFail($id);
 
         if (empty($weekDays)) {
-            return $this->sendError('Week Days not found');
+            return $this->sendError(trans('custom.week_days_not_found'));
         }
 
-        return $this->sendResponse($weekDays->toArray(), 'Week Days retrieved successfully');
+        return $this->sendResponse($weekDays->toArray(), trans('custom.week_days_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class WeekDaysAPIController extends AppBaseController
         $weekDays = $this->weekDaysRepository->findWithoutFail($id);
 
         if (empty($weekDays)) {
-            return $this->sendError('Week Days not found');
+            return $this->sendError(trans('custom.week_days_not_found'));
         }
 
         $weekDays = $this->weekDaysRepository->update($input, $id);
 
-        return $this->sendResponse($weekDays->toArray(), 'WeekDays updated successfully');
+        return $this->sendResponse($weekDays->toArray(), trans('custom.weekdays_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class WeekDaysAPIController extends AppBaseController
         $weekDays = $this->weekDaysRepository->findWithoutFail($id);
 
         if (empty($weekDays)) {
-            return $this->sendError('Week Days not found');
+            return $this->sendError(trans('custom.week_days_not_found'));
         }
 
         $weekDays->delete();

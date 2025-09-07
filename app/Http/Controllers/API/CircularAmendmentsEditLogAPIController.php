@@ -64,7 +64,7 @@ class CircularAmendmentsEditLogAPIController extends AppBaseController
         $this->circularAmendmentsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $circularAmendmentsEditLogs = $this->circularAmendmentsEditLogRepository->all();
 
-        return $this->sendResponse($circularAmendmentsEditLogs->toArray(), 'Circular Amendments Edit Logs retrieved successfully');
+        return $this->sendResponse($circularAmendmentsEditLogs->toArray(), trans('custom.circular_amendments_edit_logs_retrieved_successful'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CircularAmendmentsEditLogAPIController extends AppBaseController
 
         $circularAmendmentsEditLog = $this->circularAmendmentsEditLogRepository->create($input);
 
-        return $this->sendResponse($circularAmendmentsEditLog->toArray(), 'Circular Amendments Edit Log saved successfully');
+        return $this->sendResponse($circularAmendmentsEditLog->toArray(), trans('custom.circular_amendments_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CircularAmendmentsEditLogAPIController extends AppBaseController
         $circularAmendmentsEditLog = $this->circularAmendmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($circularAmendmentsEditLog)) {
-            return $this->sendError('Circular Amendments Edit Log not found');
+            return $this->sendError(trans('custom.circular_amendments_edit_log_not_found'));
         }
 
-        return $this->sendResponse($circularAmendmentsEditLog->toArray(), 'Circular Amendments Edit Log retrieved successfully');
+        return $this->sendResponse($circularAmendmentsEditLog->toArray(), trans('custom.circular_amendments_edit_log_retrieved_successfull'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CircularAmendmentsEditLogAPIController extends AppBaseController
         $circularAmendmentsEditLog = $this->circularAmendmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($circularAmendmentsEditLog)) {
-            return $this->sendError('Circular Amendments Edit Log not found');
+            return $this->sendError(trans('custom.circular_amendments_edit_log_not_found'));
         }
 
         $circularAmendmentsEditLog = $this->circularAmendmentsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($circularAmendmentsEditLog->toArray(), 'CircularAmendmentsEditLog updated successfully');
+        return $this->sendResponse($circularAmendmentsEditLog->toArray(), trans('custom.circularamendmentseditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CircularAmendmentsEditLogAPIController extends AppBaseController
         $circularAmendmentsEditLog = $this->circularAmendmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($circularAmendmentsEditLog)) {
-            return $this->sendError('Circular Amendments Edit Log not found');
+            return $this->sendError(trans('custom.circular_amendments_edit_log_not_found'));
         }
 
         $circularAmendmentsEditLog->delete();

@@ -65,7 +65,7 @@ class ExternalLinkHashAPIController extends AppBaseController
         $this->externalLinkHashRepository->pushCriteria(new LimitOffsetCriteria($request));
         $externalLinkHashes = $this->externalLinkHashRepository->all();
 
-        return $this->sendResponse($externalLinkHashes->toArray(), 'External Link Hashes retrieved successfully');
+        return $this->sendResponse($externalLinkHashes->toArray(), trans('custom.external_link_hashes_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ExternalLinkHashAPIController extends AppBaseController
 
         $externalLinkHash = $this->externalLinkHashRepository->create($input);
 
-        return $this->sendResponse($externalLinkHash->toArray(), 'External Link Hash saved successfully');
+        return $this->sendResponse($externalLinkHash->toArray(), trans('custom.external_link_hash_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ExternalLinkHashAPIController extends AppBaseController
         $externalLinkHash = $this->externalLinkHashRepository->findWithoutFail($id);
 
         if (empty($externalLinkHash)) {
-            return $this->sendError('External Link Hash not found');
+            return $this->sendError(trans('custom.external_link_hash_not_found'));
         }
 
-        return $this->sendResponse($externalLinkHash->toArray(), 'External Link Hash retrieved successfully');
+        return $this->sendResponse($externalLinkHash->toArray(), trans('custom.external_link_hash_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ExternalLinkHashAPIController extends AppBaseController
         $externalLinkHash = $this->externalLinkHashRepository->findWithoutFail($id);
 
         if (empty($externalLinkHash)) {
-            return $this->sendError('External Link Hash not found');
+            return $this->sendError(trans('custom.external_link_hash_not_found'));
         }
 
         $externalLinkHash = $this->externalLinkHashRepository->update($input, $id);
 
-        return $this->sendResponse($externalLinkHash->toArray(), 'ExternalLinkHash updated successfully');
+        return $this->sendResponse($externalLinkHash->toArray(), trans('custom.externallinkhash_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ExternalLinkHashAPIController extends AppBaseController
         $externalLinkHash = $this->externalLinkHashRepository->findWithoutFail($id);
 
         if (empty($externalLinkHash)) {
-            return $this->sendError('External Link Hash not found');
+            return $this->sendError(trans('custom.external_link_hash_not_found'));
         }
 
         $externalLinkHash->delete();

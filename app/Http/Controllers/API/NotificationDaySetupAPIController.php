@@ -65,7 +65,7 @@ class NotificationDaySetupAPIController extends AppBaseController
         $this->notificationDaySetupRepository->pushCriteria(new LimitOffsetCriteria($request));
         $notificationDaySetups = $this->notificationDaySetupRepository->all();
 
-        return $this->sendResponse($notificationDaySetups->toArray(), 'Notification Day Setups retrieved successfully');
+        return $this->sendResponse($notificationDaySetups->toArray(), trans('custom.notification_day_setups_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class NotificationDaySetupAPIController extends AppBaseController
 
         $notificationDaySetup = $this->notificationDaySetupRepository->create($input);
 
-        return $this->sendResponse($notificationDaySetup->toArray(), 'Notification Day Setup saved successfully');
+        return $this->sendResponse($notificationDaySetup->toArray(), trans('custom.notification_day_setup_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class NotificationDaySetupAPIController extends AppBaseController
         $notificationDaySetup = $this->notificationDaySetupRepository->findWithoutFail($id);
 
         if (empty($notificationDaySetup)) {
-            return $this->sendError('Notification Day Setup not found');
+            return $this->sendError(trans('custom.notification_day_setup_not_found'));
         }
 
-        return $this->sendResponse($notificationDaySetup->toArray(), 'Notification Day Setup retrieved successfully');
+        return $this->sendResponse($notificationDaySetup->toArray(), trans('custom.notification_day_setup_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class NotificationDaySetupAPIController extends AppBaseController
         $notificationDaySetup = $this->notificationDaySetupRepository->findWithoutFail($id);
 
         if (empty($notificationDaySetup)) {
-            return $this->sendError('Notification Day Setup not found');
+            return $this->sendError(trans('custom.notification_day_setup_not_found'));
         }
 
         $notificationDaySetup = $this->notificationDaySetupRepository->update($input, $id);
 
-        return $this->sendResponse($notificationDaySetup->toArray(), 'NotificationDaySetup updated successfully');
+        return $this->sendResponse($notificationDaySetup->toArray(), trans('custom.notificationdaysetup_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class NotificationDaySetupAPIController extends AppBaseController
         $notificationDaySetup = $this->notificationDaySetupRepository->findWithoutFail($id);
 
         if (empty($notificationDaySetup)) {
-            return $this->sendError('Notification Day Setup not found');
+            return $this->sendError(trans('custom.notification_day_setup_not_found'));
         }
 
         $notificationDaySetup->delete();

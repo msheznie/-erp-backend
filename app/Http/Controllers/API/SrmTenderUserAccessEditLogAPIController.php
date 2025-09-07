@@ -64,7 +64,7 @@ class SrmTenderUserAccessEditLogAPIController extends AppBaseController
         $this->srmTenderUserAccessEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srmTenderUserAccessEditLogs = $this->srmTenderUserAccessEditLogRepository->all();
 
-        return $this->sendResponse($srmTenderUserAccessEditLogs->toArray(), 'Srm Tender User Access Edit Logs retrieved successfully');
+        return $this->sendResponse($srmTenderUserAccessEditLogs->toArray(), trans('custom.srm_tender_user_access_edit_logs_retrieved_success'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SrmTenderUserAccessEditLogAPIController extends AppBaseController
 
         $srmTenderUserAccessEditLog = $this->srmTenderUserAccessEditLogRepository->create($input);
 
-        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), 'Srm Tender User Access Edit Log saved successfully');
+        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), trans('custom.srm_tender_user_access_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SrmTenderUserAccessEditLogAPIController extends AppBaseController
         $srmTenderUserAccessEditLog = $this->srmTenderUserAccessEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderUserAccessEditLog)) {
-            return $this->sendError('Srm Tender User Access Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_user_access_edit_log_not_found'));
         }
 
-        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), 'Srm Tender User Access Edit Log retrieved successfully');
+        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), trans('custom.srm_tender_user_access_edit_log_retrieved_successf'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SrmTenderUserAccessEditLogAPIController extends AppBaseController
         $srmTenderUserAccessEditLog = $this->srmTenderUserAccessEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderUserAccessEditLog)) {
-            return $this->sendError('Srm Tender User Access Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_user_access_edit_log_not_found'));
         }
 
         $srmTenderUserAccessEditLog = $this->srmTenderUserAccessEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), 'SrmTenderUserAccessEditLog updated successfully');
+        return $this->sendResponse($srmTenderUserAccessEditLog->toArray(), trans('custom.srmtenderuseraccesseditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SrmTenderUserAccessEditLogAPIController extends AppBaseController
         $srmTenderUserAccessEditLog = $this->srmTenderUserAccessEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderUserAccessEditLog)) {
-            return $this->sendError('Srm Tender User Access Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_user_access_edit_log_not_found'));
         }
 
         $srmTenderUserAccessEditLog->delete();

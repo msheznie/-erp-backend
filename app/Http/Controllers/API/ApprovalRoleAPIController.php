@@ -159,7 +159,7 @@ class ApprovalRoleAPIController extends AppBaseController
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($request->rollMasterID);
 
         if($approvalGroupAlreadyExist > 0){
-            return $this->sendError('The selected approval group has already been assigned to an approval level.', 500,['type' => $approvalRole]);
+            return $this->sendError(trans('custom.the_selected_approval_group_has_already_been_assig'), 500,['type' => $approvalRole]);
         }
 
         if (empty($approvalRole)) {

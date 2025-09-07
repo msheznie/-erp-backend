@@ -161,7 +161,7 @@ class CustomerCurrencyAPIController extends AppBaseController
                                                 ->where('currencyID',$request['currencyID'])
                                                 ->first();
             if($customerCurrency){
-                return $this->sendError('Selected currency is assigned already',500);
+                return $this->sendError(trans('custom.selected_currency_is_assigned_already'),500);
             }
 
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
@@ -194,7 +194,7 @@ class CustomerCurrencyAPIController extends AppBaseController
         $customerCurrency = $this->customerCurrencyRepository->findWithoutFail($id);
 
         if (empty($customerCurrency)) {
-            return $this->sendError('Customer Currency not found');
+            return $this->sendError(trans('custom.customer_currency_not_found'));
         }
 
         return $this->sendResponse($customerCurrency->toArray(), trans('custom.not_found', ['attribute' => trans('custom.customer_currencies')]));

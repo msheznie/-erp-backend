@@ -65,7 +65,7 @@ class DocumentSubProductAPIController extends AppBaseController
         $this->documentSubProductRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentSubProducts = $this->documentSubProductRepository->all();
 
-        return $this->sendResponse($documentSubProducts->toArray(), 'Document Sub Products retrieved successfully');
+        return $this->sendResponse($documentSubProducts->toArray(), trans('custom.document_sub_products_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DocumentSubProductAPIController extends AppBaseController
 
         $documentSubProduct = $this->documentSubProductRepository->create($input);
 
-        return $this->sendResponse($documentSubProduct->toArray(), 'Document Sub Product saved successfully');
+        return $this->sendResponse($documentSubProduct->toArray(), trans('custom.document_sub_product_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class DocumentSubProductAPIController extends AppBaseController
         $documentSubProduct = $this->documentSubProductRepository->findWithoutFail($id);
 
         if (empty($documentSubProduct)) {
-            return $this->sendError('Document Sub Product not found');
+            return $this->sendError(trans('custom.document_sub_product_not_found'));
         }
 
-        return $this->sendResponse($documentSubProduct->toArray(), 'Document Sub Product retrieved successfully');
+        return $this->sendResponse($documentSubProduct->toArray(), trans('custom.document_sub_product_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class DocumentSubProductAPIController extends AppBaseController
         $documentSubProduct = $this->documentSubProductRepository->findWithoutFail($id);
 
         if (empty($documentSubProduct)) {
-            return $this->sendError('Document Sub Product not found');
+            return $this->sendError(trans('custom.document_sub_product_not_found'));
         }
 
         $documentSubProduct = $this->documentSubProductRepository->update($input, $id);
 
-        return $this->sendResponse($documentSubProduct->toArray(), 'DocumentSubProduct updated successfully');
+        return $this->sendResponse($documentSubProduct->toArray(), trans('custom.documentsubproduct_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class DocumentSubProductAPIController extends AppBaseController
         $documentSubProduct = $this->documentSubProductRepository->findWithoutFail($id);
 
         if (empty($documentSubProduct)) {
-            return $this->sendError('Document Sub Product not found');
+            return $this->sendError(trans('custom.document_sub_product_not_found'));
         }
 
         $documentSubProduct->delete();

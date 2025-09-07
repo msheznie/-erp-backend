@@ -66,7 +66,7 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $this->bankReconciliationTemplateMappingRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankReconciliationTemplateMappings = $this->bankReconciliationTemplateMappingRepository->all();
 
-        return $this->sendResponse($bankReconciliationTemplateMappings->toArray(), 'Bank Reconciliation Template Mappings retrieved successfully');
+        return $this->sendResponse($bankReconciliationTemplateMappings->toArray(), trans('custom.bank_reconciliation_template_mappings_retrieved_su'));
     }
 
     /**
@@ -160,13 +160,13 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
                 $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->findWithoutFail($input['templateId']);
 
                 if (empty($bankReconciliationTemplateMapping)) {
-                    return $this->sendError('Bank Reconciliation Template Mapping not found');
+                    return $this->sendError(trans('custom.bank_reconciliation_template_mapping_not_found_1'));
                 }
                 $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->update($input, $input['templateId']);
             } else {
                 $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->create($input);
             }
-            return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), 'Bank reconciliation template mapping saved successfully');
+            return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), trans('custom.bank_reconciliation_template_mapping_saved_success'));
         }
     }
 
@@ -215,10 +215,10 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationTemplateMapping)) {
-            return $this->sendError('Bank Reconciliation Template Mapping not found');
+            return $this->sendError(trans('custom.bank_reconciliation_template_mapping_not_found_1'));
         }
 
-        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), 'Bank Reconciliation Template Mapping retrieved successfully');
+        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), trans('custom.bank_reconciliation_template_mapping_retrieved_suc'));
     }
 
     /**
@@ -284,12 +284,12 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationTemplateMapping)) {
-            return $this->sendError('Bank Reconciliation Template Mapping not found');
+            return $this->sendError(trans('custom.bank_reconciliation_template_mapping_not_found_1'));
         }
 
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), 'BankReconciliationTemplateMapping updated successfully');
+        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), trans('custom.bankreconciliationtemplatemapping_updated_successf'));
     }
 
     /**
@@ -337,7 +337,7 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationTemplateMapping)) {
-            return $this->sendError('Bank Reconciliation Template Mapping not found');
+            return $this->sendError(trans('custom.bank_reconciliation_template_mapping_not_found_1'));
         }
 
         $bankReconciliationTemplateMapping->delete();
@@ -351,8 +351,8 @@ class BankReconciliationTemplateMappingAPIController extends AppBaseController
 
         $bankReconciliationTemplateMapping = $this->bankReconciliationTemplateMappingRepository->where('bankAccountAutoID', $accountAutoId)->first();
         if (!$bankReconciliationTemplateMapping) {
-            return $this->sendError('Bank Reconciliation Template Mapping not found.', 404);
+            return $this->sendError(trans('custom.bank_reconciliation_template_mapping_not_found'), 404);
         }
-        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), 'Bank Reconciliation Template Mapping retrieved successfully');
+        return $this->sendResponse($bankReconciliationTemplateMapping->toArray(), trans('custom.bank_reconciliation_template_mapping_retrieved_suc'));
     }
 }

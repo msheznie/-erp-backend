@@ -86,7 +86,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $this->taxVatCategoriesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxVatCategories = $this->taxVatCategoriesRepository->all();
 
-        return $this->sendResponse($taxVatCategories->toArray(), 'Tax Vat Categories retrieved successfully');
+        return $this->sendResponse($taxVatCategories->toArray(), trans('custom.tax_vat_categories_retrieved_successfully'));
     }
 
     /**
@@ -132,7 +132,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('recordType'));
         if(!(isset($input['taxMasterAutoID']) && $input['taxMasterAutoID'])){
-            return $this->sendError('Tax Master Auto ID is not found',500);
+            return $this->sendError(trans('custom.tax_master_auto_id_is_not_found'),500);
         }
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
@@ -169,7 +169,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         // check duplicated subcategory
         $isDuplicated = TaxVatCategories::where('subCategoryDescription',$input['subCategoryDescription'])->where('taxMasterAutoID',$input['taxMasterAutoID'])->exists();
         if($isDuplicated){
-           return $this->sendError('Subcategory is already taken',500);
+           return $this->sendError(trans('custom.subcategory_is_already_taken'),500);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -179,7 +179,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
         $taxVatCategories = $this->taxVatCategoriesRepository->create($input);
 
-        return $this->sendResponse($taxVatCategories->toArray(), 'Tax Vat Categories saved successfully');
+        return $this->sendResponse($taxVatCategories->toArray(), trans('custom.tax_vat_categories_saved_successfully'));
     }
 
     private function checkCustomValidaitons($input)
@@ -291,10 +291,10 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatCategories)) {
-            return $this->sendError('Tax Vat Categories not found');
+            return $this->sendError(trans('custom.tax_vat_categories_not_found'));
         }
 
-        return $this->sendResponse($taxVatCategories->toArray(), 'Tax Vat Categories retrieved successfully');
+        return $this->sendResponse($taxVatCategories->toArray(), trans('custom.tax_vat_categories_retrieved_successfully'));
     }
 
     /**
@@ -355,11 +355,11 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatCategories)) {
-            return $this->sendError('Tax Vat Categories not found');
+            return $this->sendError(trans('custom.tax_vat_categories_not_found'));
         }
 
         if(!(isset($input['taxMasterAutoID']) && $input['taxMasterAutoID'])){
-            return $this->sendError('Tax Master Auto ID is not found',500);
+            return $this->sendError(trans('custom.tax_master_auto_id_is_not_found'),500);
         }
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
@@ -387,7 +387,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxData = Tax::find($input['taxMasterAutoID']);
 
         if (!$taxData) {
-            return $this->sendError('Tax Master not found',500);
+            return $this->sendError(trans('custom.tax_master_not_found'),500);
         }
 
 
@@ -416,7 +416,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
         $isDuplicated = TaxVatCategories::where('subCategoryDescription',$input['subCategoryDescription'])->where('taxMasterAutoID',$input['taxMasterAutoID'])->where('taxVatSubCategoriesAutoID','!=',$id)->exists();
         if($isDuplicated){
-            return $this->sendError('Subcategory is already taken',500);
+            return $this->sendError(trans('custom.subcategory_is_already_taken'),500);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -425,7 +425,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         $taxVatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $id)->update($input);
 
-        return $this->sendResponse([], 'TaxVatCategories updated successfully');
+        return $this->sendResponse([], trans('custom.taxvatcategories_updated_successfully'));
     }
 
     /**
@@ -472,17 +472,17 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
 
         if (empty($taxVatCategories)) {
-            return $this->sendError('Tax Vat Categories not found');
+            return $this->sendError(trans('custom.tax_vat_categories_not_found'));
         }
 
         $isExists = ItemMaster::where('vatSubCategory',$id)->exists();
         if ($isExists) {
-            return $this->sendError('You cannot delete. this sub category has assigned to item master');
+            return $this->sendError(trans('custom.you_cannot_delete_this_sub_category_has_assigned_t'));
         }
 
         $taxVatCategories->delete();
 
-        return $this->sendResponse([],'Tax Vat Categories deleted successfully');
+        return $this->sendResponse([],trans('custom.tax_vat_categories_deleted_successfully'));
     }
 
     public function getAllVatCategories(Request $request)
@@ -549,7 +549,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
             'subCategoryTypes' => VatSubCategoryType::all(),
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getVatCategoryFormData(Request $request){
@@ -570,7 +570,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
             'subCategories' => $subCategories
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getVatSubCategoryItemAssignFromData(Request $request){
@@ -585,7 +585,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         }
         $output['items'] = $output['items']->take(500)->get();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAllVatSubCategoryItemAssign(Request $request){
@@ -652,14 +652,14 @@ class TaxVatCategoriesAPIController extends AppBaseController
                     return $this->sendError($error,422);
                 }
                 DB::commit();
-                return $this->sendResponse([], 'Successfully assigned');
+                return $this->sendResponse([], trans('custom.successfully_assigned'));
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return $this->sendError($exception->getMessage());
             }
 
         }
-        return $this->sendError('Error Occurred',500);
+        return $this->sendError(trans('custom.error_occurred'),500);
     }
 
     public function removeAssignedItemFromVATSubCategory(Request $request){
@@ -671,20 +671,20 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
             $itemMaster = ItemMaster::find($id);
             if(empty($itemMaster)){
-                return $this->sendError('Item Master Not found');
+                return $this->sendError(trans('custom.item_master_not_found'));
             }
 
             //If the item is in Fully Approved status do not allow to remove.
             if($itemMaster->itemApprovedYN == 1){
-                return $this->sendError('Item is fully approved. You cannot remove');
+                return $this->sendError(trans('custom.item_is_fully_approved_you_cannot_remove'));
             }
 
             $isUpdate = ItemMaster::where('itemCodeSystem',$id)->update(['vatSubCategory'=>0]);
             if($isUpdate){
-                return $this->sendResponse($isUpdate, 'Successfully removed');
+                return $this->sendResponse($isUpdate, trans('custom.successfully_removed'));
             }
         }
-        return $this->sendError('Error Occured',500);
+        return $this->sendError(trans('custom.error_occured'),500);
     }
 
     public function updateItemVatCategories(Request $request)
@@ -692,7 +692,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['documentSystemID'])) {
-            return $this->sendError('Document System ID not found');
+            return $this->sendError(trans('custom.document_system_id_not_found'));
         }
 
         DB::beginTransaction();
@@ -726,7 +726,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'VAT Categories updated successfully');
+            return $this->sendResponse([], trans('custom.vat_categories_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

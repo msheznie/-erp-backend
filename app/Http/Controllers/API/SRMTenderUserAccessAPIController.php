@@ -64,7 +64,7 @@ class SRMTenderUserAccessAPIController extends AppBaseController
         $this->sRMTenderUserAccessRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sRMTenderUserAccesses = $this->sRMTenderUserAccessRepository->all();
 
-        return $this->sendResponse($sRMTenderUserAccesses->toArray(), 'S R M Tender User Accesses retrieved successfully');
+        return $this->sendResponse($sRMTenderUserAccesses->toArray(), trans('custom.s_r_m_tender_user_accesses_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SRMTenderUserAccessAPIController extends AppBaseController
 
         $sRMTenderUserAccess = $this->sRMTenderUserAccessRepository->create($input);
 
-        return $this->sendResponse($sRMTenderUserAccess->toArray(), 'S R M Tender User Access saved successfully');
+        return $this->sendResponse($sRMTenderUserAccess->toArray(), trans('custom.s_r_m_tender_user_access_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SRMTenderUserAccessAPIController extends AppBaseController
         $sRMTenderUserAccess = $this->sRMTenderUserAccessRepository->findWithoutFail($id);
 
         if (empty($sRMTenderUserAccess)) {
-            return $this->sendError('S R M Tender User Access not found');
+            return $this->sendError(trans('custom.s_r_m_tender_user_access_not_found'));
         }
 
-        return $this->sendResponse($sRMTenderUserAccess->toArray(), 'S R M Tender User Access retrieved successfully');
+        return $this->sendResponse($sRMTenderUserAccess->toArray(), trans('custom.s_r_m_tender_user_access_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SRMTenderUserAccessAPIController extends AppBaseController
         $sRMTenderUserAccess = $this->sRMTenderUserAccessRepository->findWithoutFail($id);
 
         if (empty($sRMTenderUserAccess)) {
-            return $this->sendError('S R M Tender User Access not found');
+            return $this->sendError(trans('custom.s_r_m_tender_user_access_not_found'));
         }
 
         $sRMTenderUserAccess = $this->sRMTenderUserAccessRepository->update($input, $id);
 
-        return $this->sendResponse($sRMTenderUserAccess->toArray(), 'SRMTenderUserAccess updated successfully');
+        return $this->sendResponse($sRMTenderUserAccess->toArray(), trans('custom.srmtenderuseraccess_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SRMTenderUserAccessAPIController extends AppBaseController
         $sRMTenderUserAccess = $this->sRMTenderUserAccessRepository->findWithoutFail($id);
 
         if (empty($sRMTenderUserAccess)) {
-            return $this->sendError('S R M Tender User Access not found');
+            return $this->sendError(trans('custom.s_r_m_tender_user_access_not_found'));
         }
 
         $sRMTenderUserAccess->delete();

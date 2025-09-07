@@ -65,7 +65,7 @@ class RegisteredSupplierContactDetailAPIController extends AppBaseController
         $this->registeredSupplierContactDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registeredSupplierContactDetails = $this->registeredSupplierContactDetailRepository->all();
 
-        return $this->sendResponse($registeredSupplierContactDetails->toArray(), 'Registered Supplier Contact Details retrieved successfully');
+        return $this->sendResponse($registeredSupplierContactDetails->toArray(), trans('custom.registered_supplier_contact_details_retrieved_succ'));
     }
 
     /**
@@ -116,7 +116,7 @@ class RegisteredSupplierContactDetailAPIController extends AppBaseController
         if( array_key_exists ('id' , $input )){
             $registeredSupplierContactDetail = $this->registeredSupplierContactDetailRepository->update($input,$input['id']);
         }
-        return $this->sendResponse([], 'Registered Supplier Contact Detail saved successfully');
+        return $this->sendResponse([], trans('custom.registered_supplier_contact_detail_saved_successfu'));
     }
 
     /**
@@ -163,10 +163,10 @@ class RegisteredSupplierContactDetailAPIController extends AppBaseController
         $registeredSupplierContactDetail = $this->registeredSupplierContactDetailRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierContactDetail)) {
-            return $this->sendError('Registered Supplier Contact Detail not found');
+            return $this->sendError(trans('custom.registered_supplier_contact_detail_not_found'));
         }
 
-        return $this->sendResponse($registeredSupplierContactDetail->toArray(), 'Registered Supplier Contact Detail retrieved successfully');
+        return $this->sendResponse($registeredSupplierContactDetail->toArray(), trans('custom.registered_supplier_contact_detail_retrieved_succe'));
     }
 
     /**
@@ -223,12 +223,12 @@ class RegisteredSupplierContactDetailAPIController extends AppBaseController
         $registeredSupplierContactDetail = $this->registeredSupplierContactDetailRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierContactDetail)) {
-            return $this->sendError('Registered Supplier Contact Detail not found');
+            return $this->sendError(trans('custom.registered_supplier_contact_detail_not_found'));
         }
 
         $registeredSupplierContactDetail = $this->registeredSupplierContactDetailRepository->update($input, $id);
 
-        return $this->sendResponse($registeredSupplierContactDetail->toArray(), 'RegisteredSupplierContactDetail updated successfully');
+        return $this->sendResponse($registeredSupplierContactDetail->toArray(), trans('custom.registeredsuppliercontactdetail_updated_successful'));
     }
 
     /**
@@ -275,11 +275,11 @@ class RegisteredSupplierContactDetailAPIController extends AppBaseController
         $registeredSupplierContactDetail = $this->registeredSupplierContactDetailRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierContactDetail)) {
-            return $this->sendError('Registered Supplier Contact Detail not found');
+            return $this->sendError(trans('custom.registered_supplier_contact_detail_not_found'));
         }
 
         $registeredSupplierContactDetail->delete();
 
-        return $this->sendResponse([], 'Registered Supplier Contact Detail deleted successfully');
+        return $this->sendResponse([], trans('custom.registered_supplier_contact_detail_deleted_success'));
     }
 }

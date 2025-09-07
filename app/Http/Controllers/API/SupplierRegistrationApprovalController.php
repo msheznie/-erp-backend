@@ -283,7 +283,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
     {
         try{
             $supplierValidation = $this->srmService->supplierValidation($request);
-            return $this->sendResponse($supplierValidation, 'Record retrieved successfully');
+            return $this->sendResponse($supplierValidation, trans('custom.record_retrieved_successfully_1'));
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }

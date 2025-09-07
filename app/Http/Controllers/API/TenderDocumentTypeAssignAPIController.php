@@ -65,7 +65,7 @@ class TenderDocumentTypeAssignAPIController extends AppBaseController
         $this->tenderDocumentTypeAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderDocumentTypeAssigns = $this->tenderDocumentTypeAssignRepository->all();
 
-        return $this->sendResponse($tenderDocumentTypeAssigns->toArray(), 'Tender Document Type Assigns retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssigns->toArray(), trans('custom.tender_document_type_assigns_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderDocumentTypeAssignAPIController extends AppBaseController
 
         $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->create($input);
 
-        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'Tender Document Type Assign saved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), trans('custom.tender_document_type_assign_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderDocumentTypeAssignAPIController extends AppBaseController
         $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssign)) {
-            return $this->sendError('Tender Document Type Assign not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_not_found'));
         }
 
-        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'Tender Document Type Assign retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), trans('custom.tender_document_type_assign_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderDocumentTypeAssignAPIController extends AppBaseController
         $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssign)) {
-            return $this->sendError('Tender Document Type Assign not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_not_found'));
         }
 
         $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->update($input, $id);
 
-        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'TenderDocumentTypeAssign updated successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), trans('custom.tenderdocumenttypeassign_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderDocumentTypeAssignAPIController extends AppBaseController
         $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssign)) {
-            return $this->sendError('Tender Document Type Assign not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_not_found'));
         }
 
         $tenderDocumentTypeAssign->delete();

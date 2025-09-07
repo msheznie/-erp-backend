@@ -218,7 +218,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $this->procumentOrderRepository->pushCriteria(new LimitOffsetCriteria($request));
         $procumentOrders = $this->procumentOrderRepository->all();
 
-        return $this->sendResponse($procumentOrders->toArray(), 'Procurement Orders retrieved successfully');
+        return $this->sendResponse($procumentOrders->toArray(), trans('custom.procurement_orders_retrieved_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if ($input['documentSystemID'] == 5) {
                 if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
                     DB::rollBack();
-                    return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
+                    return $this->sendError(trans('custom.wo_period_from_cannot_be_greater_than_wo_period_to'), 500);
                 }
             }
 
@@ -490,7 +490,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($procumentOrders->toArray(), 'Procurement Order saved successfully');
+            return $this->sendResponse($procumentOrders->toArray(), trans('custom.procurement_order_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 500);
@@ -516,7 +516,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }, 'location'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -538,7 +538,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder['poDiscountPercentageToTooltip'] = $procumentOrder->poDiscountPercentage;
         $procumentOrder->poDiscountPercentage = round($procumentOrder->poDiscountPercentage,2);
 
-        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
+        return $this->sendResponse($procumentOrder->toArray(), trans('custom.procurement_order_retrieved_successfully'));
     }
 
     /**
@@ -662,13 +662,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
 
         if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
             if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
-                return $this->sendError('WO Period From cannot be greater than WO Period To');
+                return $this->sendError(trans('custom.wo_period_from_cannot_be_greater_than_wo_period_to'));
             }
         }
 
@@ -680,15 +680,15 @@ class ProcumentOrderAPIController extends AppBaseController
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID != $employee->empID) {
-            return $this->sendError('You cannot amend this order, this is already amended by ' . $procumentOrder->WO_amendRequestedByEmpID, 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende_1') . $procumentOrder->WO_amendRequestedByEmpID, 500);
         }
 
         if ($procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
+            return $this->sendError(trans('custom.this_purchase_order_closed_you_cannot_edit'), 500);
         }
 
         if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
-            return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
+            return $this->sendError(trans('custom.this_purchase_order_fully_approved_you_cannot_edit'), 500);
         }
 
         //checking segment is active
@@ -1066,11 +1066,11 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->get();
                 if ($policy == 0) {
                     if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
-                        return $this->sendError('Category is not found.', 500);
+                        return $this->sendError(trans('custom.category_is_not_found'), 500);
                     }
 
                     if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError('You cannot add different category item', 500);
+                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                     }
                 } else {
                     if (sizeof($pRDetailExistSameItem) == 1) {
@@ -1091,7 +1091,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (empty($poDetailExist)) {
-                return $this->sendError('Order cannot be confirmed without any details');
+                return $this->sendError(trans('custom.order_cannot_be_confirmed_without_any_details'));
             }
 
             $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -1214,7 +1214,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {
-                // return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                // return $this->sendError(trans('custom.you_cannot_confirm_payment_term_with_0_amount'), 500);
             }
 
             //po payment terms exist
@@ -1453,12 +1453,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         $procumentOrder->delete();
 
-        return $this->sendResponse($id, 'Procurement Order deleted successfully');
+        return $this->sendResponse($id, trans('custom.procurement_order_deleted_successfully'));
     }
 
     private function recalculateTermsAndConditionsPercentage($purchaseOrderID,$netAmount)
@@ -1683,7 +1683,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+        ///return $this->sendResponse($supplierMasters->toArray(), trans('custom.supplier_masters_retrieved_successfully'));*/
     }
 
 
@@ -1828,7 +1828,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             if (empty($purchaseOrder)) {
-                return $this->sendError('Purchase order not found.');
+                return $this->sendError(trans('custom.purchase_order_not_found_1'));
             }
             
             $sup = SupplierMaster::find($purchaseOrder->supplierID);
@@ -1894,7 +1894,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'contractEnablePolicy' => $contractEnablePolicy
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -1905,7 +1905,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $projects = ErpProjectMaster::where('serviceLineSystemID', $serviceLineSystemID)->get();
 
-        return $this->sendResponse($projects, 'Segments Projects retrieved successfully');
+        return $this->sendResponse($projects, trans('custom.segments_projects_retrieved_successfully'));
     }
 
     public function getItemsOptionForProcumentOrder(Request $request)
@@ -1959,7 +1959,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getShippingAndInvoiceDetails(Request $request)
@@ -1973,7 +1973,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        return $this->sendResponse($erpAddressDetails->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($erpAddressDetails->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function procumentOrderDetailTotal(Request $request)
@@ -1986,7 +1986,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
-        return $this->sendResponse($detailSum->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($detailSum->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getProcurementOrderRecord(Request $request)
@@ -2064,7 +2064,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function getPOMasterApproval(Request $request)
@@ -2206,7 +2206,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvmaster.grvCancelledYN,erp_grvdetails.itemPrimaryCode,
 erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost, erp_grvmaster.refferedBackYN FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
 
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     function getInvoiceDetailsForPO(Request $request)
@@ -2245,7 +2245,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                             WHERE
                                 purchaseOrderID = ' . $purchaseOrderID . ' ');
 
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     public function getProcumentOrderAllAmendments(Request $request)
@@ -2402,7 +2402,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+        ///return $this->sendResponse($supplierMasters->toArray(), trans('custom.supplier_masters_retrieved_successfully'));*/
     }
 
     public function poCheckDetailExistinGrv(Request $request)
@@ -2420,7 +2420,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $fullyRetuned = false;
@@ -2433,9 +2433,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
             }
             if($fullyRetuned) {
-                return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+                return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
             }else {
-                return $this->sendError('Cannot cancel, GRV is created for this PO');
+                return $this->sendError(trans('custom.cannot_cancel_grv_is_created_for_this_po'));
             }
         }
         if (!empty($detailExistGRV)) {
@@ -2444,24 +2444,24 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     $fullyRetuned = true;
                 }
                 if($fullyRetuned) {
-                    return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+                    return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
                 }else {
-                    return $this->sendError('Cannot cancel, GRV is created for this PO');
+                    return $this->sendError(trans('custom.cannot_cancel_grv_is_created_for_this_po'));
                 }
             } else {
-                return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
+                return $this->sendError(trans('custom.cannot_revert_it_back_to_amend_grv_is_created_for_'));
             }
         }
 
         // check main work order has subwork order
         if ($type != 1) {
             if ($purchaseOrder->poType_N == 6) {
-                return $this->sendError('Sub work order Cannot revert it back to amend');
+                return $this->sendError(trans('custom.sub_work_order_cannot_revert_it_back_to_amend'));
             } elseif ($purchaseOrder->poType_N == 5) {
                 $hasSubWorkOrder = ProcumentOrder::where('poType_N', 6)->where('WO_purchaseOrderID', $purchaseOrder->purchaseOrderID)
                     ->count();
                 if ($hasSubWorkOrder > 0) {
-                    return $this->sendError('Cannot revert it back to amend. Sub Work Order is created for this WO');
+                    return $this->sendError(trans('custom.cannot_revert_it_back_to_amend_sub_work_order_is_c'));
                 }
             }
         }
@@ -2471,10 +2471,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO', 404, ['advancePaymentError' => true]);
+            return $this->sendError(trans('custom.cannot') . $comment . '. Advance payment is created for this PO', 404, ['advancePaymentError' => true]);
         }
 
-        return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
     }
 
     public function procumentOrderCancel(Request $request)
@@ -2487,7 +2487,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
@@ -2579,7 +2579,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         CancelDocument::sendEmail($input);
 
-        return $this->sendResponse($purchaseOrderID, 'Order canceled successfully ');
+        return $this->sendResponse($purchaseOrderID, trans('custom.order_canceled_successfully'));
     }
 
     public function procumentOrderReturnBack(Request $request)
@@ -2593,11 +2593,11 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if ($purchaseOrder->manuallyClosed == 1) {
-            return $this->sendError('You cannot revert back this request as it is closed manually.');
+            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close_1'));
         }
 
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
@@ -2695,7 +2695,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
 
-        return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
+        return $this->sendResponse($purchaseOrderID, trans('custom.po_return_back_to_amend_successfully'));
     }
 
     public function reportSpentAnalysisBySupplierFilter(Request $request)
@@ -2731,7 +2731,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             'currency' => $currency
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function reportSpentAnalysisHeader(Request $request)
@@ -2767,7 +2767,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
 
-        return $this->sendResponse($months, 'Record retrieved successfully');
+        return $this->sendResponse($months, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function reportSpentAnalysis(Request $request)
@@ -3230,7 +3230,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     /**
@@ -3247,23 +3247,23 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($input['purchaseOrderID']);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError('You cannot close this order, this is already fully received');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_is_already_fully_'));
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError('You cannot close this order, this order already manually closed');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_already_man'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('You cannot close this order, this order is only approved');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_is_only_app'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError('You cannot close this order, You can only close partially received order');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_you_can_only_close_par'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3344,7 +3344,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError($sendEmail["message"], 500);
         }
 
-        return $this->sendResponse($procumentOrder, 'Purchase Order successfully closed');
+        return $this->sendResponse($procumentOrder, trans('custom.purchase_order_successfully_closed'));
     }
 
     /**
@@ -3368,7 +3368,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['project','segment','created_by','detail' => function ($query) {
@@ -3605,7 +3605,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         //checking segment is active
@@ -3808,7 +3808,7 @@ WHERE
 	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . '
 		AND YEAR (erp_bookinvsuppmaster.postedDate) = (' . $expYear . ') AND MONTH (erp_bookinvsuppmaster.postedDate) = (' . $expMonth . ')');
         }
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     /**
@@ -4000,27 +4000,27 @@ WHERE
 
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError('You cannot close this order, this is already fully received');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_is_already_fully_'));
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError('You cannot close this order, this order already manually closed');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_already_man'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('You cannot close this order, this order is only approved');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_this_order_is_only_app'));
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError('You cannot close this order, You can only close partially received order');
+            return $this->sendError(trans('custom.you_cannot_close_this_order_you_can_only_close_par'));
         }
 
 
-        return $this->sendResponse($procumentOrder, 'Details retrieved successfully');
+        return $this->sendResponse($procumentOrder, trans('custom.details_retrieved_successfully'));
     }
 
     public function getGRVDrilldownSpentAnalysisTotal(Request $request)
@@ -4130,7 +4130,7 @@ WHERE
 	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . ' AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
 		AND YEAR (erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')');
         }
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     /**
@@ -4151,27 +4151,27 @@ WHERE
             ->first();
 
         if (empty($procurementOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         if ($procurementOrder->poConfirmedYN != 1) {
-            return $this->sendError('You cannot amend this order, this is not confirm', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_not_confirm'), 500);
         }
 
         if ($procurementOrder->poClosedYN == 1) {
-            return $this->sendError('You cannot amend this order, this is already closed', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_closed'), 500);
         }
 
         if ($procurementOrder->manuallyClosed == 1) {
-            return $this->sendError('You cannot amend this order, this order manually closed');
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_order_manually_cl'));
         }
 
         if ($procurementOrder->grvRecieved != 0) {
-            return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_grv_is_fully_or_partia'), 500);
         }
 
         if ($procurementOrder->poCancelledYN == -1) {
-            return $this->sendError('You cannot amend this order, this is already canceled', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_cancel'), 500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -4183,10 +4183,10 @@ WHERE
 
             if ($amendEmp) {
                 $amendEmpName = $amendEmp->empName;
-                return $this->sendError('You cannot amend this order, this is already amended by ' . $amendEmpName, 500);
+                return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende_1') . $amendEmpName, 500);
             }
 
-            return $this->sendError('You cannot amend this order, this is already amended.', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende'), 500);
         }
 
         $procurementOrder->WO_amendYN = -1;
@@ -4215,7 +4215,7 @@ WHERE
 
         AuditTrial::createAuditTrial($procurementOrder->documentSystemID, $input['purchaseOrderID'], '', 'amended');
 
-        return $this->sendResponse($procurementOrder, 'Order updated successfully');
+        return $this->sendResponse($procurementOrder, trans('custom.order_updated_successfully'));
     }
 
 
@@ -4243,36 +4243,36 @@ WHERE
             ->first();
 
         if (empty($procurementOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         if ($procurementOrder->poConfirmedYN != 1) {
-            return $this->sendError('You cannot amend this order, this is not confirm', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_not_confirm'), 500);
         }
 
         if ($detailExistGRV) {
-            return $this->sendError('You cannot amend, GRV is created for this PO');
+            return $this->sendError(trans('custom.you_cannot_amend_grv_is_created_for_this_po'));
         }
 
         if ($detailExistAPD) {
-            return $this->sendError('You cannot amend advance payment is created for this PO');
+            return $this->sendError(trans('custom.you_cannot_amend_advance_payment_is_created_for_th'));
         }
 
         if ($procurementOrder->poClosedYN == 1) {
-            return $this->sendError('You cannot amend this order, this is already closed', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_closed'), 500);
         }
 
         if ($procurementOrder->manuallyClosed == 1) {
-            return $this->sendError('You cannot amend this order, this order manually closed');
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_order_manually_cl'));
         }
 
 
         if ($procurementOrder->grvRecieved != 0) {
-            return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_grv_is_fully_or_partia'), 500);
         }
 
         if ($procurementOrder->poCancelledYN == -1) {
-            return $this->sendError('You cannot amend this order, this is already canceled', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_cancel'), 500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -4283,13 +4283,13 @@ WHERE
 
             if ($amendEmp) {
                 $amendEmpName = $amendEmp->empName;
-                return $this->sendError('You cannot amend this order, this is already amended by ' . $amendEmpName, 500);
+                return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende_1') . $amendEmpName, 500);
             }
 
-            return $this->sendError('You cannot amend this order, this is already amended.', 500);
+            return $this->sendError(trans('custom.you_cannot_amend_this_order_this_is_already_amende'), 500);
         }
 
-        return $this->sendResponse($procurementOrder, 'Order updated successfully');
+        return $this->sendResponse($procurementOrder, trans('custom.order_updated_successfully'));
     }
 
     /**
@@ -4312,10 +4312,10 @@ WHERE
         }])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
-        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
+        return $this->sendResponse($procumentOrder->toArray(), trans('custom.procurement_order_retrieved_successfully'));
     }
 
     /**
@@ -4340,7 +4340,7 @@ WHERE
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $id)->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         $oldVaTEligible = ($purchaseOrder->supplierVATEligible || $purchaseOrder->vatRegisteredYN) ? 1 : 0;
@@ -4352,7 +4352,7 @@ WHERE
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
 
         if (empty($supplier)) {
-            return $this->sendError('Supplier not found');
+            return $this->sendError(trans('custom.supplier_not_found'));
         }
 
         if (!isset($input['fromAmend'])) {
@@ -4385,7 +4385,7 @@ WHERE
 
 
         if (empty($currency)) {
-            return $this->sendError('Currency not found');
+            return $this->sendError(trans('custom.currency_not_found'));
         }
 
         $purchaseOrder->supplierTransactionCurrencyID = $input['supplierTransactionCurrencyID'];
@@ -4713,7 +4713,7 @@ WHERE
             }
         }
 
-        return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
+        return $this->sendResponse($purchaseOrder->toArray(), trans('custom.procurement_order_retrieved_successfully'));
     }
 
     /**
@@ -4737,10 +4737,10 @@ WHERE
         ])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
-        return $this->sendResponse($procumentOrder->toArray(), 'Purchase Order retrieved successfully');
+        return $this->sendResponse($procumentOrder->toArray(), trans('custom.purchase_order_retrieved_successfully'));
     }
 
     public function getGRVBasedPODropdowns(Request $request)
@@ -4766,7 +4766,7 @@ HAVING
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        return $this->sendResponse($detail, 'GRV Currencies retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.grv_currencies_retrieved_successfully'));
     }
 
     public function purchaseOrderForGRV(Request $request)
@@ -4779,7 +4779,7 @@ ORDER BY
             ->first();
 
         if (empty($grvMaster)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
         //checking segment is active
@@ -4807,7 +4807,7 @@ ORDER BY
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
 
-        return $this->sendResponse($ProcumentOrder->toArray(), 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($ProcumentOrder->toArray(), trans('custom.purchase_order_details_retrieved_successfully'));
     }
 
     public function getPurchasePaymentStatusHistory(Request $request)
@@ -4894,7 +4894,7 @@ ORDER BY
                                         AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
                                 ) AS POPaymentDetails');
 
-        return $this->sendResponse($detail, 'payment status retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
 
     public function getProcurementOrderReopen(Request $request)
@@ -4906,19 +4906,19 @@ ORDER BY
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
         $emails = array();
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if ($purchaseOrder->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this PO it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_already_partially_'));
         }
 
         if ($purchaseOrder->approved == -1) {
-            return $this->sendError('You cannot reopen this PO it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_already_fully_appr'));
         }
 
         if ($purchaseOrder->poConfirmedYN == 0) {
-            return $this->sendError('You cannot reopen this PO, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_po_it_is_not_confirmed'));
         }
 
         // updating fields
@@ -4999,7 +4999,7 @@ ORDER BY
         /*Audit entry*/
         AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');
+        return $this->sendResponse($purchaseOrder->toArray(), trans('custom.purchase_order_reopened_successfully'));
     }
 
     public function procumentOrderPRAttachment(Request $request)
@@ -5064,7 +5064,7 @@ ORDER BY
         if ($attachmentFound == 0) {
             return $this->sendError('No Attachments Found', 500);
         } else {
-            return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
+            return $this->sendResponse($purchaseOrderID, trans('custom.pr_attachments_pulled_successfully'));
         }
     }
 
@@ -5114,7 +5114,7 @@ ORDER BY
 
 
         if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is not sent');
+            return $this->sendResponse($emailSentTo, trans('custom.supplier_email_is_not_updated_email_notification_i'));
         } else {
             return $this->sendResponse($emailSentTo, 'Supplier notification email sent');
         }
@@ -5128,11 +5128,11 @@ ORDER BY
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if ($purchaseOrder->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer Back this PO');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_po'));
         }
 
         $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess', 'isVatEligible', 'rcmAvailable']);
@@ -5225,7 +5225,7 @@ ORDER BY
 
         DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->update(['isRejected' => false]);
 
-        return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
+        return $this->sendResponse($purchaseOrder->toArray(), trans('custom.purchase_order_amend_successfully'));
     }
 
     public function reportPoEmployeePerformance(Request $request)
@@ -5304,7 +5304,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY totalCount DESC;');
         //dd(DB::getQueryLog());
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function exportPoEmployeePerformance(Request $request)
@@ -5440,7 +5440,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     public function exportProcumentOrderMaster(Request $request)
@@ -5710,7 +5710,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         // })->download($type);
 
-        // return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), trans('custom.success_export'));
 
         $doc_name = 'purchase_order';
         $doc_name_path = 'purchase_order/';
@@ -6147,7 +6147,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
         $output = array('suppliers' => $suppliers, 'categories' => $categories);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getReportSavingFliterData(Request $request)
@@ -6174,7 +6174,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $output = array('suppliers' => $supplierMaster, 'categories' => $categories, 'years' => $years, 'subCategories' => $subCategories);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAdvancePaymentRequestStatusHistory(Request $request)
@@ -6226,7 +6226,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 			AND erp_advancepaymentdetails.poAdvPaymentID = ' . $advancePaymentId . '
 	');
 
-        return $this->sendResponse($detail, 'payment status retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
 
     public function poExpectedDeliveryDateAmend(Request $request)
@@ -6239,7 +6239,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrderMasterData = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrderMasterData)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if (isset($input['deliveryDate'])) {
@@ -6252,7 +6252,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID, $input['purchaseOrderID'], '', 'expected delivery date amended to ' . $input['deliveryDate']);
 
-        return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
+        return $this->sendResponse($purchaseOrderMasterData->toArray(), trans('custom.record_updated_successfully'));
     }
 
     public function amendProcumentSubWorkOrder(Request $request)
@@ -6266,11 +6266,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if (!$purchaseOrder->isWoAmendAccess) {
-            return $this->sendError('You cannot amend this sub work order.');
+            return $this->sendError(trans('custom.you_cannot_amend_this_sub_work_order'));
         }
 
         $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
@@ -6280,7 +6280,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->sum('netAmount');
 
         if ($subWoTotal > $mainWoTotal) {
-            return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.');
+            return $this->sendError(trans('custom.sub_work_order_is_exceeding_the_main_work_order_to_1'));
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
@@ -6320,7 +6320,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 'localCurrencyER' => round($currencyConversionMaster['trasToLocER'], 8)
             ]);
 
-        return $this->sendResponse($purchaseOrder, 'Sub work order amend successfully ');
+        return $this->sendResponse($purchaseOrder, trans('custom.sub_work_order_amend_successfully'));
     }
 
     public function amendProcumentSubWorkOrderReview(Request $request)
@@ -6368,7 +6368,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $masterData->poCancelledYN != 0 || $masterData->grvRecieved != 0 ||
             $masterData->WO_amendYN != 0 || $masterData->WO_confirmedYN != 1
         ) {
-            return $this->sendError('You cannot amend this ' . $documentName);
+            return $this->sendError(trans('custom.you_cannot_amend_this') . $documentName);
         }
 
         DB::beginTransaction();
@@ -6406,7 +6406,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $procumentOrder = ProcumentOrder::find($input['purchaseOrderID']);
         if (empty($procumentOrder)) {
-            return $this->sendError('Order Detail not found');
+            return $this->sendError(trans('custom.order_detail_not_found_1'));
         }
 
         $update_array = null;
@@ -6529,7 +6529,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $output = array('isEEOSSPolicy' => $hasEEOSSPolicy);
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateWorkOrder(Request $request)
@@ -6874,7 +6874,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
             }
             DB::commit();
-            return $this->sendResponse([], 'Work order generated successfully');
+            return $this->sendResponse([], trans('custom.work_order_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage() . $exception->getLine());
@@ -6986,7 +6986,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     break;
             }
 
-            return $this->sendResponse($tracingData, 'Document tracing data retrived successfully');
+            return $this->sendResponse($tracingData, trans('custom.document_tracing_data_retrived_successfully'));
 
         }  catch (\Exception $exception) {
             return $this->sendError($exception->getMessage(), 500);
@@ -9067,13 +9067,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_project_template.xlsx')) {
                 return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_project_template.xlsx', 'procument_order_item_upload_template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_template.xlsx')) {
                 return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_template.xlsx', 'procument_order_item_upload_template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         }
     }
@@ -9096,7 +9096,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->first();
 
             if (empty($purchaseOrder)) {
-                return $this->sendError('Procument Order not found', 500);
+                return $this->sendError(trans('custom.procument_order_not_found'), 500);
             }
 
             $allowedExtensions = ['xlsx','xls'];
@@ -9154,7 +9154,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
 
             if ($unexpectedHeader) {
-                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
             }
 
             foreach ($uniqueData as $key => $value) {
@@ -9168,14 +9168,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             if (!$validateHeaderCode || !$validateHeaderCode) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
 
             if ($purchaseOrder->cancelledYN == -1) {
-                return $this->sendError('This Purchase Order already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_purchase_order_already_closed_you_can_not_add'), 500);
             }
 
             if ($purchaseOrder->approved == 1) {
@@ -9193,7 +9193,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully_1'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -9350,7 +9350,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Exempt VAT Gl uploaded Successfully!!');
+            return $this->sendResponse([], trans('custom.exempt_vat_gl_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -9416,7 +9416,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $procumentArray = (['totalSubOrderAmountPreview' => $totalSubOrderAmountPreview, 'totalVat' => $totalVat]);
 
-        return $this->sendResponse($procumentArray, 'Data retrieved successfully');
+        return $this->sendResponse($procumentArray, trans('custom.data_retrieved_successfully'));
     }
 
     public function poConfigDescriptionUpdate($id, Request $request){
@@ -9426,14 +9426,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $paymentTermConfig = DB::table('po_wise_payment_term_config')->find($id);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig = DB::table('po_wise_payment_term_config')
             ->where('id', $id)
             ->update(['description' => $input['description'], 'isConfigUpdate' => true]);
 
-        return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.description_updated_successfully'));
 
     }
 
@@ -9444,14 +9444,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $paymentTermConfig = DB::table('po_wise_payment_term_config')->find($input['id']);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig = DB::table('po_wise_payment_term_config')
             ->where('id', $input['id'])
             ->update(['isSelected' => $input['isSelected']]);
 
-        return $this->sendResponse($paymentTermConfig, 'Payment term config updated successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.payment_term_config_updated_successfully'));
 
     }
     function truncateDecimals($value, $decimals = 3) {

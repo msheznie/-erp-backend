@@ -64,7 +64,7 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
         $this->miBulkUploadErrorLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $miBulkUploadErrorLogs = $this->miBulkUploadErrorLogRepository->all();
 
-        return $this->sendResponse($miBulkUploadErrorLogs->toArray(), 'Mi Bulk Upload Error Logs retrieved successfully');
+        return $this->sendResponse($miBulkUploadErrorLogs->toArray(), trans('custom.mi_bulk_upload_error_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
 
         $miBulkUploadErrorLog = $this->miBulkUploadErrorLogRepository->create($input);
 
-        return $this->sendResponse($miBulkUploadErrorLog->toArray(), 'Mi Bulk Upload Error Log saved successfully');
+        return $this->sendResponse($miBulkUploadErrorLog->toArray(), trans('custom.mi_bulk_upload_error_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
         $miBulkUploadErrorLog = $this->miBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($miBulkUploadErrorLog)) {
-            return $this->sendError('Mi Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mi_bulk_upload_error_log_not_found'));
         }
 
-        return $this->sendResponse($miBulkUploadErrorLog->toArray(), 'Mi Bulk Upload Error Log retrieved successfully');
+        return $this->sendResponse($miBulkUploadErrorLog->toArray(), trans('custom.mi_bulk_upload_error_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
         $miBulkUploadErrorLog = $this->miBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($miBulkUploadErrorLog)) {
-            return $this->sendError('Mi Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mi_bulk_upload_error_log_not_found'));
         }
 
         $miBulkUploadErrorLog = $this->miBulkUploadErrorLogRepository->update($input, $id);
 
-        return $this->sendResponse($miBulkUploadErrorLog->toArray(), 'MiBulkUploadErrorLog updated successfully');
+        return $this->sendResponse($miBulkUploadErrorLog->toArray(), trans('custom.mibulkuploaderrorlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
         $miBulkUploadErrorLog = $this->miBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($miBulkUploadErrorLog)) {
-            return $this->sendError('Mi Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mi_bulk_upload_error_log_not_found'));
         }
 
         $miBulkUploadErrorLog->delete();
@@ -300,11 +300,11 @@ class MiBulkUploadErrorLogAPIController extends AppBaseController
         $materialIssueID = $request['materialIssueID'];
         $errorMsg = $this->miBulkUploadErrorLogRepository->getBulkUploadErrors($materialIssueID);
 
-        return $this->sendResponse($errorMsg, 'Material issue item upload error log status fetched successfully');
+        return $this->sendResponse($errorMsg, trans('custom.material_issue_item_upload_error_log_status_fetche'));
     }
 
     public function deleteMiItemUploadErrorLog($id) {
         MiBulkUploadErrorLog::where('documentSystemID', trim($id))->delete();
-        return $this->sendResponse([], 'Material Issue Bulk Upload Error Log deleted successfully');
+        return $this->sendResponse([], trans('custom.material_issue_bulk_upload_error_log_deleted_succe'));
     }
 }

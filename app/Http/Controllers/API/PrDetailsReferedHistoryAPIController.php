@@ -76,7 +76,7 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
         $this->prDetailsReferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $prDetailsReferedHistories = $this->prDetailsReferedHistoryRepository->all();
 
-        return $this->sendResponse($prDetailsReferedHistories->toArray(), 'Pr Details Refered Histories retrieved successfully');
+        return $this->sendResponse($prDetailsReferedHistories->toArray(), trans('custom.pr_details_refered_histories_retrieved_successfull'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
 
         $prDetailsReferedHistories = $this->prDetailsReferedHistoryRepository->create($input);
 
-        return $this->sendResponse($prDetailsReferedHistories->toArray(), 'Pr Details Refered History saved successfully');
+        return $this->sendResponse($prDetailsReferedHistories->toArray(), trans('custom.pr_details_refered_history_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
         $prDetailsReferedHistory = $this->prDetailsReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($prDetailsReferedHistory)) {
-            return $this->sendError('Pr Details Refered History not found');
+            return $this->sendError(trans('custom.pr_details_refered_history_not_found'));
         }
 
-        return $this->sendResponse($prDetailsReferedHistory->toArray(), 'Pr Details Refered History retrieved successfully');
+        return $this->sendResponse($prDetailsReferedHistory->toArray(), trans('custom.pr_details_refered_history_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
         $prDetailsReferedHistory = $this->prDetailsReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($prDetailsReferedHistory)) {
-            return $this->sendError('Pr Details Refered History not found');
+            return $this->sendError(trans('custom.pr_details_refered_history_not_found'));
         }
 
         $prDetailsReferedHistory = $this->prDetailsReferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($prDetailsReferedHistory->toArray(), 'PrDetailsReferedHistory updated successfully');
+        return $this->sendResponse($prDetailsReferedHistory->toArray(), trans('custom.prdetailsreferedhistory_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
         $prDetailsReferedHistory = $this->prDetailsReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($prDetailsReferedHistory)) {
-            return $this->sendError('Pr Details Refered History not found');
+            return $this->sendError(trans('custom.pr_details_refered_history_not_found'));
         }
 
         $prDetailsReferedHistory->delete();
 
-        return $this->sendResponse($id, 'Pr Details Refered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.pr_details_refered_history_deleted_successfully'));
     }
 
     public function getPrItemsForAmendHistory(Request $request)
@@ -302,6 +302,6 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
             }])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Pr Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.pr_details_reffered_history_retrieved_successfully'));
     }
 }

@@ -65,7 +65,7 @@ class ModuleMasterAPIController extends AppBaseController
         $this->moduleMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $moduleMasters = $this->moduleMasterRepository->all();
 
-        return $this->sendResponse($moduleMasters->toArray(), 'Module Masters retrieved successfully');
+        return $this->sendResponse($moduleMasters->toArray(), trans('custom.module_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ModuleMasterAPIController extends AppBaseController
 
         $moduleMaster = $this->moduleMasterRepository->create($input);
 
-        return $this->sendResponse($moduleMaster->toArray(), 'Module Master saved successfully');
+        return $this->sendResponse($moduleMaster->toArray(), trans('custom.module_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ModuleMasterAPIController extends AppBaseController
         $moduleMaster = $this->moduleMasterRepository->findWithoutFail($id);
 
         if (empty($moduleMaster)) {
-            return $this->sendError('Module Master not found');
+            return $this->sendError(trans('custom.module_master_not_found'));
         }
 
-        return $this->sendResponse($moduleMaster->toArray(), 'Module Master retrieved successfully');
+        return $this->sendResponse($moduleMaster->toArray(), trans('custom.module_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ModuleMasterAPIController extends AppBaseController
         $moduleMaster = $this->moduleMasterRepository->findWithoutFail($id);
 
         if (empty($moduleMaster)) {
-            return $this->sendError('Module Master not found');
+            return $this->sendError(trans('custom.module_master_not_found'));
         }
 
         $moduleMaster = $this->moduleMasterRepository->update($input, $id);
 
-        return $this->sendResponse($moduleMaster->toArray(), 'ModuleMaster updated successfully');
+        return $this->sendResponse($moduleMaster->toArray(), trans('custom.modulemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ModuleMasterAPIController extends AppBaseController
         $moduleMaster = $this->moduleMasterRepository->findWithoutFail($id);
 
         if (empty($moduleMaster)) {
-            return $this->sendError('Module Master not found');
+            return $this->sendError(trans('custom.module_master_not_found'));
         }
 
         $moduleMaster->delete();

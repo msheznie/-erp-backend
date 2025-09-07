@@ -64,7 +64,7 @@ class CalendarDatesDetailEditLogAPIController extends AppBaseController
         $this->calendarDatesDetailEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $calendarDatesDetailEditLogs = $this->calendarDatesDetailEditLogRepository->all();
 
-        return $this->sendResponse($calendarDatesDetailEditLogs->toArray(), 'Calendar Dates Detail Edit Logs retrieved successfully');
+        return $this->sendResponse($calendarDatesDetailEditLogs->toArray(), trans('custom.calendar_dates_detail_edit_logs_retrieved_successf'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CalendarDatesDetailEditLogAPIController extends AppBaseController
 
         $calendarDatesDetailEditLog = $this->calendarDatesDetailEditLogRepository->create($input);
 
-        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), 'Calendar Dates Detail Edit Log saved successfully');
+        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), trans('custom.calendar_dates_detail_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CalendarDatesDetailEditLogAPIController extends AppBaseController
         $calendarDatesDetailEditLog = $this->calendarDatesDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($calendarDatesDetailEditLog)) {
-            return $this->sendError('Calendar Dates Detail Edit Log not found');
+            return $this->sendError(trans('custom.calendar_dates_detail_edit_log_not_found'));
         }
 
-        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), 'Calendar Dates Detail Edit Log retrieved successfully');
+        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), trans('custom.calendar_dates_detail_edit_log_retrieved_successfu'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CalendarDatesDetailEditLogAPIController extends AppBaseController
         $calendarDatesDetailEditLog = $this->calendarDatesDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($calendarDatesDetailEditLog)) {
-            return $this->sendError('Calendar Dates Detail Edit Log not found');
+            return $this->sendError(trans('custom.calendar_dates_detail_edit_log_not_found'));
         }
 
         $calendarDatesDetailEditLog = $this->calendarDatesDetailEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), 'CalendarDatesDetailEditLog updated successfully');
+        return $this->sendResponse($calendarDatesDetailEditLog->toArray(), trans('custom.calendardatesdetaileditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CalendarDatesDetailEditLogAPIController extends AppBaseController
         $calendarDatesDetailEditLog = $this->calendarDatesDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($calendarDatesDetailEditLog)) {
-            return $this->sendError('Calendar Dates Detail Edit Log not found');
+            return $this->sendError(trans('custom.calendar_dates_detail_edit_log_not_found'));
         }
 
         $calendarDatesDetailEditLog->delete();

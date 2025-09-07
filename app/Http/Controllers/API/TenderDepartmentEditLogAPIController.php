@@ -64,7 +64,7 @@ class TenderDepartmentEditLogAPIController extends AppBaseController
         $this->tenderDepartmentEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderDepartmentEditLogs = $this->tenderDepartmentEditLogRepository->all();
 
-        return $this->sendResponse($tenderDepartmentEditLogs->toArray(), 'Tender Department Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderDepartmentEditLogs->toArray(), trans('custom.tender_department_edit_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderDepartmentEditLogAPIController extends AppBaseController
 
         $tenderDepartmentEditLog = $this->tenderDepartmentEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderDepartmentEditLog->toArray(), 'Tender Department Edit Log saved successfully');
+        return $this->sendResponse($tenderDepartmentEditLog->toArray(), trans('custom.tender_department_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderDepartmentEditLogAPIController extends AppBaseController
         $tenderDepartmentEditLog = $this->tenderDepartmentEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderDepartmentEditLog)) {
-            return $this->sendError('Tender Department Edit Log not found');
+            return $this->sendError(trans('custom.tender_department_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderDepartmentEditLog->toArray(), 'Tender Department Edit Log retrieved successfully');
+        return $this->sendResponse($tenderDepartmentEditLog->toArray(), trans('custom.tender_department_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderDepartmentEditLogAPIController extends AppBaseController
         $tenderDepartmentEditLog = $this->tenderDepartmentEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderDepartmentEditLog)) {
-            return $this->sendError('Tender Department Edit Log not found');
+            return $this->sendError(trans('custom.tender_department_edit_log_not_found'));
         }
 
         $tenderDepartmentEditLog = $this->tenderDepartmentEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderDepartmentEditLog->toArray(), 'TenderDepartmentEditLog updated successfully');
+        return $this->sendResponse($tenderDepartmentEditLog->toArray(), trans('custom.tenderdepartmenteditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderDepartmentEditLogAPIController extends AppBaseController
         $tenderDepartmentEditLog = $this->tenderDepartmentEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderDepartmentEditLog)) {
-            return $this->sendError('Tender Department Edit Log not found');
+            return $this->sendError(trans('custom.tender_department_edit_log_not_found'));
         }
 
         $tenderDepartmentEditLog->delete();

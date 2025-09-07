@@ -65,7 +65,7 @@ class DocumentManagementAPIController extends AppBaseController
         $this->documentManagementRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentManagements = $this->documentManagementRepository->all();
 
-        return $this->sendResponse($documentManagements->toArray(), 'Document Managements retrieved successfully');
+        return $this->sendResponse($documentManagements->toArray(), trans('custom.document_managements_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DocumentManagementAPIController extends AppBaseController
 
         $documentManagement = $this->documentManagementRepository->create($input);
 
-        return $this->sendResponse($documentManagement->toArray(), 'Document Management saved successfully');
+        return $this->sendResponse($documentManagement->toArray(), trans('custom.document_management_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class DocumentManagementAPIController extends AppBaseController
         $documentManagement = $this->documentManagementRepository->findWithoutFail($id);
 
         if (empty($documentManagement)) {
-            return $this->sendError('Document Management not found');
+            return $this->sendError(trans('custom.document_management_not_found'));
         }
 
-        return $this->sendResponse($documentManagement->toArray(), 'Document Management retrieved successfully');
+        return $this->sendResponse($documentManagement->toArray(), trans('custom.document_management_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class DocumentManagementAPIController extends AppBaseController
         $documentManagement = $this->documentManagementRepository->findWithoutFail($id);
 
         if (empty($documentManagement)) {
-            return $this->sendError('Document Management not found');
+            return $this->sendError(trans('custom.document_management_not_found'));
         }
 
         $documentManagement = $this->documentManagementRepository->update($input, $id);
 
-        return $this->sendResponse($documentManagement->toArray(), 'DocumentManagement updated successfully');
+        return $this->sendResponse($documentManagement->toArray(), trans('custom.documentmanagement_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class DocumentManagementAPIController extends AppBaseController
         $documentManagement = $this->documentManagementRepository->findWithoutFail($id);
 
         if (empty($documentManagement)) {
-            return $this->sendError('Document Management not found');
+            return $this->sendError(trans('custom.document_management_not_found'));
         }
 
         $documentManagement->delete();
 
-        return $this->sendResponse($id, 'Document Management deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_management_deleted_successfully'));
     }
 }

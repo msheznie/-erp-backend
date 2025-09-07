@@ -87,7 +87,7 @@ class MobileBillMasterAPIController extends AppBaseController
         $this->mobileBillMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mobileBillMasters = $this->mobileBillMasterRepository->all();
 
-        return $this->sendResponse($mobileBillMasters->toArray(), 'Mobile Bill Masters retrieved successfully');
+        return $this->sendResponse($mobileBillMasters->toArray(), trans('custom.mobile_bill_masters_retrieved_successfully'));
     }
 
     /**
@@ -164,7 +164,7 @@ class MobileBillMasterAPIController extends AppBaseController
 
         $mobileBillMaster = $this->mobileBillMasterRepository->create($input);
 
-        return $this->sendResponse($mobileBillMaster->toArray(), 'Mobile Bill Master saved successfully');
+        return $this->sendResponse($mobileBillMaster->toArray(), trans('custom.mobile_bill_master_saved_successfully'));
     }
 
     /**
@@ -218,10 +218,10 @@ class MobileBillMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($mobileBillMaster)) {
-            return $this->sendError('Mobile Bill Master not found');
+            return $this->sendError(trans('custom.mobile_bill_master_not_found'));
         }
 
-        return $this->sendResponse($mobileBillMaster->toArray(), 'Mobile Bill Master retrieved successfully');
+        return $this->sendResponse($mobileBillMaster->toArray(), trans('custom.mobile_bill_master_retrieved_successfully'));
     }
 
     /**
@@ -293,7 +293,7 @@ class MobileBillMasterAPIController extends AppBaseController
         $mobileBillMaster = $this->mobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($mobileBillMaster)) {
-            return $this->sendError('Mobile Bill Master not found');
+            return $this->sendError(trans('custom.mobile_bill_master_not_found'));
         }
 
         if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1){
@@ -301,19 +301,19 @@ class MobileBillMasterAPIController extends AppBaseController
             // check mobile summary exists
             $isSummaryExists = MobileBillSummary::where('mobileMasterID',$id)->exists();
             if(!$isSummaryExists){
-                return $this->sendError('You cannot confirm this Mobile bill. Mobile bill summary not found');
+                return $this->sendError(trans('custom.you_cannot_confirm_this_mobile_bill_mobile_bill_su'));
             }
 
             // check mobile detail exists
             $isDetailExists = MobileDetail::where('mobilebillMasterID',$id)->exists();
             if(!$isDetailExists){
-                return $this->sendError('You cannot confirm this Mobile bill. Mobile bill details not found');
+                return $this->sendError(trans('custom.you_cannot_confirm_this_mobile_bill_mobile_bill_de'));
             }
 
             // check employee mobile bill exists
             $isEmpBillExists = EmployeeMobileBillMaster::where('mobilebillMasterID',$id)->exists();
             if(!$isEmpBillExists){
-                return $this->sendError('You cannot confirm this Mobile bill. Employee mobile bill is not generated');
+                return $this->sendError(trans('custom.you_cannot_confirm_this_mobile_bill_employee_mobil'));
             }
 
             $input['confirmedDate'] = Carbon::now();
@@ -327,7 +327,7 @@ class MobileBillMasterAPIController extends AppBaseController
 
         $mobileBillMaster = $this->mobileBillMasterRepository->update($input, $id);
 
-        return $this->sendResponse($mobileBillMaster->toArray(), 'MobileBillMaster updated successfully');
+        return $this->sendResponse($mobileBillMaster->toArray(), trans('custom.mobilebillmaster_updated_successfully'));
     }
 
     /**
@@ -374,12 +374,12 @@ class MobileBillMasterAPIController extends AppBaseController
         $mobileBillMaster = $this->mobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($mobileBillMaster)) {
-            return $this->sendError('Mobile Bill Master not found');
+            return $this->sendError(trans('custom.mobile_bill_master_not_found'));
         }
 
         $mobileBillMaster->delete();
 
-        return $this->sendResponse($mobileBillMaster,'Mobile Bill Master deleted successfully');
+        return $this->sendResponse($mobileBillMaster,trans('custom.mobile_bill_master_deleted_successfully'));
     }
 
     public function getAllMobileBill(Request $request){
@@ -424,7 +424,7 @@ class MobileBillMasterAPIController extends AppBaseController
             'period' => $period
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -432,7 +432,7 @@ class MobileBillMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if(!(isset($input['mobilebillMasterID']) && $input['mobilebillMasterID']>0)){
-            return $this->sendError('Mobile Bill Master ID not found');
+            return $this->sendError(trans('custom.mobile_bill_master_id_not_found'));
         }
 
         $isExists = EmployeeMobileBillMaster::where('mobilebillMasterID',$input['mobilebillMasterID'])->exists();
@@ -440,13 +440,13 @@ class MobileBillMasterAPIController extends AppBaseController
         if($input['type'] == 'summary'){
 
             if($isExists){
-                return $this->sendError('You cannot delete. Employee mobile bill is already generated');
+                return $this->sendError(trans('custom.you_cannot_delete_employee_mobile_bill_is_already_'));
             }
 
             $isDelete = MobileBillSummary::where('mobileMasterID',$input['mobilebillMasterID'])->delete();
         }elseif ($input['type'] == 'detail'){
             if($isExists){
-                return $this->sendError('You cannot delete. Employee mobile bill is already generated');
+                return $this->sendError(trans('custom.you_cannot_delete_employee_mobile_bill_is_already_'));
             }
             $isDelete = MobileDetail::where('mobilebillMasterID',$input['mobilebillMasterID'])->delete();
         }else{
@@ -454,9 +454,9 @@ class MobileBillMasterAPIController extends AppBaseController
         }
 
         if($isDelete) {
-            return $this->sendResponse([],'Successfully Deleted');
+            return $this->sendResponse([],trans('custom.successfully_deleted'));
         }else{
-            return $this->sendError('Error Occur',500);
+            return $this->sendError(trans('custom.error_occur'),500);
         }
     }
 
@@ -521,7 +521,7 @@ class MobileBillMasterAPIController extends AppBaseController
                 ->get();
         }
 
-        return $this->sendResponse($output,'Successfully Retrieved');
+        return $this->sendResponse($output,trans('custom.successfully_retrieved'));
     }
 
     public function getBillMastersByCompany(Request $request){
@@ -544,7 +544,7 @@ class MobileBillMasterAPIController extends AppBaseController
                 ->orderBy('mobilebillMasterID','DESC')
                 ->get();
         }
-        return $this->sendResponse($billMaster, 'Bill Master retrieved successfully');
+        return $this->sendResponse($billMaster, trans('custom.bill_master_retrieved_successfully'));
     }
 
     public function exportMobileReport(Request $request){
@@ -585,7 +585,7 @@ class MobileBillMasterAPIController extends AppBaseController
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
 
-            return $this->sendResponse(array(), 'successfully export');
+            return $this->sendResponse(array(), trans('custom.success_export'));
         }
         return $this->sendError( 'No Records Found');
     }

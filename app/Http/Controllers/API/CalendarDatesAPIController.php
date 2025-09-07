@@ -65,7 +65,7 @@ class CalendarDatesAPIController extends AppBaseController
         $this->calendarDatesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $calendarDates = $this->calendarDatesRepository->all();
 
-        return $this->sendResponse($calendarDates->toArray(), 'Calendar Dates retrieved successfully');
+        return $this->sendResponse($calendarDates->toArray(), trans('custom.calendar_dates_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class CalendarDatesAPIController extends AppBaseController
 
         $calendarDates = $this->calendarDatesRepository->create($input);
 
-        return $this->sendResponse($calendarDates->toArray(), 'Calendar Dates saved successfully');
+        return $this->sendResponse($calendarDates->toArray(), trans('custom.calendar_dates_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class CalendarDatesAPIController extends AppBaseController
         $calendarDates = $this->calendarDatesRepository->findWithoutFail($id);
 
         if (empty($calendarDates)) {
-            return $this->sendError('Calendar Dates not found');
+            return $this->sendError(trans('custom.calendar_dates_not_found'));
         }
 
-        return $this->sendResponse($calendarDates->toArray(), 'Calendar Dates retrieved successfully');
+        return $this->sendResponse($calendarDates->toArray(), trans('custom.calendar_dates_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class CalendarDatesAPIController extends AppBaseController
         $calendarDates = $this->calendarDatesRepository->findWithoutFail($id);
 
         if (empty($calendarDates)) {
-            return $this->sendError('Calendar Dates not found');
+            return $this->sendError(trans('custom.calendar_dates_not_found'));
         }
 
         $calendarDates = $this->calendarDatesRepository->update($input, $id);
 
-        return $this->sendResponse($calendarDates->toArray(), 'CalendarDates updated successfully');
+        return $this->sendResponse($calendarDates->toArray(), trans('custom.calendardates_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class CalendarDatesAPIController extends AppBaseController
         $calendarDates = $this->calendarDatesRepository->findWithoutFail($id);
 
         if (empty($calendarDates)) {
-            return $this->sendError('Calendar Dates not found');
+            return $this->sendError(trans('custom.calendar_dates_not_found'));
         }
 
         $calendarDates->delete();

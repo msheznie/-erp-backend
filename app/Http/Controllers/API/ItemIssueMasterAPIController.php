@@ -132,7 +132,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $this->itemIssueMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemIssueMasters = $this->itemIssueMasterRepository->all();
 
-        return $this->sendResponse($itemIssueMasters->toArray(), 'Item Issue Masters retrieved successfully');
+        return $this->sendResponse($itemIssueMasters->toArray(), trans('custom.item_issue_masters_retrieved_successfully'));
     }
 
     /**
@@ -316,7 +316,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMasters = $this->itemIssueMasterRepository->create($input);
         DB::commit();
-        return $this->sendResponse($itemIssueMasters->toArray(), 'Item Issue Master saved successfully');
+        return $this->sendResponse($itemIssueMasters->toArray(), trans('custom.item_issue_master_saved_successfully'));
     }
 
     /**
@@ -367,10 +367,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
-            return $this->sendError('Item Issue Master not found');
+            return $this->sendError(trans('custom.item_issue_master_not_found'));
         }
 
-        return $this->sendResponse($itemIssueMaster->toArray(), 'Item Issue Master retrieved successfully');
+        return $this->sendResponse($itemIssueMaster->toArray(), trans('custom.item_issue_master_retrieved_successfully'));
     }
 
     /**
@@ -436,7 +436,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
-            return $this->sendError('Item Issue Master not found');
+            return $this->sendError(trans('custom.item_issue_master_not_found'));
         }
 
 
@@ -465,7 +465,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
+                return $this->sendError(trans('custom.department_not_found'));
             }
 
             if ($checkDepartmentActive->isActive == 0) {
@@ -479,7 +479,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (isset($input['wareHouseFrom'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('Warehouse not found', 500, $wareHouseError);
+                return $this->sendError(trans('custom.warehouse_not_found'), 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {
@@ -536,7 +536,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     if (!empty($materielRequest)) {
                         if ($input['reqDocID'] != $itemIssueMaster->reqDocID) {
                             if ($materielRequest->selectedForIssue == -1) {
-                                return $this->sendError('This Request already selected. Please check again!', 500);
+                                return $this->sendError(trans('custom.this_request_already_selected_please_check_again'), 500);
                             }
                         }
 
@@ -827,12 +827,12 @@ class ItemIssueMasterAPIController extends AppBaseController
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
-            return $this->sendError('Item Issue Master not found');
+            return $this->sendError(trans('custom.item_issue_master_not_found'));
         }
 
         $itemIssueMaster->delete();
 
-        return $this->sendResponse($id, 'Item Issue Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_issue_master_deleted_successfully'));
     }
 
     /**
@@ -1228,7 +1228,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -1258,7 +1258,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $confirmYn = $materialIssue->confirmedYN;
 
         $data = MaterialIssueService::getMaterialRequest($subCompanies,$request,$input,$confirmYn);
-        return $this->sendResponse($data, 'Materiel Issue updated successfully');
+        return $this->sendResponse($data, trans('custom.materiel_issue_updated_successfully'));
     }
 
     /**
@@ -1275,12 +1275,12 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
         if (empty($materielIssue)) {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
-        return $this->sendResponse($materielIssue->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($materielIssue->toArray(), trans('custom.materiel_issue_retrieved_successfully'));
     }
 
     public function printItemIssue(Request $request)
@@ -1289,7 +1289,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
         if (empty($materielIssue)) {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
@@ -1297,7 +1297,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $materielIssue->companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company Master not found');
+            return $this->sendError(trans('custom.company_master_not_found'));
         }
 
         if (!empty($company->localCurrencyID)) {
@@ -1306,7 +1306,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $materielIssue->localCurrencyCode = $localCurrency->CurrencyCode;
             $materielIssue->localDecimalPlaces = $localCurrency->DecimalPlaces;
         } else {
-            return $this->sendError('Company local currency not found');
+            return $this->sendError(trans('custom.company_local_currency_not_found'));
         }
 
         $isShowAllocatedEmployeeTable = false;
@@ -1346,7 +1346,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
         if (empty($materielIssue)) {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
@@ -1392,7 +1392,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($employees->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function materielIssueReopen(Request $request)
@@ -1403,19 +1403,19 @@ class ItemIssueMasterAPIController extends AppBaseController
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
         $emails = array();
         if (empty($itemIssueMaster)) {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         if ($itemIssueMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this Materiel Issue it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_issue_it_is_alread_1'));
         }
 
         if ($itemIssueMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Materiel Issue it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_issue_it_is_alread'));
         }
 
         if ($itemIssueMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Materiel Issue, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_issue_it_is_not_co'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1489,7 +1489,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($itemIssueMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue reopened successfully');
+        return $this->sendResponse($itemIssueMaster->toArray(), trans('custom.materiel_issue_reopened_successfully'));
     }
 
     public function materielIssueReferBack(Request $request)
@@ -1500,11 +1500,11 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssue = $this->itemIssueMasterRepository->find($id);
         if (empty($itemIssue)) {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         if ($itemIssue->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this materiel issue');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_materiel_issue'));
         }
 
         $itemIssueArray = $itemIssue->toArray();
@@ -1553,7 +1553,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $this->itemIssueMasterRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($itemIssue->toArray(), 'Materiel Issue Amend successfully');
+        return $this->sendResponse($itemIssue->toArray(), trans('custom.materiel_issue_amend_successfully'));
     }
 
     public function getMaterialIssueByRefNo(Request $request) {
@@ -1571,14 +1571,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                 "data" => $fetchDetails
             ];
 
-            return $this->sendResponse($data, 'Data retreived successfully');
+            return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
 
         }else{
             $data = [
                 "status" => false,
                 "data" => []
             ];
-            return $this->sendResponse($data, 'Data not found!');
+            return $this->sendResponse($data, trans('custom.data_not_found_1'));
         }
 
     }
@@ -1588,10 +1588,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         foreach ($reqItems as $item) {
             $itemAvailable = ItemAssigned::where('itemCodeSystem', $item['itemCode'])->where('companySystemID', $request->companyId)->first();
             if(empty($itemAvailable)) {
-                return $this->sendError('Few items in this document are not linked with item master. You cannot create material issue for this.');
+                return $this->sendError(trans('custom.few_items_in_this_document_are_not_linked_with_ite'));
             }
         }
-        return $this->sendResponse([], 'Data retrieved successfully');
+        return $this->sendResponse([], trans('custom.data_retrieved_successfully'));
     }
 
     public function checkProductExistInIssues($id,$companySystemID) {
@@ -1610,14 +1610,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                 "data" => $fetchDetails
             ];
 
-            return $this->sendResponse($data, 'Data retreived successfully');
+            return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
 
         }else{
             $data = [
                 "status" => false,
                 "data" => []
             ];
-            return $this->sendResponse($data, 'Data not found!');
+            return $this->sendResponse($data, trans('custom.data_not_found_1'));
         }
 
 
@@ -1658,7 +1658,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 }
             }
         }else {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         return $itemIssue->details;
@@ -1746,22 +1746,22 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if(!isset($input['items']))
-            return $this->sendError('Materiel Issue details not found');
+            return $this->sendError(trans('custom.materiel_issue_details_not_found'));
 
         $items = ($input['items']) ? : [];
         $materielIssueId = ($input['materielIssueId']) ? :null;
 
         if(empty($items))
-            return $this->sendError('Materiel Issue details not found');
+            return $this->sendError(trans('custom.materiel_issue_details_not_found'));
 
         if(!$materielIssueId)
-            return $this->sendError('Materiel Issue id not found');
+            return $this->sendError(trans('custom.materiel_issue_id_not_found'));
 
 
         $materielIssue = ItemIssueMaster::where('itemIssueAutoID',$materielIssueId)->first();
 
         if(!$materielIssue)
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
 
         $materielIssue->reqDocID = collect($items)->first()['RequestID'];
         $materielIssue->save();
@@ -1793,11 +1793,11 @@ class ItemIssueMasterAPIController extends AppBaseController
            if(!$response->success)
                return $this->sendError($response->message);
 
-           return $this->sendResponse($response->data, 'Materiel Issue Details saved successfully');
+           return $this->sendResponse($response->data, trans('custom.materiel_issue_details_saved_successfully'));
 
         });
 
-        return $this->sendResponse([], 'Materiel Issue Details saved successfully');
+        return $this->sendResponse([], trans('custom.materiel_issue_details_saved_successfully'));
 
     }
 
@@ -1843,7 +1843,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $response = $addItems->getData();
 
             if($response->success)
-                return $this->sendResponse([], 'Materiel Issue Details saved successfully');
+                return $this->sendResponse([], trans('custom.materiel_issue_details_saved_successfully'));
         }
 
     }
@@ -2138,7 +2138,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'segments' => $segments,
             'assets' => FixedAssetMaster::whereHas('allocatToExpense')->with('allocatToExpense')->where('companySystemID',$selectedCompanyId)->select(['faCode','faID','assetDescription'])->get()
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
     }
 
     public function validateMIRReport(Request $request)
@@ -2163,7 +2163,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('Error Occurred');
+                return $this->sendError(trans('custom.error_occurred'));
         }
 
     }
@@ -2194,7 +2194,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $employeeSubQuery = $details['employeeSubQuery'];
         if (empty($items))
         {
-            return $this->sendError('The items field is required.', 500);
+            return $this->sendError(trans('custom.the_items_field_is_required'), 500);
 
         }
 
@@ -2571,7 +2571,7 @@ class ItemIssueMasterAPIController extends AppBaseController
        $results['companyName']  = $companyName; 
        $results['groupedResults']  = $groupedResults;    
 
-    return $this->sendResponse($results, 'Meterial issues  retrieved successfully');
+    return $this->sendResponse($results, trans('custom.meterial_issues_retrieved_successfully'));
 
     }
 

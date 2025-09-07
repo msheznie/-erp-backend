@@ -212,7 +212,7 @@ class ApprovalLevelAPIController extends AppBaseController
                                             ->get();
         
         if(count($documentApproved) > 0){
-            return $this->sendError('Cannot delete approval level. following documents are pending for approval',500 ,$documentApproved->Toarray());
+            return $this->sendError(trans('custom.cannot_delete_approval_level_following_documents_a'),500 ,$documentApproved->Toarray());
         }
 
         $approvalLevel->approvalRole()->delete();

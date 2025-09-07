@@ -74,7 +74,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $this->supplierCatalogMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCatalogMasters = $this->supplierCatalogMasterRepository->all();
 
-        return $this->sendResponse($supplierCatalogMasters->toArray(), 'Supplier Catalog Masters retrieved successfully');
+        return $this->sendResponse($supplierCatalogMasters->toArray(), trans('custom.supplier_catalog_masters_retrieved_successfully'));
     }
 
     /**
@@ -157,7 +157,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $input['createdBy'] = $employee->employeeSystemID;
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->create($input);
 
-        return $this->sendResponse($supplierCatalogMaster->toArray(), 'Supplier Catalog Master saved successfully');
+        return $this->sendResponse($supplierCatalogMaster->toArray(), trans('custom.supplier_catalog_master_saved_successfully'));
     }
 
     /**
@@ -209,10 +209,10 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($supplierCatalogMaster)) {
-            return $this->sendError('Supplier Catalog Master not found');
+            return $this->sendError(trans('custom.supplier_catalog_master_not_found'));
         }
 
-        return $this->sendResponse($supplierCatalogMaster->toArray(), 'Supplier Catalog Master retrieved successfully');
+        return $this->sendResponse($supplierCatalogMaster->toArray(), trans('custom.supplier_catalog_master_retrieved_successfully'));
     }
 
     /**
@@ -297,12 +297,12 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogMaster)) {
-            return $this->sendError('Supplier Catalog Master not found');
+            return $this->sendError(trans('custom.supplier_catalog_master_not_found'));
         }
 
         if (isset($input['isDeleted']) && $input['isDeleted'] == 1 && $supplierCatalogMaster->isDeleted == 0) {
             if ($supplierCatalogMaster->isActive == 1) {
-                return $this->sendError('Active catalog cannot delete', 406);
+                return $this->sendError(trans('custom.active_catalog_cannot_delete'), 406);
             }
         }
 
@@ -323,7 +323,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
 
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCatalogMaster->toArray(), 'SupplierCatalogMaster updated successfully');
+        return $this->sendResponse($supplierCatalogMaster->toArray(), trans('custom.suppliercatalogmaster_updated_successfully'));
     }
 
     /**
@@ -370,12 +370,12 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogMaster)) {
-            return $this->sendError('Supplier Catalog Master not found');
+            return $this->sendError(trans('custom.supplier_catalog_master_not_found'));
         }
 
         $supplierCatalogMaster->delete();
 
-        return $this->sendResponse($id, 'Supplier Catalog Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_catalog_master_deleted_successfully'));
     }
 
     public function getAllCatalogsByCompany(Request $request){
@@ -447,7 +447,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             });
         }
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     function getSupplierCatalogDetailBySupplierItem(Request $request){
@@ -475,7 +475,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             ->with(['uom_default','item_by','local_currency','master'])
             ->get();
 
-        return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
+        return $this->sendResponse($catalog->toArray(),trans('custom.catalog_retrieved_successfully'));
 
     }
 
@@ -497,7 +497,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $catalog = $this->getCatelogDataForPO($po_id, $item_array);
 
 
-        return $this->sendResponse($catalog,'Catalog retrieved successfully');
+        return $this->sendResponse($catalog,trans('custom.catalog_retrieved_successfully'));
 
     }
 
@@ -543,7 +543,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $catalog = $this->getCatelogDataForPO($po_id, $item_array);
 
 
-        return $this->sendResponse($catalog,'Catalog retrieved successfully');
+        return $this->sendResponse($catalog,trans('custom.catalog_retrieved_successfully'));
 
     }
 }

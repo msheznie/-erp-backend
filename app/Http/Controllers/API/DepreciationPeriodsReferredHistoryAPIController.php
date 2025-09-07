@@ -75,7 +75,7 @@ class DepreciationPeriodsReferredHistoryAPIController extends AppBaseController
         $this->depreciationPeriodsReferredHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $depreciationPeriodsReferredHistories = $this->depreciationPeriodsReferredHistoryRepository->all();
 
-        return $this->sendResponse($depreciationPeriodsReferredHistories->toArray(), 'Depreciation Periods Referred Histories retrieved successfully');
+        return $this->sendResponse($depreciationPeriodsReferredHistories->toArray(), trans('custom.depreciation_periods_referred_histories_retrieved_'));
     }
 
     /**
@@ -122,7 +122,7 @@ class DepreciationPeriodsReferredHistoryAPIController extends AppBaseController
 
         $depreciationPeriodsReferredHistories = $this->depreciationPeriodsReferredHistoryRepository->create($input);
 
-        return $this->sendResponse($depreciationPeriodsReferredHistories->toArray(), 'Depreciation Periods Referred History saved successfully');
+        return $this->sendResponse($depreciationPeriodsReferredHistories->toArray(), trans('custom.depreciation_periods_referred_history_saved_succes'));
     }
 
     /**
@@ -169,10 +169,10 @@ class DepreciationPeriodsReferredHistoryAPIController extends AppBaseController
         $depreciationPeriodsReferredHistory = $this->depreciationPeriodsReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationPeriodsReferredHistory)) {
-            return $this->sendError('Depreciation Periods Referred History not found');
+            return $this->sendError(trans('custom.depreciation_periods_referred_history_not_found'));
         }
 
-        return $this->sendResponse($depreciationPeriodsReferredHistory->toArray(), 'Depreciation Periods Referred History retrieved successfully');
+        return $this->sendResponse($depreciationPeriodsReferredHistory->toArray(), trans('custom.depreciation_periods_referred_history_retrieved_su'));
     }
 
     /**
@@ -229,12 +229,12 @@ class DepreciationPeriodsReferredHistoryAPIController extends AppBaseController
         $depreciationPeriodsReferredHistory = $this->depreciationPeriodsReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationPeriodsReferredHistory)) {
-            return $this->sendError('Depreciation Periods Referred History not found');
+            return $this->sendError(trans('custom.depreciation_periods_referred_history_not_found'));
         }
 
         $depreciationPeriodsReferredHistory = $this->depreciationPeriodsReferredHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($depreciationPeriodsReferredHistory->toArray(), 'DepreciationPeriodsReferredHistory updated successfully');
+        return $this->sendResponse($depreciationPeriodsReferredHistory->toArray(), trans('custom.depreciationperiodsreferredhistory_updated_success'));
     }
 
     /**
@@ -281,12 +281,12 @@ class DepreciationPeriodsReferredHistoryAPIController extends AppBaseController
         $depreciationPeriodsReferredHistory = $this->depreciationPeriodsReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationPeriodsReferredHistory)) {
-            return $this->sendError('Depreciation Periods Referred History not found');
+            return $this->sendError(trans('custom.depreciation_periods_referred_history_not_found'));
         }
 
         $depreciationPeriodsReferredHistory->delete();
 
-        return $this->sendResponse($id, 'Depreciation Periods Referred History deleted successfully');
+        return $this->sendResponse($id, trans('custom.depreciation_periods_referred_history_deleted_succ'));
     }
 
     public function getAssetDepPeriodHistoryByID(Request $request)

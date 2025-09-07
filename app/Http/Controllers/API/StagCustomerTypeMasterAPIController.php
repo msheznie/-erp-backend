@@ -65,7 +65,7 @@ class StagCustomerTypeMasterAPIController extends AppBaseController
         $this->stagCustomerTypeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stagCustomerTypeMasters = $this->stagCustomerTypeMasterRepository->all();
 
-        return $this->sendResponse($stagCustomerTypeMasters->toArray(), 'Stag Customer Type Masters retrieved successfully');
+        return $this->sendResponse($stagCustomerTypeMasters->toArray(), trans('custom.stag_customer_type_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class StagCustomerTypeMasterAPIController extends AppBaseController
 
         $stagCustomerTypeMaster = $this->stagCustomerTypeMasterRepository->create($input);
 
-        return $this->sendResponse($stagCustomerTypeMaster->toArray(), 'Stag Customer Type Master saved successfully');
+        return $this->sendResponse($stagCustomerTypeMaster->toArray(), trans('custom.stag_customer_type_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class StagCustomerTypeMasterAPIController extends AppBaseController
         $stagCustomerTypeMaster = $this->stagCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($stagCustomerTypeMaster)) {
-            return $this->sendError('Stag Customer Type Master not found');
+            return $this->sendError(trans('custom.stag_customer_type_master_not_found'));
         }
 
-        return $this->sendResponse($stagCustomerTypeMaster->toArray(), 'Stag Customer Type Master retrieved successfully');
+        return $this->sendResponse($stagCustomerTypeMaster->toArray(), trans('custom.stag_customer_type_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class StagCustomerTypeMasterAPIController extends AppBaseController
         $stagCustomerTypeMaster = $this->stagCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($stagCustomerTypeMaster)) {
-            return $this->sendError('Stag Customer Type Master not found');
+            return $this->sendError(trans('custom.stag_customer_type_master_not_found'));
         }
 
         $stagCustomerTypeMaster = $this->stagCustomerTypeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($stagCustomerTypeMaster->toArray(), 'StagCustomerTypeMaster updated successfully');
+        return $this->sendResponse($stagCustomerTypeMaster->toArray(), trans('custom.stagcustomertypemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class StagCustomerTypeMasterAPIController extends AppBaseController
         $stagCustomerTypeMaster = $this->stagCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($stagCustomerTypeMaster)) {
-            return $this->sendError('Stag Customer Type Master not found');
+            return $this->sendError(trans('custom.stag_customer_type_master_not_found'));
         }
 
         $stagCustomerTypeMaster->delete();

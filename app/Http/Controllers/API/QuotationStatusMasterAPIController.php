@@ -65,7 +65,7 @@ class QuotationStatusMasterAPIController extends AppBaseController
         $this->quotationStatusMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationStatusMasters = $this->quotationStatusMasterRepository->all();
 
-        return $this->sendResponse($quotationStatusMasters->toArray(), 'Quotation Status Masters retrieved successfully');
+        return $this->sendResponse($quotationStatusMasters->toArray(), trans('custom.quotation_status_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class QuotationStatusMasterAPIController extends AppBaseController
 
         $quotationStatusMaster = $this->quotationStatusMasterRepository->create($input);
 
-        return $this->sendResponse($quotationStatusMaster->toArray(), 'Quotation Status Master saved successfully');
+        return $this->sendResponse($quotationStatusMaster->toArray(), trans('custom.quotation_status_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class QuotationStatusMasterAPIController extends AppBaseController
         $quotationStatusMaster = $this->quotationStatusMasterRepository->findWithoutFail($id);
 
         if (empty($quotationStatusMaster)) {
-            return $this->sendError('Quotation Status Master not found');
+            return $this->sendError(trans('custom.quotation_status_master_not_found'));
         }
 
-        return $this->sendResponse($quotationStatusMaster->toArray(), 'Quotation Status Master retrieved successfully');
+        return $this->sendResponse($quotationStatusMaster->toArray(), trans('custom.quotation_status_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class QuotationStatusMasterAPIController extends AppBaseController
         $quotationStatusMaster = $this->quotationStatusMasterRepository->findWithoutFail($id);
 
         if (empty($quotationStatusMaster)) {
-            return $this->sendError('Quotation Status Master not found');
+            return $this->sendError(trans('custom.quotation_status_master_not_found'));
         }
 
         $quotationStatusMaster = $this->quotationStatusMasterRepository->update($input, $id);
 
-        return $this->sendResponse($quotationStatusMaster->toArray(), 'QuotationStatusMaster updated successfully');
+        return $this->sendResponse($quotationStatusMaster->toArray(), trans('custom.quotationstatusmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class QuotationStatusMasterAPIController extends AppBaseController
         $quotationStatusMaster = $this->quotationStatusMasterRepository->findWithoutFail($id);
 
         if (empty($quotationStatusMaster)) {
-            return $this->sendError('Quotation Status Master not found');
+            return $this->sendError(trans('custom.quotation_status_master_not_found'));
         }
 
         $quotationStatusMaster->delete();
