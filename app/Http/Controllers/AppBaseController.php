@@ -79,5 +79,45 @@ class AppBaseController extends BaseController
         return $input;
     }
 
+    /**
+     * Set the application locale based on user's language preference
+     */
+    protected function setUserLocale()
+    {
+        try {
+            $employeeSystemID = \App\helper\Helper::getEmployeeSystemID();
+            
+            if ($employeeSystemID) {
+                $employeeLanguage = \App\Models\EmployeeLanguage::where('employeeID', $employeeSystemID)
+                    ->with(['language'])
+                    ->first();
+                
+                if ($employeeLanguage && $employeeLanguage->language) {
+                    $userLanguageCode = $employeeLanguage->language->languageShortCode;
+                    
+                    if ($userLanguageCode) {
+                        app()->setLocale($userLanguageCode);
+                        return;
+                    }
+                }
+            }
+            
+            // Fallback to Accept-Language header
+            $acceptLanguage = request()->header('Accept-Language');
+            if ($acceptLanguage) {
+                app()->setLocale($acceptLanguage);
+                return;
+            }
+            
+            // Final fallback to English
+            app()->setLocale('en');
+            
+        } catch (\Exception $e) {
+            // If there's an error, fall back to English
+            app()->setLocale('en');
+            \Log::warning('Error setting user locale: ' . $e->getMessage());
+        }
+    }
+
 
 }
