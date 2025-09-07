@@ -1,7 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Payment Voucher Matching</title>
+    <title>{{ __('custom.payment_voucher_matching') }}</title>
     <style>
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         @page {
             margin-left: 30px;
             margin-right: 30px;
@@ -181,9 +203,9 @@
     <table style="width:100%;">
         <tr>
             <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+                        style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
             </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
+            <td><span style="font-weight: bold;">{{ __('custom.reviewed_by') }} :</span></td>
         </tr>
     </table>
     <table style="width:100%;">
@@ -197,13 +219,13 @@
                 <span class="white-space-pre-line font-weight-bold"></span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -225,10 +247,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Matching Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.matching_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->matchingDocCode}}</span>
@@ -236,10 +258,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Matching Date</span>
+                            <span style="font-weight: bold;">{{ __('custom.matching_date') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -254,7 +276,7 @@
     <hr style="color: #d3d9df">
     <div>
         <span style="font-size: 18px">
-            Payment Voucher Matching
+            {{ __('custom.payment_voucher_matching') }}
         </span>
     </div>
     <br>
@@ -266,10 +288,10 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span class="font-weight-bold">Supplier Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.supplier_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->supplier)
@@ -279,10 +301,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Supplier Name</span>
+                            <span style="font-weight: bold;">{{ __('custom.supplier_name') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->supplier)
@@ -292,17 +314,17 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">
+                            <span style="font-weight: bold;">
                                 @if($masterdata->documentSystemID == 15)
-                                    Debit Note Code
+                                    {{ __('custom.debit_note_code') }}
                                 @endif
                                 @if($masterdata->documentSystemID == 4)
-                                    Payment Voucher Code
+                                    {{ __('custom.payment_voucher_code') }}
                                 @endif
                             </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->BPVcode}}
@@ -314,12 +336,12 @@
                 <table style="width: 100%">
                     <tr style="width: 100%">
                         <td valign="bottom" class="text-right">
-                                         <span class="font-weight-bold">
+                                         <span style="font-weight: bold;">
                          <h3 class="text-muted">
                              @if($masterdata->matchingConfirmedYN == 0)
-                                 Not Confirmed
+                                 {{ __('custom.not_confirmed') }}
                              @elseif($masterdata->matchingConfirmedYN == 1)
-                                 Confirmed
+                                 {{ __('custom.confirmed') }}
                              @endif
                          </h3>
  `             </span>
@@ -330,7 +352,7 @@
                     </tr>
                     <tr>
                         <td valign="bottom" class="text-right">
-                            <span class="font-weight-bold"> Currency:</span>
+                            <span style="font-weight: bold;"> {{ __('custom.currency') }}:</span>
                             @if($masterdata->transactioncurrency)
                                 {{$masterdata->transactioncurrency->CurrencyCode}}
                             @endif
@@ -345,12 +367,12 @@
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-center">Booking Inv Code</th>
-                <th class="text-center">PO Number</th>
-                <th class="text-center">Invoice No</th>
-                <th class="text-center">Invoice Date</th>
-                <th class="text-center">Invoice Amount</th>
-                <th class="text-center">Matched Amount</th>
+                <th class="text-center">{{ __('custom.booking_inv_code') }}</th>
+                <th class="text-center">{{ __('custom.po_number') }}</th>
+                <th class="text-center">{{ __('custom.invoice_no') }}</th>
+                <th class="text-center">{{ __('custom.invoice_date') }}</th>
+                <th class="text-center">{{ __('custom.invoice_amount') }}</th>
+                <th class="text-center">{{ __('custom.matched_amount') }}</th>
             </tr>
             </thead>
             <tbody>

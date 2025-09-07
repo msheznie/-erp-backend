@@ -862,6 +862,7 @@ class BankReconciliationAPIController extends AppBaseController
     public function printBankReconciliation(Request $request)
     {
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en');
         $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
 
         if (empty($bankReconciliation)) {
@@ -881,14 +882,33 @@ class BankReconciliationAPIController extends AppBaseController
 
         $array = array('entity' => $bankReconciliation,
                        'decimalPlaces' => $decimalPlaces,
-                       'date' => Carbon::now());
+                       'date' => Carbon::now(),
+                       'lang' => $lang);
         $time = strtotime("now");
         $fileName = 'bank_reconciliation' . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-L', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.bank_reconciliation', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
 

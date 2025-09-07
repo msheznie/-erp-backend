@@ -1373,7 +1373,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $companySystemID = $request->companySystemID;
         $sentNotificationAt = $request->sentNotificationAt;
-
+        $local = $request->get('language');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
 
 
         $templateName = "download_template.ci_template";

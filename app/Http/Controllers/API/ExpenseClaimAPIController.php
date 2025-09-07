@@ -546,10 +546,13 @@ class ExpenseClaimAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
         $html = view('print.expense_claim', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $htmlFooter = view('print.expense_claim_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function getPaymentStatusHistory(Request $request)

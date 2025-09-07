@@ -1781,6 +1781,7 @@ class SalesReturnAPIController extends AppBaseController
 
     function printSalesReturn(Request $request){
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $do = $this->salesReturnRepository->with(['tax','created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
@@ -1810,14 +1811,36 @@ class SalesReturnAPIController extends AppBaseController
             $do->companyLogo = $companyLogo;
         }      
 
-        $array = array('entity' => $do);
+        $array = array('entity' => $do, 'lang' => $lang); // Pass lang to view
         $time = strtotime("now");
         $fileName = 'sales_return_' . $id . '_' . $time . '.pdf';
-        $html = view('print.sales_return', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.sales_return', $array);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printSalesReturn: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
 
