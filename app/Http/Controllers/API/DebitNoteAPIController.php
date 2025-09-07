@@ -2017,6 +2017,7 @@ class DebitNoteAPIController extends AppBaseController
     public function printDebitNote(Request $request)
     {
         $id = $request->get('debitNoteAutoID');
+        $lang = $request->get('lang', 'en');
         $debitNote = $this->debitNoteRepository->getAudit($id);
 
         if (empty($debitNote)) {
@@ -2058,7 +2059,7 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote->localDecimal = $localDecimal;
         $debitNote->rptDecimal = $rptDecimal;
 
-        $array = array('entity' => $debitNote);
+        $array = array('entity' => $debitNote, 'lang' => $lang);
         $time = strtotime("now");
         $fileName = 'debit_note_' . $id . '_' . $time . '.pdf';
 
@@ -2067,12 +2068,28 @@ class DebitNoteAPIController extends AppBaseController
                                             ->where('documentID', 15)
                                             ->first();
 
-                                            
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        $direction = $isRTL ? 'rtl' : 'ltr';
 
         if ($printTemplate && $printTemplate->printTemplateID == 10) {
             $html = view('print.debit_note_template.debit_note_gulf', $array);
             $htmlFooter = view('print.debit_note_template.debit_note_gulf_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            
+            // Configure mPDF for RTL support if Arabic
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'), 
+                'mode' => 'utf-8', 
+                'format' => 'A4-P', 
+                'setAutoTopMargin' => 'stretch', 
+                'autoMarginPadding' => -10
+            ];
+            
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+            
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
             $mpdf->AddPage('P');
             $mpdf->setAutoBottomMargin = 'stretch';
             $mpdf->SetHTMLFooter($htmlFooter);
@@ -2080,12 +2097,26 @@ class DebitNoteAPIController extends AppBaseController
             $mpdf->WriteHTML($html);
             return $mpdf->Output($fileName, 'I');
         } else {
-
             $html = view('print.debit_note', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
-
-            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+            
+            // Configure mPDF for RTL support if Arabic
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'), 
+                'mode' => 'utf-8', 
+                'format' => 'A4-L', 
+                'setAutoTopMargin' => 'stretch', 
+                'autoMarginPadding' => -10
+            ];
+            
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+            
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf->AddPage('L');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
         }
     }
 

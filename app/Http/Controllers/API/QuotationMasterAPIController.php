@@ -1082,6 +1082,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function getSalesQuotationPrintPDF(Request $request)
     {
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en');
 
         $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
 
@@ -1112,15 +1113,48 @@ class QuotationMasterAPIController extends AppBaseController
         $order = array(
             'masterdata' => $output,
             'paymentTermsView' => $paymentTermsView,
-            'netTotal' => $netTotal
+            'netTotal' => $netTotal,
+            'lang' => $lang
         );
 
+        $time = strtotime("now");
+        $fileName = 'sales_quotation_' . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.sales_quotation', $order);
-
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('mPDF Error in getSalesQuotationPrintPDF: ' . $e->getMessage());
+            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+        }
     }
 
     public function updateSentCustomerDetail(Request $request){

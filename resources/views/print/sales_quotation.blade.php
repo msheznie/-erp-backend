@@ -1,7 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Quotation</title>
+    <title>{{ __('custom.quotation') }}</title>
     <style>
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         @page {
             margin-left: 30px;
             margin-right: 30px;
@@ -180,14 +202,14 @@
     <table style="width:100%;">
         <tr>
             <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+                        style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
             </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
+            <td><span style="font-weight: bold;">{{ __('custom.reviewed_by') }} :</span></td>
         </tr>
     </table>
     <table style="width:100%;">
         <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+            <td><span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span></td>
         </tr>
         <tr>
             &nbsp;
@@ -224,13 +246,13 @@
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -253,10 +275,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Document Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->quotationCode}}@if($masterdata->versionNo)\V{{$masterdata->versionNo}}@endif
@@ -265,10 +287,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Document Date </span>
+                            <span style="font-weight: bold;">{{ __('custom.document_date') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -278,10 +300,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Document Exp Date </span>
+                            <span style="font-weight: bold;">{{ __('custom.document_exp_date') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -296,25 +318,20 @@
     <hr style="color: #d3d9df">
 
         
-    <table style="width: 100%" class="table_height">
-        <tr style="width: 100%">
- 
-        <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentSystemID == 67)
-                            @if($masterdata->quotationType == 1)
-                                Rental Quotation
-                            @else
-                                Sales Quotation
-                            @endif
-                        @endif
-                        @if($masterdata->documentSystemID == 68)
-                            Sales Order
-                        @endif
-                    </span>
-                </div>
-        </tr>
-    </table>
+    <div>
+        <span style="font-size: 18px">
+            @if($masterdata->documentSystemID == 67)
+                @if($masterdata->quotationType == 1)
+                    {{ __('custom.rental_quotation') }}
+                @else
+                    {{ __('custom.sales_quotation') }}
+                @endif
+            @endif
+            @if($masterdata->documentSystemID == 68)
+                {{ __('custom.sales_order') }}
+            @endif
+        </span>
+    </div>
     <br>
     <br>
 
@@ -324,10 +341,10 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span class="font-weight-bold">Customer Name</span>
+                            <span style="font-weight: bold;">{{ __('custom.customer_name') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->customerName}}
@@ -335,10 +352,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Customer Address</span>
+                            <span style="font-weight: bold;">{{ __('custom.customer_address') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->customerAddress}}
@@ -346,10 +363,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Customer Telephone</span>
+                            <span style="font-weight: bold;">{{ __('custom.customer_telephone') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->customerTelephone}}
@@ -357,10 +374,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Email</span>
+                            <span style="font-weight: bold;">{{ __('custom.email') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->customerEmail}}
@@ -369,10 +386,10 @@
                      @if(($masterdata->documentSystemID == 67) || ($masterdata->documentSystemID == 68 && $masterdata->quotationType == 1))
                      <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Lead Time (In Days)</span>
+                            <span style="font-weight: bold;">{{ __('custom.lead_time_days') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->leadTime)
@@ -387,10 +404,10 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span class="font-weight-bold">Sales Person</span>
+                            <span style="font-weight: bold;">{{ __('custom.sales_person') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->sales_person)
@@ -400,10 +417,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Contact Person</span>
+                            <span style="font-weight: bold;">{{ __('custom.contact_person') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->contactPersonName}}
@@ -411,10 +428,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Contact Person Telephone</span>
+                            <span style="font-weight: bold;">{{ __('custom.contact_person_telephone') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$masterdata->contactPersonNumber}}
@@ -423,10 +440,10 @@
 
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Currency</span>
+                            <span style="font-weight: bold;">{{ __('custom.currency') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->transactionCurrency)
@@ -444,17 +461,17 @@
             <thead>
             <tr class="theme-tr-head">
                 <th>#</th>
-                <th>Item Code</th>
-                <th>Item Description</th>
-                <th>Part No / Ref.Number</th>
-                <th>UOM</th>
-                <th>Qty</th>
-                <th>Unit Rate</th>
-                <th>Discount</th>
+                <th>{{ __('custom.item_code') }}</th>
+                <th>{{ __('custom.item_description') }}</th>
+                <th>{{ __('custom.part_number') }}</th>
+                <th>{{ __('custom.uom') }}</th>
+                <th>{{ __('custom.quantity') }}</th>
+                <th>{{ __('custom.unit_rate') }}</th>
+                <th>{{ __('custom.discount') }}</th>
                 @if($masterdata->isVatEligible)
-                    <th>VAT. Per Unit</th>
+                    <th>{{ __('custom.vat_percentage') }}</th>
                 @endif
-                <th>Net Amount</th>
+                <th>{{ __('custom.net_amount') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -478,22 +495,22 @@
             @endforeach
             @if($masterdata->isVatEligible)
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">Order Amount</td>
+                    <td colspan="9" class="text-right">{{ __('custom.sub_total') }}</td>
                     <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">VAT Amount	</td>
+                    <td colspan="9" class="text-right">{{ __('custom.vat_amount') }}</td>
                     <td class="text-right ">{{number_format($masterdata->VATAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">Net Amount</td>
+                    <td colspan="9" class="text-right">{{ __('custom.grand_total') }}</td>
                     <td class="text-right ">{{number_format(($netTotal + $masterdata->VATAmount), $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endif
 
             @if(!$masterdata->isVatEligible)
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="8" class="text-right">Net Amount</td>
+                    <td colspan="8" class="text-right">{{ __('custom.grand_total') }}</td>
                     <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endif
@@ -505,8 +522,8 @@
     <div class="row">
         <table style="width:100%;padding-top: 3%;">
             <tr>
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Delivery Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span style="font-weight: bold;">{{ __('custom.delivery_terms') }}</span></td>
+                <td style="width:2%;vertical-align: top;"><span style="font-weight: bold;">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($masterdata->deliveryTerms) !!}</td>
             </tr>
         </table>
@@ -514,8 +531,8 @@
     <div class="row">
         <table style="width:100%;padding-top: 3%;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Penalty Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span style="font-weight: bold;">{{ __('custom.penalty_terms') }}</span></td>
+                <td style="width:2%;vertical-align: top;"><span style="font-weight: bold;">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($masterdata->panaltyTerms) !!}</td>
             </tr>
         </table>
@@ -523,18 +540,18 @@
     <div class="row">
         <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span style="font-weight: bold;">{{ __('custom.payment_terms') }}</span></td>
+                <td style="width:2%;vertical-align: top;"><span style="font-weight: bold;">:</span></td>
                 <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
             </tr>
         </table>
     </div>
     <div class="row" style="font-size: 11.5px !important;">
-        <div><span class="font-weight-bold">Notes :</span></div>
+        <div><span style="font-weight: bold;">{{ __('custom.notes') }} :</span></div>
         <div>{!! nl2br($masterdata->Note) !!}</div>
         {{--<table style="width:100%">
             <tr>
-                <td style="width:11%;vertical-align: top;"><span class="font-weight-bold">Notes :</span></td>
+                <td style="width:11%;vertical-align: top;"><span style="font-weight: bold;">Notes :</span></td>
             </tr>
             <tr>
                 <td style="width:88%;vertical-align: top;">{!! nl2br($masterdata->Note) !!}</td>
