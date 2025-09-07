@@ -54,6 +54,10 @@ class DepartmentBudgetPlanningDetail extends Model
         return $this->belongsTo(DepartmentBudgetPlanning::class, 'department_planning_id');
     }
 
+    public function budgetDelegateAccessDetails()
+    {
+        return $this->hasMany(\App\Models\BudgetDelegateAccessRecord::class, 'budget_planning_detail_id', 'id');
+    }
     /**
      * Get the budget template.
      */

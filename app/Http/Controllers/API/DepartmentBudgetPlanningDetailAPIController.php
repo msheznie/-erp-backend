@@ -8,6 +8,7 @@ use App\Models\BudgetDetTemplateEntry;
 use App\Models\BudgetDetTemplateEntryData;
 use App\Models\BudgetPlanningDetailTempAttachment;
 use App\Models\BudgetTemplateColumn;
+use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\Employee;
@@ -170,13 +171,36 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError('Department Planning ID is required');
         }
 
+        $employeeID =  \Helper::getEmployeeSystemID();
+
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $departmentPlanningId,
+            'delegateUser' =>  $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
         try {
+
+            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
+                'budgetDelegateAccessDetails',
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
                 'responsiblePerson'
-            ])
-            ->forDepartmentPlanning($departmentPlanningId)
+            ]);
+
+            if($userPermission['success'] && $userPermission['data']['delegateUser']['status'])
+            {
+                $query ->whereHas('budgetDelegateAccessDetails' , function ($q)use ($delegateIDs) {
+                    $q->whereIn('delegatee_id',$delegateIDs);
+                });
+
+            }
+
+            $query->forDepartmentPlanning($departmentPlanningId)
             ->select([
                 'id',
                 'department_planning_id',
@@ -194,7 +218,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'amount_given_by_hod',
                 'internal_status',
                 'difference_current_request',
-                'created_at'
+                'created_at',
             ])->orderBy('id', $sort);
 
             $search = $request->input('search');
@@ -344,6 +368,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      */
     public function saveBudgetDetailTemplateEntries(Request $request)
     {
+
+
         try {
             $validator = \Validator::make($request->all(), [
                 'budgetDetailId' => 'required|numeric|exists:department_budget_planning_details,id',
@@ -361,6 +387,31 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $entryID = $input['entryID'] ?? null;
             $data = $input['data'];
 
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => 1,
+                'departmentBudgetPlanningDetailID' => $budgetDetailId,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                if(empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                {
+                    $this->sendError("no Aaccess");
+                }
+
+            }
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
             $entryID = null;
             $state = null;
