@@ -499,7 +499,7 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
             default:
-                return $this->sendResponse(array(), 'export failed');
+                return $this->sendResponse(array(), trans('custom.export_failed'));
         }
 
         $companyID = isset($input['companyId']) ? $input['companyId']: null;

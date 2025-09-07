@@ -78,7 +78,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $this->customerInvoiceTrackingRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceTrackings = $this->customerInvoiceTrackingRepository->all();
 
-        return $this->sendResponse($customerInvoiceTrackings->toArray(), 'Customer Invoice Trackings retrieved successfully');
+        return $this->sendResponse($customerInvoiceTrackings->toArray(), trans('custom.customer_invoice_trackings_retrieved_successfully'));
     }
 
     /**
@@ -231,7 +231,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
 
         $customerInvoiceTracking = $this->customerInvoiceTrackingRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceTracking->toArray(), 'Customer Invoice Tracking saved successfully');
+        return $this->sendResponse($customerInvoiceTracking->toArray(), trans('custom.customer_invoice_tracking_saved_successfully'));
     }
 
     /**
@@ -283,10 +283,10 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             }])->findWithoutFail($id);
 
         if (empty($customerInvoiceTracking)) {
-            return $this->sendError('Batch Submission not found');
+            return $this->sendError(trans('custom.batch_submission_not_found_1'));
         }
 
-        return $this->sendResponse($customerInvoiceTracking->toArray(), 'Customer Invoice Tracking retrieved successfully');
+        return $this->sendResponse($customerInvoiceTracking->toArray(), trans('custom.customer_invoice_tracking_retrieved_successfully'));
     }
 
     /**
@@ -409,12 +409,12 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $customerInvoiceTracking = $this->customerInvoiceTrackingRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceTracking)) {
-            return $this->sendError('Customer Invoice Tracking not found');
+            return $this->sendError(trans('custom.customer_invoice_tracking_not_found'));
         }
 
         $customerInvoiceTracking = $this->customerInvoiceTrackingRepository->update($input, $id);
         $this->updateMasterPayment($id);
-        return $this->sendResponse($customerInvoiceTracking->toArray(), 'CustomerInvoiceTracking updated successfully');
+        return $this->sendResponse($customerInvoiceTracking->toArray(), trans('custom.customerinvoicetracking_updated_successfully'));
     }
 
     /**
@@ -461,12 +461,12 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $customerInvoiceTracking = $this->customerInvoiceTrackingRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceTracking)) {
-            return $this->sendError('Customer Invoice Tracking not found');
+            return $this->sendError(trans('custom.customer_invoice_tracking_not_found'));
         }
 
         $customerInvoiceTracking->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice Tracking deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_invoice_tracking_deleted_successfully'));
     }
 
 
@@ -540,7 +540,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             $output['customerInvoiceTrackingCode'] = $this->nextBSCode($companyId,$output['companyFinanceYear'][0]);
         }
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getContractServiceLine(Request $request){
@@ -551,7 +551,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
                                         ->whereIn('serviceLineSystemID', function($q) use($companyId,$customerID){
                                             $q->select('serviceLineSystemID')->from('contractmaster')->where('companySystemID', $companyId)->where('clientID', $customerID);
                                         })->get();
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function nextBSCode($companySystemID,$financeYear)
@@ -594,7 +594,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             $where = ' AND performamaster.clientAppPerformaType = '.$approvalType;
         }
         if(empty($batchSubmission)){
-            return $this->sendError('Customer Invoice Tracking Not Found');
+            return $this->sendError(trans('custom.customer_invoice_tracking_not_found_1'));
         }
 
         $companySystemID = $batchSubmission->companySystemID;
@@ -760,7 +760,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $batchSubmission =  CustomerInvoiceTracking::find($id);
 
         if (empty($batchSubmission)) {
-            return $this->sendError('Batch submission not found');
+            return $this->sendError(trans('custom.batch_submission_not_found'));
         }
 
         $batchSubmission = CustomerInvoiceTracking::where('customerInvoiceTrackingID',$id)
@@ -769,7 +769,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             }])->first();
 
         if (empty($batchSubmission)) {
-            return $this->sendError('Batch submission details not found');
+            return $this->sendError(trans('custom.batch_submission_details_not_found'));
         }
 
         $company = Company::select('CompanyName', 'CompanyID', 'companySystemID','reportingCurrency')
@@ -801,7 +801,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $batchSubmission =  CustomerInvoiceTracking::find($id);
 
         if (empty($batchSubmission)) {
-            return $this->sendError('Batch submission not found');
+            return $this->sendError(trans('custom.batch_submission_not_found'));
         }
 
 
@@ -812,7 +812,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             }])->get();
 
         if (empty($output)) {
-            return $this->sendError('Batch submission details not found');
+            return $this->sendError(trans('custom.batch_submission_details_not_found'));
         }
 
 
@@ -854,7 +854,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             $excel->getActiveSheet()->getStyle('A1:K1')->getFont()->setBold( true );
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     public function getINVTrackingFormData(Request $request){
@@ -872,7 +872,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function updateAllInvoiceTrackingDetail(Request $request){
@@ -935,7 +935,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
                 break;
 
             default:
-                return $this->sendError('Type not found', 422);
+                return $this->sendError(trans('custom.type_not_found'), 422);
                 break;
 
         }
@@ -959,16 +959,16 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
 
         if($isUpdate){
             $this->updateMasterPayment($input['customerInvoiceTrackingID']);
-            return $this->sendResponse($isUpdate,'Successfully updated');
+            return $this->sendResponse($isUpdate,trans('custom.successfully_updated'));
         }
-        return $this->sendError('Error occured', 500);
+        return $this->sendError(trans('custom.error_occured_1'), 500);
     }
 
     public function deleteAllInvoiceTrackingDetail(Request $request){
         $input = $request->all();
         $masterID = isset($input['customerInvoiceTrackingID']) ? $input['customerInvoiceTrackingID'] : 0;
         if (!$masterID){
-            return $this->sendError('Customer Invoice Tracking ID Not Found',500);
+            return $this->sendError(trans('custom.customer_invoice_tracking_id_not_found'),500);
         }
 
         $master = CustomerInvoiceTracking::find($masterID);
@@ -990,9 +990,9 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
 
         if($isDelete){
             $this->updateMasterPayment($masterID);
-            return $this->sendResponse([],'All Customer Invoice Tracking Details deleted successfully');
+            return $this->sendResponse([],trans('custom.all_customer_invoice_tracking_details_deleted_succ'));
         }
-        return $this->sendError('Error in delete process',500);
+        return $this->sendError(trans('custom.error_in_delete_process'),500);
 
     }
 

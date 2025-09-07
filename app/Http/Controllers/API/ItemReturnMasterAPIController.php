@@ -101,7 +101,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $this->itemReturnMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemReturnMasters = $this->itemReturnMasterRepository->all();
 
-        return $this->sendResponse($itemReturnMasters->toArray(), 'Item Return Masters retrieved successfully');
+        return $this->sendResponse($itemReturnMasters->toArray(), trans('custom.item_return_masters_retrieved_successfully'));
     }
 
 
@@ -251,7 +251,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $itemReturnMasters = $this->itemReturnMasterRepository->create($input);
         DB::commit();
-        return $this->sendResponse($itemReturnMasters->toArray(), 'Item Return Master saved successfully');
+        return $this->sendResponse($itemReturnMasters->toArray(), trans('custom.item_return_master_saved_successfully'));
     }
 
     /**
@@ -302,10 +302,10 @@ class ItemReturnMasterAPIController extends AppBaseController
         },'segment_by','warehouse_by','customer_by'])->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return Master not found');
+            return $this->sendError(trans('custom.item_return_master_not_found'));
         }
 
-        return $this->sendResponse($itemReturnMaster->toArray(), 'Item Return Master retrieved successfully');
+        return $this->sendResponse($itemReturnMaster->toArray(), trans('custom.item_return_master_retrieved_successfully'));
     }
 
     /**
@@ -374,13 +374,13 @@ class ItemReturnMasterAPIController extends AppBaseController
         $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return Master not found');
+            return $this->sendError(trans('custom.item_return_master_not_found'));
         }
         if (isset($input['serviceLineSystemID'])) {
             if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found', 500);
+                    return $this->sendError(trans('custom.department_not_found'), 500);
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
@@ -397,7 +397,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             if ($input['wareHouseLocation']) {
                 $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
                 if (empty($checkWareHouseActive)) {
-                    return $this->sendError('WareHouse not found', 500, $wareHouseError);
+                    return $this->sendError(trans('custom.warehouse_not_found_1'), 500, $wareHouseError);
                 }
 
                 if ($checkWareHouseActive->isActive == 0) {
@@ -598,12 +598,12 @@ class ItemReturnMasterAPIController extends AppBaseController
         $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return Master not found');
+            return $this->sendError(trans('custom.item_return_master_not_found'));
         }
 
         $itemReturnMaster->delete();
 
-        return $this->sendResponse($id, 'Item Return Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_return_master_deleted_successfully'));
     }
 
     /**
@@ -716,7 +716,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             'units' => $units
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -734,12 +734,12 @@ class ItemReturnMasterAPIController extends AppBaseController
         $materielReturn = $this->itemReturnMasterRepository->getAudit($id);
 
         if (empty($materielReturn)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
 
-        return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
+        return $this->sendResponse($materielReturn->toArray(), trans('custom.materiel_return_retrieved_successfully'));
     }
 
     public function printItemReturn(Request $request)
@@ -748,7 +748,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $materielReturn = $this->itemReturnMasterRepository->getAudit($id);
 
         if (empty($materielReturn)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
@@ -997,19 +997,19 @@ class ItemReturnMasterAPIController extends AppBaseController
         $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
         $emails = array();
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         if ($itemReturnMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this Materiel Return it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_return_it_is_alrea'));
         }
 
         if ($itemReturnMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Materiel Return it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_return_it_is_alrea_1'));
         }
 
         if ($itemReturnMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Materiel Return, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_return_it_is_not_c'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -1083,7 +1083,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($itemReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
+        return $this->sendResponse($itemReturnMaster->toArray(), trans('custom.materiel_return_reopened_successfully'));
     }
 
     public function materielReturnReferBack(Request $request)
@@ -1094,11 +1094,11 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $itemReturn = $this->itemReturnMasterRepository->find($id);
         if (empty($itemReturn)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         if ($itemReturn->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this materiel return');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_materiel_return'));
         }
 
         $itemReturnArray = $itemReturn->toArray();
@@ -1145,6 +1145,6 @@ class ItemReturnMasterAPIController extends AppBaseController
             $this->itemReturnMasterRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($itemReturn->toArray(), 'Materiel Return Amend successfully');
+        return $this->sendResponse($itemReturn->toArray(), trans('custom.materiel_return_amend_successfully'));
     }
 }

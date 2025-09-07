@@ -2417,7 +2417,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             }
 
             if ($emailSentTo == 0) {
-                return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+                return $this->sendResponse($emailSentTo, trans('custom.customer_email_is_not_updated_report_is_not_sent'));
             } else {
                 CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
                 return $this->sendResponse($emailSentTo, 'Customer statement report sent');

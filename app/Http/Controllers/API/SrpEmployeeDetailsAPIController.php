@@ -65,7 +65,7 @@ class SrpEmployeeDetailsAPIController extends AppBaseController
         $this->srpEmployeeDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->all();
 
-        return $this->sendResponse($srpEmployeeDetails->toArray(), 'Srp Employee Details retrieved successfully');
+        return $this->sendResponse($srpEmployeeDetails->toArray(), trans('custom.srp_employee_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpEmployeeDetailsAPIController extends AppBaseController
 
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->create($input);
 
-        return $this->sendResponse($srpEmployeeDetails->toArray(), 'Srp Employee Details saved successfully');
+        return $this->sendResponse($srpEmployeeDetails->toArray(), trans('custom.srp_employee_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpEmployeeDetailsAPIController extends AppBaseController
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->findWithoutFail($id);
 
         if (empty($srpEmployeeDetails)) {
-            return $this->sendError('Srp Employee Details not found');
+            return $this->sendError(trans('custom.srp_employee_details_not_found'));
         }
 
-        return $this->sendResponse($srpEmployeeDetails->toArray(), 'Srp Employee Details retrieved successfully');
+        return $this->sendResponse($srpEmployeeDetails->toArray(), trans('custom.srp_employee_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpEmployeeDetailsAPIController extends AppBaseController
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->findWithoutFail($id);
 
         if (empty($srpEmployeeDetails)) {
-            return $this->sendError('Srp Employee Details not found');
+            return $this->sendError(trans('custom.srp_employee_details_not_found'));
         }
 
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($srpEmployeeDetails->toArray(), 'SrpEmployeeDetails updated successfully');
+        return $this->sendResponse($srpEmployeeDetails->toArray(), trans('custom.srpemployeedetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpEmployeeDetailsAPIController extends AppBaseController
         $srpEmployeeDetails = $this->srpEmployeeDetailsRepository->findWithoutFail($id);
 
         if (empty($srpEmployeeDetails)) {
-            return $this->sendError('Srp Employee Details not found');
+            return $this->sendError(trans('custom.srp_employee_details_not_found'));
         }
 
         $srpEmployeeDetails->delete();

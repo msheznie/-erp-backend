@@ -108,7 +108,7 @@ class ItemMasterAPIController extends AppBaseController
         $this->itemMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemMasters = $this->itemMasterRepository->all();
 
-        return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');
+        return $this->sendResponse($itemMasters->toArray(), trans('custom.item_masters_retrieved_successfully'));
     }
 
     /**
@@ -130,7 +130,7 @@ class ItemMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Primary Company not found');
+            return $this->sendError(trans('custom.primary_company_not_found'));
         }
 
         $document = DocumentMaster::where('documentID', 'ITMM')->first();
@@ -138,7 +138,7 @@ class ItemMasterAPIController extends AppBaseController
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
 
         if (empty($financeCategoryMaster)) {
-            return $this->sendError('Finance Item Category not found');
+            return $this->sendError(trans('custom.finance_item_category_not_found'));
         }
 
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder;
@@ -171,7 +171,7 @@ class ItemMasterAPIController extends AppBaseController
                 $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $item['financeCategorySub'])->first();
 
                 if (empty($financeCategorySub)) {
-                    return $this->sendError('Finance Item Sub Category not found');
+                    return $this->sendError(trans('custom.finance_item_sub_category_not_found'));
                 }
 
                 if ($document) {
@@ -217,7 +217,7 @@ class ItemMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendReponseWithDetails($createdItems, 'Item Master saved successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($createdItems, trans('custom.item_master_saved_successfully'),1,$confirm['data'] ?? null);
         } catch (\Exception $e) {
             DB::rollBack();
         }
@@ -261,7 +261,7 @@ class ItemMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+        ///return $this->sendResponse($itemMasters->toArray(), trans('custom.item_masters_retrieved_successfully'));*/
     }
 
     public function exportItemMaster(Request $request)
@@ -342,7 +342,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
 
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+        ///return $this->sendResponse($itemMasters->toArray(), trans('custom.item_masters_retrieved_successfully'));*/
     }
 
     public function getSubcategoriesByItemType(Request $request)
@@ -743,7 +743,7 @@ class ItemMasterAPIController extends AppBaseController
             'categoryTypeData' => $categoryTypeData
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -846,7 +846,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
-            return $this->sendError('Finance Audit category is required.');
+            return $this->sendError(trans('custom.finance_audit_category_is_required'));
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -857,7 +857,7 @@ class ItemMasterAPIController extends AppBaseController
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
 
         if (empty($financeCategoryMaster)) {
-            return $this->sendError('Finance category not found');
+            return $this->sendError(trans('custom.finance_category_not_found_1'));
         }
 
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
@@ -881,7 +881,7 @@ class ItemMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['primaryCompanyID'] = $company->CompanyID;
@@ -980,7 +980,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($itemMasters->toArray(), 'Item Master saved successfully');
+        return $this->sendResponse($itemMasters->toArray(), trans('custom.item_master_saved_successfully'));
     }
 
     /**
@@ -1023,7 +1023,7 @@ class ItemMasterAPIController extends AppBaseController
         $pic_item = $itemMaster->itemPicture;
   
         if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
         foreach ($input as $key => $value) {
@@ -1041,7 +1041,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
-            return $this->sendError('Finance Audit category is required.');
+            return $this->sendError(trans('custom.finance_audit_category_is_required'));
         }
 
         if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] != 3) {
@@ -1051,7 +1051,7 @@ class ItemMasterAPIController extends AppBaseController
         if (isset($input['isSubItem']) && $input['isSubItem'] == 1) {
             $mainItemID = isset($input['mainItemID'][0]) ? $input['mainItemID'][0] : $input['mainItemID'];
             if (!$mainItemID) {
-                return $this->sendError('Main Item field is required.');
+                return $this->sendError(trans('custom.main_item_field_is_required'));
             }
         }
              
@@ -1182,10 +1182,10 @@ class ItemMasterAPIController extends AppBaseController
                     }
                 }
 
-                return $this->sendResponse([], 'Item Master updated successfully');
+                return $this->sendResponse([], trans('custom.item_master_updated_successfully'));
             }
 
-            return $this->sendError('Item Master already approved. You cannot edit');
+            return $this->sendError(trans('custom.item_master_already_approved_you_cannot_edit'));
         }
     
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
@@ -1213,7 +1213,7 @@ class ItemMasterAPIController extends AppBaseController
                 ->first();
 
             if (empty($checkSubCategory)) {
-                return $this->sendError('The Finance Sub Category field is required.', 500);
+                return $this->sendError(trans('custom.the_finance_sub_category_field_is_required'), 500);
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
@@ -1230,7 +1230,7 @@ class ItemMasterAPIController extends AppBaseController
                 ->first();
 
             if (empty($checkSubCategory)) {
-                return $this->sendError('The Finance Sub Category field is required.', 500);
+                return $this->sendError(trans('custom.the_finance_sub_category_field_is_required'), 500);
             }
         }
 
@@ -1284,7 +1284,7 @@ class ItemMasterAPIController extends AppBaseController
             ->where('itemmaster.itemCodeSystem', $id)
             ->first();
 
-        return $this->sendResponse(json_decode($categoryTypes->categoryType), 'Category types retrieved successfully');
+        return $this->sendResponse(json_decode($categoryTypes->categoryType), trans('custom.category_types_retrieved_successfully'));
     }
     public function getAssignedCompaniesByItem(Request $request)
     {
@@ -1311,7 +1311,7 @@ class ItemMasterAPIController extends AppBaseController
             $itemCompanies = [];
         }
 
-        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+        return $this->sendResponse($itemCompanies, trans('custom.companies_retrieved_successfully'));
 
     }
 
@@ -1335,7 +1335,7 @@ class ItemMasterAPIController extends AppBaseController
                     $isConversion = 0;
                 }
             } else {
-                return $this->sendError('Item not found');
+                return $this->sendError(trans('custom.item_not_found'));
             }
         $subItemUnit = Unit::find($unitID);
         $mainItemUnit = Unit::find($mainItemUnitID);
@@ -1343,7 +1343,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $output = array('isConversion' => $isConversion, 'subItemUnit'=>$subItemUnit, 'mainItemUnit' => $mainItemUnit);
 
-        return $this->sendResponse($output, 'pre check unit conversion retrieved successfully');
+        return $this->sendResponse($output, trans('custom.pre_check_unit_conversion_retrieved_successfully'));
 
     }
 
@@ -1361,7 +1361,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $unitConversions = $this->unitConversionRepository->create($input);
 
-        return $this->sendResponse($unitConversions->toArray(), 'Unit Conversion saved successfully');
+        return $this->sendResponse($unitConversions->toArray(), trans('custom.unit_conversion_saved_successfully'));
     }
 
         /**
@@ -1439,10 +1439,10 @@ class ItemMasterAPIController extends AppBaseController
 
 
         if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
-        return $this->sendResponse($itemMaster, 'Item Master retrieved successfully');
+        return $this->sendResponse($itemMaster, trans('custom.item_master_retrieved_successfully'));
     }
 
     /**
@@ -1463,12 +1463,12 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster = $this->itemMasterRepository->findWithoutFail($id);
 
         if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
         $itemMaster = $this->itemMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemMaster->toArray(), 'ItemMaster updated successfully');
+        return $this->sendResponse($itemMaster->toArray(), trans('custom.itemmaster_updated_successfully'));
     }
 
     /**
@@ -1485,12 +1485,12 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster = $this->itemMasterRepository->findWithoutFail($id);
 
         if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
         $itemMaster->delete();
 
-        return $this->sendResponse($id, 'Item Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_master_deleted_successfully'));
     }
 
     public function getAllMainItemsByCompany(Request $request){
@@ -1518,7 +1518,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $output = array('subItems' => $subItems, 'isSubItem'=>$isSubItem, 'mainItemUOM' => $mainItemUOM, 'mainItems' => $mainItems);
 
-        return $this->sendResponse($output, 'Main item details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.main_item_details_retrieved_successfully'));
 
     }
 
@@ -1565,10 +1565,10 @@ class ItemMasterAPIController extends AppBaseController
             ->findWithoutFail($id);
 
         if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
-        return $this->sendResponse($itemMaster->toArray(), 'Item Master retrieved successfully');
+        return $this->sendResponse($itemMaster->toArray(), trans('custom.item_master_retrieved_successfully'));
     }
 
     public function getAllFixedAssetItems(Request $request)
@@ -1591,7 +1591,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -1603,11 +1603,11 @@ class ItemMasterAPIController extends AppBaseController
 
         $item = $this->itemMasterRepository->find($id);
         if (empty($item)) {
-            return $this->sendError('Item Master not found');
+            return $this->sendError(trans('custom.item_master_not_found_2'));
         }
 
         if ($item->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this item');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_item'));
         }
 
         $itemArray = $item->toArray();
@@ -1641,7 +1641,7 @@ class ItemMasterAPIController extends AppBaseController
             $this->itemMasterRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($item->toArray(), 'Item Master Amend successfully');
+        return $this->sendResponse($item->toArray(), trans('custom.item_master_amend_successfully'));
     }
 
 
@@ -1687,7 +1687,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function checkLedgerQty(Request $request)
@@ -1707,7 +1707,7 @@ class ItemMasterAPIController extends AppBaseController
             array_push($sumArray, $sum);
         }
 
-        return $this->sendResponse($sumArray, 'Data retrieved successfully');
+        return $this->sendResponse($sumArray, trans('custom.data_retrieved_successfully'));
     }
 
     public function getSupplierByCatalogItemDetail(Request $request) {
@@ -1727,7 +1727,7 @@ class ItemMasterAPIController extends AppBaseController
                                                         });
                                                 })
                                                 ->paginate(15);
-        return $this->sendResponse($supplierCatalog, 'Data retrieved successfully');
+        return $this->sendResponse($supplierCatalog, trans('custom.data_retrieved_successfully'));
 
 //        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
 //            $sort = 'asc';
@@ -1934,7 +1934,7 @@ class ItemMasterAPIController extends AppBaseController
             return $query->where('companySystemID', '=', $companyId);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
 
-        return $this->sendResponse($itemMasters, 'Data retrieved successfully');
+        return $this->sendResponse($itemMasters, trans('custom.data_retrieved_successfully'));
 
 
     }
@@ -1965,7 +1965,7 @@ class ItemMasterAPIController extends AppBaseController
         'financeItemCategorySub' => $itemCategorySubArray,
     );
 
-    return $this->sendResponse($output, 'Record retrieved successfully');
+    return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getItemSubCategory(Request $request)
@@ -1983,7 +1983,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($subCategoryData, 'Record retrieved successfully');
+        return $this->sendResponse($subCategoryData, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateItemAmend(Request $request)
@@ -1993,7 +1993,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster = ItemMaster::find($input['itemID']);
 
         if (!$itemMaster) {
-            return $this->sendError('Item Data not found');
+            return $this->sendError(trans('custom.item_data_not_found'));
         }
       $errorMessages = "Finance Sub Category,PartNO,Barcode,Unit Of measure cannot be amended ,the item used in ";
       $successMessages = "Use of Finance Sub Category,PartNO,Barcode,Unit Of measure checking is done in ";

@@ -66,7 +66,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         $this->supplierEvaluationTemplateSectionTableColumnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationTemplateSectionTableColumns = $this->supplierEvaluationTemplateSectionTableColumnRepository->all();
 
-        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumns->toArray(), 'Supplier Evaluation Template Section Table Columns retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumns->toArray(), trans('custom.supplier_evaluation_template_section_table_columns'));
     }
 
     /**
@@ -120,7 +120,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
         $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumn->toArray(), 'Supplier Evaluation Template Section Table Column saved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumn->toArray(), trans('custom.supplier_evaluation_template_section_table_column__2'));
     }
 
     /**
@@ -168,10 +168,10 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateSectionTableColumn)) {
-            return $this->sendError('Supplier Evaluation Template Section Table Column not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_column__1'));
         }
 
-        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumn->toArray(), 'Supplier Evaluation Template Section Table Column retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTableColumn->toArray(), trans('custom.supplier_evaluation_template_section_table_column__3'));
     }
 
     /**
@@ -241,7 +241,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
     
         if (empty($supplierEvaluationTemplateSectionTableColumn)) {
-            return $this->sendError('Supplier Evaluation Template Section Table Column not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_column__1'));
         }
 
         if(isset($input['column_type']) && $input['column_type'] == 3){
@@ -295,7 +295,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
             'supplierEvaluationTemplateSectionTableColumn'=> $supplierEvaluationTemplateSectionTableColumn,
             'tableColumnData'=> $tableColumnData,
         ];
-        return $this->sendResponse($data, 'SupplierEvaluationTemplateSectionTableColumn updated successfully');
+        return $this->sendResponse($data, trans('custom.supplierevaluationtemplatesectiontablecolumn_updat'));
     }
 
     /**
@@ -343,7 +343,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
         $supplierEvaluationTemplateSectionTableColumn = $this->supplierEvaluationTemplateSectionTableColumnRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateSectionTableColumn)) {
-            return $this->sendError('Supplier Evaluation Template Section Table Column not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_column__1'));
         }
 
         $supplierEvaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->first();
@@ -382,6 +382,6 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
         $tableColumnData = SupplierEvaluationTemplateSectionTableColumn::where('table_id', $supplierEvaluationTemplateSectionTableColumn['table_id'])->get();
 
-        return $this->sendResponse($tableColumnData,'Supplier Evaluation Template Section Table Column deleted successfully');
+        return $this->sendResponse($tableColumnData,trans('custom.supplier_evaluation_template_section_table_column_'));
     }
 }

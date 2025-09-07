@@ -64,7 +64,7 @@ class PricingScheduleMasterEditLogAPIController extends AppBaseController
         $this->pricingScheduleMasterEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pricingScheduleMasterEditLogs = $this->pricingScheduleMasterEditLogRepository->all();
 
-        return $this->sendResponse($pricingScheduleMasterEditLogs->toArray(), 'Pricing Schedule Master Edit Logs retrieved successfully');
+        return $this->sendResponse($pricingScheduleMasterEditLogs->toArray(), trans('custom.pricing_schedule_master_edit_logs_retrieved_succes'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PricingScheduleMasterEditLogAPIController extends AppBaseController
 
         $pricingScheduleMasterEditLog = $this->pricingScheduleMasterEditLogRepository->create($input);
 
-        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), 'Pricing Schedule Master Edit Log saved successfully');
+        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), trans('custom.pricing_schedule_master_edit_log_saved_successfull'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PricingScheduleMasterEditLogAPIController extends AppBaseController
         $pricingScheduleMasterEditLog = $this->pricingScheduleMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMasterEditLog)) {
-            return $this->sendError('Pricing Schedule Master Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_edit_log_not_found'));
         }
 
-        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), 'Pricing Schedule Master Edit Log retrieved successfully');
+        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), trans('custom.pricing_schedule_master_edit_log_retrieved_success'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PricingScheduleMasterEditLogAPIController extends AppBaseController
         $pricingScheduleMasterEditLog = $this->pricingScheduleMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMasterEditLog)) {
-            return $this->sendError('Pricing Schedule Master Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_edit_log_not_found'));
         }
 
         $pricingScheduleMasterEditLog = $this->pricingScheduleMasterEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), 'PricingScheduleMasterEditLog updated successfully');
+        return $this->sendResponse($pricingScheduleMasterEditLog->toArray(), trans('custom.pricingschedulemastereditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PricingScheduleMasterEditLogAPIController extends AppBaseController
         $pricingScheduleMasterEditLog = $this->pricingScheduleMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMasterEditLog)) {
-            return $this->sendError('Pricing Schedule Master Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_edit_log_not_found'));
         }
 
         $pricingScheduleMasterEditLog->delete();

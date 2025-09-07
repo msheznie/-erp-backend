@@ -43,7 +43,7 @@ class DocumentControlAPIController extends AppBaseController
             'years' => $years,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateDocumentControlReport(Request $request)
@@ -260,7 +260,7 @@ class DocumentControlAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($finalArray, 'successfully generated report');
+        return $this->sendResponse($finalArray, trans('custom.successfully_generated_report'));
     }
 
 }

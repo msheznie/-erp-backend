@@ -71,7 +71,7 @@ class WarehouseMasterAPIController extends AppBaseController
         $this->warehouseMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseMasters = $this->warehouseMasterRepository->all();
 
-        return $this->sendResponse($warehouseMasters->toArray(), 'Warehouse Masters retrieved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), trans('custom.warehouse_masters_retrieved_successfully'));
     }
 
     /**
@@ -138,10 +138,10 @@ class WarehouseMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError('Warehouse Master not found');
+            return $this->sendError(trans('custom.warehouse_master_not_found'));
         }
 
-        return $this->sendResponse($warehouseMaster->toArray(), 'Warehouse Master retrieved successfully');
+        return $this->sendResponse($warehouseMaster->toArray(), trans('custom.warehouse_master_retrieved_successfully'));
     }
 
     /**
@@ -261,12 +261,12 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMaster = $this->warehouseMasterRepository->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError('Warehouse Master not found');
+            return $this->sendError(trans('custom.warehouse_master_not_found'));
         }
 
         $warehouseMaster->delete();
 
-        return $this->sendResponse($id, 'Warehouse Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_master_deleted_successfully'));
     }
 
     /**
@@ -300,7 +300,7 @@ class WarehouseMasterAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -436,7 +436,7 @@ class WarehouseMasterAPIController extends AppBaseController
             ->where('isActive', 1)
             ->get();
 
-        return $this->sendResponse($warehouseMasters->toArray(), 'Record retrieved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -465,12 +465,12 @@ class WarehouseMasterAPIController extends AppBaseController
                     'file_size' => round($fileSize / 1024, 2),
                     'original_file_name' => $fileName
                 ];
-                return $this->sendResponse($response, 'Image uploaded successfully');
+                return $this->sendResponse($response, trans('custom.image_uploaded_successfully'));
             } else {
-                return $this->sendError('Image cannot be uploaded',500);
+                return $this->sendError(trans('custom.image_cannot_be_uploaded'),500);
             }
         } catch (\Exception $exception) {
-            return $this->sendError('Image cannot be uploaded',500);
+            return $this->sendError(trans('custom.image_cannot_be_uploaded'),500);
         }
     }
 

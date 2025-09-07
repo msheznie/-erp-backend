@@ -74,7 +74,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $this->expenseEmployeeAllocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseEmployeeAllocations = $this->expenseEmployeeAllocationRepository->all();
 
-        return $this->sendResponse($expenseEmployeeAllocations->toArray(), 'Expense Employee Allocations retrieved successfully');
+        return $this->sendResponse($expenseEmployeeAllocations->toArray(), trans('custom.expense_employee_allocations_retrieved_successfull'));
     }
 
     /**
@@ -237,7 +237,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->create($input);
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'Expense Employee Allocation saved successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expense_employee_allocation_saved_successfully'));
     }
 
     public function getAllocatedEmployeesForExpense(Request $request)
@@ -249,7 +249,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                                                   ->with(['employee'])
                                                   ->get();
 
-        return $this->sendResponse($allocatedEmployees, 'Data retrieved successfully');
+        return $this->sendResponse($allocatedEmployees, trans('custom.data_retrieved_successfully'));
     }
 
     /**
@@ -296,10 +296,10 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'Expense Employee Allocation retrieved successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expense_employee_allocation_retrieved_successfully'));
     }
 
     /**
@@ -356,12 +356,12 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->update($input, $id);
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'ExpenseEmployeeAllocation updated successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expenseemployeeallocation_updated_successfully'));
     }
 
     /**
@@ -408,12 +408,12 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
         $expenseEmployeeAllocation->delete();
 
-        return $this->sendResponse([], 'Expense Employee Allocation deleted successfully');
+        return $this->sendResponse([], trans('custom.expense_employee_allocation_deleted_successfully'));
     }
 
     public function getEmployeeRecentAllocation(Request $request) {
@@ -435,7 +435,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         if(empty($materialIssue))
         {
-            return $this->sendError('Material Issue not found',500);
+            return $this->sendError(trans('custom.material_issue_not_found'),500);
         }
 
         
@@ -443,7 +443,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         if(empty($activeFiancialYearID))
         {
-            return $this->sendError('Financial year not found',500);
+            return $this->sendError(trans('custom.financial_year_not_found'),500);
         }
 
 
@@ -475,6 +475,6 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                 ->get();
         }
 
-        return $this->sendResponse($data, 'Data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
     }
 }

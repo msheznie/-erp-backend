@@ -74,7 +74,7 @@ class ReportTemplateColumnsAPIController extends AppBaseController
         $this->reportTemplateColumnsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->all();
 
-        return $this->sendResponse($reportTemplateColumns->toArray(), 'Report Template Columns retrieved successfully');
+        return $this->sendResponse($reportTemplateColumns->toArray(), trans('custom.report_template_columns_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class ReportTemplateColumnsAPIController extends AppBaseController
 
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->create($input);
 
-        return $this->sendResponse($reportTemplateColumns->toArray(), 'Report Template Columns saved successfully');
+        return $this->sendResponse($reportTemplateColumns->toArray(), trans('custom.report_template_columns_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class ReportTemplateColumnsAPIController extends AppBaseController
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->findWithoutFail($id);
 
         if (empty($reportTemplateColumns)) {
-            return $this->sendError('Report Template Columns not found');
+            return $this->sendError(trans('custom.report_template_columns_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateColumns->toArray(), 'Report Template Columns retrieved successfully');
+        return $this->sendResponse($reportTemplateColumns->toArray(), trans('custom.report_template_columns_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class ReportTemplateColumnsAPIController extends AppBaseController
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->findWithoutFail($id);
 
         if (empty($reportTemplateColumns)) {
-            return $this->sendError('Report Template Columns not found');
+            return $this->sendError(trans('custom.report_template_columns_not_found'));
         }
 
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateColumns->toArray(), 'ReportTemplateColumns updated successfully');
+        return $this->sendResponse($reportTemplateColumns->toArray(), trans('custom.reporttemplatecolumns_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class ReportTemplateColumnsAPIController extends AppBaseController
         $reportTemplateColumns = $this->reportTemplateColumnsRepository->findWithoutFail($id);
 
         if (empty($reportTemplateColumns)) {
-            return $this->sendError('Report Template Columns not found');
+            return $this->sendError(trans('custom.report_template_columns_not_found'));
         }
 
         $reportTemplateColumns->delete();
 
-        return $this->sendResponse($id, 'Report Template Columns deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_columns_deleted_successfully'));
     }
 }

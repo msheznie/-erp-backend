@@ -65,7 +65,7 @@ class TenderSiteVisitDatesAPIController extends AppBaseController
         $this->tenderSiteVisitDatesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->all();
 
-        return $this->sendResponse($tenderSiteVisitDates->toArray(), 'Tender Site Visit Dates retrieved successfully');
+        return $this->sendResponse($tenderSiteVisitDates->toArray(), trans('custom.tender_site_visit_dates_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderSiteVisitDatesAPIController extends AppBaseController
 
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->create($input);
 
-        return $this->sendResponse($tenderSiteVisitDates->toArray(), 'Tender Site Visit Dates saved successfully');
+        return $this->sendResponse($tenderSiteVisitDates->toArray(), trans('custom.tender_site_visit_dates_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderSiteVisitDatesAPIController extends AppBaseController
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDates)) {
-            return $this->sendError('Tender Site Visit Dates not found');
+            return $this->sendError(trans('custom.tender_site_visit_dates_not_found'));
         }
 
-        return $this->sendResponse($tenderSiteVisitDates->toArray(), 'Tender Site Visit Dates retrieved successfully');
+        return $this->sendResponse($tenderSiteVisitDates->toArray(), trans('custom.tender_site_visit_dates_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderSiteVisitDatesAPIController extends AppBaseController
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDates)) {
-            return $this->sendError('Tender Site Visit Dates not found');
+            return $this->sendError(trans('custom.tender_site_visit_dates_not_found'));
         }
 
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->update($input, $id);
 
-        return $this->sendResponse($tenderSiteVisitDates->toArray(), 'TenderSiteVisitDates updated successfully');
+        return $this->sendResponse($tenderSiteVisitDates->toArray(), trans('custom.tendersitevisitdates_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderSiteVisitDatesAPIController extends AppBaseController
         $tenderSiteVisitDates = $this->tenderSiteVisitDatesRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDates)) {
-            return $this->sendError('Tender Site Visit Dates not found');
+            return $this->sendError(trans('custom.tender_site_visit_dates_not_found'));
         }
 
         $tenderSiteVisitDates->delete();

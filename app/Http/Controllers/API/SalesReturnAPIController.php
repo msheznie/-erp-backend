@@ -98,7 +98,7 @@ class SalesReturnAPIController extends AppBaseController
         $this->salesReturnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesReturns = $this->salesReturnRepository->all();
 
-        return $this->sendResponse($salesReturns->toArray(), 'Sales Returns retrieved successfully');
+        return $this->sendResponse($salesReturns->toArray(), trans('custom.sales_returns_retrieved_successfully'));
     }
 
     /**
@@ -180,7 +180,7 @@ class SalesReturnAPIController extends AppBaseController
 
         $customer = CustomerMaster::find($input['customerID']);
         if(empty($customer)){
-            return $this->sendError('Selected customer not found on db',500);
+            return $this->sendError(trans('custom.selected_customer_not_found_on_db'),500);
         }
 
         if(!$customer->custGLAccountSystemID){
@@ -243,7 +243,7 @@ class SalesReturnAPIController extends AppBaseController
 
         $salesReturn = $this->salesReturnRepository->create($input);
 
-        return $this->sendResponse($salesReturn->toArray(), 'Sales Return saved successfully');
+        return $this->sendResponse($salesReturn->toArray(), trans('custom.sales_return_saved_successfully'));
     }
 
     /**
@@ -297,10 +297,10 @@ class SalesReturnAPIController extends AppBaseController
         },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($salesReturn)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
-        return $this->sendResponse($salesReturn->toArray(), 'Sales Return retrieved successfully');
+        return $this->sendResponse($salesReturn->toArray(), trans('custom.sales_return_retrieved_successfully'));
     }
 
     /**
@@ -356,7 +356,7 @@ class SalesReturnAPIController extends AppBaseController
         $salesReturn = $this->salesReturnRepository->findWithoutFail($id);
 
         if (empty($salesReturn)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','returnType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
         $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
@@ -486,7 +486,7 @@ class SalesReturnAPIController extends AppBaseController
 
                 $detail = SalesReturnDetail::where('salesReturnID', $id)->get();
                 if(count((array)$detail) == 0){
-                    return  $this->sendError('Return detail not found', 500);
+                    return  $this->sendError(trans('custom.return_detail_not_found'), 500);
                 }
 
                 $checkQuantity = SalesReturnDetail::where('salesReturnID', $id)
@@ -533,13 +533,13 @@ class SalesReturnAPIController extends AppBaseController
 
                     //If the revenue account or cost account or BS account is null do not allow to confirm
                     if(!($item->financeGLcodebBSSystemID > 0)){
-                        return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                        return $this->sendError(trans('custom.bs_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                     }elseif (!($item->financeGLcodePLSystemID > 0)){
-                        return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                        return $this->sendError(trans('custom.cost_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                     }elseif (!($item->financeCogsGLcodePLSystemID > 0)){
-                        return $this->sendError('Cogs GL account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                        return $this->sendError(trans('custom.cogs_gl_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                     }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
-                        return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                        return $this->sendError(trans('custom.revenue_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                     }
 
                     $updateItem = SalesReturnDetail::find($item['salesReturnDetailID']);
@@ -607,7 +607,7 @@ class SalesReturnAPIController extends AppBaseController
                 if(TaxService::checkCompanyVATEligible($salesReturn->companySystemID) && $totalVAT > 0){
                     if ($salesReturn->returnType == 2) {
                         if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
-                            return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_control_gl_account_not_c'), 500);
                         }
                     } else {
                          $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
@@ -619,11 +619,11 @@ class SalesReturnAPIController extends AppBaseController
                         foreach ($invoiceDetails as $key => $value) {
                             if (isset($value->delivery_order->selectedForCustomerInvoice) && $value->delivery_order->selectedForCustomerInvoice == -1) {
                                 if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
-                                    return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                                    return $this->sendError(trans('custom.cannot_confirm_output_vat_control_gl_account_not_c'), 500);
                                 }
                             } else {
                                 if(empty(TaxService::getOutputVATTransferGLAccount($salesReturn->companySystemID))){
-                                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                                    return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                                 }
                             }
                         }
@@ -651,12 +651,12 @@ class SalesReturnAPIController extends AppBaseController
             }else{
                 $salesReturn = $this->salesReturnRepository->update($input, $id);
                 DB::commit();
-                return $this->sendResponse($salesReturn->toArray(), 'Sales Return updated successfully');
+                return $this->sendResponse($salesReturn->toArray(), trans('custom.sales_return_updated_successfully'));
             }
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
     }
 
@@ -704,7 +704,7 @@ class SalesReturnAPIController extends AppBaseController
         $salesReturn = $this->salesReturnRepository->findWithoutFail($id);
 
         if (empty($salesReturn)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
         $salesReturn->delete();
@@ -780,7 +780,7 @@ class SalesReturnAPIController extends AppBaseController
                                     ->get();
         }
 
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+        return $this->sendResponse($master->toArray(), trans('custom.quotations_retrieved_successfully'));
     }
 
 
@@ -822,7 +822,7 @@ class SalesReturnAPIController extends AppBaseController
                                 GROUP BY invDetails.customerItemDetailID');
         }
        
-        return $this->sendResponse($detail, 'Delivery order Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.delivery_order_details_retrieved_successfully'));
     }
 
 
@@ -978,7 +978,7 @@ class SalesReturnAPIController extends AppBaseController
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
                             if(empty($item)){
-                                return $this->sendError('Item not found',500);
+                                return $this->sendError(trans('custom.item_not_found'),500);
                             }
 
                             $data = array(
@@ -1119,10 +1119,10 @@ class SalesReturnAPIController extends AppBaseController
             }
 
              DB::commit();
-            return $this->sendResponse([], 'Sales Return Item Details saved successfully');
+            return $this->sendResponse([], trans('custom.sales_return_item_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
         
     }
@@ -1430,7 +1430,7 @@ class SalesReturnAPIController extends AppBaseController
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
                             if(empty($item)){
-                                return $this->sendError('Item not found',500);
+                                return $this->sendError(trans('custom.item_not_found'),500);
                             }
 
                             $data = array(
@@ -1555,10 +1555,10 @@ class SalesReturnAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Sales Return Item Details saved successfully');
+            return $this->sendResponse([], trans('custom.sales_return_item_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
     }
 
@@ -1773,10 +1773,10 @@ class SalesReturnAPIController extends AppBaseController
         }])->find($id);
 
         if (empty($salesReturn)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
-        return $this->sendResponse($salesReturn->toArray(), 'Sales Return retrieved successfully');
+        return $this->sendResponse($salesReturn->toArray(), trans('custom.sales_return_retrieved_successfully'));
     }
 
     function printSalesReturn(Request $request){
@@ -1792,7 +1792,7 @@ class SalesReturnAPIController extends AppBaseController
 
 
         if (empty($do)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
         if($do->transaction_currency){
@@ -1839,7 +1839,7 @@ class SalesReturnAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printSalesReturn: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 
@@ -1855,10 +1855,10 @@ class SalesReturnAPIController extends AppBaseController
 
 
         if (empty($data)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
-        return $this->sendResponse($data->toArray(), 'Sales Return retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.sales_return_retrieved_successfully'));
     }
 
 
@@ -1871,19 +1871,19 @@ class SalesReturnAPIController extends AppBaseController
         $salesReturn= SalesReturn::find($salesReturnID);
         $emails = array();
         if (empty($salesReturn)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
         if ($salesReturn->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this sales return. it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_return_it_is_already_'));
         }
 
         if ($salesReturn->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this sales return. it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_return_it_is_already__1'));
         }
 
         if ($salesReturn->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this sales return. it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_sales_return_it_is_not_conf'));
         }
 
         // updating fields
@@ -1954,7 +1954,7 @@ class SalesReturnAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($salesReturn->documentSystemID,$salesReturnID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($salesReturn->toArray(), 'Sales Return reopened successfully');
+        return $this->sendResponse($salesReturn->toArray(), trans('custom.sales_return_reopened_successfully'));
     }
 
 
@@ -1966,11 +1966,11 @@ class SalesReturnAPIController extends AppBaseController
 
         $doData = SalesReturn::find($salesReturnID);
         if (empty($doData)) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
         if ($doData->refferedBackYN != -1) {
-            return $this->sendError('You cannot amend this sales return');
+            return $this->sendError(trans('custom.you_cannot_amend_this_sales_return'));
         }
 
         $salesReturnArray = $doData->toArray();
@@ -2016,7 +2016,7 @@ class SalesReturnAPIController extends AppBaseController
             $doData->save();
         }
 
-        return $this->sendResponse($doData->toArray(), 'Sales Return Amend successfully');
+        return $this->sendResponse($doData->toArray(), trans('custom.sales_return_amend_successfully'));
     }
 
     public function approveSalesReturn(Request $request)
@@ -2051,7 +2051,7 @@ class SalesReturnAPIController extends AppBaseController
                 $query->with(['transaction_currency']);
             },'delivery_order_detail','uom_issuing'])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     function getSalesReturnDetailsForSI(Request $request)
@@ -2065,7 +2065,7 @@ class SalesReturnAPIController extends AppBaseController
                 $query->with(['transaction_currency']);
             },'sales_invoice_detail','uom_issuing'])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
 }

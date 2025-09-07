@@ -137,7 +137,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $this->purchaseRequestRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseRequests = $this->purchaseRequestRepository->all();
 
-        return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Requests retrieved successfully');
+        return $this->sendResponse($purchaseRequests->toArray(), trans('custom.purchase_requests_retrieved_successfully'));
     }
 
     /**
@@ -200,7 +200,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $items = $items->take(20)->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -343,7 +343,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getEligibleMr(Request $request){
@@ -359,7 +359,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $data = ['eligibleMr'=>$eligibleMr,
                  'checkPolicy'=>$checkPolicy];
         
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getWarehouse(Request $request){
@@ -401,7 +401,7 @@ class PurchaseRequestAPIController extends AppBaseController
             );
 
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function createPrMaterialRequest(Request $request){
@@ -474,7 +474,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 $isJobUpdate = MaterielRequest::where('RequestID', $MaterialRequestID)->update($isJobData);
                 GenerateMaterialRequestItem::dispatch($input,$db);
                 DB::commit();
-                return $this->sendResponse($MaterialRequest, 'Material request & material items created successfully');
+                return $this->sendResponse($MaterialRequest, trans('custom.material_request_material_items_created_successful'));
 
             }
             else
@@ -515,7 +515,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->make(true);
 
         return $data;
-        //return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+        //return $this->sendResponse($purchaseRequests, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getPrToGrvQry($request)
@@ -976,7 +976,7 @@ class PurchaseRequestAPIController extends AppBaseController
         //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         // })->download($type);
 
-        // return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), trans('custom.success_export'));
 
         $doc_name = 'pr_to_grv';
         $doc_name_path = 'pr_to_grv/';
@@ -1029,7 +1029,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return $this->sendError('Policy not found');
+                    return $this->sendError(trans('custom.policy_not_found'));
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
@@ -1077,7 +1077,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($approveDetails, 'Record retrieved successfully');
+        return $this->sendResponse($approveDetails, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -1117,7 +1117,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'years' => $years);
 
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -1362,7 +1362,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         //checking segment is active
@@ -1412,7 +1412,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->orderBy('purchaseRequestID', 'DESC')
             ->get();
 
-        return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($purchaseRequests->toArray(), trans('custom.purchase_request_details_retrieved_successfully'));
     }
 
     /**
@@ -1538,7 +1538,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
-        return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request saved successfully');
+        return $this->sendResponse($purchaseRequests->toArray(), trans('custom.purchase_request_saved_successfully'));
     }
 
     /**
@@ -1561,9 +1561,9 @@ class PurchaseRequestAPIController extends AppBaseController
         ])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
-        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+        return $this->sendResponse($purchaseRequest->toArray(), trans('custom.purchase_request_retrieved_successfully'));
     }
 
 
@@ -1589,10 +1589,10 @@ class PurchaseRequestAPIController extends AppBaseController
         ])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
-        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+        return $this->sendResponse($purchaseRequest->toArray(), trans('custom.purchase_request_retrieved_successfully'));
     }
 
     public function createPurchaseAPI(CreatePurchaseRequestAPIRequest $request)
@@ -1896,7 +1896,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
         DB::commit();
 
-        return $this->sendResponse($errors, 'Purchase Request saved successfully');
+        return $this->sendResponse($errors, trans('custom.purchase_request_saved_successfully'));
 
     }
         catch (\Exception $exception) {
@@ -1925,10 +1925,10 @@ class PurchaseRequestAPIController extends AppBaseController
             },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
-        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+        return $this->sendResponse($purchaseRequest->toArray(), trans('custom.purchase_request_retrieved_successfully'));
     }
 
 
@@ -1959,15 +1959,15 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request closed. You cannot edit.', 500);
+            return $this->sendError(trans('custom.this_purchase_request_closed_you_cannot_edit'), 500);
         }
 
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You cannot edit.', 500);
+            return $this->sendError(trans('custom.this_purchase_request_fully_approved_you_cannot_ed'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -2052,11 +2052,11 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
 
             if ($purchaseRequest->comments == null || $purchaseRequest->comments == "") {
-                return $this->sendError('Comment cannot be empty.', 500);
+                return $this->sendError(trans('custom.comment_cannot_be_empty'), 500);
             }
 
             if ($purchaseRequest->location == null || $purchaseRequest->location == 0) {
-                return $this->sendError('Location cannot be empty.', 500);
+                return $this->sendError(trans('custom.location_cannot_be_empty'), 500);
             }
 
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -2068,7 +2068,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                 if ($policy == 0) {
                     if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                        return $this->sendError('Category is not found.', 500);
+                        return $this->sendError(trans('custom.category_is_not_found'), 500);
                     }
 
                     //checking if item category is same or not
@@ -2077,7 +2077,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         ->get();
 
                     if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError('You cannot add different category item', 500);
+                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                     }
                 }
             }
@@ -2166,12 +2166,12 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         $purchaseRequest->delete();
 
-        return $this->sendResponse($id, 'Purchase Request deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_request_deleted_successfully'));
     }
 
     /**
@@ -2261,24 +2261,24 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('You cannot cancel this request as it is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_request_as_it_is_already_ca'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('You cannot cancel this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_request_as_it_is_closed_man'));
         }
 
         $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
         if ($checkPo > 0) {
-            return $this->sendError('Cannot cancel. Order is created for this request');
+            return $this->sendError(trans('custom.cannot_cancel_order_is_created_for_this_request'));
         }
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_canceled'));
 
     }
 
@@ -2297,21 +2297,21 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('You cannot cancel this request as it is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_request_as_it_is_already_ca'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('You cannot cancel this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_request_as_it_is_closed_man'));
         }
 
         $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
         if ($checkPo > 0) {
-            return $this->sendError('Cannot cancel. Order is created for this request');
+            return $this->sendError(trans('custom.cannot_cancel_order_is_created_for_this_request'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -2366,7 +2366,7 @@ class PurchaseRequestAPIController extends AppBaseController
         
         CancelDocument::sendEmail($input);
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_canceled'));
 
     }
 
@@ -2384,20 +2384,20 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::with(['confirmed_by'])->find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('You cannot revert back this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close'));
         }
 
         $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
         if ($checkPo > 0) {
-            return $this->sendError('Cannot return back to amend. Order is created for this request');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_order_is_created_for_t'));
         }
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_return_back_to_amend'));
     }
 
     /**
@@ -2415,17 +2415,17 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::with(['confirmed_by'])->find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('You cannot revert back this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close'));
         }
 
         $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
         if ($checkPo > 0) {
-            return $this->sendError('Cannot return back to amend. Order is created for this request');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_order_is_created_for_t'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -2490,7 +2490,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         DocumentApproved::destroy($ids_to_delete);
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_return_back_to_amend'));
     }
 
     /**
@@ -2508,22 +2508,22 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::with(['confirmed_by', 'details'])->find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('This request already manually closed');
+            return $this->sendError(trans('custom.this_request_already_manually_closed'));
         }
 
         if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
-            return $this->sendError('You cannot close this, request is currently processing');
+            return $this->sendError(trans('custom.you_cannot_close_this_request_is_currently_process'));
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
             return $this->sendError('You can only close approved request');
         }
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_closed'));
     }
 
     /**
@@ -2541,15 +2541,15 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::with(['confirmed_by', 'details'])->find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('This request already closed');
+            return $this->sendError(trans('custom.this_request_already_closed'));
         }
 
         if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
-            return $this->sendError('You cannot close this, request is currently processing');
+            return $this->sendError(trans('custom.you_cannot_close_this_request_is_currently_process'));
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
@@ -2635,7 +2635,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         // DocumentApproved::destroy($ids_to_delete);
 
-        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
+        return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_closed'));
     }
 
     /**
@@ -2665,7 +2665,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
@@ -2905,7 +2905,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if($purchaseRequestReopen['status'] = false){
             return $this->sendError($purchaseRequestReopen['message']);
         }else {
-        return $this->sendResponse($purchaseRequestReopen, 'Purchase Request reopened successfully');
+        return $this->sendResponse($purchaseRequestReopen, trans('custom.purchase_request_reopened_successfully'));
         }
 
     }
@@ -2918,11 +2918,11 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this request');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_request'));
         }
 
         $purchaseRequestArray = $purchaseRequest->toArray();
@@ -2977,7 +2977,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $purchaseRequest->save();
         }
 
-        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
+        return $this->sendResponse($purchaseRequest->toArray(), trans('custom.purchase_request_amend_successfully'));
     }
 
     public function amendPurchaseRequest(Request $request)
@@ -2988,7 +2988,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($purchaseRequestId);
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
 
         if ($purchaseRequest->checkBudgetYN == 0) {
@@ -2999,7 +2999,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$input['purchaseRequestID'],'','removed budget check');
 
-        return $this->sendResponse($purchaseRequest->toArray(), 'Request budget check removed successfully');
+        return $this->sendResponse($purchaseRequest->toArray(), trans('custom.request_budget_check_removed_successfully'));
     }
 
     /**
@@ -3043,7 +3043,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'cancelled_by'=>$cancelledDetails->cancelled_by,
             ];
         }
-        return $this->sendResponse($cancelList, 'Record retrieved successfully');
+        return $this->sendResponse($cancelList, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -3070,7 +3070,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->with(['closed_by'])
                 ->first();
         }
-        return $this->sendResponse($closedDetails, 'Record retrieved successfully');
+        return $this->sendResponse($closedDetails, trans('custom.record_retrieved_successfully_1'));
     }
 
     /*
@@ -3103,7 +3103,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseArray = (['totalAmount' => $totalAmount]);
 
-        return $this->sendResponse($purchaseArray, 'Data retrieved successfully');
+        return $this->sendResponse($purchaseArray, trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -3114,7 +3114,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx', 'purchase_request_item_upload_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -3142,7 +3142,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 "data" => [],
                 "policy" => false
             ];
-            return $this->sendResponse($data, 'Data not found!');
+            return $this->sendResponse($data, trans('custom.data_not_found_1'));
         }else {
             if(count($fetchDetails) > 0) {
                 $data = [
@@ -3151,7 +3151,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     "policy" => true,
                     "message" =>  "PR / PO available for these items"
                 ];
-                return $this->sendResponse($data, 'Data retreived successfully');
+                return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
             }else {
                 if(count($checkPOPending) > 0) {
                     $data = [
@@ -3161,7 +3161,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         "data" => $fetchDetails,
                         "message" => "PR / PO available for these items"
                     ];
-                    return $this->sendResponse($data, 'Data retreived successfully');
+                    return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
     
                 }else {
                     $data = [
@@ -3169,7 +3169,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         "policy" => true,
                         "data" => []
                     ];
-                    return $this->sendResponse($data, 'Data not found!');
+                    return $this->sendResponse($data, trans('custom.data_not_found_1'));
                 }
             }
         }
@@ -3242,7 +3242,7 @@ class PurchaseRequestAPIController extends AppBaseController
         foreach($filtered as $filterData) {
             array_push($dataArray,$filterData);
         }
-        return $this->sendResponse($dataArray, 'Data retreived Successfully!');
+        return $this->sendResponse($dataArray, trans('custom.data_retreived_successfully_1'));
     }
 
     public function confirmDocument(Request $request)
@@ -3373,9 +3373,9 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
 
            
-            return $this->sendResponse($requests, 'Quantity updated successfully!');
+            return $this->sendResponse($requests, trans('custom.quantity_updated_successfully'));
         }else {
-            return $this->sendResponse($requests, 'Data not found!');
+            return $this->sendResponse($requests, trans('custom.data_not_found_1'));
         }            
     }
 
@@ -3385,7 +3385,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if(count($pulledDetails) > 0) {
             return $this->sendResponse(true, 'Data found!');
         }else {
-            return $this->sendResponse(false, 'Data not found!');
+            return $this->sendResponse(false, trans('custom.data_not_found_1'));
         }
     }
 
@@ -3439,13 +3439,13 @@ class PurchaseRequestAPIController extends AppBaseController
             $policy = $allAltUOM->isYesNO;
 
             if ($policy == 0) {
-                return $this->sendError('Policy not found');
+                return $this->sendError(trans('custom.policy_not_found'));
             }
         }
 
         $units = Unit::all();
 
-        return $this->sendResponse($units->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($units->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -3473,7 +3473,7 @@ class PurchaseRequestAPIController extends AppBaseController
         })
         ->groupBy('itemCodeSystem')->get();
 
-        return $this->sendResponse($items, 'Data retrieved successfully');
+        return $this->sendResponse($items, trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -3675,7 +3675,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
             return $this->sendResponse($notifyPR['data'], $notifyPR['message']);
         } catch (\Exception $ex) {
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage());
         }
     }
 }

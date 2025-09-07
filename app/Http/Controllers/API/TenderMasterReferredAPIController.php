@@ -64,7 +64,7 @@ class TenderMasterReferredAPIController extends AppBaseController
         $this->tenderMasterReferredRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMasterReferreds = $this->tenderMasterReferredRepository->all();
 
-        return $this->sendResponse($tenderMasterReferreds->toArray(), 'Tender Master Referreds retrieved successfully');
+        return $this->sendResponse($tenderMasterReferreds->toArray(), trans('custom.tender_master_referreds_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderMasterReferredAPIController extends AppBaseController
 
         $tenderMasterReferred = $this->tenderMasterReferredRepository->create($input);
 
-        return $this->sendResponse($tenderMasterReferred->toArray(), 'Tender Master Referred saved successfully');
+        return $this->sendResponse($tenderMasterReferred->toArray(), trans('custom.tender_master_referred_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderMasterReferredAPIController extends AppBaseController
         $tenderMasterReferred = $this->tenderMasterReferredRepository->findWithoutFail($id);
 
         if (empty($tenderMasterReferred)) {
-            return $this->sendError('Tender Master Referred not found');
+            return $this->sendError(trans('custom.tender_master_referred_not_found'));
         }
 
-        return $this->sendResponse($tenderMasterReferred->toArray(), 'Tender Master Referred retrieved successfully');
+        return $this->sendResponse($tenderMasterReferred->toArray(), trans('custom.tender_master_referred_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderMasterReferredAPIController extends AppBaseController
         $tenderMasterReferred = $this->tenderMasterReferredRepository->findWithoutFail($id);
 
         if (empty($tenderMasterReferred)) {
-            return $this->sendError('Tender Master Referred not found');
+            return $this->sendError(trans('custom.tender_master_referred_not_found'));
         }
 
         $tenderMasterReferred = $this->tenderMasterReferredRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMasterReferred->toArray(), 'TenderMasterReferred updated successfully');
+        return $this->sendResponse($tenderMasterReferred->toArray(), trans('custom.tendermasterreferred_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderMasterReferredAPIController extends AppBaseController
         $tenderMasterReferred = $this->tenderMasterReferredRepository->findWithoutFail($id);
 
         if (empty($tenderMasterReferred)) {
-            return $this->sendError('Tender Master Referred not found');
+            return $this->sendError(trans('custom.tender_master_referred_not_found'));
         }
 
         $tenderMasterReferred->delete();

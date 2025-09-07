@@ -90,7 +90,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $this->itemReturnDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemReturnDetails = $this->itemReturnDetailsRepository->all();
 
-        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details retrieved successfully');
+        return $this->sendResponse($itemReturnDetails->toArray(), trans('custom.item_return_details_retrieved_successfully'));
     }
 
     /**
@@ -142,7 +142,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $itemReturn = ItemReturnMaster::where('itemReturnAutoID', $input['itemReturnAutoID'])->first();
 
         if (empty($itemReturn)) {
-            return $this->sendError('Item Return not found', 500);
+            return $this->sendError(trans('custom.item_return_not_found'), 500);
         }
 
         $validator = \Validator::make($itemReturn->toArray(), [
@@ -158,7 +158,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         if ($itemReturn->wareHouseLocation) {
             $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemReturn->wareHouseLocation)->first();
             if (empty($wareHouse)) {
-                return $this->sendError('Warehouse not found', 500);
+                return $this->sendError(trans('custom.warehouse_not_found'), 500);
             }
             if ($wareHouse->isActive == 0) {
                 return $this->sendError('Please select an active warehouse.', 500);
@@ -170,7 +170,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         if ($itemReturn->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($itemReturn->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found',500);
+                return $this->sendError(trans('custom.department_not_found'),500);
             }
 
             if ($checkDepartmentActive->isActive == 0) {
@@ -190,7 +190,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($itemAssign)) {
-            return $this->sendError('Item not found', 500);
+            return $this->sendError(trans('custom.item_not_found'), 500);
         }
 
         $input['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
@@ -317,7 +317,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         //}
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->create($input);
-        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details saved successfully');
+        return $this->sendResponse($itemReturnDetails->toArray(), trans('custom.item_return_details_saved_successfully'));
     }
 
     /**
@@ -364,10 +364,10 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetails)) {
-            return $this->sendError('Item Return Details not found');
+            return $this->sendError(trans('custom.item_return_details_not_found'));
         }
 
-        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details retrieved successfully');
+        return $this->sendResponse($itemReturnDetails->toArray(), trans('custom.item_return_details_retrieved_successfully'));
     }
 
     /**
@@ -431,13 +431,13 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetails)) {
-            return $this->sendError('Item Return Details not found');
+            return $this->sendError(trans('custom.item_return_details_not_found'));
         }
 
         $itemReturnMaster = ItemReturnMaster::find($input['itemReturnAutoID']);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return not found');
+            return $this->sendError(trans('custom.item_return_not_found'));
         }
 
         $isse_code = $input['issueCodeSystem'];
@@ -451,7 +451,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $item_issue = ItemIssueMaster::find($isse_code);
 
             if (empty($item_issue)) {
-                return $this->sendError('Item Issue not found');
+                return $this->sendError(trans('custom.item_issue_not_found'));
             }
             $isManufacturing = WarehouseMaster::where('wareHouseSystemCode', $item_issue->wareHouseFrom)->where('manufacturingYN', 1)->first();
 
@@ -499,7 +499,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
                 ->first();
             if (empty($unitConvention)) {
-                return $this->sendError('Unit Convention not found', 500);
+                return $this->sendError(trans('custom.unit_convention_not_found'), 500);
             }
 
             if ($unitConvention) {
@@ -529,7 +529,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 $input['qtyIssued'] = 0;
                 $input['qtyIssuedDefaultMeasure'] = 0;
             } else {
-                return $this->sendError('Materiel Issue not found', 500);
+                return $this->sendError(trans('custom.materiel_issue_not_found'), 500);
             }
         }
 
@@ -561,7 +561,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
        
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($itemReturnDetails->toArray(), 'ItemReturnDetails updated successfully');
+        return $this->sendResponse($itemReturnDetails->toArray(), trans('custom.itemreturndetails_updated_successfully'));
     }
 
     /**
@@ -608,13 +608,13 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetails)) {
-            return $this->sendError('Item Return Details not found');
+            return $this->sendError(trans('custom.item_return_details_not_found'));
         }
 
         $itemReturn = ItemReturnMaster::where('itemReturnAutoID', $itemReturnDetails->itemReturnAutoID)->first();
 
         if (empty($itemReturn)) {
-            return $this->sendError('Materiel return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found'));
         }
 
         if ($itemReturnDetails->trackingType == 2) {
@@ -624,7 +624,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                                                          ->first();
 
             if ($validateSubProductSold) {
-                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
             }
 
             $subProduct = DocumentSubProduct::where('documentSystemID', $itemReturn->documentSystemID)
@@ -652,7 +652,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         $itemReturnDetails->delete();
 
-        return $this->sendResponse($id, 'Item Return Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_return_details_deleted_successfully'));
     }
 
     /**
@@ -670,7 +670,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $itemReturnMaster = ItemReturnMaster::find($rId);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return not found');
+            return $this->sendError(trans('custom.item_return_not_found'));
         }
 
         $items = ItemReturnDetails::where('itemReturnAutoID', $rId)
@@ -706,7 +706,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($items->toArray(), 'Material Return Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.material_return_details_retrieved_successfully'));
     }
 
     /**
@@ -737,7 +737,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 }

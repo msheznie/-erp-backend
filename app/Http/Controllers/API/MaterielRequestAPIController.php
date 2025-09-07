@@ -128,7 +128,7 @@ class MaterielRequestAPIController extends AppBaseController
         $this->materielRequestRepository->pushCriteria(new RequestCriteria($request));
         $this->materielRequestRepository->pushCriteria(new LimitOffsetCriteria($request));
         $materielRequests = $this->materielRequestRepository->all();
-        return $this->sendResponse($materielRequests->toArray(), 'Materiel Requests retrieved successfully');
+        return $this->sendResponse($materielRequests->toArray(), trans('custom.materiel_requests_retrieved_successfully'));
     }
 
     /**
@@ -446,7 +446,7 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequests = $this->materielRequestRepository->create($input);
 
         DB::commit();
-        return $this->sendResponse($materielRequests->toArray(), 'Materiel Request saved successfully');
+        return $this->sendResponse($materielRequests->toArray(), trans('custom.materiel_request_saved_successfully'));
     }
 
     /**
@@ -493,10 +493,10 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = $this->materielRequestRepository->with(['segment_by','created_by','confirmed_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
+        return $this->sendResponse($materielRequest->toArray(), trans('custom.materiel_request_retrieved_successfully'));
     }
 
     /**
@@ -558,7 +558,7 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = $this->materielRequestRepository->findWithoutFail($id);
 
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -571,7 +571,7 @@ class MaterielRequestAPIController extends AppBaseController
         if($materielRequest->location != $input['location']){
             $checkWareHouseActive = WarehouseMaster::find($input['location']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('Location not found');
+                return $this->sendError(trans('custom.location_not_found'));
             }
 
             if($checkWareHouseActive->isActive == 0){
@@ -670,12 +670,12 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = $this->materielRequestRepository->findWithoutFail($id);
 
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
         $materielRequest->delete();
 
-        return $this->sendResponse($id, 'Materiel Request deleted successfully');
+        return $this->sendResponse($id, trans('custom.materiel_request_deleted_successfully'));
     }
 
     /**
@@ -762,7 +762,7 @@ class MaterielRequestAPIController extends AppBaseController
             'allowPRfromMR' => $allowPRfromMR
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -779,10 +779,10 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequest = $this->materielRequestRepository->getAudit($id);
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
+        return $this->sendResponse($materielRequest->toArray(), trans('custom.materiel_request_retrieved_successfully'));
     }
 
     public function printMaterielRequest(Request $request)
@@ -791,7 +791,7 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = $this->materielRequestRepository->getAudit($id);
 
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
         $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
@@ -818,19 +818,19 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = MaterielRequest::find($requestID);
         $emails = array();
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
         if ($materielRequest->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Request its already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_request_its_already_partial'));
         }
 
         if ($materielRequest->approved == -1) {
-            return $this->sendError('You cannot reopen this Request its already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_request_its_already_fully_a'));
         }
 
         if ($materielRequest->ConfirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Request, its not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_request_its_not_confirmed'));
         }
 
         // updating fields
@@ -909,7 +909,7 @@ class MaterielRequestAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($materielRequest->documentSystemID,$requestID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($materielRequest->toArray(), 'Request reopened successfully');
+        return $this->sendResponse($materielRequest->toArray(), trans('custom.request_reopened_successfully'));
     }
 
     public function createMaterialAPI(CreateMaterielRequestAPIRequest $request)
@@ -1151,7 +1151,7 @@ class MaterielRequestAPIController extends AppBaseController
             }
             DB::commit();
 
-            return $this->sendResponse($errors, 'Materiel Request saved successfully');
+            return $this->sendResponse($errors, trans('custom.materiel_request_saved_successfully'));
         }
         catch (\Exception $exception) {
             DB::rollBack();
@@ -1167,12 +1167,12 @@ class MaterielRequestAPIController extends AppBaseController
 
         $itemRequest = $this->materielRequestRepository->find($id);
         if (empty($itemRequest)) {
-            return $this->sendError('Request not found');
+            return $this->sendError(trans('custom.request_not_found'));
         }
 
 
         if ($itemRequest->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this request');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_request'));
         }
 
         $itemRequestArray = $itemRequest->toArray();
@@ -1223,7 +1223,7 @@ class MaterielRequestAPIController extends AppBaseController
             $this->materielRequestRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($itemRequest->toArray(), 'Request Amend successfully');
+        return $this->sendResponse($itemRequest->toArray(), trans('custom.request_amend_successfully'));
     }
 
     public function checkPurcahseRequestExist($id) {
@@ -1238,7 +1238,7 @@ class MaterielRequestAPIController extends AppBaseController
                     'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID,
                     'purchaseReq' => ($materielRequest->purchase_requests->first()->purchase_request) ? $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode: ""
                 ];
-                return $this->sendResponse($data, 'Purchase request received successfully');
+                return $this->sendResponse($data, trans('custom.purchase_request_received_successfully'));
             }else {
                 $data = [
                     'status' => false,
@@ -1259,19 +1259,19 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest = MaterielRequest::find($requestID);
 
         if (empty($materielRequest)) {
-            return $this->sendError('Materiel Request not found');
+            return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
         if ($materielRequest->cancelledYN == -1) {
-            return $this->sendError('You cannot cancel this request as it is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_request_as_it_is_already_ca'));
         }
 
         if(count($materielRequest->materialIssue) > 0) {
-            return $this->sendError('Cannot cancel. Materiel Issue is created for this request');
+            return $this->sendError(trans('custom.cannot_cancel_materiel_issue_is_created_for_this_r'));
         }
 
         if(count($materielRequest->purchase_requests) > 0) {
-            return $this->sendError('Cannot cancel. Purchase Request is created for this request');
+            return $this->sendError(trans('custom.cannot_cancel_purchase_request_is_created_for_this'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -1327,7 +1327,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
         CancelDocument::sendEmail($input);
 
-        return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
+        return $this->sendResponse($materielRequest, trans('custom.materiel_request_successfully_canceled'));
     }
 
 
@@ -1394,7 +1394,7 @@ class MaterielRequestAPIController extends AppBaseController
             $materielRequest->save();
         }
 
-        return $this->sendResponse($materielRequest,'Materiel Details Updated!');
+        return $this->sendResponse($materielRequest,trans('custom.materiel_details_updated'));
 
     }
 
@@ -1422,12 +1422,12 @@ class MaterielRequestAPIController extends AppBaseController
         $materialRequest = MaterielRequest::with(['confirmed_by'])->find($input['materialRequestID']);
 
         if (empty($materialRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
   
 
         if ($materialRequest->ClosedYN == 1) {
-            return $this->sendError('You cannot revert back this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close'));
         }
 
         $checkMr = ItemIssueMaster::where('reqDocID', $input['materialRequestID']);
@@ -1435,10 +1435,10 @@ class MaterielRequestAPIController extends AppBaseController
 
         if ($checkMr->count() > 0) {
 
-            return $this->sendError('Cannot return back to amend.The Material Request linked with following Material Issues', 500, ['data' => $checkMr->pluck('itemIssueCode')]);
+            return $this->sendError(trans('custom.cannot_return_back_to_amendthe_material_request_li'), 500, ['data' => $checkMr->pluck('itemIssueCode')]);
         }
 
-        return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
+        return $this->sendResponse($materialRequest, trans('custom.purchase_request_successfully_return_back_to_amend'));
     }
 
     public function returnMaterialRequest(Request $request)
@@ -1449,17 +1449,17 @@ class MaterielRequestAPIController extends AppBaseController
         $materialRequest = MaterielRequest::with(['confirmed_by'])->find($input['RequestID']);
 
         if (empty($materialRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
   
 
         if ($materialRequest->ClosedYN == 1) {
-            return $this->sendError('You cannot revert back this request as it is closed manually');
+            return $this->sendError(trans('custom.you_cannot_revert_back_this_request_as_it_is_close'));
         }
 
         $checkMr = ItemIssueMaster::where('reqDocID', $input['RequestID'])->count();
         if ($checkMr > 0) {
-            return $this->sendError('Cannot return back to amend. Itemissue is created for this request');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_itemissue_is_created_f'));
         }
 
 
@@ -1534,7 +1534,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         DocumentApproved::destroy($ids_to_delete);
 
-        return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
+        return $this->sendResponse($materialRequest, trans('custom.purchase_request_successfully_return_back_to_amend'));
     }
 
     public function getMaterialRequestRequestCodes(Request $request)
@@ -1633,7 +1633,7 @@ class MaterielRequestAPIController extends AppBaseController
                 }
                     $itemMasters = $itemMastersQuery->limit(100)->get();
 
-                return $this->sendResponse($itemMasters->toArray(), 'Data retrieved successfully');
+                return $this->sendResponse($itemMasters->toArray(), trans('custom.data_retrieved_successfully'));
                 break;
             default :
                 return [];
@@ -1646,13 +1646,13 @@ class MaterielRequestAPIController extends AppBaseController
         $input = $request->all();
 
         if(!isset($input['itemIssueAutoId']))
-            return $this->sendError('Materiel Issue id not found');
+            return $this->sendError(trans('custom.materiel_issue_id_not_found'));
 
         if(!isset($input['itemSystemCode']))
-            return $this->sendError('Item id not found to link');
+            return $this->sendError(trans('custom.item_id_not_found_to_link'));
 
         if(!isset($input['companyId']))
-            return $this->sendError('Company Id not found');
+            return $this->sendError(trans('custom.company_id_not_found_1'));
 
         $itemIssueMaster =  ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoId'])->first();
         $materialRequestId = $input['requestID'];
@@ -1668,7 +1668,7 @@ class MaterielRequestAPIController extends AppBaseController
         $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
         $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
         if(!$itemCurrentCostAndQty)
-            return $this->sendError('Item details not found');
+            return $this->sendError(trans('custom.item_details_not_found'));
 
         return $this->sendResponse($itemCurrentCostAndQty,"Details reterived successfully!");
 
@@ -1681,7 +1681,7 @@ class MaterielRequestAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('material_request_item_upload_template/material_request_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('material_request_item_upload_template/material_request_item_upload_template.xlsx', 'material_request_item_upload_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -1696,7 +1696,7 @@ class MaterielRequestAPIController extends AppBaseController
 
             $materialRequest = MaterielRequest::where('RequestID', $input['requestID'])->first();
             if (empty($materialRequest)) {
-                return $this->sendError('Material Request not found', 500);
+                return $this->sendError(trans('custom.material_request_not_found'), 500);
             }
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -1725,18 +1725,18 @@ class MaterielRequestAPIController extends AppBaseController
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             if(empty($uniqueData)) {
-                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
             }
 
             $excelHeaders = array_keys(array_merge(...$uniqueData));
             $templateHeaders = ['item_code', 'item_description', 'qty', 'comment'];
             $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
             if ($unexpectedHeader) {
-                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
             }
 
             if ($materialRequest->cancelledYN == -1) {
-                return $this->sendError('This Purchase Order already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_purchase_order_already_closed_you_can_not_add'), 500);
             }
             if ($materialRequest->approved == -1) {
                 return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
@@ -1753,11 +1753,11 @@ class MaterielRequestAPIController extends AppBaseController
                 $db = isset($request->db) ? $request->db : "";
                 mrBulkUploadItem::dispatch(array_filter($record),($materialRequest->toArray()), $db, Auth::id());
             } else {
-                return $this->sendError('Upload failed due to changes made in the Excel template', 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
             }
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully_1'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

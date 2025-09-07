@@ -131,7 +131,7 @@ class DebitNoteAPIController extends AppBaseController
         $this->debitNoteRepository->pushCriteria(new LimitOffsetCriteria($request));
         $debitNotes = $this->debitNoteRepository->all();
 
-        return $this->sendResponse($debitNotes->toArray(), 'Debit Notes retrieved successfully');
+        return $this->sendResponse($debitNotes->toArray(), trans('custom.debit_notes_retrieved_successfully'));
     }
 
     /**
@@ -335,7 +335,7 @@ class DebitNoteAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found', 500);
+            return $this->sendError(trans('custom.company_not_found'), 500);
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
@@ -405,7 +405,7 @@ class DebitNoteAPIController extends AppBaseController
         
         $debitNotes = $this->debitNoteRepository->create($input);
 
-        return $this->sendResponse($debitNotes->toArray(), 'Debit Note saved successfully');
+        return $this->sendResponse($debitNotes->toArray(), trans('custom.debit_note_saved_successfully'));
     }
 
     /**
@@ -464,10 +464,10 @@ class DebitNoteAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
-        return $this->sendResponse($debitNote->toArray(), 'Debit Note retrieved successfully');
+        return $this->sendResponse($debitNote->toArray(), trans('custom.debit_note_retrieved_successfully'));
     }
 
     /**
@@ -596,11 +596,11 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if ($debitNote->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot edit.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
 
         if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
@@ -608,7 +608,7 @@ class DebitNoteAPIController extends AppBaseController
             $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
 
             if($detailsCount > 0){
-                return $this->sendError('You cannot change the currency.If you want to change Please delete all details and change it.', 500);
+                return $this->sendError(trans('custom.you_cannot_change_the_currencyif_you_want_to_chang'), 500);
             }
         }
 
@@ -898,7 +898,7 @@ class DebitNoteAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && $vatAmount > 0){
 
                 if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                 }
 
                 $outputChartOfAc = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -906,7 +906,7 @@ class DebitNoteAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -1023,7 +1023,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($policy, 'Debit note updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($policy, trans('custom.debit_note_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateDebitNoteAPIRequest $request)
@@ -1047,11 +1047,11 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if ($debitNote->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot edit.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
 
         if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
@@ -1059,7 +1059,7 @@ class DebitNoteAPIController extends AppBaseController
             $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
 
             if($detailsCount > 0){
-                return $this->sendError('You cannot change the currency.If you want to change Please delete all details and change it.', 500);
+                return $this->sendError(trans('custom.you_cannot_change_the_currencyif_you_want_to_chang'), 500);
             }
         }
 
@@ -1326,7 +1326,7 @@ class DebitNoteAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && $vatAmount > 0){
 
                 if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                 }
 
                 $outputChartOfAc = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -1334,7 +1334,7 @@ class DebitNoteAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -1400,7 +1400,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($debitNote, 'Debit note updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($debitNote, trans('custom.debit_note_updated_successfully'),1,$confirm['data'] ?? null);
 
     }
 
@@ -1429,17 +1429,17 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if ($debitNote->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot edit.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
         $details['type'] = $type;
 
         $debitNote = $this->debitNoteRepository->update($details, $id);
 
-        return $this->sendResponse($debitNote, 'Debit note updated successfully');
+        return $this->sendResponse($debitNote, trans('custom.debit_note_updated_successfully'));
 
     }
 
@@ -1487,12 +1487,12 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         $debitNote->delete();
 
-        return $this->sendResponse($id, 'Debit Note deleted successfully');
+        return $this->sendResponse($id, trans('custom.debit_note_deleted_successfully'));
     }
 
     public function debitNoteLocalUpdate($id,Request $request){
@@ -1565,10 +1565,10 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote = $this->debitNoteRepository->getAudit($id);
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
-        return $this->sendResponse($debitNote, 'Data retrieved successfully');
+        return $this->sendResponse($debitNote, trans('custom.data_retrieved_successfully'));
     }
 
     public function getAllDebitNotes(Request $request)
@@ -1685,7 +1685,7 @@ class DebitNoteAPIController extends AppBaseController
             'currency' => $currency,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -1929,19 +1929,19 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
         $emails = array();
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if ($debitNote->approved == -1) {
-            return $this->sendError('You cannot reopen this Debit Note it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_debit_note_it_is_already_fu'));
         }
 
         if ($debitNote->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Debit Note it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_debit_note_it_is_already_pa'));
         }
 
         if ($debitNote->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Debit Note, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_debit_note_it_is_not_confir'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -2011,7 +2011,7 @@ class DebitNoteAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($debitNote->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($debitNote->toArray(), 'Debit Note reopened successfully');
+        return $this->sendResponse($debitNote->toArray(), trans('custom.debit_note_reopened_successfully'));
     }
 
     public function printDebitNote(Request $request)
@@ -2021,7 +2021,7 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote = $this->debitNoteRepository->getAudit($id);
 
         if (empty($debitNote)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         $debitNote->docRefNo = \Helper::getCompanyDocRefNo($debitNote->companySystemID, $debitNote->documentSystemID);
@@ -2129,7 +2129,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNoteMaster = DebitNote::find($debitNoteAutoID);
         if (empty($debitNoteMaster)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         $detail = DB::select('SELECT
@@ -2182,7 +2182,7 @@ UNION ALL
 	AND erp_matchdocumentmaster.companySystemID = ' . $companySystemID . '
 	AND erp_matchdocumentmaster.documentSystemID = ' . $debitNoteMaster->documentSystemID . '');
 
-        return $this->sendResponse($detail, 'payment status retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
 
     public function amendDebitNote(Request $request)
@@ -2193,11 +2193,11 @@ UNION ALL
 
         $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
         if (empty($debitNoteMasterData)) {
-            return $this->sendError('Debit Note not found');
+            return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
         if ($debitNoteMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this debit note');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_debit_note'));
         }
 
         $debitNoteArray = $debitNoteMasterData->toArray();
@@ -2247,7 +2247,7 @@ UNION ALL
             $debitNoteMasterData->save();
         }
 
-        return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend successfully');
+        return $this->sendResponse($debitNoteMasterData->toArray(), trans('custom.debit_note_amend_successfully'));
     }
 
     public function amendDebitNoteReview(Request $request)
@@ -2262,11 +2262,11 @@ UNION ALL
         $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
 
         if (empty($debitNoteMasterData)) {
-            return $this->sendError('Debit note not found');
+            return $this->sendError(trans('custom.debit_note_not_found_1'));
         }
 
         if ($debitNoteMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this debit note, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_debit_note_it'));
         }
 
         // checking document matched in payment
@@ -2276,7 +2276,7 @@ UNION ALL
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. debit note is added to payment');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_debit_note_is_added_to_1'));
         }
 
         // checking document matched in machmaster
@@ -2286,7 +2286,7 @@ UNION ALL
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. debit note is added to matching');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_debit_note_is_added_to'));
         }
 
 
@@ -2423,7 +2423,7 @@ UNION ALL
             AuditTrial::createAuditTrial($debitNoteMasterData->documentSystemID,$debitNoteAutoID,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend saved successfully');
+            return $this->sendResponse($debitNoteMasterData->toArray(), trans('custom.debit_note_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2450,7 +2450,7 @@ UNION ALL
             $printID = $matchedAmount->matchDocumentMasterAutoID;
         }
 
-        return $this->sendResponse($printID, 'Print data retrieved');
+        return $this->sendResponse($printID, trans('custom.print_data_retrieved'));
     }
 
     public function approvalPreCheckDebitNote(Request $request)

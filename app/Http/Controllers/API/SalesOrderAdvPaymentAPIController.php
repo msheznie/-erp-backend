@@ -75,7 +75,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $this->salesOrderAdvPaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesOrderAdvPayments = $this->salesOrderAdvPaymentRepository->all();
 
-        return $this->sendResponse($salesOrderAdvPayments->toArray(), 'Sales Order Adv Payments retrieved successfully');
+        return $this->sendResponse($salesOrderAdvPayments->toArray(), trans('custom.sales_order_adv_payments_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $salesOrder = QuotationMaster::find($input['soID']);
 
         if (empty($salesOrder)) {
-            return $this->sendError('Sales Order not found');
+            return $this->sendError(trans('custom.sales_order_not_found'));
         }
 
         if (!isset($input['comAmount']) || $input['comAmount'] == 0) {
@@ -202,7 +202,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
                 ->update(['isRequested' => 1]);
         }
 
-        return $this->sendResponse($salesOrderAdvPayment->toArray(), 'Sales Order Adv Payment saved successfully');
+        return $this->sendResponse($salesOrderAdvPayment->toArray(), trans('custom.sales_order_adv_payment_saved_successfully'));
     }
 
     /**
@@ -249,10 +249,10 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $salesOrderAdvPayment = $this->salesOrderAdvPaymentRepository->findWithoutFail($id);
 
         if (empty($salesOrderAdvPayment)) {
-            return $this->sendError('Sales Order Adv Payment not found');
+            return $this->sendError(trans('custom.sales_order_adv_payment_not_found'));
         }
 
-        return $this->sendResponse($salesOrderAdvPayment->toArray(), 'Sales Order Adv Payment retrieved successfully');
+        return $this->sendResponse($salesOrderAdvPayment->toArray(), trans('custom.sales_order_adv_payment_retrieved_successfully'));
     }
 
     /**
@@ -309,7 +309,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $salesOrderAdvPayment = $this->salesOrderAdvPaymentRepository->findWithoutFail($id);
 
         if (empty($salesOrderAdvPayment)) {
-            return $this->sendError('Sales Order Adv Payment not found');
+            return $this->sendError(trans('custom.sales_order_adv_payment_not_found'));
         }
 
         if (isset($input['dueDate']) && $input['dueDate']) {
@@ -318,7 +318,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
 
         $salesOrderAdvPayment = $this->salesOrderAdvPaymentRepository->update($input, $id);
 
-        return $this->sendResponse($salesOrderAdvPayment->toArray(), 'SalesOrderAdvPayment updated successfully');
+        return $this->sendResponse($salesOrderAdvPayment->toArray(), trans('custom.salesorderadvpayment_updated_successfully'));
     }
 
     /**
@@ -365,7 +365,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $salesOrderAdvPayment = $this->salesOrderAdvPaymentRepository->findWithoutFail($id);
 
         if (empty($salesOrderAdvPayment)) {
-            return $this->sendError('Sales Order Adv Payment not found');
+            return $this->sendError(trans('custom.sales_order_adv_payment_not_found'));
         }
 
         $salesOrderAdvPayment->delete();
@@ -381,13 +381,13 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $advancePayment = SalesOrderAdvPayment::where('soTermID', $input['paymentTermID'])->first();;
 
         if (empty($advancePayment)) {
-            return $this->sendError('Payment Terms not found');
+            return $this->sendError(trans('custom.payment_terms_not_found'));
         }
 
         $salesOrder = QuotationMaster::with(['segment'])->find($advancePayment->soID);
 
         if(empty($salesOrder)){
-            return $this->sendError('Sales Order not found');
+            return $this->sendError(trans('custom.sales_order_not_found'));
         }
 
         $currency = CurrencyMaster::where('currencyID', $salesOrder->transactionCurrencyID)->first();
@@ -401,7 +401,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
             'ptype' => $detailPaymentType
         );
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function getSoLogisticPrintDetail(Request $request)
@@ -415,7 +415,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
             $soPaymentTerms = SalesOrderAdvPayment::find($soAdvPaymentID);
 
             if(empty($soPaymentTerms)){
-                return $this->sendError('Advance Payment not found');
+                return $this->sendError(trans('custom.advance_payment_not_found'));
             }
 
             $soAdvPaymentID = $soPaymentTerms->soAdvPaymentID;
@@ -424,14 +424,14 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $items = SalesOrderAdvPayment::with(['company', 'currency', 'supplier_by'])->find($soAdvPaymentID);
 
         if(empty($soPaymentTerms)){
-            return $this->sendError('Advance Payment not found');
+            return $this->sendError(trans('custom.advance_payment_not_found'));
         }
 
 
         $salesOrder = QuotationMaster::find($items->poID);
 
         if (empty($salesOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $referenceDoc = CompanyDocumentAttachment::where('companySystemID', $salesOrder->companySystemID)
@@ -449,7 +449,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
             'docRef' => $newRefDocNew
         );
 
-        return $this->sendResponse($printData, 'Data retrieved successfully');
+        return $this->sendResponse($printData, trans('custom.data_retrieved_successfully'));
     }
 
 }

@@ -65,7 +65,7 @@ class POSSatgSalesReturnAPIController extends AppBaseController
         $this->pOSSatgSalesReturnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSatgSalesReturns = $this->pOSSatgSalesReturnRepository->all();
 
-        return $this->sendResponse($pOSSatgSalesReturns->toArray(), 'P O S Satg Sales Returns retrieved successfully');
+        return $this->sendResponse($pOSSatgSalesReturns->toArray(), trans('custom.p_o_s_satg_sales_returns_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSatgSalesReturnAPIController extends AppBaseController
 
         $pOSSatgSalesReturn = $this->pOSSatgSalesReturnRepository->create($input);
 
-        return $this->sendResponse($pOSSatgSalesReturn->toArray(), 'P O S Satg Sales Return saved successfully');
+        return $this->sendResponse($pOSSatgSalesReturn->toArray(), trans('custom.p_o_s_satg_sales_return_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSatgSalesReturnAPIController extends AppBaseController
         $pOSSatgSalesReturn = $this->pOSSatgSalesReturnRepository->findWithoutFail($id);
 
         if (empty($pOSSatgSalesReturn)) {
-            return $this->sendError('P O S Satg Sales Return not found');
+            return $this->sendError(trans('custom.p_o_s_satg_sales_return_not_found'));
         }
 
-        return $this->sendResponse($pOSSatgSalesReturn->toArray(), 'P O S Satg Sales Return retrieved successfully');
+        return $this->sendResponse($pOSSatgSalesReturn->toArray(), trans('custom.p_o_s_satg_sales_return_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSatgSalesReturnAPIController extends AppBaseController
         $pOSSatgSalesReturn = $this->pOSSatgSalesReturnRepository->findWithoutFail($id);
 
         if (empty($pOSSatgSalesReturn)) {
-            return $this->sendError('P O S Satg Sales Return not found');
+            return $this->sendError(trans('custom.p_o_s_satg_sales_return_not_found'));
         }
 
         $pOSSatgSalesReturn = $this->pOSSatgSalesReturnRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSatgSalesReturn->toArray(), 'POSSatgSalesReturn updated successfully');
+        return $this->sendResponse($pOSSatgSalesReturn->toArray(), trans('custom.possatgsalesreturn_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSatgSalesReturnAPIController extends AppBaseController
         $pOSSatgSalesReturn = $this->pOSSatgSalesReturnRepository->findWithoutFail($id);
 
         if (empty($pOSSatgSalesReturn)) {
-            return $this->sendError('P O S Satg Sales Return not found');
+            return $this->sendError(trans('custom.p_o_s_satg_sales_return_not_found'));
         }
 
         $pOSSatgSalesReturn->delete();

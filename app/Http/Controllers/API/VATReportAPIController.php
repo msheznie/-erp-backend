@@ -56,7 +56,7 @@ class VATReportAPIController extends AppBaseController
             'customers' => $customers,
             'suppliers' => $suppliers,
         );
-        return  $this->sendResponse($output,'Data retrieved successfully');
+        return  $this->sendResponse($output,trans('custom.data_retrieved_successfully'));
     }
 
     public function validateVATReport(Request $request){
@@ -126,7 +126,7 @@ class VATReportAPIController extends AppBaseController
             default:
                 return $this->sendError('No report ID found');
         }
-        return $this->sendResponse([],'Data Retrieved Successfully');
+        return $this->sendResponse([],trans('custom.data_retrieved_successfully_2'));
     }
 
     public function generateVATReport(Request $request){

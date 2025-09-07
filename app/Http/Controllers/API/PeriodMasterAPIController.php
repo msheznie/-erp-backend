@@ -65,7 +65,7 @@ class PeriodMasterAPIController extends AppBaseController
         $this->periodMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $periodMasters = $this->periodMasterRepository->all();
 
-        return $this->sendResponse($periodMasters->toArray(), 'Period Masters retrieved successfully');
+        return $this->sendResponse($periodMasters->toArray(), trans('custom.period_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PeriodMasterAPIController extends AppBaseController
 
         $periodMasters = $this->periodMasterRepository->create($input);
 
-        return $this->sendResponse($periodMasters->toArray(), 'Period Master saved successfully');
+        return $this->sendResponse($periodMasters->toArray(), trans('custom.period_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PeriodMasterAPIController extends AppBaseController
         $periodMaster = $this->periodMasterRepository->findWithoutFail($id);
 
         if (empty($periodMaster)) {
-            return $this->sendError('Period Master not found');
+            return $this->sendError(trans('custom.period_master_not_found'));
         }
 
-        return $this->sendResponse($periodMaster->toArray(), 'Period Master retrieved successfully');
+        return $this->sendResponse($periodMaster->toArray(), trans('custom.period_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PeriodMasterAPIController extends AppBaseController
         $periodMaster = $this->periodMasterRepository->findWithoutFail($id);
 
         if (empty($periodMaster)) {
-            return $this->sendError('Period Master not found');
+            return $this->sendError(trans('custom.period_master_not_found'));
         }
 
         $periodMaster = $this->periodMasterRepository->update($input, $id);
 
-        return $this->sendResponse($periodMaster->toArray(), 'PeriodMaster updated successfully');
+        return $this->sendResponse($periodMaster->toArray(), trans('custom.periodmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class PeriodMasterAPIController extends AppBaseController
         $periodMaster = $this->periodMasterRepository->findWithoutFail($id);
 
         if (empty($periodMaster)) {
-            return $this->sendError('Period Master not found');
+            return $this->sendError(trans('custom.period_master_not_found'));
         }
 
         $periodMaster->delete();
 
-        return $this->sendResponse($id, 'Period Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.period_master_deleted_successfully'));
     }
 }

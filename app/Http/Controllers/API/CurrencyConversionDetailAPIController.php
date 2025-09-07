@@ -68,7 +68,7 @@ class CurrencyConversionDetailAPIController extends AppBaseController
         $this->currencyConversionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyConversionDetails = $this->currencyConversionDetailRepository->all();
 
-        return $this->sendResponse($currencyConversionDetails->toArray(), 'Currency Conversion Details retrieved successfully');
+        return $this->sendResponse($currencyConversionDetails->toArray(), trans('custom.currency_conversion_details_retrieved_successfully'));
     }
 
     /**
@@ -115,7 +115,7 @@ class CurrencyConversionDetailAPIController extends AppBaseController
 
         $currencyConversionDetail = $this->currencyConversionDetailRepository->create($input);
 
-        return $this->sendResponse($currencyConversionDetail->toArray(), 'Currency Conversion Detail saved successfully');
+        return $this->sendResponse($currencyConversionDetail->toArray(), trans('custom.currency_conversion_detail_saved_successfully'));
     }
 
     /**
@@ -162,10 +162,10 @@ class CurrencyConversionDetailAPIController extends AppBaseController
         $currencyConversionDetail = $this->currencyConversionDetailRepository->findWithoutFail($id);
 
         if (empty($currencyConversionDetail)) {
-            return $this->sendError('Currency Conversion Detail not found');
+            return $this->sendError(trans('custom.currency_conversion_detail_not_found'));
         }
 
-        return $this->sendResponse($currencyConversionDetail->toArray(), 'Currency Conversion Detail retrieved successfully');
+        return $this->sendResponse($currencyConversionDetail->toArray(), trans('custom.currency_conversion_detail_retrieved_successfully'));
     }
 
     /**
@@ -306,7 +306,7 @@ class CurrencyConversionDetailAPIController extends AppBaseController
         $currencyConversionDetail = $this->currencyConversionDetailRepository->findWithoutFail($id);
 
         if (empty($currencyConversionDetail)) {
-            return $this->sendError('Currency Conversion Detail not found');
+            return $this->sendError(trans('custom.currency_conversion_detail_not_found'));
         }
 
         $currencyConversionDetail->delete();

@@ -65,7 +65,7 @@ class FreeBillingMasterPerformaAPIController extends AppBaseController
         $this->freeBillingMasterPerformaRepository->pushCriteria(new LimitOffsetCriteria($request));
         $freeBillingMasterPerformas = $this->freeBillingMasterPerformaRepository->all();
 
-        return $this->sendResponse($freeBillingMasterPerformas->toArray(), 'Free Billing Master Performas retrieved successfully');
+        return $this->sendResponse($freeBillingMasterPerformas->toArray(), trans('custom.free_billing_master_performas_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FreeBillingMasterPerformaAPIController extends AppBaseController
 
         $freeBillingMasterPerformas = $this->freeBillingMasterPerformaRepository->create($input);
 
-        return $this->sendResponse($freeBillingMasterPerformas->toArray(), 'Free Billing Master Performa saved successfully');
+        return $this->sendResponse($freeBillingMasterPerformas->toArray(), trans('custom.free_billing_master_performa_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FreeBillingMasterPerformaAPIController extends AppBaseController
         $freeBillingMasterPerforma = $this->freeBillingMasterPerformaRepository->findWithoutFail($id);
 
         if (empty($freeBillingMasterPerforma)) {
-            return $this->sendError('Free Billing Master Performa not found');
+            return $this->sendError(trans('custom.free_billing_master_performa_not_found'));
         }
 
-        return $this->sendResponse($freeBillingMasterPerforma->toArray(), 'Free Billing Master Performa retrieved successfully');
+        return $this->sendResponse($freeBillingMasterPerforma->toArray(), trans('custom.free_billing_master_performa_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FreeBillingMasterPerformaAPIController extends AppBaseController
         $freeBillingMasterPerforma = $this->freeBillingMasterPerformaRepository->findWithoutFail($id);
 
         if (empty($freeBillingMasterPerforma)) {
-            return $this->sendError('Free Billing Master Performa not found');
+            return $this->sendError(trans('custom.free_billing_master_performa_not_found'));
         }
 
         $freeBillingMasterPerforma = $this->freeBillingMasterPerformaRepository->update($input, $id);
 
-        return $this->sendResponse($freeBillingMasterPerforma->toArray(), 'FreeBillingMasterPerforma updated successfully');
+        return $this->sendResponse($freeBillingMasterPerforma->toArray(), trans('custom.freebillingmasterperforma_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class FreeBillingMasterPerformaAPIController extends AppBaseController
         $freeBillingMasterPerforma = $this->freeBillingMasterPerformaRepository->findWithoutFail($id);
 
         if (empty($freeBillingMasterPerforma)) {
-            return $this->sendError('Free Billing Master Performa not found');
+            return $this->sendError(trans('custom.free_billing_master_performa_not_found'));
         }
 
         $freeBillingMasterPerforma->delete();
 
-        return $this->sendResponse($id, 'Free Billing Master Performa deleted successfully');
+        return $this->sendResponse($id, trans('custom.free_billing_master_performa_deleted_successfully'));
     }
 }

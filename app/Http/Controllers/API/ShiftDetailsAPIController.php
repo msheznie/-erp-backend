@@ -152,7 +152,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $this->shiftDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $shiftDetails = $this->shiftDetailsRepository->all();
 
-        return $this->sendResponse($shiftDetails->toArray(), 'Shift Details retrieved successfully');
+        return $this->sendResponse($shiftDetails->toArray(), trans('custom.shift_details_retrieved_successfully'));
     }
 
     /**
@@ -221,7 +221,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                         ->first();
 
         if(!empty($counterCheck)){
-            return $this->sendError('Already a shift is going on with counter [ '.$counterCheck->counter->counterCode.' ] by ' .$counterCheck->user->empName,500);
+            return $this->sendError(trans('custom.already_a_shift_is_going_on_with_counter').$counterCheck->counter->counterCode.' ] by ' .$counterCheck->user->empName,500);
         }
 
         $shift = ShiftDetails::where('isClosed',0)
@@ -231,14 +231,14 @@ class ShiftDetailsAPIController extends AppBaseController
                             ->first();
 
         if(!empty($shift)){
-            return $this->sendError('You cannot start new shift, Already a shift is going on with counter [ '.$shift->counter->counterCode.' ]',500);
+            return $this->sendError(trans('custom.you_cannot_start_new_shift_already_a_shift_is_goin').$shift->counter->counterCode.' ]',500);
         }
 
         $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
 
         $company  = Company::with(['localcurrency','reportingcurrency'])->find($input['companyID']);
         if(empty($company)){
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['empID'] = $employee->employeeSystemID;
@@ -282,8 +282,8 @@ class ShiftDetailsAPIController extends AppBaseController
         $input['timestamp'] = now();
 
         $shiftDetails = $this->shiftDetailsRepository->create($input);
-        //return $this->sendResponse($input, 'Shift Details saved successfully');
-        return $this->sendResponse($shiftDetails->toArray(), 'Shift Details saved successfully');
+        //return $this->sendResponse($input, trans('custom.shift_details_saved_successfully'));
+        return $this->sendResponse($shiftDetails->toArray(), trans('custom.shift_details_saved_successfully'));
     }
 
     /**
@@ -330,10 +330,10 @@ class ShiftDetailsAPIController extends AppBaseController
         $shiftDetails = $this->shiftDetailsRepository->findWithoutFail($id);
 
         if (empty($shiftDetails)) {
-            return $this->sendError('Shift Details not found');
+            return $this->sendError(trans('custom.shift_details_not_found'));
         }
 
-        return $this->sendResponse($shiftDetails->toArray(), 'Shift Details retrieved successfully');
+        return $this->sendResponse($shiftDetails->toArray(), trans('custom.shift_details_retrieved_successfully'));
     }
 
     /**
@@ -396,7 +396,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $shiftDetails = $this->shiftDetailsRepository->findWithoutFail($id);
 
         if (empty($shiftDetails)) {
-            return $this->sendError('Shift not found');
+            return $this->sendError(trans('custom.shift_not_found'));
         }
 
 
@@ -437,7 +437,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $input['modifiedUserName'] = $employee->empName;
         $input['timestamp'] = now();
         $shiftDetails = $this->shiftDetailsRepository->update($input, $id);
-        return $this->sendResponse($shiftDetails->toArray(), 'ShiftDetails updated successfully');
+        return $this->sendResponse($shiftDetails->toArray(), trans('custom.shiftdetails_updated_successfully'));
     }
 
     /**
@@ -484,12 +484,12 @@ class ShiftDetailsAPIController extends AppBaseController
         $shiftDetails = $this->shiftDetailsRepository->findWithoutFail($id);
 
         if (empty($shiftDetails)) {
-            return $this->sendError('Shift Details not found');
+            return $this->sendError(trans('custom.shift_details_not_found'));
         }
 
         $shiftDetails->delete();
 
-        return $this->sendResponse($id, 'Shift Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.shift_details_deleted_successfully'));
     }
 
     public function getPosSourceShiftDetails(Request $request) {
@@ -514,7 +514,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $shiftDetailLabels = POSSOURCEShiftDetails::selectRaw('startTime ,endTime, createdUserName, posType')->where('shiftID', $shiftID)->first();
 
         if(empty($shiftDetailLabels)){
-            return $this->sendError('Shift Details not found',500);
+            return $this->sendError(trans('custom.shift_details_not_found'),500);
         }
 
         if($shiftDetailLabels->posType == 1) {
@@ -816,11 +816,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<=", $invoice->invoiceDate)->where('dateTo', ">=", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
                     if (!isset($companyFinancePeriod->companyFinancePeriodID) || is_null($companyFinancePeriod->companyFinancePeriodID)) {
-                        return $this->sendError('Financial period is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_period_is_not_found_or_inactive'), 500);
                     }
 
                     if (!isset($companyFinancePeriod->companyFinanceYearID) || is_null($companyFinancePeriod->companyFinanceYearID)) {
-                        return $this->sendError('Financial year is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_year_is_not_found_or_inactive'), 500);
                     }
 
                     $customerID = null;
@@ -882,7 +882,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $FYPeriodDateTo = $companyfinanceperiod->dateTo;
                     $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
                     if (empty($customer)) {
-                        return $this->sendError('Customer not found', 500);
+                        return $this->sendError(trans('custom.customer_not_found'), 500);
                     }
 
                     /*exchange added*/
@@ -961,7 +961,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
                     if ($input['bookingDate'] > $curentDate) {
-                        return $this->sendResponse('e', 'Document date cannot be greater than current date');
+                        return $this->sendResponse('e', trans('custom.document_date_cannot_be_greater_than_current_date'));
                     }
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
@@ -987,13 +987,13 @@ class ShiftDetailsAPIController extends AppBaseController
                             ->where('companySystemID', $companySystemID)
                             ->first();
                         if (empty($itemAssigned)) {
-                            return $this->sendError('Item not found');
+                            return $this->sendError(trans('custom.item_not_found'));
                         }
 
                         $customerInvoiceDirect = CustomerInvoiceDirect::find($input2['custInvoiceDirectAutoID']);
 
                         if (empty($customerInvoiceDirect)) {
-                            return $this->sendError('Customer Invoice Direct Not Found');
+                            return $this->sendError(trans('custom.customer_invoice_direct_not_found_1'));
                         }
 
                         $input2['itemCodeSystem'] = $itemAssigned->itemCodeSystem;
@@ -1047,7 +1047,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             $catalogDetail = CustomerCatalogDetail::find($input2['customerCatalogDetailID']);
 
                             if (empty($catalogDetail)) {
-                                return $this->sendError('Customer catalog Not Found');
+                                return $this->sendError(trans('custom.customer_catalog_not_found'));
                             }
 
                             if ($customerInvoiceDirect->custTransactionCurrencyID != $catalogDetail->localCurrencyID) {
@@ -1306,11 +1306,11 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                     if (!isset($getCompanyFinancePeriod->companyFinancePeriodID) || is_null($getCompanyFinancePeriod->companyFinancePeriodID)) {
-                        return $this->sendError('Financial period is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_period_is_not_found_or_inactive'), 500);
                     }
 
                     if (!isset($getCompanyFinanceYear->companyFinanceYearID) || is_null($getCompanyFinanceYear->companyFinanceYearID)) {
-                        return $this->sendError('Financial year is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_year_is_not_found_or_inactive'), 500);
                     }
 
 
@@ -1333,7 +1333,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $customer = CustomerMaster::find($customerID);
                     if (empty($customer)) {
-                        return $this->sendError('Selected customer not found on db', 500);
+                        return $this->sendError(trans('custom.selected_customer_not_found_on_db'), 500);
                     }
 
                     if (!$customer->custGLAccountSystemID) {
@@ -1477,7 +1477,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                                     $item = ItemMaster::find($cusInvDetail->itemCodeSystem);
                                     if(empty($item)){
-                                        return $this->sendError('Item not found',500);
+                                        return $this->sendError(trans('custom.item_not_found'),500);
                                     }
 
                                     $data = array(
@@ -1689,7 +1689,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
             } catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
-                return $this->sendError('Error Occurred' . $exception->getMessage() . 'Line :' . $exception->getLine());
+                return $this->sendError(trans('custom.error_occurred') . $exception->getMessage() . 'Line :' . $exception->getLine());
             }
 
             //sales return
@@ -1734,11 +1734,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<=", $invoice->menuSalesDate)->where('dateTo', ">=", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
                     if (!isset($companyFinancePeriod->companyFinancePeriodID) || is_null($companyFinancePeriod->companyFinancePeriodID)) {
-                        return $this->sendError('Financial period is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_period_is_not_found_or_inactive'), 500);
                     }
 
                     if (!isset($companyFinancePeriod->companyFinanceYearID) || is_null($companyFinancePeriod->companyFinanceYearID)) {
-                        return $this->sendError('Financial year is not found or inactive', 500);
+                        return $this->sendError(trans('custom.financial_year_is_not_found_or_inactive'), 500);
                     }
 
                     $customerID = null;
@@ -1839,7 +1839,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $customer = CustomerMaster::where('customerCodeSystem',  $input['customerID'])->first();
 
                     if(empty($customer)){
-                        return $this->sendError('Customer not found', 500);
+                        return $this->sendError(trans('custom.customer_not_found'), 500);
 
                     }
 
@@ -1915,7 +1915,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
                     if ($input['bookingDate'] > $curentDate) {
-                        return $this->sendResponse('e', 'Document date cannot be greater than current date');
+                        return $this->sendResponse('e', trans('custom.document_date_cannot_be_greater_than_current_date'));
                     }
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
@@ -2281,7 +2281,7 @@ class ShiftDetailsAPIController extends AppBaseController
             }
             catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
-                return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+                return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
             }
 
             $hasSales = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->where('isCreditSales', 0)->get();
@@ -2675,7 +2675,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $hasItems = POSInvoiceSource::where('shiftId', $shiftId)->get();
                 $hasItemsSR = POSSourceSalesReturn::where('shiftId', $shiftId)->get();
                 if ($hasItems->isEmpty() && $hasItemsSR->isEmpty()) {
-                    return $this->sendError('Invoices not found');
+                    return $this->sendError(trans('custom.invoices_not_found'));
                 }
 
                 $shiftLogArray = [
@@ -3237,7 +3237,7 @@ class ShiftDetailsAPIController extends AppBaseController
             if ($shiftDetails->posType == 2) {
                 $hasItems = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->get();
                 if ($hasItems->isEmpty()) {
-                    return $this->sendError('Invoices not found');
+                    return $this->sendError(trans('custom.invoices_not_found'));
                 }
                 $shiftLogArray = [
                     'startTime' => $shiftDetails->startTime,
@@ -3793,7 +3793,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $company = Company::with(['localcurrency','reportingcurrency'])->find($input['companyId']);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $currencyDenomination = CurrencyDenomination::where('currencyID',$company->localCurrencyID)
@@ -3817,7 +3817,7 @@ class ShiftDetailsAPIController extends AppBaseController
                              ->get();
 
         if(count($counters) == 0){
-            return $this->sendError('Counter not created. Please create a counter.');
+            return $this->sendError(trans('custom.counter_not_created_please_create_a_counter'));
         }
 
         $isShiftOpen = false;
@@ -3851,7 +3851,7 @@ class ShiftDetailsAPIController extends AppBaseController
             'payments' => $payments
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getPosMismatchEntries(Request $request)
@@ -3904,7 +3904,7 @@ class ShiftDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -3926,7 +3926,7 @@ class ShiftDetailsAPIController extends AppBaseController
         ->get();
 
      
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -3961,7 +3961,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
         POSGLEntries::insert($itemGLArraySR);
-        return $this->sendResponse($sum, 'Record retrieved successfully');
+        return $this->sendResponse($sum, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -3984,7 +3984,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->where('shiftID', $input['shiftId'])
                 ->get();
         }
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
 
     }
 }

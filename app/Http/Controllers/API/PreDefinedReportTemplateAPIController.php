@@ -71,7 +71,7 @@ class PreDefinedReportTemplateAPIController extends AppBaseController
         $this->preDefinedReportTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $preDefinedReportTemplates = $this->preDefinedReportTemplateRepository->all();
 
-        return $this->sendResponse($preDefinedReportTemplates->toArray(), 'Pre Defined Report Templates retrieved successfully');
+        return $this->sendResponse($preDefinedReportTemplates->toArray(), trans('custom.pre_defined_report_templates_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PreDefinedReportTemplateAPIController extends AppBaseController
 
         $preDefinedReportTemplate = $this->preDefinedReportTemplateRepository->create($input);
 
-        return $this->sendResponse($preDefinedReportTemplate->toArray(), 'Pre Defined Report Template saved successfully');
+        return $this->sendResponse($preDefinedReportTemplate->toArray(), trans('custom.pre_defined_report_template_saved_successfully'));
     }
 
     /**
@@ -165,10 +165,10 @@ class PreDefinedReportTemplateAPIController extends AppBaseController
         $preDefinedReportTemplate = $this->preDefinedReportTemplateRepository->findWithoutFail($id);
 
         if (empty($preDefinedReportTemplate)) {
-            return $this->sendError('Pre Defined Report Template not found');
+            return $this->sendError(trans('custom.pre_defined_report_template_not_found'));
         }
 
-        return $this->sendResponse($preDefinedReportTemplate->toArray(), 'Pre Defined Report Template retrieved successfully');
+        return $this->sendResponse($preDefinedReportTemplate->toArray(), trans('custom.pre_defined_report_template_retrieved_successfully'));
     }
 
     /**
@@ -225,12 +225,12 @@ class PreDefinedReportTemplateAPIController extends AppBaseController
         $preDefinedReportTemplate = $this->preDefinedReportTemplateRepository->findWithoutFail($id);
 
         if (empty($preDefinedReportTemplate)) {
-            return $this->sendError('Pre Defined Report Template not found');
+            return $this->sendError(trans('custom.pre_defined_report_template_not_found'));
         }
 
         $preDefinedReportTemplate = $this->preDefinedReportTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($preDefinedReportTemplate->toArray(), 'PreDefinedReportTemplate updated successfully');
+        return $this->sendResponse($preDefinedReportTemplate->toArray(), trans('custom.predefinedreporttemplate_updated_successfully'));
     }
 
     /**
@@ -277,12 +277,12 @@ class PreDefinedReportTemplateAPIController extends AppBaseController
         $preDefinedReportTemplate = $this->preDefinedReportTemplateRepository->findWithoutFail($id);
 
         if (empty($preDefinedReportTemplate)) {
-            return $this->sendError('Pre Defined Report Template not found');
+            return $this->sendError(trans('custom.pre_defined_report_template_not_found'));
         }
 
         $preDefinedReportTemplate->delete();
 
-        return $this->sendResponse($id, 'Pre Defined Report Template deleted successfully');
+        return $this->sendResponse($id, trans('custom.pre_defined_report_template_deleted_successfully'));
     }
 
 

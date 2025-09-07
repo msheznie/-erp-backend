@@ -126,7 +126,7 @@ class JvDetailAPIController extends AppBaseController
         $this->jvDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $jvDetails = $this->jvDetailRepository->all();
 
-        return $this->sendResponse($jvDetails->toArray(), 'Jv Details retrieved successfully');
+        return $this->sendResponse($jvDetails->toArray(), trans('custom.jv_details_retrieved_successfully'));
     }
 
     /**
@@ -260,10 +260,10 @@ class JvDetailAPIController extends AppBaseController
         $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
 
         if (empty($jvDetail)) {
-            return $this->sendError('Jv Detail not found');
+            return $this->sendError(trans('custom.jv_detail_not_found'));
         }
 
-        return $this->sendResponse($jvDetail->toArray(), 'Jv Detail retrieved successfully');
+        return $this->sendResponse($jvDetail->toArray(), trans('custom.jv_detail_retrieved_successfully'));
     }
 
     /**
@@ -389,7 +389,7 @@ class JvDetailAPIController extends AppBaseController
         $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
 
         if (empty($jvDetail)) {
-            return $this->sendError('Jv Detail not found');
+            return $this->sendError(trans('custom.jv_detail_not_found'));
         }
 
         $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
@@ -400,7 +400,7 @@ class JvDetailAPIController extends AppBaseController
 
         $jvDetail->delete();
 
-        return $this->sendResponse($id, 'Jv Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.jv_detail_deleted_successfully'));
     }
 
     public function getJournalVoucherDetails(Request $request)
@@ -413,7 +413,7 @@ class JvDetailAPIController extends AppBaseController
             ->orderBy('jvDetailAutoID', 'ASC')
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Jv Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.jv_detail_retrieved_successfully'));
     }
 
     public function getJournalVoucherContracts(Request $request)
@@ -439,7 +439,7 @@ class JvDetailAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($contract, 'Record retrived successfully');
+        return $this->sendResponse($contract, trans('custom.record_retrived_successfully'));
     }
 
     public function journalVoucherSalaryJVDetailStore(Request $request)
@@ -463,7 +463,7 @@ class JvDetailAPIController extends AppBaseController
         $checkItems = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
             ->count();
         if ($checkItems > 0) {
-            return $this->sendError('All ready items are added, You cannot add more.');
+            return $this->sendError(trans('custom.all_ready_items_are_added_you_cannot_add_more'));
         }
 
         if (empty($input['detailTable'])) {
@@ -473,7 +473,7 @@ class JvDetailAPIController extends AppBaseController
         $jvMasterData = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
 
@@ -553,7 +553,7 @@ class JvDetailAPIController extends AppBaseController
                 'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ' - ' .$payrollCode
             ]);
 
-        return $this->sendResponse('', 'JV Details saved successfully');
+        return $this->sendResponse('', trans('custom.jv_details_saved_successfully'));
 
     }
 
@@ -566,7 +566,7 @@ class JvDetailAPIController extends AppBaseController
         $jvMaster = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
@@ -589,7 +589,7 @@ class JvDetailAPIController extends AppBaseController
             $deleteHistoryDetails = ChartOfAccountAllocationDetailHistory::where('jvMasterAutoId', $jvMasterAutoId)->delete();
         }
 
-        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+        return $this->sendResponse($jvMasterAutoId, trans('custom.details_deleted_successfully'));
     }
 
     public function journalVoucherDeleteAllSJ(Request $request)
@@ -601,7 +601,7 @@ class JvDetailAPIController extends AppBaseController
         $jvMaster = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
@@ -643,11 +643,11 @@ class JvDetailAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+            return $this->sendResponse($jvMasterAutoId, trans('custom.details_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollback();
             //return $this->sendError($exception->getMessage() . 'Line :' . $exception->getLine());
-            return $this->sendError('Error occurred in detail deleting',500);
+            return $this->sendError(trans('custom.error_occurred_in_detail_deleting'),500);
         }
 
     }
@@ -668,13 +668,13 @@ class JvDetailAPIController extends AppBaseController
         $checkItems = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
             ->count();
         if ($checkItems > 0) {
-            return $this->sendError('All ready items are added, You cannot add more.');
+            return $this->sendError(trans('custom.all_ready_items_are_added_you_cannot_add_more'));
         }
 
         $jvMasterData = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
@@ -808,7 +808,7 @@ GROUP BY
                 'JVNarration' => 'Revenue Accrual for the month of '.$formattedDate
             ]);
 
-        return $this->sendResponse('', 'JV Details saved successfully');
+        return $this->sendResponse('', trans('custom.jv_details_saved_successfully'));
 
     }
 
@@ -821,7 +821,7 @@ GROUP BY
         $jvMaster = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
@@ -849,7 +849,7 @@ GROUP BY
 
         }
 
-        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+        return $this->sendResponse($jvMasterAutoId, trans('custom.details_deleted_successfully'));
     }
 
     public function journalVoucherPOAccrualJVDetailStore(Request $request)
@@ -869,7 +869,7 @@ GROUP BY
         $checkItems = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
             ->count();
         if ($checkItems > 0) {
-            return $this->sendError('All ready items are added, You cannot add more.');
+            return $this->sendError(trans('custom.all_ready_items_are_added_you_cannot_add_more'));
         }
 
         if (empty($input['detailTable'])) {
@@ -879,7 +879,7 @@ GROUP BY
         $jvMasterData = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $systemGlCodeScenario = SystemGlCodeScenario::where('slug','po-accrual-liability')->first();
@@ -1005,7 +1005,7 @@ GROUP BY
                 'JVNarration' => $narration
             ]);
 
-        return $this->sendResponse('', 'JV Details saved successfully');
+        return $this->sendResponse('', trans('custom.jv_details_saved_successfully'));
 
     }
 
@@ -1033,7 +1033,7 @@ GROUP BY
         $jvMaster = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
@@ -1055,7 +1055,7 @@ GROUP BY
         }
 
 
-        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+        return $this->sendResponse($jvMasterAutoId, trans('custom.details_deleted_successfully'));
     }
 
 
@@ -1067,7 +1067,7 @@ GROUP BY
         $data = array();
         $type = isset($input['type'])?$input['type']:'csv';
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -1127,7 +1127,7 @@ GROUP BY
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
         $messages = [
             'currencyID' => 'Currency is required',
@@ -1154,7 +1154,7 @@ GROUP BY
             $jvMaster->save();
             
             DB::commit();
-            return $this->sendResponse($jvDetails, 'Allocation made successfully');
+            return $this->sendResponse($jvDetails, trans('custom.allocation_made_successfully'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage() . ' Line Number ' . $exception->getLine(),500);

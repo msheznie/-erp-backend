@@ -42,7 +42,7 @@ class SupplierEvaluationController extends AppBaseController
         $this->SupplierEvaluationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluation = $this->SupplierEvaluationRepository->all();
 
-        return $this->sendResponse($supplierEvaluation->toArray(), 'Supplier Evaluation retrieved successfully');
+        return $this->sendResponse($supplierEvaluation->toArray(), trans('custom.supplier_evaluation_retrieved_successfully'));
     }
 
     /**
@@ -96,7 +96,7 @@ class SupplierEvaluationController extends AppBaseController
             }
         }
         DB::commit();
-        return $this->sendResponse($supplierEvaluation->toArray(), 'Supplier evaluation created successfully');
+        return $this->sendResponse($supplierEvaluation->toArray(), trans('custom.supplier_evaluation_created_successfully'));
     }
 
     /**
@@ -110,7 +110,7 @@ class SupplierEvaluationController extends AppBaseController
         $supplierEvaluation = SupplierEvaluation::where('id', $id)->first();
 
         if (empty($supplierEvaluation)) {
-            return $this->sendError('Supplier Evaluation not found');
+            return $this->sendError(trans('custom.supplier_evaluation_not_found'));
         }
 
         $supplierEvaluation['templateMaster'] = SupplierEvaluationTemplate::with(['company'])->where('id', $supplierEvaluation['evaluationTemplate'])->first();
@@ -130,7 +130,7 @@ class SupplierEvaluationController extends AppBaseController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $this->sendResponse($supplierEvaluation->toArray(), 'Supplier Evaluation retrieved successfully');
+        return $this->sendResponse($supplierEvaluation->toArray(), trans('custom.supplier_evaluation_retrieved_successfully'));
     }
 
     /**

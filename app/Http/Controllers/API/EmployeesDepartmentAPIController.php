@@ -64,7 +64,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $this->employeesDepartmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeesDepartments = $this->employeesDepartmentRepository->all();
 
-        return $this->sendResponse($employeesDepartments->toArray(), 'Employees Departments retrieved successfully');
+        return $this->sendResponse($employeesDepartments->toArray(), trans('custom.employees_departments_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         //$employeesDepartments = $this->employeesDepartmentRepository->create($input);
         $employeesDepartments = EmployeesDepartment::insert($input);
 
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 
     /**
@@ -138,10 +138,10 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
 
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
-        return $this->sendResponse($employeesDepartment->toArray(), 'Employees Department retrieved successfully');
+        return $this->sendResponse($employeesDepartment->toArray(), trans('custom.employees_department_retrieved_successfully'));
     }
 
     /**
@@ -161,12 +161,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
 
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $employeesDepartment = $this->employeesDepartmentRepository->update($input, $id);
 
-        return $this->sendResponse($employeesDepartment->toArray(), 'EmployeesDepartment updated successfully');
+        return $this->sendResponse($employeesDepartment->toArray(), trans('custom.employeesdepartment_updated_successfully'));
     }
 
     /**
@@ -182,7 +182,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         /** @var EmployeesDepartment $employeesDepartment */
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $emp_id = $employeesDepartment->employeeSystemID;
@@ -230,7 +230,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment->save();
 
-        return $this->sendResponse($id, 'Employees Department deleted successfully');
+        return $this->sendResponse($id, trans('custom.employees_department_deleted_successfully'));
     }
 
     public function getApprovalAccessRightsDatatable(Request $request)
@@ -353,16 +353,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $categories = FinanceItemCategoryMaster::all();
         $yesNoSelections = YesNoSelection::all();
         $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(), 'department' => $department, 'documents' => $documents, 'segments' => $segments, 'categories' => $categories, 'yesNoSelections' => $yesNoSelections);
-        return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
+        return $this->sendResponse($employeesDepartment, trans('custom.employees_department_retrieved_successfully'));
     }
 
     public function getDepartmentDocument(Request $request)
     {
         $document = DocumentMaster::where('departmentSystemID', $request['departmentSystemID'])->get();
         if (empty($document)) {
-            return $this->sendError('Document not found');
+            return $this->sendError(trans('custom.document_not_found'));
         }
-        return $this->sendResponse($document, 'Document retrieved successfully');
+        return $this->sendResponse($document, trans('custom.document_retrieved_successfully'));
     }
 
     function deleteAllAccessRights(Request $request)
@@ -408,7 +408,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->update(['removedYN' => 1, 'removedByEmpID' => $employeeData->empID, 'removedByEmpSystemID' => $employeeData->employeeSystemID, 'removedDate' => date("Y-m-d H:m:s")]);
 
 
-        return $this->sendResponse(array(), 'Employees Department deleted successfully');
+        return $this->sendResponse(array(), trans('custom.employees_department_deleted_successfully'));
     }
 
 
@@ -455,7 +455,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->update(['isActive' => $input['type'], 'activatedByEmpID' => $employeeData->empID, 'activatedByEmpSystemID' => $employeeData->employeeSystemID, 'activatedDate' => date("Y-m-d H:m:s")]);
 
 
-        return $this->sendResponse(array(), 'Employees Department deleted successfully');
+        return $this->sendResponse(array(), trans('custom.employees_department_deleted_successfully'));
     }
 
 
@@ -480,7 +480,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $employeesDepartments[] = EmployeesDepartment::insert($value);
             }
         }
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 
     public function getExistingApprovalAccessRights($input)
@@ -594,7 +594,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($input['employeesDepartmentsID']);
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $emp_id = $employeesDepartment->employeeSystemID;
@@ -635,7 +635,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment->save();
 
-        return $this->sendResponse($input['employeesDepartmentsID'], 'Employees updated successfully');
+        return $this->sendResponse($input['employeesDepartmentsID'], trans('custom.employees_updated_successfully'));
     }
 
     public function approvalMatrixReport(Request $request)
@@ -1266,6 +1266,6 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartments = EmployeesDepartment::insert($saveData);
 
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 }

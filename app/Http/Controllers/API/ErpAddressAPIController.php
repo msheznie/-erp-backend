@@ -49,7 +49,7 @@ class ErpAddressAPIController extends AppBaseController
         $this->erpAddressRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpAddresses = $this->erpAddressRepository->all();
 
-        return $this->sendResponse($erpAddresses->toArray(), 'Erp Addresses retrieved successfully');
+        return $this->sendResponse($erpAddresses->toArray(), trans('custom.erp_addresses_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class ErpAddressAPIController extends AppBaseController
 
         $erpAddresses = $this->erpAddressRepository->create($input);
 
-        return $this->sendResponse($erpAddresses->toArray(), 'Erp Address saved successfully');
+        return $this->sendResponse($erpAddresses->toArray(), trans('custom.erp_address_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class ErpAddressAPIController extends AppBaseController
         $erpAddress = $this->erpAddressRepository->findWithoutFail($id);
 
         if (empty($erpAddress)) {
-            return $this->sendError('Erp Address not found');
+            return $this->sendError(trans('custom.erp_address_not_found'));
         }
 
-        return $this->sendResponse($erpAddress->toArray(), 'Erp Address retrieved successfully');
+        return $this->sendResponse($erpAddress->toArray(), trans('custom.erp_address_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class ErpAddressAPIController extends AppBaseController
         $erpAddress = $this->erpAddressRepository->findWithoutFail($id);
 
         if (empty($erpAddress)) {
-            return $this->sendError('Erp Address not found');
+            return $this->sendError(trans('custom.erp_address_not_found'));
         }
 
         $erpAddress = $this->erpAddressRepository->update($input, $id);
 
-        return $this->sendResponse($erpAddress->toArray(), 'ErpAddress updated successfully');
+        return $this->sendResponse($erpAddress->toArray(), trans('custom.erpaddress_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class ErpAddressAPIController extends AppBaseController
         $erpAddress = $this->erpAddressRepository->findWithoutFail($id);
 
         if (empty($erpAddress)) {
-            return $this->sendError('Erp Address not found');
+            return $this->sendError(trans('custom.erp_address_not_found'));
         }
 
         $erpAddress->delete();
 
-        return $this->sendResponse($id, 'Erp Address deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_address_deleted_successfully'));
     }
 }

@@ -75,7 +75,7 @@ class GRVTypesAPIController extends AppBaseController
         $this->gRVTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gRVTypes = $this->gRVTypesRepository->all();
 
-        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types retrieved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), trans('custom.g_r_v_types_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class GRVTypesAPIController extends AppBaseController
 
         $gRVTypes = $this->gRVTypesRepository->create($input);
 
-        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types saved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), trans('custom.g_r_v_types_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class GRVTypesAPIController extends AppBaseController
         $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
         if (empty($gRVTypes)) {
-            return $this->sendError('G R V Types not found');
+            return $this->sendError(trans('custom.g_r_v_types_not_found'));
         }
 
-        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types retrieved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), trans('custom.g_r_v_types_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class GRVTypesAPIController extends AppBaseController
         $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
         if (empty($gRVTypes)) {
-            return $this->sendError('G R V Types not found');
+            return $this->sendError(trans('custom.g_r_v_types_not_found'));
         }
 
         $gRVTypes = $this->gRVTypesRepository->update($input, $id);
 
-        return $this->sendResponse($gRVTypes->toArray(), 'GRVTypes updated successfully');
+        return $this->sendResponse($gRVTypes->toArray(), trans('custom.grvtypes_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class GRVTypesAPIController extends AppBaseController
         $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
         if (empty($gRVTypes)) {
-            return $this->sendError('G R V Types not found');
+            return $this->sendError(trans('custom.g_r_v_types_not_found'));
         }
 
         $gRVTypes->delete();
 
-        return $this->sendResponse($id, 'G R V Types deleted successfully');
+        return $this->sendResponse($id, trans('custom.g_r_v_types_deleted_successfully'));
     }
 }

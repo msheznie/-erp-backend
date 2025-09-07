@@ -65,7 +65,7 @@ class ExampleTableTemplateAPIController extends AppBaseController
         $this->exampleTableTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $exampleTableTemplates = $this->exampleTableTemplateRepository->all();
 
-        return $this->sendResponse($exampleTableTemplates->toArray(), 'Example Table Templates retrieved successfully');
+        return $this->sendResponse($exampleTableTemplates->toArray(), trans('custom.example_table_templates_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ExampleTableTemplateAPIController extends AppBaseController
 
         $exampleTableTemplate = $this->exampleTableTemplateRepository->create($input);
 
-        return $this->sendResponse($exampleTableTemplate->toArray(), 'Example Table Template saved successfully');
+        return $this->sendResponse($exampleTableTemplate->toArray(), trans('custom.example_table_template_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ExampleTableTemplateAPIController extends AppBaseController
         $exampleTableTemplate = $this->exampleTableTemplateRepository->findWithoutFail($id);
 
         if (empty($exampleTableTemplate)) {
-            return $this->sendError('Example Table Template not found');
+            return $this->sendError(trans('custom.example_table_template_not_found'));
         }
 
-        return $this->sendResponse($exampleTableTemplate->toArray(), 'Example Table Template retrieved successfully');
+        return $this->sendResponse($exampleTableTemplate->toArray(), trans('custom.example_table_template_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ExampleTableTemplateAPIController extends AppBaseController
         $exampleTableTemplate = $this->exampleTableTemplateRepository->findWithoutFail($id);
 
         if (empty($exampleTableTemplate)) {
-            return $this->sendError('Example Table Template not found');
+            return $this->sendError(trans('custom.example_table_template_not_found'));
         }
 
         $exampleTableTemplate = $this->exampleTableTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($exampleTableTemplate->toArray(), 'ExampleTableTemplate updated successfully');
+        return $this->sendResponse($exampleTableTemplate->toArray(), trans('custom.exampletabletemplate_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ExampleTableTemplateAPIController extends AppBaseController
         $exampleTableTemplate = $this->exampleTableTemplateRepository->findWithoutFail($id);
 
         if (empty($exampleTableTemplate)) {
-            return $this->sendError('Example Table Template not found');
+            return $this->sendError(trans('custom.example_table_template_not_found'));
         }
 
         $exampleTableTemplate->delete();
@@ -289,7 +289,7 @@ class ExampleTableTemplateAPIController extends AppBaseController
         } else {
             $jsonData = " ";
         }
-        return $this->sendResponse($jsonData, 'Example Table Template retrieved successfully');
+        return $this->sendResponse($jsonData, trans('custom.example_table_template_retrieved_successfully'));
 
     }
 }

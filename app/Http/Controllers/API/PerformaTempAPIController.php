@@ -65,7 +65,7 @@ class PerformaTempAPIController extends AppBaseController
         $this->performaTempRepository->pushCriteria(new LimitOffsetCriteria($request));
         $performaTemps = $this->performaTempRepository->all();
 
-        return $this->sendResponse($performaTemps->toArray(), 'Performa Temps retrieved successfully');
+        return $this->sendResponse($performaTemps->toArray(), trans('custom.performa_temps_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PerformaTempAPIController extends AppBaseController
 
         $performaTemps = $this->performaTempRepository->create($input);
 
-        return $this->sendResponse($performaTemps->toArray(), 'Performa Temp saved successfully');
+        return $this->sendResponse($performaTemps->toArray(), trans('custom.performa_temp_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PerformaTempAPIController extends AppBaseController
         $performaTemp = $this->performaTempRepository->findWithoutFail($id);
 
         if (empty($performaTemp)) {
-            return $this->sendError('Performa Temp not found');
+            return $this->sendError(trans('custom.performa_temp_not_found'));
         }
 
-        return $this->sendResponse($performaTemp->toArray(), 'Performa Temp retrieved successfully');
+        return $this->sendResponse($performaTemp->toArray(), trans('custom.performa_temp_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PerformaTempAPIController extends AppBaseController
         $performaTemp = $this->performaTempRepository->findWithoutFail($id);
 
         if (empty($performaTemp)) {
-            return $this->sendError('Performa Temp not found');
+            return $this->sendError(trans('custom.performa_temp_not_found'));
         }
 
         $performaTemp = $this->performaTempRepository->update($input, $id);
 
-        return $this->sendResponse($performaTemp->toArray(), 'PerformaTemp updated successfully');
+        return $this->sendResponse($performaTemp->toArray(), trans('custom.performatemp_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class PerformaTempAPIController extends AppBaseController
         $performaTemp = $this->performaTempRepository->findWithoutFail($id);
 
         if (empty($performaTemp)) {
-            return $this->sendError('Performa Temp not found');
+            return $this->sendError(trans('custom.performa_temp_not_found'));
         }
 
         $performaTemp->delete();
 
-        return $this->sendResponse($id, 'Performa Temp deleted successfully');
+        return $this->sendResponse($id, trans('custom.performa_temp_deleted_successfully'));
     }
 }

@@ -64,7 +64,7 @@ class SRMSupplierValuesAPIController extends AppBaseController
         $this->sRMSupplierValuesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->all();
 
-        return $this->sendResponse($sRMSupplierValues->toArray(), 'S R M Supplier Values retrieved successfully');
+        return $this->sendResponse($sRMSupplierValues->toArray(), trans('custom.s_r_m_supplier_values_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SRMSupplierValuesAPIController extends AppBaseController
 
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->create($input);
 
-        return $this->sendResponse($sRMSupplierValues->toArray(), 'S R M Supplier Values saved successfully');
+        return $this->sendResponse($sRMSupplierValues->toArray(), trans('custom.s_r_m_supplier_values_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SRMSupplierValuesAPIController extends AppBaseController
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->findWithoutFail($id);
 
         if (empty($sRMSupplierValues)) {
-            return $this->sendError('S R M Supplier Values not found');
+            return $this->sendError(trans('custom.s_r_m_supplier_values_not_found'));
         }
 
-        return $this->sendResponse($sRMSupplierValues->toArray(), 'S R M Supplier Values retrieved successfully');
+        return $this->sendResponse($sRMSupplierValues->toArray(), trans('custom.s_r_m_supplier_values_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SRMSupplierValuesAPIController extends AppBaseController
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->findWithoutFail($id);
 
         if (empty($sRMSupplierValues)) {
-            return $this->sendError('S R M Supplier Values not found');
+            return $this->sendError(trans('custom.s_r_m_supplier_values_not_found'));
         }
 
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->update($input, $id);
 
-        return $this->sendResponse($sRMSupplierValues->toArray(), 'SRMSupplierValues updated successfully');
+        return $this->sendResponse($sRMSupplierValues->toArray(), trans('custom.srmsuppliervalues_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SRMSupplierValuesAPIController extends AppBaseController
         $sRMSupplierValues = $this->sRMSupplierValuesRepository->findWithoutFail($id);
 
         if (empty($sRMSupplierValues)) {
-            return $this->sendError('S R M Supplier Values not found');
+            return $this->sendError(trans('custom.s_r_m_supplier_values_not_found'));
         }
 
         $sRMSupplierValues->delete();

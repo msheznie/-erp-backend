@@ -164,7 +164,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $this->customerInvoiceDirectRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceDirects = $this->customerInvoiceDirectRepository->all();
 
-        return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice Directs retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirects->toArray(), trans('custom.customer_invoice_directs_retrieved_successfully'));
     }
 
     /**
@@ -302,7 +302,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found');
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'));
         }
 
          
@@ -323,7 +323,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirect->toArray(), trans('custom.customer_invoice_direct_retrieved_successfully'));
     }
 
     /**
@@ -386,7 +386,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = CustomerInvoiceDirect::find($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found',500);
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'),500);
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
@@ -428,7 +428,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'), 500);
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
@@ -471,7 +471,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             if ($_post['custTransactionCurrencyID'] != $customerInvoiceDirect->custTransactionCurrencyID) {
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You cannot change the currency.', 500);
+                    return $this->sendError(trans('custom.invoice_details_exist_you_cannot_change_the_curren'), 500);
                 } else {
                     $myCurr = $_post['custTransactionCurrencyID'];
                     //$companyCurrency = \Helper::companyCurrency($customerInvoiceDirect->companySystemID);
@@ -548,7 +548,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkGrv)) {
-                return $this->sendError('Selected GRV is already assigned to ' . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
+                return $this->sendError(trans('custom.selected_grv_is_already_assigned_to') . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
             }
         } else {
             $input['customerGRVAutoID'] = null;
@@ -587,7 +587,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
             if (count($detail) > 0) {
-                return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
+                return $this->sendError(trans('custom.invoice_details_exist_you_cannot_change_the_custom'), 500);
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
@@ -654,14 +654,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (isset($input['serviceStartDate']) && isset($input['serviceEndDate']) && $input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             if (($_post['serviceStartDate'] > $_post['serviceEndDate'])) {
-                return $this->sendError('Service start date cannot be greater than service end date.', 500);
+                return $this->sendError(trans('custom.service_start_date_cannot_be_greater_than_service_'), 500);
             }
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['bookingDate'] > $curentDate) {
-            return $this->sendError('Document date cannot be greater than current date', 500);
+            return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
 
         if ($input['invoiceDueDate'] != '') {
@@ -797,7 +797,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
                 if (count($detail) == 0) {
-                    return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
+                    return $this->sendError(trans('custom.you_cannot_confirm_invoice_details_not_found'), 500);
                 } else {
 
                     if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {   // item sales invoice || From Delivery Note|| From Sales Order|| From Quotation
@@ -823,7 +823,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
 
                         if (count(array_unique($financeCategories)) > 1) {
-                            return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+                            return $this->sendError(trans('custom.multiple_finance_category_cannot_be_added_differen'),500);
                         }
 
                         foreach ($details as $item) {
@@ -831,11 +831,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
 
                             if ((!($item->financeGLcodebBSSystemID > 0)) && $item->itemFinanceCategoryID != 2) {
-                                return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                                return $this->sendError(trans('custom.bs_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             } elseif (!($item->financeGLcodePLSystemID > 0)) {
-                                return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                                return $this->sendError(trans('custom.cost_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             } elseif (!($item->financeGLcodeRevenueSystemID > 0)) {
-                                return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                                return $this->sendError(trans('custom.revenue_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             }
 
                             $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
@@ -936,11 +936,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             ->sum('amount');
 
                         if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                         }
 
                         if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                         }
 
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
@@ -959,7 +959,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         if (!$confirm["success"]) {
                             return $this->sendError($confirm["message"], 500);
                         } else {
-                            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                            return $this->sendResponse($customerInvoiceDirect->toArray(), trans('custom.customer_invoice_confirmed_successfully'));
                         }
 
 
@@ -1046,7 +1046,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         if (count($groupby) != 0) {
 
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
+                                return $this->sendError(trans('custom.you_cannot_continue_multiple_segment_or_contract_e_1'), 500);
                             } else {
 
                                 // VAT configuration validation
@@ -1056,7 +1056,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     ->sum('amount');
 
                                 if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                                 }
 
                                 $params = array('autoID' => $id,
@@ -1072,7 +1072,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                                     return $this->sendError($confirm["message"], 500);
                                 } else {
-                                    return $this->sendReponseWithDetails($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully',1,$confirm['data'] ?? null);
+                                    return $this->sendReponseWithDetails($customerInvoiceDirect->toArray(), trans('custom.customer_invoice_confirmed_successfully'),1,$confirm['data'] ?? null);
                                 }
                             }
                         } else {
@@ -1086,7 +1086,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         else {
             $this->customerInvoiceDirectRepository->update($_post, $id);
-            return $this->sendResponse($_post, 'Invoice Updated Successfully');
+            return $this->sendResponse($_post, trans('custom.invoice_updated_successfully_1'));
         }
     }
 
@@ -1111,7 +1111,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkGrv)) {
-                return $this->sendError('Selected GRV is already assigned to ' . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
+                return $this->sendError(trans('custom.selected_grv_is_already_assigned_to') . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
             }
         } else {
             $input['customerGRVAutoID'] = null;
@@ -1119,7 +1119,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(array_only($input, ['customerGRVAutoID']), $id);
 
-        return $this->sendResponse($customerInvoiceDirect, 'Invoice Updated Successfully');
+        return $this->sendResponse($customerInvoiceDirect, trans('custom.invoice_updated_successfully_1'));
     }
 
 
@@ -1167,12 +1167,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found');
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'));
         }
 
         $customerInvoiceDirect->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice Direct deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_invoice_direct_deleted_successfully'));
     }
 
     public function customerInvoiceLocalUpdate($id,Request $request) {
@@ -1277,7 +1277,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'), 500);
         }
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
@@ -1293,7 +1293,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
         
-        return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirect, trans('custom.customer_invoice_direct_retrieved_successfully'));
     }
 
     public function getCIUploadStatus(Request $request)
@@ -1301,7 +1301,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $output = UploadCustomerInvoice::where('companySystemID',$companyId)
                                                 ->where('uploadStatus',-1)->count();
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -1364,7 +1364,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'isEQOINVPolicyOn' => $isEQOINVPolicyOn
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function downloadCITemplate(Request $request){
@@ -1418,7 +1418,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function uploadCustomerInvoice(Request $request) {
         $input = $request->all();
         if($input['uploadComment']== ''){
-            return $this->sendError('Description is required',500);
+            return $this->sendError(trans('custom.description_is_required'),500);
         }
 
         if($input['excelUploadCustomerInvoice']== null){
@@ -1487,7 +1487,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             CustomerInvoiceUpload::dispatch($db, $uploadData);
 
             DB::commit();
-            return $this->sendResponse([], 'Customer Invoice uploaded successfully');
+            return $this->sendResponse([], trans('custom.customer_invoice_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1506,7 +1506,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                                   ->first();
 
         if ($checkStatus) {
-            return $this->sendResponse([], 'Customer Invoice can be edit successfully');
+            return $this->sendResponse([], trans('custom.customer_invoice_can_be_edit_successfully'));
         } else {
             return $this->sendError("Unable to edit customer invoice. Upload is currently in progress.");
         }
@@ -1547,11 +1547,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $uploadCustomerInvoiceObj = UploadCustomerInvoice::find($customerInvoiceUploadID);
 
         if(!isset($uploadCustomerInvoiceObj)) {
-            return $this->sendError('Customer Invoice Upload details not found');
+            return $this->sendError(trans('custom.customer_invoice_upload_details_not_found'));
         }
 
         if($uploadCustomerInvoiceObj->uploadStatus == -1) {
-            return $this->sendError('Upload in progress. Cannot be deleted.');
+            return $this->sendError(trans('custom.upload_in_progress_cannot_be_deleted'));
         }
 
         DB::beginTransaction();
@@ -1574,7 +1574,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
             DB::commit();
-            return $this->sendResponse([], 'customer invoice upload deleted successfully');
+            return $this->sendResponse([], trans('custom.customer_invoice_upload_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1646,7 +1646,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($type == 'getCurrency') {
             $customerID = $request['customerID'];
             $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
-            return $this->sendResponse($output, 'Record retrieved successfully');
+            return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
         }
         if ($id) {
             $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID', 'isPerforma','vatRegisteredYN')
@@ -1820,7 +1820,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);
         $output['autoGeneratePolicy'] = $autoGeneratePolicy;
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     function getCustomerInvoicePerformaDetails(Request $request)
@@ -1886,7 +1886,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->first();
 
         if (empty($performa)) {
-            return $this->sendResponse('e', 'Already pulled');
+            return $this->sendResponse('e', trans('custom.already_pulled'));
         }
 
 
@@ -1901,7 +1901,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         /*   $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
            if (!empty($detailsAlreadyExist)) {
-               return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
+               return $this->sendResponse('e', trans('custom.already_a_proforma_added_to_this_customer_invoice'));
            }*/
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')
             ->where('CompanyID', $master->companyID)
@@ -1933,7 +1933,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (!empty($contract)) {
             if ($contract->paymentInDaysForJob <= 0) {
-                return $this->sendResponse('e', 'Payment Period is not updated in the contract. Please update and try again');
+                return $this->sendResponse('e', trans('custom.payment_period_is_not_updated_in_the_contract_plea'));
             }
             /*isRequiredStamp*/
             if ($contract->isRequiredStamp == -1) {
@@ -1949,7 +1949,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invoiceExist = PerformaDetails::select('invoiceSsytemCode')->where('invoiceSsytemCode', $custInvoiceDirectAutoID)->where('performaMasterID', $performaMasterID)->first();
         if (!empty($invoiceExist)) {
-            return $this->sendResponse('e', 'You cannot add this proforma to this invoice as this was previously added in invoice - ' . $bookingInvCode);
+            return $this->sendResponse('e', trans('custom.you_cannot_add_this_proforma_to_this_invoice_as_th') . $bookingInvCode);
         }
 
         $myCurr = $bankAccountDetails->currencyID; /*currencyID*/
@@ -1971,7 +1971,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 /*define input*/
 
                 if (!$chartOfAccount) {
-                    return $this->sendResponse('e', 'Chart Of Account not found.');
+                    return $this->sendResponse('e', trans('custom.chart_of_account_not_found_2'));
                 }
 
                 $addToCusInvDetails[$x]['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
@@ -2109,10 +2109,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 } 
 
                 DB::commit();
-                return $this->sendResponse('s', 'successfully created');
+                return $this->sendResponse('s', trans('custom.successfully_created'));
             } catch (\Exception $exception) {
                 DB::rollback();
-                return $this->sendResponse('e', 'Error Occured !');
+                return $this->sendResponse('e', trans('custom.error_occured_2'));
             }
 
         }
@@ -2173,7 +2173,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return $this->sendResponse('e', 'Customer Invoice not found.');
+            return $this->sendResponse('e', trans('custom.customer_invoice_not_found_1'));
         }
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4|| $master->isPerforma == 5) {
@@ -2183,7 +2183,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (empty($invoiceDetail)) {
-            return $this->sendResponse('e', 'Invoice Details not found.');
+            return $this->sendResponse('e', trans('custom.invoice_details_not_found_1'));
         }
 
         $totalAmount = 0;
@@ -2208,7 +2208,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->first();
 
         if (empty($taxMaster)) {
-            return $this->sendResponse('e', 'VAT Master not found');
+            return $this->sendResponse('e', trans('custom.vat_master_not_found'));
         }*/
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
@@ -2216,7 +2216,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'VAT Detail Already exist');
+            return $this->sendResponse('e', trans('custom.vat_detail_already_exist_1'));
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalAmount);
@@ -2300,10 +2300,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse('s', 'Successfully Added');
+            return $this->sendResponse('s', trans('custom.successfully_added'));
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error Occurred',500);
+            return $this->sendError(trans('custom.error_occurred'),500);
         }
     }
 
@@ -2347,10 +2347,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->update($details);
 
             DB::commit();
-            return $this->sendResponse('s', 'Successfully Deleted');
+            return $this->sendResponse('s', trans('custom.successfully_deleted'));
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('e', 'Error Occurred');
+            return $this->sendError('e', trans('custom.error_occurred'));
         }
 
 
@@ -2666,7 +2666,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $custom = (array)$customerInvoice;
         if (empty($custom)) {
-            return $this->sendError('Customer Invoice detail not found.');
+            return $this->sendError(trans('custom.customer_invoice_detail_not_found'));
         }
         $customerInvoice->companySystemID = $companySystemID;
         $customerInvoice->CompanyName = $CompanyName;
@@ -2902,7 +2902,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         
         if(!isset($secondaryBankAccount)){
-            return $this->sendError('Bank account not found.');
+            return $this->sendError(trans('custom.bank_account_not_found_1'));
         }
 
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
@@ -3385,19 +3385,19 @@ GROUP BY
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
         $emails = array();
         if (empty($invoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.invoice_not_found'));
         }
 
         if ($invoice->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this invoice it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_invoice_it_is_already_parti'));
         }
 
         if ($invoice->approved == -1) {
-            return $this->sendError('You cannot reopen this invoice it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_invoice_it_is_already_fully'));
         }
 
         if ($invoice->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this invoice, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_invoice_it_is_not_confirmed'));
         }
 
         // updating fields
@@ -3472,7 +3472,7 @@ GROUP BY
         /*Audit entry*/
         AuditTrial::createAuditTrial($invoice->documentSystemiD,$custInvoiceDirectAutoID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
+        return $this->sendResponse($invoice->toArray(), trans('custom.invoice_reopened_successfully'));
     }
 
     function customerInvoiceAudit(Request $request)
@@ -3488,10 +3488,10 @@ GROUP BY
 
 
         if (empty($gRVMaster)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
-        return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
+        return $this->sendResponse($gRVMaster->toArray(), trans('custom.grv_retrieved_successfully'));
     }
 
     public function getAllcontractbyclient(request $request)
@@ -3505,7 +3505,7 @@ GROUP BY
             $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
             $contract = DB::select($qry);
 
-            return $this->sendResponse($contract, 'Record retrieved successfully');
+            return $this->sendResponse($contract, trans('custom.record_retrieved_successfully_1'));
         }
 
     }
@@ -3522,7 +3522,7 @@ GROUP BY
         $contract = DB::select($qry);
 
 
-        return $this->sendResponse($contract, 'Record retrieved successfully');
+        return $this->sendResponse($contract, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -3565,7 +3565,7 @@ WHERE
 	AND erp_custreceivepaymentdet.bookingInvCodeSystem = $master->custInvoiceDirectAutoID 
 	AND erp_custreceivepaymentdet.addedDocumentSystemID = $master->documentSystemiD");
 
-        return $this->sendResponse($master, 'Contract deleted successfully');
+        return $this->sendResponse($master, trans('custom.contract_deleted_successfully'));
     }
 
     public function getCustomerInvoiceApproval(Request $request)
@@ -3838,11 +3838,11 @@ WHERE
 
         $customerInvoiceDirectData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
         if (empty($customerInvoiceDirectData)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
         
         // if ($customerInvoiceDirectData->refferedBackYN != -1) {
-        //     return $this->sendError('You cannot refer back this Customer Invoice');
+        //     return $this->sendError(trans('custom.you_cannot_refer_back_this_customer_invoice'));
         // }
 
         $customerInvoiceArray = $customerInvoiceDirectData->toArray();
@@ -3919,7 +3919,7 @@ WHERE
                 ->delete();
         }*/
 
-        return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer Invoice Amend successfully');
+        return $this->sendResponse($customerInvoiceDirectData->toArray(), trans('custom.customer_invoice_amend_successfully'));
     }
 
     public function customerInvoiceCancel(Request $request)
@@ -3930,25 +3930,25 @@ WHERE
 
         $customerInvoiceDirectData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
         if (empty($customerInvoiceDirectData)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
 
         if ($customerInvoiceDirectData->confirmedYN == 1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already confirmed');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al_2'));
         }
 
         if ($customerInvoiceDirectData->approved == -1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already approved');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al'));
         }
 
         if ($customerInvoiceDirectData->canceledYN == -1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al_1'));
         }
 
         $customerDirectDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->get();
 
         if (count($customerDirectDetail) > 0) {
-            return $this->sendError('You cannot cancel this customer invoice, invoice details are exist');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_invoice_de'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3965,7 +3965,7 @@ WHERE
         /*Audit entry*/
         AuditTrial::createAuditTrial($customerInvoiceDirectData->documentSystemiD,$custInvoiceDirectAutoID,$request['cancelComments'],'Cancelled');
 
-        return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
+        return $this->sendResponse($customerInvoiceDirectData->toArray(), trans('custom.customer_invoice_cancelled_successfully'));
     }
 
     public function customerInvoiceCancelAPI(Request $request)
@@ -3973,11 +3973,11 @@ WHERE
         $input = $request->all();
 
         if(empty($input['customerInvoiceNo'])){
-            return $this->sendError('Customer invoice number not found.', 422);
+            return $this->sendError(trans('custom.customer_invoice_number_not_found'), 422);
         }
 
         if(empty($input['bookingInvCode'])){
-            return $this->sendError('Document code not found.', 422);
+            return $this->sendError(trans('custom.document_code_not_found'), 422);
         }
 
         $customerInvoiceNo = $input['customerInvoiceNo'];
@@ -4073,16 +4073,16 @@ WHERE
         $masterData = CustomerInvoiceDirect::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_customer_invo'));
         }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',20)->exists();
         if ($isAPIDocument){
-            return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+            return $this->sendError(trans('custom.this_is_an_autogenerated_document_this_cannot_be_r'));
         }
 
         $documentAutoId = $id;
@@ -4133,10 +4133,10 @@ WHERE
                                                                 ->first();
 
             if ($checkForInventoryItems) {
-                return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
+                return $this->sendError(trans('custom.selected_customer_invoice_cannot_be_returned_back_'));
             }
         }elseif ($masterData->isPerforma == 5){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
+            return $this->sendError(trans('custom.selected_customer_invoice_cannot_be_returned_back__1'));
         }
 
 
@@ -4188,7 +4188,7 @@ WHERE
             }
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Customer Invoice amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.customer_invoice_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -4343,14 +4343,14 @@ WHERE
 
         $customerInvoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
         if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
 
         // updating fields
         $customerInvoice->customerInvoiceNo = null;
         $customerInvoice->save();
 
-        return $this->sendResponse($customerInvoice, 'Record updated successfully');
+        return $this->sendResponse($customerInvoice, trans('custom.record_updated_successfully'));
     }
 
     public function savecustomerInvoiceProformaTaxDetails($custInvoiceDirectAutoID, $totalVATAmount)
@@ -4361,13 +4361,13 @@ WHERE
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found_1')];
         }
 
         $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
       
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.invoice_details_not_found_1')];
         }
 
         $totalAmount = 0;
@@ -4507,7 +4507,7 @@ WHERE
          
         }
 
-        return $this->sendResponse(true, 'Record checked successfully');
+        return $this->sendResponse(true, trans('custom.record_checked_successfully'));
 
     }
 }

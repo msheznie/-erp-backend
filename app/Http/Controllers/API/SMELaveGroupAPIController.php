@@ -65,7 +65,7 @@ class SMELaveGroupAPIController extends AppBaseController
         $this->sMELaveGroupRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMELaveGroups = $this->sMELaveGroupRepository->all();
 
-        return $this->sendResponse($sMELaveGroups->toArray(), 'S M E Lave Groups retrieved successfully');
+        return $this->sendResponse($sMELaveGroups->toArray(), trans('custom.s_m_e_lave_groups_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMELaveGroupAPIController extends AppBaseController
 
         $sMELaveGroup = $this->sMELaveGroupRepository->create($input);
 
-        return $this->sendResponse($sMELaveGroup->toArray(), 'S M E Lave Group saved successfully');
+        return $this->sendResponse($sMELaveGroup->toArray(), trans('custom.s_m_e_lave_group_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMELaveGroupAPIController extends AppBaseController
         $sMELaveGroup = $this->sMELaveGroupRepository->findWithoutFail($id);
 
         if (empty($sMELaveGroup)) {
-            return $this->sendError('S M E Lave Group not found');
+            return $this->sendError(trans('custom.s_m_e_lave_group_not_found'));
         }
 
-        return $this->sendResponse($sMELaveGroup->toArray(), 'S M E Lave Group retrieved successfully');
+        return $this->sendResponse($sMELaveGroup->toArray(), trans('custom.s_m_e_lave_group_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMELaveGroupAPIController extends AppBaseController
         $sMELaveGroup = $this->sMELaveGroupRepository->findWithoutFail($id);
 
         if (empty($sMELaveGroup)) {
-            return $this->sendError('S M E Lave Group not found');
+            return $this->sendError(trans('custom.s_m_e_lave_group_not_found'));
         }
 
         $sMELaveGroup = $this->sMELaveGroupRepository->update($input, $id);
 
-        return $this->sendResponse($sMELaveGroup->toArray(), 'SMELaveGroup updated successfully');
+        return $this->sendResponse($sMELaveGroup->toArray(), trans('custom.smelavegroup_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMELaveGroupAPIController extends AppBaseController
         $sMELaveGroup = $this->sMELaveGroupRepository->findWithoutFail($id);
 
         if (empty($sMELaveGroup)) {
-            return $this->sendError('S M E Lave Group not found');
+            return $this->sendError(trans('custom.s_m_e_lave_group_not_found'));
         }
 
         $sMELaveGroup->delete();

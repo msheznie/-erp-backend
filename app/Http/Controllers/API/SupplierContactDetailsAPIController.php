@@ -51,7 +51,7 @@ class SupplierContactDetailsAPIController extends AppBaseController
         $this->supplierContactDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierContactDetails = $this->supplierContactDetailsRepository->all();
 
-        return $this->sendResponse($supplierContactDetails->toArray(), 'Supplier Contact Details retrieved successfully');
+        return $this->sendResponse($supplierContactDetails->toArray(), trans('custom.supplier_contact_details_retrieved_successfully'));
     }
 
     /**
@@ -71,7 +71,7 @@ class SupplierContactDetailsAPIController extends AppBaseController
             ->orderBy('supplierContactID', 'DESC')
             ->get();
 
-        return $this->sendResponse($supplierContactDetails->toArray(), 'Supplier Contact Details retrieved successfully');
+        return $this->sendResponse($supplierContactDetails->toArray(), trans('custom.supplier_contact_details_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class SupplierContactDetailsAPIController extends AppBaseController
         }else{
             $supplierContactDetails = $this->supplierContactDetailsRepository->create($input);
         }
-        return $this->sendResponse($supplierContactDetails->toArray(), 'Supplier Contact Details saved successfully');
+        return $this->sendResponse($supplierContactDetails->toArray(), trans('custom.supplier_contact_details_saved_successfully'));
     }
 
     /**
@@ -134,10 +134,10 @@ class SupplierContactDetailsAPIController extends AppBaseController
         $supplierContactDetails = $this->supplierContactDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierContactDetails)) {
-            return $this->sendError('Supplier Contact Details not found');
+            return $this->sendError(trans('custom.supplier_contact_details_not_found'));
         }
 
-        return $this->sendResponse($supplierContactDetails->toArray(), 'Supplier Contact Details retrieved successfully');
+        return $this->sendResponse($supplierContactDetails->toArray(), trans('custom.supplier_contact_details_retrieved_successfully'));
     }
 
     /**
@@ -157,12 +157,12 @@ class SupplierContactDetailsAPIController extends AppBaseController
         $supplierContactDetails = $this->supplierContactDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierContactDetails)) {
-            return $this->sendError('Supplier Contact Details not found');
+            return $this->sendError(trans('custom.supplier_contact_details_not_found'));
         }
 
         $supplierContactDetails = $this->supplierContactDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($supplierContactDetails->toArray(), 'SupplierContactDetails updated successfully');
+        return $this->sendResponse($supplierContactDetails->toArray(), trans('custom.suppliercontactdetails_updated_successfully'));
     }
 
     /**
@@ -179,11 +179,11 @@ class SupplierContactDetailsAPIController extends AppBaseController
         $supplierContactDetails = $this->supplierContactDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierContactDetails)) {
-            return $this->sendError('Supplier Contact Details not found');
+            return $this->sendError(trans('custom.supplier_contact_details_not_found'));
         }
 
         $supplierContactDetails->delete();
 
-        return $this->sendResponse($id, 'Supplier Contact Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_contact_details_deleted_successfully'));
     }
 }

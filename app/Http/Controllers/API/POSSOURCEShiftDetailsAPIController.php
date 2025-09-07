@@ -65,7 +65,7 @@ class POSSOURCEShiftDetailsAPIController extends AppBaseController
         $this->pOSSOURCEShiftDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->all();
 
-        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), 'P O S S O U R C E Shift Details retrieved successfully');
+        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_shift_details_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCEShiftDetailsAPIController extends AppBaseController
 
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), 'P O S S O U R C E Shift Details saved successfully');
+        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_shift_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCEShiftDetailsAPIController extends AppBaseController
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEShiftDetails)) {
-            return $this->sendError('P O S S O U R C E Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_shift_details_not_found'));
         }
 
-        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), 'P O S S O U R C E Shift Details retrieved successfully');
+        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_shift_details_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCEShiftDetailsAPIController extends AppBaseController
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEShiftDetails)) {
-            return $this->sendError('P O S S O U R C E Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_shift_details_not_found'));
         }
 
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), 'POSSOURCEShiftDetails updated successfully');
+        return $this->sendResponse($pOSSOURCEShiftDetails->toArray(), trans('custom.possourceshiftdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCEShiftDetailsAPIController extends AppBaseController
         $pOSSOURCEShiftDetails = $this->pOSSOURCEShiftDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEShiftDetails)) {
-            return $this->sendError('P O S S O U R C E Shift Details not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_shift_details_not_found'));
         }
 
         $pOSSOURCEShiftDetails->delete();

@@ -59,13 +59,13 @@ class SupplierCategorySubAPIController extends AppBaseController
         $this->supplierCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategorySubs = $this->supplierCategorySubRepository->all();
 
-        return $this->sendResponse($supplierCategorySubs->toArray(), 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($supplierCategorySubs->toArray(), trans('custom.supplier_category_subs_retrieved_successfully'));
     }
 
     public function getSubCategoriesByMasterCategory(Request $request){
         $businessCategoryID = $request['businessCategoryID'];
         $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->where('isActive',1)->get();
-        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
+        return $this->sendResponse($businessSubCategories, trans('custom.sub_category_retrieved_successfully'));
     }
 
     /**
@@ -293,7 +293,7 @@ class SupplierCategorySubAPIController extends AppBaseController
     public function getSubCategoriesByMultipleMasterCategory(Request $request){
         $input = $request->all();
         $businessSubCategories = SupplierCategorySub::whereIn('supMasterCategoryID',$input)->where('isActive',1)->get();
-        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
+        return $this->sendResponse($businessSubCategories, trans('custom.sub_category_retrieved_successfully'));
     }
 
 

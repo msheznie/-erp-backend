@@ -72,7 +72,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $this->fixedAssetCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetCategories = $this->fixedAssetCategoryRepository->all();
 
-        return $this->sendResponse($fixedAssetCategories->toArray(), 'Fixed Asset Categories retrieved successfully');
+        return $this->sendResponse($fixedAssetCategories->toArray(), trans('custom.fixed_asset_categories_retrieved_successfully'));
     }
 
     /**
@@ -146,7 +146,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['companyID'] = $company->CompanyID;
@@ -155,7 +155,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $input['createdUserID'] = Helper::getEmployeeID();
         $fixedAssetCategories = $this->fixedAssetCategoryRepository->create($input);
 
-        return $this->sendResponse($fixedAssetCategories->toArray(), 'Asset Category saved successfully');
+        return $this->sendResponse($fixedAssetCategories->toArray(), trans('custom.asset_category_saved_successfully'));
     }
 
     /**
@@ -202,10 +202,10 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+            return $this->sendError(trans('custom.asset_category_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetCategory->toArray(), 'Fixed Asset Category retrieved successfully');
+        return $this->sendResponse($fixedAssetCategory->toArray(), trans('custom.fixed_asset_category_retrieved_successfully'));
     }
 
     /**
@@ -263,7 +263,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Fixed Asset Category not found');
+            return $this->sendError(trans('custom.fixed_asset_category_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -297,7 +297,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['companyID'] = $company->CompanyID;
@@ -307,7 +307,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
 
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('faCatID', $id)->update($input);
 
-        return $this->sendResponse($fixedAssetCategory, 'Asset Category updated successfully');
+        return $this->sendResponse($fixedAssetCategory, trans('custom.asset_category_updated_successfully'));
     }
 
     /**
@@ -354,20 +354,20 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+            return $this->sendError(trans('custom.asset_category_not_found'));
         }
 
 
         $checkInItems = ItemMaster::where('faCatID', $id)->first();
 
         if ($checkInItems) {
-            return $this->sendError('This Asset category is already assigned to assets. you cannot delete this record');
+            return $this->sendError(trans('custom.this_asset_category_is_already_assigned_to_assets_'));
         }
 
         $checkInCostings = FixedAssetMaster::where('faCatID', $id)->first();
 
         if ($checkInCostings) {
-            return $this->sendError('This Asset category is already assigned to assets. you cannot delete this record');
+            return $this->sendError(trans('custom.this_asset_category_is_already_assigned_to_assets_'));
         }
 
 
@@ -375,7 +375,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
 
         $fixedAssetCategory->delete();
 
-        return $this->sendResponse($id, 'Asset Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.asset_category_deleted_successfully'));
     }
 
     public function getAllAssetCategory(Request $request)
@@ -442,6 +442,6 @@ class FixedAssetCategoryAPIController extends AppBaseController
             'companies' => $companies,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

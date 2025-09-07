@@ -85,7 +85,7 @@ class BankMemoSupplierAPIController extends AppBaseController
 
         $data = array('bankMemos' => $bankMemoSuppliers->toArray(), 'count' => $count);
 
-        return $this->sendResponse($data, 'Bank Memo Suppliers retrieved successfully');
+        return $this->sendResponse($data, trans('custom.bank_memo_suppliers_retrieved_successfully'));
     }
 
     public function getBankMemoBySupplierCurrencyId(Request $request)

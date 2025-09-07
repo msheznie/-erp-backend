@@ -69,7 +69,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $this->evaluationCriteriaScoreConfigRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationCriteriaScoreConfigs = $this->evaluationCriteriaScoreConfigRepository->all();
 
-        return $this->sendResponse($evaluationCriteriaScoreConfigs->toArray(), 'Evaluation Criteria Score Configs retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaScoreConfigs->toArray(), trans('custom.evaluation_criteria_score_configs_retrieved_succes'));
     }
 
     /**
@@ -116,7 +116,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
 
         $evaluationCriteriaScoreConfig = $this->evaluationCriteriaScoreConfigRepository->create($input);
 
-        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), 'Evaluation Criteria Score Config saved successfully');
+        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), trans('custom.evaluation_criteria_score_config_saved_successfull'));
     }
 
     /**
@@ -163,10 +163,10 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $evaluationCriteriaScoreConfig = $this->evaluationCriteriaScoreConfigRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaScoreConfig)) {
-            return $this->sendError('Evaluation Criteria Score Config not found');
+            return $this->sendError(trans('custom.evaluation_criteria_score_config_not_found'));
         }
 
-        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), 'Evaluation Criteria Score Config retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), trans('custom.evaluation_criteria_score_config_retrieved_success'));
     }
 
     /**
@@ -223,12 +223,12 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $evaluationCriteriaScoreConfig = $this->evaluationCriteriaScoreConfigRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaScoreConfig)) {
-            return $this->sendError('Evaluation Criteria Score Config not found');
+            return $this->sendError(trans('custom.evaluation_criteria_score_config_not_found'));
         }
 
         $evaluationCriteriaScoreConfig = $this->evaluationCriteriaScoreConfigRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), 'EvaluationCriteriaScoreConfig updated successfully');
+        return $this->sendResponse($evaluationCriteriaScoreConfig->toArray(), trans('custom.evaluationcriteriascoreconfig_updated_successfully'));
     }
 
     /**
@@ -275,7 +275,7 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $evaluationCriteriaScoreConfig = $this->evaluationCriteriaScoreConfigRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaScoreConfig)) {
-            return $this->sendError('Evaluation Criteria Score Config not found');
+            return $this->sendError(trans('custom.evaluation_criteria_score_config_not_found'));
         }
 
         $evaluationCriteriaScoreConfig->delete();
@@ -291,9 +291,9 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             if(!$deleteCriteriaScore['success']){
                 return $this->sendError($deleteCriteriaScore['message']);
             }
-            return $this->sendResponse([], 'Score configuration deleted successfully');
+            return $this->sendResponse([], trans('custom.score_configuration_deleted_successfully'));
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage());
         }
     }
 

@@ -65,7 +65,7 @@ class HrmsEmployeeManagerAPIController extends AppBaseController
         $this->hrmsEmployeeManagerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrmsEmployeeManagers = $this->hrmsEmployeeManagerRepository->all();
 
-        return $this->sendResponse($hrmsEmployeeManagers->toArray(), 'Hrms Employee Managers retrieved successfully');
+        return $this->sendResponse($hrmsEmployeeManagers->toArray(), trans('custom.hrms_employee_managers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrmsEmployeeManagerAPIController extends AppBaseController
 
         $hrmsEmployeeManager = $this->hrmsEmployeeManagerRepository->create($input);
 
-        return $this->sendResponse($hrmsEmployeeManager->toArray(), 'Hrms Employee Manager saved successfully');
+        return $this->sendResponse($hrmsEmployeeManager->toArray(), trans('custom.hrms_employee_manager_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrmsEmployeeManagerAPIController extends AppBaseController
         $hrmsEmployeeManager = $this->hrmsEmployeeManagerRepository->findWithoutFail($id);
 
         if (empty($hrmsEmployeeManager)) {
-            return $this->sendError('Hrms Employee Manager not found');
+            return $this->sendError(trans('custom.hrms_employee_manager_not_found'));
         }
 
-        return $this->sendResponse($hrmsEmployeeManager->toArray(), 'Hrms Employee Manager retrieved successfully');
+        return $this->sendResponse($hrmsEmployeeManager->toArray(), trans('custom.hrms_employee_manager_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrmsEmployeeManagerAPIController extends AppBaseController
         $hrmsEmployeeManager = $this->hrmsEmployeeManagerRepository->findWithoutFail($id);
 
         if (empty($hrmsEmployeeManager)) {
-            return $this->sendError('Hrms Employee Manager not found');
+            return $this->sendError(trans('custom.hrms_employee_manager_not_found'));
         }
 
         $hrmsEmployeeManager = $this->hrmsEmployeeManagerRepository->update($input, $id);
 
-        return $this->sendResponse($hrmsEmployeeManager->toArray(), 'HrmsEmployeeManager updated successfully');
+        return $this->sendResponse($hrmsEmployeeManager->toArray(), trans('custom.hrmsemployeemanager_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrmsEmployeeManagerAPIController extends AppBaseController
         $hrmsEmployeeManager = $this->hrmsEmployeeManagerRepository->findWithoutFail($id);
 
         if (empty($hrmsEmployeeManager)) {
-            return $this->sendError('Hrms Employee Manager not found');
+            return $this->sendError(trans('custom.hrms_employee_manager_not_found'));
         }
 
         $hrmsEmployeeManager->delete();

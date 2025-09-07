@@ -65,7 +65,7 @@ class TenderTypeAPIController extends AppBaseController
         $this->tenderTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderTypes = $this->tenderTypeRepository->all();
 
-        return $this->sendResponse($tenderTypes->toArray(), 'Tender Types retrieved successfully');
+        return $this->sendResponse($tenderTypes->toArray(), trans('custom.tender_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderTypeAPIController extends AppBaseController
 
         $tenderType = $this->tenderTypeRepository->create($input);
 
-        return $this->sendResponse($tenderType->toArray(), 'Tender Type saved successfully');
+        return $this->sendResponse($tenderType->toArray(), trans('custom.tender_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderTypeAPIController extends AppBaseController
         $tenderType = $this->tenderTypeRepository->findWithoutFail($id);
 
         if (empty($tenderType)) {
-            return $this->sendError('Tender Type not found');
+            return $this->sendError(trans('custom.tender_type_not_found'));
         }
 
-        return $this->sendResponse($tenderType->toArray(), 'Tender Type retrieved successfully');
+        return $this->sendResponse($tenderType->toArray(), trans('custom.tender_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderTypeAPIController extends AppBaseController
         $tenderType = $this->tenderTypeRepository->findWithoutFail($id);
 
         if (empty($tenderType)) {
-            return $this->sendError('Tender Type not found');
+            return $this->sendError(trans('custom.tender_type_not_found'));
         }
 
         $tenderType = $this->tenderTypeRepository->update($input, $id);
 
-        return $this->sendResponse($tenderType->toArray(), 'TenderType updated successfully');
+        return $this->sendResponse($tenderType->toArray(), trans('custom.tendertype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderTypeAPIController extends AppBaseController
         $tenderType = $this->tenderTypeRepository->findWithoutFail($id);
 
         if (empty($tenderType)) {
-            return $this->sendError('Tender Type not found');
+            return $this->sendError(trans('custom.tender_type_not_found'));
         }
 
         $tenderType->delete();

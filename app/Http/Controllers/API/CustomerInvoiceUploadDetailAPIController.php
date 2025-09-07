@@ -64,7 +64,7 @@ class CustomerInvoiceUploadDetailAPIController extends AppBaseController
         $this->customerInvoiceUploadDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceUploadDetails = $this->customerInvoiceUploadDetailRepository->all();
 
-        return $this->sendResponse($customerInvoiceUploadDetails->toArray(), 'Customer Invoice Upload Details retrieved successfully');
+        return $this->sendResponse($customerInvoiceUploadDetails->toArray(), trans('custom.customer_invoice_upload_details_retrieved_successf'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CustomerInvoiceUploadDetailAPIController extends AppBaseController
 
         $customerInvoiceUploadDetail = $this->customerInvoiceUploadDetailRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), 'Customer Invoice Upload Detail saved successfully');
+        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), trans('custom.customer_invoice_upload_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CustomerInvoiceUploadDetailAPIController extends AppBaseController
         $customerInvoiceUploadDetail = $this->customerInvoiceUploadDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceUploadDetail)) {
-            return $this->sendError('Customer Invoice Upload Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_upload_detail_not_found'));
         }
 
-        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), 'Customer Invoice Upload Detail retrieved successfully');
+        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), trans('custom.customer_invoice_upload_detail_retrieved_successfu'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CustomerInvoiceUploadDetailAPIController extends AppBaseController
         $customerInvoiceUploadDetail = $this->customerInvoiceUploadDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceUploadDetail)) {
-            return $this->sendError('Customer Invoice Upload Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_upload_detail_not_found'));
         }
 
         $customerInvoiceUploadDetail = $this->customerInvoiceUploadDetailRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), 'CustomerInvoiceUploadDetail updated successfully');
+        return $this->sendResponse($customerInvoiceUploadDetail->toArray(), trans('custom.customerinvoiceuploaddetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CustomerInvoiceUploadDetailAPIController extends AppBaseController
         $customerInvoiceUploadDetail = $this->customerInvoiceUploadDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceUploadDetail)) {
-            return $this->sendError('Customer Invoice Upload Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_upload_detail_not_found'));
         }
 
         $customerInvoiceUploadDetail->delete();

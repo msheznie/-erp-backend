@@ -49,11 +49,11 @@ class ItemSpecificationController extends AppBaseController
         if($specification) {
             $specification->html = $input['html'];
             $specification->save();
-            return $this->sendResponse($specification->toArray(), 'Item Specification Updated Successfully');
+            return $this->sendResponse($specification->toArray(), trans('custom.item_specification_updated_successfully'));
 
         }else {
             $data = ItemSpecification::create($request->input());
-            return $this->sendResponse($data->toArray(), 'Item Specification Created Successfully');
+            return $this->sendResponse($data->toArray(), trans('custom.item_specification_created_successfully'));
         }
 
     }

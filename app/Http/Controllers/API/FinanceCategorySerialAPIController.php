@@ -65,7 +65,7 @@ class FinanceCategorySerialAPIController extends AppBaseController
         $this->financeCategorySerialRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeCategorySerials = $this->financeCategorySerialRepository->all();
 
-        return $this->sendResponse($financeCategorySerials->toArray(), 'Finance Category Serials retrieved successfully');
+        return $this->sendResponse($financeCategorySerials->toArray(), trans('custom.finance_category_serials_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FinanceCategorySerialAPIController extends AppBaseController
 
         $financeCategorySerial = $this->financeCategorySerialRepository->create($input);
 
-        return $this->sendResponse($financeCategorySerial->toArray(), 'Finance Category Serial saved successfully');
+        return $this->sendResponse($financeCategorySerial->toArray(), trans('custom.finance_category_serial_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FinanceCategorySerialAPIController extends AppBaseController
         $financeCategorySerial = $this->financeCategorySerialRepository->findWithoutFail($id);
 
         if (empty($financeCategorySerial)) {
-            return $this->sendError('Finance Category Serial not found');
+            return $this->sendError(trans('custom.finance_category_serial_not_found'));
         }
 
-        return $this->sendResponse($financeCategorySerial->toArray(), 'Finance Category Serial retrieved successfully');
+        return $this->sendResponse($financeCategorySerial->toArray(), trans('custom.finance_category_serial_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FinanceCategorySerialAPIController extends AppBaseController
         $financeCategorySerial = $this->financeCategorySerialRepository->findWithoutFail($id);
 
         if (empty($financeCategorySerial)) {
-            return $this->sendError('Finance Category Serial not found');
+            return $this->sendError(trans('custom.finance_category_serial_not_found'));
         }
 
         $financeCategorySerial = $this->financeCategorySerialRepository->update($input, $id);
 
-        return $this->sendResponse($financeCategorySerial->toArray(), 'FinanceCategorySerial updated successfully');
+        return $this->sendResponse($financeCategorySerial->toArray(), trans('custom.financecategoryserial_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class FinanceCategorySerialAPIController extends AppBaseController
         $financeCategorySerial = $this->financeCategorySerialRepository->findWithoutFail($id);
 
         if (empty($financeCategorySerial)) {
-            return $this->sendError('Finance Category Serial not found');
+            return $this->sendError(trans('custom.finance_category_serial_not_found'));
         }
 
         $financeCategorySerial->delete();

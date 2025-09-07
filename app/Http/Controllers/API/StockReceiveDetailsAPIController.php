@@ -79,7 +79,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $this->stockReceiveDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->all();
 
-        return $this->sendResponse($stockReceiveDetails->toArray(), 'Stock Receive Details retrieved successfully');
+        return $this->sendResponse($stockReceiveDetails->toArray(), trans('custom.stock_receive_details_retrieved_successfully'));
     }
 
     /**
@@ -126,7 +126,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
 
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->create($input);
 
-        return $this->sendResponse($stockReceiveDetails->toArray(), 'Stock Receive Details saved successfully');
+        return $this->sendResponse($stockReceiveDetails->toArray(), trans('custom.stock_receive_details_saved_successfully'));
     }
 
     /**
@@ -173,10 +173,10 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
 
         if (empty($stockReceiveDetails)) {
-            return $this->sendError('Stock Receive Details not found');
+            return $this->sendError(trans('custom.stock_receive_details_not_found'));
         }
 
-        return $this->sendResponse($stockReceiveDetails->toArray(), 'Stock Receive Details retrieved successfully');
+        return $this->sendResponse($stockReceiveDetails->toArray(), trans('custom.stock_receive_details_retrieved_successfully'));
     }
 
     /**
@@ -234,7 +234,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
 
         if (empty($stockReceiveDetails)) {
-            return $this->sendError('Stock Receive Details not found');
+            return $this->sendError(trans('custom.stock_receive_details_not_found'));
         }
 
         if ($stockReceiveDetails->unitCostLocal == 0 || $stockReceiveDetails->unitCostRpt == 0) {
@@ -299,7 +299,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
             $stockTransfer->save();
         }
 
-        return $this->sendResponse($stockReceiveDetails->toArray(), 'StockReceiveDetails updated successfully');
+        return $this->sendResponse($stockReceiveDetails->toArray(), trans('custom.stockreceivedetails_updated_successfully'));
     }
 
     /**
@@ -346,7 +346,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
 
         if (empty($stockReceiveDetails)) {
-            return $this->sendError('Stock Receive Details not found');
+            return $this->sendError(trans('custom.stock_receive_details_not_found'));
         }
 
         $stockTransferDetail = StockTransferDetails::where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
@@ -376,7 +376,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
 
         $stockReceiveDetails->delete();
 
-        return $this->sendResponse($id, 'Stock Receive Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_receive_details_deleted_successfully'));
     }
 
     public function getStockReceiveDetailsByMaster(Request $request)
@@ -391,7 +391,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
                                             ->with(['unit_by','item_by'])
                                             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Stock Receive details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.stock_receive_details_retrieved_successfully_1'));
     }
 
 
@@ -418,13 +418,13 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $stockReceive = StockReceive::where('stockReceiveAutoID', $stockReceiveAutoID)->first();
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockTransfer = StockTransfer::find($input['stockTransferAutoID']);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         foreach ($input['detailTable'] as $new) {
@@ -436,7 +436,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
                     ->count();
 
                 if ($srDetailExistSameItem > 0) {
-                    return $this->sendError('Same inventory item cannot be added more than once',500);
+                    return $this->sendError(trans('custom.same_inventory_item_cannot_be_added_more_than_once'),500);
                 }
 
                 if ($new['unitCostLocal'] == 0 || $new['unitCostRpt'] == 0) {
@@ -501,6 +501,6 @@ class StockReceiveDetailsAPIController extends AppBaseController
         }
         $stockTransfer->save();
 
-        return $this->sendResponse('', 'Receive Details saved successfully');
+        return $this->sendResponse('', trans('custom.receive_details_saved_successfully'));
     }
 }

@@ -170,7 +170,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $this->bookInvSuppMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppMasters = $this->bookInvSuppMasterRepository->all();
 
-        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Supplier Invoice Masters retrieved successfully');
+        return $this->sendResponse($bookInvSuppMasters->toArray(), trans('custom.supplier_invoice_masters_retrieved_successfully'));
     }
 
     /**
@@ -294,7 +294,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $returnData = SupplierInvoiceAPIService::storeBookingInvoice($input);
         if(isset($returnData['status']) && $returnData['status'] == 'success') {
-            return $this->sendResponse($returnData['data'], 'Supplier Invoice created successfully');
+            return $this->sendResponse($returnData['data'], trans('custom.supplier_invoice_created_successfully'));
         } else {
             return $this->sendError($returnData['message'], 500);
         }
@@ -358,10 +358,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice retrieved successfully');
+        return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_retrieved_successfully'));
     }
 
     public function unitCostValidation(Request $request)
@@ -382,7 +382,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($isUnitCostZeroValidate, 'Record retrieved successfully');
+        return $this->sendResponse($isUnitCostZeroValidate, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -469,7 +469,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $totalNetAmount = 0;
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         $supplier_id = $input['supplierID'];
@@ -672,7 +672,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if(isset($input['retentionPercentage'])){
             if($input['retentionPercentage'] > 100){
-                return $this->sendError('Retention Percentage cannot be greater than 100%');
+                return $this->sendError(trans('custom.retention_percentage_cannot_be_greater_than_100'));
             }
         }
 
@@ -799,7 +799,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] != 4){
                 if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
-                    return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
+                    return $this->sendError(trans('custom.due_date_cannot_be_null_as_retention_amount_is_gre'), 500);
                 }
 
                 if(!is_numeric($input['retentionPercentage'])) {
@@ -1247,7 +1247,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                     if($totalNetAmount < 0)
                     {
-                        return $this->sendError('The net amount cannot be less than zero. Please check the net amount.',500);
+                        return $this->sendError(trans('custom.the_net_amount_cannot_be_less_than_zero_please_che'),500);
 
                     }
             }
@@ -1299,13 +1299,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             if ($input['bookingAmountTrans'] != \Helper::roundValue($bookingAmountTrans)) {
-                return $this->sendError('Cannot confirm. Supplier Invoice Master and Detail shows a difference in total.',500);
+                return $this->sendError(trans('custom.cannot_confirm_supplier_invoice_master_and_detail_'),500);
             }
 
             //check tax configuration if tax added
             if($detailTaxSumTrans > 0 ){
                 if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                 }
 
                 $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -1313,18 +1313,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                 }
 
                 //if rcm activated
                 if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
                     if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                     }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
 
                     }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                        // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                     }
                     
                     $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -1332,7 +1332,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                     }
                 }
             }
@@ -1341,9 +1341,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $vatTotal = ($input['documentType'] == 0 || $input['documentType'] == 2) ? BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount') : SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount');
                 if($vatTotal > 0){
                     if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                     }else if( empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                     }
 
                     $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -1351,7 +1351,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                     }
 
                     $inputVATGL = TaxService::getInputVATTransferGLAccount($input["companySystemID"]);
@@ -1359,14 +1359,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_a'), 500);
                     }
 
                     if (TaxService::isSupplierInvoiceRcmActivated($id)) {
                         if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                         }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                         }
 
                         $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -1374,7 +1374,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                         if (!$checkAssignedStatus) {
-                            return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                         }
 
                         $inputVATGL = TaxService::getOutputVATTransferGLAccount($input["companySystemID"]);
@@ -1382,7 +1382,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatTransferGLAccountAutoID, $input["companySystemID"]);
 
                         if (!$checkAssignedStatus) {
-                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not__1'), 500);
                         }
                     }
                 }
@@ -1507,7 +1507,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
@@ -1953,13 +1953,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             if ($input['bookingAmountTrans'] != \Helper::roundValue($bookingAmountTrans)) {
-                return $this->sendError('Cannot confirm. Supplier Invoice Master and Detail shows a difference in total.',500);
+                return $this->sendError(trans('custom.cannot_confirm_supplier_invoice_master_and_detail_'),500);
             }
 
             //check tax configuration if tax added
             if($detailTaxSumTrans > 0 ){
                 if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                 }
 
                 $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -1967,18 +1967,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                 }
 
                 //if rcm activated
                 if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
                     if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                     }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
 
                     }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                        // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                     }
 
                     $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -1986,7 +1986,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                     }
                 }
             }
@@ -1996,9 +1996,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     ->sum('VATAmount');
                 if($vatTotal > 0){
                     if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                     }else if( empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                     }
 
                     $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
@@ -2006,7 +2006,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                     }
 
                     $inputVATGL = TaxService::getInputVATTransferGLAccount($input["companySystemID"]);
@@ -2014,14 +2014,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $input["companySystemID"]);
 
                     if (!$checkAssignedStatus) {
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_a'), 500);
                     }
 
                     if (TaxService::isSupplierInvoiceRcmActivated($id)) {
                         if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                         }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                         }
 
                         $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -2029,7 +2029,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                         if (!$checkAssignedStatus) {
-                            return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                         }
 
                         $inputVATGL = TaxService::getOutputVATTransferGLAccount($input["companySystemID"]);
@@ -2037,7 +2037,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatTransferGLAccountAutoID, $input["companySystemID"]);
 
                         if (!$checkAssignedStatus) {
-                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
+                            return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not__1'), 500);
                         }
                     }
                 }
@@ -2096,7 +2096,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.supplier_invoice_master_not_found'));
         }
 
         $confirm = CustomValidation::validation(11,$bookInvSuppMaster,2,[]);
@@ -2106,7 +2106,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $bookInvSuppMaster->delete();
 
-        return $this->sendResponse($id, 'Supplier Invoice Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_invoice_master_deleted_successfully'));
     }
 
     public function updateLocalER($id,Request $request){
@@ -2253,7 +2253,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $output['isProjectBase'] = $isProjectBase;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function getInvoiceMasterFormData(Request $request)
@@ -2371,7 +2371,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'contractEnablePolicy' => $contractEnablePolicy
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getInvoiceSupplierTypeBase(Request $request)
@@ -2401,7 +2401,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                         ->get();
         }
 
-        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData, 'currencies' => $currencies], 'Record retrieved successfully');
+        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData, 'currencies' => $currencies], trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -2450,19 +2450,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         $emails = array();
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if ($bookInvSuppMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Supplier Invoice it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_supplier_invoice_it_is_alre'));
         }
 
         if ($bookInvSuppMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this Supplier Invoice it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_supplier_invoice_it_is_alre_1'));
         }
 
         if ($bookInvSuppMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Supplier Invoice, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_supplier_invoice_it_is_not_'));
         }
 
         // updating fields
@@ -2555,7 +2555,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($bookInvSuppMaster->documentSystemID,$bookingSuppMasInvAutoID,$input['reopenComments'],'Reopened','Pending Approval');
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
+        return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_reopened_successfully'));
     }
 
     public function getInvoiceMasterApproval(Request $request)
@@ -2760,7 +2760,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if (!isset($input['taxMasterAutoID'])) {
@@ -2771,21 +2771,21 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         if ($input['percentage'] == 0) {
-            return $this->sendError('VAT percentage cannot be 0');
+            return $this->sendError(trans('custom.vat_percentage_cannot_be_0'));
         }
 
 
         if ($bookInvSuppMaster->documentType == 0) {
             $invoiceDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->first();
             if (empty($invoiceDetail)) {
-                return $this->sendResponse('e', 'Invoice details not found.');
+                return $this->sendResponse('e', trans('custom.invoice_details_not_found'));
             }
         }
         $decimal = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
         if ($bookInvSuppMaster->documentType == 1) {
             $invoiceDetail = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)->first();
             if (empty($invoiceDetail)) {
-                return $this->sendResponse('e', 'Invoice Details not found.');
+                return $this->sendResponse('e', trans('custom.invoice_details_not_found_1'));
             }
         }
 
@@ -2810,7 +2810,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($taxMaster)) {
-            return $this->sendResponse('e', 'VAT Master not found');
+            return $this->sendResponse('e', trans('custom.vat_master_not_found'));
         }*/
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
@@ -2818,7 +2818,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'VAT detail already exist');
+            return $this->sendResponse('e', trans('custom.vat_detail_already_exist'));
         }
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -2884,7 +2884,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         try {
             Taxdetail::create($_post);
             DB::commit();
-            return $this->sendResponse('s', 'Successfully Added');
+            return $this->sendResponse('s', trans('custom.successfully_added'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError('e', 'Error Occurred');
@@ -2902,7 +2902,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('documentSystemID', 11)
             ->first();
 
-        return $this->sendResponse($detailTaxSum->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($detailTaxSum->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -2913,7 +2913,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $bookInvSuppMaster = BookInvSuppMaster::find($id);
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         $bookInvSuppMasterRecord = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
@@ -2930,7 +2930,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'project','company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'employee'])->first();
 
         if (empty($bookInvSuppMasterRecord)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($bookInvSuppMaster->companySystemID, $bookInvSuppMaster->documentSystemID);
@@ -3062,7 +3062,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printSupplierInvoice: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 
@@ -3074,19 +3074,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $suppInvoiceData = BookInvSuppMaster::find($supInvoiceAutoID);
         if (empty($suppInvoiceData)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if ($suppInvoiceData->confirmedYN == 1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already confirmed');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al_2'));
         }
 
         if ($suppInvoiceData->approved == -1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already approved');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al'));
         }
 
         if ($suppInvoiceData->cancelYN == -1) {
-            return $this->sendError('You cannot cancel this customer invoice, this is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_this_is_al_1'));
         }
 
         $supplierDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
@@ -3096,7 +3096,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierDirectItemDetail = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $supInvoiceAutoID)->get();
 
         if (count($supplierDetail) > 0 || count($supplierDirectDetail) > 0 || count($supplierDirectItemDetail) > 0) {
-            return $this->sendError('You cannot cancel this supplier invoice, invoice details are exist');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_supplier_invoice_invoice_de'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3114,7 +3114,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         AuditTrial::createAuditTrial($suppInvoiceData->documentSystemID,$supInvoiceAutoID,$request['cancelComments'],'Cancelled', 'Not Confirmed');
 
-        return $this->sendResponse($suppInvoiceData->toArray(), 'Customer invoice cancelled successfully');
+        return $this->sendResponse($suppInvoiceData->toArray(), trans('custom.customer_invoice_cancelled_successfully'));
     }
 
     public function getSupplierInvoiceStatusHistory(Request $request)
@@ -3180,7 +3180,7 @@ LEFT JOIN suppliermaster ON erp_paysupplierinvoicedetail.supplierCodeSystem = su
 LEFT JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
 LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  WHERE bookingInvSystemCode = ' . $bookingSuppMasInvAutoID . ' AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 AND erp_paysupplierinvoicedetail.companySystemID = ' . $companySystemID . ' ');
 
-        return $this->sendResponse($detail, 'payment status retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
 
     public function getSupplierInvoiceAmend(Request $request)
@@ -3191,18 +3191,18 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if($bookInvSuppMaster['approved'] == -1) {
             $isAPIDocument = DocumentSystemMapping::where('documentId',$bookingSuppMasInvAutoID)->where('documentSystemID',11)->exists();
             if ($isAPIDocument){
-                return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+                return $this->sendError(trans('custom.this_is_an_autogenerated_document_this_cannot_be_r'));
             }
         }
 
         if ($bookInvSuppMaster->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this Supplier Invoice');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_supplier_invoice'));
         }
 
         $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable', 'isVatEligible']);
@@ -3279,7 +3279,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->delete();
         }
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice Amend successfully');
+        return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_amend_successfully'));
     }
 
     public function supplierInvoiceTaxPercentage(Request $request)
@@ -3290,7 +3290,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $taxMaster = DB::select('SELECT taxPercent FROM erp_taxmaster WHERE taxMasterAutoID = ' . $taxMasterAutoID . '');
 
-        return $this->sendResponse($taxMaster, 'Data retrieved successfully');
+        return $this->sendResponse($taxMaster, trans('custom.data_retrieved_successfully'));
     }
 
     public function amendSupplierInvoiceReview(Request $request)
@@ -3305,7 +3305,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $bookInvSuppMasterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMasterData)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         $documentAutoId = $bookingSuppMasInvAutoID;
@@ -3320,7 +3320,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$documentAutoId)->where('documentSystemID',11)->exists();
         if ($isAPIDocument){
-            return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+            return $this->sendError(trans('custom.this_is_an_autogenerated_document_this_cannot_be_r'));
         }
 
         if($bookInvSuppMasterData->approved == -1) {
@@ -3356,7 +3356,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
 
         if ($bookInvSuppMasterData->confirmedYN == 0 && $bookInvSuppMasterData->cancelYN == 0) {
-            return $this->sendError('You cannot return back to amend this Supplier Invoice, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_supplier_invo'));
         }
 
         // checking document matched in machmaster
@@ -3366,7 +3366,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. Supplier Invoice is added to payment');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_supplier_invoice_is_ad'));
         }
 
         $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -3492,7 +3492,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($bookingSuppMasInvAutoID, $bookInvSuppMasterData->documentSystemID);
 
             DB::commit();
-            return $this->sendResponse($bookInvSuppMasterData->toArray(), 'Supplier Invoice amend saved successfully');
+            return $this->sendResponse($bookInvSuppMasterData->toArray(), trans('custom.supplier_invoice_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3518,7 +3518,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $printID = $matchedAmount->matchDocumentMasterAutoID;
         }
 
-        return $this->sendResponse($printID, 'Print data retrieved');
+        return $this->sendResponse($printID, trans('custom.print_data_retrieved'));
     }
 
     public function clearSupplierInvoiceNo(Request $request)
@@ -3529,14 +3529,14 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         // updating fields
         $bookInvSuppMaster->supplierInvoiceNo = null;
         $bookInvSuppMaster->save();
 
-        return $this->sendResponse($bookInvSuppMaster, 'Record updated successfully');
+        return $this->sendResponse($bookInvSuppMaster, trans('custom.record_updated_successfully'));
     }
 
     public function getFilteredDirectCustomerInvoice(Request $request)
@@ -3557,7 +3557,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                                         ->take(30)
                                         ->get()->toArray();
 
-        return $this->sendResponse($directCustomerInvoices, 'Data retrieved successfully');
+        return $this->sendResponse($directCustomerInvoices, trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -3577,7 +3577,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                                         ->get();
 
 
-        return $this->sendResponse($purchaseOrders, 'Data retrieved successfully');
+        return $this->sendResponse($purchaseOrders, trans('custom.data_retrieved_successfully'));
     }
 
     public function createSupplierInvoices(Request $request)

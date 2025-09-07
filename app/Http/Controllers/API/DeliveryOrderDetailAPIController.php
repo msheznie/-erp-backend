@@ -87,7 +87,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $this->deliveryOrderDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $deliveryOrderDetails = $this->deliveryOrderDetailRepository->all();
 
-        return $this->sendResponse($deliveryOrderDetails->toArray(), 'Delivery Order Details retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetails->toArray(), trans('custom.delivery_order_details_retrieved_successfully_1'));
     }
 
     /**
@@ -134,12 +134,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
-            return $this->sendError('Item not found',500);
+            return $this->sendError(trans('custom.item_not_found'),500);
         }
 
         $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
         $category = $item->financeCategoryMaster;
 
@@ -318,13 +318,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         if((!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
-            return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.bs_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
-            return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.cost_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeCogsGLcodePL'] || !$input['financeCogsGLcodePLSystemID']){
-            return $this->sendError('COGS gl account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.cogs_gl_account_cannot_be_null_for_2') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']){
-            return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.revenue_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }
 
         /*if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']
@@ -431,7 +431,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail saved successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.delivery_order_detail_saved_successfully'));
     }
 
     /**
@@ -478,10 +478,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.delivery_order_detail_retrieved_successfully'));
     }
 
     /**
@@ -540,12 +540,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
 
         $deliveryOrderMaster = DeliveryOrder::find($deliveryOrderDetail->deliveryOrderID);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
 
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
@@ -676,7 +676,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'DeliveryOrderDetail updated successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.deliveryorderdetail_updated_successfully'));
     }
 
     /**
@@ -723,12 +723,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
         $deliveryOrder = DeliveryOrder::find($deliveryOrderDetail->deliveryOrderID);
         if(!empty($deliveryOrder)){
             if($deliveryOrder->confirmedYN == 1){
-                return $this->sendError('Order was already confirmed. you cannot delete',500);
+                return $this->sendError(trans('custom.order_was_already_confirmed_you_cannot_delete'),500);
             }
 
             // $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
@@ -748,7 +748,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                                              ->first();
 
                 if ($validateSubProductSold) {
-                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                    return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
                 }
 
                 $subProduct = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
@@ -849,7 +849,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse([],'Delivery Order Detail deleted successfully');
+        return $this->sendResponse([],trans('custom.delivery_order_detail_deleted_successfully'));
     }
 
     private function updateAmountsByTransactionAmount($input,$deliveryOrder){
@@ -891,7 +891,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $inputDetails = collect($inputDetails)->where('isChecked',1)->toArray();
         $financeCategories = collect($inputDetails)->pluck('itemCategory')->toArray();
         if (count(array_unique($financeCategories)) > 1) {
-            return $this->sendError('Multiple finance category cannot be added. Different finance category found on selected details.',500);
+            return $this->sendError(trans('custom.multiple_finance_category_cannot_be_added_differen_1'),500);
         }
 
         foreach ($input['detailTable'] as $newValidation) {
@@ -1238,7 +1238,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             $item = ItemMaster::find($new['itemAutoID']);
                             if(empty($item)){
-                                return $this->sendError('Item not found',500);
+                                return $this->sendError(trans('custom.item_not_found'),500);
                             }
 
                             $DODetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -1264,13 +1264,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             }
 
                             if((!$DODetail_arr['financeGLcodebBS'] || !$DODetail_arr['financeGLcodebBSSystemID']) && $item->financeCategoryMaster != 2){
-                                return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.bs_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodePL'] || !$DODetail_arr['financeGLcodePLSystemID']){
-                                return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.cost_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeCogsGLcodePL'] || !$DODetail_arr['financeCogsGLcodePLSystemID']){
-                                return $this->sendError('COGS gl account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.cogs_gl_account_cannot_be_null_for_2') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodeRevenueSystemID'] || !$DODetail_arr['financeGLcodeRevenue']){
-                                return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.revenue_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }
 
                             /*if (!$DODetail_arr['financeGLcodebBS'] || !$DODetail_arr['financeGLcodebBSSystemID']
@@ -1361,10 +1361,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             } 
 
             DB::commit();
-            return $this->sendResponse([], 'Delivery Order Details saved successfully');
+            return $this->sendResponse([], trans('custom.delivery_order_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -1445,7 +1445,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Delivery Order not found.'];
+            return ['status' => false, 'message' => trans('custom.delivery_order_not_found_3')];
         }
 
         $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
@@ -1593,12 +1593,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
 
         if (empty($master)) {
-            return $this->sendResponse('e', 'Delivery Order not found.');
+            return $this->sendResponse('e', trans('custom.delivery_order_not_found_3'));
         }
 
         $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
         if (empty($invoiceDetail)) {
-            return $this->sendResponse('e', 'Delivery Details not found.');
+            return $this->sendResponse('e', trans('custom.delivery_details_not_found'));
         }
 
         $totalAmount = 0;
@@ -1618,7 +1618,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 ->first();
 
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'VAT Detail Already exist');
+            return $this->sendResponse('e', trans('custom.vat_detail_already_exist_1'));
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
@@ -1701,7 +1701,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
 
             DB::commit();
-            return $this->sendResponse('s', 'Successfully Added');
+            return $this->sendResponse('s', trans('custom.successfully_added'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
@@ -1727,7 +1727,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
             if (empty($masterData)) {
-                return $this->sendError('Delivery Order not found', 500);
+                return $this->sendError(trans('custom.delivery_order_not_found'), 500);
             }
 
 
@@ -1763,7 +1763,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             foreach ($uniqueData as $key => $value) {
 
                 if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('qty',$value)) {
-                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                     return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
                 }
 
 
@@ -1790,7 +1790,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
             if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
 
@@ -1799,7 +1799,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if ($masterData->cancelledYN == -1) {
-                return $this->sendError('This Quotation already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_quotation_already_closed_you_can_not_add'), 500);
             }
 
             if ($masterData->approvedYN == 1) {
@@ -2057,7 +2057,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
 
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
@@ -2080,11 +2080,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         if ($item->financeCategoryMaster == 1) {
             if (isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0)) {
-                return $this->sendError('Stock Qty is 0. You cannot issue.', 500);
+                return $this->sendError(trans('custom.stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
-                return $this->sendError('Cost is 0. You cannot issue.', 500);
+                return $this->sendError(trans('custom.cost_is_0_you_cannot_issue_1'), 500);
             }
         }
 

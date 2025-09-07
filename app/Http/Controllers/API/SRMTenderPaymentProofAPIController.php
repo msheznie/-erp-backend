@@ -64,7 +64,7 @@ class SRMTenderPaymentProofAPIController extends AppBaseController
         $this->sRMTenderPaymentProofRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sRMTenderPaymentProofs = $this->sRMTenderPaymentProofRepository->all();
 
-        return $this->sendResponse($sRMTenderPaymentProofs->toArray(), 'S R M Tender Payment Proofs retrieved successfully');
+        return $this->sendResponse($sRMTenderPaymentProofs->toArray(), trans('custom.s_r_m_tender_payment_proofs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SRMTenderPaymentProofAPIController extends AppBaseController
 
         $sRMTenderPaymentProof = $this->sRMTenderPaymentProofRepository->create($input);
 
-        return $this->sendResponse($sRMTenderPaymentProof->toArray(), 'S R M Tender Payment Proof saved successfully');
+        return $this->sendResponse($sRMTenderPaymentProof->toArray(), trans('custom.s_r_m_tender_payment_proof_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SRMTenderPaymentProofAPIController extends AppBaseController
         $sRMTenderPaymentProof = $this->sRMTenderPaymentProofRepository->findWithoutFail($id);
 
         if (empty($sRMTenderPaymentProof)) {
-            return $this->sendError('S R M Tender Payment Proof not found');
+            return $this->sendError(trans('custom.s_r_m_tender_payment_proof_not_found'));
         }
 
-        return $this->sendResponse($sRMTenderPaymentProof->toArray(), 'S R M Tender Payment Proof retrieved successfully');
+        return $this->sendResponse($sRMTenderPaymentProof->toArray(), trans('custom.s_r_m_tender_payment_proof_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SRMTenderPaymentProofAPIController extends AppBaseController
         $sRMTenderPaymentProof = $this->sRMTenderPaymentProofRepository->findWithoutFail($id);
 
         if (empty($sRMTenderPaymentProof)) {
-            return $this->sendError('S R M Tender Payment Proof not found');
+            return $this->sendError(trans('custom.s_r_m_tender_payment_proof_not_found'));
         }
 
         $sRMTenderPaymentProof = $this->sRMTenderPaymentProofRepository->update($input, $id);
 
-        return $this->sendResponse($sRMTenderPaymentProof->toArray(), 'SRMTenderPaymentProof updated successfully');
+        return $this->sendResponse($sRMTenderPaymentProof->toArray(), trans('custom.srmtenderpaymentproof_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SRMTenderPaymentProofAPIController extends AppBaseController
         $sRMTenderPaymentProof = $this->sRMTenderPaymentProofRepository->findWithoutFail($id);
 
         if (empty($sRMTenderPaymentProof)) {
-            return $this->sendError('S R M Tender Payment Proof not found');
+            return $this->sendError(trans('custom.s_r_m_tender_payment_proof_not_found'));
         }
 
         $sRMTenderPaymentProof->delete();

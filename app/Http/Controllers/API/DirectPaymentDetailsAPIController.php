@@ -115,7 +115,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $this->directPaymentDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directPaymentDetails = $this->directPaymentDetailsRepository->all();
 
-        return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details retrieved successfully');
+        return $this->sendResponse($directPaymentDetails->toArray(), trans('custom.direct_payment_details_retrieved_successfully'));
     }
 
     /**
@@ -218,10 +218,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($id);
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
-        return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details retrieved successfully');
+        return $this->sendResponse($directPaymentDetails->toArray(), trans('custom.direct_payment_details_retrieved_successfully'));
     }
 
     /**
@@ -334,11 +334,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($id);
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
         if($directPaymentDetails->master && $directPaymentDetails->master->confirmedYN){
-            return $this->sendError('You cannot delete Direct Payment Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_direct_payment_detail_this_docum'),500);
         }
 
         $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation(
@@ -352,7 +352,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         // update master table  
         PaySupplier::updateMaster($directPaymentDetails->directPaymentAutoID);
 
-        return $this->sendResponse($id, 'Direct Payment Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_payment_details_deleted_successfully'));
     }
 
 
@@ -367,7 +367,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         }])->findWhere(['directPaymentAutoID' => $id]);
 
-        return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
+        return $this->sendResponse($directPaymentDetails, trans('custom.details_retrieved_successfully'));
     }
 
     public function deleteAllDirectPayment(Request $request)
@@ -378,11 +378,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         if($paySupplierInvoiceMaster->confirmedYN){
-            return $this->sendError('You cannot delete Direct Payment Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_direct_payment_detail_this_docum'),500);
         }
 
         $expenseClaimDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
@@ -401,7 +401,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
         PaySupplier::updateMaster($id);
-        return $this->sendResponse($directPaymentDetails, 'Successfully delete');
+        return $this->sendResponse($directPaymentDetails, trans('custom.successfully_delete'));
     }
 
     public function updateDirectPaymentAccount(Request $request)
@@ -435,25 +435,25 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($input['directPaymentDetailsID']);
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['toBankCurrencyID'], $input['toBankCurrencyID'], $input['toBankAmount']);
 
         $company = Company::find($input['companySystemID']);
         if(empty($company)){
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
         $bankAccount = BankAccount::find($input['toBankAccountID']);
 
         if(empty($bankAccount)){
-            return $this->sendError('Bank not found');
+            return $this->sendError(trans('custom.bank_not_found'));
         }
 
         $chartofaccount = ChartOfAccount::find($bankAccount->chartOfAccountSystemID);
 
         if(empty($chartofaccount)){
-            return $this->sendError('Bank account GL code not found');
+            return $this->sendError(trans('custom.bank_account_gl_code_not_found'));
         }
 
         $input['toCompanyLocalCurrencyID'] = $company->localCurrencyID;
@@ -470,7 +470,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $input['directPaymentDetailsID']);
 
-        return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
+        return $this->sendResponse($directPaymentDetails->toArray(), trans('custom.directpaymentdetails_updated_successfully'));
 
     }
 
@@ -479,7 +479,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($request->directPaymentDetailsID);
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
         if ($request->toBankCurrencyID) {
@@ -511,10 +511,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
 
             $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => \Helper::roundValue($bankAmount)];
-            return $this->sendResponse($output, 'Successfully data retrieved');
+            return $this->sendResponse($output, trans('custom.successfully_data_retrieved'));
         } else {
             $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
-            return $this->sendResponse($output, 'Successfully data retrieved');
+            return $this->sendResponse($output, trans('custom.successfully_data_retrieved'));
         }
     }
 
@@ -528,7 +528,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $expenseClaim = ExpenseClaimMaster::find($id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
 
@@ -536,7 +536,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($payMasterAutoId);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_not_found'));
         }
         // check policy 16 is on for ec
 //        if($expenseClaim->pettyCashYN == 1){
@@ -624,7 +624,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             ExpenseClaimMaster::find($id)->update(['addedForPayment' => -1, 'addedToSalary' => -1]);
         }
 
-        return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');
+        return $this->sendResponse($expenseClaimDetails, trans('custom.monthly_addition_details_added_successfully'));
     }
 
     public function addPVDetailsByInterCompany(Request $request)
@@ -644,11 +644,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice not found', 500);
+            return $this->sendError(trans('custom.pay_supplier_invoice_not_found'), 500);
         }
 
         if($paySupplierInvoiceMaster->confirmedYN){
-            return $this->sendError('You cannot add Direct Payment Detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_direct_payment_detail_this_document'), 500);
         }
 
 
@@ -673,13 +673,13 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
             $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['PayMasterAutoId'], 'relatedPartyYN' => 1]);
             if (count($directPaymentDetails) > 0) {
-                return $this->sendError('Cannot add GL code as there is a related party GL code added.', 500);
+                return $this->sendError(trans('custom.cannot_add_gl_code_as_there_is_a_related_party_gl_'), 500);
             }
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['PayMasterAutoId'], 'glCodeIsBank' => 1]);
         if (count($directPaymentDetails) > 0) {
-            return $this->sendError('Cannot add GL code as there is a bank GL code added.', 500);
+            return $this->sendError(trans('custom.cannot_add_gl_code_as_there_is_a_bank_gl_code_adde'), 500);
         }
 
 
@@ -741,14 +741,14 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($id);
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
         $input['deductionType'] = $request->input('deduction_type');
         $input = $this->convertArrayToValue( $input );
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
-        return $this->sendResponse($directPaymentDetails->toArray(), 'Monthly deduction type updated successfully');
+        return $this->sendResponse($directPaymentDetails->toArray(), trans('custom.monthly_deduction_type_updated_successfully'));
 
     }
 
@@ -757,11 +757,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['type'])) {
-            return $this->sendError('Type parameter required');
+            return $this->sendError(trans('custom.type_parameter_required'));
         }
 
         if (!isset($input['invoice'])) {
-            return $this->sendError('Invoice parameter required.');
+            return $this->sendError(trans('custom.invoice_parameter_required'));
         }
 
         
@@ -772,7 +772,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         if (empty($account) && $type == 15 && $invoice == 3) {
             return $this->sendError('The selected GL is not linked to a bank account.');
         } else {
-            return $this->sendResponse($account, 'Account details retrieved successfully.');
+            return $this->sendResponse($account, trans('custom.account_details_retrieved_successfully'));
         }
 
     }

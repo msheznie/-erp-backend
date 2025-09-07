@@ -64,7 +64,7 @@ class logUploadBudgetAPIController extends AppBaseController
         $this->logUploadBudgetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logUploadBudgets = $this->logUploadBudgetRepository->all();
 
-        return $this->sendResponse($logUploadBudgets->toArray(), 'Log Upload Budgets retrieved successfully');
+        return $this->sendResponse($logUploadBudgets->toArray(), trans('custom.log_upload_budgets_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class logUploadBudgetAPIController extends AppBaseController
 
         $logUploadBudget = $this->logUploadBudgetRepository->create($input);
 
-        return $this->sendResponse($logUploadBudget->toArray(), 'Log Upload Budget saved successfully');
+        return $this->sendResponse($logUploadBudget->toArray(), trans('custom.log_upload_budget_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class logUploadBudgetAPIController extends AppBaseController
         $logUploadBudget = $this->logUploadBudgetRepository->findWithoutFail($id);
 
         if (empty($logUploadBudget)) {
-            return $this->sendError('Log Upload Budget not found');
+            return $this->sendError(trans('custom.log_upload_budget_not_found'));
         }
 
-        return $this->sendResponse($logUploadBudget->toArray(), 'Log Upload Budget retrieved successfully');
+        return $this->sendResponse($logUploadBudget->toArray(), trans('custom.log_upload_budget_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class logUploadBudgetAPIController extends AppBaseController
         $logUploadBudget = $this->logUploadBudgetRepository->findWithoutFail($id);
 
         if (empty($logUploadBudget)) {
-            return $this->sendError('Log Upload Budget not found');
+            return $this->sendError(trans('custom.log_upload_budget_not_found'));
         }
 
         $logUploadBudget = $this->logUploadBudgetRepository->update($input, $id);
 
-        return $this->sendResponse($logUploadBudget->toArray(), 'logUploadBudget updated successfully');
+        return $this->sendResponse($logUploadBudget->toArray(), trans('custom.loguploadbudget_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class logUploadBudgetAPIController extends AppBaseController
         $logUploadBudget = $this->logUploadBudgetRepository->findWithoutFail($id);
 
         if (empty($logUploadBudget)) {
-            return $this->sendError('Log Upload Budget not found');
+            return $this->sendError(trans('custom.log_upload_budget_not_found'));
         }
 
         $logUploadBudget->delete();

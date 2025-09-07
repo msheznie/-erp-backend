@@ -84,7 +84,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $this->tenderBoqItemsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBoqItems = $this->tenderBoqItemsRepository->all();
 
-        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items retrieved successfully');
+        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_retrieved_successfully'));
     }
 
     /**
@@ -131,7 +131,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         $tenderBoqItems = $this->tenderBoqItemsRepository->create($input);
 
-        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items saved successfully');
+        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_saved_successfully'));
     }
 
     /**
@@ -178,10 +178,10 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError('Tender Boq Items not found');
+            return $this->sendError(trans('custom.tender_boq_items_not_found'));
         }
 
-        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items retrieved successfully');
+        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_retrieved_successfully'));
     }
 
     /**
@@ -238,12 +238,12 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError('Tender Boq Items not found');
+            return $this->sendError(trans('custom.tender_boq_items_not_found'));
         }
 
         $tenderBoqItems = $this->tenderBoqItemsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBoqItems->toArray(), 'TenderBoqItems updated successfully');
+        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tenderboqitems_updated_successfully'));
     }
 
     /**
@@ -290,7 +290,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError('Tender Boq Items not found');
+            return $this->sendError(trans('custom.tender_boq_items_not_found'));
         }
 
         $tenderBoqItems->delete();
@@ -320,7 +320,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $main_work_id = $input['main_work_id'];
 
         if($input['qty'] <=0 ){
-            return $this->sendError('QTY cannot be less than or equal to zero');
+            return $this->sendError(trans('custom.qty_cannot_be_less_than_or_equal_to_zero'));
         }
 
         $exist = $this->tenderBoqItemsRepository->checkBoqItemsExists($input, $editOrAmend, $input['item_name'], $main_work_id);
@@ -418,7 +418,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             return ['success' => false, 'message' => 'QTY is required'];
         }else{
             if($input['qty'] <=0 ){
-                return ['success' => false, 'message' => 'QTY cannot be less than or equal to zero'];
+                return ['success' => false, 'message' => trans('custom.qty_cannot_be_less_than_or_equal_to_zero')];
             }
         }
         $versionID = $input['versionID'] ?? 0;
@@ -514,7 +514,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx', 'tender_boq_item_upload_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -582,7 +582,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
 
                 if (!$validateItem || !$validateQty) {
-                    return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                    return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
                 }
             }
 
@@ -659,7 +659,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                 return $this->sendError($skipRecords, 200);
             }
 
-            return $this->sendResponse([], 'Items uploaded successfully!');
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

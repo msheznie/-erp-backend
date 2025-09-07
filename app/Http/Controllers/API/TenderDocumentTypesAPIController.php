@@ -67,7 +67,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $this->tenderDocumentTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->all();
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypes->toArray(), trans('custom.tender_document_types_retrieved_successfully'));
     }
 
     /**
@@ -114,7 +114,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
 
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->create($input);
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types saved successfully');
+        return $this->sendResponse($tenderDocumentTypes->toArray(), trans('custom.tender_document_types_saved_successfully'));
     }
 
     /**
@@ -161,10 +161,10 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+            return $this->sendError(trans('custom.tender_document_types_not_found'));
         }
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypes->toArray(), trans('custom.tender_document_types_retrieved_successfully'));
     }
 
     /**
@@ -221,12 +221,12 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+            return $this->sendError(trans('custom.tender_document_types_not_found'));
         }
 
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->update($input, $id);
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'TenderDocumentTypes updated successfully');
+        return $this->sendResponse($tenderDocumentTypes->toArray(), trans('custom.tenderdocumenttypes_updated_successfully'));
     }
 
     /**
@@ -273,7 +273,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+            return $this->sendError(trans('custom.tender_document_types_not_found'));
         }
 
         $tenderDocumentTypes->delete();

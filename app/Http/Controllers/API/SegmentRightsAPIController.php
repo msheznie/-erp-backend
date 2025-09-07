@@ -55,7 +55,7 @@ class SegmentRightsAPIController extends AppBaseController
         $this->segmentRightsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $segmentRights = $this->segmentRightsRepository->all();
 
-        return $this->sendResponse($segmentRights->toArray(), 'Segment Rights retrieved successfully');
+        return $this->sendResponse($segmentRights->toArray(), trans('custom.segment_rights_retrieved_successfully'));
     }
 
     /**
@@ -93,7 +93,7 @@ class SegmentRightsAPIController extends AppBaseController
                 $i++;
             }
         } else {
-            return $this->sendError('Segment required', 500);
+            return $this->sendError(trans('custom.segment_required'), 500);
         }
         $finalArr = [];
 
@@ -134,12 +134,12 @@ class SegmentRightsAPIController extends AppBaseController
                 }
             }
         } else {
-            return $this->sendError('Employee required', 500);
+            return $this->sendError(trans('custom.employee_required'), 500);
         }
 
         if(!empty($finalArr)){
             $segmentRights = SegmentRights::insert($finalArr);
-            return $this->sendResponse('', 'Segment rights created successfully');
+            return $this->sendResponse('', trans('custom.segment_rights_created_successfully'));
         }else{
             return $this->sendError( 'Employee already exist',500);
         }
@@ -162,10 +162,10 @@ class SegmentRightsAPIController extends AppBaseController
         $segmentRights = $this->segmentRightsRepository->findWithoutFail($id);
 
         if (empty($segmentRights)) {
-            return $this->sendError('Segment Rights not found');
+            return $this->sendError(trans('custom.segment_rights_not_found'));
         }
 
-        return $this->sendResponse($segmentRights->toArray(), 'Segment Rights retrieved successfully');
+        return $this->sendResponse($segmentRights->toArray(), trans('custom.segment_rights_retrieved_successfully'));
     }
 
     /**
@@ -185,12 +185,12 @@ class SegmentRightsAPIController extends AppBaseController
         $segmentRights = $this->segmentRightsRepository->findWithoutFail($id);
 
         if (empty($segmentRights)) {
-            return $this->sendError('Segment Rights not found');
+            return $this->sendError(trans('custom.segment_rights_not_found'));
         }
 
         $segmentRights = $this->segmentRightsRepository->update($input, $id);
 
-        return $this->sendResponse($segmentRights->toArray(), 'SegmentRights updated successfully');
+        return $this->sendResponse($segmentRights->toArray(), trans('custom.segmentrights_updated_successfully'));
     }
 
     /**
@@ -207,12 +207,12 @@ class SegmentRightsAPIController extends AppBaseController
         $segmentRights = $this->segmentRightsRepository->findWithoutFail($id);
 
         if (empty($segmentRights)) {
-            return $this->sendError('Segment Rights not found');
+            return $this->sendError(trans('custom.segment_rights_not_found'));
         }
 
         $segmentRights->delete();
 
-        return $this->sendResponse($id, 'Segment Rights deleted successfully');
+        return $this->sendResponse($id, trans('custom.segment_rights_deleted_successfully'));
     }
 
     public function getSegmentRightEmployees(Request $request)

@@ -66,7 +66,7 @@ class ReportTemplateEquityAPIController extends AppBaseController
         $this->reportTemplateEquityRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateEquities = $this->reportTemplateEquityRepository->all();
 
-        return $this->sendResponse($reportTemplateEquities->toArray(), 'Report Template Equities retrieved successfully');
+        return $this->sendResponse($reportTemplateEquities->toArray(), trans('custom.report_template_equities_retrieved_successfully'));
     }
 
     /**
@@ -120,7 +120,7 @@ class ReportTemplateEquityAPIController extends AppBaseController
             $input = $request->all();
             $reportTemplateEquity = $this->reportTemplateEquityRepository->create($input);
     
-            return $this->sendResponse($reportTemplateEquity->toArray(), 'Report Template Equity saved successfully');
+            return $this->sendResponse($reportTemplateEquity->toArray(), trans('custom.report_template_equity_saved_successfully'));
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);
         }
@@ -171,10 +171,10 @@ class ReportTemplateEquityAPIController extends AppBaseController
         $reportTemplateEquity = $this->reportTemplateEquityRepository->findWithoutFail($id);
 
         if (empty($reportTemplateEquity)) {
-            return $this->sendError('Report Template Equity not found');
+            return $this->sendError(trans('custom.report_template_equity_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateEquity->toArray(), 'Report Template Equity retrieved successfully');
+        return $this->sendResponse($reportTemplateEquity->toArray(), trans('custom.report_template_equity_retrieved_successfully'));
     }
 
     /**
@@ -240,12 +240,12 @@ class ReportTemplateEquityAPIController extends AppBaseController
         $reportTemplateEquity = $this->reportTemplateEquityRepository->findWithoutFail($id);
 
         if (empty($reportTemplateEquity)) {
-            return $this->sendError('Report Template Equity not found');
+            return $this->sendError(trans('custom.report_template_equity_not_found'));
         }
 
         $reportTemplateEquity = $this->reportTemplateEquityRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateEquity->toArray(), 'ReportTemplateEquity updated successfully');
+        return $this->sendResponse($reportTemplateEquity->toArray(), trans('custom.reporttemplateequity_updated_successfully'));
     }
 
     /**
@@ -294,14 +294,14 @@ class ReportTemplateEquityAPIController extends AppBaseController
       
 
         if (empty($reportTemplateEquity)) {
-            return $this->sendError('Report Template Equity not found');
+            return $this->sendError(trans('custom.report_template_equity_not_found'));
         }
         $masterId = $reportTemplateEquity->templateMasterID;
         $reportTemplateEquity->delete();
 
         ReportTemplateLinks::where('templateMasterID',$masterId)->where('templateDetailID',$id)->delete();
 
-        return $this->sendResponse(true, 'Report Template Equity deleted successfully');
+        return $this->sendResponse(true, trans('custom.report_template_equity_deleted_successfully'));
 
     }
 }

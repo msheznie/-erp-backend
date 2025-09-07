@@ -71,7 +71,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         $this->currencyConversionMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyConversionMasters = $this->currencyConversionMasterRepository->all();
 
-        return $this->sendResponse($currencyConversionMasters->toArray(), 'Currency Conversion Masters retrieved successfully');
+        return $this->sendResponse($currencyConversionMasters->toArray(), trans('custom.currency_conversion_masters_retrieved_successfully'));
     }
 
     /**
@@ -162,7 +162,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($currencyConversionMaster->toArray(), 'Currency Conversion Master saved successfully');
+            return $this->sendResponse($currencyConversionMaster->toArray(), trans('custom.currency_conversion_master_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
@@ -213,10 +213,10 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         $currencyConversionMaster = $this->currencyConversionMasterRepository->findWithoutFail($id);
 
         if (empty($currencyConversionMaster)) {
-            return $this->sendError('Currency Conversion Master not found');
+            return $this->sendError(trans('custom.currency_conversion_master_not_found'));
         }
 
-        return $this->sendResponse($currencyConversionMaster->toArray(), 'Currency Conversion Master retrieved successfully');
+        return $this->sendResponse($currencyConversionMaster->toArray(), trans('custom.currency_conversion_master_retrieved_successfully'));
     }
 
     /**
@@ -273,7 +273,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         $currencyConversionMaster = $this->currencyConversionMasterRepository->findWithoutFail($id);
 
         if (empty($currencyConversionMaster)) {
-            return $this->sendError('Currency Conversion Master not found');
+            return $this->sendError(trans('custom.currency_conversion_master_not_found'));
         }
 
 
@@ -339,7 +339,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         $currencyConversionMaster = $this->currencyConversionMasterRepository->findWithoutFail($id);
 
         if (empty($currencyConversionMaster)) {
-            return $this->sendError('Currency Conversion Master not found');
+            return $this->sendError(trans('custom.currency_conversion_master_not_found'));
         }
 
         $currencyConversionMaster->delete();
@@ -397,7 +397,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
                                                ->where('id', $input['id'])
                                                ->first();
 
-        return $this->sendResponse($conversions, 'Currency Conversion Master retrieved successfully');
+        return $this->sendResponse($conversions, trans('custom.currency_conversion_master_retrieved_successfully'));
     }
 
 
@@ -409,12 +409,12 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         $currencyMaster = CurrencyMaster::find($id);
         $reportingId = 0;
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.currency_master_not_found'));
         }
 
         $currencyConversionMaster = CurrencyConversionMaster::find($currencyConversionMasterID);
         if (empty($currencyConversionMaster)) {
-            return $this->sendError('Currency Conversion Master not found');
+            return $this->sendError(trans('custom.currency_conversion_master_not_found'));
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -430,7 +430,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
             'reportingCurrency' => $reportingId,
             'conversions' => $conversions->toArray()
         );
-        return $this->sendResponse($array, 'Currency conversions retrieved successfully');
+        return $this->sendResponse($array, trans('custom.currency_conversions_retrieved_successfully'));
     }
 
     public function currencyConversionReopen(Request $request)

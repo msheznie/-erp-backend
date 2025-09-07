@@ -65,7 +65,7 @@ class GrvDetailsPrnAPIController extends AppBaseController
         $this->grvDetailsPrnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $grvDetailsPrns = $this->grvDetailsPrnRepository->all();
 
-        return $this->sendResponse($grvDetailsPrns->toArray(), 'Grv Details Prns retrieved successfully');
+        return $this->sendResponse($grvDetailsPrns->toArray(), trans('custom.grv_details_prns_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class GrvDetailsPrnAPIController extends AppBaseController
 
         $grvDetailsPrn = $this->grvDetailsPrnRepository->create($input);
 
-        return $this->sendResponse($grvDetailsPrn->toArray(), 'Grv Details Prn saved successfully');
+        return $this->sendResponse($grvDetailsPrn->toArray(), trans('custom.grv_details_prn_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class GrvDetailsPrnAPIController extends AppBaseController
         $grvDetailsPrn = $this->grvDetailsPrnRepository->findWithoutFail($id);
 
         if (empty($grvDetailsPrn)) {
-            return $this->sendError('Grv Details Prn not found');
+            return $this->sendError(trans('custom.grv_details_prn_not_found'));
         }
 
-        return $this->sendResponse($grvDetailsPrn->toArray(), 'Grv Details Prn retrieved successfully');
+        return $this->sendResponse($grvDetailsPrn->toArray(), trans('custom.grv_details_prn_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class GrvDetailsPrnAPIController extends AppBaseController
         $grvDetailsPrn = $this->grvDetailsPrnRepository->findWithoutFail($id);
 
         if (empty($grvDetailsPrn)) {
-            return $this->sendError('Grv Details Prn not found');
+            return $this->sendError(trans('custom.grv_details_prn_not_found'));
         }
 
         $grvDetailsPrn = $this->grvDetailsPrnRepository->update($input, $id);
 
-        return $this->sendResponse($grvDetailsPrn->toArray(), 'GrvDetailsPrn updated successfully');
+        return $this->sendResponse($grvDetailsPrn->toArray(), trans('custom.grvdetailsprn_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class GrvDetailsPrnAPIController extends AppBaseController
         $grvDetailsPrn = $this->grvDetailsPrnRepository->findWithoutFail($id);
 
         if (empty($grvDetailsPrn)) {
-            return $this->sendError('Grv Details Prn not found');
+            return $this->sendError(trans('custom.grv_details_prn_not_found'));
         }
 
         $grvDetailsPrn->delete();

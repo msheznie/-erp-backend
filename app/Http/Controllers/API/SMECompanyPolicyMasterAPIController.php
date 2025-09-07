@@ -65,7 +65,7 @@ class SMECompanyPolicyMasterAPIController extends AppBaseController
         $this->sMECompanyPolicyMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMECompanyPolicyMasters = $this->sMECompanyPolicyMasterRepository->all();
 
-        return $this->sendResponse($sMECompanyPolicyMasters->toArray(), 'S M E Company Policy Masters retrieved successfully');
+        return $this->sendResponse($sMECompanyPolicyMasters->toArray(), trans('custom.s_m_e_company_policy_masters_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMECompanyPolicyMasterAPIController extends AppBaseController
 
         $sMECompanyPolicyMaster = $this->sMECompanyPolicyMasterRepository->create($input);
 
-        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), 'S M E Company Policy Master saved successfully');
+        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), trans('custom.s_m_e_company_policy_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMECompanyPolicyMasterAPIController extends AppBaseController
         $sMECompanyPolicyMaster = $this->sMECompanyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicyMaster)) {
-            return $this->sendError('S M E Company Policy Master not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_master_not_found'));
         }
 
-        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), 'S M E Company Policy Master retrieved successfully');
+        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), trans('custom.s_m_e_company_policy_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMECompanyPolicyMasterAPIController extends AppBaseController
         $sMECompanyPolicyMaster = $this->sMECompanyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicyMaster)) {
-            return $this->sendError('S M E Company Policy Master not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_master_not_found'));
         }
 
         $sMECompanyPolicyMaster = $this->sMECompanyPolicyMasterRepository->update($input, $id);
 
-        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), 'SMECompanyPolicyMaster updated successfully');
+        return $this->sendResponse($sMECompanyPolicyMaster->toArray(), trans('custom.smecompanypolicymaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMECompanyPolicyMasterAPIController extends AppBaseController
         $sMECompanyPolicyMaster = $this->sMECompanyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicyMaster)) {
-            return $this->sendError('S M E Company Policy Master not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_master_not_found'));
         }
 
         $sMECompanyPolicyMaster->delete();

@@ -128,7 +128,7 @@ class JvMasterAPIController extends AppBaseController
         $this->jvMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $jvMasters = $this->jvMasterRepository->all();
 
-        return $this->sendResponse($jvMasters->toArray(), 'Jv Masters retrieved successfully');
+        return $this->sendResponse($jvMasters->toArray(), trans('custom.jv_masters_retrieved_successfully'));
     }
 
     /**
@@ -207,7 +207,7 @@ class JvMasterAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($resultData['data'], 'JV created successfully');
+                return $this->sendResponse($resultData['data'], trans('custom.jv_created_successfully'));
             }
         } else {
             DB::rollback();
@@ -271,10 +271,10 @@ class JvMasterAPIController extends AppBaseController
         }])->find($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
         $jvMaster->JVNarration = $jvMaster->JVNarration;
-        return $this->sendResponse($jvMaster->toArray(), 'Jv Master retrieved successfully');
+        return $this->sendResponse($jvMaster->toArray(), trans('custom.jv_master_retrieved_successfully'));
     }
 
     /**
@@ -434,12 +434,12 @@ class JvMasterAPIController extends AppBaseController
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $jvMaster->delete();
 
-        return $this->sendResponse($id, 'Jv Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.jv_master_deleted_successfully'));
     }
 
     public function getJournalVoucherMasterFormData(Request $request)
@@ -515,7 +515,7 @@ class JvMasterAPIController extends AppBaseController
             'projects' => $projects
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -562,7 +562,7 @@ class JvMasterAPIController extends AppBaseController
         },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $jvMasterData->JVNarration = $jvMasterData->JVNarration;
@@ -574,7 +574,7 @@ class JvMasterAPIController extends AppBaseController
 
         $jvMasterData['isProject_base'] = $isProject_base;
 
-        return $this->sendResponse($jvMasterData, 'Jv Master retrieved successfully');
+        return $this->sendResponse($jvMasterData, trans('custom.jv_master_retrieved_successfully'));
     }
 
     public function journalVoucherForSalaryJVMaster(Request $request)
@@ -584,7 +584,7 @@ class JvMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company master not found');
+            return $this->sendError(trans('custom.company_master_not_found_1'));
         }
 
         if ($company) {
@@ -613,7 +613,7 @@ AND hrms_jvmaster.accJVSelectedYN = 0
 AND hrms_jvmaster.accJVpostedYN = 0
 AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -627,7 +627,7 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company master not found');
+            return $this->sendError(trans('custom.company_master_not_found_1'));
         }
 
         if ($company) {
@@ -676,7 +676,7 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
             )
             ->get();
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function journalVoucherForAccrualJVMaster(Request $request)
@@ -687,7 +687,7 @@ AND hrms_jvmaster.companyID = '" . $companyID . "'" . $where);
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company master not found');
+            return $this->sendError(trans('custom.company_master_not_found_1'));
         }
 
         if ($company) {
@@ -706,7 +706,7 @@ WHERE accruavalfromopmaster.companyID = '" . $companyID . "'
 AND accruavalfromopmaster.accConfirmedYN = 1
 AND accruavalfromopmaster.accJVpostedYN = 0");
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function journalVoucherForAccrualJVDetail(Request $request)
@@ -717,7 +717,7 @@ AND accruavalfromopmaster.accJVpostedYN = 0");
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company master not found');
+            return $this->sendError(trans('custom.company_master_not_found_1'));
         }
 
         if ($company) {
@@ -746,7 +746,7 @@ WHERE
     accruvalfromop.accMasterID = $accruvalMasterID
 AND accruvalfromop.companyID = '" . $companyID . "'");
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function exportStandardJVFormat(Request $request)
@@ -762,13 +762,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
                 return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
             } else{
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_with_project_template.xlsx')) {
                 return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_with_project_template.xlsx', 'standard_jv_upload_with_project_template.xlsx');
             } else{
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         }
         
@@ -987,13 +987,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if (empty($companyFinanceYear)) {
-                return $this->sendError('Financial year not created or not active for reversal document. You cannot approve this document.');
+                return $this->sendError(trans('custom.financial_year_not_created_or_not_active_for_rever'));
             }
 
             $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND isActive = -1 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             if (empty($companyFinancePeriod)) {
-                return $this->sendError('Financial period not created or not active for reversal document. You cannot approve this document.');
+                return $this->sendError(trans('custom.financial_period_not_created_or_not_active_for_rev'));
             }
         }
 
@@ -1104,7 +1104,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $jvMasterData = jvMaster::find($jvMasterAutoId);
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $filter = '';
@@ -1233,19 +1233,19 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $jvMasterData = JvMaster::find($jvMasterAutoId);
         $emails = array();
         if (empty($jvMasterData)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         if ($jvMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this journal voucher it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_journal_voucher_it_is_alrea'));
         }
 
         if ($jvMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this journal voucher it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_journal_voucher_it_is_alrea_1'));
         }
 
         if ($jvMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this journal voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_journal_voucher_it_is_not_c'));
         }
 
         // updating fields
@@ -1324,7 +1324,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         /*Audit entry*/
         AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$jvMasterAutoId,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($jvMasterData->toArray(), 'JV reopened successfully');
+        return $this->sendResponse($jvMasterData->toArray(), trans('custom.jv_reopened_successfully'));
     }
 
     public function getJournalVoucherAmend(Request $request)
@@ -1335,11 +1335,11 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $jvMasterData = JvMaster::find($jvMasterAutoId);
         if (empty($jvMasterData)) {
-            return $this->sendError('Journal Voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
 
         if ($jvMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this journal voucher');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_journal_voucher'));
         }
 
         $journalVoucherArray = $jvMasterData->toArray();
@@ -1392,7 +1392,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
 
-        return $this->sendResponse($jvMasterData->toArray(), 'Journal Voucher Amend successfully');
+        return $this->sendResponse($jvMasterData->toArray(), trans('custom.journal_voucher_amend_successfully'));
     }
 
     public function standardJvExcelUpload(request $request)
@@ -1425,7 +1425,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
             if (count($formatChk2) > 0) {
                 if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
-                    return $this->sendError('Uploaded data format is invalid', 500);
+                    return $this->sendError(trans('custom.uploaded_data_format_is_invalid'), 500);
                 }
             }
 
@@ -1449,7 +1449,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 $jvMasterData = JvMaster::find($input['jvMasterAutoId']);
 
                 if (empty($jvMasterData)) {
-                    return $this->sendError('Journal Voucher not found');
+                    return $this->sendError(trans('custom.journal_voucher_not_found'));
                 }
                 $line_nu = 1;
                 foreach ($record as $val) {
@@ -1586,7 +1586,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             {
                 $details['detail'] = $failed_gl;
                 $details['valid'] = true;
-                return $this->sendResponse($details, 'All JV Details uploaded successfully');
+                return $this->sendResponse($details, trans('custom.all_jv_details_uploaded_successfully'));
             }
             else if($count > 0)
             {
@@ -1620,7 +1620,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $jvMasterData = jvMaster::find($id);
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $jvMasterDataLine = jvMaster::where('jvMasterAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
@@ -1631,7 +1631,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }])->first();
 
         if (empty($jvMasterDataLine)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
@@ -1691,7 +1691,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printJournalVoucher: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 
@@ -1731,7 +1731,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         $jvMasterData = jvMaster::find($jvMasterAutoId);
         if (empty($jvMasterData)) {
-            return $this->sendError('Jv Master not found');
+            return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
         $type = $request->type;
@@ -1852,7 +1852,7 @@ HAVING
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     public function amendJournalVoucherReview(Request $request)
@@ -1867,18 +1867,18 @@ HAVING
         $jvMaster = JvMaster::find($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found_1'));
         }
         if ($jvMaster->isReverseAccYN == -1 && $jvMaster->jvType == 0) {
-            return $this->sendError('You cannot return back to amend this journal voucher, as it is a reversal JV');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_journal_vouch'));
         }
 
         if ($jvMaster->reversedYN == 1 && $jvMaster->jvType == 0 && $jvMaster->reversalJV == 1) {
-            return $this->sendError('You cannot return back to amend this journal voucher, as it has an already auto generated JV');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_journal_vouch_2'));
         }
 
         if ($jvMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this journal voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_journal_vouch_1'));
         }
 
         $documentAutoId = $id;
@@ -1988,7 +1988,7 @@ HAVING
             AuditTrial::createAuditTrial($jvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($jvMaster->toArray(), 'Journal voucher amend saved successfully');
+            return $this->sendResponse($jvMaster->toArray(), trans('custom.journal_voucher_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2006,11 +2006,11 @@ HAVING
         $jvMaster = JvMaster::find($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found_1'));
         }
 
         if ($jvMaster->approved != -1) {
-            return $this->sendError('You cannot upload to budget this journal voucher, It is not approved', 500);
+            return $this->sendError(trans('custom.you_cannot_upload_to_budget_this_journal_voucher_i'), 500);
         }
 
         $checkAlreadyAdded = BudgetConsumedData::where('documentSystemCode', $id)
@@ -2018,7 +2018,7 @@ HAVING
             ->where('documentSystemID', $jvMaster->documentSystemID)
             ->count();
         if ($checkAlreadyAdded > 0) {
-            return $this->sendError('Cannot update. Already data is updated to budget consumed', 500);
+            return $this->sendError(trans('custom.cannot_update_already_data_is_updated_to_budget_co'), 500);
         }
 
         DB::beginTransaction();
@@ -2061,7 +2061,7 @@ HAVING
             AuditTrial::createAuditTrial($jvMaster->documentSystemID,$id,'','budget uploaded');
 
             DB::commit();
-            return $this->sendResponse($glData->toArray(), 'Journal voucher uploaded to budget successfully');
+            return $this->sendResponse($glData->toArray(), trans('custom.journal_voucher_uploaded_to_budget_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2076,11 +2076,11 @@ HAVING
         $jvMaster = JvMaster::find($id);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Journal voucher not found');
+            return $this->sendError(trans('custom.journal_voucher_not_found_1'));
         }
 
         if ($jvMaster->approved != -1) {
-            return $this->sendError('You cannot copy this journal voucher, It is not approved', 500);
+            return $this->sendError(trans('custom.you_cannot_copy_this_journal_voucher_it_is_not_app'), 500);
         }
 
         $formattedDate = Carbon::now()->format("Y-m-d");
@@ -2127,7 +2127,7 @@ HAVING
         $monthEnd = $jvInsertData['FYPeriodDateTo'];
 
         if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
-            return $this->sendError('Current date is not within the financial period!, you cannot copy JV');
+            return $this->sendError(trans('custom.current_date_is_not_within_the_financial_period_yo'));
         }
 
         $jvInsertData['createdPcID'] = gethostname();
@@ -2215,7 +2215,7 @@ HAVING
             }
 
             DB::commit();
-            return $this->sendResponse($jvMasterRes->jvMasterAutoId, 'JV Copied successfully');
+            return $this->sendResponse($jvMasterRes->jvMasterAutoId, trans('custom.jv_copied_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

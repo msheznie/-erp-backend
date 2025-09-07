@@ -75,7 +75,7 @@ class SupplierCategoryICVSubAPIController extends AppBaseController
         $this->supplierCategoryICVSubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategoryICVSubs = $this->supplierCategoryICVSubRepository->all();
 
-        return $this->sendResponse($supplierCategoryICVSubs->toArray(), 'Supplier Category I C V Subs retrieved successfully');
+        return $this->sendResponse($supplierCategoryICVSubs->toArray(), trans('custom.supplier_category_i_c_v_subs_retrieved_successfull'));
     }
 
     /**
@@ -122,7 +122,7 @@ class SupplierCategoryICVSubAPIController extends AppBaseController
 
         $supplierCategoryICVSubs = $this->supplierCategoryICVSubRepository->create($input);
 
-        return $this->sendResponse($supplierCategoryICVSubs->toArray(), 'Supplier Category I C V Sub saved successfully');
+        return $this->sendResponse($supplierCategoryICVSubs->toArray(), trans('custom.supplier_category_i_c_v_sub_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class SupplierCategoryICVSubAPIController extends AppBaseController
         $supplierCategoryICVSub = $this->supplierCategoryICVSubRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVSub)) {
-            return $this->sendError('Supplier Category I C V Sub not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_sub_not_found'));
         }
 
-        return $this->sendResponse($supplierCategoryICVSub->toArray(), 'Supplier Category I C V Sub retrieved successfully');
+        return $this->sendResponse($supplierCategoryICVSub->toArray(), trans('custom.supplier_category_i_c_v_sub_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class SupplierCategoryICVSubAPIController extends AppBaseController
         $supplierCategoryICVSub = $this->supplierCategoryICVSubRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVSub)) {
-            return $this->sendError('Supplier Category I C V Sub not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_sub_not_found'));
         }
 
         $supplierCategoryICVSub = $this->supplierCategoryICVSubRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCategoryICVSub->toArray(), 'SupplierCategoryICVSub updated successfully');
+        return $this->sendResponse($supplierCategoryICVSub->toArray(), trans('custom.suppliercategoryicvsub_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class SupplierCategoryICVSubAPIController extends AppBaseController
         $supplierCategoryICVSub = $this->supplierCategoryICVSubRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVSub)) {
-            return $this->sendError('Supplier Category I C V Sub not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_sub_not_found'));
         }
 
         $supplierCategoryICVSub->delete();
 
-        return $this->sendResponse($id, 'Supplier Category I C V Sub deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_category_i_c_v_sub_deleted_successfully'));
     }
 }

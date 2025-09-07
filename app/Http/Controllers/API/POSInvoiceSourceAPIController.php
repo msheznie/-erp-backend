@@ -65,7 +65,7 @@ class POSInvoiceSourceAPIController extends AppBaseController
         $this->pOSInvoiceSourceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSInvoiceSources = $this->pOSInvoiceSourceRepository->all();
 
-        return $this->sendResponse($pOSInvoiceSources->toArray(), 'P O S Invoice Sources retrieved successfully');
+        return $this->sendResponse($pOSInvoiceSources->toArray(), trans('custom.p_o_s_invoice_sources_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSInvoiceSourceAPIController extends AppBaseController
 
         $pOSInvoiceSource = $this->pOSInvoiceSourceRepository->create($input);
 
-        return $this->sendResponse($pOSInvoiceSource->toArray(), 'P O S Invoice Source saved successfully');
+        return $this->sendResponse($pOSInvoiceSource->toArray(), trans('custom.p_o_s_invoice_source_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSInvoiceSourceAPIController extends AppBaseController
         $pOSInvoiceSource = $this->pOSInvoiceSourceRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSource)) {
-            return $this->sendError('P O S Invoice Source not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_not_found'));
         }
 
-        return $this->sendResponse($pOSInvoiceSource->toArray(), 'P O S Invoice Source retrieved successfully');
+        return $this->sendResponse($pOSInvoiceSource->toArray(), trans('custom.p_o_s_invoice_source_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSInvoiceSourceAPIController extends AppBaseController
         $pOSInvoiceSource = $this->pOSInvoiceSourceRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSource)) {
-            return $this->sendError('P O S Invoice Source not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_not_found'));
         }
 
         $pOSInvoiceSource = $this->pOSInvoiceSourceRepository->update($input, $id);
 
-        return $this->sendResponse($pOSInvoiceSource->toArray(), 'POSInvoiceSource updated successfully');
+        return $this->sendResponse($pOSInvoiceSource->toArray(), trans('custom.posinvoicesource_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSInvoiceSourceAPIController extends AppBaseController
         $pOSInvoiceSource = $this->pOSInvoiceSourceRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSource)) {
-            return $this->sendError('P O S Invoice Source not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_not_found'));
         }
 
         $pOSInvoiceSource->delete();

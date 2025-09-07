@@ -74,7 +74,7 @@ class HRMSPeriodMasterAPIController extends AppBaseController
         $this->hRMSPeriodMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSPeriodMasters = $this->hRMSPeriodMasterRepository->all();
 
-        return $this->sendResponse($hRMSPeriodMasters->toArray(), 'H R M S Period Masters retrieved successfully');
+        return $this->sendResponse($hRMSPeriodMasters->toArray(), trans('custom.h_r_m_s_period_masters_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class HRMSPeriodMasterAPIController extends AppBaseController
 
         $hRMSPeriodMaster = $this->hRMSPeriodMasterRepository->create($input);
 
-        return $this->sendResponse($hRMSPeriodMaster->toArray(), 'H R M S Period Master saved successfully');
+        return $this->sendResponse($hRMSPeriodMaster->toArray(), trans('custom.h_r_m_s_period_master_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class HRMSPeriodMasterAPIController extends AppBaseController
         $hRMSPeriodMaster = $this->hRMSPeriodMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSPeriodMaster)) {
-            return $this->sendError('H R M S Period Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_period_master_not_found'));
         }
 
-        return $this->sendResponse($hRMSPeriodMaster->toArray(), 'H R M S Period Master retrieved successfully');
+        return $this->sendResponse($hRMSPeriodMaster->toArray(), trans('custom.h_r_m_s_period_master_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class HRMSPeriodMasterAPIController extends AppBaseController
         $hRMSPeriodMaster = $this->hRMSPeriodMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSPeriodMaster)) {
-            return $this->sendError('H R M S Period Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_period_master_not_found'));
         }
 
         $hRMSPeriodMaster = $this->hRMSPeriodMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSPeriodMaster->toArray(), 'HRMSPeriodMaster updated successfully');
+        return $this->sendResponse($hRMSPeriodMaster->toArray(), trans('custom.hrmsperiodmaster_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class HRMSPeriodMasterAPIController extends AppBaseController
         $hRMSPeriodMaster = $this->hRMSPeriodMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSPeriodMaster)) {
-            return $this->sendError('H R M S Period Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_period_master_not_found'));
         }
 
         $hRMSPeriodMaster->delete();
 
-        return $this->sendResponse($id, 'H R M S Period Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_period_master_deleted_successfully'));
     }
 }

@@ -70,7 +70,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         $this->assetRequestDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetRequestDetails = $this->assetRequestDetailRepository->all();
 
-        return $this->sendResponse($assetRequestDetails->toArray(), 'Asset Request Details retrieved successfully');
+        return $this->sendResponse($assetRequestDetails->toArray(), trans('custom.asset_request_details_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class AssetRequestDetailAPIController extends AppBaseController
 
         $assetRequestDetail = $this->assetRequestDetailRepository->create($input);
 
-        return $this->sendResponse($assetRequestDetail->toArray(), 'Asset Request Detail saved successfully');
+        return $this->sendResponse($assetRequestDetail->toArray(), trans('custom.asset_request_detail_saved_successfully'));
     }
 
     /**
@@ -164,10 +164,10 @@ class AssetRequestDetailAPIController extends AppBaseController
         $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
 
         if (empty($assetRequestDetail)) {
-            return $this->sendError('Asset Request Detail not found');
+            return $this->sendError(trans('custom.asset_request_detail_not_found'));
         }
 
-        return $this->sendResponse($assetRequestDetail->toArray(), 'Asset Request Detail retrieved successfully');
+        return $this->sendResponse($assetRequestDetail->toArray(), trans('custom.asset_request_detail_retrieved_successfully'));
     }
 
     /**
@@ -224,12 +224,12 @@ class AssetRequestDetailAPIController extends AppBaseController
         $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
 
         if (empty($assetRequestDetail)) {
-            return $this->sendError('Asset Request Detail not found');
+            return $this->sendError(trans('custom.asset_request_detail_not_found'));
         }
 
         $assetRequestDetail = $this->assetRequestDetailRepository->update($input, $id);
 
-        return $this->sendResponse($assetRequestDetail->toArray(), 'AssetRequestDetail updated successfully');
+        return $this->sendResponse($assetRequestDetail->toArray(), trans('custom.assetrequestdetail_updated_successfully'));
     }
 
     /**
@@ -276,7 +276,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
 
         if (empty($assetRequestDetail)) {
-            return $this->sendError('Asset Request Detail not found');
+            return $this->sendError(trans('custom.asset_request_detail_not_found'));
         }
 
         $assetRequestDetail->delete();
@@ -315,7 +315,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         $assetRequestMaster =DB::select($query);
 
          /* AssetRequest::where('company_id', $companyID)->where('approved_yn', 1)->get(); */
-        return $this->sendResponse($assetRequestMaster, 'Asset request master data retrieved successfully');
+        return $this->sendResponse($assetRequestMaster, trans('custom.asset_request_master_data_retrieved_successfully'));
     }
     public function getAssetRequestDetailSelected(Request $request){ 
         $input = $request->all();
@@ -351,7 +351,7 @@ class AssetRequestDetailAPIController extends AppBaseController
             'allowItemToTypePolicy'=> $allowItemToTypePolicy,
             'department' => $department
         ];
-        return $this->sendResponse($data, 'Asset request detail data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.asset_request_detail_data_retrieved_successfully'));
     }
     public function getAssetDropData(Request $request){ 
         $input = $request->all();
@@ -361,7 +361,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         ->where('selectedForDisposal',0)
         ->where('DIPOSED',0)
         ->get();
-        return $this->sendResponse($assetMaster->toArray(), 'Asset master data retrieved successfully');
+        return $this->sendResponse($assetMaster->toArray(), trans('custom.asset_master_data_retrieved_successfully'));
     }
    
 }

@@ -181,7 +181,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
@@ -217,7 +217,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $budgetTransferForms = $this->erpBudgetAdditionRepository->create($input);
 
-        return $this->sendResponse($budgetTransferForms->toArray(), 'Budget Addition Form saved successfully');
+        return $this->sendResponse($budgetTransferForms->toArray(), trans('custom.budget_addition_form_saved_successfully'));
     }
 
     /**
@@ -265,10 +265,10 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->fetchBudgetData($id);
 
         if (empty($erpBudgetAddition)) {
-            return $this->sendError('Erp Budget Addition not found');
+            return $this->sendError(trans('custom.erp_budget_addition_not_found'));
         }
 
-        return $this->sendResponse($erpBudgetAddition, 'Erp Budget Addition retrieved successfully');
+        return $this->sendResponse($erpBudgetAddition, trans('custom.erp_budget_addition_retrieved_successfully'));
     }
 
     /**
@@ -328,7 +328,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAddition)) {
-            return $this->sendError('Erp Budget Addition not found');
+            return $this->sendError(trans('custom.erp_budget_addition_not_found'));
         }
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -543,7 +543,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAddition)) {
-            return $this->sendError('Erp Budget Addition not found');
+            return $this->sendError(trans('custom.erp_budget_addition_not_found'));
         }
 
         $erpBudgetAddition->delete();
@@ -615,7 +615,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAdditionMaster = ErpBudgetAddition::find($id);
 
         if (empty($budgetAdditionMaster)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         $template_details = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID)
@@ -624,10 +624,10 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'companySystemID' => $budgetAdditionMaster->companySystemID
             ])->get();
         if (empty($template_details)) {
-            return $this->sendError('Templates not found');
+            return $this->sendError(trans('custom.templates_not_found'));
         }
 
-        return $this->sendResponse($template_details, 'Templates Details retrieved successfully');
+        return $this->sendResponse($template_details, trans('custom.templates_details_retrieved_successfully'));
     }
     public function getAllGLCodesByBudgetAddition(Request $request){
         $id = $request->get('id');
@@ -635,13 +635,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAdditionMaster = ErpBudgetAddition::find($id);
 
         if (empty($budgetAdditionMaster)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         $templateMaster = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetAdditionMaster->templatesMasterAutoID)
@@ -657,7 +657,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->whereIn('chartOfAccountSystemID', $glIds)
             ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
-        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+        return $this->sendResponse($glCodes, trans('custom.gl_codes_retrieved_successfully'));
     }
 
     public function getTemplateByGLCodeByBudgetAddition(Request $request) {
@@ -670,13 +670,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAdditionMaster = ErpBudgetAddition::find($id);
 
         if (empty($budgetAdditionMaster)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         $templateMaster = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetAdditionMaster->templatesMasterAutoID)
@@ -690,7 +690,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $templateDetail = ReportTemplateDetails::where('detID', $glData[0]->templateDetailID)->where('companyReportTemplateID',$glData[0]->templateMasterID)->get();
 
-        return $this->sendResponse($templateDetail, 'Template Description retrieved successfully');
+        return $this->sendResponse($templateDetail, trans('custom.template_description_retrieved_successfully'));
     }
 
     public function getBudgetAdditionApprovalByUser(Request $request)
@@ -902,19 +902,19 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
         $emails = array();
         if (empty($budgetAddition)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         if ($budgetAddition->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Budget Addition it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_addition_it_is_alrea_1'));
         }
 
         if ($budgetAddition->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Budget Addition it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_addition_it_is_alrea'));
         }
 
         if ($budgetAddition->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Budget Addition, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_addition_it_is_not_c'));
         }
 
         $updateInput = [
@@ -988,7 +988,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($budgetAddition->documentSystemID, $id, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($budgetAddition->toArray(), 'Budget Addition reopened successfully');
+        return $this->sendResponse($budgetAddition->toArray(), trans('custom.budget_addition_reopened_successfully'));
     }
     public function getBudgetAdditionAudit(Request $request)
     {
@@ -996,7 +996,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAddition = $this->erpBudgetAdditionRepository->getAudit($id);
 
         if (empty($budgetAddition)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         return $this->sendResponse($budgetAddition, 'Budget Addition audit detailed retrived');
@@ -1008,11 +1008,11 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $budgetAdditionMasterData = ErpBudgetAddition::find($budgetAdditionID);
 
         if (empty($budgetAdditionMasterData)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
         if ($budgetAdditionMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this budget addition');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_budget_addition'));
         }
 
         $budgetAdditionArray = $budgetAdditionMasterData->toArray();
@@ -1059,6 +1059,6 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             $budgetAdditionMasterData->RollLevForApp_curr = 1;
             $budgetAdditionMasterData->save();
         }
-        return $this->sendResponse($budgetAdditionMasterData->toArray(), 'Budget Addition amend successfully');
+        return $this->sendResponse($budgetAdditionMasterData->toArray(), trans('custom.budget_addition_amend_successfully'));
     }
 }

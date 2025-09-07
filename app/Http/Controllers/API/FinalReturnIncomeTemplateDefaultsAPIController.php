@@ -130,7 +130,7 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
 
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), 'Final Return Income Template Defaults retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), trans('custom.final_return_income_template_defaults_retrieved_su'));
     }
 
     /**
@@ -184,7 +184,7 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
 
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->create($input);
 
-        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), 'Final Return Income Template Defaults saved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), trans('custom.final_return_income_template_defaults_saved_succes'));
     }
 
     /**
@@ -232,10 +232,10 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateDefaults)) {
-            return $this->sendError('Final Return Income Template Defaults not found');
+            return $this->sendError(trans('custom.final_return_income_template_defaults_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), 'Final Return Income Template Defaults retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), trans('custom.final_return_income_template_defaults_retrieved_su'));
     }
 
     /**
@@ -301,12 +301,12 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateDefaults)) {
-            return $this->sendError('Final Return Income Template Defaults not found');
+            return $this->sendError(trans('custom.final_return_income_template_defaults_not_found'));
         }
 
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), 'FinalReturnIncomeTemplateDefaults updated successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateDefaults->toArray(), trans('custom.finalreturnincometemplatedefaults_updated_successf'));
     }
 
     /**
@@ -354,7 +354,7 @@ class FinalReturnIncomeTemplateDefaultsAPIController extends AppBaseController
         $finalReturnIncomeTemplateDefaults = $this->finalReturnIncomeTemplateDefaultsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateDefaults)) {
-            return $this->sendError('Final Return Income Template Defaults not found');
+            return $this->sendError(trans('custom.final_return_income_template_defaults_not_found'));
         }
 
         $finalReturnIncomeTemplateDefaults->delete();

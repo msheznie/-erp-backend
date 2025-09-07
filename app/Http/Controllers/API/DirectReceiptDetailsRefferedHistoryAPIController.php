@@ -76,7 +76,7 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
         $this->directReceiptDetailsRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directReceiptDetailsRefferedHistories = $this->directReceiptDetailsRefferedHistoryRepository->all();
 
-        return $this->sendResponse($directReceiptDetailsRefferedHistories->toArray(), 'Direct Receipt Details Reffered Histories retrieved successfully');
+        return $this->sendResponse($directReceiptDetailsRefferedHistories->toArray(), trans('custom.direct_receipt_details_reffered_histories_retrieve'));
     }
 
     /**
@@ -123,7 +123,7 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
 
         $directReceiptDetailsRefferedHistories = $this->directReceiptDetailsRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($directReceiptDetailsRefferedHistories->toArray(), 'Direct Receipt Details Reffered History saved successfully');
+        return $this->sendResponse($directReceiptDetailsRefferedHistories->toArray(), trans('custom.direct_receipt_details_reffered_history_saved_succ'));
     }
 
     /**
@@ -170,10 +170,10 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
         $directReceiptDetailsRefferedHistory = $this->directReceiptDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetailsRefferedHistory)) {
-            return $this->sendError('Direct Receipt Details Reffered History not found');
+            return $this->sendError(trans('custom.direct_receipt_details_reffered_history_not_found'));
         }
 
-        return $this->sendResponse($directReceiptDetailsRefferedHistory->toArray(), 'Direct Receipt Details Reffered History retrieved successfully');
+        return $this->sendResponse($directReceiptDetailsRefferedHistory->toArray(), trans('custom.direct_receipt_details_reffered_history_retrieved_'));
     }
 
     /**
@@ -230,12 +230,12 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
         $directReceiptDetailsRefferedHistory = $this->directReceiptDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetailsRefferedHistory)) {
-            return $this->sendError('Direct Receipt Details Reffered History not found');
+            return $this->sendError(trans('custom.direct_receipt_details_reffered_history_not_found'));
         }
 
         $directReceiptDetailsRefferedHistory = $this->directReceiptDetailsRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($directReceiptDetailsRefferedHistory->toArray(), 'DirectReceiptDetailsRefferedHistory updated successfully');
+        return $this->sendResponse($directReceiptDetailsRefferedHistory->toArray(), trans('custom.directreceiptdetailsrefferedhistory_updated_succes'));
     }
 
     /**
@@ -282,12 +282,12 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
         $directReceiptDetailsRefferedHistory = $this->directReceiptDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetailsRefferedHistory)) {
-            return $this->sendError('Direct Receipt Details Reffered History not found');
+            return $this->sendError(trans('custom.direct_receipt_details_reffered_history_not_found'));
         }
 
         $directReceiptDetailsRefferedHistory->delete();
 
-        return $this->sendResponse($id, 'Direct Receipt Details Reffered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_receipt_details_reffered_history_deleted_su'));
     }
 
 
@@ -302,6 +302,6 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
             ->with(['segment'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.purchase_order_details_reffered_history_retrieved_'));
     }
 }

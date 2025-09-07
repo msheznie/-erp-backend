@@ -65,7 +65,7 @@ class EvaluationCriteriaTypeAPIController extends AppBaseController
         $this->evaluationCriteriaTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationCriteriaTypes = $this->evaluationCriteriaTypeRepository->all();
 
-        return $this->sendResponse($evaluationCriteriaTypes->toArray(), 'Evaluation Criteria Types retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaTypes->toArray(), trans('custom.evaluation_criteria_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EvaluationCriteriaTypeAPIController extends AppBaseController
 
         $evaluationCriteriaType = $this->evaluationCriteriaTypeRepository->create($input);
 
-        return $this->sendResponse($evaluationCriteriaType->toArray(), 'Evaluation Criteria Type saved successfully');
+        return $this->sendResponse($evaluationCriteriaType->toArray(), trans('custom.evaluation_criteria_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EvaluationCriteriaTypeAPIController extends AppBaseController
         $evaluationCriteriaType = $this->evaluationCriteriaTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaType)) {
-            return $this->sendError('Evaluation Criteria Type not found');
+            return $this->sendError(trans('custom.evaluation_criteria_type_not_found'));
         }
 
-        return $this->sendResponse($evaluationCriteriaType->toArray(), 'Evaluation Criteria Type retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaType->toArray(), trans('custom.evaluation_criteria_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EvaluationCriteriaTypeAPIController extends AppBaseController
         $evaluationCriteriaType = $this->evaluationCriteriaTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaType)) {
-            return $this->sendError('Evaluation Criteria Type not found');
+            return $this->sendError(trans('custom.evaluation_criteria_type_not_found'));
         }
 
         $evaluationCriteriaType = $this->evaluationCriteriaTypeRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationCriteriaType->toArray(), 'EvaluationCriteriaType updated successfully');
+        return $this->sendResponse($evaluationCriteriaType->toArray(), trans('custom.evaluationcriteriatype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EvaluationCriteriaTypeAPIController extends AppBaseController
         $evaluationCriteriaType = $this->evaluationCriteriaTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaType)) {
-            return $this->sendError('Evaluation Criteria Type not found');
+            return $this->sendError(trans('custom.evaluation_criteria_type_not_found'));
         }
 
         $evaluationCriteriaType->delete();

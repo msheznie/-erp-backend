@@ -64,7 +64,7 @@ class AssetWarrantyAPIController extends AppBaseController
         $this->assetWarrantyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetWarranties = $this->assetWarrantyRepository->all();
 
-        return $this->sendResponse($assetWarranties->toArray(), 'Asset Warranties retrieved successfully');
+        return $this->sendResponse($assetWarranties->toArray(), trans('custom.asset_warranties_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class AssetWarrantyAPIController extends AppBaseController
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $assetWarranty = $this->assetWarrantyRepository->create($input);
 
-        return $this->sendResponse($input, 'Asset Warranty saved successfully');
+        return $this->sendResponse($input, trans('custom.asset_warranty_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class AssetWarrantyAPIController extends AppBaseController
         $assetWarranty = $this->assetWarrantyRepository->findWithoutFail($id);
 
         if (empty($assetWarranty)) {
-            return $this->sendError('Asset Warranty not found');
+            return $this->sendError(trans('custom.asset_warranty_not_found'));
         }
 
-        return $this->sendResponse($assetWarranty->toArray(), 'Asset Warranty retrieved successfully');
+        return $this->sendResponse($assetWarranty->toArray(), trans('custom.asset_warranty_retrieved_successfully'));
     }
 
     /**
@@ -238,13 +238,13 @@ class AssetWarrantyAPIController extends AppBaseController
         $assetWarranty = $this->assetWarrantyRepository->findWithoutFail($id);
 
         if (empty($assetWarranty)) {
-            return $this->sendError('Asset Warranty not found');
+            return $this->sendError(trans('custom.asset_warranty_not_found'));
         }
         $input['start_date'] = new Carbon($input['start_date']);
         $input['end_date'] = new Carbon($input['end_date']);
         $assetWarranty = $this->assetWarrantyRepository->update($input, $id);
 
-        return $this->sendResponse($assetWarranty->toArray(), 'Asset Warranty Updated Successfully');
+        return $this->sendResponse($assetWarranty->toArray(), trans('custom.asset_warranty_updated_successfully'));
     }
 
     /**
@@ -292,11 +292,11 @@ class AssetWarrantyAPIController extends AppBaseController
         $assetWarranty = $this->assetWarrantyRepository->findWithoutFail($id);
 
         if (empty($assetWarranty)) {
-            return $this->sendError('Asset Warranty not found');
+            return $this->sendError(trans('custom.asset_warranty_not_found'));
         }
 
         $assetWarranty->delete();
-        return $this->sendResponse(true, 'Asset Warranty deleted successfully');
+        return $this->sendResponse(true, trans('custom.asset_warranty_deleted_successfully'));
 
     }
 

@@ -64,7 +64,7 @@ class HrDeligationDetailsAPIController extends AppBaseController
         $this->hrDeligationDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->all();
 
-        return $this->sendResponse($hrDeligationDetails->toArray(), 'Hr Deligation Details retrieved successfully');
+        return $this->sendResponse($hrDeligationDetails->toArray(), trans('custom.hr_deligation_details_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HrDeligationDetailsAPIController extends AppBaseController
 
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->create($input);
 
-        return $this->sendResponse($hrDeligationDetails->toArray(), 'Hr Deligation Details saved successfully');
+        return $this->sendResponse($hrDeligationDetails->toArray(), trans('custom.hr_deligation_details_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HrDeligationDetailsAPIController extends AppBaseController
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->findWithoutFail($id);
 
         if (empty($hrDeligationDetails)) {
-            return $this->sendError('Hr Deligation Details not found');
+            return $this->sendError(trans('custom.hr_deligation_details_not_found'));
         }
 
-        return $this->sendResponse($hrDeligationDetails->toArray(), 'Hr Deligation Details retrieved successfully');
+        return $this->sendResponse($hrDeligationDetails->toArray(), trans('custom.hr_deligation_details_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HrDeligationDetailsAPIController extends AppBaseController
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->findWithoutFail($id);
 
         if (empty($hrDeligationDetails)) {
-            return $this->sendError('Hr Deligation Details not found');
+            return $this->sendError(trans('custom.hr_deligation_details_not_found'));
         }
 
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($hrDeligationDetails->toArray(), 'HrDeligationDetails updated successfully');
+        return $this->sendResponse($hrDeligationDetails->toArray(), trans('custom.hrdeligationdetails_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HrDeligationDetailsAPIController extends AppBaseController
         $hrDeligationDetails = $this->hrDeligationDetailsRepository->findWithoutFail($id);
 
         if (empty($hrDeligationDetails)) {
-            return $this->sendError('Hr Deligation Details not found');
+            return $this->sendError(trans('custom.hr_deligation_details_not_found'));
         }
 
         $hrDeligationDetails->delete();

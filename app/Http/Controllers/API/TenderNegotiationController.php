@@ -72,14 +72,14 @@ class TenderNegotiationController extends AppBaseController
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
         if(!isset($updateTenderMasterRecord)) {
-            return $this->sendError('Tender Master not found!', 404);
+            return $this->sendError(trans('custom.tender_master_not_found_1'), 404);
         }
 
         $input['currencyId'] = $updateTenderMasterRecord->currency_id;
         $latestNegotiation = $this->tenderNegotiationRepository->getVersion($input['srm_tender_master_id']);
         $input['version'] = $latestNegotiation ? $latestNegotiation->version + 1 : 1;
         $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
-        return $this->sendResponse($tenderNeotiation->toArray(), 'Tender negotiation started successfully');
+        return $this->sendResponse($tenderNeotiation->toArray(), trans('custom.tender_negotiation_started_successfully'));
 
 
     }
@@ -93,7 +93,7 @@ class TenderNegotiationController extends AppBaseController
     public function show($id)
     {
         $tenderNeotiation = $this->tenderNegotiationRepository->withRelations($id,['confirmed_by']);
-        return $this->sendResponse($tenderNeotiation->toArray(), 'Data reterived successfully');
+        return $this->sendResponse($tenderNeotiation->toArray(), trans('custom.data_reterived_successfully'));
     }
 
 
@@ -271,7 +271,7 @@ class TenderNegotiationController extends AppBaseController
 
     public function getFormData(Request $request) {
         $yesNoSelection = YesNoSelection::all();
-        return $this->sendResponse($yesNoSelection, 'Data reterived successfully');
+        return $this->sendResponse($yesNoSelection, trans('custom.data_reterived_successfully'));
     }
 
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
@@ -377,9 +377,9 @@ class TenderNegotiationController extends AppBaseController
 
 
         if($result) {
-            return $this->sendResponse($saveTenderNegotiation, 'Record updated successfully');
+            return $this->sendResponse($saveTenderNegotiation, trans('custom.record_updated_successfully'));
         }else {
-            return $this->sendError('Sorry! Cannot update record', 404);
+            return $this->sendError(trans('custom.sorry_cannot_update_record'), 404);
 
         }
 
@@ -526,7 +526,7 @@ class TenderNegotiationController extends AppBaseController
             $result =  $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId'], $validatedData['tenderUuid']);
             return $this->sendResponse($result,'Received supplier List');
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred');
+            return $this->sendError(trans('custom.error_occurred_1'));
         }
     }
 }

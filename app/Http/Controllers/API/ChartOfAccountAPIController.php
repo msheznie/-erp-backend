@@ -83,7 +83,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $this->chartOfAccountRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccounts = $this->chartOfAccountRepository->all();
 
-        return $this->sendResponse($chartOfAccounts->toArray(), 'Chart Of Accounts retrieved successfully');
+        return $this->sendResponse($chartOfAccounts->toArray(), trans('custom.chart_of_accounts_retrieved_successfully_1'));
     }
 
 
@@ -178,7 +178,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
                 if (empty($chartOfAccount)) {
-                    return $this->sendError('Chart of Account not found!', 404);
+                    return $this->sendError(trans('custom.chart_of_account_not_found'), 404);
                 }
 
                 $input = $this->convertArrayToValue($input);
@@ -190,7 +190,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
                 {
                     $retainEarningCode = $isRetainedEarningExists->first();
-                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                    return $this->sendError(trans('custom.there_is_an_retained_earnings_account_that_is_alre').$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
                 }
 
 
@@ -224,7 +224,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 if ($checkSubLedgerAccount) {
                     if (($isMasterAc != $chartOfAccount->isMasterAccount) && $isMasterAc == 0) {
-                        return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change master account as sub ledger account');
+                        return $this->sendError(trans('custom.this_account_is_already_assigned_to_sub_ledger_acc'));
                     }
 
                     if ($chartOfAccount->isMasterAccount && !$isActiveAc) {
@@ -234,16 +234,16 @@ class ChartOfAccountAPIController extends AppBaseController
                             ->first();
 
                         if ($checkForDeactiveAccounts) {
-                            return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot deactivate this account');
+                            return $this->sendError(trans('custom.this_account_is_already_assigned_to_sub_ledger_acc_3'));
                         }
                     }
 
                     if ($input['catogaryBLorPLID'] != $chartOfAccount->catogaryBLorPLID) {
-                        return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the category');
+                        return $this->sendError(trans('custom.this_account_is_already_assigned_to_sub_ledger_acc_1'));
                     }
 
                     if ($input['controlAccountsSystemID'] != $chartOfAccount->controlAccountsSystemID) {
-                        return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the control account');
+                        return $this->sendError(trans('custom.this_account_is_already_assigned_to_sub_ledger_acc_2'));
                     }
                 }
 
@@ -358,10 +358,10 @@ class ChartOfAccountAPIController extends AppBaseController
                         $previosValue = $data['allowedpreviousValues'];
                         $newValue = $data['allowednewValues'];
                         $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $previosDataValue['AccountCode']." has updated", "U", $newValue, $previosValue);
-                        return $this->sendResponse([], 'Chart Of Account updated successfully done');
+                        return $this->sendResponse([], trans('custom.chart_of_account_updated_successfully_done'));
                     }
 
-                    return $this->sendError('You cannot edit, This document already confirmed and approved.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed_an'), 500);
                 }
 
                 // $input = array_except($input,['currency_master']); // uses only in sub sub tables
@@ -422,7 +422,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 if($isRetainedEarningExists->exists() && (isset($input['is_retained_earnings']) && $input['is_retained_earnings']))
                 {
                     $retainEarningCode = $isRetainedEarningExists->first();
-                    return $this->sendError('There is an Retained Earnings Account, that is already defined '.$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
+                    return $this->sendError(trans('custom.there_is_an_retained_earnings_account_that_is_alre').$retainEarningCode->AccountCode.' - '.$retainEarningCode->AccountDescription,500);
                 }
 
                 $availability = FALSE;
@@ -492,7 +492,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $isGeneralLedger = GeneralLedger::where('chartOfAccountSystemID', $id)->get();
 
-        return $this->sendResponse([$isBank,$isGeneralLedger], 'Data retrieved successfully');
+        return $this->sendResponse([$isBank,$isGeneralLedger], trans('custom.data_retrieved_successfully'));
     }
 
     /**
@@ -529,7 +529,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $itemCompanies = [];
         }
 
-        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+        return $this->sendResponse($itemCompanies, trans('custom.companies_retrieved_successfully'));
     }
 
     public function getNotAssignedCompaniesByChartOfAccount(Request $request)
@@ -553,7 +553,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 'CompanyID',
                 'CompanyName']);
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.companies_retrieved_successfully'));
     }
 
 
@@ -571,10 +571,10 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = $this->chartOfAccountRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart Of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_3'));
         }
 
-        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account retrieved successfully');
+        return $this->sendResponse($chartOfAccount->toArray(), trans('custom.chart_of_account_retrieved_successfully'));
     }
 
     /**
@@ -594,12 +594,12 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = $this->chartOfAccountRepository->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart Of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_3'));
         }
 
         $chartOfAccount = $this->chartOfAccountRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccount->toArray(), 'ChartOfAccount updated successfully');
+        return $this->sendResponse($chartOfAccount->toArray(), trans('custom.chartofaccount_updated_successfully'));
     }
 
     /**
@@ -616,12 +616,12 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = $this->chartOfAccountRepository->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart Of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_3'));
         }
 
         $chartOfAccount->delete();
 
-        return $this->sendResponse($id, 'Chart Of Account deleted successfully');
+        return $this->sendResponse($id, trans('custom.chart_of_account_deleted_successfully'));
     }
 
     public function getChartOfAccount(Request $request)
@@ -840,7 +840,7 @@ class ChartOfAccountAPIController extends AppBaseController
             'isAmmendable' => $isAmmendable,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getInterCompanies(Request $request)
@@ -858,7 +858,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($allCompanies, 'Record retrieved successfully');
+        return $this->sendResponse($allCompanies, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getMasterChartOfAccountData(Request $request)
@@ -878,7 +878,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 ->get(['AccountCode', 'AccountDescription']);
         }
 
-        return $this->sendResponse($masterAccounts, 'Record retrieved successfully');
+        return $this->sendResponse($masterAccounts, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -912,11 +912,11 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $chartOfAccount = $this->chartOfAccountRepository->find($id);
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart Of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_3'));
         }
 
         if ($chartOfAccount->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this Chart Of Account');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_chart_of_account'));
         }
 
         $chartOfAccountArray = $chartOfAccount->toArray();
@@ -955,7 +955,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $this->chartOfAccountRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account Amend successfully');
+        return $this->sendResponse($chartOfAccount->toArray(), trans('custom.chart_of_account_amend_successfully'));
     }
 
     public function getChartOfAccounts(request $request)
@@ -1014,7 +1014,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         $items = $items->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -1149,7 +1149,7 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $chartOfAccount = $this->chartOfAccountRepository->with(['primaryCompany', 'controlAccount', 'allocation', 'accountType', 'templateCategoryDetails'])->findWithoutFail($id);
 
-        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account retrieved successfully');
+        return $this->sendResponse($chartOfAccount->toArray(), trans('custom.chart_of_account_retrieved_successfully'));
     }
     public function printChartOfAccount(Request $request)
     {
@@ -1187,7 +1187,7 @@ class ChartOfAccountAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printChartOfAccount: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 }

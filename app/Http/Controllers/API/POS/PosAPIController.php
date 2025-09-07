@@ -58,7 +58,7 @@ class PosAPIController extends AppBaseController
                     ->get();
 
             DB::commit();
-            return $this->sendResponse($companyDetails, 'Data Retrieved successfully');
+            return $this->sendResponse($companyDetails, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -86,7 +86,7 @@ class PosAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($customerCategoryArray, 'Data Retrieved successfully');
+            return $this->sendResponse($customerCategoryArray, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -103,7 +103,7 @@ class PosAPIController extends AppBaseController
                 ->where('locationName', '!=', '')
                 ->get();
             DB::commit();
-            return $this->sendResponse($location, 'Data Retrieved successfully');
+            return $this->sendResponse($location, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -126,7 +126,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($segments, 'Data Retrieved successfully');
+            return $this->sendResponse($segments, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -156,7 +156,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+            return $this->sendResponse($chartOfAccount, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -251,7 +251,7 @@ class PosAPIController extends AppBaseController
                 $chartOfAccount = $chartOfAccount->paginate($per_page);
 
             DB::commit();
-            return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+            return $this->sendResponse($chartOfAccount, trans('custom.data_retrieved_successfully_3'));
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -267,7 +267,7 @@ class PosAPIController extends AppBaseController
                 ->where('UnitShortCode', '!=', '')
                 ->get();
             DB::commit();
-            return $this->sendResponse($units, 'Data Retrieved successfully');
+            return $this->sendResponse($units, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -284,7 +284,7 @@ class PosAPIController extends AppBaseController
                 ->where('conversion', '!=', '')
                 ->get();
             DB::commit();
-            return $this->sendResponse($unitConvertion, 'Data Retrieved successfully');
+            return $this->sendResponse($unitConvertion, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -310,7 +310,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($warehouse, 'Data Retrieved successfully');
+            return $this->sendResponse($warehouse, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -336,7 +336,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($warehouseItems, 'Data Retrieved successfully');
+            return $this->sendResponse($warehouseItems, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -357,7 +357,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+            return $this->sendResponse($warehousebin, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -385,7 +385,7 @@ class PosAPIController extends AppBaseController
                 $financeItemCategorySub = $financeItemCategorySub->get();
 
             DB::commit();
-            return $this->sendResponse($financeItemCategorySub, 'Data Retrieved successfully');
+            return $this->sendResponse($financeItemCategorySub, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -441,7 +441,7 @@ class PosAPIController extends AppBaseController
             $items = $this->getItemMasters($company_id, $third_party_system_id);
 
             DB::commit();
-            return $this->sendResponse($items, 'Data Retrieved successfully');
+            return $this->sendResponse($items, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -514,7 +514,7 @@ class PosAPIController extends AppBaseController
                 $items = $items->paginate($per_page);
 
             DB::commit();
-            return $this->sendResponse($items, 'Data Retrieved successfully');
+            return $this->sendResponse($items, trans('custom.data_retrieved_successfully_3'));
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -530,7 +530,7 @@ class PosAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+            return $this->sendResponse($warehousebin, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -564,7 +564,7 @@ class PosAPIController extends AppBaseController
 
             }
             DB::commit();
-            return $this->sendResponse($employee, 'Data Retrieved successfully');
+            return $this->sendResponse($employee, trans('custom.data_retrieved_successfully_3'));
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -583,7 +583,7 @@ class PosAPIController extends AppBaseController
                 ->get();
 
             DB::commit();
-            return $this->sendResponse($financeItemCategory, 'Data Retrieved successfully');
+            return $this->sendResponse($financeItemCategory, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -632,7 +632,7 @@ class PosAPIController extends AppBaseController
             $supplierMaster = $supplierMaster->paginate($per_page);
 
             DB::commit();
-            return $this->sendResponse($supplierMaster, 'Data Retrieved successfully');
+            return $this->sendResponse($supplierMaster, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1024,7 +1024,7 @@ class PosAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($customerMaster, 'Data Retrieved successfully');
+            return $this->sendResponse($customerMaster, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

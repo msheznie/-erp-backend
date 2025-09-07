@@ -54,7 +54,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($departmentBudgetPlanningDetails->toArray(), 'Department Budget Planning Details retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetails->toArray(), trans('custom.department_budget_planning_details_retrieved_succe'));
     }
 
     /**
@@ -71,7 +71,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->create($input);
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'Department Budget Planning Detail saved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.department_budget_planning_detail_saved_successful'));
     }
 
     /**
@@ -88,10 +88,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'Department Budget Planning Detail retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.department_budget_planning_detail_retrieved_succes'));
     }
 
     /**
@@ -111,12 +111,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->update($input, $id);
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'DepartmentBudgetPlanningDetail updated successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.departmentbudgetplanningdetail_updated_successfull'));
     }
 
     /**
@@ -135,7 +135,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
         $departmentBudgetPlanningDetail->delete();
@@ -165,7 +165,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
         
         if (!$departmentPlanningId) {
-            return $this->sendError('Department Planning ID is required');
+            return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
         try {
@@ -234,7 +234,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             ]);
 
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving details - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_details') . $e->getMessage(), 500);
         }
     }
 
@@ -256,9 +256,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $detail->internal_status = $input['internal_status'];
             $detail->save();
 
-            return $this->sendResponse($detail, 'Internal status updated successfully');
+            return $this->sendResponse($detail, trans('custom.internal_status_updated_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error updating status - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_updating_status') . $e->getMessage(), 500);
         }
     }
 
@@ -273,7 +273,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentPlanningId = $request->input('departmentPlanningId');
         
         if (!$departmentPlanningId) {
-            return $this->sendError('Department Planning ID is required');
+            return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
         try {
@@ -292,9 +292,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ')
                 ->first();
 
-            return $this->sendResponse($summary, 'Summary retrieved successfully');
+            return $this->sendResponse($summary, trans('custom.summary_retrieved_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving summary - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_summary') . $e->getMessage(), 500);
         }
     }
 
@@ -313,7 +313,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ->first();
 
             if (!$budgetTemplate) {
-                return $this->sendError('Budget template not found or inactive');
+                return $this->sendError(trans('custom.budget_template_not_found_or_inactive'));
             }
 
             // Check if budget template has columns configured
@@ -327,10 +327,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'hasLinkRequestAmount' => $hasLinkRequestAmount
             ];
 
-            return $this->sendResponse($verificationData, 'Budget template configuration verified successfully');
+            return $this->sendResponse($verificationData, trans('custom.budget_template_configuration_verified_successfull'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error verifying budget template configuration - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_verifying_budget_template_configuration') . $e->getMessage(), 500);
         }
     }
 
@@ -434,10 +434,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'entryID' => $entryID,
             ];
 
-            return $this->sendResponse($dataSet,'Budget detail template entries saved successfully');
+            return $this->sendResponse($dataSet,trans('custom.budget_detail_template_entries_saved_successfully'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error saving template entries - ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_saving_template_entries') . $e->getMessage());
         }
     }
 
@@ -455,7 +455,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Validate budget detail exists
             $budgetDetail = DepartmentBudgetPlanningDetail::find($input['id']);
             if (!$budgetDetail) {
-                return $this->sendError('Budget detail not found');
+                return $this->sendError(trans('custom.budget_detail_not_found'));
             }
 
             // Get entries with their data and template column information using Eloquent
@@ -496,10 +496,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $groupedEntries[$entry->entryID]['unitItems'] = count($itemData) > 0 ? $itemData->toArray() : [];
             }
 
-            return $this->sendResponse(array_values($groupedEntries), 'Budget detail template entries retrieved successfully');
+            return $this->sendResponse(array_values($groupedEntries), trans('custom.budget_detail_template_entries_retrieved_successfu'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving template entries - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_template_entries') . $e->getMessage(), 500);
         }
     }
 

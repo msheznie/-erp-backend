@@ -68,7 +68,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         $this->employeeMobileBillMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeMobileBillMasters = $this->employeeMobileBillMasterRepository->all();
 
-        return $this->sendResponse($employeeMobileBillMasters->toArray(), 'Employee Mobile Bill Masters retrieved successfully');
+        return $this->sendResponse($employeeMobileBillMasters->toArray(), trans('custom.employee_mobile_bill_masters_retrieved_successfull'));
     }
 
     /**
@@ -115,7 +115,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
 
         $employeeMobileBillMaster = $this->employeeMobileBillMasterRepository->create($input);
 
-        return $this->sendResponse($employeeMobileBillMaster->toArray(), 'Employee Mobile Bill Master saved successfully');
+        return $this->sendResponse($employeeMobileBillMaster->toArray(), trans('custom.employee_mobile_bill_master_saved_successfully'));
     }
 
     /**
@@ -162,10 +162,10 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         $employeeMobileBillMaster = $this->employeeMobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($employeeMobileBillMaster)) {
-            return $this->sendError('Employee Mobile Bill Master not found');
+            return $this->sendError(trans('custom.employee_mobile_bill_master_not_found'));
         }
 
-        return $this->sendResponse($employeeMobileBillMaster->toArray(), 'Employee Mobile Bill Master retrieved successfully');
+        return $this->sendResponse($employeeMobileBillMaster->toArray(), trans('custom.employee_mobile_bill_master_retrieved_successfully'));
     }
 
     /**
@@ -222,12 +222,12 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         $employeeMobileBillMaster = $this->employeeMobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($employeeMobileBillMaster)) {
-            return $this->sendError('Employee Mobile Bill Master not found');
+            return $this->sendError(trans('custom.employee_mobile_bill_master_not_found'));
         }
 
         $employeeMobileBillMaster = $this->employeeMobileBillMasterRepository->update($input, $id);
 
-        return $this->sendResponse($employeeMobileBillMaster->toArray(), 'EmployeeMobileBillMaster updated successfully');
+        return $this->sendResponse($employeeMobileBillMaster->toArray(), trans('custom.employeemobilebillmaster_updated_successfully'));
     }
 
     /**
@@ -274,7 +274,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         $employeeMobileBillMaster = $this->employeeMobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($employeeMobileBillMaster)) {
-            return $this->sendError('Employee Mobile Bill Master not found');
+            return $this->sendError(trans('custom.employee_mobile_bill_master_not_found'));
         }
 
         $employeeMobileBillMaster->delete();
@@ -288,7 +288,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         $user = Helper::getEmployeeInfo();
         $employeeMobileBillMaster = null;
         if(!(isset($input['mobilebillMasterID']) && $input['mobilebillMasterID']>0)){
-            return $this->sendError('Mobile Bill Master ID not found');
+            return $this->sendError(trans('custom.mobile_bill_master_id_not_found'));
         }
 
         $mobilMaster = MobileBillMaster::with(['summary'=> function($query){
@@ -296,7 +296,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         }])->find($input['mobilebillMasterID']);
 
         if(empty($mobilMaster)){
-            return $this->sendError('Mobile Bill Master not found');
+            return $this->sendError(trans('custom.mobile_bill_master_not_found'));
         }
 
         $input['isSubmitted'] = 0;
@@ -344,9 +344,9 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
         }
 
         if($employeeMobileBillMaster != null){
-            return $this->sendResponse($employeeMobileBillMaster->toArray(), 'Employee Mobile Bill Master saved successfully');
+            return $this->sendResponse($employeeMobileBillMaster->toArray(), trans('custom.employee_mobile_bill_master_saved_successfully'));
         }
-        return $this->sendError('Error occur',500);
+        return $this->sendError(trans('custom.error_occur_1'),500);
 
     }
 
@@ -423,7 +423,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
 
-            return $this->sendResponse(array(), 'successfully export');
+            return $this->sendResponse(array(), trans('custom.success_export'));
         }
         return $this->sendError( 'No Records Found');
 

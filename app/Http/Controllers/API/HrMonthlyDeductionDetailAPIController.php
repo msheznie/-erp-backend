@@ -65,7 +65,7 @@ class HrMonthlyDeductionDetailAPIController extends AppBaseController
         $this->hrMonthlyDeductionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrMonthlyDeductionDetails = $this->hrMonthlyDeductionDetailRepository->all();
 
-        return $this->sendResponse($hrMonthlyDeductionDetails->toArray(), 'Hr Monthly Deduction Details retrieved successfully');
+        return $this->sendResponse($hrMonthlyDeductionDetails->toArray(), trans('custom.hr_monthly_deduction_details_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrMonthlyDeductionDetailAPIController extends AppBaseController
 
         $hrMonthlyDeductionDetail = $this->hrMonthlyDeductionDetailRepository->create($input);
 
-        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), 'Hr Monthly Deduction Detail saved successfully');
+        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), trans('custom.hr_monthly_deduction_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrMonthlyDeductionDetailAPIController extends AppBaseController
         $hrMonthlyDeductionDetail = $this->hrMonthlyDeductionDetailRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionDetail)) {
-            return $this->sendError('Hr Monthly Deduction Detail not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_detail_not_found'));
         }
 
-        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), 'Hr Monthly Deduction Detail retrieved successfully');
+        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), trans('custom.hr_monthly_deduction_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrMonthlyDeductionDetailAPIController extends AppBaseController
         $hrMonthlyDeductionDetail = $this->hrMonthlyDeductionDetailRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionDetail)) {
-            return $this->sendError('Hr Monthly Deduction Detail not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_detail_not_found'));
         }
 
         $hrMonthlyDeductionDetail = $this->hrMonthlyDeductionDetailRepository->update($input, $id);
 
-        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), 'HrMonthlyDeductionDetail updated successfully');
+        return $this->sendResponse($hrMonthlyDeductionDetail->toArray(), trans('custom.hrmonthlydeductiondetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrMonthlyDeductionDetailAPIController extends AppBaseController
         $hrMonthlyDeductionDetail = $this->hrMonthlyDeductionDetailRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionDetail)) {
-            return $this->sendError('Hr Monthly Deduction Detail not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_detail_not_found'));
         }
 
         $hrMonthlyDeductionDetail->delete();

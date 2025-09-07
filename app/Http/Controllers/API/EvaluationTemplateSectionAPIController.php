@@ -68,7 +68,7 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
         $this->evaluationTemplateSectionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationTemplateSections = $this->evaluationTemplateSectionRepository->all();
 
-        return $this->sendResponse($evaluationTemplateSections->toArray(), 'Evaluation Template Sections retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSections->toArray(), trans('custom.evaluation_template_sections_retrieved_successfull'));
     }
 
     /**
@@ -122,7 +122,7 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
 
         $evaluationTemplateSection = $this->evaluationTemplateSectionRepository->create($input);
 
-        return $this->sendResponse($evaluationTemplateSection->toArray(), 'Evaluation Template Section saved successfully');
+        return $this->sendResponse($evaluationTemplateSection->toArray(), trans('custom.evaluation_template_section_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
         $evaluationTemplateSection = $this->evaluationTemplateSectionRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSection)) {
-            return $this->sendError('Evaluation Template Section not found');
+            return $this->sendError(trans('custom.evaluation_template_section_not_found'));
         }
 
-        return $this->sendResponse($evaluationTemplateSection->toArray(), 'Evaluation Template Section retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSection->toArray(), trans('custom.evaluation_template_section_retrieved_successfully'));
     }
 
     public function getTemplateSectionFormData(Request $request)  {
@@ -198,7 +198,7 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
             'evaluationTemplateSectionTable' => $evaluationTemplateSectionTable,
             'supplierEvaluationMasters' => $supplierEvaluationMasters,
         ];
-        return $this->sendResponse($data, 'Evaluation template section form data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.evaluation_template_section_form_data_retrieved_su'));
     }
 
     /**
@@ -264,12 +264,12 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
         $evaluationTemplateSection = $this->evaluationTemplateSectionRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSection)) {
-            return $this->sendError('Evaluation Template Section not found');
+            return $this->sendError(trans('custom.evaluation_template_section_not_found'));
         }
 
         $evaluationTemplateSection = $this->evaluationTemplateSectionRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationTemplateSection->toArray(), 'EvaluationTemplateSection updated successfully');
+        return $this->sendResponse($evaluationTemplateSection->toArray(), trans('custom.evaluationtemplatesection_updated_successfully'));
     }
 
     /**
@@ -317,7 +317,7 @@ class EvaluationTemplateSectionAPIController extends AppBaseController
         $evaluationTemplateSection = $this->evaluationTemplateSectionRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSection)) {
-            return $this->sendError('Evaluation Template Section not found');
+            return $this->sendError(trans('custom.evaluation_template_section_not_found'));
         }
 
         $evaluationTemplateSection->delete();

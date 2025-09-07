@@ -65,7 +65,7 @@ class GenderAPIController extends AppBaseController
         $this->genderRepository->pushCriteria(new LimitOffsetCriteria($request));
         $genders = $this->genderRepository->all();
 
-        return $this->sendResponse($genders->toArray(), 'Genders retrieved successfully');
+        return $this->sendResponse($genders->toArray(), trans('custom.genders_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class GenderAPIController extends AppBaseController
 
         $gender = $this->genderRepository->create($input);
 
-        return $this->sendResponse($gender->toArray(), 'Gender saved successfully');
+        return $this->sendResponse($gender->toArray(), trans('custom.gender_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class GenderAPIController extends AppBaseController
         $gender = $this->genderRepository->findWithoutFail($id);
 
         if (empty($gender)) {
-            return $this->sendError('Gender not found');
+            return $this->sendError(trans('custom.gender_not_found'));
         }
 
-        return $this->sendResponse($gender->toArray(), 'Gender retrieved successfully');
+        return $this->sendResponse($gender->toArray(), trans('custom.gender_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class GenderAPIController extends AppBaseController
         $gender = $this->genderRepository->findWithoutFail($id);
 
         if (empty($gender)) {
-            return $this->sendError('Gender not found');
+            return $this->sendError(trans('custom.gender_not_found'));
         }
 
         $gender = $this->genderRepository->update($input, $id);
 
-        return $this->sendResponse($gender->toArray(), 'Gender updated successfully');
+        return $this->sendResponse($gender->toArray(), trans('custom.gender_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class GenderAPIController extends AppBaseController
         $gender = $this->genderRepository->findWithoutFail($id);
 
         if (empty($gender)) {
-            return $this->sendError('Gender not found');
+            return $this->sendError(trans('custom.gender_not_found'));
         }
 
         $gender->delete();
 
-        return $this->sendResponse($id, 'Gender deleted successfully');
+        return $this->sendResponse($id, trans('custom.gender_deleted_successfully'));
     }
 }

@@ -64,7 +64,7 @@ class HrDepartmentMasterAPIController extends AppBaseController
         $this->hrDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrDepartmentMasters = $this->hrDepartmentMasterRepository->all();
 
-        return $this->sendResponse($hrDepartmentMasters->toArray(), 'Hr Department Masters retrieved successfully');
+        return $this->sendResponse($hrDepartmentMasters->toArray(), trans('custom.hr_department_masters_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HrDepartmentMasterAPIController extends AppBaseController
 
         $hrDepartmentMaster = $this->hrDepartmentMasterRepository->create($input);
 
-        return $this->sendResponse($hrDepartmentMaster->toArray(), 'Hr Department Master saved successfully');
+        return $this->sendResponse($hrDepartmentMaster->toArray(), trans('custom.hr_department_master_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HrDepartmentMasterAPIController extends AppBaseController
         $hrDepartmentMaster = $this->hrDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrDepartmentMaster)) {
-            return $this->sendError('Hr Department Master not found');
+            return $this->sendError(trans('custom.hr_department_master_not_found'));
         }
 
-        return $this->sendResponse($hrDepartmentMaster->toArray(), 'Hr Department Master retrieved successfully');
+        return $this->sendResponse($hrDepartmentMaster->toArray(), trans('custom.hr_department_master_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HrDepartmentMasterAPIController extends AppBaseController
         $hrDepartmentMaster = $this->hrDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrDepartmentMaster)) {
-            return $this->sendError('Hr Department Master not found');
+            return $this->sendError(trans('custom.hr_department_master_not_found'));
         }
 
         $hrDepartmentMaster = $this->hrDepartmentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hrDepartmentMaster->toArray(), 'HrDepartmentMaster updated successfully');
+        return $this->sendResponse($hrDepartmentMaster->toArray(), trans('custom.hrdepartmentmaster_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HrDepartmentMasterAPIController extends AppBaseController
         $hrDepartmentMaster = $this->hrDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrDepartmentMaster)) {
-            return $this->sendError('Hr Department Master not found');
+            return $this->sendError(trans('custom.hr_department_master_not_found'));
         }
 
         $hrDepartmentMaster->delete();

@@ -53,7 +53,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         $this->employeeNavigationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeNavigations = $this->employeeNavigationRepository->all();
 
-        return $this->sendResponse($employeeNavigations->toArray(), 'Employee Navigations retrieved successfully');
+        return $this->sendResponse($employeeNavigations->toArray(), trans('custom.employee_navigations_retrieved_successfully'));
     }
 
     /**
@@ -72,7 +72,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         $validate = EmployeeNavigation::with(['usergroup'])->where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->first();
 
         if($validate && $validate->usergroup){
-            return $this->sendError('Selected employee already exists in the '.$validate->usergroup->description.' user group');
+            return $this->sendError(trans('custom.selected_employee_already_exists_in_the').$validate->usergroup->description.' user group');
         }else{
             if($employees){
                 foreach ($employees as $val){
@@ -82,7 +82,7 @@ class EmployeeNavigationAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($employeeNavigations->toArray(), 'Employee Navigation saved successfully');
+        return $this->sendResponse($employeeNavigations->toArray(), trans('custom.employee_navigation_saved_successfully'));
     }
 
     /**
@@ -99,10 +99,10 @@ class EmployeeNavigationAPIController extends AppBaseController
         $employeeNavigation = $this->employeeNavigationRepository->findWithoutFail($id);
 
         if (empty($employeeNavigation)) {
-            return $this->sendError('Employee Navigation not found');
+            return $this->sendError(trans('custom.employee_navigation_not_found'));
         }
 
-        return $this->sendResponse($employeeNavigation->toArray(), 'Employee Navigation retrieved successfully');
+        return $this->sendResponse($employeeNavigation->toArray(), trans('custom.employee_navigation_retrieved_successfully'));
     }
 
     /**
@@ -122,12 +122,12 @@ class EmployeeNavigationAPIController extends AppBaseController
         $employeeNavigation = $this->employeeNavigationRepository->findWithoutFail($id);
 
         if (empty($employeeNavigation)) {
-            return $this->sendError('Employee Navigation not found');
+            return $this->sendError(trans('custom.employee_navigation_not_found'));
         }
 
         $employeeNavigation = $this->employeeNavigationRepository->update($input, $id);
 
-        return $this->sendResponse($employeeNavigation->toArray(), 'EmployeeNavigation updated successfully');
+        return $this->sendResponse($employeeNavigation->toArray(), trans('custom.employeenavigation_updated_successfully'));
     }
 
     /**
@@ -144,12 +144,12 @@ class EmployeeNavigationAPIController extends AppBaseController
         $employeeNavigation = $this->employeeNavigationRepository->findWithoutFail($id);
 
         if (empty($employeeNavigation)) {
-            return $this->sendError('Employee Navigation not found');
+            return $this->sendError(trans('custom.employee_navigation_not_found'));
         }
 
         $employeeNavigation->delete();
 
-        return $this->sendResponse($id, 'Employee Navigation deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_navigation_deleted_successfully'));
     }
 
     public function getUserGroupEmployeesByCompanyDatatable(Request $request)
@@ -236,7 +236,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         }
 
         $groupCompany = $groupCompany->get();
-        return $this->sendResponse($groupCompany, 'Employee Navigation deleted successfully');
+        return $this->sendResponse($groupCompany, trans('custom.employee_navigation_deleted_successfully'));
     }
 
 }

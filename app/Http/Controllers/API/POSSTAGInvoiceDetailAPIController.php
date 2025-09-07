@@ -65,7 +65,7 @@ class POSSTAGInvoiceDetailAPIController extends AppBaseController
         $this->pOSSTAGInvoiceDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSTAGInvoiceDetails = $this->pOSSTAGInvoiceDetailRepository->all();
 
-        return $this->sendResponse($pOSSTAGInvoiceDetails->toArray(), 'P O S S T A G Invoice Details retrieved successfully');
+        return $this->sendResponse($pOSSTAGInvoiceDetails->toArray(), trans('custom.p_o_s_s_t_a_g_invoice_details_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSTAGInvoiceDetailAPIController extends AppBaseController
 
         $pOSSTAGInvoiceDetail = $this->pOSSTAGInvoiceDetailRepository->create($input);
 
-        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), 'P O S S T A G Invoice Detail saved successfully');
+        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), trans('custom.p_o_s_s_t_a_g_invoice_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSTAGInvoiceDetailAPIController extends AppBaseController
         $pOSSTAGInvoiceDetail = $this->pOSSTAGInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGInvoiceDetail)) {
-            return $this->sendError('P O S S T A G Invoice Detail not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_invoice_detail_not_found'));
         }
 
-        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), 'P O S S T A G Invoice Detail retrieved successfully');
+        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), trans('custom.p_o_s_s_t_a_g_invoice_detail_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSTAGInvoiceDetailAPIController extends AppBaseController
         $pOSSTAGInvoiceDetail = $this->pOSSTAGInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGInvoiceDetail)) {
-            return $this->sendError('P O S S T A G Invoice Detail not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_invoice_detail_not_found'));
         }
 
         $pOSSTAGInvoiceDetail = $this->pOSSTAGInvoiceDetailRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), 'POSSTAGInvoiceDetail updated successfully');
+        return $this->sendResponse($pOSSTAGInvoiceDetail->toArray(), trans('custom.posstaginvoicedetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSTAGInvoiceDetailAPIController extends AppBaseController
         $pOSSTAGInvoiceDetail = $this->pOSSTAGInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGInvoiceDetail)) {
-            return $this->sendError('P O S S T A G Invoice Detail not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_invoice_detail_not_found'));
         }
 
         $pOSSTAGInvoiceDetail->delete();

@@ -49,7 +49,7 @@ class MonthsAPIController extends AppBaseController
         $this->monthsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $months = $this->monthsRepository->all();
 
-        return $this->sendResponse($months->toArray(), 'Months retrieved successfully');
+        return $this->sendResponse($months->toArray(), trans('custom.months_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class MonthsAPIController extends AppBaseController
 
         $months = $this->monthsRepository->create($input);
 
-        return $this->sendResponse($months->toArray(), 'Months saved successfully');
+        return $this->sendResponse($months->toArray(), trans('custom.months_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class MonthsAPIController extends AppBaseController
         $months = $this->monthsRepository->findWithoutFail($id);
 
         if (empty($months)) {
-            return $this->sendError('Months not found');
+            return $this->sendError(trans('custom.months_not_found'));
         }
 
-        return $this->sendResponse($months->toArray(), 'Months retrieved successfully');
+        return $this->sendResponse($months->toArray(), trans('custom.months_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class MonthsAPIController extends AppBaseController
         $months = $this->monthsRepository->findWithoutFail($id);
 
         if (empty($months)) {
-            return $this->sendError('Months not found');
+            return $this->sendError(trans('custom.months_not_found'));
         }
 
         $months = $this->monthsRepository->update($input, $id);
 
-        return $this->sendResponse($months->toArray(), 'Months updated successfully');
+        return $this->sendResponse($months->toArray(), trans('custom.months_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class MonthsAPIController extends AppBaseController
         $months = $this->monthsRepository->findWithoutFail($id);
 
         if (empty($months)) {
-            return $this->sendError('Months not found');
+            return $this->sendError(trans('custom.months_not_found'));
         }
 
         $months->delete();
 
-        return $this->sendResponse($id, 'Months deleted successfully');
+        return $this->sendResponse($id, trans('custom.months_deleted_successfully'));
     }
 }

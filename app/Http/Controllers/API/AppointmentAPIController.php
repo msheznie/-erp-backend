@@ -74,7 +74,7 @@ class AppointmentAPIController extends AppBaseController
         $this->appointmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $appointments = $this->appointmentRepository->all();
 
-        return $this->sendResponse($appointments->toArray(), 'Appointments retrieved successfully');
+        return $this->sendResponse($appointments->toArray(), trans('custom.appointments_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class AppointmentAPIController extends AppBaseController
 
         $appointment = $this->appointmentRepository->create($input);
 
-        return $this->sendResponse($appointment->toArray(), 'Appointment saved successfully');
+        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError('Appointment not found');
+            return $this->sendError(trans('custom.appointment_not_found'));
         }
 
-        return $this->sendResponse($appointment->toArray(), 'Appointment retrieved successfully');
+        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError('Appointment not found');
+            return $this->sendError(trans('custom.appointment_not_found'));
         }
 
         $appointment = $this->appointmentRepository->update($input, $id);
 
-        return $this->sendResponse($appointment->toArray(), 'Appointment updated successfully');
+        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_updated_successfully'));
     }
 
     /**
@@ -280,7 +280,7 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError('Appointment not found');
+            return $this->sendError(trans('custom.appointment_not_found'));
         }
 
         $appointment->delete();
@@ -551,7 +551,7 @@ class AppointmentAPIController extends AppBaseController
         try
         {
             $serviceLineSystemID = $this->appointmentRepository->getServiceLineSystemIDs($request);
-            return $this->sendResponse($serviceLineSystemID , 'Data Retrieved successfully');
+            return $this->sendResponse($serviceLineSystemID , trans('custom.data_retrieved_successfully_3'));
         }
         catch (\Exception $e)
         {
@@ -565,6 +565,6 @@ class AppointmentAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, 'succesfully created');
+        return $this->sendResponse($acc_d, trans('custom.succesfully_created'));
     }
 }

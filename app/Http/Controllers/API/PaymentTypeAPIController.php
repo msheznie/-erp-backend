@@ -65,7 +65,7 @@ class PaymentTypeAPIController extends AppBaseController
         $this->paymentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentTypes = $this->paymentTypeRepository->all();
 
-        return $this->sendResponse($paymentTypes->toArray(), 'Payment Types retrieved successfully');
+        return $this->sendResponse($paymentTypes->toArray(), trans('custom.payment_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PaymentTypeAPIController extends AppBaseController
 
         $paymentType = $this->paymentTypeRepository->create($input);
 
-        return $this->sendResponse($paymentType->toArray(), 'Payment Type saved successfully');
+        return $this->sendResponse($paymentType->toArray(), trans('custom.payment_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PaymentTypeAPIController extends AppBaseController
         $paymentType = $this->paymentTypeRepository->findWithoutFail($id);
 
         if (empty($paymentType)) {
-            return $this->sendError('Payment Type not found');
+            return $this->sendError(trans('custom.payment_type_not_found'));
         }
 
-        return $this->sendResponse($paymentType->toArray(), 'Payment Type retrieved successfully');
+        return $this->sendResponse($paymentType->toArray(), trans('custom.payment_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PaymentTypeAPIController extends AppBaseController
         $paymentType = $this->paymentTypeRepository->findWithoutFail($id);
 
         if (empty($paymentType)) {
-            return $this->sendError('Payment Type not found');
+            return $this->sendError(trans('custom.payment_type_not_found'));
         }
 
         $paymentType = $this->paymentTypeRepository->update($input, $id);
 
-        return $this->sendResponse($paymentType->toArray(), 'PaymentType updated successfully');
+        return $this->sendResponse($paymentType->toArray(), trans('custom.paymenttype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PaymentTypeAPIController extends AppBaseController
         $paymentType = $this->paymentTypeRepository->findWithoutFail($id);
 
         if (empty($paymentType)) {
-            return $this->sendError('Payment Type not found');
+            return $this->sendError(trans('custom.payment_type_not_found'));
         }
 
         $paymentType->delete();

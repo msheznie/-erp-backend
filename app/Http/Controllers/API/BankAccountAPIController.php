@@ -122,7 +122,7 @@ class BankAccountAPIController extends AppBaseController
             ->first();
 
         if (empty($bank)) {
-            return $this->sendError('Bank not found', 500);
+            return $this->sendError(trans('custom.bank_not_found'), 500);
         }
 
         $input['bankShortCode'] = $bank->bankShortCode;

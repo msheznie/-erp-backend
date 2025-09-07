@@ -66,7 +66,7 @@ class PortMasterAPIController extends AppBaseController
         $this->portMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $portMasters = $this->portMasterRepository->all();
 
-        return $this->sendResponse($portMasters->toArray(), 'Port Masters retrieved successfully');
+        return $this->sendResponse($portMasters->toArray(), trans('custom.port_masters_retrieved_successfully'));
     }
 
     /**
@@ -117,12 +117,12 @@ class PortMasterAPIController extends AppBaseController
 
         if(isset($input['id'])){
             $portMaster = PortMaster::where('id', $input['id'])->update($masterData);
-            return $this->sendResponse($portMaster, 'Port Master updated successfully');
+            return $this->sendResponse($portMaster, trans('custom.port_master_updated_successfully'));
         }
 
         $portMaster = $this->portMasterRepository->create($input);
 
-        return $this->sendResponse($portMaster->toArray(), 'Port Master saved successfully');
+        return $this->sendResponse($portMaster->toArray(), trans('custom.port_master_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class PortMasterAPIController extends AppBaseController
         $portMaster = $this->portMasterRepository->findWithoutFail($id);
 
         if (empty($portMaster)) {
-            return $this->sendError('Port Master not found');
+            return $this->sendError(trans('custom.port_master_not_found'));
         }
 
-        return $this->sendResponse($portMaster->toArray(), 'Port Master retrieved successfully');
+        return $this->sendResponse($portMaster->toArray(), trans('custom.port_master_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class PortMasterAPIController extends AppBaseController
         $portMaster = $this->portMasterRepository->findWithoutFail($id);
 
         if (empty($portMaster)) {
-            return $this->sendError('Port Master not found');
+            return $this->sendError(trans('custom.port_master_not_found'));
         }
 
         $portMaster = $this->portMasterRepository->update($input, $id);
 
-        return $this->sendResponse($portMaster->toArray(), 'PortMaster updated successfully');
+        return $this->sendResponse($portMaster->toArray(), trans('custom.portmaster_updated_successfully'));
     }
 
     /**
@@ -281,12 +281,12 @@ class PortMasterAPIController extends AppBaseController
         $portMaster = $this->portMasterRepository->findWithoutFail($id);
 
         if (empty($portMaster)) {
-            return $this->sendError('Port Master not found');
+            return $this->sendError(trans('custom.port_master_not_found'));
         }
 
         $portMaster->delete();
 
-        return $this->sendSuccess('Port Master deleted successfully');
+        return $this->sendSuccess(trans('custom.port_master_deleted_successfully'));
     }
 
     public function getAllPort(Request $request){
@@ -325,11 +325,11 @@ class PortMasterAPIController extends AppBaseController
                 })->first();
 
         if($customerInvoiceLogistic){
-            return $this->sendError('This port is already used in customer invoice');
+            return $this->sendError(trans('custom.this_port_is_already_used_in_customer_invoice'));
         }
         $deleteData = ['is_deleted'=>1];
         $PortMaster = PortMaster::where('id',$portID )->update($deleteData);
-        return $this->sendResponse($PortMaster, 'Port Master deleted successfully');
+        return $this->sendResponse($PortMaster, trans('custom.port_master_deleted_successfully'));
     }
 
 

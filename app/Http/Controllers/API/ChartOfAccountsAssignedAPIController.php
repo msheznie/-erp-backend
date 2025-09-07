@@ -59,7 +59,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $this->chartOfAccountsAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccountsAssigneds = $this->chartOfAccountsAssignedRepository->all();
 
-        return $this->sendResponse($chartOfAccountsAssigneds->toArray(), 'Chart Of Accounts Assigneds retrieved successfully');
+        return $this->sendResponse($chartOfAccountsAssigneds->toArray(), trans('custom.chart_of_accounts_assigneds_retrieved_successfully'));
     }
 
     /**
@@ -86,13 +86,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
 
             if (empty($chartOfAccountsAssigned)) {
-                return $this->sendError('Chart of Account company assigned not found!', 404);
+                return $this->sendError(trans('custom.chart_of_account_company_assigned_not_found'), 404);
             }
 
             $chartofaccountData = ChartOfAccount::find($chartOfAccountsAssigned->chartOfAccountSystemID);
 
             if (!$chartofaccountData) {
-                return $this->sendError('Chart of Account not found!', 404);
+                return $this->sendError(trans('custom.chart_of_account_not_found'), 404);
             }
 
             if ($chartofaccountData->isMasterAccount == 1) {
@@ -109,7 +109,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                                                                ->first();
 
                     if ($checkSubAccountIsAssigned) {
-                        return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot unassign');
+                        return $this->sendError(trans('custom.a_sub_ledger_account_is_assigned_and_active_to_thi'));
                     }
                 }
             } 
@@ -125,7 +125,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             //                                                    ->first();
 
             //         if (!$checkMasterAccountIsAssigned) {
-            //             return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot update');
+            //             return $this->sendError(trans('custom.master_account_is_not_assigned_or_inactive_to_this_1'));
             //         }
             //     }
             // }
@@ -155,7 +155,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
 
                 if (!$chartofaccountData) {
-                    return $this->sendError('Chart of Account not found!', 404);
+                    return $this->sendError(trans('custom.chart_of_account_not_found'), 404);
                 }
 
                 // if ($chartofaccountData->isMasterAccount == 0) {
@@ -169,7 +169,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 //                                                ->first();
 
                 //     if (!$checkMasterAccountIsAssigned) {
-                //         return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
+                //         return $this->sendError(trans('custom.master_account_is_not_assigned_or_inactive_to_this'));
                 //     }
                 // }
 
@@ -189,7 +189,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'Chart Of Accounts Assigned saved successfully');
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), trans('custom.chart_of_accounts_assigned_saved_successfully'));
     }
 
     /**
@@ -206,10 +206,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountsAssigned)) {
-            return $this->sendError('Chart Of Accounts Assigned not found');
+            return $this->sendError(trans('custom.chart_of_accounts_assigned_not_found'));
         }
 
-        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'Chart Of Accounts Assigned retrieved successfully');
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), trans('custom.chart_of_accounts_assigned_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountsAssigned)) {
-            return $this->sendError('Chart Of Accounts Assigned not found');
+            return $this->sendError(trans('custom.chart_of_accounts_assigned_not_found'));
         }
 
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'ChartOfAccountsAssigned updated successfully');
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), trans('custom.chartofaccountsassigned_updated_successfully'));
     }
 
     /**
@@ -251,13 +251,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountsAssigned)) {
-            return $this->sendError('Chart Of Accounts Assigned not found');
+            return $this->sendError(trans('custom.chart_of_accounts_assigned_not_found'));
         }
 
         $chartofaccountData = ChartOfAccount::find($chartOfAccountsAssigned->chartOfAccountSystemID);
 
         if (!$chartofaccountData) {
-            return $this->sendError('Chart of Account not found!', 404);
+            return $this->sendError(trans('custom.chart_of_account_not_found'), 404);
         }
 
         if ($chartofaccountData->isMasterAccount == 1) {
@@ -273,7 +273,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                                                        ->first();
 
             if ($checkSubAccountIsAssigned) {
-                return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot delete');
+                return $this->sendError(trans('custom.a_sub_ledger_account_is_assigned_and_active_to_thi_1'));
             }
         } 
 
@@ -292,13 +292,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
 
         if ($checkGlIsSelectedForVAT || $checkGlInTaxAuthority) {
-            return $this->sendError('Chart of account is selcted for VAT setup of this company, therefore you cannot delete');
+            return $this->sendError(trans('custom.chart_of_account_is_selcted_for_vat_setup_of_this_'));
         }
 
 
         $chartOfAccountsAssigned->delete();
 
-        return $this->sendResponse($id, 'Chart Of Accounts Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.chart_of_accounts_assigned_deleted_successfully'));
     }
 
     public function getDirectInvoiceGL(request $request)
@@ -330,7 +330,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -363,7 +363,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $data = $data->get();
-        return $this->sendResponse($data->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getPaymentVoucherGL(request $request)
@@ -402,7 +402,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -428,7 +428,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -449,9 +449,9 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $items = $items->get();
 
         if (empty($items)) {
-            return $this->sendError('Data not found');
+            return $this->sendError(trans('custom.data_not_found'));
         } 
-        return $this->sendResponse($items, 'Data retrieved successfully');
+        return $this->sendResponse($items, trans('custom.data_retrieved_successfully'));
     }
 
     public function getglDetails(request $request){
@@ -470,7 +470,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                                     ->where('projectID' , $projectID)->get();
 
         if (empty($glDetails)) {
-                return $this->sendError('Data not found');
+                return $this->sendError(trans('custom.data_not_found'));
         } 
 
         return \DataTables::of($glDetails)
@@ -502,7 +502,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $items = $items->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -513,7 +513,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
 
         if (!$chartofaccountData) {
-            return $this->sendError('Chart of Account not found!', 404);
+            return $this->sendError(trans('custom.chart_of_account_not_found'), 404);
         }
 
         $checkSubAccountIsAssigned = ChartOfAccountsAssigned::with(['company'])
@@ -524,7 +524,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                                                              })
                                                              ->get();
 
-        return $this->sendResponse($checkSubAccountIsAssigned, 'Data retrieved successfully');
+        return $this->sendResponse($checkSubAccountIsAssigned, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -549,7 +549,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 }

@@ -40,7 +40,7 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($budgetDetTemplateEntries->toArray(), 'Budget Det Template Entries retrieved successfully');
+        return $this->sendResponse($budgetDetTemplateEntries->toArray(), trans('custom.budget_det_template_entries_retrieved_successfully'));
     }
 
     /**
@@ -57,7 +57,7 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
 
         $budgetDetTemplateEntry = $this->budgetDetTemplateEntryRepository->create($input);
 
-        return $this->sendResponse($budgetDetTemplateEntry->toArray(), 'Budget Det Template Entry saved successfully');
+        return $this->sendResponse($budgetDetTemplateEntry->toArray(), trans('custom.budget_det_template_entry_saved_successfully'));
     }
 
     /**
@@ -74,10 +74,10 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
         $budgetDetTemplateEntry = $this->budgetDetTemplateEntryRepository->find($id);
 
         if (empty($budgetDetTemplateEntry)) {
-            return $this->sendError('Budget Det Template Entry not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_not_found'));
         }
 
-        return $this->sendResponse($budgetDetTemplateEntry->toArray(), 'Budget Det Template Entry retrieved successfully');
+        return $this->sendResponse($budgetDetTemplateEntry->toArray(), trans('custom.budget_det_template_entry_retrieved_successfully'));
     }
 
     /**
@@ -97,12 +97,12 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
         $budgetDetTemplateEntry = $this->budgetDetTemplateEntryRepository->find($id);
 
         if (empty($budgetDetTemplateEntry)) {
-            return $this->sendError('Budget Det Template Entry not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_not_found'));
         }
 
         $budgetDetTemplateEntry = $this->budgetDetTemplateEntryRepository->update($input, $id);
 
-        return $this->sendResponse($budgetDetTemplateEntry->toArray(), 'BudgetDetTemplateEntry updated successfully');
+        return $this->sendResponse($budgetDetTemplateEntry->toArray(), trans('custom.budgetdettemplateentry_updated_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
         $budgetDetTemplateEntry = $this->budgetDetTemplateEntryRepository->find($id);
 
         if (empty($budgetDetTemplateEntry)) {
-            return $this->sendError('Budget Det Template Entry not found');
+            return $this->sendError(trans('custom.budget_det_template_entry_not_found'));
         }
 
         $budgetDetTemplateEntry->delete();
@@ -140,7 +140,7 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
     {
         $entries = $this->budgetDetTemplateEntryRepository->getByBudgetDetailId($budgetDetailId);
 
-        return $this->sendResponse($entries->toArray(), 'Budget Det Template Entries retrieved successfully');
+        return $this->sendResponse($entries->toArray(), trans('custom.budget_det_template_entries_retrieved_successfully'));
     }
 
     /**
@@ -156,7 +156,7 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
         $perPage = $request->get('per_page', 15);
         $entries = $this->budgetDetTemplateEntryRepository->getByBudgetDetailIdPaginated($budgetDetailId, $perPage);
 
-        return $this->sendResponse($entries->toArray(), 'Budget Det Template Entries retrieved successfully');
+        return $this->sendResponse($entries->toArray(), trans('custom.budget_det_template_entries_retrieved_successfully'));
     }
 
     /**
@@ -174,6 +174,6 @@ class BudgetDetTemplateEntryAPIController extends AppBaseController
             return $this->sendSuccess('Budget Det Template Entries deleted successfully');
         }
 
-        return $this->sendError('Failed to delete Budget Det Template Entries');
+        return $this->sendError(trans('custom.failed_to_delete_budget_det_template_entries'));
     }
 } 

@@ -65,7 +65,7 @@ class TicketMasterAPIController extends AppBaseController
         $this->ticketMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $ticketMasters = $this->ticketMasterRepository->all();
 
-        return $this->sendResponse($ticketMasters->toArray(), 'Ticket Masters retrieved successfully');
+        return $this->sendResponse($ticketMasters->toArray(), trans('custom.ticket_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TicketMasterAPIController extends AppBaseController
 
         $ticketMasters = $this->ticketMasterRepository->create($input);
 
-        return $this->sendResponse($ticketMasters->toArray(), 'Ticket Master saved successfully');
+        return $this->sendResponse($ticketMasters->toArray(), trans('custom.ticket_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TicketMasterAPIController extends AppBaseController
         $ticketMaster = $this->ticketMasterRepository->findWithoutFail($id);
 
         if (empty($ticketMaster)) {
-            return $this->sendError('Ticket Master not found');
+            return $this->sendError(trans('custom.ticket_master_not_found'));
         }
 
-        return $this->sendResponse($ticketMaster->toArray(), 'Ticket Master retrieved successfully');
+        return $this->sendResponse($ticketMaster->toArray(), trans('custom.ticket_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TicketMasterAPIController extends AppBaseController
         $ticketMaster = $this->ticketMasterRepository->findWithoutFail($id);
 
         if (empty($ticketMaster)) {
-            return $this->sendError('Ticket Master not found');
+            return $this->sendError(trans('custom.ticket_master_not_found'));
         }
 
         $ticketMaster = $this->ticketMasterRepository->update($input, $id);
 
-        return $this->sendResponse($ticketMaster->toArray(), 'TicketMaster updated successfully');
+        return $this->sendResponse($ticketMaster->toArray(), trans('custom.ticketmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class TicketMasterAPIController extends AppBaseController
         $ticketMaster = $this->ticketMasterRepository->findWithoutFail($id);
 
         if (empty($ticketMaster)) {
-            return $this->sendError('Ticket Master not found');
+            return $this->sendError(trans('custom.ticket_master_not_found'));
         }
 
         $ticketMaster->delete();
 
-        return $this->sendResponse($id, 'Ticket Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.ticket_master_deleted_successfully'));
     }
 }

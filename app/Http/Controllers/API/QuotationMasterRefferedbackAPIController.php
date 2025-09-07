@@ -76,7 +76,7 @@ class QuotationMasterRefferedbackAPIController extends AppBaseController
         $this->quotationMasterRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationMasterRefferedbacks = $this->quotationMasterRefferedbackRepository->all();
 
-        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), 'Quotation Master Refferedbacks retrieved successfully');
+        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), trans('custom.quotation_master_refferedbacks_retrieved_successfu'));
     }
 
     /**
@@ -123,7 +123,7 @@ class QuotationMasterRefferedbackAPIController extends AppBaseController
 
         $quotationMasterRefferedbacks = $this->quotationMasterRefferedbackRepository->create($input);
 
-        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), 'Quotation Master Refferedback saved successfully');
+        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), trans('custom.quotation_master_refferedback_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class QuotationMasterRefferedbackAPIController extends AppBaseController
         $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->with(['confirmed_by', 'created_by'])->findWithoutFail($id);
 
         if (empty($quotationMasterRefferedback)) {
-            return $this->sendError('Quotation Master Refferedback not found');
+            return $this->sendError(trans('custom.quotation_master_refferedback_not_found'));
         }
 
-        return $this->sendResponse($quotationMasterRefferedback->toArray(), 'Quotation Master Refferedback retrieved successfully');
+        return $this->sendResponse($quotationMasterRefferedback->toArray(), trans('custom.quotation_master_refferedback_retrieved_successful'));
     }
 
     /**
@@ -230,12 +230,12 @@ class QuotationMasterRefferedbackAPIController extends AppBaseController
         $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($quotationMasterRefferedback)) {
-            return $this->sendError('Quotation Master Refferedback not found');
+            return $this->sendError(trans('custom.quotation_master_refferedback_not_found'));
         }
 
         $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($quotationMasterRefferedback->toArray(), 'QuotationMasterRefferedback updated successfully');
+        return $this->sendResponse($quotationMasterRefferedback->toArray(), trans('custom.quotationmasterrefferedback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class QuotationMasterRefferedbackAPIController extends AppBaseController
         $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($quotationMasterRefferedback)) {
-            return $this->sendError('Quotation Master Refferedback not found');
+            return $this->sendError(trans('custom.quotation_master_refferedback_not_found'));
         }
 
         $quotationMasterRefferedback->delete();
 
-        return $this->sendResponse($id, 'Quotation Master Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_master_refferedback_deleted_successfully'));
     }
 
     public function getSalesQuotationAmendHistory(Request $request)

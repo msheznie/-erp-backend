@@ -114,7 +114,7 @@ class DeliveryOrderAPIController extends AppBaseController
         $this->deliveryOrderRepository->pushCriteria(new LimitOffsetCriteria($request));
         $deliveryOrders = $this->deliveryOrderRepository->all();
 
-        return $this->sendResponse($deliveryOrders->toArray(), 'Delivery Orders retrieved successfully');
+        return $this->sendResponse($deliveryOrders->toArray(), trans('custom.delivery_orders_retrieved_successfully'));
     }
 
     /**
@@ -196,7 +196,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $customer = CustomerMaster::where('customerCodeSystem',$input['customerID'])->first();
         if(empty($customer)){
-            return $this->sendError('Selected customer not found on db',500);
+            return $this->sendError(trans('custom.selected_customer_not_found_on_db'),500);
         }
 
 
@@ -271,7 +271,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $deliveryOrder = $this->deliveryOrderRepository->create($input);
 
-        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order saved successfully');
+        return $this->sendResponse($deliveryOrder->toArray(), trans('custom.delivery_order_saved_successfully'));
     }
 
     /**
@@ -324,10 +324,10 @@ class DeliveryOrderAPIController extends AppBaseController
             $query->with(['quotation','uom_default', 'item_by']);
         },'segment','warehouse'])->findWithoutFail($id);
         if (empty($deliveryOrder)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
-        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');
+        return $this->sendResponse($deliveryOrder->toArray(), trans('custom.delivery_order_retrieved_successfully'));
     }
 
     /**
@@ -384,7 +384,7 @@ class DeliveryOrderAPIController extends AppBaseController
         $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
 
         if (empty($deliveryOrder)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
         
         $deliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $id)->count();
@@ -552,12 +552,12 @@ class DeliveryOrderAPIController extends AppBaseController
 
             $detail = DeliveryOrderDetail::where('deliveryOrderID', $id)->get();
             if(count((array)$detail) == 0){
-                return  $this->sendError('Order detail not found', 500);
+                return  $this->sendError(trans('custom.order_detail_not_found'), 500);
             }
 
             $financeCategories = $detail->pluck('itemFinanceCategoryID')->toArray();
             if (count(array_unique($financeCategories)) > 1) {
-                return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+                return $this->sendError(trans('custom.multiple_finance_category_cannot_be_added_differen'),500);
             }
 
             $checkQuantity = DeliveryOrderDetail::where('deliveryOrderID', $id)
@@ -578,11 +578,11 @@ class DeliveryOrderAPIController extends AppBaseController
 
                 //If the revenue account or cost account or BS account is null do not allow to confirm
                 if((!($item->financeGLcodebBSSystemID > 0)) && $updateItem->itemFinanceCategoryID!=2){
-                    return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    return $this->sendError(trans('custom.bs_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }elseif (!($item->financeGLcodePLSystemID > 0)){
-                    return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    return $this->sendError(trans('custom.cost_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
-                    return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    return $this->sendError(trans('custom.revenue_account_cannot_be_null_for').$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }
 
                 $data = array(
@@ -676,7 +676,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 ->sum('amount');
 
             if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($deliveryOrder->companySystemID))){
-                return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
             }
 
             $object = new ChartOfAccountValidationService();
@@ -706,7 +706,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         }else{
             $deliveryOrder = $this->deliveryOrderRepository->update($input, $id);
-            return $this->sendResponse($deliveryOrder->toArray(), 'DeliveryOrder updated successfully');
+            return $this->sendResponse($deliveryOrder->toArray(), trans('custom.deliveryorder_updated_successfully'));
         }
 
     }
@@ -755,7 +755,7 @@ class DeliveryOrderAPIController extends AppBaseController
         $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
 
         if (empty($deliveryOrder)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
         $deliveryOrder->delete();
@@ -835,7 +835,7 @@ class DeliveryOrderAPIController extends AppBaseController
             'wareHouses'=>$wareHouses
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAllDeliveryOrder(Request $request){
@@ -905,7 +905,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($master->merge($existsMaster)->toArray(), 'Quotations retrieved successfully');
+        return $this->sendResponse($master->merge($existsMaster)->toArray(), trans('custom.quotations_retrieved_successfully'));
     }
 
     public function getSalesQuoatationDetailForDO(Request $request){
@@ -927,7 +927,7 @@ WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInSO != 1');
 
-        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.quotation_details_retrieved_successfully'));
     }
 
     public function getDeliveryOrderApprovals(Request $request)
@@ -1131,10 +1131,10 @@ WHERE
 
 
         if (empty($data)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
-        return $this->sendResponse($data->toArray(), 'Delivery Order retrieved successfully');
+        return $this->sendResponse($data->toArray(), trans('custom.delivery_order_retrieved_successfully'));
     }
 
     public function deliveryOrderReopen(Request $request)
@@ -1146,19 +1146,19 @@ WHERE
         $deliveryOrder= DeliveryOrder::find($deliveryOrderID);
         $emails = array();
         if (empty($deliveryOrder)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
         if ($deliveryOrder->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this delivery order. it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_delivery_order_it_is_alread_1'));
         }
 
         if ($deliveryOrder->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this delivery order. it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_delivery_order_it_is_alread'));
         }
 
         if ($deliveryOrder->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this delivery order. it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_delivery_order_it_is_not_co'));
         }
 
         // updating fields
@@ -1233,7 +1233,7 @@ WHERE
         /*Audit entry*/
         AuditTrial::createAuditTrial($deliveryOrder->documentSystemID,$deliveryOrderID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
+        return $this->sendResponse($deliveryOrder->toArray(), trans('custom.delivery_order_reopened_successfully'));
     }
 
     function getInvoiceDetailsForDO(Request $request)
@@ -1247,7 +1247,7 @@ WHERE
                 $query->with(['currency']);
             },'delivery_order_detail','uom_issuing'])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     function printDeliveryOrder(Request $request){
@@ -1263,7 +1263,7 @@ WHERE
 
 
         if (empty($do)) {
-            return $this->sendError('Delivery order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found_1'));
         }
 
         if($do->transaction_currency){
@@ -1310,7 +1310,7 @@ WHERE
             return $mpdf->Output($fileName, 'I');
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printDeliveryOrder: ' . $e->getMessage());
-            return $this->sendError('PDF generation failed: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
         }
     }
 
@@ -1323,11 +1323,11 @@ WHERE
 
         $doData = DeliveryOrder::find($deliveryOrderID);
         if (empty($doData)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
 
         if ($doData->refferedBackYN != -1) {
-            return $this->sendError('You cannot amend this delivery order');
+            return $this->sendError(trans('custom.you_cannot_amend_this_delivery_order'));
         }
 
         $deliveryOrderArray = array_except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
@@ -1380,7 +1380,7 @@ WHERE
             $doData->save();
         }
 
-        return $this->sendResponse($doData->toArray(), 'Delivery Order Amend successfully');
+        return $this->sendResponse($doData->toArray(), trans('custom.delivery_order_amend_successfully'));
     }
 
     public function getInvoiceDetailsForDeliveryOrderPrintView(Request $request){
@@ -1398,9 +1398,9 @@ WHERE
         ])->find($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
+            return $this->sendError(trans('custom.customer_invoice_direct_not_found'), 500);
         } else {
-            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
+            return $this->sendResponse($customerInvoiceDirect, trans('custom.customer_invoice_direct_retrieved_successfully'));
         }
     }
 
@@ -1416,7 +1416,7 @@ WHERE
                     $query->with(['transaction_currency']);
                 }])
             ->get();
-        return $this->sendResponse($detail, 'Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }
 
     public function isLinkItem(Request $request) {
@@ -1428,9 +1428,9 @@ WHERE
         ->first();
 
         if($addNewItem) {
-            return $this->sendResponse($addNewItem->isYesNO, 'Details retrieved successfully');
+            return $this->sendResponse($addNewItem->isYesNO, trans('custom.details_retrieved_successfully'));
         }else {
-            return $this->sendResponse(false, 'Details retrieved successfully');
+            return $this->sendResponse(false, trans('custom.details_retrieved_successfully'));
         }
 
     }
@@ -1589,7 +1589,7 @@ WHERE
                 return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
 
-        return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], 'Details retrieved successfully');
+        return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], trans('custom.details_retrieved_successfully'));
    
     }
 
@@ -1599,7 +1599,7 @@ WHERE
         if ($exists = Storage::disk($disk)->exists('delivery_order_template/delivery_order_template.xlsx')) {
             return Storage::disk($disk)->download('delivery_order_template/delivery_order_template.xlsx', 'delivery_order_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
 
@@ -1624,16 +1624,16 @@ WHERE
         $masterData = DeliveryOrder::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Delivery Order not found');
+            return $this->sendError(trans('custom.delivery_order_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this Delivery order, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_delivery_orde'));
         }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',71)->exists();
         if ($isAPIDocument){
-            return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+            return $this->sendError(trans('custom.this_is_an_autogenerated_document_this_cannot_be_r'));
         }
 
         $documentAutoId = $id;
@@ -1692,7 +1692,7 @@ WHERE
 
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Return back to amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.return_back_to_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

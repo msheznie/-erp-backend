@@ -65,7 +65,7 @@ class WorkOrderGenerationLogAPIController extends AppBaseController
         $this->workOrderGenerationLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $workOrderGenerationLogs = $this->workOrderGenerationLogRepository->all();
 
-        return $this->sendResponse($workOrderGenerationLogs->toArray(), 'Work Order Generation Logs retrieved successfully');
+        return $this->sendResponse($workOrderGenerationLogs->toArray(), trans('custom.work_order_generation_logs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class WorkOrderGenerationLogAPIController extends AppBaseController
 
         $workOrderGenerationLog = $this->workOrderGenerationLogRepository->create($input);
 
-        return $this->sendResponse($workOrderGenerationLog->toArray(), 'Work Order Generation Log saved successfully');
+        return $this->sendResponse($workOrderGenerationLog->toArray(), trans('custom.work_order_generation_log_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class WorkOrderGenerationLogAPIController extends AppBaseController
         $workOrderGenerationLog = $this->workOrderGenerationLogRepository->findWithoutFail($id);
 
         if (empty($workOrderGenerationLog)) {
-            return $this->sendError('Work Order Generation Log not found');
+            return $this->sendError(trans('custom.work_order_generation_log_not_found'));
         }
 
-        return $this->sendResponse($workOrderGenerationLog->toArray(), 'Work Order Generation Log retrieved successfully');
+        return $this->sendResponse($workOrderGenerationLog->toArray(), trans('custom.work_order_generation_log_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class WorkOrderGenerationLogAPIController extends AppBaseController
         $workOrderGenerationLog = $this->workOrderGenerationLogRepository->findWithoutFail($id);
 
         if (empty($workOrderGenerationLog)) {
-            return $this->sendError('Work Order Generation Log not found');
+            return $this->sendError(trans('custom.work_order_generation_log_not_found'));
         }
 
         $workOrderGenerationLog = $this->workOrderGenerationLogRepository->update($input, $id);
 
-        return $this->sendResponse($workOrderGenerationLog->toArray(), 'WorkOrderGenerationLog updated successfully');
+        return $this->sendResponse($workOrderGenerationLog->toArray(), trans('custom.workordergenerationlog_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class WorkOrderGenerationLogAPIController extends AppBaseController
         $workOrderGenerationLog = $this->workOrderGenerationLogRepository->findWithoutFail($id);
 
         if (empty($workOrderGenerationLog)) {
-            return $this->sendError('Work Order Generation Log not found');
+            return $this->sendError(trans('custom.work_order_generation_log_not_found'));
         }
 
         $workOrderGenerationLog->delete();

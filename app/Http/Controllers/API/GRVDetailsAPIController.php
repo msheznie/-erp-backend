@@ -100,7 +100,7 @@ class GRVDetailsAPIController extends AppBaseController
         $this->gRVDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gRVDetails = $this->gRVDetailsRepository->all();
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV details retrieved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), trans('custom.grv_details_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         $gRVDetails = $this->gRVDetailsRepository->create($input);
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV details saved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), trans('custom.grv_details_saved_successfully'));
     }
 
     /**
@@ -134,10 +134,10 @@ class GRVDetailsAPIController extends AppBaseController
         $gRVDetails = $this->gRVDetailsRepository->findWithoutFail($id);
 
         if (empty($gRVDetails)) {
-            return $this->sendError('GRV Details not found');
+            return $this->sendError(trans('custom.grv_details_not_found'));
         }
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV details retrieved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), trans('custom.grv_details_retrieved_successfully'));
     }
 
     /**
@@ -165,13 +165,13 @@ class GRVDetailsAPIController extends AppBaseController
             $gRVDetails = $this->gRVDetailsRepository->findWithoutFail($id);
 
             if (empty($gRVDetails)) {
-                return $this->sendError('GRV details not found');
+                return $this->sendError(trans('custom.grv_details_not_found_1'));
             }
 
             $grvMaster = GRVMaster::find($input['grvAutoID']);
 
             if (empty($grvMaster)) {
-                return $this->sendError('GRV not found');
+                return $this->sendError(trans('custom.grv_not_found'));
             }
 
             if (is_null($input['noQty'])) {
@@ -344,7 +344,7 @@ class GRVDetailsAPIController extends AppBaseController
            
             $this->updatePullType($input['grvAutoID']);
             DB::commit();
-            return $this->sendResponse($gRVDetails->toArray(), 'GRV details updated successfully');
+            return $this->sendResponse($gRVDetails->toArray(), trans('custom.grv_details_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
@@ -458,7 +458,7 @@ class GRVDetailsAPIController extends AppBaseController
         $gRVDetails = $this->gRVDetailsRepository->with(['item_by'])->findWithoutFail($id);
 
         if (empty($gRVDetails)) {
-            return $this->sendError('GRV Details not found');
+            return $this->sendError(trans('custom.grv_details_not_found'));
         }
 
         $purchaseOrderDetailsID = $gRVDetails->purchaseOrderDetailsID;
@@ -471,7 +471,7 @@ class GRVDetailsAPIController extends AppBaseController
                                         ->count();
 
         if($logisticItems){
-            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
+            return $this->sendError(trans('custom.grv_details_cannot_be_deleted_as_this_grv_is_linke'),500);
         }
 
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
@@ -483,7 +483,7 @@ class GRVDetailsAPIController extends AppBaseController
             $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
 
             if ($POMaster->partiallyGRVAllowed == 0) {
-                return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
+                return $this->sendError(trans('custom.you_cannot_delete_one_line_item_as_partial_grv_is_'), 422);
             }
         }
 
@@ -497,7 +497,7 @@ class GRVDetailsAPIController extends AppBaseController
                                                              ->first();
 
                 if ($validateSubProductSold) {
-                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                    return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
                 }
 
                 $subProduct = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
@@ -518,7 +518,7 @@ class GRVDetailsAPIController extends AppBaseController
                                                              ->first();
 
                 if ($validateSubProductSold) {
-                    return $this->sendError('You cannot delete this line item. batch details are sold already.', 422);
+                    return $this->sendError(trans('custom.you_cannot_delete_this_line_item_batch_details_are'), 422);
                 }
 
                 $subProduct = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
@@ -639,10 +639,10 @@ class GRVDetailsAPIController extends AppBaseController
             $this->updatePullType($gRVDetails->grvAutoID);
 
             DB::commit();
-            return $this->sendResponse($id, 'GRV details deleted successfully');
+            return $this->sendResponse($id, trans('custom.grv_details_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -724,7 +724,7 @@ class GRVDetailsAPIController extends AppBaseController
             $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
         }
 
-        return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.grv_details_retrieved_successfully'));
     }
 
     public function storeGRVDetailsFromPO(Request $request)
@@ -792,7 +792,7 @@ class GRVDetailsAPIController extends AppBaseController
                     ->first();
 
                     if (!$warehouse) {
-                    return $this->sendError('Location not found', 500);
+                    return $this->sendError(trans('custom.location_not_found'), 500);
                     }
 
                     if ($warehouse->manufacturingYN == 1) {
@@ -931,7 +931,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->first();
 
         if(empty($GRVMaster)){
-            $this->sendError('GRV not found',500);
+            $this->sendError(trans('custom.grv_not_found'),500);
         }
 
         $allowMultiplePO = CompanyPolicyMaster::where('companyPolicyCategoryID', 10)
@@ -976,7 +976,7 @@ class GRVDetailsAPIController extends AppBaseController
                         ->first();
 
                     if($alreadyItemPulledCheck){
-                        return $this->sendError('Cannot proceed. Selected item is already added in '.$alreadyItemPulledCheck->grv_master->grvPrimaryCode.' and it is not approved yet', 422);
+                        return $this->sendError(trans('custom.cannot_proceed_selected_item_is_already_added_in').$alreadyItemPulledCheck->grv_master->grvPrimaryCode.' and it is not approved yet', 422);
                     }
 
 
@@ -987,7 +987,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $new['receivedQty'] = $grvDetailItem['receivedQty'];
 
                     if (($new['noQty'] == '' || $new['noQty'] == 0)) {
-                        return $this->sendError('Qty cannot be zero', 422);
+                        return $this->sendError(trans('custom.qty_cannot_be_zero'), 422);
                     } else {
                         if ($POMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
@@ -1009,7 +1009,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                         if (!empty($grvDetailExistSameItem)) {
                             if ($grvDetailExistSameItem['purchaseOrderMastertID'] != $new['purchaseOrderMasterID']) {
-                                return $this->sendError('You cannot add details from multiple PO', 422);
+                                return $this->sendError(trans('custom.you_cannot_add_details_from_multiple_po'), 422);
                             }
                         }
                     }
@@ -1030,7 +1030,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                             if ($grvDetailExistSameItem) {
                                 if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                                    return $this->sendError('You cannot add different category item', 422);
+                                    return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
                                 }
                             }
 
@@ -1045,7 +1045,7 @@ class GRVDetailsAPIController extends AppBaseController
                         ->first();
 
                     if ($grvDetailExistSameItem) {
-                        return $this->sendError('Selected item is already added from the same order.', 422);
+                        return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_order'), 422);
                     }
 
                     $totalAddedQty = $new['noQty'] + $new['receivedQty'];
@@ -1215,7 +1215,7 @@ class GRVDetailsAPIController extends AppBaseController
 
 
             // DB::rollBack();
-            // return $this->sendError('Error Occurred');
+            // return $this->sendError(trans('custom.error_occurred'));
             
             $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
                                         ->update(['pullType' => 1]);
@@ -1223,13 +1223,13 @@ class GRVDetailsAPIController extends AppBaseController
 
             DB::commit();
                 if(isset($grvPrimaryCode) && $grvPrimaryCode != null){
-                    return $this->sendResponse('', 'GRV created successfully ' . $grvPrimaryCode);
+                    return $this->sendResponse('', trans('custom.grv_created_successfully') . $grvPrimaryCode);
                 } else {
-                    return $this->sendResponse('', 'GRV details saved successfully');
+                    return $this->sendResponse('', trans('custom.grv_details_saved_successfully'));
                 }
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -1318,13 +1318,13 @@ class GRVDetailsAPIController extends AppBaseController
 
         $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
         if (empty($grvMaster)) {
-            return $this->sendError('GRV Master not found');
+            return $this->sendError(trans('custom.grv_master_not_found'));
         }
 
         if ($grvMaster->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
+                return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
                 return $this->sendError('Please select a active department', 500);
@@ -1336,7 +1336,7 @@ class GRVDetailsAPIController extends AppBaseController
         if ($grvMaster->grvLocation) {
             $checkWarehouseActive = WarehouseMaster::find($grvMaster->grvLocation);
             if (empty($checkWarehouseActive)) {
-                return $this->sendError('Warehouse not found');
+                return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
                 return $this->sendError('Please select an active warehouse', 500);
@@ -1369,7 +1369,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                     if ($grvDetailExistSameItem) {
                         if ($itemAssign->financeCategoryMaster != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError('You cannot add different category item', 422);
+                            return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
                         }
                     }
                 }
@@ -1390,13 +1390,13 @@ class GRVDetailsAPIController extends AppBaseController
                    if($grvTypeID == 1) {
                        if ($item->financeCategoryMaster == 1) {
                            if ($grvDetailExistSameItem) {
-                               return $this->sendError('Selected item is already added from the same grv.', 422);
+                               return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_grv'), 422);
                            }
                        }
                    }
               if($grvTypeID != 1) {
                 if ($grvDetailExistSameItem) {
-                    return $this->sendError('Selected item is already added from the same grv.', 422);
+                    return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_grv'), 422);
                 }
             }
 
@@ -1516,10 +1516,10 @@ class GRVDetailsAPIController extends AppBaseController
             $item = $this->gRVDetailsRepository->create($GRVDetail_arr);
 
             DB::commit();
-            return $this->sendResponse('', 'GRV details saved successfully');
+            return $this->sendResponse('', trans('custom.grv_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
 
     }
@@ -1535,13 +1535,13 @@ class GRVDetailsAPIController extends AppBaseController
 
         $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
         if (empty($grvMaster)) {
-            return $this->sendError('GRV Master not found');
+            return $this->sendError(trans('custom.grv_master_not_found'));
         }
 
         if ($grvMaster->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
+                return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
                 return $this->sendError('Please select a active department', 500);
@@ -1553,7 +1553,7 @@ class GRVDetailsAPIController extends AppBaseController
         if ($grvMaster->grvLocation) {
             $checkWarehouseActive = WarehouseMaster::find($grvMaster->grvLocation);
             if (empty($checkWarehouseActive)) {
-                return $this->sendError('Warehouse not found');
+                return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
                 return $this->sendError('Please select an active warehouse', 500);
@@ -1567,7 +1567,7 @@ class GRVDetailsAPIController extends AppBaseController
         try {
             $itemAssign = ItemMaster::find($input['itemCode']);
             if (empty($itemAssign)) {
-                return $this->sendError('Item not found');
+                return $this->sendError(trans('custom.item_not_found'));
             }
 
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($grvMaster->documentSystemID, $grvMaster->companySystemID, $id, $input);
@@ -1645,10 +1645,10 @@ class GRVDetailsAPIController extends AppBaseController
             $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
 
             DB::commit();
-            return $this->sendResponse('', 'GRV details saved successfully');
+            return $this->sendResponse('', trans('custom.grv_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
 
     }
@@ -1671,7 +1671,7 @@ class GRVDetailsAPIController extends AppBaseController
         $grvMasterData = GRVMaster::find($grvAutoID);
 
         if (!$grvMasterData) {
-            return $this->sendError('GRV Master not found');
+            return $this->sendError(trans('custom.grv_master_not_found'));
         }
 
         // check logistic item exist
@@ -1681,7 +1681,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->count();
 
         if($logisticItems){
-            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
+            return $this->sendError(trans('custom.grv_details_cannot_be_deleted_as_this_grv_is_linke'),500);
         }
 
         $this->expenseAssetAllocationRepo->deleteExpenseAssetAllocation($grvAutoID, $grvMasterData->documentSystemID);
@@ -1800,7 +1800,7 @@ class GRVDetailsAPIController extends AppBaseController
                 'grvTotalSupplierTransactionCurrency' => 0
             ]);
 
-        return $this->sendResponse($grvAutoID, 'GRV details deleted successfully');
+        return $this->sendResponse($grvAutoID, trans('custom.grv_details_deleted_successfully'));
     }
 
     public function setMarkupPercentage($unitCost, $grvData , $markupPercentage=0, $markupTransAmount=0, $by = ''){
@@ -1890,7 +1890,7 @@ class GRVDetailsAPIController extends AppBaseController
         $grvMaster = GRVMaster::find($input['grvAutoID']);
 
         if (empty($grvMaster)) {
-            return $this->sendError('GRV not found');
+            return $this->sendError(trans('custom.grv_not_found'));
         }
 
         if ($grvMaster->isMarkupUpdated==1) {
@@ -1899,7 +1899,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
         if(!$markupAmendRestrictionPolicy){
-            return $this->sendError('Document already confirmed. You cannot update.');
+            return $this->sendError(trans('custom.document_already_confirmed_you_cannot_update'));
         }
 
         $markupArray = $this->setMarkupPercentage($input['unitCost'],$grvMaster,$input['markupPercentage'],$input['markupTransactionAmount'],$markupUpdatedBy);
@@ -1910,7 +1910,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         $gRVDetails = $this->gRVDetailsRepository->update($GRVDetail_arr, $input['grvDetailsID']);
 
-        return $this->sendResponse($gRVDetails, 'GRV markup details updated successfully');
+        return $this->sendResponse($gRVDetails, trans('custom.grv_markup_details_updated_successfully'));
     }
 
 
@@ -1928,7 +1928,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->first();
 
         if(empty($GRVMaster)){
-            $this->sendError('GRV not found',500);
+            $this->sendError(trans('custom.grv_not_found'),500);
         }
 
         $PRMaster = PurchaseReturn::find($input['purhaseReturnAutoID']);
@@ -1956,7 +1956,7 @@ class GRVDetailsAPIController extends AppBaseController
                                                         ->first();
 
                     if($alreadyItemPulledCheck){
-                        return $this->sendError('Cannot proceed. Selected item is already added in '.$alreadyItemPulledCheck->grv_master->grvPrimaryCode.' and it is not approved yet', 422);
+                        return $this->sendError(trans('custom.cannot_proceed_selected_item_is_already_added_in').$alreadyItemPulledCheck->grv_master->grvPrimaryCode.' and it is not approved yet', 422);
                     }
 
 
@@ -1967,7 +1967,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $new['receivedQty'] = $grvDetailItem['receivedQty'];
 
                     if (($new['noQty'] == '' || $new['noQty'] == 0)) {
-                        return $this->sendError('Qty cannot be zero', 422);
+                        return $this->sendError(trans('custom.qty_cannot_be_zero'), 422);
                     } else {
                         // if ($allowPartialGRVPolicy->isYesNO == 0 && $PRMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
@@ -1989,7 +1989,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                     //     if (!empty($grvDetailExistSameItem)) {
                     //         if ($grvDetailExistSameItem['purchaseOrderMastertID'] != $new['purchaseOrderMasterID']) {
-                    //             return $this->sendError('You cannot add details from multiple PO', 422);
+                    //             return $this->sendError(trans('custom.you_cannot_add_details_from_multiple_po'), 422);
                     //         }
                     //     }
                     // }
@@ -2002,7 +2002,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                     if ($grvDetailExistSameItem) {
                         if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError('You cannot add different category item', 422);
+                            return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
                         }
                     }
 
@@ -2014,7 +2014,7 @@ class GRVDetailsAPIController extends AppBaseController
                                                         ->first();
 
                     if ($grvDetailExistSameItem) {
-                        return $this->sendError('Selected item is already added from the same purchase return.', 422);
+                        return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_purch'), 422);
                     }
 
                     $totalAddedQty = $new['noQty'] + $new['receivedQty'];
@@ -2040,14 +2040,14 @@ class GRVDetailsAPIController extends AppBaseController
                     $grvDetailsOfPrDetail = GRVDetails::find($new['grvDetailsID']);
 
                     if (!$grvDetailsOfPrDetail) {
-                        return $this->sendError('GRV Details Of PR Detail not found.', 422);
+                        return $this->sendError(trans('custom.grv_details_of_pr_detail_not_found'), 422);
                     }
 
 
                     $grvMasterOfPrDetail = GRVMaster::find($new['grvAutoID']);
 
                     if (!$grvMasterOfPrDetail) {
-                        return $this->sendError('GRV Master Of PR Detail not found.', 422);
+                        return $this->sendError(trans('custom.grv_master_of_pr_detail_not_found'), 422);
                     }
 
                     // checking the qty request is matching with sum total
@@ -2152,10 +2152,10 @@ class GRVDetailsAPIController extends AppBaseController
                                         ->update(['pullType' => 2]);
 
             DB::commit();
-            return $this->sendResponse('', 'GRV details saved successfully');
+            return $this->sendResponse('', trans('custom.grv_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }

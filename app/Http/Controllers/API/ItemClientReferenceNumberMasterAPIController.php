@@ -65,7 +65,7 @@ class ItemClientReferenceNumberMasterAPIController extends AppBaseController
         $this->itemClientReferenceNumberMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemClientReferenceNumberMasters = $this->itemClientReferenceNumberMasterRepository->all();
 
-        return $this->sendResponse($itemClientReferenceNumberMasters->toArray(), 'Item Client Reference Number Masters retrieved successfully');
+        return $this->sendResponse($itemClientReferenceNumberMasters->toArray(), trans('custom.item_client_reference_number_masters_retrieved_suc'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ItemClientReferenceNumberMasterAPIController extends AppBaseController
 
         $itemClientReferenceNumberMasters = $this->itemClientReferenceNumberMasterRepository->create($input);
 
-        return $this->sendResponse($itemClientReferenceNumberMasters->toArray(), 'Item Client Reference Number Master saved successfully');
+        return $this->sendResponse($itemClientReferenceNumberMasters->toArray(), trans('custom.item_client_reference_number_master_saved_successf'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ItemClientReferenceNumberMasterAPIController extends AppBaseController
         $itemClientReferenceNumberMaster = $this->itemClientReferenceNumberMasterRepository->findWithoutFail($id);
 
         if (empty($itemClientReferenceNumberMaster)) {
-            return $this->sendError('Item Client Reference Number Master not found');
+            return $this->sendError(trans('custom.item_client_reference_number_master_not_found'));
         }
 
-        return $this->sendResponse($itemClientReferenceNumberMaster->toArray(), 'Item Client Reference Number Master retrieved successfully');
+        return $this->sendResponse($itemClientReferenceNumberMaster->toArray(), trans('custom.item_client_reference_number_master_retrieved_succ'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ItemClientReferenceNumberMasterAPIController extends AppBaseController
         $itemClientReferenceNumberMaster = $this->itemClientReferenceNumberMasterRepository->findWithoutFail($id);
 
         if (empty($itemClientReferenceNumberMaster)) {
-            return $this->sendError('Item Client Reference Number Master not found');
+            return $this->sendError(trans('custom.item_client_reference_number_master_not_found'));
         }
 
         $itemClientReferenceNumberMaster = $this->itemClientReferenceNumberMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemClientReferenceNumberMaster->toArray(), 'ItemClientReferenceNumberMaster updated successfully');
+        return $this->sendResponse($itemClientReferenceNumberMaster->toArray(), trans('custom.itemclientreferencenumbermaster_updated_successful'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ItemClientReferenceNumberMasterAPIController extends AppBaseController
         $itemClientReferenceNumberMaster = $this->itemClientReferenceNumberMasterRepository->findWithoutFail($id);
 
         if (empty($itemClientReferenceNumberMaster)) {
-            return $this->sendError('Item Client Reference Number Master not found');
+            return $this->sendError(trans('custom.item_client_reference_number_master_not_found'));
         }
 
         $itemClientReferenceNumberMaster->delete();
 
-        return $this->sendResponse($id, 'Item Client Reference Number Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_client_reference_number_master_deleted_succes'));
     }
 }

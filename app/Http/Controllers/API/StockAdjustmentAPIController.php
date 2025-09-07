@@ -101,7 +101,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $this->stockAdjustmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockAdjustments = $this->stockAdjustmentRepository->all();
 
-        return $this->sendResponse($stockAdjustments->toArray(), 'Stock Adjustments retrieved successfully');
+        return $this->sendResponse($stockAdjustments->toArray(), trans('custom.stock_adjustments_retrieved_successfully'));
     }
 
     /**
@@ -220,13 +220,13 @@ class StockAdjustmentAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
             DB::rollBack();
-            return $this->sendError('Segment not found',500);
+            return $this->sendError(trans('custom.segment_not_found'),500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
         if (empty($warehouse)) {
             DB::rollBack();
-            return $this->sendError('Location not found',500);
+            return $this->sendError(trans('custom.location_not_found'),500);
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -258,7 +258,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $stockAdjustments = $this->stockAdjustmentRepository->create($input);
         DB::commit();
-        return $this->sendResponse($stockAdjustments->toArray(), 'Stock Adjustment saved successfully');
+        return $this->sendResponse($stockAdjustments->toArray(), trans('custom.stock_adjustment_saved_successfully'));
     }
 
     /**
@@ -309,10 +309,10 @@ class StockAdjustmentAPIController extends AppBaseController
         },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
-        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment retrieved successfully');
+        return $this->sendResponse($stockAdjustment->toArray(), trans('custom.stock_adjustment_retrieved_successfully'));
     }
 
     /**
@@ -378,13 +378,13 @@ class StockAdjustmentAPIController extends AppBaseController
         $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
 
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
         if ($input['serviceLineSystemID']) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Segment not found');
+                return $this->sendError(trans('custom.segment_not_found'));
             }
 
             if ($checkDepartmentActive->isActive == 0) {
@@ -398,7 +398,7 @@ class StockAdjustmentAPIController extends AppBaseController
         if ($input['location']) {
             $checkWareHouseActive = WarehouseMaster::find($input['location']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('Location not found', 500, $wareHouseError);
+                return $this->sendError(trans('custom.location_not_found'), 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {
@@ -583,12 +583,12 @@ class StockAdjustmentAPIController extends AppBaseController
         $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
 
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
         $stockAdjustment->delete();
 
-        return $this->sendResponse($id, 'Stock Adjustment deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_adjustment_deleted_successfully'));
     }
 
 
@@ -722,7 +722,7 @@ class StockAdjustmentAPIController extends AppBaseController
             'reasons' => $reasons
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -739,12 +739,12 @@ class StockAdjustmentAPIController extends AppBaseController
         $stockAdjustment = $this->stockAdjustmentRepository->getAudit($id);
 
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
         $stockAdjustment->docRefNo = \Helper::getCompanyDocRefNo($stockAdjustment->companySystemID, $stockAdjustment->documentSystemID);
 
-        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment retrieved successfully');
+        return $this->sendResponse($stockAdjustment->toArray(), trans('custom.stock_adjustment_retrieved_successfully'));
     }
 
     public function getStockAdjustmentApprovedByUser(Request $request)
@@ -961,19 +961,19 @@ class StockAdjustmentAPIController extends AppBaseController
         $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
         if ($stockAdjustment->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Adjustment it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_adjustment_it_is_alre_1'));
         }
 
         if ($stockAdjustment->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Adjustment it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_adjustment_it_is_alre'));
         }
 
         if ($stockAdjustment->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Adjustment, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_adjustment_it_is_not_'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1047,7 +1047,7 @@ class StockAdjustmentAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($stockAdjustment->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment reopened successfully');
+        return $this->sendResponse($stockAdjustment->toArray(), trans('custom.stock_adjustment_reopened_successfully'));
     }
 
     public function stockAdjustmentReferBack(Request $request)
@@ -1058,11 +1058,11 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $stockAdjustment = $this->stockAdjustmentRepository->find($id);
         if (empty($stockAdjustment)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
         if ($stockAdjustment->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this stock adjustment');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_stock_adjustment'));
         }
 
         $stockAdjustmentArray = $stockAdjustment->toArray();
@@ -1109,6 +1109,6 @@ class StockAdjustmentAPIController extends AppBaseController
             $this->stockAdjustmentRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment Amend successfully');
+        return $this->sendResponse($stockAdjustment->toArray(), trans('custom.stock_adjustment_amend_successfully'));
     }
 }

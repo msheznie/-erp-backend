@@ -235,7 +235,7 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
         $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMasterRefferedBack)) {
-            return $this->sendError('Book Inv Supp Master Reffered Back not found');
+            return $this->sendError(trans('custom.book_inv_supp_master_reffered_back_not_found'));
         }
 
         $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->update($input, $id);

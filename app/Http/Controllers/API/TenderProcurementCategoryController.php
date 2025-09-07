@@ -137,10 +137,10 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($procurementCategory)) {
-            return $this->sendError('Procurement Category not found');
+            return $this->sendError(trans('custom.procurement_category_not_found'));
         }
 
-        return $this->sendResponse($procurementCategory->toArray(), 'Procurement Category retrieved successfully');
+        return $this->sendResponse($procurementCategory->toArray(), trans('custom.procurement_category_retrieved_successfully'));
     }
 
     /**
@@ -178,7 +178,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($procurementCategory)) {
-            return $this->sendError('Procurement Category not found');
+            return $this->sendError(trans('custom.procurement_category_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -265,7 +265,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $tenderProcurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($tenderProcurementCategory)) {
-            return $this->sendError('Procurement Category not found');
+            return $this->sendError(trans('custom.procurement_category_not_found'));
         }
 
         $level = $tenderProcurementCategory['level'];
@@ -375,7 +375,7 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
 
-        return $this->sendResponse($procurementCategory, 'Procurement Category restored successfully');
+        return $this->sendResponse($procurementCategory, trans('custom.procurement_category_restored_successfully'));
     }
 
     private function checkEditCondition($id, $request, $level){

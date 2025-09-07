@@ -165,7 +165,7 @@ class AssetVerificationDetailAPIController extends AppBaseController
             $this->assetVerificationDetailRepository->insert($rows);
         }
 
-        return $this->sendResponse([], 'Asset Verification Detail saved successfully');
+        return $this->sendResponse([], trans('custom.asset_verification_detail_saved_successfully'));
     }
 
     /**
@@ -213,10 +213,10 @@ class AssetVerificationDetailAPIController extends AppBaseController
         $assetVerificationDetail = $this->assetVerificationDetailRepository->findWithoutFail($id);
 
         if (empty($assetVerificationDetail)) {
-            return $this->sendError('Asset Verification Detail not found');
+            return $this->sendError(trans('custom.asset_verification_detail_not_found'));
         }
 
-        return $this->sendResponse($assetVerificationDetail->toArray(), 'Asset Verification Detail retrieved successfully');
+        return $this->sendResponse($assetVerificationDetail->toArray(), trans('custom.asset_verification_detail_retrieved_successfully'));
     }
 
     /**
@@ -274,12 +274,12 @@ class AssetVerificationDetailAPIController extends AppBaseController
         $assetVerificationDetail = $this->assetVerificationDetailRepository->findWithoutFail($id);
 
         if (empty($assetVerificationDetail)) {
-            return $this->sendError('Asset Verification Detail not found');
+            return $this->sendError(trans('custom.asset_verification_detail_not_found'));
         }
 
         $assetVerificationDetail = $this->assetVerificationDetailRepository->update($input, $id);
 
-        return $this->sendResponse($assetVerificationDetail->toArray(), 'AssetVerificationDetail updated successfully');
+        return $this->sendResponse($assetVerificationDetail->toArray(), trans('custom.assetverificationdetail_updated_successfully'));
     }
 
     /**
@@ -334,12 +334,12 @@ class AssetVerificationDetailAPIController extends AppBaseController
         $assetVerificationDetail = $this->assetVerificationDetailRepository->findWithoutFail($id);
 
         if (empty($assetVerificationDetail)) {
-            return $this->sendError('Asset Verification Detail not found');
+            return $this->sendError(trans('custom.asset_verification_detail_not_found'));
         }
 
         $assetVerificationDetail->delete();
 
-        return $this->sendResponse([],'Asset Verification Detail deleted successfully');
+        return $this->sendResponse([],trans('custom.asset_verification_detail_deleted_successfully'));
     }
 
     public function listAllAsset()

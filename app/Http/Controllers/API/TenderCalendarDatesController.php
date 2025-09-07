@@ -70,7 +70,7 @@ class TenderCalendarDatesController extends AppBaseController
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $calendarDate = $this->calendarDatesRepository->create($input);
-        return $this->sendResponse($calendarDate->toArray(), 'Calendar date description saved successfully');
+        return $this->sendResponse($calendarDate->toArray(), trans('custom.calendar_date_description_saved_successfully'));
     }
 
     /**
@@ -84,10 +84,10 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date description not found');
+            return $this->sendError(trans('custom.calendar_date_description_not_found'));
         }
 
-        return $this->sendResponse($calendarDate->toArray(), 'Calendar date description retrieved successfully');
+        return $this->sendResponse($calendarDate->toArray(), trans('custom.calendar_date_description_retrieved_successfully'));
     }
 
     /**
@@ -114,7 +114,7 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date description not found');
+            return $this->sendError(trans('custom.calendar_date_description_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -140,7 +140,7 @@ class TenderCalendarDatesController extends AppBaseController
 
         $calendarDates = CalendarDates::where('id', $id)->update($input);
 
-        return $this->sendResponse($calendarDates, 'Calendar date description updated successfully');
+        return $this->sendResponse($calendarDates, trans('custom.calendar_date_description_updated_successfully'));
     }
 
     /**
@@ -154,12 +154,12 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date not found');
+            return $this->sendError(trans('custom.calendar_date_not_found'));
         }
 
         $calendarDate->delete();
 
-        return $this->sendResponse($id, 'Calendar date description deleted successfully');
+        return $this->sendResponse($id, trans('custom.calendar_date_description_deleted_successfully'));
     }
 
     public function getAllCalendarDates(Request $request)

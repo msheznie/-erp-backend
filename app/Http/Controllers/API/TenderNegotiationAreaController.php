@@ -53,10 +53,10 @@ class TenderNegotiationAreaController extends AppBaseController
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($input);
 
         if(!$tenderNegotiationArea) {
-            return $this->sendError('Tender negotiation area data not found', 404);
+            return $this->sendError(trans('custom.tender_negotiation_area_data_not_found'), 404);
         }
 
-        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender Negotiation Area added successfully');
+        return $this->sendResponse($tenderNegotiationArea->toArray(), trans('custom.tender_negotiation_area_added_successfully'));
 
     }
 
@@ -113,12 +113,12 @@ class TenderNegotiationAreaController extends AppBaseController
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiationArea)) {
-            return $this->sendError('Tender Negotiation data not found', 404);
+            return $this->sendError(trans('custom.tender_negotiation_data_not_found'), 404);
         }
 
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->update($request->all(), $id);
 
-        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender negotiation area updated successfully');
+        return $this->sendResponse($tenderNegotiationArea->toArray(), trans('custom.tender_negotiation_area_updated_successfully'));
         
     }
 
@@ -152,9 +152,9 @@ class TenderNegotiationAreaController extends AppBaseController
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($input['tenderNegotiationID']);
         
         if(!$tenderNegotiationArea) {
-            return $this->sendError('Tender negotiation area data not found', 404);
+            return $this->sendError(trans('custom.tender_negotiation_area_data_not_found'), 404);
         }
-        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender negotiation area retereived successfully');
+        return $this->sendResponse($tenderNegotiationArea->toArray(), trans('custom.tender_negotiation_area_retereived_successfully'));
 
     }
 }

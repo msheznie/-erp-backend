@@ -77,7 +77,7 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
         $this->poPaymentTermsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poPaymentTermsRefferedbacks = $this->poPaymentTermsRefferedbackRepository->all();
 
-        return $this->sendResponse($poPaymentTermsRefferedbacks->toArray(), 'Po Payment Terms Refferedbacks retrieved successfully');
+        return $this->sendResponse($poPaymentTermsRefferedbacks->toArray(), trans('custom.po_payment_terms_refferedbacks_retrieved_successfu'));
     }
 
     /**
@@ -124,7 +124,7 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
 
         $poPaymentTermsRefferedbacks = $this->poPaymentTermsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($poPaymentTermsRefferedbacks->toArray(), 'Po Payment Terms Refferedback saved successfully');
+        return $this->sendResponse($poPaymentTermsRefferedbacks->toArray(), trans('custom.po_payment_terms_refferedback_saved_successfully'));
     }
 
     /**
@@ -171,10 +171,10 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
         $poPaymentTermsRefferedback = $this->poPaymentTermsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermsRefferedback)) {
-            return $this->sendError('Po Payment Terms Refferedback not found');
+            return $this->sendError(trans('custom.po_payment_terms_refferedback_not_found'));
         }
 
-        return $this->sendResponse($poPaymentTermsRefferedback->toArray(), 'Po Payment Terms Refferedback retrieved successfully');
+        return $this->sendResponse($poPaymentTermsRefferedback->toArray(), trans('custom.po_payment_terms_refferedback_retrieved_successful'));
     }
 
     /**
@@ -231,12 +231,12 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
         $poPaymentTermsRefferedback = $this->poPaymentTermsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermsRefferedback)) {
-            return $this->sendError('Po Payment Terms Refferedback not found');
+            return $this->sendError(trans('custom.po_payment_terms_refferedback_not_found'));
         }
 
         $poPaymentTermsRefferedback = $this->poPaymentTermsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($poPaymentTermsRefferedback->toArray(), 'PoPaymentTermsRefferedback updated successfully');
+        return $this->sendResponse($poPaymentTermsRefferedback->toArray(), trans('custom.popaymenttermsrefferedback_updated_successfully'));
     }
 
     /**
@@ -283,12 +283,12 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
         $poPaymentTermsRefferedback = $this->poPaymentTermsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermsRefferedback)) {
-            return $this->sendError('Po Payment Terms Refferedback not found');
+            return $this->sendError(trans('custom.po_payment_terms_refferedback_not_found'));
         }
 
         $poPaymentTermsRefferedback->delete();
 
-        return $this->sendResponse($id, 'Po Payment Terms Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.po_payment_terms_refferedback_deleted_successfully'));
     }
 
     public function getPoPaymentTermsForAmendHistory(Request $request)
@@ -302,6 +302,6 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 
-        return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($poAdvancePaymentType->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

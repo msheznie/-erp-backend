@@ -486,7 +486,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($data, 'consumed data retrived successfully');
+        return $this->sendResponse($data, trans('custom.consumed_data_retrived_successfully'));
     }
 
     public function changeBudgetConsumption(Request $request)
@@ -613,10 +613,10 @@ class BudgetConsumedDataAPIController extends AppBaseController
             BudgetConsumedData::insert($newData);
 
             DB::commit();
-            return $this->sendResponse([], 'budget year changed successfully');
+            return $this->sendResponse([], trans('custom.budget_year_changed_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error Occurred', 500);
+            return $this->sendError(trans('custom.error_occurred'), 500);
         }
     }
 }

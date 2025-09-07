@@ -65,7 +65,7 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
         $this->finalReturnIncomeTemplateLinksRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), 'Final Return Income Template Links retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), trans('custom.final_return_income_template_links_retrieved_succe'));
     }
 
     /**
@@ -120,7 +120,7 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be modified', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_mo'), 500);
         }
        
 
@@ -158,7 +158,7 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), 'Final Return Income Template Links saved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), trans('custom.final_return_income_template_links_saved_successfu'));
     }
 
     /**
@@ -206,10 +206,10 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
         $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateLinks)) {
-            return $this->sendError('Final Return Income Template Links not found');
+            return $this->sendError(trans('custom.final_return_income_template_links_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), 'Final Return Income Template Links retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), trans('custom.final_return_income_template_links_retrieved_succe'));
     }
 
     /**
@@ -275,12 +275,12 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
         $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateLinks)) {
-            return $this->sendError('Final Return Income Template Links not found');
+            return $this->sendError(trans('custom.final_return_income_template_links_not_found'));
         }
 
         $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), 'FinalReturnIncomeTemplateLinks updated successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks->toArray(), trans('custom.finalreturnincometemplatelinks_updated_successfull'));
     }
 
     /**
@@ -329,15 +329,15 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($finalReturnIncomeTemplateLinks->templateMasterID);
 
         if (empty($finalReturnIncomeTemplateLinks)) {
-            return $this->sendError('Final Return Income Template Links not found');
+            return $this->sendError(trans('custom.final_return_income_template_links_not_found'));
         }
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be deleted', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_de'), 500);
         }
 
         $finalReturnIncomeTemplateLinks->delete();
 
-        return $this->sendResponse($finalReturnIncomeTemplateLinks,'Final Return Income Template Links deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateLinks,trans('custom.final_return_income_template_links_deleted_success'));
     }
 }

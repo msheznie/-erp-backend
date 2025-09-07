@@ -62,7 +62,7 @@ class UserGroupAssignAPIController extends AppBaseController
         $this->userGroupAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userGroupAssigns = $this->userGroupAssignRepository->all();
 
-        return $this->sendResponse($userGroupAssigns->toArray(), 'User Group Assigns retrieved successfully');
+        return $this->sendResponse($userGroupAssigns->toArray(), trans('custom.user_group_assigns_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class UserGroupAssignAPIController extends AppBaseController
 
         UpdateRoleRouteJob::dispatch($dataBase, $input["userGroupID"]);
 
-        return $this->sendResponse(array(), 'User Group Assign saved successfully');
+        return $this->sendResponse(array(), trans('custom.user_group_assign_saved_successfully'));
     }
 
     /**
@@ -155,10 +155,10 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
-        return $this->sendResponse($userGroupAssign->toArray(), 'User Group Assign retrieved successfully');
+        return $this->sendResponse($userGroupAssign->toArray(), trans('custom.user_group_assign_retrieved_successfully'));
     }
 
     /**
@@ -178,12 +178,12 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
         $userGroupAssign = $this->userGroupAssignRepository->update($input, $id);
 
-        return $this->sendResponse($userGroupAssign->toArray(), 'UserGroupAssign updated successfully');
+        return $this->sendResponse($userGroupAssign->toArray(), trans('custom.usergroupassign_updated_successfully'));
     }
 
     /**
@@ -200,12 +200,12 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
         $userGroupAssign->delete();
 
-        return $this->sendResponse($id, 'User Group Assign deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_group_assign_deleted_successfully'));
     }
 
     public function getUserGroupNavigation(Request $request)
@@ -269,13 +269,13 @@ class UserGroupAssignAPIController extends AppBaseController
 
             $array = array('mainMenus' => $tree,'subMenus' => $subMenus);
             //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-            return $this->sendResponse($array, 'Record retrieved successfully');
+            return $this->sendResponse($array, trans('custom.record_retrieved_successfully_1'));
         }
         else
         {
             $array = array('mainMenus' =>[],'subMenus' => []);
             //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-            return $this->sendResponse($array, 'Record retrieved successfully');
+            return $this->sendResponse($array, trans('custom.record_retrieved_successfully_1'));
         }
 
        
@@ -308,7 +308,7 @@ class UserGroupAssignAPIController extends AppBaseController
                 return $this->sendError('No access right found',401);
             }
         }else{
-            return $this->sendError('Company ID not found');
+            return $this->sendError(trans('custom.company_id_not_found'));
         }
 
 
@@ -337,7 +337,7 @@ class UserGroupAssignAPIController extends AppBaseController
             $accessRights = array('isDelegation' => $isDelegation,'R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
         }
 
-        return $this->sendResponse($accessRights, 'Record retrieved successfully');
+        return $this->sendResponse($accessRights, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function exportNavigationeport(Request $request)

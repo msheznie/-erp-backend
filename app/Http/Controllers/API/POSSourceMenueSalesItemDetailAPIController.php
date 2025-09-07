@@ -65,7 +65,7 @@ class POSSourceMenueSalesItemDetailAPIController extends AppBaseController
         $this->pOSSourceMenueSalesItemDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceMenueSalesItemDetails = $this->pOSSourceMenueSalesItemDetailRepository->all();
 
-        return $this->sendResponse($pOSSourceMenueSalesItemDetails->toArray(), 'P O S Source Menue Sales Item Details retrieved successfully');
+        return $this->sendResponse($pOSSourceMenueSalesItemDetails->toArray(), trans('custom.p_o_s_source_menue_sales_item_details_retrieved_su'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceMenueSalesItemDetailAPIController extends AppBaseController
 
         $pOSSourceMenueSalesItemDetail = $this->pOSSourceMenueSalesItemDetailRepository->create($input);
 
-        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), 'P O S Source Menue Sales Item Detail saved successfully');
+        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), trans('custom.p_o_s_source_menue_sales_item_detail_saved_success'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceMenueSalesItemDetailAPIController extends AppBaseController
         $pOSSourceMenueSalesItemDetail = $this->pOSSourceMenueSalesItemDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenueSalesItemDetail)) {
-            return $this->sendError('P O S Source Menue Sales Item Detail not found');
+            return $this->sendError(trans('custom.p_o_s_source_menue_sales_item_detail_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), 'P O S Source Menue Sales Item Detail retrieved successfully');
+        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), trans('custom.p_o_s_source_menue_sales_item_detail_retrieved_suc'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceMenueSalesItemDetailAPIController extends AppBaseController
         $pOSSourceMenueSalesItemDetail = $this->pOSSourceMenueSalesItemDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenueSalesItemDetail)) {
-            return $this->sendError('P O S Source Menue Sales Item Detail not found');
+            return $this->sendError(trans('custom.p_o_s_source_menue_sales_item_detail_not_found'));
         }
 
         $pOSSourceMenueSalesItemDetail = $this->pOSSourceMenueSalesItemDetailRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), 'POSSourceMenueSalesItemDetail updated successfully');
+        return $this->sendResponse($pOSSourceMenueSalesItemDetail->toArray(), trans('custom.possourcemenuesalesitemdetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceMenueSalesItemDetailAPIController extends AppBaseController
         $pOSSourceMenueSalesItemDetail = $this->pOSSourceMenueSalesItemDetailRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenueSalesItemDetail)) {
-            return $this->sendError('P O S Source Menue Sales Item Detail not found');
+            return $this->sendError(trans('custom.p_o_s_source_menue_sales_item_detail_not_found'));
         }
 
         $pOSSourceMenueSalesItemDetail->delete();

@@ -91,7 +91,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $this->leaveDocumentApprovedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveDocumentApproveds = $this->leaveDocumentApprovedRepository->all();
 
-        return $this->sendResponse($leaveDocumentApproveds->toArray(), 'Leave Document Approveds retrieved successfully');
+        return $this->sendResponse($leaveDocumentApproveds->toArray(), trans('custom.leave_document_approveds_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
         $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->create($input);
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'Leave Document Approved saved successfully');
+        return $this->sendResponse($leaveDocumentApproved->toArray(), trans('custom.leave_document_approved_saved_successfully'));
     }
 
     /**
@@ -185,10 +185,10 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+            return $this->sendError(trans('custom.leave_document_approved_not_found'));
         }
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'Leave Document Approved retrieved successfully');
+        return $this->sendResponse($leaveDocumentApproved->toArray(), trans('custom.leave_document_approved_retrieved_successfully'));
     }
 
     /**
@@ -245,12 +245,12 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+            return $this->sendError(trans('custom.leave_document_approved_not_found'));
         }
 
         $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->update($input, $id);
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'LeaveDocumentApproved updated successfully');
+        return $this->sendResponse($leaveDocumentApproved->toArray(), trans('custom.leavedocumentapproved_updated_successfully'));
     }
 
     /**
@@ -297,12 +297,12 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
 
         if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+            return $this->sendError(trans('custom.leave_document_approved_not_found'));
         }
 
         $leaveDocumentApproved->delete();
 
-        return $this->sendResponse($id, 'Leave Document Approved deleted successfully');
+        return $this->sendResponse($id, trans('custom.leave_document_approved_deleted_successfully'));
     }
 
     public function getLeaveApproval(Request $request){
@@ -373,7 +373,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
 
         if(empty($leaveDocumentApproved)){
-            return $this->sendError('Leave Document Approved Details Not Found');
+            return $this->sendError(trans('custom.leave_document_approved_details_not_found'));
         }
 
         $input['companySystemID'] = $leaveDocumentApproved->companySystemID;
@@ -389,7 +389,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                                     ->whereHas('detail')
                                     ->first();
         if(empty($leaveDetails)){
-            return $this->sendError('Leave Details Not Found');
+            return $this->sendError(trans('custom.leave_details_not_found_1'));
         }
         DB::beginTransaction();
 
@@ -425,7 +425,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 $isSendMail = email::sendEmail($emails);
                 if(isset($isSendMail['success']) && $isSendMail['success']){
                     DB::commit();
-                    return $this->sendResponse([],'Successfully Referred back');
+                    return $this->sendResponse([],trans('custom.successfully_referred_back'));
                 }
             }
         } catch (\Exception $exception) {
@@ -464,7 +464,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
         $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
         if(empty($leaveDocumentApproved)){
-            return $this->sendError('Leave Document Approved Details Not Found');
+            return $this->sendError(trans('custom.leave_document_approved_details_not_found'));
         }
         $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
 
@@ -474,7 +474,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             ->first();
 
         if(empty($leaveDetails)){
-            return $this->sendError('Leave Details Not Found');
+            return $this->sendError(trans('custom.leave_details_not_found_1'));
         }
 
         $user = Helper::getEmployeeInfo();
@@ -560,7 +560,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $isSendMail = email::sendEmail($emails);
             if(isset($isSendMail['success']) && $isSendMail['success']){
                 DB::commit();
-                return $this->sendResponse([],'Successfully Approved');
+                return $this->sendResponse([],trans('custom.successfully_approved'));
             }
 
         }catch(\Exception $exception){
@@ -712,12 +712,12 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         }
         $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
         if(empty($leaveDocumentApproved)){
-            return $this->sendError('Leave Document Approved Details Not Found');
+            return $this->sendError(trans('custom.leave_document_approved_details_not_found'));
         }
 
         // check already approved
         if($leaveDocumentApproved->approvedYN == -1){
-            return $this->sendError('Document Already Approved');
+            return $this->sendError(trans('custom.document_already_approved'));
         }
 
 
@@ -743,7 +743,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 );
                 break;
             default:
-                return $this->sendError('Document ID Not Found');
+                return $this->sendError(trans('custom.document_id_not_found'));
         }
 
         $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
@@ -757,7 +757,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             ->first();
 
         if(empty($modelDetails)){
-            return $this->sendError('Leave Details Not Found');
+            return $this->sendError(trans('custom.leave_details_not_found_1'));
         }
 
         $user = Helper::getEmployeeInfo();
@@ -918,7 +918,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $isSendMail = email::sendEmail($emails);
             if(isset($isSendMail['success']) && $isSendMail['success']){
                 DB::commit();
-                return $this->sendResponse([],'Successfully Approved');
+                return $this->sendResponse([],trans('custom.successfully_approved'));
             }
 
         }catch(\Exception $exception){
@@ -946,15 +946,15 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
 
         if(empty($leaveDocumentApproved)){
-            return $this->sendError('Leave Document Approved Details Not Found');
+            return $this->sendError(trans('custom.leave_document_approved_details_not_found'));
         }
 
         if(!$leaveDocumentApproved->companySystemID){
-            return $this->sendError('Company System ID Not Found on document approved table');
+            return $this->sendError(trans('custom.company_system_id_not_found_on_document_approved_t'));
         }
 
         if(!$leaveDocumentApproved->documentSystemID){
-            return $this->sendError('Document System ID Not Found on document approved table');
+            return $this->sendError(trans('custom.document_system_id_not_found_on_document_approved_'));
         }
 
         $input['companySystemID'] = $leaveDocumentApproved->companySystemID;
@@ -983,7 +983,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         ->first();
 
                     if(empty($entityDetail)){
-                        return $this->sendError('Expense Claim Details Not Found');
+                        return $this->sendError(trans('custom.expense_claim_details_not_found'));
                     }
 
                     $confirmEmployee = $entityDetail->confirmedByEmpID;
@@ -1004,7 +1004,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         ->whereHas('detail')
                         ->first();
                     if(empty($entityDetail)){
-                        return $this->sendError('Leave Details Not Found');
+                        return $this->sendError(trans('custom.leave_details_not_found_1'));
                     }
 
                     $confirmEmployee = $entityDetail->confirmedby;
@@ -1037,7 +1037,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 $isSendMail = email::sendEmail($emails);
                 if(isset($isSendMail['success']) && $isSendMail['success']){
                     DB::commit();
-                    return $this->sendResponse([],'Successfully Referred back');
+                    return $this->sendResponse([],trans('custom.successfully_referred_back'));
                 }
             }
         } catch (\Exception $exception) {

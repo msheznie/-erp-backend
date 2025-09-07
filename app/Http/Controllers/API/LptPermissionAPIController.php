@@ -65,7 +65,7 @@ class LptPermissionAPIController extends AppBaseController
         $this->lptPermissionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $lptPermissions = $this->lptPermissionRepository->all();
 
-        return $this->sendResponse($lptPermissions->toArray(), 'Lpt Permissions retrieved successfully');
+        return $this->sendResponse($lptPermissions->toArray(), trans('custom.lpt_permissions_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class LptPermissionAPIController extends AppBaseController
 
         $lptPermission = $this->lptPermissionRepository->create($input);
 
-        return $this->sendResponse($lptPermission->toArray(), 'Lpt Permission saved successfully');
+        return $this->sendResponse($lptPermission->toArray(), trans('custom.lpt_permission_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class LptPermissionAPIController extends AppBaseController
         $lptPermission = $this->lptPermissionRepository->findWithoutFail($id);
 
         if (empty($lptPermission)) {
-            return $this->sendError('Lpt Permission not found');
+            return $this->sendError(trans('custom.lpt_permission_not_found'));
         }
 
-        return $this->sendResponse($lptPermission->toArray(), 'Lpt Permission retrieved successfully');
+        return $this->sendResponse($lptPermission->toArray(), trans('custom.lpt_permission_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class LptPermissionAPIController extends AppBaseController
         $lptPermission = $this->lptPermissionRepository->findWithoutFail($id);
 
         if (empty($lptPermission)) {
-            return $this->sendError('Lpt Permission not found');
+            return $this->sendError(trans('custom.lpt_permission_not_found'));
         }
 
         $lptPermission = $this->lptPermissionRepository->update($input, $id);
 
-        return $this->sendResponse($lptPermission->toArray(), 'LptPermission updated successfully');
+        return $this->sendResponse($lptPermission->toArray(), trans('custom.lptpermission_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class LptPermissionAPIController extends AppBaseController
         $lptPermission = $this->lptPermissionRepository->findWithoutFail($id);
 
         if (empty($lptPermission)) {
-            return $this->sendError('Lpt Permission not found');
+            return $this->sendError(trans('custom.lpt_permission_not_found'));
         }
 
         $lptPermission->delete();
 
-        return $this->sendResponse($id, 'Lpt Permission deleted successfully');
+        return $this->sendResponse($id, trans('custom.lpt_permission_deleted_successfully'));
     }
 }

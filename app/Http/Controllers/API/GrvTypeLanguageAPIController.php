@@ -64,7 +64,7 @@ class GrvTypeLanguageAPIController extends AppBaseController
         $this->grvTypeLanguageRepository->pushCriteria(new LimitOffsetCriteria($request));
         $grvTypeLanguages = $this->grvTypeLanguageRepository->all();
 
-        return $this->sendResponse($grvTypeLanguages->toArray(), 'Grv Type Languages retrieved successfully');
+        return $this->sendResponse($grvTypeLanguages->toArray(), trans('custom.grv_type_languages_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class GrvTypeLanguageAPIController extends AppBaseController
 
         $grvTypeLanguage = $this->grvTypeLanguageRepository->create($input);
 
-        return $this->sendResponse($grvTypeLanguage->toArray(), 'Grv Type Language saved successfully');
+        return $this->sendResponse($grvTypeLanguage->toArray(), trans('custom.grv_type_language_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class GrvTypeLanguageAPIController extends AppBaseController
         $grvTypeLanguage = $this->grvTypeLanguageRepository->findWithoutFail($id);
 
         if (empty($grvTypeLanguage)) {
-            return $this->sendError('Grv Type Language not found');
+            return $this->sendError(trans('custom.grv_type_language_not_found'));
         }
 
-        return $this->sendResponse($grvTypeLanguage->toArray(), 'Grv Type Language retrieved successfully');
+        return $this->sendResponse($grvTypeLanguage->toArray(), trans('custom.grv_type_language_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class GrvTypeLanguageAPIController extends AppBaseController
         $grvTypeLanguage = $this->grvTypeLanguageRepository->findWithoutFail($id);
 
         if (empty($grvTypeLanguage)) {
-            return $this->sendError('Grv Type Language not found');
+            return $this->sendError(trans('custom.grv_type_language_not_found'));
         }
 
         $grvTypeLanguage = $this->grvTypeLanguageRepository->update($input, $id);
 
-        return $this->sendResponse($grvTypeLanguage->toArray(), 'GrvTypeLanguage updated successfully');
+        return $this->sendResponse($grvTypeLanguage->toArray(), trans('custom.grvtypelanguage_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class GrvTypeLanguageAPIController extends AppBaseController
         $grvTypeLanguage = $this->grvTypeLanguageRepository->findWithoutFail($id);
 
         if (empty($grvTypeLanguage)) {
-            return $this->sendError('Grv Type Language not found');
+            return $this->sendError(trans('custom.grv_type_language_not_found'));
         }
 
         $grvTypeLanguage->delete();

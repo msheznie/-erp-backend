@@ -76,7 +76,7 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
         $this->purchaseOrderDetailsRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderDetailsRefferedHistories = $this->purchaseOrderDetailsRefferedHistoryRepository->all();
 
-        return $this->sendResponse($purchaseOrderDetailsRefferedHistories->toArray(), 'Purchase Order Details Reffered Histories retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetailsRefferedHistories->toArray(), trans('custom.purchase_order_details_reffered_histories_retrieve'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
 
         $purchaseOrderDetailsRefferedHistories = $this->purchaseOrderDetailsRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderDetailsRefferedHistories->toArray(), 'Purchase Order Details Reffered History saved successfully');
+        return $this->sendResponse($purchaseOrderDetailsRefferedHistories->toArray(), trans('custom.purchase_order_details_reffered_history_saved_succ'));
     }
 
     /**
@@ -170,10 +170,10 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderDetailsRefferedHistory = $this->purchaseOrderDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetailsRefferedHistory)) {
-            return $this->sendError('Purchase Order Details Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_details_reffered_history_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderDetailsRefferedHistory->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetailsRefferedHistory->toArray(), trans('custom.purchase_order_details_reffered_history_retrieved_'));
     }
 
     /**
@@ -230,12 +230,12 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderDetailsRefferedHistory = $this->purchaseOrderDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetailsRefferedHistory)) {
-            return $this->sendError('Purchase Order Details Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_details_reffered_history_not_found'));
         }
 
         $purchaseOrderDetailsRefferedHistory = $this->purchaseOrderDetailsRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderDetailsRefferedHistory->toArray(), 'PurchaseOrderDetailsRefferedHistory updated successfully');
+        return $this->sendResponse($purchaseOrderDetailsRefferedHistory->toArray(), trans('custom.purchaseorderdetailsrefferedhistory_updated_succes'));
     }
 
     /**
@@ -282,12 +282,12 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderDetailsRefferedHistory = $this->purchaseOrderDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetailsRefferedHistory)) {
-            return $this->sendError('Purchase Order Details Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_details_reffered_history_not_found'));
         }
 
         $purchaseOrderDetailsRefferedHistory->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Details Reffered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_details_reffered_history_deleted_su'));
     }
 
     public function getPoItemsForAmendHistory(Request $request)
@@ -302,6 +302,6 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
             }])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.purchase_order_details_reffered_history_retrieved_'));
     }
 }

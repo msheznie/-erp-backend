@@ -65,7 +65,7 @@ class RigMasterAPIController extends AppBaseController
         $this->rigMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $rigMasters = $this->rigMasterRepository->all();
 
-        return $this->sendResponse($rigMasters->toArray(), 'Rig Masters retrieved successfully');
+        return $this->sendResponse($rigMasters->toArray(), trans('custom.rig_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class RigMasterAPIController extends AppBaseController
 
         $rigMasters = $this->rigMasterRepository->create($input);
 
-        return $this->sendResponse($rigMasters->toArray(), 'Rig Master saved successfully');
+        return $this->sendResponse($rigMasters->toArray(), trans('custom.rig_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class RigMasterAPIController extends AppBaseController
         $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
         if (empty($rigMaster)) {
-            return $this->sendError('Rig Master not found');
+            return $this->sendError(trans('custom.rig_master_not_found'));
         }
 
-        return $this->sendResponse($rigMaster->toArray(), 'Rig Master retrieved successfully');
+        return $this->sendResponse($rigMaster->toArray(), trans('custom.rig_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class RigMasterAPIController extends AppBaseController
         $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
         if (empty($rigMaster)) {
-            return $this->sendError('Rig Master not found');
+            return $this->sendError(trans('custom.rig_master_not_found'));
         }
 
         $rigMaster = $this->rigMasterRepository->update($input, $id);
 
-        return $this->sendResponse($rigMaster->toArray(), 'RigMaster updated successfully');
+        return $this->sendResponse($rigMaster->toArray(), trans('custom.rigmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class RigMasterAPIController extends AppBaseController
         $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
         if (empty($rigMaster)) {
-            return $this->sendError('Rig Master not found');
+            return $this->sendError(trans('custom.rig_master_not_found'));
         }
 
         $rigMaster->delete();
 
-        return $this->sendResponse($id, 'Rig Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.rig_master_deleted_successfully'));
     }
 }

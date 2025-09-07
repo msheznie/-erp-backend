@@ -84,7 +84,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $this->financeItemCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeItemCategorySubs = $this->financeItemCategorySubRepository->all();
 
-        return $this->sendResponse($financeItemCategorySubs->toArray(), 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($financeItemCategorySubs->toArray(), trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
 
@@ -270,13 +270,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $itemCategorySubArray = [];
         }
 
-        return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($itemCategorySubArray, trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
     public function getSubcategoryExpiryStatus(Request $request){
         $input = $request->all();
         $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN', 'trackingType')->first();
-        return $this->sendResponse($expiryStatus, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($expiryStatus, trans('custom.finance_item_category_subs_retrieved_successfully'));
 
     }
 
@@ -305,7 +305,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                                             ->groupBy('itemCategorySubID')
                                             ->get();
 
-        return $this->sendResponse($subCategories, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($subCategories, trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
     /**
@@ -426,7 +426,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $input = array_except($input,['companySystemID','finance_item_category_master']);
 
             if (empty($financeItemCategorySubs)) {
-                return $this->sendError('Sub category not found');
+                return $this->sendError(trans('custom.sub_category_not_found'));
             }
 
             foreach ($input as $key => $value) {
@@ -459,7 +459,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financeItemCategorySubs = $this->financeItemCategorySubRepository->create($input);
         }
 
-        return $this->sendResponse($financeItemCategorySubs->toArray(), 'Finance Item Category Sub saved successfully');
+        return $this->sendResponse($financeItemCategorySubs->toArray(), trans('custom.finance_item_category_sub_saved_successfully'));
     }
 
     /**
@@ -476,10 +476,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub retrieved successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), trans('custom.finance_item_category_sub_retrieved_successfully'));
     }
 
     /**
@@ -499,7 +499,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
         $previosValue = $financeItemCategorySub->toArray();
@@ -518,7 +518,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $this->auditLog($db, $id,$uuid, "financeitemcategorysub", $financeItemCategorySub->categoryDescription." has updated", "U", $newValue, $previosValue);
          }
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), trans('custom.finance_item_category_sub_updated_successfully'));
     }
 
     public function finance_item_category_subs_update(Request $request)
@@ -744,7 +744,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has updated", "U", $newValue, $previosValue);
             
-            return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
+            return $this->sendResponse($itemCategorySubUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
 
@@ -757,7 +757,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             
             $this->auditLog($db, $itemCategorySubCreate['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has created", "C", $newValue, []);
             
-            return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
+            return $this->sendResponse($itemCategorySubCreate, trans('custom.finance_item_category_sub_created_successfully'));
         }
     }
 
@@ -780,7 +780,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
 
-        return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
 
     }
 
@@ -800,7 +800,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
 
-        return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
     }
 
 
@@ -820,11 +820,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
         $financeItemCategorySub->delete();
 
-        return $this->sendResponse($id, 'Finance Item Category Sub deleted successfully');
+        return $this->sendResponse($id, trans('custom.finance_item_category_sub_deleted_successfully'));
     }
 }
