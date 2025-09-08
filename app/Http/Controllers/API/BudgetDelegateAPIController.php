@@ -259,7 +259,7 @@ class BudgetDelegateAPIController extends AppBaseController
         $data = $request->all();
         $departmentID = $data['department_id'];
         $budgetPlanningId = $data['budget_planning_id'];
-        $budgetPlanningDetailId = $data['budget_planning_detail_id'];
+        $budgetPlanningDetailId = $data['budget_planning_detail_id'] ?? 0;
 
         if (!isset($data['department_id'])) {
             return $this->sendError(trans('custom.department_id_is_required'));

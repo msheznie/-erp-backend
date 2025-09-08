@@ -55,6 +55,7 @@ Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetai
 Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlanningDetailAPIController@updateInternalStatus')->name('Update department budget planning detail status');
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
+Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount');
 
 // Budget Delegate Access Routes
 Route::post('getDelegateAccessRecords', 'BudgetDelegateAPIController@getDelegateAccessRecords')->name('Get delegate access records');
