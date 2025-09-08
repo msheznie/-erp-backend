@@ -157,6 +157,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         $detail['employees'] = $employees;
 
         return $this->sendResponse($detail, trans('custom.budgettemplatecomments_retrieved_successfully'));
+
     }
 
     /**
