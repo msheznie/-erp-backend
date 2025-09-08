@@ -6137,5 +6137,9 @@ return [
     
     // Inventory Reclassification translations
     'e_reclassification_code' => 'Reclassification Code',
-    'e_reclassification_date' => 'Reclassification Date'
+    'e_reclassification_date' => 'Reclassification Date',
+    'supplier_employee_code' => 'Supplier/Employee Code',
+    'supplier_employee_name' => 'Supplier/Employee Name',
+    'amount_local' => 'Amount (Local)',
+    'amount_rpt' => 'Amount (Rpt)',
 ];
