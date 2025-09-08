@@ -404,9 +404,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             // Update only the status field
             $updateData = ['workStatus' => $input['workStatus']];
-            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
+//            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
 
             if ($input['workStatus'] == 2) {
+
                 // Get database from request (added by TenantEnforce middleware)
                 $db = $request->input('db', '');
 
@@ -529,7 +530,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Validate required fields
         $validator = \Validator::make($input, [
             'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
-            'requestCode' => 'required|string|max:20',
+            'requestCode' => ['required', 'string', 'max:20', new \App\Rules\UniqueRequestCodePerBudgetPlanning($input['budgetPlanningId'])],
             'currentSubmissionDate' => 'required|date_format:d/m/Y',
             'dateOfRequest' => 'required|date_format:d/m/Y|after:currentSubmissionDate',
             'reasonForExtension' => ['required', 'string', new NoEmoji()],

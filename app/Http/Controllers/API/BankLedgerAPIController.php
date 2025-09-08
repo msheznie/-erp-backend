@@ -314,29 +314,31 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
-                $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount, reportingCurrency.DecimalPlaces as DecimalPlaces')
-                    ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
-                    ->where('companySystemID', $bankLedger->companySystemID)
-                    ->where('documentSystemID', $bankLedger->documentSystemID)
-                    ->where('documentSystemCode', $bankLedger->documentSystemCode)
-                    ->when($bankLedger->pdcID > 0, function($query) use ($bankLedger) {
-                        $query->where('pdcID', $bankLedger->pdcID);
-                    })
-                    ->where('chartOfAccountSystemID', $bankLedger->bank_account->chartOfAccountSystemID)
-                    ->first();
+                if($bankLedger->documentSystemID != 110) {
+                    $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount, reportingCurrency.DecimalPlaces as DecimalPlaces')
+                        ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
+                        ->where('companySystemID', $bankLedger->companySystemID)
+                        ->where('documentSystemID', $bankLedger->documentSystemID)
+                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                        ->when($bankLedger->pdcID > 0, function($query) use ($bankLedger) {
+                            $query->where('pdcID', $bankLedger->pdcID);
+                        })
+                        ->where('chartOfAccountSystemID', $bankLedger->bank_account->chartOfAccountSystemID)
+                        ->first();
 
-                if (!empty($checkGLAmount)) {
-                    $glAmount = 0;
-                    $conditionChecking = true;
-                    $glAmount = $checkGLAmount->documentRptAmount;
-                    $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
-                    $b = abs(round($glAmount,$checkGLAmount->DecimalPlaces));
-                    $epsilon = 0.00001;
-                    if ((abs($a-$b) > $epsilon)) {
-                        return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
+                    if (!empty($checkGLAmount)) {
+                        $glAmount = 0;
+                        $conditionChecking = true;
+                        $glAmount = $checkGLAmount->documentRptAmount;
+                        $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
+                        $b = abs(round($glAmount,$checkGLAmount->DecimalPlaces));
+                        $epsilon = 0.00001;
+                        if ((abs($a-$b) > $epsilon)) {
+                            return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
+                        }
+                    } else {
+                        return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                     }
-                } else {
-                    return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                 }
 
                 $updateArray['bankClearedYN'] = ($input['bankClearedYN'])
@@ -435,29 +437,31 @@ class BankLedgerAPIController extends AppBaseController
                     }
                     
 
-                    $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount,reportingCurrency.DecimalPlaces as DecimalPlaces')
-                        ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
-                        ->where('companySystemID', $bankLedger->companySystemID)
-                        ->where('documentSystemID', $bankLedger->documentSystemID)
-                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
-                        ->when($bankLedger->pdcID > 0, function($query) use ($bankLedger) {
-                            $query->where('pdcID', $bankLedger->pdcID);
-                        })
-                        ->where('chartOfAccountSystemID', $bankGLCode)
-                        ->first();
+                    if($bankLedger->documentSystemID != 110) {
+                        $checkGLAmount = GeneralLedger::selectRaw('SUM(documentRptAmount) as documentRptAmount,reportingCurrency.DecimalPlaces as DecimalPlaces')
+                            ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
+                            ->where('companySystemID', $bankLedger->companySystemID)
+                            ->where('documentSystemID', $bankLedger->documentSystemID)
+                            ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                            ->when($bankLedger->pdcID > 0, function($query) use ($bankLedger) {
+                                $query->where('pdcID', $bankLedger->pdcID);
+                            })
+                            ->where('chartOfAccountSystemID', $bankGLCode)
+                            ->first();
 
-                    if (!empty($checkGLAmount)) {
-                        $glAmount = 0;
-                        $conditionChecking = true;
-                        $glAmount = $checkGLAmount->documentRptAmount;
-                        $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
-                        $b = abs(round($glAmount,$checkGLAmount->DecimalPlaces));
-                        $epsilon = 0.00001;
-                        if ((abs($a-$b) > $epsilon)) {
-                            return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
+                        if (!empty($checkGLAmount)) {
+                            $glAmount = 0;
+                            $conditionChecking = true;
+                            $glAmount = $checkGLAmount->documentRptAmount;
+                            $a = abs(round($bankLedger->payAmountCompRpt, $bankLedger->reporting_currency->DecimalPlaces));
+                            $b = abs(round($glAmount,$checkGLAmount->DecimalPlaces));
+                            $epsilon = 0.00001;
+                            if ((abs($a-$b) > $epsilon)) {
+                                return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
+                            }
+                        } else {
+                            return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                         }
-                    } else {
-                        return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                     }
                 }
 

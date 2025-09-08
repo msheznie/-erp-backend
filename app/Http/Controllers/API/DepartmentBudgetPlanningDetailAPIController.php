@@ -8,8 +8,11 @@ use App\Models\BudgetDetTemplateEntry;
 use App\Models\BudgetDetTemplateEntryData;
 use App\Models\BudgetPlanningDetailTempAttachment;
 use App\Models\BudgetTemplateColumn;
+use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\Employee;
+use App\Models\FixedAssetMaster;
 use App\Models\ItemMaster;
 use App\Models\Months;
 use App\Models\Unit;
@@ -168,13 +171,36 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
+        $employeeID =  \Helper::getEmployeeSystemID();
+
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $departmentPlanningId,
+            'delegateUser' =>  $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
         try {
+
+            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
+                'budgetDelegateAccessDetails',
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
                 'responsiblePerson'
-            ])
-            ->forDepartmentPlanning($departmentPlanningId)
+            ]);
+
+            if($userPermission['success'] && $userPermission['data']['delegateUser']['status'])
+            {
+                $query ->whereHas('budgetDelegateAccessDetails' , function ($q)use ($delegateIDs) {
+                    $q->whereIn('delegatee_id',$delegateIDs);
+                });
+
+            }
+
+            $query->forDepartmentPlanning($departmentPlanningId)
             ->select([
                 'id',
                 'department_planning_id',
@@ -192,7 +218,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'amount_given_by_hod',
                 'internal_status',
                 'difference_current_request',
-                'created_at'
+                'created_at',
             ])->orderBy('id', $sort);
 
             $search = $request->input('search');
@@ -342,6 +368,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      */
     public function saveBudgetDetailTemplateEntries(Request $request)
     {
+
+
         try {
             $validator = \Validator::make($request->all(), [
                 'budgetDetailId' => 'required|numeric|exists:department_budget_planning_details,id',
@@ -359,6 +387,31 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $entryID = $input['entryID'] ?? null;
             $data = $input['data'];
 
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => 1,
+                'departmentBudgetPlanningDetailID' => $budgetDetailId,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                if(empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                {
+                    $this->sendError("no Aaccess");
+                }
+
+            }
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
             $entryID = null;
             $state = null;
@@ -481,15 +534,51 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
                 $rowData = [];
                 $itemData = [];
+                $companyId = $input['companyId'];
                 foreach ($entry->entryData as $entryData) {
                     $rowData[$entryData->templateColumnID] = $entryData->value;
 
                     if ($entryData->templateColumn->preColumnID == 5) {
-                        $itemData = ItemMaster::where('primaryCompanySystemID', $input['companyId'])
-                            ->where('unit', $entryData->value)
-                            ->where('isActive', 1)
-                            ->where('itemApprovedYN', 1)
-                            ->get();
+
+
+                        switch ($entryData->value)
+                        {
+                            case 1: // Employee
+                                $itemData = Employee::where('empCompanySystemID', $companyId)
+                                    ->where('discharegedYN', 0)
+                                    ->where('ActivationFlag', -1)
+                                    ->where('empLoginActive', 1)
+                                    ->where('empActive', 1)
+                                    ->select('employeeSystemID as itemCodeSystem', 'empFullName as itemDescription')
+                                    ->get();
+
+                                break;
+
+                            case 2: // Fixed Asset
+                                $itemData = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive', 1)
+                                    ->where('financeCategoryMaster',3)
+                                    ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                                    ->get();
+                                break;
+
+                            case 3: // Item
+                                $itemData = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive', 1)
+                                    ->where('financeCategoryMaster',1)
+                                    ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                                    ->get();
+                                break;
+
+                            case 4: // Service
+                                $itemData = ItemMaster::where('primaryCompanySystemID',$companyId)->where('isActive', 1)
+                                    ->where('financeCategoryMaster',2)
+                                    ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                                    ->get();
+                                break;
+
+                            default:
+                                $itemData = [];
+                                break;
+                        }
                     }
                 }
                 $groupedEntries[$entry->entryID]['entryData'] = $rowData;
@@ -562,5 +651,69 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
         return $this->sendResponse(null,"Template detail row deleted successfully");
+    }
+
+
+    public function getOptionsForSelectedUnit(Request $request)
+    {
+        $caseID = $request->input('id');
+        $companyId = $request->input('companyId');
+
+        $selectedCompanyId = $companyId;
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        try {
+            switch ($caseID)
+            {
+                case 1: // Employee
+                    $employees = Employee::where('empCompanySystemID', $companyId)
+                        ->where('discharegedYN', 0)
+                        ->where('ActivationFlag', -1)
+                        ->where('empLoginActive', 1)
+                        ->where('empActive', 1)
+                        ->select('employeeSystemID as itemCodeSystem', 'empFullName as itemDescription')
+                        ->get();
+                    
+                    return $this->sendResponse($employees->toArray(), 'Employees retrieved successfully');
+                    break;
+                    
+                case 2: // Fixed Asset
+                    $fixedAssets = ItemMaster::where('primaryCompanySystemID',$subCompanies)->where('isActive', 1)
+                        ->where('financeCategoryMaster',3)
+                        ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                        ->get();
+                    return $this->sendResponse($fixedAssets->toArray(), 'Fixed Assets retrieved successfully');
+                    break;
+                    
+                case 3: // Item
+                    $fixedAssets = ItemMaster::where('primaryCompanySystemID',$subCompanies)->where('isActive', 1)
+                        ->where('financeCategoryMaster',1)
+                        ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                        ->get();
+                    return $this->sendResponse($fixedAssets->toArray(), 'Items retrieved successfully');
+                    break;
+                    
+                case 4: // Service
+                    $fixedAssets = ItemMaster::where('primaryCompanySystemID',$subCompanies)->where('isActive', 1)
+                        ->where('financeCategoryMaster',2)
+                        ->select('itemCodeSystem', DB::raw("CONCAT(primaryCode, ' - ', itemDescription) as itemDescription"))
+                        ->get();
+                    return $this->sendResponse($fixedAssets->toArray(), 'Services retrieved successfully');
+                    break;
+
+                default:
+                    return $this->sendError('Invalid unit type selected');
+                    break;
+            }
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving options - ' . $e->getMessage(), 500);
+        }
     }
 }

@@ -34,6 +34,7 @@ Route::get('budget_template_columns/template/{templateId}/formula-references/{ex
 Route::resource('budget_template_columns', 'BudgetTemplateColumnAPIController');
 
 // Budget Planning Routes
+Route::post('getBudgetPlanningUserPermissions', 'CompanyBudgetPlanningAPIController@getBudgetPlanningUserPermissions')->name('Get budget planning user permissions');
 Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
 Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
 Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
@@ -47,6 +48,7 @@ Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPICont
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');
 Route::post('getReversions', 'DepartmentBudgetPlanningAPIController@getReversions')->name('Get reversions');
+Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIController@getOptionsForSelectedUnit')->name('Get options for selected unit');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
