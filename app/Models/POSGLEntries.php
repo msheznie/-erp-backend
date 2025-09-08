@@ -104,5 +104,14 @@ class POSGLEntries extends Model
         
     ];
 
+     public function bankAccount() {
+        return $this->belongsTo(BankAccount::class,'glCode','chartOfAccountSystemID')
+            ->where('approvedYN', 1);
+    }
+
+    public function invoice() {
+        return $this->belongsTo(POSInvoiceSource::class, 'invoiceID', 'invoiceID');
+    } 
+
     
 }
