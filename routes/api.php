@@ -64,7 +64,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
 
-        Route::group(['middleware' => 'auth.api.keycloak'], function () {
+        Route::group(['middleware' => ['auth.api.keycloak', 'csrf.api']], function () {
 
             Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
                 Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
