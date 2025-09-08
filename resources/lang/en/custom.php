@@ -6105,5 +6105,37 @@ return [
     'no' => 'No',
     'other' => 'Other',
     'cn_date' => 'CN Date',
-    'credit_note_code' => 'Credit Note Code'
+    'credit_note_code' => 'Credit Note Code',
+    
+    // Material Request translations
+    'e_request_code' => 'Request Code',
+    'e_comments' => 'Comments',
+    'e_requested_date' => 'Requested Date',
+    'e_priority' => 'Priority',
+    
+    // Item Issue translations
+    'e_issue_code' => 'Issue Code',
+    'e_issue_date' => 'Issue Date',
+    'e_comment' => 'Comment',
+    'e_created_at' => 'Created At',
+    'e_confirmed_at' => 'Confirmed At',
+    'e_approved_at' => 'Approved At',
+    
+    // Item Return translations
+    'e_item_return_code' => 'Item Return Code',
+    'e_department' => 'Department',
+    'e_return_date' => 'Return Date',
+    'e_warehouse' => 'Warehouse',
+    
+    // Stock Transfer translations
+    'e_stock_transfer_code' => 'Stock Transfer Code',
+    'e_transfer_date' => 'Transfer Date',
+    
+    // Common document translations
+    'e_doc_code' => 'Doc Code',
+    'e_date' => 'Date',
+    
+    // Inventory Reclassification translations
+    'e_reclassification_code' => 'Reclassification Code',
+    'e_reclassification_date' => 'Reclassification Date'
 ];

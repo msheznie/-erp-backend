@@ -108,15 +108,15 @@ class InventoryReclassificationRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Reclassification Code'] = $val->documentCode;
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reclassification Date'] = \Helper::dateFormat($val->inventoryReclassificationDate);
-                $data[$x]['Comment'] = $val->narration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][__('custom.e_reclassification_code')] = $val->documentCode;
+                $data[$x][__('custom.e_segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][__('custom.e_reclassification_date')] = \Helper::dateFormat($val->inventoryReclassificationDate);
+                $data[$x][__('custom.e_comment')] = $val->narration;
+                $data[$x][__('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][__('custom.e_created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][__('custom.e_confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][__('custom.e_approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][__('custom.e_status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }
