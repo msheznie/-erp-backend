@@ -454,13 +454,7 @@ class GRVMasterRepository extends BaseRepository
             return $grvMaster;
     }
 
-    public function setExportExcelData($dataSet, Request $request) {
-
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
-        
+    public function setExportExcelData($dataSet) {
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
