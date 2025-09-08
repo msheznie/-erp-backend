@@ -173,6 +173,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $employeeID =  \Helper::getEmployeeSystemID();
 
+//        $employeeID = 110;
         $newRequest = new Request();
         $newRequest->replace([
             'companyId' => $request->input('companySystemID'),
@@ -391,7 +392,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => 1,
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  Auth::user()->employee_id
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -406,9 +407,15 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             {
                 $delegateUserAccess = $userPermission['data']['delegateUser'];
 
-                if(empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
                 {
-                    $this->sendError("no Aaccess");
+                   return  $this->sendError("User doesn't have permission to input data");
+                }
+
+
+                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['edit_input'])
+                {
+                    return  $this->sendError("User doesn't have permission to edit data");
                 }
 
             }
@@ -714,6 +721,41 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving options - ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function updateDepartmentBudgetPlanningDetailAmount(Request $request)
+    {
+        $employeeID =  \Helper::getEmployeeSystemID();
+
+//        $employeeID = 110;
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $request->input('departmentSystemID'),
+            'delegateUser' =>  $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+        if(!empty($userPermission) && $userPermission['success'])
+        {
+            if(isset($userPermission['data']['delegateUser']))
+            {
+                if($userPermission['data']['delegateUser']['status'])
+                    return $this->sendError("Delegate User cannot update!",500);
+            }
+
+            $budgetPlanningDetailId = $request->input('budgetPlanningDetailId');
+
+            $budgetPlanningDetail = DepartmentBudgetPlanningDetail::find($budgetPlanningDetailId);
+
+            $budgetPlanningDetail[$request->input('field')] = (double) $request->input('value');
+            $budgetPlanningDetail->save();
+
+            return $this->sendResponse("Amount updated successfully",200);
+        }else {
+            return $this->sendError("Unable to update amount details",500);
         }
     }
 }
