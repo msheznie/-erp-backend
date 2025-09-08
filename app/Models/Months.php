@@ -59,5 +59,47 @@ class Months extends Model
         
     ];
 
+    /**
+     * Relationship to MonthsLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(MonthsLanguage::class, 'monthID', 'monthID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated month description
+     */
+    public function getTranslatedMonthDesAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->monthDes;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->monthDes;
+            }
+        }
+        
+        return $this->monthDes;
+    }
     
 }

@@ -47,7 +47,7 @@ class PoPaymentTermTypesAPIController extends AppBaseController
     {
         $this->poPaymentTermTypesRepository->pushCriteria(new RequestCriteria($request));
         $this->poPaymentTermTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $poPaymentTermTypes = $this->poPaymentTermTypesRepository->all();
+        $poPaymentTermTypes = $this->poPaymentTermTypesRepository->with('translations')->all();
 
         return $this->sendResponse($poPaymentTermTypes->toArray(), trans('custom.po_payment_term_types_retrieved_successfully'));
     }
@@ -80,7 +80,7 @@ class PoPaymentTermTypesAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PoPaymentTermTypes $poPaymentTermTypes */
-        $poPaymentTermTypes = $this->poPaymentTermTypesRepository->findWithoutFail($id);
+        $poPaymentTermTypes = $this->poPaymentTermTypesRepository->with('translations')->findWithoutFail($id);
 
         if (empty($poPaymentTermTypes)) {
             return $this->sendError(trans('custom.po_payment_term_types_not_found'));

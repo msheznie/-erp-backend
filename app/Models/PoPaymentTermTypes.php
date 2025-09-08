@@ -35,6 +35,8 @@ class PoPaymentTermTypes extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $appends = ['translated_category_description'];
+
     public $fillable = [
         'categoryDescription'
     ];
@@ -57,6 +59,40 @@ class PoPaymentTermTypes extends Model
     public static $rules = [
         
     ];
+
+    public function translations()
+    {
+        return $this->hasMany(PoPaymentTermTypesLanguage::class, 'paymentTermsCategoryID', 'paymentTermsCategoryID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getTranslatedCategoryDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->categoryDescription;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->categoryDescription;
+            }
+        }
+        
+        return $this->categoryDescription;
+    }
 
     
 }

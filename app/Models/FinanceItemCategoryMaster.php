@@ -104,5 +104,47 @@ class FinanceItemCategoryMaster extends Model
             ->get();
     }
 
+    /**
+     * Relationship to FinanceItemCategoryMasterLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(FinanceItemCategoryMasterLanguage::class, 'itemCategoryID', 'itemCategoryID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated category description
+     */
+    public function getTranslatedCategoryDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->categoryDescription;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->categoryDescription;
+            }
+        }
+        
+        return $this->categoryDescription;
+    }
     
 }

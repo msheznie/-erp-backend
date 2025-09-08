@@ -246,7 +246,13 @@ class PurchaseRequestAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $month = Months::all();
+        $month = Months::with('translations')->get()->map(function($month) {
+            return [
+                'monthID' => $month->monthID,
+                'monthDes' => $month->monthDes,
+                'translated_month_des' => $month->translated_month_des
+            ];
+        });
         $buyers = Employee::where('discharegedYN', '!=', -1)
             ->where('empActive', 1)
             ->whereIn('empCompanySystemID', $childCompanies)
@@ -266,7 +272,13 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $currencies = CurrencyMaster::all();
 
-        $financeCategories = FinanceItemCategoryMaster::all();
+        $financeCategories = FinanceItemCategoryMaster::with('translations')->get()->map(function($category) {
+            return [
+                'itemCategoryID' => $category->itemCategoryID,
+                'categoryDescription' => $category->categoryDescription,
+                'translated_category_description' => $category->translated_category_description
+            ];
+        });
 
         $locations = Location::where('is_deleted',0)->get();
 

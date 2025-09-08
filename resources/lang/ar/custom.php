@@ -3207,6 +3207,11 @@ return [
     'no_budget_found' => 'لم يتم العثور على ميزانية للسنة المالية الحالية.',
     'no_grv_selected_to_add' => 'لم يتم تحديد إشعار استلام بضاعة للإضافة',
     'no_items_found_for_print' => 'لم يتم العثور على عناصر للطباعة',
+    'no_items_selected_to_add' => 'لم يتم تحديد عناصر للإضافة.',
+    'item_already_exist' => 'موجود بالفعل',
+    'request_department_is_different_from_order' => 'قسم الطلب مختلف عن الطلبية',
+    'different_budget_year_found_cannot_pull_different_budget_year_pr' => 'تم العثور على سنة ميزانية مختلفة. لا يمكنك سحب طلب شراء من سنة ميزانية مختلفة لنفس أمر الشراء',
+    'item_po_qty_cannot_be_greater_than_balance_qty' => 'كمية عنصر أمر الشراء لا يمكن أن تكون أكبر من كمية الرصيد',
     'no_of_quantity_is_required' => 'عدد الكمية مطلوب',
     'no_records_found' => 'لم يتم العثور على سجلات',
     'no_templates' => 'لا يوجد قالب معين لهذا البنك',
@@ -3657,6 +3662,7 @@ return [
     'po_payment_terms_saved_successfully' => 'تم حفظ شروط الدفع لأمر الشراء بنجاح',
     'po_payment_terms_total_percentage_cannot_be_greate' => 'لا يمكن أن يكون إجمالي نسبة شروط الدفع لأمر الشراء أكبر من 100',
     'po_qty_cannot_be_greater_than_requested_qty' => 'لا يمكن أن تكون كمية أمر الشراء أكبر من الكمية المطلوبة',
+    'po_quantity_field_is_required' => 'حقل كمية أمر الشراء مطلوب.',
     'po_return_back_to_amend_successfully' => 'تم إرجاع أمر الشراء للتعديل بنجاح ',
     'po_vat_update_error' => 'خطأ في تحديث ضريبة القيمة المضافة لأمر الشراء',
     'poaddons_updated_successfully' => 'تم تحديث إضافات أمر الشراء بنجاح',
@@ -6075,6 +6081,7 @@ return [
     "estimated_unit_cost" => "التكلفة المقدرة للوحدة",
     
     // Purchase Order specific translations
+    'inventory' => 'المخزون',
     'specifications' => 'المواصفات',
     'payment_terms_and_conditions' => 'شروط وأحكام الدفع',
     'company_id' => 'رقم الشركة',
