@@ -1655,14 +1655,13 @@ class DebitNoteAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
-        // $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
-        //     ->where('companySystemID', $companyId)
-        //     ->where('poConfirmedYN', 1)
-        //     ->where('poCancelledYN', 0)
-        //     ->where('approved', -1)
-        //     ->get();
+        $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
+            ->where('companySystemID', $companyId)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('approved', -1)
+            ->get();
 
-        $companyBasePO = [];
 
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
             ->where('companySystemID', $companyId)
