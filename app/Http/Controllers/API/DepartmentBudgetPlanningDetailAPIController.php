@@ -392,7 +392,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $newRequest = new Request();
             $newRequest->replace([
-                'companyId' => 1,
+                'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
                 'delegateUser' =>  \Helper::getEmployeeSystemID()
             ]);
@@ -409,13 +409,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             {
                 $delegateUserAccess = $userPermission['data']['delegateUser'];
 
-                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                if(!empty($delegateUserAccess['access']) && $delegateUserAccess['access']['input'] === false)
                 {
                    return  $this->sendError("User doesn't have permission to input data");
                 }
 
 
-                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['edit_input'])
+                if((!empty($delegateUserAccess['access']) && !$delegateUserAccess['access']['edit_input']) && !empty($entryID))
                 {
                     return  $this->sendError("User doesn't have permission to edit data");
                 }
@@ -725,6 +725,35 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             BudgetPlanningDetailTempAttachment::where('entry_id',$entry['entryID'])->delete();
 
             $budgetDetailId = $entry['budget_detail_id'];
+
+
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => $input['companySystemID'],
+                'departmentBudgetPlanningDetailID' => $budgetDetailId,
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                if(!empty($delegateUserAccess['access']) && $delegateUserAccess['access']['delete_input'] === false)
+                {
+                    return  $this->sendError("User doesn't have permission to input data");
+                }
+
+            }
+
+
 
             $entry->delete();
 
