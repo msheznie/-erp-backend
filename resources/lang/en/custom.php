@@ -6235,5 +6235,18 @@ return [
     'jv_details_uploaded_successfully' => ' JV Details uploaded successfully',
     'there_is_no_data_to_update' => 'There is no data to update',
     'non_payroll' => 'Non-Payroll',
-    'payroll' => 'Payroll'
+    'payroll' => 'Payroll',
+
+    // AR Module Batch Submission
+    'tracking_no' => 'Tracking No',
+    'batch_no' => 'Batch No',
+    'month' => 'Month',
+    'batch_amount' => 'Batch Amount',
+    'rejected_amount' => 'Rejected Amount',
+    'under_process' => 'Under Process',
+
+    // AR Module RV matching
+    'cancelled_by' => 'Cancelled By',
+    'cancelled_at' => 'Cancelled At',
+    'receipt_amount' => 'Receipt Amount',
 ];

@@ -6139,7 +6139,7 @@ return [
     'cn_date' => 'CN التاريخ',
     'credit_note_code' => 'رمز مذكرة الائتمان',
     'user_already_assigned' => 'هناك :attribute مستخدمين معينين بالفعل لهذه المجموعة. قم بإزالة المستخدمين وحاول مرة أخرى',
-    
+
     // Navigation Report
     'erp_navigation' => 'التنقل في نظام تخطيط موارد المؤسسة',
     'portal_navigation' => 'تنقل البوابة',
@@ -6159,7 +6159,7 @@ return [
     'export_to_csv' => 'تصدير إلى CSV',
     'not_available' => 'غير متاح',
     'na' => 'غير متاح',
-    
+
     'confirmed_on' => 'تم التأكيد في',
     'approved_on' => 'تم الموافقة على',
 
@@ -6232,7 +6232,7 @@ return [
     'group_description' => 'وصف المجموعة',
     'approver_name' => 'اسم الموافق',
     'approver_status' => 'حالة الموافق',
-      //     journal voucher
+    //     journal voucher
     'configure_po_accrual_account' => 'يرجى تكوين حساب استحقاق أمر الشراء لهذه الشركة.',
     'reversal_date_should_greater_the_jv_date' => 'يجب أن يكون تاريخ الانعكاس أكبر من تاريخ المشروع المشترك',
     'pending_allocation_jv_exists' => 'هناك مشروع مشترك معلق للتخصيص، يرجى الموافقة على هذا المشروع المشترك للتخصيص.',
@@ -6254,5 +6254,18 @@ return [
     'jv_details_uploaded_successfully' => ' تم تحميل تفاصيل قسيمة المجلة بنجاح',
     'there_is_no_data_to_update' => 'لا توجد بيانات للتحديث',
     'payroll' => 'كشوف المرتبات',
-    'non_payroll' => 'غير كشوف المرتبات'
+    'non_payroll' => 'غير كشوف المرتبات',
+
+    // AR Module Batch Submission
+    'tracking_no' => 'رقم التتبع',
+    'batch_no' => 'رقم الدفعة',
+    'month' => 'الشهر',
+    'batch_amount' => 'مبلغ الدفعة',
+    'rejected_amount' => 'المبلغ المرفوض',
+    'under_process' => 'قيد المعالجة',
+
+    // AR Module RV matching
+    'cancelled_by' => 'تم إلغاؤه بواسطة',
+    'cancelled_at' => 'تم إلغاؤه في',
+    'receipt_amount' => 'مبلغ الإيصال',
 ];
