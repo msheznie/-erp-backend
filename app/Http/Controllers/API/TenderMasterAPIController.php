@@ -536,9 +536,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($exist)) {
             if (isset($input['rfx']) && $input['rfx']) {
-                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_title_cannot_be_duplicated')];
             }
         }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
