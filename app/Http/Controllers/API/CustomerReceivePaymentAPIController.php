@@ -2361,7 +2361,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         /*companySystemID*/
         $companySystemID = isset($input['companyId']) ? $input['companyId'] : 0;
         $type = $input['type']; /*value ['filter','create','getCurrency']*/
-        $advaceReceipt  = array('value' => 15, 'label' => 'Advance Receipt');
+        $advaceReceipt  = array('value' => 15, 'label' => trans('custom.advance_receipt'));
 
         switch ($type) {
             case 'filter':
@@ -2374,8 +2374,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->groupby('year')
                     ->orderby('year', 'desc')
                     ->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                                               array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                                               array('value' => 14, 'label' => trans('custom.direct_receipt')));
 
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
@@ -2471,8 +2471,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isAssigned', -1)
                     ->where('companySystemID', $companySystemID)
                     ->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                    array('value' => 14, 'label' => 'Direct Receipt'),array('value' => 15, 'label' => 'Advance Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                    array('value' => 14, 'label' => trans('custom.direct_receipt')),array('value' => 15, 'label' => trans('custom.advance_receipt')));
 
 
                 $output['bankAccount'] = [];

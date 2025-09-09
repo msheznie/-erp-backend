@@ -6157,4 +6157,13 @@ return [
     'supplier_employee_name' => 'Supplier/Employee Name',
     'amount_local' => 'Amount (Local)',
     'amount_rpt' => 'Amount (Rpt)',
+
+    // Accounts Receivable receipt voucher
+    'rv_brv_code' => 'BRV Code',
+    'rv_receipt_type' => 'Receipt Type',
+    'rv_brv_date' => 'BRV Date',
+    'rv_confirmed_on' => 'Confirmed on',
+    'rv_approved_on' => 'Approved on',
+    'rv_bank_amount' => 'Bank Amount',
+    'rv_treasury_cleared' => 'Treasury Cleared'
 ];
