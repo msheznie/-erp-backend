@@ -208,13 +208,13 @@ class TransactionsExportExcel extends AppBaseController
                 $createdBy = collect($createdBy)->pluck('id');
 
                 $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
-                $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
+                $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '6':
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'glCodeAssignedYN', 'approved', 'year'));
                 $dataQry = $this->expenseClaimRepository->expenseClaimListQuery($request, $input, $search);
-                $data = $this->expenseClaimRepository->setExportExcelData($dataQry);
+                $data = $this->expenseClaimRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '7':

@@ -147,11 +147,11 @@ class ExpenseClaimRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Expense Claim Date'] = \Helper::dateFormat($val->expenseClaimDate);
-                $data[$x]['Document Code'] = $val->expenseClaimCode;
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->timesReferred);
+                $data[$x][__('custom.expense_claim_date')] = \Helper::dateFormat($val->expenseClaimDate);
+                $data[$x][__('custom.document_code')] = $val->expenseClaimCode;
+                $data[$x][__('custom.comments')] = $val->comments;
+                $data[$x][__('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][__('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->timesReferred);
 
                 $x++;
             }

@@ -6242,6 +6242,16 @@ return [
     'non_payroll' => 'Non-Payroll',
     'payroll' => 'Payroll',
 
+    'supplier_amount' => 'Supplier Amount',
+    'bank_amount' => 'Bank Amount',
+    'payment_code' => 'Payment Code',
+    'payment_type' => 'Payment Type',
+    'sup_emp_other' => 'Supplier / Employee / Other',
+
+    'expense_claim_date' => 'Expense Claim Date',
+
+    'cancelled_by' => 'Cancelled By',
+    'cancelled_at' => 'Cancelled At',
     // AR Module Batch Submission
     'tracking_no' => 'Tracking No',
     'batch_no' => 'Batch No',

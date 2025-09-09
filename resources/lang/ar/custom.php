@@ -6260,6 +6260,14 @@ return [
     'there_is_no_data_to_update' => 'لا توجد بيانات للتحديث',
     'payroll' => 'كشوف المرتبات',
     'non_payroll' => 'غير كشوف المرتبات',
+    'supplier_amount' => 'مبلغ المورد',
+    'bank_amount' => 'مبلغ البنك',
+    'payment_code' => 'رمز الدفع',
+    'payment_type' => 'نوع الدفع',
+    'sup_emp_other' => 'المورد / الموظف / أخرى',
+    'expense_claim_date' => 'تاريخ المطالبة بالمصروفات',
+    'cancelled_by' => 'ألغاه',
+    'cancelled_at' => 'أُلغي في',
 
     // AR Module Batch Submission
     'tracking_no' => 'رقم التتبع',
