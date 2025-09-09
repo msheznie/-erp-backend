@@ -592,7 +592,7 @@ class TenderMasterAPIController extends AppBaseController
 
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -612,7 +612,7 @@ class TenderMasterAPIController extends AppBaseController
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -2068,7 +2068,7 @@ class TenderMasterAPIController extends AppBaseController
                 if ($tenderType == 1 && $documentType == 0) {
                     $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
                 }
-                return ['success' => true, 'message' => 'Successfully Published'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_published')];
             }
         } catch (\Exception $e) {
             DB::rollback();
