@@ -65,7 +65,7 @@ class ReportTemplateCashBankAPIController extends AppBaseController
         $this->reportTemplateCashBankRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateCashBanks = $this->reportTemplateCashBankRepository->all();
 
-        return $this->sendResponse($reportTemplateCashBanks->toArray(), 'Report Template Cash Banks retrieved successfully');
+        return $this->sendResponse($reportTemplateCashBanks->toArray(), trans('custom.report_template_cash_banks_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ReportTemplateCashBankAPIController extends AppBaseController
 
         $reportTemplateCashBanks = $this->reportTemplateCashBankRepository->create($input);
 
-        return $this->sendResponse($reportTemplateCashBanks->toArray(), 'Report Template Cash Bank saved successfully');
+        return $this->sendResponse($reportTemplateCashBanks->toArray(), trans('custom.report_template_cash_bank_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ReportTemplateCashBankAPIController extends AppBaseController
         $reportTemplateCashBank = $this->reportTemplateCashBankRepository->findWithoutFail($id);
 
         if (empty($reportTemplateCashBank)) {
-            return $this->sendError('Report Template Cash Bank not found');
+            return $this->sendError(trans('custom.report_template_cash_bank_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateCashBank->toArray(), 'Report Template Cash Bank retrieved successfully');
+        return $this->sendResponse($reportTemplateCashBank->toArray(), trans('custom.report_template_cash_bank_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ReportTemplateCashBankAPIController extends AppBaseController
         $reportTemplateCashBank = $this->reportTemplateCashBankRepository->findWithoutFail($id);
 
         if (empty($reportTemplateCashBank)) {
-            return $this->sendError('Report Template Cash Bank not found');
+            return $this->sendError(trans('custom.report_template_cash_bank_not_found'));
         }
 
         $reportTemplateCashBank = $this->reportTemplateCashBankRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateCashBank->toArray(), 'ReportTemplateCashBank updated successfully');
+        return $this->sendResponse($reportTemplateCashBank->toArray(), trans('custom.reporttemplatecashbank_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ReportTemplateCashBankAPIController extends AppBaseController
         $reportTemplateCashBank = $this->reportTemplateCashBankRepository->findWithoutFail($id);
 
         if (empty($reportTemplateCashBank)) {
-            return $this->sendError('Report Template Cash Bank not found');
+            return $this->sendError(trans('custom.report_template_cash_bank_not_found'));
         }
 
         $reportTemplateCashBank->delete();
 
-        return $this->sendResponse($id, 'Report Template Cash Bank deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_cash_bank_deleted_successfully'));
     }
 }

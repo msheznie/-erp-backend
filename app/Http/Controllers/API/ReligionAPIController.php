@@ -65,7 +65,7 @@ class ReligionAPIController extends AppBaseController
         $this->religionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $religions = $this->religionRepository->all();
 
-        return $this->sendResponse($religions->toArray(), 'Religions retrieved successfully');
+        return $this->sendResponse($religions->toArray(), trans('custom.religions_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ReligionAPIController extends AppBaseController
 
         $religion = $this->religionRepository->create($input);
 
-        return $this->sendResponse($religion->toArray(), 'Religion saved successfully');
+        return $this->sendResponse($religion->toArray(), trans('custom.religion_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ReligionAPIController extends AppBaseController
         $religion = $this->religionRepository->findWithoutFail($id);
 
         if (empty($religion)) {
-            return $this->sendError('Religion not found');
+            return $this->sendError(trans('custom.religion_not_found'));
         }
 
-        return $this->sendResponse($religion->toArray(), 'Religion retrieved successfully');
+        return $this->sendResponse($religion->toArray(), trans('custom.religion_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ReligionAPIController extends AppBaseController
         $religion = $this->religionRepository->findWithoutFail($id);
 
         if (empty($religion)) {
-            return $this->sendError('Religion not found');
+            return $this->sendError(trans('custom.religion_not_found'));
         }
 
         $religion = $this->religionRepository->update($input, $id);
 
-        return $this->sendResponse($religion->toArray(), 'Religion updated successfully');
+        return $this->sendResponse($religion->toArray(), trans('custom.religion_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ReligionAPIController extends AppBaseController
         $religion = $this->religionRepository->findWithoutFail($id);
 
         if (empty($religion)) {
-            return $this->sendError('Religion not found');
+            return $this->sendError(trans('custom.religion_not_found'));
         }
 
         $religion->delete();
 
-        return $this->sendResponse($id, 'Religion deleted successfully');
+        return $this->sendResponse($id, trans('custom.religion_deleted_successfully'));
     }
 }

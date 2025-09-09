@@ -404,7 +404,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
                 }
 
                 if($jvDetail->debitAmount == 0 && $jvDetail->creditAmount == 0){
-                    return $this->sendError('Total debit and credit amount cannot be zero',500,['type' => 'confirm']);
+                    return $this->sendError(trans('custom.total_debit_and_credit_amount_cannot_be_zero'),500,['type' => 'confirm']);
                 }
             }
 
@@ -767,19 +767,19 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $jvMasterData = ConsoleJVMaster::find($consoleJvAutoID);
         $emails = array();
         if (empty($jvMasterData)) {
-            return $this->sendError('Console JV not found');
+            return $this->sendError(trans('custom.console_jv_not_found'));
         }
 
         if ($jvMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this console journal voucher it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it__2'));
         }
 
         if ($jvMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this console journal voucher it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it_'));
         }
 
         if ($jvMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this console journal voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it__1'));
         }
 
         // updating fields
@@ -858,7 +858,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$consoleJvAutoID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($jvMasterData->toArray(), 'Console JV reopened successfully');
+        return $this->sendResponse($jvMasterData->toArray(), trans('custom.console_jv_reopened_successfully'));
     }
 
 

@@ -65,7 +65,7 @@ class FilterApiController extends AppBaseController
         $output = array(
             'employees' => $employees
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
 
     }

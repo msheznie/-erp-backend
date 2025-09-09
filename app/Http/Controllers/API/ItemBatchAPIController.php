@@ -72,7 +72,7 @@ class ItemBatchAPIController extends AppBaseController
         $this->itemBatchRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemBatches = $this->itemBatchRepository->all();
 
-        return $this->sendResponse($itemBatches->toArray(), 'Item Batches retrieved successfully');
+        return $this->sendResponse($itemBatches->toArray(), trans('custom.item_batches_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class ItemBatchAPIController extends AppBaseController
 
         $itemBatch = $this->itemBatchRepository->create($input);
 
-        return $this->sendResponse($itemBatch->toArray(), 'Item Batch saved successfully');
+        return $this->sendResponse($itemBatch->toArray(), trans('custom.item_batch_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ItemBatchAPIController extends AppBaseController
         $itemBatch = $this->itemBatchRepository->findWithoutFail($id);
 
         if (empty($itemBatch)) {
-            return $this->sendError('Item Batch not found');
+            return $this->sendError(trans('custom.item_batch_not_found'));
         }
 
-        return $this->sendResponse($itemBatch->toArray(), 'Item Batch retrieved successfully');
+        return $this->sendResponse($itemBatch->toArray(), trans('custom.item_batch_retrieved_successfully'));
     }
 
     /**
@@ -229,11 +229,11 @@ class ItemBatchAPIController extends AppBaseController
                                      ->first();
 
         if ($checkBatchCode) {
-            return $this->sendError('Batch code cannot be duplicate');
+            return $this->sendError(trans('custom.batch_code_cannot_be_duplicate'));
         }
 
         if (isset($input['batchCode']) && strlen($input['batchCode']) > 20) {
-            return $this->sendError('Batch code length cannot greater than 20');
+            return $this->sendError(trans('custom.batch_code_length_cannot_greater_than_20'));
         }
 
         if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['batchCode'])) {
@@ -249,7 +249,7 @@ class ItemBatchAPIController extends AppBaseController
         $newTotalQty = $subProducts + floatval($input['quantity']);
 
         if ($newTotalQty > $input['noQty']) {
-            return $this->sendError('Batch quantity cannot be greater than total quantity');
+            return $this->sendError(trans('custom.batch_quantity_cannot_be_greater_than_total_quanti'));
         }
 
         if (!is_null($input['expireDate'])) {
@@ -260,7 +260,7 @@ class ItemBatchAPIController extends AppBaseController
         $itemBatch = $this->itemBatchRepository->findWithoutFail($id);
 
         if (empty($itemBatch)) {
-            return $this->sendError('Item Batch not found');
+            return $this->sendError(trans('custom.item_batch_not_found'));
         }
 
 
@@ -271,7 +271,7 @@ class ItemBatchAPIController extends AppBaseController
 
         $itemBatch = $this->itemBatchRepository->update($input, $id);
 
-        return $this->sendResponse($itemBatch->toArray(), 'Item Batch updated successfully');
+        return $this->sendResponse($itemBatch->toArray(), trans('custom.item_batch_updated_successfully'));
     }
 
     /**
@@ -318,11 +318,11 @@ class ItemBatchAPIController extends AppBaseController
         $itemBatch = $this->itemBatchRepository->findWithoutFail($id);
 
         if (empty($itemBatch)) {
-            return $this->sendError('Item Batch not found');
+            return $this->sendError(trans('custom.item_batch_not_found'));
         }
 
         if ($itemBatch->copiedQty > 0) {
-            return $this->sendError('Item Batch cannot be deleted. It has been sold');
+            return $this->sendError(trans('custom.item_batch_cannot_be_deleted_it_has_been_sold'));
         }
 
         $delteSubProduct = DocumentSubProduct::where('productBatchID', $itemBatch->id)
@@ -331,7 +331,7 @@ class ItemBatchAPIController extends AppBaseController
 
         $itemBatch->delete();
 
-        return $this->sendResponse([],'Item Batch deleted successfully');
+        return $this->sendResponse([],trans('custom.item_batch_deleted_successfully'));
     }
 
 
@@ -421,7 +421,7 @@ class ItemBatchAPIController extends AppBaseController
                                     })
                                   ->get();
 
-        return $this->sendResponse($itemSerials, 'product batch retrived successfully');
+        return $this->sendResponse($itemSerials, trans('custom.product_batch_retrived_successfully'));
     }
 
     public function updateSoldStatusOfBatch(Request $request) 
@@ -555,7 +555,7 @@ class ItemBatchAPIController extends AppBaseController
             } 
 
             DB::commit();
-            return $this->sendResponse([], 'product serial generated successfully');
+            return $this->sendResponse([], trans('custom.product_serial_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
@@ -621,7 +621,7 @@ class ItemBatchAPIController extends AppBaseController
                                   })
                                   ->get();
 
-        return $this->sendResponse($itemSerials, 'product batch retrived successfully');
+        return $this->sendResponse($itemSerials, trans('custom.product_batch_retrived_successfully'));
     }
 
     public function updateReturnStatusOfBatch(Request $request) 
@@ -761,7 +761,7 @@ class ItemBatchAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse([], 'product batch generated successfully');
+            return $this->sendResponse([], trans('custom.product_batch_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);

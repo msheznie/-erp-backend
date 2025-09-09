@@ -72,7 +72,7 @@ class MobileBillSummaryAPIController extends AppBaseController
         $this->mobileBillSummaryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mobileBillSummaries = $this->mobileBillSummaryRepository->all();
 
-        return $this->sendResponse($mobileBillSummaries->toArray(), 'Mobile Bill Summaries retrieved successfully');
+        return $this->sendResponse($mobileBillSummaries->toArray(), trans('custom.mobile_bill_summaries_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class MobileBillSummaryAPIController extends AppBaseController
 
         $mobileBillSummary = $this->mobileBillSummaryRepository->create($input);
 
-        return $this->sendResponse($mobileBillSummary->toArray(), 'Mobile Bill Summary saved successfully');
+        return $this->sendResponse($mobileBillSummary->toArray(), trans('custom.mobile_bill_summary_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class MobileBillSummaryAPIController extends AppBaseController
         $mobileBillSummary = $this->mobileBillSummaryRepository->findWithoutFail($id);
 
         if (empty($mobileBillSummary)) {
-            return $this->sendError('Mobile Bill Summary not found');
+            return $this->sendError(trans('custom.mobile_bill_summary_not_found'));
         }
 
-        return $this->sendResponse($mobileBillSummary->toArray(), 'Mobile Bill Summary retrieved successfully');
+        return $this->sendResponse($mobileBillSummary->toArray(), trans('custom.mobile_bill_summary_retrieved_successfully'));
     }
 
     /**
@@ -226,12 +226,12 @@ class MobileBillSummaryAPIController extends AppBaseController
         $mobileBillSummary = $this->mobileBillSummaryRepository->findWithoutFail($id);
 
         if (empty($mobileBillSummary)) {
-            return $this->sendError('Mobile Bill Summary not found');
+            return $this->sendError(trans('custom.mobile_bill_summary_not_found'));
         }
 
         $mobileBillSummary = $this->mobileBillSummaryRepository->update($input, $id);
 
-        return $this->sendResponse($mobileBillSummary->toArray(), 'MobileBillSummary updated successfully');
+        return $this->sendResponse($mobileBillSummary->toArray(), trans('custom.mobilebillsummary_updated_successfully'));
     }
 
     /**
@@ -278,7 +278,7 @@ class MobileBillSummaryAPIController extends AppBaseController
         $mobileBillSummary = $this->mobileBillSummaryRepository->findWithoutFail($id);
 
         if (empty($mobileBillSummary)) {
-            return $this->sendError('Mobile Bill Summary not found');
+            return $this->sendError(trans('custom.mobile_bill_summary_not_found'));
         }
 
         $mobileBillSummary->delete();
@@ -399,7 +399,7 @@ class MobileBillSummaryAPIController extends AppBaseController
             Storage::disk('local')->delete($path);
             $insert = DB::table($tableName)->insert($insert_data);
             if($insert){
-                return $this->sendResponse([], 'File Imported successfully');
+                return $this->sendResponse([], trans('custom.file_imported_successfully'));
             }
         }
 
@@ -454,7 +454,7 @@ class MobileBillSummaryAPIController extends AppBaseController
         if (Storage::disk($disk)->exists('mobile_bill_templates/summary_template.xlsx')) {
             return Storage::disk($disk)->download('mobile_bill_templates/summary_template.xlsx', 'summary_template.xlsx');
         } else {
-            return $this->sendError('Summary template not found', 500);
+            return $this->sendError(trans('custom.summary_template_not_found'), 500);
         }
     }
 }

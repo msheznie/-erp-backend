@@ -72,7 +72,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $this->eRPAssetTransferDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetTransferDetails = $this->eRPAssetTransferDetailRepository->all();
 
-        return $this->sendResponse($eRPAssetTransferDetails->toArray(), 'E R P Asset Transfer Details retrieved successfully');
+        return $this->sendResponse($eRPAssetTransferDetails->toArray(), trans('custom.e_r_p_asset_transfer_details_retrieved_successfull'));
     }
 
     /**
@@ -126,7 +126,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $duplicates =  sizeof(array_diff_assoc($valuesOfAsset, $unique));
          
             if ($duplicates > 0) {
-                 return $this->sendError('Same asset cannot be link multiple times');
+                 return $this->sendError(trans('custom.same_asset_cannot_be_link_multiple_times'));
             }
         }
 
@@ -139,7 +139,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     
                 $assetRequest = AssetRequest::find($value['erp_fa_fa_asset_request_id']);
                 if (count($erpAsset) > 0) {
-                    return $this->sendError('Same asset cannot be link multiple times');
+                    return $this->sendError(trans('custom.same_asset_cannot_be_link_multiple_times'));
                 }
 
                 $assetExistUnApproved = ERPAssetTransferDetail::with(['assetTransferMaster'])
@@ -151,7 +151,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 ->orderby('id','desc')
                 ->first();  
                 if(!empty($assetExistUnApproved->assetTransferMaster)){ 
-                    return $this->sendError('Asset already pulled to unapproved document '.$assetExistUnApproved->assetTransferMaster->document_code);  
+                    return $this->sendError(trans('custom.asset_already_pulled_to_unapproved_document').$assetExistUnApproved->assetTransferMaster->document_code);  
                 }
 
                 $assetExistUnApproved = ERPAssetTransferDetail::where('fa_master_id',$value['assetDropTransferID'])
@@ -184,7 +184,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
-            return $this->sendResponse(['id' => $id], 'Asset Transfer Detail saved successfully');
+            return $this->sendResponse(['id' => $id], trans('custom.asset_transfer_detail_saved_successfully'));
         } else {
             return $this->sendError('please add atleast one item to proceed');
         }
@@ -234,10 +234,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetail)) {
-            return $this->sendError('E R P Asset Transfer Detail not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_detail_not_found'));
         }
 
-        return $this->sendResponse($eRPAssetTransferDetail->toArray(), 'E R P Asset Transfer Detail retrieved successfully');
+        return $this->sendResponse($eRPAssetTransferDetail->toArray(), trans('custom.e_r_p_asset_transfer_detail_retrieved_successfully'));
     }
 
     /**
@@ -294,12 +294,12 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetail)) {
-            return $this->sendError('E R P Asset Transfer Detail not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_detail_not_found'));
         }
 
         $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->update($input, $id);
 
-        return $this->sendResponse($eRPAssetTransferDetail->toArray(), 'ERPAssetTransferDetail updated successfully');
+        return $this->sendResponse($eRPAssetTransferDetail->toArray(), trans('custom.erpassettransferdetail_updated_successfully'));
     }
 
     /**
@@ -347,10 +347,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransferDetail)) {
-            return $this->sendError('Asset Transfer Detail not found');
+            return $this->sendError(trans('custom.asset_transfer_detail_not_found'));
         }
         $eRPAssetTransferDetail->delete();
-        return $this->sendResponse($id, 'Asset Transfer Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.asset_transfer_detail_deleted_successfully'));
     }
     public function get_employee_asset_transfer_details(Request $request, $id)
     {
@@ -358,7 +358,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
 
         if(!isset($data['assetMaster']))
         {
-            return $this->sendError('Asset Transfer Master data not found');
+            return $this->sendError(trans('custom.asset_transfer_master_data_not_found'));
         }
 
         $assetTransferDetails = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id', $id);
@@ -403,7 +403,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                                                     ->where('DIPOSED', 0)
                                                     ->get();
 
-        return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.asset_request_drop_down_data_retrieved_successfull'));
     }
 
     public function assetTransferDrop(Request $request)
@@ -412,7 +412,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $companyID = $input['companyID'];
         $data['assetMaster_drop'] = [];
         $data['location_drop'] = ErpLocation::select('locationID', 'locationName')->get();
-        return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.asset_request_drop_down_data_retrieved_successfull'));
     }
     public function addEmployeeAsset(Request $request, $id)
     {
@@ -421,7 +421,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $unique = array_unique($valuesOfAsset);
         $duplicates =  sizeof(array_diff_assoc($valuesOfAsset, $unique));
         if ($duplicates > 0) {
-            return $this->sendError('Same asset cannot be add multiple times');
+            return $this->sendError(trans('custom.same_asset_cannot_be_add_multiple_times'));
         }
 
         if (isset($input) && !empty($input)) {
@@ -476,7 +476,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 $x++;
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
-            return $this->sendResponse(['id' => $id], 'Asset Transfer Detail saved successfully');
+            return $this->sendResponse(['id' => $id], trans('custom.asset_transfer_detail_saved_successfully'));
         }
     }
     public function getAssetTransferDetails(Request $request)
@@ -494,7 +494,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $companyID = $request->get('companyID');
         $AssetTransferMaster = ERPAssetTransfer::find($id);
         if (empty($AssetTransferMaster)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
         $transferDetails = $this->getAssetTransfer($id, $companyID);
 
@@ -541,7 +541,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             ->where('fa_master_id', $request['value'])->get();
 
         if (count($erpAsset) > 0) {
-            return $this->sendError('Same asset cannot be link multiple times');
+            return $this->sendError(trans('custom.same_asset_cannot_be_link_multiple_times'));
         }
 
         $updateData = [
@@ -551,7 +551,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         ERPAssetTransferDetail::where('id', $request['id'])
             ->update($updateData);
 
-        return $this->sendResponse(['id' => $request['value']], 'Asset Transfer Detail saved successfully');
+        return $this->sendResponse(['id' => $request['value']], trans('custom.asset_transfer_detail_saved_successfully'));
     }
     public function getAssetLocationValue(Request $request)
     {

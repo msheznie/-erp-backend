@@ -75,7 +75,7 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
         $this->fixedAssetMasterReferredHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetMasterReferredHistories = $this->fixedAssetMasterReferredHistoryRepository->all();
 
-        return $this->sendResponse($fixedAssetMasterReferredHistories->toArray(), 'Fixed Asset Master Referred Histories retrieved successfully');
+        return $this->sendResponse($fixedAssetMasterReferredHistories->toArray(), trans('custom.fixed_asset_master_referred_histories_retrieved_su'));
     }
 
     /**
@@ -122,7 +122,7 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
 
         $fixedAssetMasterReferredHistories = $this->fixedAssetMasterReferredHistoryRepository->create($input);
 
-        return $this->sendResponse($fixedAssetMasterReferredHistories->toArray(), 'Fixed Asset Master Referred History saved successfully');
+        return $this->sendResponse($fixedAssetMasterReferredHistories->toArray(), trans('custom.fixed_asset_master_referred_history_saved_successf'));
     }
 
     /**
@@ -169,10 +169,10 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
         $fixedAssetMasterReferredHistory = $this->fixedAssetMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMasterReferredHistory)) {
-            return $this->sendError('Fixed Asset Master Referred History not found');
+            return $this->sendError(trans('custom.fixed_asset_master_referred_history_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetMasterReferredHistory->toArray(), 'Fixed Asset Master Referred History retrieved successfully');
+        return $this->sendResponse($fixedAssetMasterReferredHistory->toArray(), trans('custom.fixed_asset_master_referred_history_retrieved_succ'));
     }
 
     /**
@@ -229,12 +229,12 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
         $fixedAssetMasterReferredHistory = $this->fixedAssetMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMasterReferredHistory)) {
-            return $this->sendError('Fixed Asset Master Referred History not found');
+            return $this->sendError(trans('custom.fixed_asset_master_referred_history_not_found'));
         }
 
         $fixedAssetMasterReferredHistory = $this->fixedAssetMasterReferredHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetMasterReferredHistory->toArray(), 'FixedAssetMasterReferredHistory updated successfully');
+        return $this->sendResponse($fixedAssetMasterReferredHistory->toArray(), trans('custom.fixedassetmasterreferredhistory_updated_successful'));
     }
 
     /**
@@ -281,12 +281,12 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
         $fixedAssetMasterReferredHistory = $this->fixedAssetMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMasterReferredHistory)) {
-            return $this->sendError('Fixed Asset Master Referred History not found');
+            return $this->sendError(trans('custom.fixed_asset_master_referred_history_not_found'));
         }
 
         $fixedAssetMasterReferredHistory->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Master Referred History deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_master_referred_history_deleted_succes'));
     }
 
 
@@ -343,9 +343,9 @@ class FixedAssetMasterReferredHistoryAPIController extends AppBaseController
         $fixedAssetMaster = FixedAssetMasterReferredHistory::with(['confirmed_by', 'group_to', 'posttogl_by'])->find($request->faID);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetMaster->toArray(), 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($fixedAssetMaster->toArray(), trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 }

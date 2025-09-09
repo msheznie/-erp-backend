@@ -65,7 +65,7 @@ class RegisteredBankMemoSupplierAPIController extends AppBaseController
         $this->registeredBankMemoSupplierRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registeredBankMemoSuppliers = $this->registeredBankMemoSupplierRepository->all();
 
-        return $this->sendResponse($registeredBankMemoSuppliers->toArray(), 'Registered Bank Memo Suppliers retrieved successfully');
+        return $this->sendResponse($registeredBankMemoSuppliers->toArray(), trans('custom.registered_bank_memo_suppliers_retrieved_successfu'));
     }
 
     /**
@@ -112,7 +112,7 @@ class RegisteredBankMemoSupplierAPIController extends AppBaseController
 
         $registeredBankMemoSupplier = $this->registeredBankMemoSupplierRepository->create($input);
 
-        return $this->sendResponse($registeredBankMemoSupplier->toArray(), 'Registered Bank Memo Supplier saved successfully');
+        return $this->sendResponse($registeredBankMemoSupplier->toArray(), trans('custom.registered_bank_memo_supplier_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class RegisteredBankMemoSupplierAPIController extends AppBaseController
         $registeredBankMemoSupplier = $this->registeredBankMemoSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredBankMemoSupplier)) {
-            return $this->sendError('Registered Bank Memo Supplier not found');
+            return $this->sendError(trans('custom.registered_bank_memo_supplier_not_found'));
         }
 
-        return $this->sendResponse($registeredBankMemoSupplier->toArray(), 'Registered Bank Memo Supplier retrieved successfully');
+        return $this->sendResponse($registeredBankMemoSupplier->toArray(), trans('custom.registered_bank_memo_supplier_retrieved_successful'));
     }
 
     /**
@@ -219,12 +219,12 @@ class RegisteredBankMemoSupplierAPIController extends AppBaseController
         $registeredBankMemoSupplier = $this->registeredBankMemoSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredBankMemoSupplier)) {
-            return $this->sendError('Registered Bank Memo Supplier not found');
+            return $this->sendError(trans('custom.registered_bank_memo_supplier_not_found'));
         }
 
         $registeredBankMemoSupplier = $this->registeredBankMemoSupplierRepository->update($input, $id);
 
-        return $this->sendResponse($registeredBankMemoSupplier->toArray(), 'RegisteredBankMemoSupplier updated successfully');
+        return $this->sendResponse($registeredBankMemoSupplier->toArray(), trans('custom.registeredbankmemosupplier_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class RegisteredBankMemoSupplierAPIController extends AppBaseController
         $registeredBankMemoSupplier = $this->registeredBankMemoSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredBankMemoSupplier)) {
-            return $this->sendError('Registered Bank Memo Supplier not found');
+            return $this->sendError(trans('custom.registered_bank_memo_supplier_not_found'));
         }
 
         $registeredBankMemoSupplier->delete();

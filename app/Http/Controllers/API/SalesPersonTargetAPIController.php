@@ -79,7 +79,7 @@ class SalesPersonTargetAPIController extends AppBaseController
         $this->salesPersonTargetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesPersonTargets = $this->salesPersonTargetRepository->all();
 
-        return $this->sendResponse($salesPersonTargets->toArray(), 'Sales Person Targets retrieved successfully');
+        return $this->sendResponse($salesPersonTargets->toArray(), trans('custom.sales_person_targets_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class SalesPersonTargetAPIController extends AppBaseController
         $masterData = SalesPersonMaster::find($input['salesPersonID']);
 
         if (empty($masterData)) {
-            return $this->sendError('Sales Person Master not found');
+            return $this->sendError(trans('custom.sales_person_master_not_found'));
         }
 
         if ($input["percentage"] > 100) {
@@ -137,7 +137,7 @@ class SalesPersonTargetAPIController extends AppBaseController
         }
 
         if ($input["toTargetAmount"] <= $input["fromTargetAmount"]) {
-            return $this->sendError('Start Amount cannot be greater than end amount!');
+            return $this->sendError(trans('custom.start_amount_cannot_be_greater_than_end_amount'));
         }
 
         if (isset($request->targetID) && !empty($request->targetID)) {
@@ -160,7 +160,7 @@ class SalesPersonTargetAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($masterData->toArray(), 'Sales Person Target saved successfully');
+        return $this->sendResponse($masterData->toArray(), trans('custom.sales_person_target_saved_successfully'));
     }
 
     /**
@@ -207,10 +207,10 @@ class SalesPersonTargetAPIController extends AppBaseController
         $salesPersonTarget = $this->salesPersonTargetRepository->findWithoutFail($id);
 
         if (empty($salesPersonTarget)) {
-            return $this->sendError('Sales Person Target not found');
+            return $this->sendError(trans('custom.sales_person_target_not_found'));
         }
 
-        return $this->sendResponse($salesPersonTarget->toArray(), 'Sales Person Target retrieved successfully');
+        return $this->sendResponse($salesPersonTarget->toArray(), trans('custom.sales_person_target_retrieved_successfully'));
     }
 
     /**
@@ -267,12 +267,12 @@ class SalesPersonTargetAPIController extends AppBaseController
         $salesPersonTarget = $this->salesPersonTargetRepository->findWithoutFail($id);
 
         if (empty($salesPersonTarget)) {
-            return $this->sendError('Sales Person Target not found');
+            return $this->sendError(trans('custom.sales_person_target_not_found'));
         }
 
         $salesPersonTarget = $this->salesPersonTargetRepository->update($input, $id);
 
-        return $this->sendResponse($salesPersonTarget->toArray(), 'SalesPersonTarget updated successfully');
+        return $this->sendResponse($salesPersonTarget->toArray(), trans('custom.salespersontarget_updated_successfully'));
     }
 
     /**
@@ -319,12 +319,12 @@ class SalesPersonTargetAPIController extends AppBaseController
         $salesPersonTarget = $this->salesPersonTargetRepository->findWithoutFail($id);
 
         if (empty($salesPersonTarget)) {
-            return $this->sendError('Sales Person Target not found');
+            return $this->sendError(trans('custom.sales_person_target_not_found'));
         }
 
         $salesPersonTarget->delete();
 
-        return $this->sendResponse($id, 'Sales Person Target deleted successfully');
+        return $this->sendResponse($id, trans('custom.sales_person_target_deleted_successfully'));
     }
 
     public function checkSalesPersonLastTarget(Request $request)
@@ -351,6 +351,6 @@ class SalesPersonTargetAPIController extends AppBaseController
         $items = SalesPersonTarget::where('salesPersonID', $salesPersonID)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Sales person target retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.sales_person_target_retrieved_successfully_1'));
     }
 }

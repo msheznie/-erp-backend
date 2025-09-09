@@ -176,19 +176,19 @@ class PurchaseReturnRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Doc Code'] = $val->purchaseReturnCode;
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->purchaseReturnRefNo;
-                $data[$x]['Date'] = \Helper::dateFormat($val->purchaseReturnDate);
-                $data[$x]['Supplier Code'] = $val->supplier_by? $val->supplier_by->primarySupplierCode : '';
-                $data[$x]['Supplier Name'] = $val->supplier_by? $val->supplier_by->supplierName : '';
-                $data[$x]['Location'] = $val->location_by? $val->location_by->wareHouseDescription : '';
-                $data[$x]['Narration'] = $val->narration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][__('custom.e_doc_code')] = $val->purchaseReturnCode;
+                $data[$x][__('custom.e_segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][__('custom.e_reference_no')] = $val->purchaseReturnRefNo;
+                $data[$x][__('custom.e_date')] = \Helper::dateFormat($val->purchaseReturnDate);
+                $data[$x][__('custom.e_supplier_code')] = $val->supplier_by? $val->supplier_by->primarySupplierCode : '';
+                $data[$x][__('custom.e_supplier_name')] = $val->supplier_by? $val->supplier_by->supplierName : '';
+                $data[$x][__('custom.e_location')] = $val->location_by? $val->location_by->wareHouseDescription : '';
+                $data[$x][__('custom.e_narration')] = $val->narration;
+                $data[$x][__('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][__('custom.e_created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][__('custom.e_confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][__('custom.e_approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][__('custom.e_status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

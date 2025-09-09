@@ -76,7 +76,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $this->poAdvancePaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poAdvancePayments = $this->poAdvancePaymentRepository->all();
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payments retrieved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payments_retrieved_successfully'));
     }
 
     /**
@@ -100,7 +100,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
         $poTermAmount = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
             ->where('poID', $input['poID'])
@@ -165,7 +165,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
                 ->update(['isRequested' => 1]);
         }
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payment_saved_successfully'));
     }
 
     /**
@@ -183,10 +183,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
-        return $this->sendResponse($poAdvancePayment->toArray(), 'Po Advance Payment retrieved successfully');
+        return $this->sendResponse($poAdvancePayment->toArray(), trans('custom.po_advance_payment_retrieved_successfully'));
     }
 
     /**
@@ -206,12 +206,12 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         $poAdvancePayment = $this->poAdvancePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($poAdvancePayment->toArray(), 'PoAdvancePayment updated successfully');
+        return $this->sendResponse($poAdvancePayment->toArray(), trans('custom.poadvancepayment_updated_successfully'));
     }
 
     /**
@@ -229,7 +229,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         try {
             $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
             if (empty($poAdvancePayment)) {
-                return $this->sendError('Po Advance Payment not found');
+                return $this->sendError(trans('custom.po_advance_payment_not_found'));
             }
             if ($poAdvancePayment["grvAutoID"]) {
                 $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
@@ -264,7 +264,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
             }
             DB::commit();
-            return $this->sendResponse($id, 'Po advance payment deleted successfully');
+            return $this->sendResponse($id, trans('custom.po_advance_payment_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($id, 'Error Occurred');
@@ -278,7 +278,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->with(['cancelled_by'])->first();
 
         if (empty($AdvancePayment)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $AdvancePayment->poID)->first();
@@ -294,7 +294,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             'ptype' => $detailPaymentType
         );
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function loadPoPaymentTermsLogistic(Request $request)
@@ -310,7 +310,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->with(['category_by', 'vat_sub_category','grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function storePoPaymentTermsLogistic(Request $request)
@@ -326,13 +326,13 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['detail']['supplierID'])->first();
 
         if (empty($supplier)) {
-            return $this->sendError('Supplier not found');
+            return $this->sendError(trans('custom.supplier_not_found'));
         }
 
         // checking grv detail exist
@@ -366,7 +366,7 @@ ORDER BY
             if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
                 return $this->sendError('Please select a GRV as there is a GRV done for this PO');
             } else if (empty($detail)) {
-                return $this->sendError('PO is fully received you cannot add logistic');
+                return $this->sendError(trans('custom.po_is_fully_received_you_cannot_add_logistic'));
             }
         }
 
@@ -374,7 +374,7 @@ ORDER BY
         $checkCategory = AddonCostCategories::find($input['detail']['logisticCategoryID']);
 
         if (!$checkCategory) {
-            return $this->sendError('Logistic category not found');    
+            return $this->sendError(trans('custom.logistic_category_not_found'));    
         }
 
         if (is_null($checkCategory->itemSystemCode)) {
@@ -468,7 +468,7 @@ ORDER BY
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payment_saved_successfully'));
     }
 
     public function getLogisticPrintDetail(Request $request)
@@ -492,7 +492,7 @@ ORDER BY
         $purchaseOrder = ProcumentOrder::find($items->poID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
@@ -508,7 +508,7 @@ ORDER BY
             'docRef' => $newRefDocNew
         );
 
-        return $this->sendResponse($printData, 'Data retrieved successfully');
+        return $this->sendResponse($printData, trans('custom.data_retrieved_successfully'));
     }
 
     public function loadPoPaymentTermsLogisticForGRV(Request $request)
@@ -522,7 +522,7 @@ ORDER BY
             ->with(['category_by', 'grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function unlinkLogistic(Request $request)
@@ -531,7 +531,7 @@ ORDER BY
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($request->poAdvPaymentID);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         if ($poAdvancePayment["grvAutoID"]) {
@@ -545,7 +545,7 @@ ORDER BY
 
         $poAdvancePayment = $this->poAdvancePaymentRepository->update(['grvAutoID' => 0], $request->poAdvPaymentID);
 
-        return $this->sendResponse([], 'Successfully unlinked');
+        return $this->sendResponse([], trans('custom.successfully_unlinked'));
     }
 
     public function getPoLogisticPrintPDF(Request $request)
@@ -566,13 +566,13 @@ ORDER BY
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::find($poAdvancePayment->poID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $PoAdvancePaymentData = PoAdvancePayment::where('poAdvPaymentID', $id)
@@ -918,11 +918,11 @@ ORDER BY
         $advancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
 
         if (empty($advancePayment)) {
-            return $this->sendError('Advance Payment Terms not found');
+            return $this->sendError(trans('custom.advance_payment_terms_not_found'));
         }
 
         if ($advancePayment->selectedToPayment == -1) {
-            return $this->sendError('Advance payment request is slected for payment voucher, therefore cannot cancel', 500);
+            return $this->sendError(trans('custom.advance_payment_request_is_slected_for_payment_vou'), 500);
         }
 
         $advancePayment->cancelledYN = 1; 
@@ -942,6 +942,6 @@ ORDER BY
             'comPercentage' => 0
         ]);
 
-        return $this->sendResponse([], 'Successfully cancelled');
+        return $this->sendResponse([], trans('custom.successfully_cancelled'));
     }
 }

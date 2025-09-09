@@ -151,7 +151,7 @@ class HRJobInvokeAPIController extends AppBaseController
         
         if(empty($dbName)){
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-            return $this->sendError('db details not found.');
+            return $this->sendError(trans('custom.db_details_not_found'));
         }
 
         $data = [
@@ -265,7 +265,7 @@ class HRJobInvokeAPIController extends AppBaseController
     function maximumLeaveCarryForwardDebug(){  
         Artisan::call('command:leaveCarryForwardComputationSchedule');
 
-        return $this->sendResponse(null, 'Job triggered successfully');
+        return $this->sendResponse(null, trans('custom.job_triggered_successfully'));
     }
 
     function sendHrDocNotifications(Request $request)
@@ -314,7 +314,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $input = $request->all();
 
         if(!isset($input['tenantId']) || !isset($input['scenarioId'])){
-            return $this->sendError('Tenant ID and Scenario ID are required', 422);
+            return $this->sendError(trans('custom.tenant_id_and_scenario_id_are_required'), 422);
         }
 
         $tenantId = $input['tenantId'];
@@ -327,7 +327,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $scenario = NotificationScenarios::find($scenarioId);
 
         if(empty($scenario)){
-            return $this->sendError('Scenario is not found', 422);
+            return $this->sendError(trans('custom.scenario_is_not_found'), 422);
         }
         NotificationService::process($scenarioId);
         

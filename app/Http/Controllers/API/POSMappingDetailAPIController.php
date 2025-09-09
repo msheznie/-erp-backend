@@ -65,7 +65,7 @@ class POSMappingDetailAPIController extends AppBaseController
         $this->pOSMappingDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSMappingDetails = $this->pOSMappingDetailRepository->all();
 
-        return $this->sendResponse($pOSMappingDetails->toArray(), 'P O S Mapping Details retrieved successfully');
+        return $this->sendResponse($pOSMappingDetails->toArray(), trans('custom.p_o_s_mapping_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSMappingDetailAPIController extends AppBaseController
 
         $pOSMappingDetail = $this->pOSMappingDetailRepository->create($input);
 
-        return $this->sendResponse($pOSMappingDetail->toArray(), 'P O S Mapping Detail saved successfully');
+        return $this->sendResponse($pOSMappingDetail->toArray(), trans('custom.p_o_s_mapping_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSMappingDetailAPIController extends AppBaseController
         $pOSMappingDetail = $this->pOSMappingDetailRepository->findWithoutFail($id);
 
         if (empty($pOSMappingDetail)) {
-            return $this->sendError('P O S Mapping Detail not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_detail_not_found'));
         }
 
-        return $this->sendResponse($pOSMappingDetail->toArray(), 'P O S Mapping Detail retrieved successfully');
+        return $this->sendResponse($pOSMappingDetail->toArray(), trans('custom.p_o_s_mapping_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSMappingDetailAPIController extends AppBaseController
         $pOSMappingDetail = $this->pOSMappingDetailRepository->findWithoutFail($id);
 
         if (empty($pOSMappingDetail)) {
-            return $this->sendError('P O S Mapping Detail not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_detail_not_found'));
         }
 
         $pOSMappingDetail = $this->pOSMappingDetailRepository->update($input, $id);
 
-        return $this->sendResponse($pOSMappingDetail->toArray(), 'POSMappingDetail updated successfully');
+        return $this->sendResponse($pOSMappingDetail->toArray(), trans('custom.posmappingdetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSMappingDetailAPIController extends AppBaseController
         $pOSMappingDetail = $this->pOSMappingDetailRepository->findWithoutFail($id);
 
         if (empty($pOSMappingDetail)) {
-            return $this->sendError('P O S Mapping Detail not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_detail_not_found'));
         }
 
         $pOSMappingDetail->delete();

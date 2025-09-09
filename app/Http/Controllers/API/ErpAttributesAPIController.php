@@ -70,7 +70,7 @@ class ErpAttributesAPIController extends AppBaseController
         $this->erpAttributesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpAttributes = $this->erpAttributesRepository->all();
 
-        return $this->sendResponse($erpAttributes->toArray(), 'Erp Attributes retrieved successfully');
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         $erpAttributes = $this->erpAttributesRepository->create($input);
 
-        return $this->sendResponse($erpAttributes->toArray(), 'Erp Attributes saved successfully');
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_saved_successfully'));
     }
 
     /**
@@ -164,10 +164,10 @@ class ErpAttributesAPIController extends AppBaseController
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
 
         if (empty($erpAttributes)) {
-            return $this->sendError('Erp Attributes not found');
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
         }
 
-        return $this->sendResponse($erpAttributes->toArray(), 'Erp Attributes retrieved successfully');
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_retrieved_successfully'));
     }
 
     /**
@@ -224,12 +224,12 @@ class ErpAttributesAPIController extends AppBaseController
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
 
         if (empty($erpAttributes)) {
-            return $this->sendError('Erp Attributes not found');
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
         }
 
         $erpAttributes = $this->erpAttributesRepository->update($input, $id);
 
-        return $this->sendResponse($erpAttributes->toArray(), 'ErpAttributes updated successfully');
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erpattributes_updated_successfully'));
         
     }
 
@@ -278,7 +278,7 @@ class ErpAttributesAPIController extends AppBaseController
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
 
         if (empty($erpAttributes)) {
-            return $this->sendError('Erp Attributes not found');
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
         }
 
         $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
@@ -338,7 +338,7 @@ class ErpAttributesAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([],'Erp Attributes deleted successfully');
+        return $this->sendResponse([],trans('custom.erp_attributes_deleted_successfully'));
     }
 
     public function itemAttributesIsMandotaryUpdate(Request $request){
@@ -363,7 +363,7 @@ class ErpAttributesAPIController extends AppBaseController
             $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been updated", "U", $newValue, $previousValue, $erpAttributes->document_master_id, 'financeitemcategorysub');
         }
 
-        return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes updated successfully');
+        return $this->sendResponse($attributesIsMandotaryUpdate, trans('custom.erp_attributes_updated_successfully'));
 
     }
 
@@ -399,7 +399,7 @@ class ErpAttributesAPIController extends AppBaseController
                     ->count();
 
                 if ($attributeFieldValidation > 0) {
-                    return $this->sendError('Selected attributes have already been used for an asset', 500);
+                    return $this->sendError(trans('custom.selected_attributes_have_already_been_used_for_an_'), 500);
                 }
             }
 
@@ -417,7 +417,7 @@ class ErpAttributesAPIController extends AppBaseController
             }
             $attributesValidateDescription = ErpAttributes::where('description', $input['description'])->count();
             if($attributesValidateDescription > 0){
-                return $this->sendError('Unable to update. Description already exist', 500);
+                return $this->sendError(trans('custom.unable_to_update_description_already_exist'), 500);
             }
              
         }
@@ -490,7 +490,7 @@ class ErpAttributesAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($attributesUpdate, 'Erp Attributes updated successfully');
+        return $this->sendResponse($attributesUpdate, trans('custom.erp_attributes_updated_successfully'));
 
     }
 
@@ -509,7 +509,7 @@ class ErpAttributesAPIController extends AppBaseController
             }
             $dropdownValidateDescription = ErpAttributesDropdown::where('description', $input['description'])->count();
             if($dropdownValidateDescription > 0){
-                return $this->sendError('Unable to update. Description already exist', 500);
+                return $this->sendError(trans('custom.unable_to_update_description_already_exist'), 500);
             }
              
         }
@@ -537,7 +537,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         $this->auditLog($db, $dropdownValues->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $dropdownValues->description . " has been updated", "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
 
-        return $this->sendResponse($dropdownValuesUpdate, 'Erp Attributes updated successfully');
+        return $this->sendResponse($dropdownValuesUpdate, trans('custom.erp_attributes_updated_successfully'));
 
     }
 
@@ -546,7 +546,7 @@ class ErpAttributesAPIController extends AppBaseController
         $id = $input['id'];
         $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)->delete();
 
-        return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes deleted successfully');
+        return $this->sendResponse($attributesIsMandotaryUpdate, trans('custom.erp_attributes_deleted_successfully'));
 
     }
 }

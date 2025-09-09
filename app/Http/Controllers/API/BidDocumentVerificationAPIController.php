@@ -64,7 +64,7 @@ class BidDocumentVerificationAPIController extends AppBaseController
         $this->bidDocumentVerificationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidDocumentVerifications = $this->bidDocumentVerificationRepository->all();
 
-        return $this->sendResponse($bidDocumentVerifications->toArray(), 'Bid Document Verifications retrieved successfully');
+        return $this->sendResponse($bidDocumentVerifications->toArray(), trans('custom.bid_document_verifications_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class BidDocumentVerificationAPIController extends AppBaseController
 
         $bidDocumentVerification = $this->bidDocumentVerificationRepository->create($input);
 
-        return $this->sendResponse($bidDocumentVerification->toArray(), 'Bid Document Verification saved successfully');
+        return $this->sendResponse($bidDocumentVerification->toArray(), trans('custom.bid_document_verification_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class BidDocumentVerificationAPIController extends AppBaseController
         $bidDocumentVerification = $this->bidDocumentVerificationRepository->findWithoutFail($id);
 
         if (empty($bidDocumentVerification)) {
-            return $this->sendError('Bid Document Verification not found');
+            return $this->sendError(trans('custom.bid_document_verification_not_found'));
         }
 
-        return $this->sendResponse($bidDocumentVerification->toArray(), 'Bid Document Verification retrieved successfully');
+        return $this->sendResponse($bidDocumentVerification->toArray(), trans('custom.bid_document_verification_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class BidDocumentVerificationAPIController extends AppBaseController
         $bidDocumentVerification = $this->bidDocumentVerificationRepository->findWithoutFail($id);
 
         if (empty($bidDocumentVerification)) {
-            return $this->sendError('Bid Document Verification not found');
+            return $this->sendError(trans('custom.bid_document_verification_not_found'));
         }
 
         $bidDocumentVerification = $this->bidDocumentVerificationRepository->update($input, $id);
 
-        return $this->sendResponse($bidDocumentVerification->toArray(), 'BidDocumentVerification updated successfully');
+        return $this->sendResponse($bidDocumentVerification->toArray(), trans('custom.biddocumentverification_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class BidDocumentVerificationAPIController extends AppBaseController
         $bidDocumentVerification = $this->bidDocumentVerificationRepository->findWithoutFail($id);
 
         if (empty($bidDocumentVerification)) {
-            return $this->sendError('Bid Document Verification not found');
+            return $this->sendError(trans('custom.bid_document_verification_not_found'));
         }
 
         $bidDocumentVerification->delete();

@@ -229,7 +229,7 @@ class FinancialReportAPIController extends AppBaseController
             'defaultSelectedColumns' => ReportCustomColumn::whereIn('id',$defaultSelectedColumns)->get()
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getUtilizationFilterFormData(Request $request)
@@ -264,7 +264,7 @@ class FinancialReportAPIController extends AppBaseController
             'company' => $company,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getSubsidiaryCompanies(Request $request)
@@ -384,7 +384,7 @@ class FinancialReportAPIController extends AppBaseController
             'controlAccount' => $controlAccount
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateFRReport(Request $request)
@@ -405,7 +405,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if (empty($companyFinanceYear)) {
-                    return $this->sendError('Finance Year Not Found');
+                    return $this->sendError(trans('custom.finance_year_not_found'));
                 }
 
                 $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
@@ -654,7 +654,7 @@ class FinancialReportAPIController extends AppBaseController
             'detailsPOWise' => $detailsPOWise
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateprojectUtilizationReport(Request $request)
@@ -845,7 +845,7 @@ class FinancialReportAPIController extends AppBaseController
             'reportTittle' => 'Project Utilization Report'
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateEmployeeLedgerReport(Request $request) {
@@ -868,7 +868,7 @@ class FinancialReportAPIController extends AppBaseController
         $currencyID = $input['currencyID'];
 
         if(!$companyID) {
-            return $this->sendError('Company ID not found');
+            return $this->sendError(trans('custom.company_id_not_found'));
         }
 
         // Retrieve company currency information
@@ -1148,7 +1148,7 @@ class FinancialReportAPIController extends AppBaseController
                 $currencyDecimalLocal,
                 $currencyDecimalRpt,
                 $grandSumArray
-            ], 'Record retrieved successfully');
+            ], trans('custom.record_retrieved_successfully_1'));
         }
     }
 
@@ -4450,7 +4450,7 @@ class FinancialReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'FGL':
                 $type = $request->type;
@@ -4684,7 +4684,7 @@ class FinancialReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
 
                 break;
                 case 'RTD':
@@ -10956,7 +10956,7 @@ GROUP BY
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     function getFinancialCustomizeRptColumnQry($request, $changeSelect = false, $companyWiseTemplate = false)
@@ -11553,7 +11553,7 @@ GROUP BY
             'expenseClaimTypes' => $expenseClaimTypes
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateICReport(Request $request)
@@ -12240,7 +12240,7 @@ GROUP BY
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
 
             case 'ICST':
@@ -12311,7 +12311,7 @@ GROUP BY
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
 
             case 'ICAT':
@@ -12365,7 +12365,7 @@ GROUP BY
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
 
             case 'ICFT':
@@ -12417,7 +12417,7 @@ GROUP BY
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -12575,7 +12575,7 @@ GROUP BY
                 );
                 break;
             default:
-                return $this->sendError('Drill down type not found');
+                return $this->sendError(trans('custom.drill_down_type_not_found'));
         }
     }
 

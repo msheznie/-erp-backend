@@ -64,7 +64,7 @@ class TenderBudgetItemEditLogAPIController extends AppBaseController
         $this->tenderBudgetItemEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBudgetItemEditLogs = $this->tenderBudgetItemEditLogRepository->all();
 
-        return $this->sendResponse($tenderBudgetItemEditLogs->toArray(), 'Tender Budget Item Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderBudgetItemEditLogs->toArray(), trans('custom.tender_budget_item_edit_logs_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderBudgetItemEditLogAPIController extends AppBaseController
 
         $tenderBudgetItemEditLog = $this->tenderBudgetItemEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), 'Tender Budget Item Edit Log saved successfully');
+        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), trans('custom.tender_budget_item_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderBudgetItemEditLogAPIController extends AppBaseController
         $tenderBudgetItemEditLog = $this->tenderBudgetItemEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBudgetItemEditLog)) {
-            return $this->sendError('Tender Budget Item Edit Log not found');
+            return $this->sendError(trans('custom.tender_budget_item_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), 'Tender Budget Item Edit Log retrieved successfully');
+        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), trans('custom.tender_budget_item_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderBudgetItemEditLogAPIController extends AppBaseController
         $tenderBudgetItemEditLog = $this->tenderBudgetItemEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBudgetItemEditLog)) {
-            return $this->sendError('Tender Budget Item Edit Log not found');
+            return $this->sendError(trans('custom.tender_budget_item_edit_log_not_found'));
         }
 
         $tenderBudgetItemEditLog = $this->tenderBudgetItemEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), 'TenderBudgetItemEditLog updated successfully');
+        return $this->sendResponse($tenderBudgetItemEditLog->toArray(), trans('custom.tenderbudgetitemeditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderBudgetItemEditLogAPIController extends AppBaseController
         $tenderBudgetItemEditLog = $this->tenderBudgetItemEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBudgetItemEditLog)) {
-            return $this->sendError('Tender Budget Item Edit Log not found');
+            return $this->sendError(trans('custom.tender_budget_item_edit_log_not_found'));
         }
 
         $tenderBudgetItemEditLog->delete();

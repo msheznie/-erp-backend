@@ -67,7 +67,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $this->paymentTermTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentTermTemplates = $this->paymentTermTemplateRepository->all();
 
-        return $this->sendResponse($paymentTermTemplates->toArray(), 'Payment Term Templates retrieved successfully');
+        return $this->sendResponse($paymentTermTemplates->toArray(), trans('custom.payment_term_templates_retrieved_successfully'));
     }
 
     /**
@@ -130,14 +130,14 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $checkTemplate = PaymentTermTemplate::where('templateName', $input['templateName'])->first();
 
         if ($checkTemplate) {
-            return $this->sendError('Template name already exists.');
+            return $this->sendError(trans('custom.template_name_already_exists'));
         }
 
         $paymentTermTemplate = $this->paymentTermTemplateRepository->create($input);
 
         $this->insertPreDefinedConfigTerms($paymentTermTemplate->id);
 
-        return $this->sendResponse($paymentTermTemplate->toArray(), 'Payment term Template saved successfully');
+        return $this->sendResponse($paymentTermTemplate->toArray(), trans('custom.payment_term_template_saved_successfully'));
     }
 
     /**
@@ -185,10 +185,10 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplate)) {
-            return $this->sendError('Payment Term Template not found');
+            return $this->sendError(trans('custom.payment_term_template_not_found'));
         }
 
-        return $this->sendResponse($paymentTermTemplate->toArray(), 'Payment Term Template retrieved successfully');
+        return $this->sendResponse($paymentTermTemplate->toArray(), trans('custom.payment_term_template_retrieved_successfully'));
     }
 
     /**
@@ -262,18 +262,18 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $checkTemplate = PaymentTermTemplate::where('templateName', $input['templateName'])->where('id', '!=', $id)->first();
 
         if ($checkTemplate) {
-            return $this->sendError('Template name already exists.');
+            return $this->sendError(trans('custom.template_name_already_exists'));
         }
 
         $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplate)) {
-            return $this->sendError('Payment Term Template not found');
+            return $this->sendError(trans('custom.payment_term_template_not_found'));
         }
 
         $paymentTermTemplate = $this->paymentTermTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($paymentTermTemplate->toArray(), 'PaymentTermTemplate updated successfully');
+        return $this->sendResponse($paymentTermTemplate->toArray(), trans('custom.paymenttermtemplate_updated_successfully'));
     }
 
     /**
@@ -321,7 +321,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplate)) {
-            return $this->sendError('Payment Term Template not found');
+            return $this->sendError(trans('custom.payment_term_template_not_found'));
         }
 
         $templatePulledPO = \DB::table('po_wise_payment_term_config')->where('templateID', $id)
@@ -334,12 +334,12 @@ class PaymentTermTemplateAPIController extends AppBaseController
             ->count();
 
         if ($pendingApprovalCount > 0) {
-            return $this->sendError('The template has already been applied to certain purchase orders that are pending for approval.', 500);
+            return $this->sendError(trans('custom.the_template_has_already_been_applied_to_certain_p'), 500);
         }
 
         $paymentTermTemplate->delete();
 
-        return $this->sendResponse($id, 'Payment Term Template deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_term_template_deleted_successfully'));
     }
 
 
@@ -383,7 +383,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplate)) {
-            return $this->sendError('Payment Term Template not found');
+            return $this->sendError(trans('custom.payment_term_template_not_found'));
         }
 
         $defaultTemplate = PaymentTermTemplate::where('isDefault', true)->first();
@@ -398,7 +398,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
                 ->count();
 
             if ($pendingApprovalCount > 0) {
-                return $this->sendError('The default template has already been applied to certain purchase orders that are pending for approval.', 500);
+                return $this->sendError(trans('custom.the_default_template_has_already_been_applied_to_c'), 500);
             }
         }
 
@@ -407,7 +407,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $input['isActive'] = true;
         $paymentTermTemplate = $this->paymentTermTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($paymentTermTemplate->toArray(), 'Payment Term Template updated successfully');
+        return $this->sendResponse($paymentTermTemplate->toArray(), trans('custom.payment_term_template_updated_successfully'));
 
     }
 
@@ -418,7 +418,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $paymentTermTemplate = $this->paymentTermTemplateRepository->findWithoutFail($input['id']);
 
         if (empty($paymentTermTemplate)) {
-            return $this->sendError('Payment Term Template not found');
+            return $this->sendError(trans('custom.payment_term_template_not_found'));
         }
 
         if($input['isActive'] == false)
@@ -439,7 +439,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
 
         $paymentTermTemplate = $paymentTermTemplate->update(['isActive' => $input['isActive']]);
 
-        return $this->sendResponse(null, 'Payment Term Template updated successfully');
+        return $this->sendResponse(null, trans('custom.payment_term_template_updated_successfully'));
 
     }
 

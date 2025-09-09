@@ -65,7 +65,7 @@ class BidBoqAPIController extends AppBaseController
         $this->bidBoqRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidBoqs = $this->bidBoqRepository->all();
 
-        return $this->sendResponse($bidBoqs->toArray(), 'Bid Boqs retrieved successfully');
+        return $this->sendResponse($bidBoqs->toArray(), trans('custom.bid_boqs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BidBoqAPIController extends AppBaseController
 
         $bidBoq = $this->bidBoqRepository->create($input);
 
-        return $this->sendResponse($bidBoq->toArray(), 'Bid Boq saved successfully');
+        return $this->sendResponse($bidBoq->toArray(), trans('custom.bid_boq_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BidBoqAPIController extends AppBaseController
         $bidBoq = $this->bidBoqRepository->findWithoutFail($id);
 
         if (empty($bidBoq)) {
-            return $this->sendError('Bid Boq not found');
+            return $this->sendError(trans('custom.bid_boq_not_found'));
         }
 
-        return $this->sendResponse($bidBoq->toArray(), 'Bid Boq retrieved successfully');
+        return $this->sendResponse($bidBoq->toArray(), trans('custom.bid_boq_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BidBoqAPIController extends AppBaseController
         $bidBoq = $this->bidBoqRepository->findWithoutFail($id);
 
         if (empty($bidBoq)) {
-            return $this->sendError('Bid Boq not found');
+            return $this->sendError(trans('custom.bid_boq_not_found'));
         }
 
         $bidBoq = $this->bidBoqRepository->update($input, $id);
 
-        return $this->sendResponse($bidBoq->toArray(), 'BidBoq updated successfully');
+        return $this->sendResponse($bidBoq->toArray(), trans('custom.bidboq_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BidBoqAPIController extends AppBaseController
         $bidBoq = $this->bidBoqRepository->findWithoutFail($id);
 
         if (empty($bidBoq)) {
-            return $this->sendError('Bid Boq not found');
+            return $this->sendError(trans('custom.bid_boq_not_found'));
         }
 
         $bidBoq->delete();

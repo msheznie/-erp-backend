@@ -74,7 +74,7 @@ class PurchaseOrderCategoryAPIController extends AppBaseController
         $this->purchaseOrderCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderCategories = $this->purchaseOrderCategoryRepository->all();
 
-        return $this->sendResponse($purchaseOrderCategories->toArray(), 'Purchase Order Categories retrieved successfully');
+        return $this->sendResponse($purchaseOrderCategories->toArray(), trans('custom.purchase_order_categories_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class PurchaseOrderCategoryAPIController extends AppBaseController
 
         $purchaseOrderCategories = $this->purchaseOrderCategoryRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderCategories->toArray(), 'Purchase Order Category saved successfully');
+        return $this->sendResponse($purchaseOrderCategories->toArray(), trans('custom.purchase_order_category_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class PurchaseOrderCategoryAPIController extends AppBaseController
         $purchaseOrderCategory = $this->purchaseOrderCategoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderCategory)) {
-            return $this->sendError('Purchase Order Category not found');
+            return $this->sendError(trans('custom.purchase_order_category_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderCategory->toArray(), 'Purchase Order Category retrieved successfully');
+        return $this->sendResponse($purchaseOrderCategory->toArray(), trans('custom.purchase_order_category_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class PurchaseOrderCategoryAPIController extends AppBaseController
         $purchaseOrderCategory = $this->purchaseOrderCategoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderCategory)) {
-            return $this->sendError('Purchase Order Category not found');
+            return $this->sendError(trans('custom.purchase_order_category_not_found'));
         }
 
         $purchaseOrderCategory = $this->purchaseOrderCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderCategory->toArray(), 'PurchaseOrderCategory updated successfully');
+        return $this->sendResponse($purchaseOrderCategory->toArray(), trans('custom.purchaseordercategory_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class PurchaseOrderCategoryAPIController extends AppBaseController
         $purchaseOrderCategory = $this->purchaseOrderCategoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderCategory)) {
-            return $this->sendError('Purchase Order Category not found');
+            return $this->sendError(trans('custom.purchase_order_category_not_found'));
         }
 
         $purchaseOrderCategory->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_category_deleted_successfully'));
     }
 }

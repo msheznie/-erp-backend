@@ -65,7 +65,7 @@ class SrpErpTemplatesAPIController extends AppBaseController
         $this->srpErpTemplatesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpTemplates = $this->srpErpTemplatesRepository->all();
 
-        return $this->sendResponse($srpErpTemplates->toArray(), 'Srp Erp Templates retrieved successfully');
+        return $this->sendResponse($srpErpTemplates->toArray(), trans('custom.srp_erp_templates_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpErpTemplatesAPIController extends AppBaseController
 
         $srpErpTemplates = $this->srpErpTemplatesRepository->create($input);
 
-        return $this->sendResponse($srpErpTemplates->toArray(), 'Srp Erp Templates saved successfully');
+        return $this->sendResponse($srpErpTemplates->toArray(), trans('custom.srp_erp_templates_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpErpTemplatesAPIController extends AppBaseController
         $srpErpTemplates = $this->srpErpTemplatesRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplates)) {
-            return $this->sendError('Srp Erp Templates not found');
+            return $this->sendError(trans('custom.srp_erp_templates_not_found'));
         }
 
-        return $this->sendResponse($srpErpTemplates->toArray(), 'Srp Erp Templates retrieved successfully');
+        return $this->sendResponse($srpErpTemplates->toArray(), trans('custom.srp_erp_templates_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpErpTemplatesAPIController extends AppBaseController
         $srpErpTemplates = $this->srpErpTemplatesRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplates)) {
-            return $this->sendError('Srp Erp Templates not found');
+            return $this->sendError(trans('custom.srp_erp_templates_not_found'));
         }
 
         $srpErpTemplates = $this->srpErpTemplatesRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpTemplates->toArray(), 'SrpErpTemplates updated successfully');
+        return $this->sendResponse($srpErpTemplates->toArray(), trans('custom.srperptemplates_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpErpTemplatesAPIController extends AppBaseController
         $srpErpTemplates = $this->srpErpTemplatesRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplates)) {
-            return $this->sendError('Srp Erp Templates not found');
+            return $this->sendError(trans('custom.srp_erp_templates_not_found'));
         }
 
         $srpErpTemplates->delete();

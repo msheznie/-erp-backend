@@ -68,7 +68,7 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
         $this->expenseClaimDetailsMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseClaimDetailsMasters = $this->expenseClaimDetailsMasterRepository->all();
 
-        return $this->sendResponse($expenseClaimDetailsMasters->toArray(), 'Expense Claim Details Masters retrieved successfully');
+        return $this->sendResponse($expenseClaimDetailsMasters->toArray(), trans('custom.expense_claim_details_masters_retrieved_successful'));
     }
 
     /**
@@ -115,7 +115,7 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
 
         $expenseClaimDetailsMaster = $this->expenseClaimDetailsMasterRepository->create($input);
 
-        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), 'Expense Claim Details Master saved successfully');
+        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), trans('custom.expense_claim_details_master_saved_successfully'));
     }
 
     /**
@@ -162,10 +162,10 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
         $expenseClaimDetailsMaster = $this->expenseClaimDetailsMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimDetailsMaster)) {
-            return $this->sendError('Expense Claim Details Master not found');
+            return $this->sendError(trans('custom.expense_claim_details_master_not_found'));
         }
 
-        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), 'Expense Claim Details Master retrieved successfully');
+        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), trans('custom.expense_claim_details_master_retrieved_successfull'));
     }
 
     /**
@@ -222,12 +222,12 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
         $expenseClaimDetailsMaster = $this->expenseClaimDetailsMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimDetailsMaster)) {
-            return $this->sendError('Expense Claim Details Master not found');
+            return $this->sendError(trans('custom.expense_claim_details_master_not_found'));
         }
 
         $expenseClaimDetailsMaster = $this->expenseClaimDetailsMasterRepository->update($input, $id);
 
-        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), 'ExpenseClaimDetailsMaster updated successfully');
+        return $this->sendResponse($expenseClaimDetailsMaster->toArray(), trans('custom.expenseclaimdetailsmaster_updated_successfully'));
     }
 
     /**
@@ -274,7 +274,7 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
         $expenseClaimDetailsMaster = $this->expenseClaimDetailsMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimDetailsMaster)) {
-            return $this->sendError('Expense Claim Details Master not found');
+            return $this->sendError(trans('custom.expense_claim_details_master_not_found'));
         }
 
         $expenseClaimDetailsMaster->delete();
@@ -291,7 +291,7 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
             ->with(['segment','currency', 'category', 'local_currency'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Expense Claim Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.expense_claim_details_retrieved_successfully'));
     }
 
     public function preCheckECDetailMasterEdit(Request $request)
@@ -302,24 +302,24 @@ class ExpenseClaimDetailsMasterAPIController extends AppBaseController
         $expenseClaimDetails = $this->expenseClaimDetailsMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimDetails)) {
-            return $this->sendError('Expense Claim Details not found');
+            return $this->sendError(trans('custom.expense_claim_details_not_found_1'));
         }
 
         $expenseClaim = $this->expenseClaimMasterRepository->findWithoutFail($expenseClaimDetails->expenseClaimMasterAutoID);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
 
         if ($expenseClaim->approved != -1) {
-            return $this->sendError('This expense claim is not approved. You cannot edit this category.', 500);
+            return $this->sendError(trans('custom.this_expense_claim_is_not_approved_you_cannot_edit'), 500);
         }
 
         if ($expenseClaim->addedForPayment != 0) {
-            return $this->sendError('Cannot edit. This expense claim is already paid.', 500);
+            return $this->sendError(trans('custom.cannot_edit_this_expense_claim_is_already_paid'), 500);
         }
 
-        return $this->sendResponse($expenseClaimDetails->toArray(), 'Expense Claim Details can update successfully');
+        return $this->sendResponse($expenseClaimDetails->toArray(), trans('custom.expense_claim_details_can_update_successfully'));
     }
 }

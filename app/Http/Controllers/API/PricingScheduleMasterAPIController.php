@@ -81,7 +81,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $this->pricingScheduleMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pricingScheduleMasters = $this->pricingScheduleMasterRepository->all();
 
-        return $this->sendResponse($pricingScheduleMasters->toArray(), 'Pricing Schedule Masters retrieved successfully');
+        return $this->sendResponse($pricingScheduleMasters->toArray(), trans('custom.pricing_schedule_masters_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->create($input);
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), 'Pricing Schedule Master saved successfully');
+        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricing_schedule_master_saved_successfully'));
     }
 
     /**
@@ -175,10 +175,10 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError('Pricing Schedule Master not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
         }
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), 'Pricing Schedule Master retrieved successfully');
+        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricing_schedule_master_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError('Pricing Schedule Master not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
         }
 
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), 'PricingScheduleMaster updated successfully');
+        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricingschedulemaster_updated_successfully'));
     }
 
     /**
@@ -287,7 +287,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError('Pricing Schedule Master not found');
+            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
         }
 
         $pricingScheduleMaster->delete();
@@ -425,7 +425,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $response = $this->pricingScheduleMasterRepository->getPricingScheduleMasterEditData($input);
-        return $this->sendResponse($response, 'Pricing Schedule Master record retrieved successfully');
+        return $this->sendResponse($response, trans('custom.pricing_schedule_master_record_retrieved_successfu'));
     }
 
     public function deletePricingSchedule(Request $request)

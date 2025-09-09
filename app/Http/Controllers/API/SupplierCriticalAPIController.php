@@ -49,7 +49,7 @@ class SupplierCriticalAPIController extends AppBaseController
         $this->supplierCriticalRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCriticals = $this->supplierCriticalRepository->all();
 
-        return $this->sendResponse($supplierCriticals->toArray(), 'Supplier Criticals retrieved successfully');
+        return $this->sendResponse($supplierCriticals->toArray(), trans('custom.supplier_criticals_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class SupplierCriticalAPIController extends AppBaseController
 
         $supplierCriticals = $this->supplierCriticalRepository->create($input);
 
-        return $this->sendResponse($supplierCriticals->toArray(), 'Supplier Critical saved successfully');
+        return $this->sendResponse($supplierCriticals->toArray(), trans('custom.supplier_critical_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class SupplierCriticalAPIController extends AppBaseController
         $supplierCritical = $this->supplierCriticalRepository->findWithoutFail($id);
 
         if (empty($supplierCritical)) {
-            return $this->sendError('Supplier Critical not found');
+            return $this->sendError(trans('custom.supplier_critical_not_found'));
         }
 
-        return $this->sendResponse($supplierCritical->toArray(), 'Supplier Critical retrieved successfully');
+        return $this->sendResponse($supplierCritical->toArray(), trans('custom.supplier_critical_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class SupplierCriticalAPIController extends AppBaseController
         $supplierCritical = $this->supplierCriticalRepository->findWithoutFail($id);
 
         if (empty($supplierCritical)) {
-            return $this->sendError('Supplier Critical not found');
+            return $this->sendError(trans('custom.supplier_critical_not_found'));
         }
 
         $supplierCritical = $this->supplierCriticalRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCritical->toArray(), 'SupplierCritical updated successfully');
+        return $this->sendResponse($supplierCritical->toArray(), trans('custom.suppliercritical_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class SupplierCriticalAPIController extends AppBaseController
         $supplierCritical = $this->supplierCriticalRepository->findWithoutFail($id);
 
         if (empty($supplierCritical)) {
-            return $this->sendError('Supplier Critical not found');
+            return $this->sendError(trans('custom.supplier_critical_not_found'));
         }
 
         $supplierCritical->delete();
 
-        return $this->sendResponse($id, 'Supplier Critical deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_critical_deleted_successfully'));
     }
 }

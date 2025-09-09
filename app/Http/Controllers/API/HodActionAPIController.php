@@ -64,7 +64,7 @@ class HodActionAPIController extends AppBaseController
         $this->hodActionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hodActions = $this->hodActionRepository->all();
 
-        return $this->sendResponse($hodActions->toArray(), 'Hod Actions retrieved successfully');
+        return $this->sendResponse($hodActions->toArray(), trans('custom.hod_actions_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HodActionAPIController extends AppBaseController
 
         $hodAction = $this->hodActionRepository->create($input);
 
-        return $this->sendResponse($hodAction->toArray(), 'Hod Action saved successfully');
+        return $this->sendResponse($hodAction->toArray(), trans('custom.hod_action_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HodActionAPIController extends AppBaseController
         $hodAction = $this->hodActionRepository->findWithoutFail($id);
 
         if (empty($hodAction)) {
-            return $this->sendError('Hod Action not found');
+            return $this->sendError(trans('custom.hod_action_not_found'));
         }
 
-        return $this->sendResponse($hodAction->toArray(), 'Hod Action retrieved successfully');
+        return $this->sendResponse($hodAction->toArray(), trans('custom.hod_action_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HodActionAPIController extends AppBaseController
         $hodAction = $this->hodActionRepository->findWithoutFail($id);
 
         if (empty($hodAction)) {
-            return $this->sendError('Hod Action not found');
+            return $this->sendError(trans('custom.hod_action_not_found'));
         }
 
         $hodAction = $this->hodActionRepository->update($input, $id);
 
-        return $this->sendResponse($hodAction->toArray(), 'HodAction updated successfully');
+        return $this->sendResponse($hodAction->toArray(), trans('custom.hodaction_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HodActionAPIController extends AppBaseController
         $hodAction = $this->hodActionRepository->findWithoutFail($id);
 
         if (empty($hodAction)) {
-            return $this->sendError('Hod Action not found');
+            return $this->sendError(trans('custom.hod_action_not_found'));
         }
 
         $hodAction->delete();

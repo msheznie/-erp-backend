@@ -83,7 +83,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $this->directReceiptDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directReceiptDetails = $this->directReceiptDetailRepository->all();
 
-        return $this->sendResponse($directReceiptDetails->toArray(), 'Direct Receipt Details retrieved successfully');
+        return $this->sendResponse($directReceiptDetails->toArray(), trans('custom.direct_receipt_details_retrieved_successfully'));
     }
 
     /**
@@ -130,7 +130,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         $directReceiptDetails = $this->directReceiptDetailRepository->create($input);
 
-        return $this->sendResponse($directReceiptDetails->toArray(), 'Direct Receipt Detail saved successfully');
+        return $this->sendResponse($directReceiptDetails->toArray(), trans('custom.direct_receipt_detail_saved_successfully'));
     }
 
     /**
@@ -177,10 +177,10 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $directReceiptDetail = $this->directReceiptDetailRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetail)) {
-            return $this->sendError('Direct Receipt Detail not found');
+            return $this->sendError(trans('custom.direct_receipt_detail_not_found'));
         }
 
-        return $this->sendResponse($directReceiptDetail->toArray(), 'Direct Receipt Detail retrieved successfully');
+        return $this->sendResponse($directReceiptDetail->toArray(), trans('custom.direct_receipt_detail_retrieved_successfully'));
     }
 
     /**
@@ -237,12 +237,12 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $directReceiptDetail = $this->directReceiptDetailRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetail)) {
-            return $this->sendError('Direct Receipt Detail not found');
+            return $this->sendError(trans('custom.direct_receipt_detail_not_found'));
         }
 
         $directReceiptDetail = $this->directReceiptDetailRepository->update($input, $id);
 
-        return $this->sendResponse($directReceiptDetail->toArray(), 'DirectReceiptDetail updated successfully');
+        return $this->sendResponse($directReceiptDetail->toArray(), trans('custom.directreceiptdetail_updated_successfully'));
     }
 
     /**
@@ -289,11 +289,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $directReceiptDetail = $this->directReceiptDetailRepository->findWithoutFail($id);
 
         if (empty($directReceiptDetail)) {
-            return $this->sendError('Direct Receipt Detail not found');
+            return $this->sendError(trans('custom.direct_receipt_detail_not_found'));
         }
 
         if($directReceiptDetail->master && $directReceiptDetail->master->confirmedYN){
-            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_delete_detail_this_document_already_con'), 500);
         }
         $masterID = $directReceiptDetail->directReceiptAutoID;
 
@@ -312,7 +312,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         CustomerReceivePayment::where('custReceivePaymentAutoID', $masterID)->update($details);
 
 
-        return $this->sendResponse($id, 'Direct Receipt Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_receipt_detail_deleted_successfully'));
     }
 
     public function directRecieptDetailsRecords(Request $request)
@@ -325,7 +325,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
             ->where('matchingDocID', 0)
             ->get();
 
-        return $this->sendResponse($detail, 'Direct Receipt Detail retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.direct_receipt_detail_retrieved_successfully'));
     }
 
     public function directReceiptContractDropDown(request $request)
@@ -343,7 +343,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         $contract = DB::select($qry);
 
-        return $this->sendResponse($contract, 'Contract deleted successfully');
+        return $this->sendResponse($contract, trans('custom.contract_deleted_successfully'));
     }
 
     public function customerDirectVoucherDetails(request $request)
@@ -373,11 +373,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $directReceiptAutoID)->first();
 
         if(empty($master)){
-            return $this->sendError('Receipt Voucher not found.');
+            return $this->sendError(trans('custom.receipt_voucher_not_found_1'));
         }
 
         if($master->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         if($master->documentType == 13 || $master->documentType == 14){
@@ -401,7 +401,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                       ->first();
             if(empty($serviceLine)){
-                return $this->sendError('Department not found.');
+                return $this->sendError(trans('custom.department_not_found_1'));
             }
             $inputData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $inputData['serviceLineCode'] = $serviceLine->ServiceLineCode;
@@ -409,7 +409,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
 
         if ($master->custChequeDate == '' && $master->pdcChequeYN == 0) {
-            return $this->sendError('Cheque date field is required.', 500);
+            return $this->sendError(trans('custom.cheque_date_field_is_required'), 500);
         }
         $bankGL = BankAccount::select('chartOfAccountSystemID')
                             ->where('bankAccountAutoID', $master->bankAccount)
@@ -424,11 +424,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
 
             if (empty($bankGL)){
-                return $this->sendError('Bank details not found.', 500);
+                return $this->sendError(trans('custom.bank_details_not_found'), 500);
             }
 
             if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
-                return $this->sendError('Cannot add. You are trying to select the same account.', 500);
+                return $this->sendError(trans('custom.cannot_add_you_are_trying_to_select_the_same_accou'), 500);
             }
 
             $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
@@ -494,7 +494,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse('s', 'successfully created');
+            return $this->sendResponse('s', trans('custom.successfully_created'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage());
@@ -518,16 +518,16 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
 
         if (empty($detail)) {
-            return $this->sendError('Receipt voucher detail not found', 500);
+            return $this->sendError(trans('custom.receipt_voucher_detail_not_found'), 500);
         }
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
 
         if(empty($master)){
-            return $this->sendError('Receipt Voucher not found.');
+            return $this->sendError(trans('custom.receipt_voucher_not_found_1'));
         }
 
         if($master->confirmedYN){
-            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_update_detail_this_document_already_con'), 500);
         }   
         
         if(isset($input['detail_project_id'])){
@@ -642,7 +642,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse('s', 'successfully updated');
+            return $this->sendResponse('s', trans('custom.successfully_updated_1'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception);

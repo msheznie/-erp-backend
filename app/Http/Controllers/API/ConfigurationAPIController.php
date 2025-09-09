@@ -24,6 +24,7 @@ class ConfigurationAPIController extends AppBaseController
         $isLang = 0;
         $environment = 'Local';
         $version = $this->getVersion();
+        $serverTime = time();
         if (env('IS_MULTI_TENANCY', false)) {
 
 
@@ -56,9 +57,9 @@ class ConfigurationAPIController extends AppBaseController
             }
         }
 
-        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version, 'serverTime' => $serverTime);
 
-        return $this->sendResponse($configuration, 'Configurations retrieved successfully');
+        return $this->sendResponse($configuration, trans('custom.configurations_retrieved_successfully'));
 
     }
 

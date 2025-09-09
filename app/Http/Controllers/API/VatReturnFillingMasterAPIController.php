@@ -86,7 +86,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $this->vatReturnFillingMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFillingMasters = $this->vatReturnFillingMasterRepository->all();
 
-        return $this->sendResponse($vatReturnFillingMasters->toArray(), 'Vat Return Filling Masters retrieved successfully');
+        return $this->sendResponse($vatReturnFillingMasters->toArray(), trans('custom.vat_return_filling_masters_retrieved_successfully'));
     }
 
     /**
@@ -210,7 +210,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($vatReturnFillingMaster->toArray(), 'Vat Return Filling Master saved successfully');
+            return $this->sendResponse($vatReturnFillingMaster->toArray(), trans('custom.vat_return_filling_master_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage().$e->getLine(), 500);
@@ -262,10 +262,10 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $vatReturnFillingMaster = $this->vatReturnFillingMasterRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMaster)) {
-            return $this->sendError('Vat Return Filling Master not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFillingMaster->toArray(), 'Vat Return Filling Master retrieved successfully');
+        return $this->sendResponse($vatReturnFillingMaster->toArray(), trans('custom.vat_return_filling_master_retrieved_successfully'));
     }
 
     /**
@@ -322,11 +322,11 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $vatReturnFillingMaster = $this->vatReturnFillingMasterRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMaster)) {
-            return $this->sendError('Vat Return Filling Master not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_not_found'));
         }
 
         if ($vatReturnFillingMaster->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_1'), 500);
         }
 
         if ($vatReturnFillingMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -392,7 +392,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $vatReturnFillingMaster = $this->vatReturnFillingMasterRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingMaster)) {
-            return $this->sendError('Vat Return Filling Master not found');
+            return $this->sendError(trans('custom.vat_return_filling_master_not_found'));
         }
         DB::beginTransaction();
         try {
@@ -414,7 +414,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
             $vatReturnFillingMaster->delete();
             DB::commit();
-            return $this->sendResponse([], 'Vat Return Filling Master deleted successfully');
+            return $this->sendResponse([], trans('custom.vat_return_filling_master_deleted_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage().$e->getLine(), 500);
@@ -569,7 +569,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             'currency' => $localCurrency
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function updateVatReturnFillingDetails(Request $request)
@@ -590,7 +590,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $this->vatReturnFillingMasterRepository->updateVatReturnFillingDetails($input['returnFilledDetailID']);
 
-        return $this->sendResponse([], 'Record updated successfully');
+        return $this->sendResponse([], trans('custom.record_updated_successfully'));
     }
 
     public function vatReturnFillingReopen(Request $request)
@@ -601,19 +601,19 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $vatReturnFillingMaster = $this->vatReturnFillingMasterRepository->findWithoutFail($id);
         $emails = array();
         if (empty($vatReturnFillingMaster)) {
-            return $this->sendError('VAT Return filling not found');
+            return $this->sendError(trans('custom.vat_return_filling_not_found_1'));
         }
 
         if ($vatReturnFillingMaster->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this VAT Return filling it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_vat_return_filling_it_is_al'));
         }
 
         if ($vatReturnFillingMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this VAT Return filling it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_vat_return_filling_it_is_al_1'));
         }
 
         if ($vatReturnFillingMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this VAT Return filling, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_vat_return_filling_it_is_no'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -680,7 +680,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             ->where('documentSystemID', $vatReturnFillingMaster->documentSystemID)
             ->delete();
 
-        return $this->sendResponse($vatReturnFillingMaster->toArray(), 'VAT Return filling reopened successfully');
+        return $this->sendResponse($vatReturnFillingMaster->toArray(), trans('custom.vat_return_filling_reopened_successfully'));
     }
 
      public function getVRFApprovedByUser(Request $request)
@@ -833,11 +833,11 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $vrfData = VatReturnFillingMaster::find($returnFillingID);
         if (empty($vrfData)) {
-            return $this->sendError('VAT Return Filling not found');
+            return $this->sendError(trans('custom.vat_return_filling_not_found'));
         }
 
         if ($vrfData->refferedBackYN != -1) {
-            return $this->sendError('You cannot amend this VAT Return Filling');
+            return $this->sendError(trans('custom.you_cannot_amend_this_vat_return_filling'));
         }
 
         $vrfArray = $vrfData->toArray();
@@ -901,7 +901,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             $vrfData->save();
         }
 
-        return $this->sendResponse($vrfData->toArray(), 'VAT Return Filling Amend successfully');
+        return $this->sendResponse($vrfData->toArray(), trans('custom.vat_return_filling_amend_successfully'));
     }
 
     public function vatReturnFillingAmend(Request $request)
@@ -916,11 +916,11 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $masterData = VatReturnFillingMaster::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Vat return filling not found');
+            return $this->sendError(trans('custom.vat_return_filling_not_found_2'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this Vat Return Filling, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_vat_return_fi'));
         }
 
         $emailBody = '<p>' . $masterData->returnFillingCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -988,7 +988,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Vat Return Filling amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.vat_return_filling_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

@@ -120,7 +120,7 @@ class ChequeTemplateMasterAPIController extends AppBaseController
 
         $chequeTemplateMaster = $this->chequeTemplateMasterRepository->create($input);
 
-        return $this->sendResponse($chequeTemplateMaster->toArray(), 'Cheque Template Master saved successfully');
+        return $this->sendResponse($chequeTemplateMaster->toArray(), trans('custom.cheque_template_master_saved_successfully'));
     }
 
     /**
@@ -167,10 +167,10 @@ class ChequeTemplateMasterAPIController extends AppBaseController
         $chequeTemplateMaster = $this->chequeTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateMaster)) {
-            return $this->sendError('Cheque Template Master not found');
+            return $this->sendError(trans('custom.cheque_template_master_not_found'));
         }
 
-        return $this->sendResponse($chequeTemplateMaster->toArray(), 'Cheque Template Master retrieved successfully');
+        return $this->sendResponse($chequeTemplateMaster->toArray(), trans('custom.cheque_template_master_retrieved_successfully'));
     }
 
     /**
@@ -227,12 +227,12 @@ class ChequeTemplateMasterAPIController extends AppBaseController
         $chequeTemplateMaster = $this->chequeTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateMaster)) {
-            return $this->sendError('Cheque Template Master not found');
+            return $this->sendError(trans('custom.cheque_template_master_not_found'));
         }
 
         $chequeTemplateMaster = $this->chequeTemplateMasterRepository->update($input, $id);
 
-        return $this->sendResponse($chequeTemplateMaster->toArray(), 'ChequeTemplateMaster updated successfully');
+        return $this->sendResponse($chequeTemplateMaster->toArray(), trans('custom.chequetemplatemaster_updated_successfully'));
     }
 
     /**
@@ -279,7 +279,7 @@ class ChequeTemplateMasterAPIController extends AppBaseController
         $chequeTemplateMaster = $this->chequeTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateMaster)) {
-            return $this->sendError('Cheque Template Master not found');
+            return $this->sendError(trans('custom.cheque_template_master_not_found'));
         }
 
         $chequeTemplateMaster->delete();

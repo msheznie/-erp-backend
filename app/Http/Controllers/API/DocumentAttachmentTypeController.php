@@ -77,7 +77,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $attachmentType = $this->tenderDocumentTypesRepository->create($input);
-        return $this->sendResponse($attachmentType->toArray(), 'Document Type saved successfully');
+        return $this->sendResponse($attachmentType->toArray(), trans('custom.document_type_saved_successfully'));
     }
 
     /**
@@ -91,10 +91,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($id);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Document Type not found');
+            return $this->sendError(trans('custom.document_type_not_found'));
         }
 
-        return $this->sendResponse($attachmentType->toArray(), 'Document Type retrieved successfully');
+        return $this->sendResponse($attachmentType->toArray(), trans('custom.document_type_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($id);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Document Type not found');
+            return $this->sendError(trans('custom.document_type_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -148,7 +148,7 @@ class DocumentAttachmentTypeController extends AppBaseController
 
         $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
 
-        return $this->sendResponse($attachmentType, 'Document Type updated successfully');
+        return $this->sendResponse($attachmentType, trans('custom.document_type_updated_successfully'));
 
     }
 
@@ -173,12 +173,12 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($request[0]);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Document Type not found');
+            return $this->sendError(trans('custom.document_type_not_found'));
         }
 
         $attachmentType->delete();
 
-        return $this->sendResponse($request[0], 'Document Type deleted successfully');
+        return $this->sendResponse($request[0], trans('custom.document_type_deleted_successfully'));
     }
 
     public function getAllDocumentAttachmentTypes(Request $request)

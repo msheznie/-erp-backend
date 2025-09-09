@@ -310,7 +310,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'yes' => $yes,
                 );
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             case 'SARDS':
                 $customers = $request['Customer'];
@@ -470,7 +470,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 );
 
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
 
             case 'SARDVS':
@@ -659,7 +659,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'yes'=>$yes
                 );
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -1768,7 +1768,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             'wareHouses' => $wareHouses
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getSalesAnalysisFilterData(Request $request)
@@ -1811,7 +1811,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             'customer' => $customerMaster
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     function getQSOQRY($request, $search = "")
@@ -2244,7 +2244,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customers = $customers->take(15)->get(['companySystemID', 'CutomerCode', 'CustomerName', 'customerCodeSystem']);
         $output = array('customers' => $customers);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 

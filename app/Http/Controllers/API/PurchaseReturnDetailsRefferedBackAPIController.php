@@ -65,7 +65,7 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
         $this->purchaseReturnDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseReturnDetailsRefferedBacks = $this->purchaseReturnDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($purchaseReturnDetailsRefferedBacks->toArray(), 'Purchase Return Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($purchaseReturnDetailsRefferedBacks->toArray(), trans('custom.purchase_return_details_reffered_backs_retrieved_s'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
 
         $purchaseReturnDetailsRefferedBack = $this->purchaseReturnDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), 'Purchase Return Details Reffered Back saved successfully');
+        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), trans('custom.purchase_return_details_reffered_back_saved_succes'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
         $purchaseReturnDetailsRefferedBack = $this->purchaseReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetailsRefferedBack)) {
-            return $this->sendError('Purchase Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), 'Purchase Return Details Reffered Back retrieved successfully');
+        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), trans('custom.purchase_return_details_reffered_back_retrieved_su'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
         $purchaseReturnDetailsRefferedBack = $this->purchaseReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetailsRefferedBack)) {
-            return $this->sendError('Purchase Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_details_reffered_back_not_found'));
         }
 
         $purchaseReturnDetailsRefferedBack = $this->purchaseReturnDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), 'PurchaseReturnDetailsRefferedBack updated successfully');
+        return $this->sendResponse($purchaseReturnDetailsRefferedBack->toArray(), trans('custom.purchasereturndetailsrefferedback_updated_successf'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
         $purchaseReturnDetailsRefferedBack = $this->purchaseReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetailsRefferedBack)) {
-            return $this->sendError('Purchase Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.purchase_return_details_reffered_back_not_found'));
         }
 
         $purchaseReturnDetailsRefferedBack->delete();
@@ -290,6 +290,6 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
                                                 ->with(['unit','grv_master'])
                                                 ->get();
 
-        return $this->sendResponse($items->toArray(), 'PR Details Refferedback retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.pr_details_refferedback_retrieved_successfully'));
     }
 }

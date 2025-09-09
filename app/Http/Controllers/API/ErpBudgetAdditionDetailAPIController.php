@@ -80,7 +80,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $this->erpBudgetAdditionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpBudgetAdditionDetails = $this->erpBudgetAdditionDetailRepository->all();
 
-        return $this->sendResponse($erpBudgetAdditionDetails->toArray(), 'Erp Budget Addition Details retrieved successfully');
+        return $this->sendResponse($erpBudgetAdditionDetails->toArray(), trans('custom.erp_budget_addition_details_retrieved_successfully'));
     }
 
     /**
@@ -131,7 +131,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $budgetAdditionMaster = $this->erpBudgetAdditionRepository->find($input['budgetAdditionFormAutoID']);
 
         if (empty($budgetAdditionMaster)) {
-            return $this->sendError('Budget Addition not found');
+            return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
 
@@ -141,7 +141,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             ->first();
 
         if (empty($department)) {
-            return $this->sendError('Department not found');
+            return $this->sendError(trans('custom.department_not_found'));
         }
 
         if ($department->isActive == 0) {
@@ -151,7 +151,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $companyData = Company::find($budgetAdditionMaster->companySystemID);
 
         if (empty($companyData)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
 
@@ -163,7 +163,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             ->first();
 
         if (empty($chartOfAccount)) {
-            return $this->sendError('Account Not Found', 500);
+            return $this->sendError(trans('custom.account_not_found'), 500);
         }
 
         $input['gLCode'] = $chartOfAccount->AccountCode;
@@ -191,7 +191,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         ])->first();
 
         if (!$budgetMaster) {
-            return $this->sendError('Budget is not created for selected segment and financial year');
+            return $this->sendError(trans('custom.budget_is_not_created_for_selected_segment_and_fin'));
         }
 
         $budgetDetails = Budjetdetails::where([
@@ -231,7 +231,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
 
         $budgetAdditionDetails = $this->erpBudgetAdditionDetailRepository->create($input);
 
-        return $this->sendResponse($budgetAdditionDetails->toArray(), 'Budget Addition Form Detail saved successfully');
+        return $this->sendResponse($budgetAdditionDetails->toArray(), trans('custom.budget_addition_form_detail_saved_successfully'));
     }
 
     /**
@@ -279,10 +279,10 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $erpBudgetAdditionDetail = $this->erpBudgetAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAdditionDetail)) {
-            return $this->sendError('Erp Budget Addition Detail not found');
+            return $this->sendError(trans('custom.erp_budget_addition_detail_not_found'));
         }
 
-        return $this->sendResponse($erpBudgetAdditionDetail->toArray(), 'Erp Budget Addition Detail retrieved successfully');
+        return $this->sendResponse($erpBudgetAdditionDetail->toArray(), trans('custom.erp_budget_addition_detail_retrieved_successfully'));
     }
 
     /**
@@ -341,12 +341,12 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $erpBudgetAdditionDetail = $this->erpBudgetAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAdditionDetail)) {
-            return $this->sendError('Erp Budget Addition Detail not found');
+            return $this->sendError(trans('custom.erp_budget_addition_detail_not_found'));
         }
 
         $erpBudgetAdditionDetail = $this->erpBudgetAdditionDetailRepository->update($input, $id);
 
-        return $this->sendResponse($erpBudgetAdditionDetail->toArray(), 'ErpBudgetAdditionDetail updated successfully');
+        return $this->sendResponse($erpBudgetAdditionDetail->toArray(), trans('custom.erpbudgetadditiondetail_updated_successfully'));
     }
 
     /**
@@ -394,12 +394,12 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $erpBudgetAdditionDetail = $this->erpBudgetAdditionDetailRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAdditionDetail)) {
-            return $this->sendError('Erp Budget Addition Detail not found');
+            return $this->sendError(trans('custom.erp_budget_addition_detail_not_found'));
         }
 
         $erpBudgetAdditionDetail->delete();
 
-        return $this->sendResponse($id, 'Erp Budget Addition Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_budget_addition_detail_deleted_successfully'));
     }
 
     public function getDetailsByBudgetAddition(Request $request)
@@ -411,7 +411,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             ->with(['segment', 'template'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Budget Addition Form Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.budget_addition_form_detail_retrieved_successfully'));
     }
 
 }

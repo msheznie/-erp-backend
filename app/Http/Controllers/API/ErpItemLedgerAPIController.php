@@ -90,7 +90,7 @@ class ErpItemLedgerAPIController extends AppBaseController
         $this->erpItemLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpItemLedgers = $this->erpItemLedgerRepository->all();
 
-        return $this->sendResponse($erpItemLedgers->toArray(), 'Erp Item Ledgers retrieved successfully');
+        return $this->sendResponse($erpItemLedgers->toArray(), trans('custom.erp_item_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class ErpItemLedgerAPIController extends AppBaseController
 
         $erpItemLedgers = $this->erpItemLedgerRepository->create($input);
 
-        return $this->sendResponse($erpItemLedgers->toArray(), 'Erp Item Ledger saved successfully');
+        return $this->sendResponse($erpItemLedgers->toArray(), trans('custom.erp_item_ledger_saved_successfully'));
     }
 
     /**
@@ -185,10 +185,10 @@ class ErpItemLedgerAPIController extends AppBaseController
         $erpItemLedger = $this->erpItemLedgerRepository->findWithoutFail($id);
 
         if (empty($erpItemLedger)) {
-            return $this->sendError('Erp Item Ledger not found');
+            return $this->sendError(trans('custom.erp_item_ledger_not_found'));
         }
 
-        return $this->sendResponse($erpItemLedger->toArray(), 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($erpItemLedger->toArray(), trans('custom.erp_item_ledger_retrieved_successfully'));
     }
 
     /**
@@ -245,12 +245,12 @@ class ErpItemLedgerAPIController extends AppBaseController
         $erpItemLedger = $this->erpItemLedgerRepository->findWithoutFail($id);
 
         if (empty($erpItemLedger)) {
-            return $this->sendError('Erp Item Ledger not found');
+            return $this->sendError(trans('custom.erp_item_ledger_not_found'));
         }
 
         $erpItemLedger = $this->erpItemLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($erpItemLedger->toArray(), 'ErpItemLedger updated successfully');
+        return $this->sendResponse($erpItemLedger->toArray(), trans('custom.erpitemledger_updated_successfully'));
     }
 
     /**
@@ -297,12 +297,12 @@ class ErpItemLedgerAPIController extends AppBaseController
         $erpItemLedger = $this->erpItemLedgerRepository->findWithoutFail($id);
 
         if (empty($erpItemLedger)) {
-            return $this->sendError('Erp Item Ledger not found');
+            return $this->sendError(trans('custom.erp_item_ledger_not_found'));
         }
 
         $erpItemLedger->delete();
 
-        return $this->sendResponse($id, 'Erp Item Ledger deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_item_ledger_deleted_successfully'));
     }
 
     public function getErpLedger(Request $request)
@@ -358,7 +358,7 @@ class ErpItemLedgerAPIController extends AppBaseController
             'categoryTypeData' => $categoryTypeData,
             'warehouse' => $warehouse
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
     }
 
     public function generateStockLedgerReport(Request $request) {
@@ -367,7 +367,7 @@ class ErpItemLedgerAPIController extends AppBaseController
 
         $output = $this->erpItemLedgerRepository->getItemLedgerDetails($input, false);
 
-        return $this->sendResponse($output['data'], 'Item ledger record retrieved successfully');
+        return $this->sendResponse($output['data'], trans('custom.item_ledger_record_retrieved_successfully'));
     }
 
 
@@ -637,7 +637,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
 
         
 
-        return $this->sendResponse($csv, 'successfully export');
+        return $this->sendResponse($csv, trans('custom.success_export'));
     }
     else if($type == 2)
     {
@@ -650,7 +650,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         $info['currency'] = ($company->localcurrency->CurrencyCode);
         $info['unit'] = $unit->UnitShortCode;
         
-        return $this->sendResponse($info, 'Item ledger record retrieved successfully');
+        return $this->sendResponse($info, trans('custom.item_ledger_record_retrieved_successfully'));
     }
 
 }
@@ -673,7 +673,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
 
         $company = Company::find($subCompanies[0]);
         if(!isset($company)){
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
         }
         $company_name = $company->CompanyName;
 
@@ -890,7 +890,7 @@ WHERE
                 }
                 break;
             default:
-                return $this->sendError('Error Occurred');
+                return $this->sendError(trans('custom.error_occurred'));
         }
 
     }
@@ -919,7 +919,7 @@ WHERE
                 }
                 break;
             default:
-                return $this->sendError('Error Occurred!');
+                return $this->sendError(trans('custom.error_occurred_2'));
         }
     }
 
@@ -938,7 +938,7 @@ WHERE
                 }
                 break;
             default:
-                return $this->sendError('Error Occurred!');
+                return $this->sendError(trans('custom.error_occurred_2'));
         }
     }
 
@@ -958,7 +958,7 @@ WHERE
             ->select('wareHouseCode', 'wareHouseSystemCode', 'wareHouseDescription')
             ->get();
 
-        return $this->sendResponse($warehouse, 'Warehouse retrieved successfully');
+        return $this->sendResponse($warehouse, trans('custom.warehouse_retrieved_successfully'));
     }
 
     public function generateStockValuationReport(Request $request)
@@ -992,7 +992,7 @@ WHERE
 
         $company = Company::find($subCompanies[0]);
         if(!isset($company)){
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
         }
         $company_name = $company->CompanyName;
 
@@ -1110,7 +1110,7 @@ WHERE
             'company_name' => $company_name
         );
 
-        return $this->sendResponse($output, 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($output, trans('custom.erp_item_ledger_retrieved_successfully'));
 
     }
 
@@ -1154,7 +1154,7 @@ WHERE
 
         $company = Company::find($subCompanies[0]);
         if(!isset($company)){
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
         }
         $company_name = $company->CompanyName;
 
@@ -1318,7 +1318,7 @@ WHERE
         
         $company = Company::find($subCompanies[0]);
         if(!isset($company)){
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
         }
         $company_name = $company->CompanyName;
 
@@ -1534,7 +1534,7 @@ GROUP BY
 
         $company = Company::find($subCompanies[0]);
         if(!isset($company)){
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
         }
         $company_name = $company->CompanyName;
 
@@ -1898,7 +1898,7 @@ GROUP BY
         $info['curren_page'] = ($page);
         $info['currency'] = ($company->localcurrency->CurrencyCode);
         $info['unit'] = $unit->UnitShortCode;   
-        return $this->sendResponse($info, 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($info, trans('custom.erp_item_ledger_retrieved_successfully'));
 
     }
 
@@ -1935,7 +1935,7 @@ GROUP BY
         $output = array(
             'item' => $item
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
     }
 
 

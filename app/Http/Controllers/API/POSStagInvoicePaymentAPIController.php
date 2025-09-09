@@ -65,7 +65,7 @@ class POSStagInvoicePaymentAPIController extends AppBaseController
         $this->pOSStagInvoicePaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagInvoicePayments = $this->pOSStagInvoicePaymentRepository->all();
 
-        return $this->sendResponse($pOSStagInvoicePayments->toArray(), 'P O S Stag Invoice Payments retrieved successfully');
+        return $this->sendResponse($pOSStagInvoicePayments->toArray(), trans('custom.p_o_s_stag_invoice_payments_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagInvoicePaymentAPIController extends AppBaseController
 
         $pOSStagInvoicePayment = $this->pOSStagInvoicePaymentRepository->create($input);
 
-        return $this->sendResponse($pOSStagInvoicePayment->toArray(), 'P O S Stag Invoice Payment saved successfully');
+        return $this->sendResponse($pOSStagInvoicePayment->toArray(), trans('custom.p_o_s_stag_invoice_payment_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagInvoicePaymentAPIController extends AppBaseController
         $pOSStagInvoicePayment = $this->pOSStagInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagInvoicePayment)) {
-            return $this->sendError('P O S Stag Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_invoice_payment_not_found'));
         }
 
-        return $this->sendResponse($pOSStagInvoicePayment->toArray(), 'P O S Stag Invoice Payment retrieved successfully');
+        return $this->sendResponse($pOSStagInvoicePayment->toArray(), trans('custom.p_o_s_stag_invoice_payment_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagInvoicePaymentAPIController extends AppBaseController
         $pOSStagInvoicePayment = $this->pOSStagInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagInvoicePayment)) {
-            return $this->sendError('P O S Stag Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_invoice_payment_not_found'));
         }
 
         $pOSStagInvoicePayment = $this->pOSStagInvoicePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagInvoicePayment->toArray(), 'POSStagInvoicePayment updated successfully');
+        return $this->sendResponse($pOSStagInvoicePayment->toArray(), trans('custom.posstaginvoicepayment_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagInvoicePaymentAPIController extends AppBaseController
         $pOSStagInvoicePayment = $this->pOSStagInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagInvoicePayment)) {
-            return $this->sendError('P O S Stag Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_invoice_payment_not_found'));
         }
 
         $pOSStagInvoicePayment->delete();

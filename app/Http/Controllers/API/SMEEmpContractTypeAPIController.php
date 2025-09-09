@@ -65,7 +65,7 @@ class SMEEmpContractTypeAPIController extends AppBaseController
         $this->sMEEmpContractTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEEmpContractTypes = $this->sMEEmpContractTypeRepository->all();
 
-        return $this->sendResponse($sMEEmpContractTypes->toArray(), 'S M E Emp Contract Types retrieved successfully');
+        return $this->sendResponse($sMEEmpContractTypes->toArray(), trans('custom.s_m_e_emp_contract_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEEmpContractTypeAPIController extends AppBaseController
 
         $sMEEmpContractType = $this->sMEEmpContractTypeRepository->create($input);
 
-        return $this->sendResponse($sMEEmpContractType->toArray(), 'S M E Emp Contract Type saved successfully');
+        return $this->sendResponse($sMEEmpContractType->toArray(), trans('custom.s_m_e_emp_contract_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEEmpContractTypeAPIController extends AppBaseController
         $sMEEmpContractType = $this->sMEEmpContractTypeRepository->findWithoutFail($id);
 
         if (empty($sMEEmpContractType)) {
-            return $this->sendError('S M E Emp Contract Type not found');
+            return $this->sendError(trans('custom.s_m_e_emp_contract_type_not_found'));
         }
 
-        return $this->sendResponse($sMEEmpContractType->toArray(), 'S M E Emp Contract Type retrieved successfully');
+        return $this->sendResponse($sMEEmpContractType->toArray(), trans('custom.s_m_e_emp_contract_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEEmpContractTypeAPIController extends AppBaseController
         $sMEEmpContractType = $this->sMEEmpContractTypeRepository->findWithoutFail($id);
 
         if (empty($sMEEmpContractType)) {
-            return $this->sendError('S M E Emp Contract Type not found');
+            return $this->sendError(trans('custom.s_m_e_emp_contract_type_not_found'));
         }
 
         $sMEEmpContractType = $this->sMEEmpContractTypeRepository->update($input, $id);
 
-        return $this->sendResponse($sMEEmpContractType->toArray(), 'SMEEmpContractType updated successfully');
+        return $this->sendResponse($sMEEmpContractType->toArray(), trans('custom.smeempcontracttype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEEmpContractTypeAPIController extends AppBaseController
         $sMEEmpContractType = $this->sMEEmpContractTypeRepository->findWithoutFail($id);
 
         if (empty($sMEEmpContractType)) {
-            return $this->sendError('S M E Emp Contract Type not found');
+            return $this->sendError(trans('custom.s_m_e_emp_contract_type_not_found'));
         }
 
         $sMEEmpContractType->delete();

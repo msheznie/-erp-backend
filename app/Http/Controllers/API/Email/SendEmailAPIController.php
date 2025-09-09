@@ -47,6 +47,6 @@ class SendEmailAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse([], 'successfully sent '. $count . ' emails');
+        return $this->sendResponse([], trans('custom.successfully_sent'). $count . ' emails');
     }
 }

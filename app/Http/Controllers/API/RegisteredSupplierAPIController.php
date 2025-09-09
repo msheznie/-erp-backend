@@ -65,7 +65,7 @@ class RegisteredSupplierAPIController extends AppBaseController
         $this->registeredSupplierRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registeredSuppliers = $this->registeredSupplierRepository->all();
 
-        return $this->sendResponse($registeredSuppliers->toArray(), 'Registered Suppliers retrieved successfully');
+        return $this->sendResponse($registeredSuppliers->toArray(), trans('custom.registered_suppliers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class RegisteredSupplierAPIController extends AppBaseController
 
         $registeredSupplier = $this->registeredSupplierRepository->create($input);
 
-        return $this->sendResponse($registeredSupplier->toArray(), 'Registered Supplier saved successfully');
+        return $this->sendResponse($registeredSupplier->toArray(), trans('custom.registered_supplier_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class RegisteredSupplierAPIController extends AppBaseController
         $registeredSupplier = $this->registeredSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredSupplier)) {
-            return $this->sendError('Registered Supplier not found');
+            return $this->sendError(trans('custom.registered_supplier_not_found'));
         }
 
-        return $this->sendResponse($registeredSupplier->toArray(), 'Registered Supplier retrieved successfully');
+        return $this->sendResponse($registeredSupplier->toArray(), trans('custom.registered_supplier_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class RegisteredSupplierAPIController extends AppBaseController
         $registeredSupplier = $this->registeredSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredSupplier)) {
-            return $this->sendError('Registered Supplier not found');
+            return $this->sendError(trans('custom.registered_supplier_not_found'));
         }
 
         $registeredSupplier = $this->registeredSupplierRepository->update($input, $id);
 
-        return $this->sendResponse($registeredSupplier->toArray(), 'RegisteredSupplier updated successfully');
+        return $this->sendResponse($registeredSupplier->toArray(), trans('custom.registeredsupplier_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class RegisteredSupplierAPIController extends AppBaseController
         $registeredSupplier = $this->registeredSupplierRepository->findWithoutFail($id);
 
         if (empty($registeredSupplier)) {
-            return $this->sendError('Registered Supplier not found');
+            return $this->sendError(trans('custom.registered_supplier_not_found'));
         }
 
         $registeredSupplier->delete();

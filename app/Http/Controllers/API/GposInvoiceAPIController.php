@@ -91,7 +91,7 @@ class GposInvoiceAPIController extends AppBaseController
         $this->gposInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gposInvoices = $this->gposInvoiceRepository->all();
 
-        return $this->sendResponse($gposInvoices->toArray(), 'Gpos Invoices retrieved successfully');
+        return $this->sendResponse($gposInvoices->toArray(), trans('custom.gpos_invoices_retrieved_successfully'));
     }
 
     /**
@@ -171,11 +171,11 @@ class GposInvoiceAPIController extends AppBaseController
             $posInvoices = $this->gposInvoiceRepository->find($invoiceId);
 
             if(empty($posInvoices)){
-                return $this->sendError('Invoice not found', 500);
+                return $this->sendError(trans('custom.invoice_not_found'), 500);
             }
 
             if($posInvoices->isCancelled == 1){
-                return $this->sendError('Invoice already canceled', 500);
+                return $this->sendError(trans('custom.invoice_already_canceled'), 500);
             }
 
             if($posInvoices->isVoid == 1){
@@ -183,7 +183,7 @@ class GposInvoiceAPIController extends AppBaseController
             }
 
             if($posInvoices->isHold == 0){
-                return $this->sendError('Cannot modify this invoice', 500);
+                return $this->sendError(trans('custom.cannot_modify_this_invoice'), 500);
             }
         }
 
@@ -192,7 +192,7 @@ class GposInvoiceAPIController extends AppBaseController
             $invoiceMasterData = array();
             $company = Company::find($input['companySystemID']);
             if (empty($company)) {
-                return $this->sendError('Company not found', 500);
+                return $this->sendError(trans('custom.company_not_found'), 500);
             }
 
             $employee = \Helper::getEmployeeInfo();
@@ -210,11 +210,11 @@ class GposInvoiceAPIController extends AppBaseController
                 ->first();
 
             if (empty($shift)) {
-                return $this->sendError('Shift not found', 500);
+                return $this->sendError(trans('custom.shift_not_found'), 500);
             }
 
             if ($shift->isClosed == 1) {
-                return $this->sendError('This shift already closed. You cannot create the invoice.', 500);
+                return $this->sendError(trans('custom.this_shift_already_closed_you_cannot_create_the_in'), 500);
             }
 
             $financialPeriod = CompanyFinancePeriod::where('companySystemID', $input['companySystemID'])
@@ -224,7 +224,7 @@ class GposInvoiceAPIController extends AppBaseController
                 ->first();
 
             if (empty($financialPeriod)) {
-                return $this->sendError('This is no active financial period. You cannot create the invoice.', 500);
+                return $this->sendError(trans('custom.this_is_no_active_financial_period_you_cannot_crea'), 500);
             }
 
             $invoiceMasterData['financialYearID'] = $financialPeriod->companyFinanceYearID;
@@ -270,11 +270,11 @@ class GposInvoiceAPIController extends AppBaseController
                 ->first();
 
             if (empty($outlet)) {
-                return $this->sendError('Outlet not found', 500);
+                return $this->sendError(trans('custom.outlet_not_found'), 500);
             }
 
             if ($outlet->isActive == 0) {
-                return $this->sendError('Outlet not active. You cannot create the invoice.', 500);
+                return $this->sendError(trans('custom.outlet_not_active_you_cannot_create_the_invoice'), 500);
             }
 
             $invoiceMasterData['wareHouseAutoID'] = $outlet->wareHouseSystemCode;
@@ -487,7 +487,7 @@ class GposInvoiceAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse($posInvoices, 'Invoice saved successfully');
+            return $this->sendResponse($posInvoices, trans('custom.invoice_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => $e . 'Error'];
@@ -538,10 +538,10 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->findWithoutFail($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Gpos Invoice not found');
+            return $this->sendError(trans('custom.gpos_invoice_not_found'));
         }
 
-        return $this->sendResponse($gposInvoice->toArray(), 'Gpos Invoice retrieved successfully');
+        return $this->sendResponse($gposInvoice->toArray(), trans('custom.gpos_invoice_retrieved_successfully'));
     }
 
     /**
@@ -598,13 +598,13 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->findWithoutFail($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.invoice_not_found'));
         }
 
         if(isset($input['isVoid']) && $input['isVoid'] == 1){
 
             if($gposInvoice->isVoid == 1){
-                return $this->sendError('Invoice already voided.');
+                return $this->sendError(trans('custom.invoice_already_voided'));
             }
             $employee = \Helper::getEmployeeInfo();
             $input['voidBy'] = $employee->employeeSystemID;
@@ -613,7 +613,7 @@ class GposInvoiceAPIController extends AppBaseController
 
         $gposInvoice = $this->gposInvoiceRepository->update(array_only($input, ['isVoid','voidBy','voidDatetime']), $id);
 
-        return $this->sendResponse($gposInvoice->toArray(), 'Invoice updated successfully');
+        return $this->sendResponse($gposInvoice->toArray(), trans('custom.invoice_updated_successfully'));
     }
 
     /**
@@ -660,12 +660,12 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->findWithoutFail($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Gpos Invoice not found');
+            return $this->sendError(trans('custom.gpos_invoice_not_found'));
         }
 
         $gposInvoice->delete();
 
-        return $this->sendResponse($id, 'Gpos Invoice deleted successfully');
+        return $this->sendResponse($id, trans('custom.gpos_invoice_deleted_successfully'));
     }
 
     public function getInvoicesByShift(Request $request)
@@ -752,7 +752,7 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->getAudit($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.invoice_not_found'));
         }
 
         if($gposInvoice->transaction_currency){
@@ -760,7 +760,7 @@ class GposInvoiceAPIController extends AppBaseController
             $gposInvoice->currencyCode = $gposInvoice->transaction_currency->CurrencyCode;
         }
 
-        return $this->sendResponse($gposInvoice->toArray(), 'Gpos Invoice retrieved successfully');
+        return $this->sendResponse($gposInvoice->toArray(), trans('custom.gpos_invoice_retrieved_successfully'));
 
     }
 
@@ -772,7 +772,7 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->getAudit($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.invoice_not_found'));
         }
 
         if($gposInvoice->transaction_currency){
@@ -787,7 +787,7 @@ class GposInvoiceAPIController extends AppBaseController
         $viewName  = 'print.pos_invoice.default';
         $html = view($viewName, $array)->render();
 
-        return $this->sendResponse($html, 'Invoice print successfully');
+        return $this->sendResponse($html, trans('custom.invoice_print_successfully'));
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

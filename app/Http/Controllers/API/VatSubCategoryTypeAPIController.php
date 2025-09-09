@@ -65,7 +65,7 @@ class VatSubCategoryTypeAPIController extends AppBaseController
         $this->vatSubCategoryTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatSubCategoryTypes = $this->vatSubCategoryTypeRepository->all();
 
-        return $this->sendResponse($vatSubCategoryTypes->toArray(), 'Vat Sub Category Types retrieved successfully');
+        return $this->sendResponse($vatSubCategoryTypes->toArray(), trans('custom.vat_sub_category_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class VatSubCategoryTypeAPIController extends AppBaseController
 
         $vatSubCategoryType = $this->vatSubCategoryTypeRepository->create($input);
 
-        return $this->sendResponse($vatSubCategoryType->toArray(), 'Vat Sub Category Type saved successfully');
+        return $this->sendResponse($vatSubCategoryType->toArray(), trans('custom.vat_sub_category_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class VatSubCategoryTypeAPIController extends AppBaseController
         $vatSubCategoryType = $this->vatSubCategoryTypeRepository->findWithoutFail($id);
 
         if (empty($vatSubCategoryType)) {
-            return $this->sendError('Vat Sub Category Type not found');
+            return $this->sendError(trans('custom.vat_sub_category_type_not_found'));
         }
 
-        return $this->sendResponse($vatSubCategoryType->toArray(), 'Vat Sub Category Type retrieved successfully');
+        return $this->sendResponse($vatSubCategoryType->toArray(), trans('custom.vat_sub_category_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class VatSubCategoryTypeAPIController extends AppBaseController
         $vatSubCategoryType = $this->vatSubCategoryTypeRepository->findWithoutFail($id);
 
         if (empty($vatSubCategoryType)) {
-            return $this->sendError('Vat Sub Category Type not found');
+            return $this->sendError(trans('custom.vat_sub_category_type_not_found'));
         }
 
         $vatSubCategoryType = $this->vatSubCategoryTypeRepository->update($input, $id);
 
-        return $this->sendResponse($vatSubCategoryType->toArray(), 'VatSubCategoryType updated successfully');
+        return $this->sendResponse($vatSubCategoryType->toArray(), trans('custom.vatsubcategorytype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class VatSubCategoryTypeAPIController extends AppBaseController
         $vatSubCategoryType = $this->vatSubCategoryTypeRepository->findWithoutFail($id);
 
         if (empty($vatSubCategoryType)) {
-            return $this->sendError('Vat Sub Category Type not found');
+            return $this->sendError(trans('custom.vat_sub_category_type_not_found'));
         }
 
         $vatSubCategoryType->delete();

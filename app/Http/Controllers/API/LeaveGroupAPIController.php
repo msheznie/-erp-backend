@@ -65,7 +65,7 @@ class LeaveGroupAPIController extends AppBaseController
         $this->leaveGroupRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveGroups = $this->leaveGroupRepository->all();
 
-        return $this->sendResponse($leaveGroups->toArray(), 'Leave Groups retrieved successfully');
+        return $this->sendResponse($leaveGroups->toArray(), trans('custom.leave_groups_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class LeaveGroupAPIController extends AppBaseController
 
         $leaveGroup = $this->leaveGroupRepository->create($input);
 
-        return $this->sendResponse($leaveGroup->toArray(), 'Leave Group saved successfully');
+        return $this->sendResponse($leaveGroup->toArray(), trans('custom.leave_group_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class LeaveGroupAPIController extends AppBaseController
         $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
 
         if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+            return $this->sendError(trans('custom.leave_group_not_found'));
         }
 
-        return $this->sendResponse($leaveGroup->toArray(), 'Leave Group retrieved successfully');
+        return $this->sendResponse($leaveGroup->toArray(), trans('custom.leave_group_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class LeaveGroupAPIController extends AppBaseController
         $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
 
         if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+            return $this->sendError(trans('custom.leave_group_not_found'));
         }
 
         $leaveGroup = $this->leaveGroupRepository->update($input, $id);
 
-        return $this->sendResponse($leaveGroup->toArray(), 'LeaveGroup updated successfully');
+        return $this->sendResponse($leaveGroup->toArray(), trans('custom.leavegroup_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class LeaveGroupAPIController extends AppBaseController
         $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
 
         if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+            return $this->sendError(trans('custom.leave_group_not_found'));
         }
 
         $leaveGroup->delete();

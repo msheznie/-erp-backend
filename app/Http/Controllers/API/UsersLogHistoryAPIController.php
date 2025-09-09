@@ -49,7 +49,7 @@ class UsersLogHistoryAPIController extends AppBaseController
         $this->usersLogHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $usersLogHistories = $this->usersLogHistoryRepository->all();
 
-        return $this->sendResponse($usersLogHistories->toArray(), 'Users Log Histories retrieved successfully');
+        return $this->sendResponse($usersLogHistories->toArray(), trans('custom.users_log_histories_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class UsersLogHistoryAPIController extends AppBaseController
 
         $usersLogHistories = $this->usersLogHistoryRepository->create($input);
 
-        return $this->sendResponse($usersLogHistories->toArray(), 'Users Log History saved successfully');
+        return $this->sendResponse($usersLogHistories->toArray(), trans('custom.users_log_history_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class UsersLogHistoryAPIController extends AppBaseController
         $usersLogHistory = $this->usersLogHistoryRepository->findWithoutFail($id);
 
         if (empty($usersLogHistory)) {
-            return $this->sendError('Users Log History not found');
+            return $this->sendError(trans('custom.users_log_history_not_found'));
         }
 
-        return $this->sendResponse($usersLogHistory->toArray(), 'Users Log History retrieved successfully');
+        return $this->sendResponse($usersLogHistory->toArray(), trans('custom.users_log_history_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class UsersLogHistoryAPIController extends AppBaseController
         $usersLogHistory = $this->usersLogHistoryRepository->findWithoutFail($id);
 
         if (empty($usersLogHistory)) {
-            return $this->sendError('Users Log History not found');
+            return $this->sendError(trans('custom.users_log_history_not_found'));
         }
 
         $usersLogHistory = $this->usersLogHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($usersLogHistory->toArray(), 'UsersLogHistory updated successfully');
+        return $this->sendResponse($usersLogHistory->toArray(), trans('custom.usersloghistory_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class UsersLogHistoryAPIController extends AppBaseController
         $usersLogHistory = $this->usersLogHistoryRepository->findWithoutFail($id);
 
         if (empty($usersLogHistory)) {
-            return $this->sendError('Users Log History not found');
+            return $this->sendError(trans('custom.users_log_history_not_found'));
         }
 
         $usersLogHistory->delete();
 
-        return $this->sendResponse($id, 'Users Log History deleted successfully');
+        return $this->sendResponse($id, trans('custom.users_log_history_deleted_successfully'));
     }
 }

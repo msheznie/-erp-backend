@@ -65,7 +65,7 @@ class HRMSJvMasterAPIController extends AppBaseController
         $this->hRMSJvMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSJvMasters = $this->hRMSJvMasterRepository->all();
 
-        return $this->sendResponse($hRMSJvMasters->toArray(), 'H R M S Jv Masters retrieved successfully');
+        return $this->sendResponse($hRMSJvMasters->toArray(), trans('custom.h_r_m_s_jv_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRMSJvMasterAPIController extends AppBaseController
 
         $hRMSJvMasters = $this->hRMSJvMasterRepository->create($input);
 
-        return $this->sendResponse($hRMSJvMasters->toArray(), 'H R M S Jv Master saved successfully');
+        return $this->sendResponse($hRMSJvMasters->toArray(), trans('custom.h_r_m_s_jv_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRMSJvMasterAPIController extends AppBaseController
         $hRMSJvMaster = $this->hRMSJvMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSJvMaster)) {
-            return $this->sendError('H R M S Jv Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_master_not_found'));
         }
 
-        return $this->sendResponse($hRMSJvMaster->toArray(), 'H R M S Jv Master retrieved successfully');
+        return $this->sendResponse($hRMSJvMaster->toArray(), trans('custom.h_r_m_s_jv_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRMSJvMasterAPIController extends AppBaseController
         $hRMSJvMaster = $this->hRMSJvMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSJvMaster)) {
-            return $this->sendError('H R M S Jv Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_master_not_found'));
         }
 
         $hRMSJvMaster = $this->hRMSJvMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSJvMaster->toArray(), 'HRMSJvMaster updated successfully');
+        return $this->sendResponse($hRMSJvMaster->toArray(), trans('custom.hrmsjvmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class HRMSJvMasterAPIController extends AppBaseController
         $hRMSJvMaster = $this->hRMSJvMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSJvMaster)) {
-            return $this->sendError('H R M S Jv Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_master_not_found'));
         }
 
         $hRMSJvMaster->delete();
 
-        return $this->sendResponse($id, 'H R M S Jv Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_jv_master_deleted_successfully'));
     }
 }

@@ -119,7 +119,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiatonApprovals)) {
-            return $this->sendError('Tender negotiation approvals not found');
+            return $this->sendError(trans('custom.tender_negotiation_approvals_not_found'));
         }
 
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->update($input, $id);
@@ -129,7 +129,7 @@ class TenderNegotiationApprovalController extends AppBaseController
             $tenderNegotiation->save();
         }
 
-        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), 'Tender negotiation approvals updated successfully');
+        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), trans('custom.tender_negotiation_approvals_updated_successfully'));
        
     }
 
@@ -170,7 +170,7 @@ class TenderNegotiationApprovalController extends AppBaseController
             $dt['status_id'] = ($status) ? $status->id : 0;
           
         }
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
     
     }
 
@@ -192,7 +192,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderMaster->save();
 
         $this->sendEmailToSuppliers($input, $tenderMaster->tender_code, $tenderMaster->title);
-        return $this->sendResponse($tenderNegotiation->toArray(), 'Tender Negotiation published successfully');
+        return $this->sendResponse($tenderNegotiation->toArray(), trans('custom.tender_negotiation_published_successfully'));
     }
 
     public function sendEmailToSuppliers($input, $code, $title) {

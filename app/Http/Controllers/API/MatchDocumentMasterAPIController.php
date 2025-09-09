@@ -133,7 +133,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $this->matchDocumentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $matchDocumentMasters = $this->matchDocumentMasterRepository->all();
 
-        return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Masters retrieved successfully');
+        return $this->sendResponse($matchDocumentMasters->toArray(), trans('custom.match_document_masters_retrieved_successfully'));
     }
 
     /**
@@ -229,7 +229,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
 
                 if (empty($paySupplierInvoiceMaster)) {
-                    return $this->sendError('Pay Supplier Invoice Master not found');
+                    return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
                 }
 
                 $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
@@ -240,17 +240,17 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->first();
 
                 if($existCheck){
-                    return $this->sendError('A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                    return $this->sendError(trans('custom.a_matching_document_for_the_selected_advanced_paym'), 500);
                 }
 
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
-                        return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                        return $this->sendError(trans('custom.selected_payment_voucher_is_not_updated_in_general'), 500);
                     }
                 } else {
-                    return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                    return $this->sendError(trans('custom.selected_payment_voucher_is_not_updated_in_general'), 500);
                 }
 
                 //when adding a new matching, checking whether advance payment more than the document value
@@ -320,7 +320,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $debitNoteMaster = DebitNote::find($input['paymentAutoID']);
                 $user_type = ($input['user_type']);
                 if (empty($debitNoteMaster)) {
-                    return $this->sendError('Debit Note not found');
+                    return $this->sendError(trans('custom.debit_note_not_found'));
                 }
                 
                 $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
@@ -331,7 +331,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->first();
 
                 if($existCheck){
-                    return $this->sendError('A matching document for the selected debit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                    return $this->sendError(trans('custom.a_matching_document_for_the_selected_debit_note_is'), 500);
                 }
 
                 //when adding a new matching, checking whether debit note added in general ledger
@@ -339,10 +339,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
-                        return $this->sendError('Selected debit note is not updated in general ledger. Please check again', 500);
+                        return $this->sendError(trans('custom.selected_debit_note_is_not_updated_in_general_ledg'), 500);
                     }
                 } else {
-                    return $this->sendError('Selected debit note is not updated in general ledger. Please check again', 500);
+                    return $this->sendError(trans('custom.selected_debit_note_is_not_updated_in_general_ledg'), 500);
                 }
 
                 //when adding a new matching, checking whether debit amount more than the document value
@@ -423,7 +423,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
 
                 if (empty($paySupplierInvoiceMaster)) {
-                    return $this->sendError('Pay Supplier Invoice Master not found');
+                    return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
                 }
 
                 $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
@@ -434,17 +434,17 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->first();
 
                 if($existCheck){
-                    return $this->sendError('A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                    return $this->sendError(trans('custom.a_matching_document_for_the_selected_advanced_paym'), 500);
                 }
 
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
-                        return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                        return $this->sendError(trans('custom.selected_payment_voucher_is_not_updated_in_general'), 500);
                     }
                 } else {
-                    return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                    return $this->sendError(trans('custom.selected_payment_voucher_is_not_updated_in_general'), 500);
                 }
 
                 //when adding a new matching, checking whether advance payment more than the document value
@@ -539,7 +539,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             
             $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
-            return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Master saved successfully');
+            return $this->sendResponse($matchDocumentMasters->toArray(), trans('custom.match_document_master_saved_successfully'));
         }
         elseif ($input['tempType'] == 'RVM') {
 
@@ -561,7 +561,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['isAutoCreateDocument'] = false;
             $matchDocumentMasters = \App\Services\API\ReceiptMatchingAPIService::createReceiptMatching($input);
             if($matchDocumentMasters['status'] == true){
-                return $this->sendResponse($matchDocumentMasters['data'], 'Match Document Master saved successfully');
+                return $this->sendResponse($matchDocumentMasters['data'], trans('custom.match_document_master_saved_successfully'));
             }else{
                 return $this->sendError($matchDocumentMasters['message'], 500);
             }
@@ -614,10 +614,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by','localcurrency','rptcurrency','supplier','customer','employee', 'payment_voucher','reciept_voucher'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
-            return $this->sendError('Match Document Master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found_1'));
         }
 
-        return $this->sendResponse($matchDocumentMaster->toArray(), 'Match Document Master retrieved successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), trans('custom.match_document_master_retrieved_successfully'));
     }
 
     /**
@@ -684,7 +684,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $user_type = $matchDocumentMaster->user_type;
 
             if (empty($matchDocumentMaster)) {
-                return $this->sendError('Match Document Master not found');
+                return $this->sendError(trans('custom.match_document_master_not_found_1'));
             }
 
             $user_type = $matchDocumentMaster->user_type;
@@ -809,7 +809,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($pvDetailExist)) {
-                        return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.matching_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
                 }
 
@@ -819,7 +819,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($pvDetailExist)) {
-                        return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.matching_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
                 }
                 $currencyValidate = CurrencyValidation::validateCurrency("payment_matching", $matchDocumentMaster);
@@ -833,7 +833,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.matching_amount_cannot_be_0'), 500, ['type' => 'confirm']);
                     }
                 }
 
@@ -844,7 +844,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.matching_amount_cannot_be_0'), 500, ['type' => 'confirm']);
                     }
                 }
 
@@ -922,7 +922,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->sum('supplierPaymentAmount');
 
                     if (($detailAmountTotTran - $input['matchBalanceAmount']) > 0.00001) {
-                        return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.detail_amount_cannot_be_greater_than_balance_amoun'), 500, ['type' => 'confirm']);
                     }
 
                     // updating flags in accounts payable ledger
@@ -1086,7 +1086,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->sum('supplierTransAmount');
 
                     if (($detailAmountTotTran - $input['matchBalanceAmount']) > 0.00001) {
-                        return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.detail_amount_cannot_be_greater_than_balance_amoun'), 500, ['type' => 'confirm']);
                     }
 
                     $details = AdvancePaymentDetails::where('matchingDocID', $id)->get();
@@ -1735,10 +1735,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                             $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                         } else {
-                                            return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                                            return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_a'), 500);
                                         }
                                     } else {
-                                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                                     }
 
                                     $taxData2 = TaxService::getInputVATGLAccount($masterData->companySystemID);
@@ -1761,10 +1761,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                                             $taxLedgerData['inputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                         } else {
-                                            return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                                            return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'), 500);
                                         }
                                     } else {
-                                        return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                                        return $this->sendError(trans('custom.cannot_confirm_input_vat_gl_account_not_configured'), 500);
                                     }
                                 }
 
@@ -1809,7 +1809,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($matchDocumentMaster->toArray(), 'Record updated successfully');
+            return $this->sendResponse($matchDocumentMaster->toArray(), trans('custom.record_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1835,7 +1835,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
                 if (empty($matchDocumentMaster)) {
-                    return $this->sendError('Match Document Master not found');
+                    return $this->sendError(trans('custom.match_document_master_not_found_1'));
                 }
 
                 $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
@@ -1883,7 +1883,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                     $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
                     if (empty($creditNoteDataUpdateCHK)) {
-                        return $this->sendError('Credit Note not found');
+                        return $this->sendError(trans('custom.credit_note_not_found'));
                     }
 
                     $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
@@ -1902,7 +1902,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($pvDetailExist)) {
-                        return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.matching_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
 
                     $currencyValidate = CurrencyValidation::validateCurrency("receipt_matching", $matchDocumentMaster);
@@ -1922,7 +1922,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     ->count();
 
                                 if ($checkAmount > 0) {
-                                    return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                                    return $this->sendError(trans('custom.matching_amount_cannot_be_0'), 500, ['type' => 'confirm']);
                                 }
                             } elseif ($row['addedDocumentSystemID'] == 19) {
                                 $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
@@ -1931,7 +1931,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     ->count();
 
                                 if ($checkAmount > 0) {
-                                    return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+                                    return $this->sendError(trans('custom.matching_amount_cannot_be_0'), 500, ['type' => 'confirm']);
                                 }
                             }
                         }
@@ -1941,7 +1941,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         ->sum('receiveAmountTrans');
 
                     if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
-                        return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.detail_amount_cannot_be_greater_than_balance_amoun'), 500, ['type' => 'confirm']);
                     }
 
                     if ($input['matchingDocCode'] == 0) {
@@ -2102,7 +2102,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
                         if (empty($creditNoteDataUpdate)) {
-                            return $this->sendError('Credit Note not found');
+                            return $this->sendError(trans('custom.credit_note_not_found'));
                         }
 
                         //when adding a new matching, checking whether debit amount more than the document value
@@ -2685,12 +2685,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
-            return $this->sendError('Match Document Master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found_1'));
         }
 
         $matchDocumentMaster->delete();
 
-        return $this->sendResponse($id, 'Match Document Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.match_document_master_deleted_successfully'));
     }
 
     public function getMatchDocumentMasterFormData(Request $request)
@@ -2749,7 +2749,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getMatchDocumentMasterView(Request $request)
@@ -2792,7 +2792,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching document not found');
+            return $this->sendError(trans('custom.matching_document_not_found'));
         }
 
         $decimalPlaces  = Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
@@ -3133,10 +3133,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
-            return $this->sendError('Match Document Master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found_1'));
         }
 
-        return $this->sendResponse($matchDocumentMaster, 'Data retrieved successfully');
+        return $this->sendResponse($matchDocumentMaster, trans('custom.data_retrieved_successfully'));
     }
 
     public function PaymentVoucherMatchingCancel(Request $request)
@@ -3148,11 +3148,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
         if (empty($MatchDocumentMasterData)) {
-            return $this->sendError('Match Document Master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found_1'));
         }
 
         if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
-            return $this->sendError('You cannot cancel this matching, it is confirmed');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_matching_it_is_confirmed'));
         }
 
 
@@ -3161,7 +3161,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($pvDetailExist)) {
-            return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
+            return $this->sendError(trans('custom.cannot_cancel_delete_the_invoices_added_to_the_det'));
         }
 
         $poAdvanceRequestDetailExist = AdvancePaymentDetails::select(DB::raw('matchingDocID'))
@@ -3169,7 +3169,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         ->first();
 
         if (!empty($poAdvanceRequestDetailExist)) {
-            return $this->sendError('Cannot cancel. Delete the po advance requests added to the detail and try again.');
+            return $this->sendError(trans('custom.cannot_cancel_delete_the_po_advance_requests_added'));
         }
 
         if ($MatchDocumentMasterData->matchingDocCode != '0') {
@@ -3198,7 +3198,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             AuditTrial::insertAuditTrial('MatchDocumentMaster',$matchDocumentMasterAutoID,$input['comment'],'Cancelled');
 
-            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully');
+            return $this->sendResponse($MatchDocumentMasterData, trans('custom.document_canceled_successfully'));
         } else {
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
@@ -3529,7 +3529,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             ( ROUND( BalanceAmt, 1 ) > 0 )) as final");
         }
 
-        return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
+        return $this->sendResponse($invoiceMaster, trans('custom.data_retrived_successfully'));
     }
 
     public function getReceiptVoucherPullingDetail(Request $request)
@@ -3546,13 +3546,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching document not found');
+            return $this->sendError(trans('custom.matching_document_not_found'));
         }
 
        if($matchDocumentMasterData->documentSystemID == 19) {
            $creditNoteDetails = CreditNoteDetails::where('creditNoteAutoID',$matchDocumentMasterData->PayMasterAutoId)->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)->first();
            if (empty($creditNoteDetails)) {
-               return $this->sendError('Credit Note Details not found');
+               return $this->sendError(trans('custom.credit_note_details_not_found'));
            }
            $serviceLineSystemID = $creditNoteDetails->serviceLineSystemID;
        }
@@ -3567,7 +3567,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             if (empty($directReceiptDetails)) {
-                return $this->sendError('Direct Receipt Details not found');
+                return $this->sendError(trans('custom.direct_receipt_details_not_found'));
             }
             $serviceLineSystemID = $directReceiptDetails->serviceLineSystemID;
 
@@ -3742,11 +3742,11 @@ ORDER BY
         $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
         if (empty($MatchDocumentMasterData)) {
-            return $this->sendError('Match Document Master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found_1'));
         }
 
         if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
-            return $this->sendError('You cannot cancel this matching, it is confirmed');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_matching_it_is_confirmed'));
         }
 
 
@@ -3755,7 +3755,7 @@ ORDER BY
             ->first();
 
         if (!empty($pvDetailExist)) {
-            return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
+            return $this->sendError(trans('custom.cannot_cancel_delete_the_invoices_added_to_the_det'));
         }
 
         if ($MatchDocumentMasterData->matchingDocCode != '0') {
@@ -3782,7 +3782,7 @@ ORDER BY
         }
 
         if ($deleteDocument) {
-            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully ');
+            return $this->sendResponse($MatchDocumentMasterData, trans('custom.document_canceled_successfully_1'));
         } else {
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
@@ -3792,11 +3792,12 @@ ORDER BY
     public function printPaymentMatching(Request $request)
     {
         $id = $request->get('matchDocumentMasterAutoID');
+        $lang = $request->get('lang', 'en');
 
         $MatchDocumentMasterData = MatchDocumentMaster::find($id);
 
         if (empty($MatchDocumentMasterData)) {
-            return $this->sendError('Match document master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found'));
         }
 
         $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail' => function($query){
@@ -3804,26 +3805,44 @@ ORDER BY
         }])->first();
 
         if (empty($matchDocumentRecord)) {
-            return $this->sendError('Match document master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found'));
         }
         $transDecimal = 2;
         if ($matchDocumentRecord->transactioncurrency) {
             $transDecimal = $matchDocumentRecord->transactioncurrency->DecimalPlaces;
         }
 
-
         $order = array(
             'masterdata' => $matchDocumentRecord,
-            'transDecimal' => $transDecimal
+            'transDecimal' => $transDecimal,
+            'lang' => $lang
         );
 
         $time = strtotime("now");
         $fileName = 'payment_matching_' . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.payment_matching', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function deleteAllRVMDetails(Request $request)
@@ -3835,11 +3854,11 @@ ORDER BY
         $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
         if (empty($MatchDocumentMasterData)) {
-            return $this->sendError('Match document master not found');
+            return $this->sendError(trans('custom.match_document_master_not_found'));
         }
 
         if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
-            return $this->sendError('You cannot delete the detail, Document already confirmed');
+            return $this->sendError(trans('custom.you_cannot_delete_the_detail_document_already_conf'));
         }
 
 
@@ -3863,7 +3882,7 @@ ORDER BY
             }
         }
 
-        return $this->sendResponse($matchDocumentMasterAutoID, 'Details deleted successfully');
+        return $this->sendResponse($matchDocumentMasterAutoID, trans('custom.details_deleted_successfully'));
     }
 
     public function amendReceiptMatchingReview(Request $request)
@@ -3880,7 +3899,7 @@ ORDER BY
 
 
         if (empty($masterData)) {
-            return $this->sendError('Document not found');
+            return $this->sendError(trans('custom.document_not_found'));
         }
 
         if($masterData->documentSystemID == 19  || $masterData->documentSystemID == 21){
@@ -3890,12 +3909,12 @@ ORDER BY
         }
 
         if ($masterData->matchingConfirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this '.$documentName.' Document, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$documentName.' Document, it is not confirmed');
         }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',70)->exists();
         if ($isAPIDocument){
-            return $this->sendError('The auto-generated documents cannot be amended.');
+            return $this->sendError(trans('custom.the_autogenerated_documents_cannot_be_amended'));
         }
 
         $matchingMasterID = $id;

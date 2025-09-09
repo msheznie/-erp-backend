@@ -703,13 +703,13 @@ class BankLedgerAPIController extends AppBaseController
 
     public function pvSupplierPrint(Request $request)
     {
-
-        $id = 76605;
+        $id = $request->get('id', 76605); // Get ID from request, default to 76605
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $PaySupplierInvoiceMasterData = PaySupplierInvoiceMaster::find($id);
 
         if (empty($PaySupplierInvoiceMasterData)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
@@ -756,16 +756,39 @@ class BankLedgerAPIController extends AppBaseController
             'rptDecimal' => $rptDecimal,
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
-            'advancePayDetailTotTra' => $advancePayDetailTotTra
+            'advancePayDetailTotTra' => $advancePayDetailTotTra,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'payment_voucher_' . $id . '_' . $time . '.pdf';
-        $html = view('print.payment_remittance_report_treasury_email', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.payment_remittance_report_treasury_email', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in pvSupplierPrint: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
 
     }
 
@@ -799,7 +822,7 @@ class BankLedgerAPIController extends AppBaseController
 
                 $bankAccountAutoID = $entity->BPVAccount;
             } else {
-                return $this->sendError('Error', 500);
+                return $this->sendError(trans('custom.error'), 500);
             }
 
 
@@ -860,7 +883,7 @@ class BankLedgerAPIController extends AppBaseController
                 $this->paySupplierInvoiceMasterRepository->update($updateArray, $id);
                 $entity = $this->paySupplierInvoiceMasterRepository->find($id);
             }
-            return $this->sendResponse($entity->toArray(), 'Successfully updated');
+            return $this->sendResponse($entity->toArray(), trans('custom.successfully_updated'));
         } else {
             return $this->sendError(trans('custom.error'), 500);
         }
@@ -2239,7 +2262,7 @@ class BankLedgerAPIController extends AppBaseController
             DB::rollback();
             return ['success' => false, 'message' => $e . trans('custom.error')];
         }
-        // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+        // return $this->sendResponse($bankLedger->toArray(), trans('custom.updated_successfully'));
     }
 
     public function printChequeItems(Request $request)

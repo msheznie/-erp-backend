@@ -77,7 +77,7 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
         $this->depreciationMasterReferredHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $depreciationMasterReferredHistories = $this->depreciationMasterReferredHistoryRepository->all();
 
-        return $this->sendResponse($depreciationMasterReferredHistories->toArray(), 'Depreciation Master Referred Histories retrieved successfully');
+        return $this->sendResponse($depreciationMasterReferredHistories->toArray(), trans('custom.depreciation_master_referred_histories_retrieved_s'));
     }
 
     /**
@@ -124,7 +124,7 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
 
         $depreciationMasterReferredHistories = $this->depreciationMasterReferredHistoryRepository->create($input);
 
-        return $this->sendResponse($depreciationMasterReferredHistories->toArray(), 'Depreciation Master Referred History saved successfully');
+        return $this->sendResponse($depreciationMasterReferredHistories->toArray(), trans('custom.depreciation_master_referred_history_saved_success'));
     }
 
     /**
@@ -171,10 +171,10 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
         $depreciationMasterReferredHistory = $this->depreciationMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationMasterReferredHistory)) {
-            return $this->sendError('Depreciation Master Referred History not found');
+            return $this->sendError(trans('custom.depreciation_master_referred_history_not_found'));
         }
 
-        return $this->sendResponse($depreciationMasterReferredHistory->toArray(), 'Depreciation Master Referred History retrieved successfully');
+        return $this->sendResponse($depreciationMasterReferredHistory->toArray(), trans('custom.depreciation_master_referred_history_retrieved_suc'));
     }
 
     /**
@@ -231,12 +231,12 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
         $depreciationMasterReferredHistory = $this->depreciationMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationMasterReferredHistory)) {
-            return $this->sendError('Depreciation Master Referred History not found');
+            return $this->sendError(trans('custom.depreciation_master_referred_history_not_found'));
         }
 
         $depreciationMasterReferredHistory = $this->depreciationMasterReferredHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($depreciationMasterReferredHistory->toArray(), 'DepreciationMasterReferredHistory updated successfully');
+        return $this->sendResponse($depreciationMasterReferredHistory->toArray(), trans('custom.depreciationmasterreferredhistory_updated_successf'));
     }
 
     /**
@@ -283,12 +283,12 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
         $depreciationMasterReferredHistory = $this->depreciationMasterReferredHistoryRepository->findWithoutFail($id);
 
         if (empty($depreciationMasterReferredHistory)) {
-            return $this->sendError('Depreciation Master Referred History not found');
+            return $this->sendError(trans('custom.depreciation_master_referred_history_not_found'));
         }
 
         $depreciationMasterReferredHistory->delete();
 
-        return $this->sendResponse($id, 'Depreciation Master Referred History deleted successfully');
+        return $this->sendResponse($id, trans('custom.depreciation_master_referred_history_deleted_succe'));
     }
 
     public function getAllDepreciationAmendHistory(Request $request)
@@ -344,10 +344,10 @@ class DepreciationMasterReferredHistoryAPIController extends AppBaseController
     {
         $fixedAssetDepreciationMaster = $this->depreciationMasterReferredHistoryRepository->with(['confirmed_by'])->findWithoutFail($request->depMasterAutoID);
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), trans('custom.fixed_asset_master_retrieved_successfully'));
 
     }
 

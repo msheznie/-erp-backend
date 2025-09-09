@@ -52,7 +52,7 @@ class TaxAuthorityAPIController extends AppBaseController
         $this->taxAuthorityRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxAuthorities = $this->taxAuthorityRepository->all();
 
-        return $this->sendResponse($taxAuthorities->toArray(), 'Tax Authorities retrieved successfully');
+        return $this->sendResponse($taxAuthorities->toArray(), trans('custom.tax_authorities_retrieved_successfully'));
     }
 
     /**
@@ -82,7 +82,7 @@ class TaxAuthorityAPIController extends AppBaseController
 
         $taxAuthorities = $this->taxAuthorityRepository->create($input);
 
-        return $this->sendResponse($taxAuthorities->toArray(), 'Tax Authority saved successfully');
+        return $this->sendResponse($taxAuthorities->toArray(), trans('custom.tax_authority_saved_successfully'));
     }
 
     /**
@@ -99,10 +99,10 @@ class TaxAuthorityAPIController extends AppBaseController
         $taxAuthority = $this->taxAuthorityRepository->findWithoutFail($id);
 
         if (empty($taxAuthority)) {
-            return $this->sendError('Tax Authority not found');
+            return $this->sendError(trans('custom.tax_authority_not_found'));
         }
 
-        return $this->sendResponse($taxAuthority->toArray(), 'Tax Authority retrieved successfully');
+        return $this->sendResponse($taxAuthority->toArray(), trans('custom.tax_authority_retrieved_successfully'));
     }
 
     /**
@@ -123,12 +123,12 @@ class TaxAuthorityAPIController extends AppBaseController
         $taxAuthority = $this->taxAuthorityRepository->findWithoutFail($id);
 
         if (empty($taxAuthority)) {
-            return $this->sendError('Tax Authority not found');
+            return $this->sendError(trans('custom.tax_authority_not_found'));
         }
 
         $taxAuthority = $this->taxAuthorityRepository->update($input, $id);
 
-        return $this->sendResponse($taxAuthority->toArray(), 'TaxAuthority updated successfully');
+        return $this->sendResponse($taxAuthority->toArray(), trans('custom.taxauthority_updated_successfully'));
     }
 
     /**
@@ -145,18 +145,18 @@ class TaxAuthorityAPIController extends AppBaseController
         $taxAuthority = $this->taxAuthorityRepository->findWithoutFail($id);
 
         if (empty($taxAuthority)) {
-            return $this->sendError('Tax Authority not found');
+            return $this->sendError(trans('custom.tax_authority_not_found'));
         }
 
         $isAssigned = TaxAuthority::where('taxAuthourityMasterID',$id)->whereHas('tax')->exists();
 
         if($isAssigned){
-            return $this->sendError('Cannot delete. Tax authority is assigned to a tax.');
+            return $this->sendError(trans('custom.cannot_delete_tax_authority_is_assigned_to_a_tax'));
         }
 
         $taxAuthority->delete();
 
-        return $this->sendResponse($id, 'Tax Authority deleted successfully');
+        return $this->sendResponse($id, trans('custom.tax_authority_deleted_successfully'));
     }
 
     public function getTaxAuthorityDatatable(Request $request)
@@ -224,18 +224,18 @@ class TaxAuthorityAPIController extends AppBaseController
             'chartOfAccount' => $chartOfAccount,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAuthorityByCompany(Request $request)
     {
         $output = TaxAuthority::where('companySystemID', $request->companySystemID)->get();
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAccountByAuthority(Request $request)
     {
         $output = TaxAuthority::where('taxAuthourityMasterID', $request->taxAuthourityMasterID)->first();
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

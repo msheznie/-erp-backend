@@ -75,7 +75,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $this->finalReturnIncomeReportsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), trans('custom.final_return_income_reports_retrieved_successfully'));
     }
 
     /**
@@ -153,7 +153,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $tempRequest = new Request(['id' => $reportID]);
         $this->syncGLrecords($tempRequest);
 
-        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports saved successfully');
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), trans('custom.final_return_income_reports_saved_successfully'));
     }
 
     /**
@@ -201,10 +201,10 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReports)) {
-            return $this->sendError('Final Return Income Reports not found');
+            return $this->sendError(trans('custom.final_return_income_reports_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), trans('custom.final_return_income_reports_retrieved_successfully'));
     }
 
     /**
@@ -271,12 +271,12 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReports)) {
-            return $this->sendError('Final Return Income Reports not found');
+            return $this->sendError(trans('custom.final_return_income_reports_not_found'));
         }
 
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'FinalReturnIncomeReports updated successfully');
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), trans('custom.finalreturnincomereports_updated_successfully'));
     }
 
     /**
@@ -324,12 +324,12 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReports)) {
-            return $this->sendError('Final Return Income Reports not found');
+            return $this->sendError(trans('custom.final_return_income_reports_not_found'));
         }
 
         $finalReturnIncomeReports->delete();
 
-        return $this->sendResponse($finalReturnIncomeReports, 'Final Return Income Reports deleted successfully');
+        return $this->sendResponse($finalReturnIncomeReports, trans('custom.final_return_income_reports_deleted_successfully'));
     }
 
     public function getReportList(Request $request)

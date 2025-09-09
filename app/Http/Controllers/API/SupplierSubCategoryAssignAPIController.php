@@ -49,7 +49,7 @@ class SupplierSubCategoryAssignAPIController extends AppBaseController
         $this->supplierSubCategoryAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierSubCategoryAssigns = $this->supplierSubCategoryAssignRepository->all();
 
-        return $this->sendResponse($supplierSubCategoryAssigns->toArray(), 'Supplier Sub Category Assigns retrieved successfully');
+        return $this->sendResponse($supplierSubCategoryAssigns->toArray(), trans('custom.supplier_sub_category_assigns_retrieved_successful'));
     }
 
     /**
@@ -66,7 +66,7 @@ class SupplierSubCategoryAssignAPIController extends AppBaseController
 
         $supplierSubCategoryAssigns = $this->supplierSubCategoryAssignRepository->create($input);
 
-        return $this->sendResponse($supplierSubCategoryAssigns->toArray(), 'Supplier Sub Category Assign saved successfully');
+        return $this->sendResponse($supplierSubCategoryAssigns->toArray(), trans('custom.supplier_sub_category_assign_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class SupplierSubCategoryAssignAPIController extends AppBaseController
         $supplierSubCategoryAssign = $this->supplierSubCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($supplierSubCategoryAssign)) {
-            return $this->sendError('Supplier Sub Category Assign not found');
+            return $this->sendError(trans('custom.supplier_sub_category_assign_not_found'));
         }
 
-        return $this->sendResponse($supplierSubCategoryAssign->toArray(), 'Supplier Sub Category Assign retrieved successfully');
+        return $this->sendResponse($supplierSubCategoryAssign->toArray(), trans('custom.supplier_sub_category_assign_retrieved_successfull'));
     }
 
     /**
@@ -106,12 +106,12 @@ class SupplierSubCategoryAssignAPIController extends AppBaseController
         $supplierSubCategoryAssign = $this->supplierSubCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($supplierSubCategoryAssign)) {
-            return $this->sendError('Supplier Sub Category Assign not found');
+            return $this->sendError(trans('custom.supplier_sub_category_assign_not_found'));
         }
 
         $supplierSubCategoryAssign = $this->supplierSubCategoryAssignRepository->update($input, $id);
 
-        return $this->sendResponse($supplierSubCategoryAssign->toArray(), 'SupplierSubCategoryAssign updated successfully');
+        return $this->sendResponse($supplierSubCategoryAssign->toArray(), trans('custom.suppliersubcategoryassign_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class SupplierSubCategoryAssignAPIController extends AppBaseController
         $supplierSubCategoryAssign = $this->supplierSubCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($supplierSubCategoryAssign)) {
-            return $this->sendError('Supplier Sub Category Assign not found');
+            return $this->sendError(trans('custom.supplier_sub_category_assign_not_found'));
         }
 
         $supplierSubCategoryAssign->delete();
 
-        return $this->sendResponse($id, 'Supplier Sub Category Assign deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_sub_category_assign_deleted_successfully'));
     }
 }

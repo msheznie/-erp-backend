@@ -76,7 +76,7 @@ class DocumentEmailNotificationMasterAPIController extends AppBaseController
         $this->documentEmailNotificationMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentEmailNotificationMasters = $this->documentEmailNotificationMasterRepository->all();
 
-        return $this->sendResponse($documentEmailNotificationMasters->toArray(), 'Document Email Notification Masters retrieved successfully');
+        return $this->sendResponse($documentEmailNotificationMasters->toArray(), trans('custom.document_email_notification_masters_retrieved_succ'));
     }
 
     /**
@@ -123,7 +123,7 @@ class DocumentEmailNotificationMasterAPIController extends AppBaseController
 
         $documentEmailNotificationMasters = $this->documentEmailNotificationMasterRepository->create($input);
 
-        return $this->sendResponse($documentEmailNotificationMasters->toArray(), 'Document Email Notification Master saved successfully');
+        return $this->sendResponse($documentEmailNotificationMasters->toArray(), trans('custom.document_email_notification_master_saved_successfu'));
     }
 
     /**
@@ -170,10 +170,10 @@ class DocumentEmailNotificationMasterAPIController extends AppBaseController
         $documentEmailNotificationMaster = $this->documentEmailNotificationMasterRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationMaster)) {
-            return $this->sendError('Document Email Notification Master not found');
+            return $this->sendError(trans('custom.document_email_notification_master_not_found'));
         }
 
-        return $this->sendResponse($documentEmailNotificationMaster->toArray(), 'Document Email Notification Master retrieved successfully');
+        return $this->sendResponse($documentEmailNotificationMaster->toArray(), trans('custom.document_email_notification_master_retrieved_succe'));
     }
 
     /**
@@ -230,12 +230,12 @@ class DocumentEmailNotificationMasterAPIController extends AppBaseController
         $documentEmailNotificationMaster = $this->documentEmailNotificationMasterRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationMaster)) {
-            return $this->sendError('Document Email Notification Master not found');
+            return $this->sendError(trans('custom.document_email_notification_master_not_found'));
         }
 
         $documentEmailNotificationMaster = $this->documentEmailNotificationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($documentEmailNotificationMaster->toArray(), 'DocumentEmailNotificationMaster updated successfully');
+        return $this->sendResponse($documentEmailNotificationMaster->toArray(), trans('custom.documentemailnotificationmaster_updated_successful'));
     }
 
     /**
@@ -282,11 +282,11 @@ class DocumentEmailNotificationMasterAPIController extends AppBaseController
         $documentEmailNotificationMaster = $this->documentEmailNotificationMasterRepository->findWithoutFail($id);
 
         if (empty($documentEmailNotificationMaster)) {
-            return $this->sendError('Document Email Notification Master not found');
+            return $this->sendError(trans('custom.document_email_notification_master_not_found'));
         }
 
         $documentEmailNotificationMaster->delete();
 
-        return $this->sendResponse($id, 'Document Email Notification Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_email_notification_master_deleted_success'));
     }
 }

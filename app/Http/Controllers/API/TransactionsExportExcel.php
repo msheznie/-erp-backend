@@ -276,7 +276,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = collect($projectID)->pluck('id');
 
                 $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID, $projectID);
-                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry);
+                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '12':
@@ -499,7 +499,7 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
             default:
-                return $this->sendResponse(array(), 'export failed');
+                return $this->sendResponse(array(), trans('custom.export_failed'));
         }
 
         $companyID = isset($input['companyId']) ? $input['companyId']: null;

@@ -84,7 +84,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $this->eRPAssetTransferRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetTransfers = $this->eRPAssetTransferRepository->all();
 
-        return $this->sendResponse($eRPAssetTransfers->toArray(), 'E R P Asset Transfers retrieved successfully');
+        return $this->sendResponse($eRPAssetTransfers->toArray(), trans('custom.e_r_p_asset_transfers_retrieved_successfully'));
     }
 
     /**
@@ -218,10 +218,10 @@ class ERPAssetTransferAPIController extends AppBaseController
             $input['updated_user_id'] = \Helper::getEmployeeSystemID();
             $eRPAssetTransfer = $this->eRPAssetTransferRepository->create($input);
             DB::commit();
-            return $this->sendResponse($eRPAssetTransfer->toArray(), 'Asset Transfer saved successfully');
+            return $this->sendResponse($eRPAssetTransfer->toArray(), trans('custom.asset_transfer_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error in  Asset Transfer create process');
+            return $this->sendError(trans('custom.error_in_asset_transfer_create_process'));
         }
     }
 
@@ -269,10 +269,10 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
 
-        return $this->sendResponse($eRPAssetTransfer->toArray(), 'E R P Asset Transfer retrieved successfully');
+        return $this->sendResponse($eRPAssetTransfer->toArray(), trans('custom.e_r_p_asset_transfer_retrieved_successfully'));
     }
 
     /**
@@ -330,7 +330,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
 
         
@@ -374,11 +374,11 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         if(($input['type'] == 2  || $input['type'] == 1 || $input['type'] == 3) && $input['serviceLineSystemID'] == 0) {
-            return $this->sendError('Segment cannot be null. Select a segment and try again', 500);
+            return $this->sendError(trans('custom.segment_cannot_be_null_select_a_segment_and_try_ag'), 500);
         }
 
         if(($input['type'] == 2 || $input['type'] == 1) && $input['location'] == 0) {
-            return $this->sendError('Location required cannot be null. Select a location and try again', 500);
+            return $this->sendError(trans('custom.location_required_cannot_be_null_select_a_location'), 500);
         }
 
         if(isset( $input['serviceLineSystemID'])) {
@@ -468,13 +468,13 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
         $eRPAssetTransfer->delete();
         $AssetTransferDetail = new ERPAssetTransferDetail();
         $AssetTransferDetail->where('erp_fa_fa_asset_transfer_id', $id)
             ->delete();
-        return $this->sendResponse($id, 'Asset Transfer  deleted successfully');
+        return $this->sendResponse($id, trans('custom.asset_transfer_deleted_successfully'));
     }
 
     public function getAllAssetTransferList(Request $request)
@@ -635,7 +635,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $data['checkBudget'] = $checkBudget->isYesNO;
         }
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
     }
     public function getAssetDropPR(Request $request)
     {
@@ -743,10 +743,10 @@ class ERPAssetTransferAPIController extends AppBaseController
         $assetTransfer = $this->eRPAssetTransferRepository->getAudit($id);
 
         if (empty($assetTransfer)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
-        return $this->sendResponse($assetTransfer, 'Data retrieved successfully');
+        return $this->sendResponse($assetTransfer, trans('custom.data_retrieved_successfully'));
     }
     public function assetTransferReopen(Request $request)
     {
@@ -756,19 +756,19 @@ class ERPAssetTransferAPIController extends AppBaseController
         $assetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
         $emails = array();
         if (empty($assetTransfer)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
         if ($assetTransfer->approved_yn == 1) {
-            return $this->sendError('You cannot reopen this Asset Transfer it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_alread_1'));
         }
 
         if ($assetTransfer->current_level_no > 1) {
-            return $this->sendError('You cannot reopen this Asset Transfer it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_alread'));
         }
 
         if ($assetTransfer->confirmed_yn == 0) {
-            return $this->sendError('You cannot reopen this Asset Transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_not_co'));
         }
 
         $updateInput = [
@@ -842,7 +842,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial(103, $id, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($assetTransfer->toArray(), 'Asset Transfer reopened successfully');
+        return $this->sendResponse($assetTransfer->toArray(), trans('custom.asset_transfer_reopened_successfully'));
     }
 
     public function amendAssetTrasfer(Request $request)
@@ -853,11 +853,11 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         $assetTransferMasterData = ERPAssetTransfer::find($assetTransferAutoID);
         if (empty($assetTransferMasterData)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
         if ($assetTransferMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this asset transfer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_asset_transfer'));
         }
 
         $assetTransferArray = $assetTransferMasterData->toArray();
@@ -906,7 +906,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $assetTransferMasterData->current_level_no = 1;
             $assetTransferMasterData->save();
         }
-        return $this->sendResponse($assetTransferMasterData->toArray(), 'Asset Transfer amend successfully');
+        return $this->sendResponse($assetTransferMasterData->toArray(), trans('custom.asset_transfer_amend_successfully'));
     }
 
     public function assetStatus(Request $request)
@@ -1256,7 +1256,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             'from_employees' => $fromEmployeeList
         ];
 
-        return $this->sendResponse($data, 'Employee data reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_data_reterived_successfully'));
 
     }
 }

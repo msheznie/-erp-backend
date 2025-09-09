@@ -200,7 +200,7 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         $chartOfAccountAllocationMaster = $this->chartOfAccountAllocationMasterRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationMaster)) {
-            return $this->sendError('Chart Of Account Allocation Master not found');
+            return $this->sendError(trans('custom.chart_of_account_allocation_master_not_found'));
         }
 
         return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));

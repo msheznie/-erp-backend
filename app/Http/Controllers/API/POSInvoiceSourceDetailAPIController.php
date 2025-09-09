@@ -65,7 +65,7 @@ class POSInvoiceSourceDetailAPIController extends AppBaseController
         $this->pOSInvoiceSourceDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSInvoiceSourceDetails = $this->pOSInvoiceSourceDetailRepository->all();
 
-        return $this->sendResponse($pOSInvoiceSourceDetails->toArray(), 'P O S Invoice Source Details retrieved successfully');
+        return $this->sendResponse($pOSInvoiceSourceDetails->toArray(), trans('custom.p_o_s_invoice_source_details_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSInvoiceSourceDetailAPIController extends AppBaseController
 
         $pOSInvoiceSourceDetail = $this->pOSInvoiceSourceDetailRepository->create($input);
 
-        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), 'P O S Invoice Source Detail saved successfully');
+        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), trans('custom.p_o_s_invoice_source_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSInvoiceSourceDetailAPIController extends AppBaseController
         $pOSInvoiceSourceDetail = $this->pOSInvoiceSourceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSourceDetail)) {
-            return $this->sendError('P O S Invoice Source Detail not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_detail_not_found'));
         }
 
-        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), 'P O S Invoice Source Detail retrieved successfully');
+        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), trans('custom.p_o_s_invoice_source_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSInvoiceSourceDetailAPIController extends AppBaseController
         $pOSInvoiceSourceDetail = $this->pOSInvoiceSourceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSourceDetail)) {
-            return $this->sendError('P O S Invoice Source Detail not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_detail_not_found'));
         }
 
         $pOSInvoiceSourceDetail = $this->pOSInvoiceSourceDetailRepository->update($input, $id);
 
-        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), 'POSInvoiceSourceDetail updated successfully');
+        return $this->sendResponse($pOSInvoiceSourceDetail->toArray(), trans('custom.posinvoicesourcedetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSInvoiceSourceDetailAPIController extends AppBaseController
         $pOSInvoiceSourceDetail = $this->pOSInvoiceSourceDetailRepository->findWithoutFail($id);
 
         if (empty($pOSInvoiceSourceDetail)) {
-            return $this->sendError('P O S Invoice Source Detail not found');
+            return $this->sendError(trans('custom.p_o_s_invoice_source_detail_not_found'));
         }
 
         $pOSInvoiceSourceDetail->delete();

@@ -90,7 +90,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $this->chequeRegisterDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chequeRegisterDetails = $this->chequeRegisterDetailRepository->all();
 
-        return $this->sendResponse($chequeRegisterDetails->toArray(), 'Cheque Register Details retrieved successfully');
+        return $this->sendResponse($chequeRegisterDetails->toArray(), trans('custom.cheque_register_details_retrieved_successfully'));
     }
 
     /**
@@ -137,7 +137,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $chequeRegisterDetail = $this->chequeRegisterDetailRepository->create($input);
 
-        return $this->sendResponse($chequeRegisterDetail->toArray(), 'Cheque Register Detail saved successfully');
+        return $this->sendResponse($chequeRegisterDetail->toArray(), trans('custom.cheque_register_detail_saved_successfully'));
     }
 
     /**
@@ -184,10 +184,10 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $chequeRegisterDetail = $this->chequeRegisterDetailRepository->findWithoutFail($id);
 
         if (empty($chequeRegisterDetail)) {
-            return $this->sendError('Cheque Register Detail not found');
+            return $this->sendError(trans('custom.cheque_register_detail_not_found'));
         }
 
-        return $this->sendResponse($chequeRegisterDetail->toArray(), 'Cheque Register Detail retrieved successfully');
+        return $this->sendResponse($chequeRegisterDetail->toArray(), trans('custom.cheque_register_detail_retrieved_successfully'));
     }
 
     /**
@@ -242,12 +242,12 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         /** @var ChequeRegisterDetail $chequeRegisterDetail */
         $chequeRegisterDetail = $this->chequeRegisterDetailRepository->findWithoutFail($id);
         if (empty($chequeRegisterDetail)) {
-            return $this->sendError('Cheque Register Detail not found');
+            return $this->sendError(trans('custom.cheque_register_detail_not_found'));
         }
 
         $chequeRegister = ChequeRegister::find($chequeRegisterDetail->cheque_register_master_id);
         if (empty($chequeRegister)) {
-            return $this->sendError('Cheque Register not found');
+            return $this->sendError(trans('custom.cheque_register_not_found'));
         }
 
         $checkNoWithZero = $input['cheque_no'];
@@ -264,7 +264,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $chequeRegisterDetail = $this->chequeRegisterDetailRepository->update($input, $id);
 
-        return $this->sendResponse($chequeRegisterDetail->toArray(), 'Cheque Register Detail updated successfully');
+        return $this->sendResponse($chequeRegisterDetail->toArray(), trans('custom.cheque_register_detail_updated_successfully'));
     }
 
     /**
@@ -311,12 +311,12 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $chequeRegisterDetail = $this->chequeRegisterDetailRepository->findWithoutFail($id);
 
         if (empty($chequeRegisterDetail)) {
-            return $this->sendError('Cheque Register Detail not found');
+            return $this->sendError(trans('custom.cheque_register_detail_not_found'));
         }
 
         $chequeRegisterDetail->delete();
 
-        return $this->sendResponse($id, 'Cheque Register Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.cheque_register_detail_deleted_successfully'));
     }
 
     public function getAllChequeRegisterDetails(Request $request)
@@ -404,7 +404,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $chequeRegisterDetails = ChequeRegisterDetail::find($input['id']);
         if (empty($chequeRegisterDetails)) {
-            return $this->sendError('Cheque Register Details Not Found', 404);
+            return $this->sendError(trans('custom.cheque_register_details_not_found'), 404);
         }
 
 
@@ -413,12 +413,12 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $unUsedChequeRegisterDetails = ChequeRegisterDetail::find($input['new_cheque_id']);
         if (empty($unUsedChequeRegisterDetails)) {
-            return $this->sendError('New Cheque Details Not Found', 404);
+            return $this->sendError(trans('custom.new_cheque_details_not_found'), 404);
         }
 
         $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($document_id);
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Payment voucher is not found', 404);
+            return $this->sendError(trans('custom.payment_voucher_is_not_found'), 404);
         }
 
         if($paySupplierInvoiceMaster->approved == -1){
@@ -526,7 +526,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $chequeRegisterDetails = ChequeRegisterDetail::with(['master'])->where('id',$input['id'])->first();
         if (empty($chequeRegisterDetails)) {
-            return $this->sendError('Cheque Register Details Not Found', 404);
+            return $this->sendError(trans('custom.cheque_register_details_not_found'), 404);
         }
 
         $unUsedChequeRegisterDetails = ChequeRegisterDetail::
@@ -538,9 +538,9 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             ->orderBy('id', 'asc')
             ->get();
         if (empty($unUsedChequeRegisterDetails)) {
-            return $this->sendError('Unused Cheques Not Found', 404);
+            return $this->sendError(trans('custom.unused_cheques_not_found'), 404);
         }
-        return $this->sendResponse($unUsedChequeRegisterDetails->toArray(), 'Data Retrieved Successfully');
+        return $this->sendResponse($unUsedChequeRegisterDetails->toArray(), trans('custom.data_retrieved_successfully_2'));
     }
 
     public function getChequeSwitchFormData(Request $request){
@@ -555,7 +555,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $master = ChequeRegister::find($input['master_id']);
         if(empty($master)){
-            return $this->sendError('Cheque Register Master Not Found', 500);
+            return $this->sendError(trans('custom.cheque_register_master_not_found'), 500);
         }
 
         $output['usedChequeWithDocument'] = ChequeRegisterDetail::
@@ -568,7 +568,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             ->join('erp_paysupplierinvoicemaster','erp_cheque_register_detail.document_id','=','erp_paysupplierinvoicemaster.PayMasterAutoId')
             ->where('erp_paysupplierinvoicemaster.approved',0)  // not approved
             ->get();
-        return $this->sendResponse($output, 'Data Retrieved Successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully_2'));
     }
 
     public function chequeRegisterDetailSwitch(Request $request) {
@@ -593,12 +593,12 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $from_cheque_details = ChequeRegisterDetail::where('id',$input['from_cheque_id'])->with(['document'])->first();
 
         if(empty($from_cheque_details) || empty($from_cheque_details->document)){
-            return $this->sendError('From Document Cheque Details Not Found',500);
+            return $this->sendError(trans('custom.from_document_cheque_details_not_found'),500);
         }
 
         $to_cheque_details = ChequeRegisterDetail::where('id',$input['to_cheque_id'])->with(['document'])->first();
         if(empty($to_cheque_details) || empty($to_cheque_details->document)){
-            return $this->sendError('To Document Cheque Details Not Found',500);
+            return $this->sendError(trans('custom.to_document_cheque_details_not_found'),500);
         }
 
         if($from_cheque_details->document->approved == -1){
@@ -719,7 +719,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($output,'Cheques are switch between the documents successfully');
+            return $this->sendResponse($output,trans('custom.cheques_are_switch_between_the_documents_successfu'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
@@ -744,7 +744,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $chequeRegisterDetails = ChequeRegisterDetail::with(['document','createdBy','updatedBy'])->where('id', $input['id'])->first();
         $output['auditDetails'] = $chequeRegisterDetails;
-        return $this->sendResponse($output,'Audit details retrieved successfully');
+        return $this->sendResponse($output,trans('custom.audit_details_retrieved_successfully'));
     }
 
 }

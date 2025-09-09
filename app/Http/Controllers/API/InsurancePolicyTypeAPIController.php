@@ -65,7 +65,7 @@ class InsurancePolicyTypeAPIController extends AppBaseController
         $this->insurancePolicyTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $insurancePolicyTypes = $this->insurancePolicyTypeRepository->all();
 
-        return $this->sendResponse($insurancePolicyTypes->toArray(), 'Insurance Policy Types retrieved successfully');
+        return $this->sendResponse($insurancePolicyTypes->toArray(), trans('custom.insurance_policy_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class InsurancePolicyTypeAPIController extends AppBaseController
 
         $insurancePolicyTypes = $this->insurancePolicyTypeRepository->create($input);
 
-        return $this->sendResponse($insurancePolicyTypes->toArray(), 'Insurance Policy Type saved successfully');
+        return $this->sendResponse($insurancePolicyTypes->toArray(), trans('custom.insurance_policy_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class InsurancePolicyTypeAPIController extends AppBaseController
         $insurancePolicyType = $this->insurancePolicyTypeRepository->findWithoutFail($id);
 
         if (empty($insurancePolicyType)) {
-            return $this->sendError('Insurance Policy Type not found');
+            return $this->sendError(trans('custom.insurance_policy_type_not_found'));
         }
 
-        return $this->sendResponse($insurancePolicyType->toArray(), 'Insurance Policy Type retrieved successfully');
+        return $this->sendResponse($insurancePolicyType->toArray(), trans('custom.insurance_policy_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class InsurancePolicyTypeAPIController extends AppBaseController
         $insurancePolicyType = $this->insurancePolicyTypeRepository->findWithoutFail($id);
 
         if (empty($insurancePolicyType)) {
-            return $this->sendError('Insurance Policy Type not found');
+            return $this->sendError(trans('custom.insurance_policy_type_not_found'));
         }
 
         $insurancePolicyType = $this->insurancePolicyTypeRepository->update($input, $id);
 
-        return $this->sendResponse($insurancePolicyType->toArray(), 'InsurancePolicyType updated successfully');
+        return $this->sendResponse($insurancePolicyType->toArray(), trans('custom.insurancepolicytype_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class InsurancePolicyTypeAPIController extends AppBaseController
         $insurancePolicyType = $this->insurancePolicyTypeRepository->findWithoutFail($id);
 
         if (empty($insurancePolicyType)) {
-            return $this->sendError('Insurance Policy Type not found');
+            return $this->sendError(trans('custom.insurance_policy_type_not_found'));
         }
 
         $insurancePolicyType->delete();
 
-        return $this->sendResponse($id, 'Insurance Policy Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.insurance_policy_type_deleted_successfully'));
     }
 }

@@ -66,7 +66,7 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
         $this->budgetTransferFormDetailRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetTransferFormDetailRefferedBacks = $this->budgetTransferFormDetailRefferedBackRepository->all();
 
-        return $this->sendResponse($budgetTransferFormDetailRefferedBacks->toArray(), 'Budget Transfer Form Detail Reffered Backs retrieved successfully');
+        return $this->sendResponse($budgetTransferFormDetailRefferedBacks->toArray(), trans('custom.budget_transfer_form_detail_reffered_backs_retriev'));
     }
 
     /**
@@ -113,7 +113,7 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
 
         $budgetTransferFormDetailRefferedBack = $this->budgetTransferFormDetailRefferedBackRepository->create($input);
 
-        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), 'Budget Transfer Form Detail Reffered Back saved successfully');
+        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), trans('custom.budget_transfer_form_detail_reffered_back_saved_su'));
     }
 
     /**
@@ -160,10 +160,10 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
         $budgetTransferFormDetailRefferedBack = $this->budgetTransferFormDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetailRefferedBack)) {
-            return $this->sendError('Budget Transfer Form Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_reffered_back_not_foun'));
         }
 
-        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), 'Budget Transfer Form Detail Reffered Back retrieved successfully');
+        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), trans('custom.budget_transfer_form_detail_reffered_back_retrieve'));
     }
 
     /**
@@ -220,12 +220,12 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
         $budgetTransferFormDetailRefferedBack = $this->budgetTransferFormDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetailRefferedBack)) {
-            return $this->sendError('Budget Transfer Form Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_reffered_back_not_foun'));
         }
 
         $budgetTransferFormDetailRefferedBack = $this->budgetTransferFormDetailRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), 'BudgetTransferFormDetailRefferedBack updated successfully');
+        return $this->sendResponse($budgetTransferFormDetailRefferedBack->toArray(), trans('custom.budgettransferformdetailrefferedback_updated_succe'));
     }
 
     /**
@@ -272,7 +272,7 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
         $budgetTransferFormDetailRefferedBack = $this->budgetTransferFormDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetailRefferedBack)) {
-            return $this->sendError('Budget Transfer Form Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_reffered_back_not_foun'));
         }
 
         $budgetTransferFormDetailRefferedBack->delete();
@@ -299,6 +299,6 @@ class BudgetTransferFormDetailRefferedBackAPIController extends AppBaseControlle
             ])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Budget Transfer Form Amend Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.budget_transfer_form_amend_detail_retrieved_succes'));
     }
 }

@@ -65,7 +65,7 @@ class DeliveryOrderDetailRefferedbackAPIController extends AppBaseController
         $this->deliveryOrderDetailRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $deliveryOrderDetailRefferedbacks = $this->deliveryOrderDetailRefferedbackRepository->all();
 
-        return $this->sendResponse($deliveryOrderDetailRefferedbacks->toArray(), 'Delivery Order Detail Refferedbacks retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetailRefferedbacks->toArray(), trans('custom.delivery_order_detail_refferedbacks_retrieved_succ'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DeliveryOrderDetailRefferedbackAPIController extends AppBaseController
 
         $deliveryOrderDetailRefferedback = $this->deliveryOrderDetailRefferedbackRepository->create($input);
 
-        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), 'Delivery Order Detail Refferedback saved successfully');
+        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), trans('custom.delivery_order_detail_refferedback_saved_successfu'));
     }
 
     /**
@@ -159,10 +159,10 @@ class DeliveryOrderDetailRefferedbackAPIController extends AppBaseController
         $deliveryOrderDetailRefferedback = $this->deliveryOrderDetailRefferedbackRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetailRefferedback)) {
-            return $this->sendError('Delivery Order Detail Refferedback not found');
+            return $this->sendError(trans('custom.delivery_order_detail_refferedback_not_found'));
         }
 
-        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), 'Delivery Order Detail Refferedback retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), trans('custom.delivery_order_detail_refferedback_retrieved_succe'));
     }
 
     /**
@@ -219,12 +219,12 @@ class DeliveryOrderDetailRefferedbackAPIController extends AppBaseController
         $deliveryOrderDetailRefferedback = $this->deliveryOrderDetailRefferedbackRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetailRefferedback)) {
-            return $this->sendError('Delivery Order Detail Refferedback not found');
+            return $this->sendError(trans('custom.delivery_order_detail_refferedback_not_found'));
         }
 
         $deliveryOrderDetailRefferedback = $this->deliveryOrderDetailRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), 'DeliveryOrderDetailRefferedback updated successfully');
+        return $this->sendResponse($deliveryOrderDetailRefferedback->toArray(), trans('custom.deliveryorderdetailrefferedback_updated_successful'));
     }
 
     /**
@@ -271,7 +271,7 @@ class DeliveryOrderDetailRefferedbackAPIController extends AppBaseController
         $deliveryOrderDetailRefferedback = $this->deliveryOrderDetailRefferedbackRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetailRefferedback)) {
-            return $this->sendError('Delivery Order Detail Refferedback not found');
+            return $this->sendError(trans('custom.delivery_order_detail_refferedback_not_found'));
         }
 
         $deliveryOrderDetailRefferedback->delete();

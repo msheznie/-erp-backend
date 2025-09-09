@@ -65,7 +65,7 @@ class POSSourceMenuSalesPaymentAPIController extends AppBaseController
         $this->pOSSourceMenuSalesPaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceMenuSalesPayments = $this->pOSSourceMenuSalesPaymentRepository->all();
 
-        return $this->sendResponse($pOSSourceMenuSalesPayments->toArray(), 'P O S Source Menu Sales Payments retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesPayments->toArray(), trans('custom.p_o_s_source_menu_sales_payments_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceMenuSalesPaymentAPIController extends AppBaseController
 
         $pOSSourceMenuSalesPayment = $this->pOSSourceMenuSalesPaymentRepository->create($input);
 
-        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), 'P O S Source Menu Sales Payment saved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), trans('custom.p_o_s_source_menu_sales_payment_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceMenuSalesPaymentAPIController extends AppBaseController
         $pOSSourceMenuSalesPayment = $this->pOSSourceMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesPayment)) {
-            return $this->sendError('P O S Source Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_payment_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), 'P O S Source Menu Sales Payment retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), trans('custom.p_o_s_source_menu_sales_payment_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceMenuSalesPaymentAPIController extends AppBaseController
         $pOSSourceMenuSalesPayment = $this->pOSSourceMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesPayment)) {
-            return $this->sendError('P O S Source Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_payment_not_found'));
         }
 
         $pOSSourceMenuSalesPayment = $this->pOSSourceMenuSalesPaymentRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), 'POSSourceMenuSalesPayment updated successfully');
+        return $this->sendResponse($pOSSourceMenuSalesPayment->toArray(), trans('custom.possourcemenusalespayment_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceMenuSalesPaymentAPIController extends AppBaseController
         $pOSSourceMenuSalesPayment = $this->pOSSourceMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesPayment)) {
-            return $this->sendError('P O S Source Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_payment_not_found'));
         }
 
         $pOSSourceMenuSalesPayment->delete();

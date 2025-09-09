@@ -76,7 +76,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $this->purchaseRequestDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->all();
 
-        return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($purchaseRequestDetails->toArray(), trans('custom.purchase_request_details_retrieved_successfully'));
     }
 
 
@@ -99,7 +99,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $item['index'] = $index;
             $index++;
         }
-        return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.purchase_request_details_retrieved_successfully'));
     }
 
     /**
@@ -146,7 +146,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
-                return $this->sendError('Item not found');
+                return $this->sendError(trans('custom.item_not_found'));
             } else {
                 $itemNotound = true;
             }
@@ -158,11 +158,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request Details not found');
+            return $this->sendError(trans('custom.purchase_request_details_not_found'));
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request already closed. You can not add.', 500);
+            return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_a'), 500);
         }
 
         if ($purchaseRequest->approved == 1) {
@@ -233,7 +233,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 if ($policy == 0) {
                     if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                        return $this->sendError('Category is not found.', 500);
+                        return $this->sendError(trans('custom.category_is_not_found'), 500);
                     }
 
                     //checking if item category is same or not
@@ -243,7 +243,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                     if ($pRDetailExistSameItem) {
                         if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError('You cannot add different category item', 500);
+                            return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                         }
                     }
                 }
@@ -498,7 +498,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
 
-        return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');
+        return $this->sendResponse($purchaseRequestDetails->toArray(), trans('custom.purchase_request_details_saved_successfully'));
     }
 
     public function updateQtyOnOrder(request $request){
@@ -547,7 +547,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $quantityOnOrder = $poQty - $grvQty;
             $updateQtyOnOrder = PurchaseRequestDetails::where('itemCode', $itemCode)->update(['quantityOnOrder'=> $quantityOnOrder]);
-            return $this->sendResponse($updateQtyOnOrder, 'Quantity On Order updated successfully');
+            return $this->sendResponse($updateQtyOnOrder, trans('custom.quantity_on_order_updated_successfully'));
 
             
     }
@@ -563,7 +563,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                          ->first();
 
         if ($checkItem) {
-            return $this->sendError('This item has already maped with another item of this purchase request');
+            return $this->sendError(trans('custom.this_item_has_already_maped_with_another_item_of_t'));
         }
 
         $checkForPoItem = PurchaseOrderDetails::where('purchaseRequestDetailsID', $input['purchaseRequestDetailsID'])
@@ -579,7 +579,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
@@ -587,7 +587,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request Details not found');
+            return $this->sendError(trans('custom.purchase_request_details_not_found'));
         }
 
 
@@ -652,7 +652,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             if ($policy == 0) {
                 if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                    return $this->sendError('Category is not found.', 500);
+                    return $this->sendError(trans('custom.category_is_not_found'), 500);
                 }
 
                 //checking if item category is same or not
@@ -663,7 +663,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 if ($pRDetailExistSameItem) {
                     if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError('You cannot add different category item', 500);
+                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                     }
                 }
             }
@@ -859,7 +859,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['quantityInHand'] = $quantityInHand;
         unset($input['itemCodeNew']);
 
-        return $this->sendResponse($input, 'Purchase Request item maped successfully');
+        return $this->sendResponse($input, trans('custom.purchase_request_item_maped_successfully'));
     }
 
     /**
@@ -876,10 +876,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestDetails)) {
-            return $this->sendError('Purchase Request Details not found');
+            return $this->sendError(trans('custom.purchase_request_details_not_found'));
         }
 
-        return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($purchaseRequestDetails->toArray(), trans('custom.purchase_request_details_retrieved_successfully'));
     }
 
     /**
@@ -910,21 +910,21 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         if(isset($total_requested_qnty)) {
             if($total_requested_qnty->sum <  $input['quantityRequested'] ) {
-                return $this->sendError('Quantity cannot be greater than total materiel request quantity');
+                return $this->sendError(trans('custom.quantity_cannot_be_greater_than_total_materiel_req'));
             }
         }
         
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestDetails)) {
-            return $this->sendError('Purchase Request Details not found');
+            return $this->sendError(trans('custom.purchase_request_details_not_found'));
         }
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($input['purchaseRequestID']);
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request already closed. You can not edit.', 500);
+            return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_e'), 500);
         }
         if ($purchaseRequest->approved == 1) {
             return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
@@ -992,7 +992,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($purchaseRequestDetailsRes->toArray(), 'PurchaseRequestDetails updated successfully');
+            return $this->sendResponse($purchaseRequestDetailsRes->toArray(), trans('custom.purchaserequestdetails_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1014,15 +1014,15 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestDetails)) {
-            return $this->sendError('Purchase Request Details not found');
+            return $this->sendError(trans('custom.purchase_request_details_not_found'));
         }
 
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($purchaseRequestDetails->purchaseRequestID);
         if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request already closed. You can not delete.', 500);
+            return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_d'), 500);
         }
         if ($purchaseRequest->approved == 1) {
             return $this->sendError('This Purchase Request fully approved. You can not delete.', 500);
@@ -1041,7 +1041,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $purchaseRequestDetails->delete();
 
-        return $this->sendResponse($id, 'Purchase Request Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_request_details_deleted_successfully'));
     }
 
     /**
@@ -1059,7 +1059,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
 
-        return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.purchase_request_details_retrieved_successfully'));
 
     }
 
@@ -1077,7 +1077,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $pr = PurchaseRequest::where('purchaseRequestID',$input['requestId'])->first();
         if(empty($pr)){
-            return $this->sendError('Purchase Request Not Found',404);
+            return $this->sendError(trans('custom.purchase_request_not_found_1'),404);
         }
 
         $companySystemID = $input['companySystemID'];
@@ -1091,7 +1091,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                        ->first();
 
         if(empty($detail)){
-            return $this->sendError('Purchase Request Detail Not Found',404);
+            return $this->sendError(trans('custom.purchase_request_detail_not_found'),404);
         }
 
 
@@ -1137,7 +1137,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $result['item'] = ItemAssigned::where('companySystemID',$companySystemID)->where('itemCodeSystem',$itemCode)->first();
 
-        return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($result, trans('custom.purchase_request_details_retrieved_successfully'));
     }
 
     public function getWarehouseStockDetails(Request $request){
@@ -1162,7 +1162,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $result = [ 'item'=>$item,
                     'itemMaster'=>$itemMaster];
 
-        return $this->sendResponse($result, 'Warehouse Stock Details retrieved successfully');
+        return $this->sendResponse($result, trans('custom.warehouse_stock_details_retrieved_successfully'));
     }
 
 
@@ -1185,7 +1185,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             if (empty($purchaseRequest)) {
-                return $this->sendError('Purchase Request not found', 500);
+                return $this->sendError(trans('custom.purchase_request_not_found'), 500);
             }
 
 
@@ -1238,7 +1238,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $validateHeaderCode = true;
                 } else {
                     if (isset($value['qty']) && isset($value['estimated_unit_cost']) && isset($value['comment'])) {
-                        return $this->sendError('Items cannot be uploaded, as there are null values found in excel row number: ' . ($totalItemCount + 4), 500);
+                        return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values__1') . ($totalItemCount + 4), 500);
                     }
                 }
 
@@ -1255,7 +1255,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
 
             if (!$validateHeaderCode || !$validateHeaderCode || !$validateEstimatedUnitCost) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
             // if (count($formatChk) > 0) {
@@ -1269,7 +1269,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if ($purchaseRequest->cancelledYN == -1) {
-                return $this->sendError('This Purchase Request already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_a'), 500);
             }
 
             if ($purchaseRequest->approved == 1) {
@@ -1365,7 +1365,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             )
         ->paginate(15);
 
-    return $this->sendResponse($purchaseRequestDetails, 'Purchase Request Details retrieved successfully');
+    return $this->sendResponse($purchaseRequestDetails, trans('custom.purchase_request_details_retrieved_successfully'));
 
 
 
@@ -1460,7 +1460,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse($csv, 'successfully export');
+        return $this->sendResponse($csv, trans('custom.success_export'));
     }
 
     public function copyPr($id)
@@ -1579,7 +1579,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         
                     if (empty($item)) {
                         if (!$allowItemToTypePolicy) {
-                            //return $this->sendError('Item not found');
+                            //return $this->sendError(trans('custom.item_not_found'));
                             $is_failed= true;
                            // continue;
                         } else {
@@ -1595,13 +1595,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     if (empty($purchaseRequest)) {
                         $is_failed= true;
                         //continue;
-                        //return $this->sendError('Purchase Request Details not found');
+                        //return $this->sendError(trans('custom.purchase_request_details_not_found'));
                     }
             
                     if ($purchaseRequest->cancelledYN == -1) {
                         $is_failed= true;
                         //continue;
-                        //return $this->sendError('This Purchase Request already closed. You can not add.', 500);
+                        //return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_a'), 500);
                     }
             
                     if ($purchaseRequest->approved == 1) {
@@ -1656,7 +1656,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         //         })
                         //         ->first();
 
-                        //         return $this->sendResponse($alreadyAdded, 'PurchaseRequestDetails copied successfully');
+                        //         return $this->sendResponse($alreadyAdded, trans('custom.purchaserequestdetails_copied_successfully'));
                         //         die();
 
                         //     if ($alreadyAdded) {
@@ -1696,7 +1696,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                 if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
                                     $is_failed= true;
                                     //continue;
-                                   // return $this->sendError('Category is not found.', 500);
+                                   // return $this->sendError(trans('custom.category_is_not_found'), 500);
                                 }
             
                                 //checking if item category is same or not
@@ -1708,7 +1708,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
                                         $is_failed= true;
                                        // continue;
-                                       // return $this->sendError('You cannot add different category item', 500);
+                                       // return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                                     }
                                 }
                             }
@@ -1803,7 +1803,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     ->where('cancelledYN', 0)
                                     ->first();
                                 /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
-                                // return $this->sendResponse($anyApprovedPRButPONotProcessed, 'successfully export');
+                                // return $this->sendResponse($anyApprovedPRButPONotProcessed, trans('custom.success_export'));
                                 // die();
                                 if (!empty($anyApprovedPRButPONotProcessed)) {
                                     $is_failed= true;
@@ -1964,7 +1964,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //DB::commit();
 
 
-            // return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request saved successfully');
+            // return $this->sendResponse($purchaseRequests->toArray(), trans('custom.purchase_request_saved_successfully'));
             //  die();
       
             $segment_success = true;;
@@ -2048,11 +2048,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     {
                         if(!$segment_success)
                         {
-                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
+                            return $this->sendResponse($items, trans('custom.purchaserequest_copied_successfully'));
                         }
                         else
                         {
-                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
+                            return $this->sendResponse($items, trans('custom.purchaserequest_copied_successfully'));
                         }
                         
                     }
@@ -2063,7 +2063,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             else 
             {
                 $purchaseRequests = $this->purchaseRequestRepository->create($request_data);
-                return $this->sendResponse($items, 'PurchaseRequest copied successfully');
+                return $this->sendResponse($items, trans('custom.purchaserequest_copied_successfully'));
 
             }
         } catch (\Exception $exception) {
@@ -2097,9 +2097,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->delete();
     
     
-            return $this->sendResponse([], 'Item Deleted Successfully');
+            return $this->sendResponse([], trans('custom.item_deleted_successfully'));
         }else {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
         
     }

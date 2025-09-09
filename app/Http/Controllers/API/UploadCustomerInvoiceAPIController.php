@@ -64,7 +64,7 @@ class UploadCustomerInvoiceAPIController extends AppBaseController
         $this->uploadCustomerInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $uploadCustomerInvoices = $this->uploadCustomerInvoiceRepository->all();
 
-        return $this->sendResponse($uploadCustomerInvoices->toArray(), 'Upload Customer Invoices retrieved successfully');
+        return $this->sendResponse($uploadCustomerInvoices->toArray(), trans('custom.upload_customer_invoices_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class UploadCustomerInvoiceAPIController extends AppBaseController
 
         $uploadCustomerInvoice = $this->uploadCustomerInvoiceRepository->create($input);
 
-        return $this->sendResponse($uploadCustomerInvoice->toArray(), 'Upload Customer Invoice saved successfully');
+        return $this->sendResponse($uploadCustomerInvoice->toArray(), trans('custom.upload_customer_invoice_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class UploadCustomerInvoiceAPIController extends AppBaseController
         $uploadCustomerInvoice = $this->uploadCustomerInvoiceRepository->findWithoutFail($id);
 
         if (empty($uploadCustomerInvoice)) {
-            return $this->sendError('Upload Customer Invoice not found');
+            return $this->sendError(trans('custom.upload_customer_invoice_not_found'));
         }
 
-        return $this->sendResponse($uploadCustomerInvoice->toArray(), 'Upload Customer Invoice retrieved successfully');
+        return $this->sendResponse($uploadCustomerInvoice->toArray(), trans('custom.upload_customer_invoice_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class UploadCustomerInvoiceAPIController extends AppBaseController
         $uploadCustomerInvoice = $this->uploadCustomerInvoiceRepository->findWithoutFail($id);
 
         if (empty($uploadCustomerInvoice)) {
-            return $this->sendError('Upload Customer Invoice not found');
+            return $this->sendError(trans('custom.upload_customer_invoice_not_found'));
         }
 
         $uploadCustomerInvoice = $this->uploadCustomerInvoiceRepository->update($input, $id);
 
-        return $this->sendResponse($uploadCustomerInvoice->toArray(), 'UploadCustomerInvoice updated successfully');
+        return $this->sendResponse($uploadCustomerInvoice->toArray(), trans('custom.uploadcustomerinvoice_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class UploadCustomerInvoiceAPIController extends AppBaseController
         $uploadCustomerInvoice = $this->uploadCustomerInvoiceRepository->findWithoutFail($id);
 
         if (empty($uploadCustomerInvoice)) {
-            return $this->sendError('Upload Customer Invoice not found');
+            return $this->sendError(trans('custom.upload_customer_invoice_not_found'));
         }
 
         $uploadCustomerInvoice->delete();

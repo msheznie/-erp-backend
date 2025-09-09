@@ -75,7 +75,7 @@ class SlotMasterAPIController extends AppBaseController
         $this->slotMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $slotMasters = $this->slotMasterRepository->all();
 
-        return $this->sendResponse($slotMasters->toArray(), 'Slot Masters retrieved successfully');
+        return $this->sendResponse($slotMasters->toArray(), trans('custom.slot_masters_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class SlotMasterAPIController extends AppBaseController
 
         $slotMaster = $this->slotMasterRepository->create($input);
 
-        return $this->sendResponse($slotMaster->toArray(), 'Slot Master saved successfully');
+        return $this->sendResponse($slotMaster->toArray(), trans('custom.slot_master_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError('Slot Master not found');
+            return $this->sendError(trans('custom.slot_master_not_found'));
         }
 
-        return $this->sendResponse($slotMaster->toArray(), 'Slot Master retrieved successfully');
+        return $this->sendResponse($slotMaster->toArray(), trans('custom.slot_master_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError('Slot Master not found');
+            return $this->sendError(trans('custom.slot_master_not_found'));
         }
 
         $slotMaster = $this->slotMasterRepository->update($input, $id);
 
-        return $this->sendResponse($slotMaster->toArray(), 'SlotMaster updated successfully');
+        return $this->sendResponse($slotMaster->toArray(), trans('custom.slotmaster_updated_successfully'));
     }
 
     /**
@@ -281,7 +281,7 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError('Slot Master not found');
+            return $this->sendError(trans('custom.slot_master_not_found'));
         }
 
         $slotMaster->delete();
@@ -292,7 +292,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         $calanderSlots = $this->slotMasterRepository->saveCalanderSlots($request);
         if ($calanderSlots['status']) {
-            return $this->sendResponse([], 'Successfully updated');
+            return $this->sendResponse([], trans('custom.successfully_updated'));
         } else {
             $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
             return $this->sendError($calanderSlots['message'], $statusCode);
@@ -302,7 +302,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         try{
             $calendarSlots = $this->slotMasterRepository->getFormDataCalendar($request);
-            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
+            return $this->sendResponse($calendarSlots, trans('custom.record_retrieved_successfully_1'));
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -311,7 +311,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         try{
             $calendarSlots = $this->slotMasterRepository->getCalendarSlotData($request);
-            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
+            return $this->sendResponse($calendarSlots, trans('custom.record_retrieved_successfully_1'));
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -366,7 +366,7 @@ class SlotMasterAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($weekDayArr, 'Record retrieved successfully');
+        return $this->sendResponse($weekDayArr, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -430,7 +430,7 @@ class SlotMasterAPIController extends AppBaseController
         $slotMasterId = $input['slotMasterId'];
         $calanderSlots = $this->slotMasterRepository->deleteSlot($slotMasterId);
         if ($calanderSlots['status']) {
-            return $this->sendResponse([], 'Successfully deleted');
+            return $this->sendResponse([], trans('custom.successfully_deleted_1'));
         } else {
             $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
             return $this->sendError($calanderSlots['message'], $statusCode);

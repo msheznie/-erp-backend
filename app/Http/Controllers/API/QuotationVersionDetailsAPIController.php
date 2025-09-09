@@ -75,7 +75,7 @@ class QuotationVersionDetailsAPIController extends AppBaseController
         $this->quotationVersionDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->all();
 
-        return $this->sendResponse($quotationVersionDetails->toArray(), 'Quotation Version Details retrieved successfully');
+        return $this->sendResponse($quotationVersionDetails->toArray(), trans('custom.quotation_version_details_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class QuotationVersionDetailsAPIController extends AppBaseController
 
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->create($input);
 
-        return $this->sendResponse($quotationVersionDetails->toArray(), 'Quotation Version Details saved successfully');
+        return $this->sendResponse($quotationVersionDetails->toArray(), trans('custom.quotation_version_details_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class QuotationVersionDetailsAPIController extends AppBaseController
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->findWithoutFail($id);
 
         if (empty($quotationVersionDetails)) {
-            return $this->sendError('Quotation Version Details not found');
+            return $this->sendError(trans('custom.quotation_version_details_not_found'));
         }
 
-        return $this->sendResponse($quotationVersionDetails->toArray(), 'Quotation Version Details retrieved successfully');
+        return $this->sendResponse($quotationVersionDetails->toArray(), trans('custom.quotation_version_details_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class QuotationVersionDetailsAPIController extends AppBaseController
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->findWithoutFail($id);
 
         if (empty($quotationVersionDetails)) {
-            return $this->sendError('Quotation Version Details not found');
+            return $this->sendError(trans('custom.quotation_version_details_not_found'));
         }
 
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($quotationVersionDetails->toArray(), 'QuotationVersionDetails updated successfully');
+        return $this->sendResponse($quotationVersionDetails->toArray(), trans('custom.quotationversiondetails_updated_successfully'));
     }
 
     /**
@@ -281,12 +281,12 @@ class QuotationVersionDetailsAPIController extends AppBaseController
         $quotationVersionDetails = $this->quotationVersionDetailsRepository->findWithoutFail($id);
 
         if (empty($quotationVersionDetails)) {
-            return $this->sendError('Quotation Version Details not found');
+            return $this->sendError(trans('custom.quotation_version_details_not_found'));
         }
 
         $quotationVersionDetails->delete();
 
-        return $this->sendResponse($id, 'Quotation Version Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_version_details_deleted_successfully'));
     }
 
     public function getSQVDetailsHistory(Request $request)
@@ -299,6 +299,6 @@ class QuotationVersionDetailsAPIController extends AppBaseController
             ->where('versionNo', $versionNo)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Quotation Version Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.quotation_version_details_retrieved_successfully'));
     }
 }

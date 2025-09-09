@@ -111,7 +111,7 @@ class StockTransferAPIController extends AppBaseController
         $this->stockTransferRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockTransfers = $this->stockTransferRepository->all();
 
-        return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfers retrieved successfully');
+        return $this->sendResponse($stockTransfers->toArray(), trans('custom.stock_transfers_retrieved_successfully'));
     }
 
     /**
@@ -205,7 +205,7 @@ class StockTransferAPIController extends AppBaseController
                                     ->first();
 
         if (!$warehouse) {
-            return $this->sendError('Location To not found', 500);
+            return $this->sendError(trans('custom.location_to_not_found_1'), 500);
         }
 
         if ($warehouse->manufacturingYN == 1) {
@@ -287,7 +287,7 @@ class StockTransferAPIController extends AppBaseController
 
         if ($input['locationFrom'] == $input['locationTo']) {
             DB::rollBack();
-            return $this->sendError('Location From and Location To  cannot be same', 500);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -342,7 +342,7 @@ class StockTransferAPIController extends AppBaseController
 
         $stockTransfers = $this->stockTransferRepository->create($input);
         DB::commit();
-        return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfer saved successfully');
+        return $this->sendResponse($stockTransfers->toArray(), trans('custom.stock_transfer_saved_successfully'));
     }
 
     /**
@@ -393,10 +393,10 @@ class StockTransferAPIController extends AppBaseController
         },'location_to_by','location_from_by','company_from','company_to'])->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer retrieved successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_transfer_retrieved_successfully'));
     }
 
     /**
@@ -460,7 +460,7 @@ class StockTransferAPIController extends AppBaseController
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         if (isset($input['tranferDate'])) {
@@ -489,7 +489,7 @@ class StockTransferAPIController extends AppBaseController
             if($input['locationFrom']) {
                 $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
                 if (empty($checkWareHouseActiveFrom)) {
-                    return $this->sendError('Location from not found', 500, $wareHouseFromError);
+                    return $this->sendError(trans('custom.location_from_not_found'), 500, $wareHouseFromError);
                 }
 
                 if ($checkWareHouseActiveFrom->isActive == 0) {
@@ -504,7 +504,7 @@ class StockTransferAPIController extends AppBaseController
             if($input['locationTo']) {
                 $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
                 if (empty($checkWareHouseActiveTo)) {
-                    return $this->sendError('Location to not found', 500, $wareHouseToError);
+                    return $this->sendError(trans('custom.location_to_not_found'), 500, $wareHouseToError);
                 }
 
                 if ($checkWareHouseActiveTo->isActive == 0) {
@@ -559,7 +559,7 @@ class StockTransferAPIController extends AppBaseController
 
         if ($input['locationFrom'] == $input['locationTo']) {
             $this->stockTransferRepository->update(['locationTo' => null], $id);
-            return $this->sendError('Location From and Location To  cannot be same', 500,$wareHouseToError);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'), 500,$wareHouseToError);
         }
 
 
@@ -630,7 +630,7 @@ class StockTransferAPIController extends AppBaseController
                                                         ->first();
 
             if (empty($stockTransDetailExist)) {
-                return $this->sendError('Stock Transfer document cannot confirm without details',500);
+                return $this->sendError(trans('custom.stock_transfer_document_cannot_confirm_without_det'),500);
             }
 
             $checkQuantity = StockTransferDetails::where('stockTransferAutoID', $id)
@@ -780,12 +780,12 @@ class StockTransferAPIController extends AppBaseController
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         $stockTransfer->delete();
 
-        return $this->sendResponse($id, 'Stock Transfer deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_transfer_deleted_successfully'));
     }
 
     public function getStockTransferMasterView(Request $request)
@@ -875,7 +875,7 @@ class StockTransferAPIController extends AppBaseController
             'companies' => $companies
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getItemsOptionForStockTransfer(Request $request)
@@ -902,7 +902,7 @@ class StockTransferAPIController extends AppBaseController
             ->take(20)
             ->get(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function StockTransferAudit(Request $request)
@@ -912,12 +912,12 @@ class StockTransferAPIController extends AppBaseController
         $stockTransfer = $this->stockTransferRepository->getAudit($id);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer retrieved successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_transfer_retrieved_successfully'));
     }
 
     public function printStockTransfer(Request $request)
@@ -926,7 +926,7 @@ class StockTransferAPIController extends AppBaseController
         $stockTransfer = $this->stockTransferRepository->getAudit($id);
 
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
@@ -1130,7 +1130,7 @@ class StockTransferAPIController extends AppBaseController
         $id = $input['stockReceiveAutoID'];
         $stockReceive = StockReceive::find($id);
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockTransfers = StockTransfer::where('companyToSystemID', $stockReceive->companyToSystemID)
@@ -1143,7 +1143,7 @@ class StockTransferAPIController extends AppBaseController
             ->orderby('createdDateTime', 'desc')
             ->get();
 
-        return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfer retrieved successfully');
+        return $this->sendResponse($stockTransfers->toArray(), trans('custom.stock_transfer_retrieved_successfully'));
     }
 
     public function getStockTransferDetailsByMaster(Request $request)
@@ -1153,13 +1153,13 @@ class StockTransferAPIController extends AppBaseController
         $id = $input['stockTransferAutoID'];
         $stockTransfer = StockTransfer::find($id);
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
         $stockTransferDetails = StockTransferDetails::where('stockTransferAutoID', $id)->with(['unit_by'])
             ->where('stockRecieved', 0)
             ->get();
 
-        return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer retrieved successfully');
+        return $this->sendResponse($stockTransferDetails->toArray(), trans('custom.stock_transfer_retrieved_successfully'));
     }
 
 
@@ -1171,19 +1171,19 @@ class StockTransferAPIController extends AppBaseController
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         if ($stockTransfer->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Transfer it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_transfer_it_is_alread'));
         }
 
         if ($stockTransfer->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Transfer it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_transfer_it_is_alread_1'));
         }
 
         if ($stockTransfer->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_transfer_it_is_not_co'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1257,7 +1257,7 @@ class StockTransferAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($stockTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer reopened successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_transfer_reopened_successfully'));
     }
 
     public function stockTransferReferBack(Request $request)
@@ -1268,11 +1268,11 @@ class StockTransferAPIController extends AppBaseController
 
         $stockTransfer = $this->stockTransferRepository->find($id);
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
         if ($stockTransfer->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this stock transfer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_stock_transfer'));
         }
 
         $stockTransferArray = $stockTransfer->toArray();
@@ -1320,7 +1320,7 @@ class StockTransferAPIController extends AppBaseController
             $this->stockTransferRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer Amend successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_transfer_amend_successfully'));
     }
 
     public function getallUomConvertion(Request $request)  {
@@ -1333,7 +1333,7 @@ class StockTransferAPIController extends AppBaseController
         $mergedArray = isset($convertionUnit)?array_merge($convertionUnit, $defaulUnit):$defaulUnit;
         $uniqueArray = array_unique($mergedArray);
         $units = Unit::whereIn('UnitID',$uniqueArray)->select('UnitID as unitOfMeasure','UnitShortCode')->get();
-        return $this->sendResponse($units, 'COnvertion unit retrived successfully');
+        return $this->sendResponse($units, trans('custom.convertion_unit_retrived_successfully'));
 
     }
 

@@ -94,7 +94,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $this->monthlyAdditionsMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $monthlyAdditionsMasters = $this->monthlyAdditionsMasterRepository->all();
 
-        return $this->sendResponse($monthlyAdditionsMasters->toArray(), 'Monthly Additions Masters retrieved successfully');
+        return $this->sendResponse($monthlyAdditionsMasters->toArray(), trans('custom.monthly_additions_masters_retrieved_successfully'));
     }
 
     /**
@@ -166,14 +166,14 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found', 500);
+            return $this->sendError(trans('custom.company_not_found'), 500);
         }
         $input['CompanyID'] = $company->CompanyID;
 
         $processPeriod = PeriodMaster::find($input['processPeriod']);
 
         if (empty($company)) {
-            return $this->sendError('Month not found', 500);
+            return $this->sendError(trans('custom.month_not_found'), 500);
         }
 
         $salaryProcessCheck = SalaryProcessEmploymentTypes::where('companySystemID', $input['companySystemID'])
@@ -224,7 +224,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $monthlyAdditionsMasters = $this->monthlyAdditionsMasterRepository->create($input);
 
-        return $this->sendResponse($monthlyAdditionsMasters->toArray(), 'Monthly Addition saved successfully');
+        return $this->sendResponse($monthlyAdditionsMasters->toArray(), trans('custom.monthly_addition_saved_successfully'));
     }
 
     /**
@@ -273,10 +273,10 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             ->findWithoutFail($id);
 
         if (empty($monthlyAdditionsMaster)) {
-            return $this->sendError('Monthly Additions Master not found');
+            return $this->sendError(trans('custom.monthly_additions_master_not_found'));
         }
 
-        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'Monthly Additions Master retrieved successfully');
+        return $this->sendResponse($monthlyAdditionsMaster->toArray(), trans('custom.monthly_additions_master_retrieved_successfully'));
     }
 
     /**
@@ -335,11 +335,11 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
         if (empty($monthlyAdditionsMaster)) {
-            return $this->sendError('Monthly Additions Master not found');
+            return $this->sendError(trans('custom.monthly_additions_master_not_found'));
         }
 
         if ($monthlyAdditionsMaster->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot edit.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
 
 
@@ -389,7 +389,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->update($updateInput, $id);
 
-        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'Monthly Addition updated successfully');
+        return $this->sendResponse($monthlyAdditionsMaster->toArray(), trans('custom.monthly_addition_updated_successfully'));
     }
 
     /**
@@ -436,12 +436,12 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
         if (empty($monthlyAdditionsMaster)) {
-            return $this->sendError('Monthly Additions Master not found');
+            return $this->sendError(trans('custom.monthly_additions_master_not_found'));
         }
 
         $monthlyAdditionsMaster->delete();
 
-        return $this->sendResponse($id, 'Monthly Additions Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.monthly_additions_master_deleted_successfully'));
     }
 
     public function getMonthlyAdditionsByCompany(Request $request)
@@ -495,7 +495,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             'employmentTypes' => $employmentTypes
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getProcessPeriods(Request $request)
@@ -526,7 +526,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $processPeriods = PeriodMaster::select(DB::raw("periodMasterID as value,CONCAT(periodMonth,' : ',DATE_FORMAT(startDate, '%d/%m/%Y'), ' - ' ,DATE_FORMAT(endDate, '%d/%m/%Y')) as label"))
             ->where('periodMasterID', '>', $maxPeriodID)->get();
 
-        return $this->sendResponse($processPeriods, 'Record retrieved successfully');
+        return $this->sendResponse($processPeriods, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getMonthlyAdditionAudit(Request $request)
@@ -535,12 +535,12 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->getAudit($id);
 
         if (empty($monthlyAddition)) {
-            return $this->sendError('Monthly Addition not found');
+            return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
         $monthlyAddition->docRefNo = \Helper::getCompanyDocRefNo($monthlyAddition->companySystemID, $monthlyAddition->documentSystemID);
 
-        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition retrieved successfully');
+        return $this->sendResponse($monthlyAddition->toArray(), trans('custom.monthly_addition_retrieved_successfully'));
     }
 
     public function monthlyAdditionReopen(Request $request)
@@ -551,19 +551,19 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
         $emails = array();
         if (empty($monthlyAddition)) {
-            return $this->sendError('Monthly Addition not found');
+            return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
         if ($monthlyAddition->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Monthly Addition it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_monthly_addition_it_is_alre'));
         }
 
         if ($monthlyAddition->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Monthly Addition it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_monthly_addition_it_is_alre_1'));
         }
 
         if ($monthlyAddition->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Monthly Addition, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_monthly_addition_it_is_not_'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedby' => null,
@@ -637,7 +637,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($monthlyAddition->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition reopened successfully');
+        return $this->sendResponse($monthlyAddition->toArray(), trans('custom.monthly_addition_reopened_successfully'));
     }
 
     public function amendEcMonthlyAdditionReview(Request $request){
@@ -655,7 +655,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this '.$documentName.', it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$documentName.', it is not confirmed');
         }
 
         $emailBody = '<p>' . $masterData->monthlyAdditionsCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

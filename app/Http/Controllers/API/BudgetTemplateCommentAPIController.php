@@ -25,7 +25,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $this->sendResponse($comments->toArray(), 'Comments retrieved successfully');
+        return $this->sendResponse($comments->toArray(), trans('custom.comments_retrieved_successfully'));
     }
 
     /**
@@ -50,11 +50,11 @@ class BudgetTemplateCommentAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($comment->toArray(), 'Comment saved successfully');
+            return $this->sendResponse($comment->toArray(), trans('custom.comment_saved_successfully'));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('Error saving comment: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_saving_comment') . $e->getMessage());
         }
     }
 
@@ -70,10 +70,10 @@ class BudgetTemplateCommentAPIController extends AppBaseController
             ->find($id);
 
         if (!$comment) {
-            return $this->sendError('Comment not found');
+            return $this->sendError(trans('custom.comment_not_found'));
         }
 
-        return $this->sendResponse($comment->toArray(), 'Comment retrieved successfully');
+        return $this->sendResponse($comment->toArray(), trans('custom.comment_retrieved_successfully'));
     }
 
     /**
@@ -104,7 +104,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         $comment = BudgetTemplateComment::find($input['id']);
 
         if (!$comment) {
-            return $this->sendError('Comment not found');
+            return $this->sendError(trans('custom.comment_not_found'));
         }
 
         // Check if user can delete this comment
@@ -115,10 +115,10 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         try {
             $comment->delete();
             BudgetTemplateComment::where('parent_comment_id', $input['id'])->delete();
-            return $this->sendResponse([], 'Comment deleted successfully');
+            return $this->sendResponse([], trans('custom.comment_deleted_successfully'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error deleting comment: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_deleting_comment') . $e->getMessage());
         }
     }
 
@@ -155,7 +155,9 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         $detail['comments'] = $comments;
         $detail['currentUserId'] = Auth::id();
         $detail['employees'] = $employees;
-        return $this->sendResponse($detail, 'BudgetTemplateComments retrieved successfully.');
+
+        return $this->sendResponse($detail, trans('custom.budgettemplatecomments_retrieved_successfully'));
+
     }
 
     /**
@@ -180,7 +182,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         $comment = BudgetTemplateComment::find($input['id']);
 
         if (!$comment) {
-            return $this->sendError('Comment not found');
+            return $this->sendError(trans('custom.comment_not_found'));
         }
 
         // Check if user can edit this comment
@@ -198,7 +200,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
             return $this->sendResponse($comment, "Comment updated successfully");
 
         } catch (\Exception $e) {
-            return $this->sendError('Error updating comment: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_updating_comment') . $e->getMessage());
         }
     }
 }

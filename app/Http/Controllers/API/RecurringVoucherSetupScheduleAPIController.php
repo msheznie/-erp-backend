@@ -65,7 +65,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $this->recurringVoucherSetupScheduleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $recurringVoucherSetupSchedules = $this->recurringVoucherSetupScheduleRepository->all();
 
-        return $this->sendResponse($recurringVoucherSetupSchedules->toArray(), 'Recurring Voucher Setup Schedules retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedules->toArray(), trans('custom.recurring_voucher_setup_schedules_retrieved_succes'));
     }
 
     /**
@@ -119,7 +119,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->create($input);
 
-        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'Recurring Voucher Setup Schedule saved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), trans('custom.recurring_voucher_setup_schedule_saved_successfull'));
     }
 
     /**
@@ -167,10 +167,10 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupSchedule)) {
-            return $this->sendError('Recurring Voucher Setup Schedule not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
         }
 
-        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'Recurring Voucher Setup Schedule retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), trans('custom.recurring_voucher_setup_schedule_retrieved_success'));
     }
 
     public function dateCalculate($oldDate,$newDate){
@@ -257,7 +257,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->find($id);
 
                 if (empty($recurringVoucherSetupSchedule)) {
-                    return $this->sendError('Recurring Voucher Setup Schedule not found');
+                    return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
                 }
 
                 if($recurringVoucherSetupSchedule->isInProccess) {
@@ -332,7 +332,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     }
                 }
 
-                return $this->sendResponse($recurringVoucherSetupSchedule, 'RRV rescheduled successfully');
+                return $this->sendResponse($recurringVoucherSetupSchedule, trans('custom.rrv_rescheduled_successfully'));
             }
 
         }catch(\Exception $e){
@@ -385,7 +385,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupSchedule)) {
-            return $this->sendError('Recurring Voucher Setup Schedule not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
         }
 
         $recurringVoucherSetupSchedule->delete();
@@ -399,7 +399,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
         $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with(['generateDocument','detail'])->get();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function recurringVoucherSchedulesAllStop(Request $request)
@@ -418,7 +418,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     'modifiedUserSystemID' => $employee->employeeSystemID
                 ]);
 
-            return $this->sendResponse($output, 'All schedules stopped successfully');
+            return $this->sendResponse($output, trans('custom.all_schedules_stopped_successfully'));
         }catch (\Exception $e){
             return $this->sendError('Try Again');
         }

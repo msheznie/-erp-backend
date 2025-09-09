@@ -79,6 +79,7 @@ class Kernel extends HttpKernel
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
         'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,
         'mobileServer' => \App\Http\Middleware\MobileServer::class,
-        'checkNotVerifiedEmail' => \App\Http\Middleware\NotVerifiedEmailMiddleware::class
+        'checkNotVerifiedEmail' => \App\Http\Middleware\NotVerifiedEmailMiddleware::class,
+        'csrf.api' => \App\Http\Middleware\VerifyCsrfTokenForApi::class
     ];
 }

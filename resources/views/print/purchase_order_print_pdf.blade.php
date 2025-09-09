@@ -17,6 +17,74 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
+    /* RTL Support for Arabic - Applied when lang=ar parameter is passed to the route */
+    @if(app()->getLocale() == 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
+    }
+    
+    .rtl-container {
+        direction: rtl;
+        text-align: right;
+    }
+    
+    .rtl-table {
+        direction: rtl;
+    }
+    
+    .rtl-table th,
+    .rtl-table td {
+        text-align: right;
+    }
+    
+    .rtl-text-left {
+        text-align: right !important;
+    }
+    
+    .rtl-text-right {
+        text-align: left !important;
+    }
+    
+    .rtl-float-left {
+        float: right !important;
+    }
+    
+    .rtl-float-right {
+        float: left !important;
+    }
+    
+    .rtl-margin-left {
+        margin-right: 0 !important;
+        margin-left: auto !important;
+    }
+    
+    .rtl-margin-right {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
+    
+    .rtl-table th {
+        text-align: center !important;
+    }
+    
+    .rtl-table td {
+        text-align: right !important;
+    }
+    
+    .rtl-table .text-center {
+        text-align: center !important;
+    }
+    
+    .rtl-table .text-left {
+        text-align: right !important;
+    }
+    
+    .rtl-table .text-right {
+        text-align: left !important;
+    }
+    @endif
+
     #watermark h3, .content h3 {
         font-size: 1.53125rem;
     }
@@ -183,9 +251,9 @@
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 
 
-<div class="content">
+<div class="content @if(app()->getLocale() == 'ar') rtl-container @endif">
     <div class="row">
-        <table style="width:100%" class="table_height">
+        <table style="width:100%" class="table_height @if(app()->getLocale() == 'ar') rtl-table @endif">
             <tr>
                 <td width="20%">
                     <table>
@@ -264,7 +332,7 @@
     </div>
     <hr style="border-top: 2px solid black; height: 2px; color: black">
     
-    <table style="width: 100%" class="table_height">
+    <table style="width: 100%" class="table_height @if(app()->getLocale() == 'ar') rtl-table @endif">
         <tr style="width: 100%">
             <td>
                 <div>
@@ -617,32 +685,32 @@
         </table>
     </div>
     <div class="row">
-        <table class="table table-bordered table-striped table-sm">
+        <table class="table table-bordered table-striped table-sm @if(app()->getLocale() == 'ar') rtl-table @endif">
             <thead>
             <tr style="border-top: 1px solid black;">
-                <th style="text-align: center">#</th>
-                <th style="text-align: center">{{ __('custom.item_code') }}</th>
-                <th style="text-align: center">{{ __('custom.item_description') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">#</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.item_code') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.item_description') }}</th>
                 @if ($isProjectBase)
-                    <th colspan="4" style="text-align: center">{{ __('custom.project') }}</th>
+                    <th colspan="4" style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.project') }}</th>
                 @endif
-                <th style="text-align: center">{{ __('custom.part_no') }} / {{ __('custom.ref_no') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.part_no') }} / {{ __('custom.ref_no') }}</th>
                 @if(isset($detailComment) && $detailComment == 1)
-                    <th style="text-align: center">{{ __('custom.comments') }}</th>
+                    <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.comments') }}</th>
                 @endif
-                <th style="text-align: center">{{ __('custom.uom') }}</th>
-                <th style="text-align: center">{{ __('custom.qty') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.uom') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.qty') }}</th>
                 @if(isset($allowAltUom))
-                <th style="text-align: center">{{ __('custom.alt_uom') }}</th>
-                <th style="text-align: center">{{ __('custom.item_qty') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.alt_uom') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.item_qty') }}</th>
                 @endif
-                <th style="text-align: center">{{ __('custom.unit_cost') }}</th>
-                <th style="text-align: center">{{ __('custom.dis_per_unit') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.unit_cost') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.dis_per_unit') }}</th>
                 @if ($podata->isVatEligible)
-                  <th style="text-align: center">{{ __('custom.vat_per_unit') }}</th>
+                  <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.vat_per_unit') }}</th>
                 @endif
-                <th style="text-align: center">{{ __('custom.net_cost_per_unit') }}</th>
-                <th style="text-align: center">{{ __('custom.net_amount') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.net_cost_per_unit') }}</th>
+                <th style="text-align: center @if(app()->getLocale() == 'ar') !important @endif">{{ __('custom.net_amount') }}</th>
             </tr>
             </thead>
             <tbody style="width: 100%;">
@@ -675,7 +743,7 @@
                         <td>{{$det->comment}}</td>
                     @endif
                     <td>{{$det->unit->UnitShortCode}}</td>
-                    <td class="text-right">{{$det->noQty}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{$det->noQty}}</td>
                     @if(isset($allowAltUom))
                     <td>
                        @if($det->altUom)
@@ -686,13 +754,13 @@
                     </td>
                     <td>{{$det->altUnitValue}}</td>
                     @endif
-                    <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
-                    <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{number_format($det->unitCost, $numberFormatting)}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)
-                        <td class="text-right">@if($podata->rcmActivated) {{number_format(0, $numberFormatting)}}@else{{number_format($det->VATAmount, $numberFormatting)}} @endif</td>
+                        <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">@if($podata->rcmActivated) {{number_format(0, $numberFormatting)}}@else{{number_format($det->VATAmount, $numberFormatting)}} @endif</td>
                     @endif
-                    <td class="text-right">{{number_format($netUnitCost, $numberFormatting)}}</td>
-                    <td class="text-right">{{number_format($det->netAmount, $numberFormatting)}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{number_format($netUnitCost, $numberFormatting)}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{number_format($det->netAmount, $numberFormatting)}}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
@@ -712,7 +780,7 @@
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;" class="table table-bordered">
+        <table style="width:100%;" class="table table-bordered @if(app()->getLocale() == 'ar') rtl-table @endif">
             <tbody>
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
@@ -819,7 +887,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 13px;"><h4  style="font-weight: bold" style=" text-decoration: underline;">Specifications</h4></td>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4  style="font-weight: bold" style=" text-decoration: underline;">{{ __('custom.specifications') }}</h4></td>
             </tr>
         </table>
         <br>
@@ -861,11 +929,11 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">Payment Terms and Conditions</h3></td>
+                <td width="100%" style="font-size: 11px;"><h3  style="font-weight: bold">{{ __('custom.payment_terms_and_conditions') }}</h3></td>
             </tr>
         </table>
         <br>
-        <table style="width:100%;" class="table table-bordered">
+        <table style="width:100%;" class="table table-bordered @if(app()->getLocale() == 'ar') rtl-table @endif">
             <tbody>
                 @foreach ($paymentTermConfigs as $paymentTermConfig)
                     <tr>

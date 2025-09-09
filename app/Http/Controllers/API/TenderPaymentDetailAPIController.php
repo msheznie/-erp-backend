@@ -64,7 +64,7 @@ class TenderPaymentDetailAPIController extends AppBaseController
         $this->tenderPaymentDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderPaymentDetails = $this->tenderPaymentDetailRepository->all();
 
-        return $this->sendResponse($tenderPaymentDetails->toArray(), 'Tender Payment Details retrieved successfully');
+        return $this->sendResponse($tenderPaymentDetails->toArray(), trans('custom.tender_payment_details_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderPaymentDetailAPIController extends AppBaseController
 
         $tenderPaymentDetail = $this->tenderPaymentDetailRepository->create($input);
 
-        return $this->sendResponse($tenderPaymentDetail->toArray(), 'Tender Payment Detail saved successfully');
+        return $this->sendResponse($tenderPaymentDetail->toArray(), trans('custom.tender_payment_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderPaymentDetailAPIController extends AppBaseController
         $tenderPaymentDetail = $this->tenderPaymentDetailRepository->findWithoutFail($id);
 
         if (empty($tenderPaymentDetail)) {
-            return $this->sendError('Tender Payment Detail not found');
+            return $this->sendError(trans('custom.tender_payment_detail_not_found'));
         }
 
-        return $this->sendResponse($tenderPaymentDetail->toArray(), 'Tender Payment Detail retrieved successfully');
+        return $this->sendResponse($tenderPaymentDetail->toArray(), trans('custom.tender_payment_detail_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderPaymentDetailAPIController extends AppBaseController
         $tenderPaymentDetail = $this->tenderPaymentDetailRepository->findWithoutFail($id);
 
         if (empty($tenderPaymentDetail)) {
-            return $this->sendError('Tender Payment Detail not found');
+            return $this->sendError(trans('custom.tender_payment_detail_not_found'));
         }
 
         $tenderPaymentDetail = $this->tenderPaymentDetailRepository->update($input, $id);
 
-        return $this->sendResponse($tenderPaymentDetail->toArray(), 'TenderPaymentDetail updated successfully');
+        return $this->sendResponse($tenderPaymentDetail->toArray(), trans('custom.tenderpaymentdetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderPaymentDetailAPIController extends AppBaseController
         $tenderPaymentDetail = $this->tenderPaymentDetailRepository->findWithoutFail($id);
 
         if (empty($tenderPaymentDetail)) {
-            return $this->sendError('Tender Payment Detail not found');
+            return $this->sendError(trans('custom.tender_payment_detail_not_found'));
         }
 
         $tenderPaymentDetail->delete();

@@ -81,7 +81,7 @@ class TenderCommitteeController extends AppBaseController
             $srm_employees = SrmEmployees::insert($data);
 
             if($srm_employees) {
-                return $this->sendResponse($data,'Employee saved successfully');
+                return $this->sendResponse($data,trans('custom.employee_saved_successfully'));
             }
 
         }else {
@@ -94,9 +94,9 @@ class TenderCommitteeController extends AppBaseController
         $delteRecord = SrmEmployees::where('company_id',$request['companyID'])->where('id',$request['id'])->delete();
         
         if($delteRecord) {
-            return $this->sendResponse($delteRecord,'Data deleted successfully');
+            return $this->sendResponse($delteRecord,trans('custom.data_deleted_successfully'));
         }else {
-            return $this->sendError('Record not found');
+            return $this->sendError(trans('custom.record_not_found'));
         }
     }
 
@@ -107,7 +107,7 @@ class TenderCommitteeController extends AppBaseController
         unset($input['employee']);
         $srm->update($input);
 
-        return $this->sendResponse($srm,'Data updated successfully');
+        return $this->sendResponse($srm,trans('custom.data_updated_successfully'));
 
     }
 
@@ -115,7 +115,7 @@ class TenderCommitteeController extends AppBaseController
 
         $requestData = $this->documentModifyService->checkForEditOrAmendRequest($request['tender_id']);
         $data = $this->srmCommonService->getActiveEmployeesForBid($request, $requestData);
-        return $this->sendResponse($data,'Data retrieved successfully');
+        return $this->sendResponse($data,trans('custom.data_retrieved_successfully'));
     }
 
 

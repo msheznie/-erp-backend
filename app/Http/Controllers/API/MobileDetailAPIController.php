@@ -67,7 +67,7 @@ class MobileDetailAPIController extends AppBaseController
         $this->mobileDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mobileDetails = $this->mobileDetailRepository->all();
 
-        return $this->sendResponse($mobileDetails->toArray(), 'Mobile Details retrieved successfully');
+        return $this->sendResponse($mobileDetails->toArray(), trans('custom.mobile_details_retrieved_successfully'));
     }
 
     /**
@@ -114,7 +114,7 @@ class MobileDetailAPIController extends AppBaseController
 
         $mobileDetail = $this->mobileDetailRepository->create($input);
 
-        return $this->sendResponse($mobileDetail->toArray(), 'Mobile Detail saved successfully');
+        return $this->sendResponse($mobileDetail->toArray(), trans('custom.mobile_detail_saved_successfully'));
     }
 
     /**
@@ -161,10 +161,10 @@ class MobileDetailAPIController extends AppBaseController
         $mobileDetail = $this->mobileDetailRepository->findWithoutFail($id);
 
         if (empty($mobileDetail)) {
-            return $this->sendError('Mobile Detail not found');
+            return $this->sendError(trans('custom.mobile_detail_not_found'));
         }
 
-        return $this->sendResponse($mobileDetail->toArray(), 'Mobile Detail retrieved successfully');
+        return $this->sendResponse($mobileDetail->toArray(), trans('custom.mobile_detail_retrieved_successfully'));
     }
 
     /**
@@ -221,12 +221,12 @@ class MobileDetailAPIController extends AppBaseController
         $mobileDetail = $this->mobileDetailRepository->findWithoutFail($id);
 
         if (empty($mobileDetail)) {
-            return $this->sendError('Mobile Detail not found');
+            return $this->sendError(trans('custom.mobile_detail_not_found'));
         }
 
         $mobileDetail = $this->mobileDetailRepository->update($input, $id);
 
-        return $this->sendResponse($mobileDetail->toArray(), 'MobileDetail updated successfully');
+        return $this->sendResponse($mobileDetail->toArray(), trans('custom.mobiledetail_updated_successfully'));
     }
 
     /**
@@ -273,7 +273,7 @@ class MobileDetailAPIController extends AppBaseController
         $mobileDetail = $this->mobileDetailRepository->findWithoutFail($id);
 
         if (empty($mobileDetail)) {
-            return $this->sendError('Mobile Detail not found');
+            return $this->sendError(trans('custom.mobile_detail_not_found'));
         }
 
         $mobileDetail->delete();
@@ -331,7 +331,7 @@ class MobileDetailAPIController extends AppBaseController
         if (Storage::disk($disk)->exists('mobile_bill_templates/detail_template.xlsx')) {
             return Storage::disk($disk)->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
         } else {
-            return $this->sendError('Summary template not found', 500);
+            return $this->sendError(trans('custom.summary_template_not_found'), 500);
         }
     }
 }

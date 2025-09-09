@@ -90,7 +90,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $this->dashboardWidgetMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $dashboardWidgetMasters = $this->dashboardWidgetMasterRepository->with(['department'])->paginate(isset($input['limit']) ? $input['limit'] : 15);
 
-        return $this->sendResponse($dashboardWidgetMasters->toArray(), 'Dashboard Widget Masters retrieved successfully');
+        return $this->sendResponse($dashboardWidgetMasters->toArray(), trans('custom.dashboard_widget_masters_retrieved_successfully'));
     }
 
     /**
@@ -145,7 +145,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         }
         $dashboardWidgetMaster = $this->dashboardWidgetMasterRepository->create($input);
 
-        return $this->sendResponse($dashboardWidgetMaster->toArray(), 'Dashboard Widget Master saved successfully');
+        return $this->sendResponse($dashboardWidgetMaster->toArray(), trans('custom.dashboard_widget_master_saved_successfully'));
     }
 
     /**
@@ -192,10 +192,10 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $dashboardWidgetMaster = $this->dashboardWidgetMasterRepository->with(['department'])->findWithoutFail($id);
 
         if (empty($dashboardWidgetMaster)) {
-            return $this->sendError('Dashboard Widget Master not found');
+            return $this->sendError(trans('custom.dashboard_widget_master_not_found'));
         }
 
-        return $this->sendResponse($dashboardWidgetMaster->toArray(), 'Dashboard Widget Master retrieved successfully');
+        return $this->sendResponse($dashboardWidgetMaster->toArray(), trans('custom.dashboard_widget_master_retrieved_successfully'));
     }
 
     /**
@@ -261,12 +261,12 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $dashboardWidgetMaster = $this->dashboardWidgetMasterRepository->findWithoutFail($id);
 
         if (empty($dashboardWidgetMaster)) {
-            return $this->sendError('Dashboard Widget Master not found');
+            return $this->sendError(trans('custom.dashboard_widget_master_not_found'));
         }
 
         $dashboardWidgetMaster = $this->dashboardWidgetMasterRepository->update($input, $id);
 
-        return $this->sendResponse($dashboardWidgetMaster->toArray(), 'DashboardWidgetMaster updated successfully');
+        return $this->sendResponse($dashboardWidgetMaster->toArray(), trans('custom.dashboardwidgetmaster_updated_successfully'));
     }
 
     /**
@@ -313,12 +313,12 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $dashboardWidgetMaster = $this->dashboardWidgetMasterRepository->findWithoutFail($id);
 
         if (empty($dashboardWidgetMaster)) {
-            return $this->sendError('Dashboard Widget Master not found');
+            return $this->sendError(trans('custom.dashboard_widget_master_not_found'));
         }
 
         $dashboardWidgetMaster->delete();
 
-        return $this->sendResponse($id, 'Dashboard Widget Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.dashboard_widget_master_deleted_successfully'));
     }
 
     public function getWidgetMasterFormData(Request $request){
@@ -335,7 +335,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $departmentMasters = $departmentMasters->toArray();
 
         $array = array('departments' => $departmentMasters);
-        return $this->sendResponse($array, 'Data retrieved successfully');
+        return $this->sendResponse($array, trans('custom.data_retrieved_successfully'));
     }
 
     public function getDashboardDepartment(Request $request){
@@ -367,7 +367,7 @@ END AS sortDashboard')
         }else{
             $departmentMasters = [];
         }
-        return $this->sendResponse($departmentMasters, 'Data retrieved successfully');
+        return $this->sendResponse($departmentMasters, trans('custom.data_retrieved_successfully'));
     }
 
     public function getDashboardWidget(Request $request){
@@ -391,7 +391,7 @@ END AS sortDashboard')
             $output['supplierGroup'] = $supplierGroup;
             $output['glAccounts'] = $glAccounts;
         }
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function getCustomWidgetGraphData(Request $request){
@@ -414,7 +414,7 @@ END AS sortDashboard')
 
         $id = isset($input['widgetMasterID']) ? $input['widgetMasterID'] : 0;
         if($id==0){
-            return $this->sendError('Widget Master ID Not Found');
+            return $this->sendError(trans('custom.widget_master_id_not_found'));
         }
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
         $isGroup = \Helper::checkIsCompanyGroup($companyID);
@@ -533,7 +533,7 @@ END AS sortDashboard')
                     $temSeries['categories'] = array_keys((array)$dataArray[0]);
                     array_push($data,$temSeries);
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 2:
             // Top 10 Suppliers
@@ -590,7 +590,7 @@ END AS sortDashboard')
 //                    $data[0]['showInLegend'] = true;
 //                    array_push($data,$pieData);
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 3:
                 //Savings Per month
@@ -604,7 +604,7 @@ END AS sortDashboard')
                     'data' => array()
                 );
                 $data = [];
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 4:
                 //Delivery Time
@@ -707,7 +707,7 @@ supplierID LIMIT 10
                 $temSeries['color']='#81C784';
                 array_push($data,$temSeries);
             }
-            return $this->sendResponse($data, 'Data retrieved successfully');
+            return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 5:
                 // Top 10 supplier by payment
@@ -766,7 +766,7 @@ GROUP BY
                     }
                     $data[0]['data'] = $pieData;
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 6:
                 // Top 10 outstanding payables
@@ -837,12 +837,12 @@ GROUP BY
                     $temSeries['categories'] = array_keys((array)$dataArray[0]);
                     array_push($data,$temSeries);
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 7:
                 // payment by status
                 $data = [];
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 8:
             // Top 10 GL Code by expense
@@ -921,7 +921,7 @@ erp_generalledger.chartOfAccountSystemID
                 $temSeries['categories'] = array_keys((array)$dataArray[0]);
                 array_push($data,$temSeries);
             }
-            return $this->sendResponse($data, 'Data retrieved successfully');
+            return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 9:
                 //Top 10 Customer based on revenue
@@ -1048,7 +1048,7 @@ GROUP BY
                     }
                     $data[0]['data'] = $pieData;
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 10:
                 // Top 10 outstanding receivable
@@ -1106,7 +1106,7 @@ GROUP BY
                     $temSeries['categories'] = array_keys((array)$dataArray[0]);
                     array_push($data,$temSeries);
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 11:
                 /*
@@ -1163,7 +1163,7 @@ GROUP BY
                     $temSeries['categories'] = array_keys((array)$dataArray[0]);
                     array_push($data,$temSeries);
                 }
-                return $this->sendResponse($data, 'Data retrieved successfully');
+                return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
 
             case 12:
                 //
@@ -1221,9 +1221,9 @@ GROUP BY
                 $temSeries['categories'] = array_keys((array)$dataArray[0]);
                 array_push($data,$temSeries);
             }
-            return $this->sendResponse($data, 'Data retrieved successfully');
+            return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
         default:
-            return $this->sendResponse($data, 'Data retrieved successfully');
+            return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
         }
     }
 

@@ -135,7 +135,7 @@ class SupplierMasterAPIController extends AppBaseController
         //->all();
 
 
-        return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');
+        return $this->sendResponse($supplierMasters->toArray(), trans('custom.supplier_masters_retrieved_successfully'));
     }
 
     /**
@@ -375,7 +375,7 @@ class SupplierMasterAPIController extends AppBaseController
         $company = Company::find($request['companyId']);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $docRefNo = \Helper::getCompanyDocRefNo($request['companyId'], 56);
@@ -611,7 +611,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierId = $request['supplierId'];
         $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
             ->first();
-        return $this->sendResponse($supplier->retentionPercentage, 'Supplier Retention Percentage retrieved successfully');
+        return $this->sendResponse($supplier->retentionPercentage, trans('custom.supplier_retention_percentage_retrieved_successful'));
 
     }
 
@@ -660,12 +660,12 @@ class SupplierMasterAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($data, 'Supplier business category retrieved successfully');
+        return $this->sendResponse($data, trans('custom.supplier_business_category_retrieved_successfully'));
     }
 
     public function getBusinessCategoriesBySupplier(){
         $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
-        return $this->sendResponse($businessCategories, 'Supplier business category retrieved successfully');
+        return $this->sendResponse($businessCategories, trans('custom.supplier_business_category_retrieved_successfully'));
     }
 
     public function createSupplierSubCategoryAssignRecord($supplierID,$supSubCategoryID){
@@ -689,7 +689,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
         else{
             if(empty($businessSubCategoryIDS)){
-                return $this->sendError('This main category has already been added',500);
+                return $this->sendError(trans('custom.this_main_category_has_already_been_added'),500);
             }
         }
 
@@ -704,7 +704,7 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                 }
                 else{
-                    return $this->sendError('These subcategories have already been added',500);
+                    return $this->sendError(trans('custom.these_subcategories_have_already_been_added'),500);
                 }
             }
             else{
@@ -713,11 +713,11 @@ class SupplierMasterAPIController extends AppBaseController
                     $this->createSupplierSubCategoryAssignRecord($supplierID,$ids->first());
                 }
                 else{
-                    return $this->sendError('This subcategory has already been added',500);
+                    return $this->sendError(trans('custom.this_subcategory_has_already_been_added'),500);
                 }
             }
         }
-        return $this->sendResponse([], 'Supplier business category added successfully');
+        return $this->sendResponse([], trans('custom.supplier_business_category_added_successfully'));
     }
 
     /**
@@ -741,7 +741,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
-            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+            return $this->sendError(trans('custom.liability_account_and_unbilled_account_cannot_be_s'));
         }
 
         if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
@@ -751,7 +751,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         if(isset($input['omanization']) && ($input['omanization'] > 100))
         {
-            return $this->sendError('Omanization percentage cannot be greater than 100');
+            return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
         }
 
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
@@ -793,13 +793,13 @@ class SupplierMasterAPIController extends AppBaseController
         if (isset($input['linkCustomerYN']) && isset($input['linkCustomerID']) && $input['linkCustomerYN'] == 1) {
             $checkLinkCustomer = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])->where('linkCustomerID',$input['linkCustomerID'])->where('linkCustomerYN',1)->first();
                 if ($checkLinkCustomer) {
-                    return $this->sendError('The selected customer is already assigned');
+                    return $this->sendError(trans('custom.the_selected_customer_is_already_assigned'));
                 }
         }
 
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
-                return $this->sendError('Linked company is required',500);
+                return $this->sendError(trans('custom.linked_company_is_required'),500);
             }
 
             $checkCustomerForInterCompany = SupplierMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
@@ -809,7 +809,7 @@ class SupplierMasterAPIController extends AppBaseController
                                                            ->first();
             
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->supplierName,500);
+                return $this->sendError(trans('custom.the_selected_company_is_already_assigned_to') .$checkCustomerForInterCompany->supplierName,500);
             }
 
 
@@ -861,7 +861,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($supplierMasters->toArray(), 'Supplier Master saved successfully');
+        return $this->sendResponse($supplierMasters->toArray(), trans('custom.supplier_master_saved_successfully'));
     }
 
 
@@ -874,7 +874,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
@@ -885,7 +885,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
-            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+            return $this->sendError(trans('custom.liability_account_and_unbilled_account_cannot_be_s'));
         }
 
         if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
@@ -894,7 +894,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         if(isset($input['omanization']) && ($input['omanization'] > 100))
         {
-            return $this->sendError('Omanization percentage cannot be greater than 100');
+            return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
         }
 
         if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
@@ -924,7 +924,7 @@ class SupplierMasterAPIController extends AppBaseController
             })->exists();
 
             if ($isPendingDocument) {
-                return $this->sendError('WHT fields cannot be updated. There are Supplier Invoice/Payment Vouchers pending for approval');
+                return $this->sendError(trans('custom.wht_fields_cannot_be_updated_there_are_supplier_in'));
             }
         }
 
@@ -944,7 +944,7 @@ class SupplierMasterAPIController extends AppBaseController
         if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
         }else{
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $isConfirm = $input['supplierConfirmedYN'];
@@ -960,19 +960,19 @@ class SupplierMasterAPIController extends AppBaseController
             if($alreadyLinkedCustomer) {
                 if (isset($alreadyLinkedCustomer->linkCustomerID)) {
                     if ($checkLinkCustomer && $alreadyLinkedCustomer->linkCustomerID != $input['linkCustomerID']) {
-                        return $this->sendError('The selected customer is already assigned');
+                        return $this->sendError(trans('custom.the_selected_customer_is_already_assigned'));
                     }
                 }
             }
             else{
                 if ($checkLinkCustomer) {
-                    return $this->sendError('The selected customer is already assigned');
+                    return $this->sendError(trans('custom.the_selected_customer_is_already_assigned'));
                 }
             }
         }
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
-                return $this->sendError('Linked company is required',500);
+                return $this->sendError(trans('custom.linked_company_is_required'),500);
             }
 
             $checkCustomerForInterCompany = SupplierMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
@@ -982,7 +982,7 @@ class SupplierMasterAPIController extends AppBaseController
                                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->supplierName,500);
+                return $this->sendError(trans('custom.the_selected_company_is_already_assigned_to') .$checkCustomerForInterCompany->supplierName,500);
             }
 
 
@@ -1002,12 +1002,12 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = SupplierMaster::where('supplierCodeSystem', $id)->first();
         $supplierMasterOld = $supplierMaster->toArray();
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         if(isset($input['retentionPercentage'])){
             if($input['retentionPercentage'] > 100){
-                return $this->sendError('Retention Percentage cannot be greater than 100%');
+                return $this->sendError(trans('custom.retention_percentage_cannot_be_greater_than_100'));
             }
         }
 
@@ -1031,7 +1031,7 @@ class SupplierMasterAPIController extends AppBaseController
             if ($input['nameOnPaymentCheque'] != $supplierMaster->nameOnPaymentCheque && ($input['supplierName'] == $supplierMaster->supplierName)) {
                 $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['nameOnPaymentCheque']), $id);
 
-                return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+                return $this->sendResponse($supplierMaster->toArray(), trans('custom.suppliermaster_updated_successfully'));
             }
 
             $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],3);
@@ -1101,10 +1101,10 @@ class SupplierMasterAPIController extends AppBaseController
 
                 $this->auditLog($db, $input['supplierCodeSystem'],$uuid, "suppliermaster", $input['primarySupplierCode']." has updated", "U", $newValue, $previosValue);
 
-                return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+                return $this->sendResponse($supplierMaster->toArray(), trans('custom.suppliermaster_updated_successfully'));
             }
 
-            return $this->sendError('Supplier Master is already approved , You cannot update.',500);
+            return $this->sendError(trans('custom.supplier_master_is_already_approved_you_cannot_upd'),500);
         }
 
 
@@ -1184,7 +1184,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendReponseWithDetails($supplierMaster->toArray(), 'SupplierMaster updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($supplierMaster->toArray(), trans('custom.suppliermaster_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
 
@@ -1218,7 +1218,7 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierCompanies = [];
         }
 
-        return $this->sendResponse($supplierCompanies, 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($supplierCompanies, trans('custom.supplier_category_subs_retrieved_successfully'));
     }
 
     /**
@@ -1240,7 +1240,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by','company'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         if($companyId){
@@ -1249,7 +1249,7 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierMaster->isLocalSupplier = false;
         }
 
-        return $this->sendResponse($supplierMaster->toArray(), 'Supplier Master retrieved successfully');
+        return $this->sendResponse($supplierMaster->toArray(), trans('custom.supplier_master_retrieved_successfully'));
     }
 
     public function supplierUsage(Request $request){
@@ -1284,7 +1284,7 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierUsageData[] = $note->debitNoteCode;
         }
 
-        return $this->sendResponse($supplierUsageData, 'Supplier usage retrieved successfully');
+        return $this->sendResponse($supplierUsageData, trans('custom.supplier_usage_retrieved_successfully'));
 
     }
 
@@ -1297,7 +1297,7 @@ class SupplierMasterAPIController extends AppBaseController
                                                 ->where('supplierCodeSystem', $supplierId)->first();
 
          if (empty($supplier)) {
-             return $this->sendError('Supplier Master not found');
+             return $this->sendError(trans('custom.supplier_master_not_found'));
          }
          $data = [];
          if ($supplier) {
@@ -1338,7 +1338,7 @@ class SupplierMasterAPIController extends AppBaseController
             'supplierBusinessData' => $data
          ];
 
-         return $this->sendResponse($supplierData, 'Supplier Master retrieved successfully');
+         return $this->sendResponse($supplierData, trans('custom.supplier_master_retrieved_successfully'));
     }
     
     /**
@@ -1358,12 +1358,12 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
 
-        return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+        return $this->sendResponse($supplierMaster->toArray(), trans('custom.suppliermaster_updated_successfully'));
     }
 
     /**
@@ -1380,12 +1380,12 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         $supplierMaster->delete();
 
-        return $this->sendResponse($id, 'Supplier Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_master_deleted_successfully'));
     }
 
 
@@ -1413,7 +1413,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function getSuppliersByCompany(Request $request)
     {
         $supplierMaster = SupplierAssigned::where('companySystemID', $request->selectedCompanyId)->get();
-        return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
+        return $this->sendResponse($supplierMaster, trans('custom.supplier_master_retrieved_successfully'));
     }
 
     public function getPOSuppliers(Request $request)
@@ -1444,7 +1444,7 @@ class SupplierMasterAPIController extends AppBaseController
             'suppliers' => $supplierMaster,
             'segment' => $segment
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
     }
 
 
@@ -1481,7 +1481,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($suppliers->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($suppliers->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     /**
@@ -1504,10 +1504,10 @@ class SupplierMasterAPIController extends AppBaseController
             ->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
-        return $this->sendResponse($supplierMaster->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($supplierMaster->toArray(), trans('custom.materiel_issue_retrieved_successfully'));
     }
 
     public function supplierReferBack(Request $request)
@@ -1518,11 +1518,11 @@ class SupplierMasterAPIController extends AppBaseController
 
         $supplier = $this->supplierMasterRepository->find($id);
         if (empty($supplier)) {
-            return $this->sendError('Supplier Master not found');
+            return $this->sendError(trans('custom.supplier_master_not_found'));
         }
 
         if ($supplier->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this supplier');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_supplier'));
         }
 
         $supplierArray = $supplier->toArray();
@@ -1561,7 +1561,7 @@ class SupplierMasterAPIController extends AppBaseController
             $this->supplierMasterRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($supplier->toArray(), 'Supplier Master Amend successfully');
+        return $this->sendResponse($supplier->toArray(), trans('custom.supplier_master_amend_successfully'));
     }
 
     public function generateSupplierExternalLink(Request $request)
@@ -1584,7 +1584,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $resData = ExternalLinkHash::create($insertData);
 
-        return $this->sendResponse($hashKey, 'External link generated successfully');
+        return $this->sendResponse($hashKey, trans('custom.external_link_generated_successfully'));
     }
 
     public function validateSupplierRegistrationLink(Request $request)
@@ -1607,7 +1607,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse([], 'External link validated successfully');
+        return $this->sendResponse([], trans('custom.external_link_validated_successfully'));
     }
 
     public function getSupplierRegisterFormData(Request $request)
@@ -1634,7 +1634,7 @@ class SupplierMasterAPIController extends AppBaseController
                 'companyDefaultBankMemos' => $companyDefaultBankMemos,
                 'businessCategories' => $businessCategories,
             ];
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function registerSupplier(Request $request)
@@ -1988,7 +1988,7 @@ class SupplierMasterAPIController extends AppBaseController
                  }                          
         
         $data['categories'] = $categories;
-        return $this->sendResponse($data, 'Supplier data retrived successfully');   
+        return $this->sendResponse($data, trans('custom.supplier_data_retrived_successfully'));   
     }
 
     public function bankMemosByRegisteredSupplierCurrency(Request $request)
@@ -1999,7 +1999,7 @@ class SupplierMasterAPIController extends AppBaseController
                                           ->where('registeredSupplierID', $input['registeredSupplierID'])
                                           ->get();
 
-        return $this->sendResponse($data, 'Supplier data retrived successfully');  
+        return $this->sendResponse($data, trans('custom.supplier_data_retrived_successfully'));  
     }
 
     public function updateRegisteredSupplierAttachment(Request $request)
@@ -2009,7 +2009,7 @@ class SupplierMasterAPIController extends AppBaseController
                                               ->update($input);
 
 
-        return $this->sendResponse([], 'Updated successfully');  
+        return $this->sendResponse([], trans('custom.updated_successfully_1'));  
     }
 
    public function updateRegisteredSupplierCurrency(Request $request)
@@ -2023,7 +2023,7 @@ class SupplierMasterAPIController extends AppBaseController
                                               ->update($input);
 
 
-        return $this->sendResponse([], 'Updated successfully');  
+        return $this->sendResponse([], trans('custom.updated_successfully_1'));  
     }
 
     public function updateRegisteredSupplierBankMemo(Request $request)
@@ -2033,7 +2033,7 @@ class SupplierMasterAPIController extends AppBaseController
                                               ->update($input);
 
 
-        return $this->sendResponse([], 'Updated successfully');  
+        return $this->sendResponse([], trans('custom.updated_successfully_1'));  
     }
 
     public function updateRegisteredSupplierMaster(Request $request)
@@ -2070,7 +2070,7 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError($e->getMessage().$e->getLine());
         }
 
-        return $this->sendResponse([], 'Updated successfully');  
+        return $this->sendResponse([], trans('custom.updated_successfully_1'));  
     }
 
     public function downloadSupplierAttachmentFile(Request $request)
@@ -2080,12 +2080,12 @@ class SupplierMasterAPIController extends AppBaseController
         $documentAttachments = RegisteredSupplierAttachment::find($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Attachments not found');
+            return $this->sendError(trans('custom.attachments_not_found'));
         }
 
         $supplierData = RegisteredSupplier::find($documentAttachments->resgisteredSupplierID);
         if (!$supplierData) {
-            return $this->sendError('Supplier Data not found');
+            return $this->sendError(trans('custom.supplier_data_not_found'));
         }
 
         $disk = Helper::policyWiseDisk($supplierData->companySystemID, 'public');
@@ -2094,7 +2094,7 @@ class SupplierMasterAPIController extends AppBaseController
             if ($exists = Storage::disk($disk)->exists($documentAttachments->path)) {
                 return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         }else{
             return $this->sendError('Attachment is not attached', 404);
@@ -2247,7 +2247,7 @@ class SupplierMasterAPIController extends AppBaseController
         $companyId = $request->input('company_id');
         if (!empty($isExist)) {
             if($isExist['STATUS'] === 1){
-                return $this->sendError('Supplier Registration Details Already Exist',402);
+                return $this->sendError(trans('custom.supplier_registration_details_already_exist'),402);
             } else if ($isExist['STATUS'] === 0){
                 $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                 $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
@@ -2266,9 +2266,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                    return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+                    return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
                 } else{
-                    return $this->sendError('Supplier Registration Link Generation Failed',500);
+                    return $this->sendError(trans('custom.supplier_registration_link_generation_failed'),500);
                 }
             }
         } else {
@@ -2287,9 +2287,9 @@ class SupplierMasterAPIController extends AppBaseController
                 $dataEmail['emailAlertMessage'] = $body;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+                return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
             } else {
-                return $this->sendError('Supplier Registration Link Generation Failed',500);
+                return $this->sendError(trans('custom.supplier_registration_link_generation_failed'),500);
             }
         }
     }
@@ -2331,9 +2331,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
-                    return $this->sendResponse($loginUrl, 'Supplier Registration Link re-sent successfully');
+                    return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_resent_successfully'));
                 } else{
-                    return $this->sendError(' Failed to re-send Supplier Registration Link',500);
+                    return $this->sendError(trans('custom.failed_to_resend_supplier_registration_link'),500);
                 }
             }
         }
@@ -2412,7 +2412,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($suppliers->toArray(),'Data retrieved successfully');
+        return $this->sendResponse($suppliers->toArray(),trans('custom.data_retrieved_successfully'));
     }
 
     public function validateSupplierAmend(Request $request)
@@ -2422,7 +2422,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = SupplierMaster::find($input['supplierID']);
 
         if (!$supplierMaster) {
-            return $this->sendError('Supplier Data not found');
+            return $this->sendError(trans('custom.supplier_data_not_found'));
         }
 
         $errorMessages = [];
@@ -2493,10 +2493,10 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
 
             if (empty($supplierBlock)) {
-                return $this->sendError('Supplier Block not found');
+                return $this->sendError(trans('custom.supplier_block_not_found'));
             }
             $supplierBlock->delete();
-            return $this->sendResponse(true,'Supplier Block deleted successfully');
+            return $this->sendResponse(true,trans('custom.supplier_block_deleted_successfully'));
 
         }
 
@@ -2505,7 +2505,7 @@ class SupplierMasterAPIController extends AppBaseController
             $blockID = $input['blockId'];
             $updated['blockReason'] = $input['blockReason'];
             $supplierBlock = $this->supplierBlockRepository->update($updated, $blockID);
-            return $this->sendResponse(true,'Supplier Block updated successfully');
+            return $this->sendResponse(true,trans('custom.supplier_block_updated_successfully'));
         }
 
         $input['supplierCodeSytem'] = $id;
@@ -2513,7 +2513,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         if($isPermenentExist)
         {
-            return $this->sendError('you cant add permenent type !already have a perment type',422);
+            return $this->sendError(trans('custom.you_cant_add_permenent_type_already_have_a_perment'),422);
         }
         
         $isPeriodExist = SupplierBlock::where('supplierCodeSytem',$id)->where('blockType',2);
@@ -2544,7 +2544,7 @@ class SupplierMasterAPIController extends AppBaseController
 
                 if($overlapRecord)
                 {
-                    return $this->sendError('The selected period already has a block',422);
+                    return $this->sendError(trans('custom.the_selected_period_already_has_a_block'),422);
                 }
             }
 
@@ -2593,7 +2593,7 @@ class SupplierMasterAPIController extends AppBaseController
             $mergedArray = array_merge($PO, $SI, $PV,$GRV);
             if(count($mergedArray) > 0)
             {
-                return $this->sendError('The supplier cannot be blocked as the supplier selected in the following documents.',500,['type' => 'blockSupplier','data' =>$mergedArray]);
+                return $this->sendError(trans('custom.the_supplier_cannot_be_blocked_as_the_supplier_sel'),500,['type' => 'blockSupplier','data' =>$mergedArray]);
     
             }
         }
@@ -2614,7 +2614,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
          $supplierBlock = $this->supplierBlockRepository->create($input);
-         return $this->sendResponse($supplierBlock,'Data updated successfully');
+         return $this->sendResponse($supplierBlock,trans('custom.data_updated_successfully'));
 
     }
 
@@ -2622,7 +2622,7 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         if (!isset($input['supplierId'])) {
-            return $this->sendError('Supplier id not found');
+            return $this->sendError(trans('custom.supplier_id_not_found'));
         }
         $supplier_id = $input['supplierId'];
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
@@ -2669,7 +2669,7 @@ class SupplierMasterAPIController extends AppBaseController
         $data['supplierBlocks'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->get();
         $data['isPermentExists'] = $this->supplierBlockRepository->where('supplierCodeSytem',$supplierId)->where('blockType',1)->exists();
 
-        return $this->sendResponse($data, 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($data, trans('custom.supplier_category_subs_retrieved_successfully'));
     }
 
     public function requestSubmitKyc(RequestSubmitKycRequest $request)

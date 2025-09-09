@@ -76,7 +76,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $this->paymentBankTransferRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentBankTransferRefferedBacks = $this->paymentBankTransferRefferedBackRepository->all();
 
-        return $this->sendResponse($paymentBankTransferRefferedBacks->toArray(), 'Payment Bank Transfer Reffered Backs retrieved successfully');
+        return $this->sendResponse($paymentBankTransferRefferedBacks->toArray(), trans('custom.payment_bank_transfer_reffered_backs_retrieved_suc'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
 
         $paymentBankTransferRefferedBacks = $this->paymentBankTransferRefferedBackRepository->create($input);
 
-        return $this->sendResponse($paymentBankTransferRefferedBacks->toArray(), 'Payment Bank Transfer Reffered Back saved successfully');
+        return $this->sendResponse($paymentBankTransferRefferedBacks->toArray(), trans('custom.payment_bank_transfer_reffered_back_saved_successf'));
     }
 
     /**
@@ -170,7 +170,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $paymentBankTransfer = $this->paymentBankTransferRefferedBackRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_reffered_back_not_found'));
         }
 
         if (!empty($paymentBankTransfer)) {
@@ -209,7 +209,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount;
         $paymentBankTransfer->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
-        return $this->sendResponse($paymentBankTransfer->toArray(), 'Payment Bank Transfer retrieved successfully');
+        return $this->sendResponse($paymentBankTransfer->toArray(), trans('custom.payment_bank_transfer_retrieved_successfully'));
     }
 
     /**
@@ -266,12 +266,12 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $paymentBankTransferRefferedBack = $this->paymentBankTransferRefferedBackRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransferRefferedBack)) {
-            return $this->sendError('Payment Bank Transfer Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_reffered_back_not_found'));
         }
 
         $paymentBankTransferRefferedBack = $this->paymentBankTransferRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($paymentBankTransferRefferedBack->toArray(), 'PaymentBankTransferRefferedBack updated successfully');
+        return $this->sendResponse($paymentBankTransferRefferedBack->toArray(), trans('custom.paymentbanktransferrefferedback_updated_successful'));
     }
 
     /**
@@ -318,12 +318,12 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $paymentBankTransferRefferedBack = $this->paymentBankTransferRefferedBackRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransferRefferedBack)) {
-            return $this->sendError('Payment Bank Transfer Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_reffered_back_not_found'));
         }
 
         $paymentBankTransferRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Payment Bank Transfer Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_bank_transfer_reffered_back_deleted_succes'));
     }
 
 

@@ -67,7 +67,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
         $this->reasonCodeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reasonCodeMasters = $this->reasonCodeMasterRepository->all();
 
-        return $this->sendResponse($reasonCodeMasters->toArray(), 'Reason Code Masters retrieved successfully');
+        return $this->sendResponse($reasonCodeMasters->toArray(), trans('custom.reason_code_masters_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->create($input);
 
-        return $this->sendResponse($reasonCodeMaster->toArray(), 'Reason Code Master saved successfully');
+        return $this->sendResponse($reasonCodeMaster->toArray(), trans('custom.reason_code_master_saved_successfully'));
     }
 
     /**
@@ -165,10 +165,10 @@ class ReasonCodeMasterAPIController extends AppBaseController
         $reasonCodeMaster = $this->reasonCodeMasterRepository->findWithoutFail($id);
 
         if (empty($reasonCodeMaster)) {
-            return $this->sendError('Reason Code Master not found');
+            return $this->sendError(trans('custom.reason_code_master_not_found'));
         }
 
-        return $this->sendResponse($reasonCodeMaster->toArray(), 'Reason Code Master retrieved successfully');
+        return $this->sendResponse($reasonCodeMaster->toArray(), trans('custom.reason_code_master_retrieved_successfully'));
     }
 
     /**
@@ -225,7 +225,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
         $reasonCodeMaster = $this->reasonCodeMasterRepository->findWithoutFail($input['id']);
 
         if (empty($reasonCodeMaster)) {
-            return $this->sendError('Reason Code Master not found');
+            return $this->sendError(trans('custom.reason_code_master_not_found'));
         }
 
 
@@ -237,7 +237,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
         if($input['isPost'] == false){
             if($input['glCode'] == null || $input['glCode'] == 0){
-                return $this->sendError('GL Code field is required');
+                return $this->sendError(trans('custom.gl_code_field_is_required'));
             };
         }
 
@@ -247,7 +247,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
 
-        return $this->sendResponse($reasonCodeMaster->toArray(), 'ReasonCodeMaster updated successfully');
+        return $this->sendResponse($reasonCodeMaster->toArray(), trans('custom.reasoncodemaster_updated_successfully'));
     }
 
     /**
@@ -294,16 +294,16 @@ class ReasonCodeMasterAPIController extends AppBaseController
         $reasonCodeMaster = $this->reasonCodeMasterRepository->findWithoutFail($id);
 
         if (empty($reasonCodeMaster)) {
-            return $this->sendError('Reason Code Master not found');
+            return $this->sendError(trans('custom.reason_code_master_not_found'));
         }
 
         $salesReturn = SalesReturnDetail::where('reasonCode', $id)->first();
         if($salesReturn){
-            return $this->sendError('Reason Code Master cannot be deleted. Record already exist in sales return detail');
+            return $this->sendError(trans('custom.reason_code_master_cannot_be_deleted_record_alread'));
         }
 
         $reasonCodeMaster->delete();
-        return $this->sendResponse([],'Reason Code Master deleted successfully');
+        return $this->sendResponse([],trans('custom.reason_code_master_deleted_successfully'));
     }
 
     /**
@@ -343,7 +343,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
     {
         $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->where('isActive', 1)->where('isAssigned', -1)->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
-        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+        return $this->sendResponse($glCodes, trans('custom.gl_codes_retrieved_successfully'));
     }
 
     public function reasonCodeMasterRecordSalesReturn($id){

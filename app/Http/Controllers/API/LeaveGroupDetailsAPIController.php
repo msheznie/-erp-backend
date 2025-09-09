@@ -65,7 +65,7 @@ class LeaveGroupDetailsAPIController extends AppBaseController
         $this->leaveGroupDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->all();
 
-        return $this->sendResponse($leaveGroupDetails->toArray(), 'Leave Group Details retrieved successfully');
+        return $this->sendResponse($leaveGroupDetails->toArray(), trans('custom.leave_group_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class LeaveGroupDetailsAPIController extends AppBaseController
 
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->create($input);
 
-        return $this->sendResponse($leaveGroupDetails->toArray(), 'Leave Group Details saved successfully');
+        return $this->sendResponse($leaveGroupDetails->toArray(), trans('custom.leave_group_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class LeaveGroupDetailsAPIController extends AppBaseController
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->findWithoutFail($id);
 
         if (empty($leaveGroupDetails)) {
-            return $this->sendError('Leave Group Details not found');
+            return $this->sendError(trans('custom.leave_group_details_not_found'));
         }
 
-        return $this->sendResponse($leaveGroupDetails->toArray(), 'Leave Group Details retrieved successfully');
+        return $this->sendResponse($leaveGroupDetails->toArray(), trans('custom.leave_group_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class LeaveGroupDetailsAPIController extends AppBaseController
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->findWithoutFail($id);
 
         if (empty($leaveGroupDetails)) {
-            return $this->sendError('Leave Group Details not found');
+            return $this->sendError(trans('custom.leave_group_details_not_found'));
         }
 
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($leaveGroupDetails->toArray(), 'LeaveGroupDetails updated successfully');
+        return $this->sendResponse($leaveGroupDetails->toArray(), trans('custom.leavegroupdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class LeaveGroupDetailsAPIController extends AppBaseController
         $leaveGroupDetails = $this->leaveGroupDetailsRepository->findWithoutFail($id);
 
         if (empty($leaveGroupDetails)) {
-            return $this->sendError('Leave Group Details not found');
+            return $this->sendError(trans('custom.leave_group_details_not_found'));
         }
 
         $leaveGroupDetails->delete();

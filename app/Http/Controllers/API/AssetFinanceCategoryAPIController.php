@@ -374,43 +374,43 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             // }
 
             if ($prefixCount > 1) {
-                return $this->sendError('Prefix cannot be add more than once');
+                return $this->sendError(trans('custom.prefix_cannot_be_add_more_than_once'));
             }
             if ($serialCount > 1) {
-                return $this->sendError('Serial number cannot be add more than once');
+                return $this->sendError(trans('custom.serial_number_cannot_be_add_more_than_once'));
             }
             if ($companyID > 1) {
-                return $this->sendError('Company element cannot be add more than once');
+                return $this->sendError(trans('custom.company_element_cannot_be_add_more_than_once'));
             }
             if ($departmentID > 1) {
-                return $this->sendError('Department element cannot be add more than once');
+                return $this->sendError(trans('custom.department_element_cannot_be_add_more_than_once'));
             }
             if ($assetcategoryID > 1) {
-                return $this->sendError('Asset category element cannot be add more than once');
+                return $this->sendError(trans('custom.asset_category_element_cannot_be_add_more_than_onc'));
             }
             if ($assetSubCategoryID > 1) {
-                return $this->sendError('Asset sub category element cannot be add more than once');
+                return $this->sendError(trans('custom.asset_sub_category_element_cannot_be_add_more_than'));
             }
 
 
             if ($serializationBasedOn == 1 && $companyID == 0) {
-                return $this->sendError('Company ID element required');
+                return $this->sendError(trans('custom.company_id_element_required'));
             }
 
             if ($serializationBasedOn == 2 && $departmentID == 0) {
-                return $this->sendError('Department ID element required');
+                return $this->sendError(trans('custom.department_id_element_required'));
             }
 
             if ($serializationBasedOn == 3 && $prefixCount == 0) {
-                return $this->sendError('Finance category element required');
+                return $this->sendError(trans('custom.finance_category_element_required'));
             }
 
             if ($serializationBasedOn == 4 && $assetcategoryID == 0) {
-                return $this->sendError('Asset category element required');
+                return $this->sendError(trans('custom.asset_category_element_required'));
             }
 
             if ($serializationBasedOn == 5 && $assetSubCategoryID == 0) {
-                return $this->sendError('Asset sub category element required');
+                return $this->sendError(trans('custom.asset_sub_category_element_required'));
             }
 
             $serializationCatExist = AssetFinanceCategory::select('serializationBasedOn')
@@ -438,7 +438,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             if (count($companyDepLevelValidate) > 0) {
                 $companyDepLevelArray = array("1", "2");
                 if (!in_array($serializationBasedOn, $companyDepLevelArray)) {
-                    return $this->sendError('You cannot create this serialization configuration , because finance categories are configured with company or department level ', 500);
+                    return $this->sendError(trans('custom.you_cannot_create_this_serialization_configuration_1'), 500);
                 }
             }
 
@@ -449,7 +449,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
                 ->get();
 
             if ((($serializationBasedOn == 1) || $serializationBasedOn == 2) && count($otherSerializationBasedOn) > 0) {
-                return $this->sendError('You cannot create this serialization configuration , because different categories has been configured to other categories ', 500);
+                return $this->sendError(trans('custom.you_cannot_create_this_serialization_configuration'), 500);
             }
         }
 

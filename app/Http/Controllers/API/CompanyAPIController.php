@@ -92,7 +92,7 @@ class CompanyAPIController extends AppBaseController
         $this->companyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companies = $this->companyRepository->all();
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.companies_retrieved_successfully'));
     }
 
 
@@ -259,7 +259,7 @@ class CompanyAPIController extends AppBaseController
             'hasPublicLinkGeneratePolicy' => $hasPublicLinkGeneratePolicy
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -279,7 +279,7 @@ class CompanyAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($data,'Record retrieved successfully');
+        return $this->sendResponse($data,trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAdvanceAccount(Request $request)
@@ -299,7 +299,7 @@ class CompanyAPIController extends AppBaseController
             ->get();
 
         $output = array('assetAndLiaAccount' => $assetAndLiabilityAccount);
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -338,7 +338,7 @@ class CompanyAPIController extends AppBaseController
                         'unbilledAccountConfigs' => $unbilledAccountConfigs,
                         'liabilityAccountConfigs' => $liabilityAccountConfigs
                     );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
     
@@ -353,7 +353,7 @@ class CompanyAPIController extends AppBaseController
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup",0)->get();
 
-        return $this->sendResponse($allCompanies->toArray(), 'Record retrieved successfully');
+        return $this->sendResponse($allCompanies->toArray(), trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -466,12 +466,12 @@ class CompanyAPIController extends AppBaseController
             $hrCompany->store($companies);
  
             DB::commit();
-            return $this->sendResponse($companies, 'Company saved successfully');
+            return $this->sendResponse($companies, trans('custom.company_saved_successfully'));
         }
         catch(Exception $ex){
             DB::rollback();
             $ex_arr = Helper::exception_to_error($ex);
-            return $this->sendError('Error in company create process.', 500, $ex_arr);
+            return $this->sendError(trans('custom.error_in_company_create_process'), 500, $ex_arr);
         }
     }
 
@@ -489,10 +489,10 @@ class CompanyAPIController extends AppBaseController
         $company = $this->companyRepository->with('reportingcurrency')->findWithoutFail($id);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
-        return $this->sendResponse($company->toArray(), 'Company retrieved successfully');
+        return $this->sendResponse($company->toArray(), trans('custom.company_retrieved_successfully'));
     }
 
     /**
@@ -516,7 +516,7 @@ class CompanyAPIController extends AppBaseController
         $company = $this->companyRepository->findWithoutFail($id);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $messages = [
@@ -608,12 +608,12 @@ class CompanyAPIController extends AppBaseController
             $hrCompany->update($id, $input);
             
             DB::commit();
-            return $this->sendResponse($company->toArray(), 'Company updated successfully');
+            return $this->sendResponse($company->toArray(), trans('custom.company_updated_successfully'));
         }
         catch(Exception $ex){
             DB::rollback();
             $ex_arr = Helper::exception_to_error($ex);
-            return $this->sendError('Error in company updated process.', 500, $ex_arr);
+            return $this->sendError(trans('custom.error_in_company_updated_process'), 500, $ex_arr);
         }
     }
 
@@ -631,12 +631,12 @@ class CompanyAPIController extends AppBaseController
         $company = $this->companyRepository->findWithoutFail($id);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $company->delete();
 
-        return $this->sendResponse($id, 'Company deleted successfully');
+        return $this->sendResponse($id, trans('custom.company_deleted_successfully'));
     }
 
     public function getCompaniesByGroup(){
@@ -650,7 +650,7 @@ class CompanyAPIController extends AppBaseController
                 ->where('isGroup',0)
                 ->get();
         }
-        return $this->sendResponse($company, 'Company retrieved successfully');
+        return $this->sendResponse($company, trans('custom.company_retrieved_successfully'));
     }
 
     public function getCompanies(Request $request){
@@ -743,7 +743,7 @@ class CompanyAPIController extends AppBaseController
             'chartOfAccount' => $chartOfAccount,
             'isGroup' => $isGroup
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -789,7 +789,7 @@ class CompanyAPIController extends AppBaseController
 
                 $this->companyRepository->update(['companyLogo'=>$myFileName, 'logoPath' => $logoPath],$input['companySystemID']);
 
-                return $this->sendResponse([], 'Company Logo uploaded successfully');
+                return $this->sendResponse([], trans('custom.company_logo_uploaded_successfully'));
 
             }
         }
@@ -836,7 +836,7 @@ class CompanyAPIController extends AppBaseController
                     }
                 }
             }
-            return $this->sendResponse($digitalStampUpload, 'Digital Stamp Uploaded successfully');
+            return $this->sendResponse($digitalStampUpload, trans('custom.digital_stamp_uploaded_successfully'));
         } catch (\Exception $e) {
             return $this->sendError('It is not possible to upload the digital stamp at the moment. Please contact the System Administrator', 500);
         }
@@ -892,7 +892,7 @@ class CompanyAPIController extends AppBaseController
 
         $updateIsDefault =CompanyDigitalStamp::where('id', $id)->update($masterData);
 
-        return $this->sendResponse($updateIsDefault , 'Default digital stamp updated successfully');
+        return $this->sendResponse($updateIsDefault , trans('custom.default_digital_stamp_updated_successfully'));
     }
 
     public function getDigitalStamps(Request $request){
@@ -1025,7 +1025,7 @@ class CompanyAPIController extends AppBaseController
             'assetAndLiabilityAccount' => $assetAndLiabilityAccount
 
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
 
     }

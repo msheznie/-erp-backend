@@ -65,7 +65,7 @@ class HrPayrollDetailsAPIController extends AppBaseController
         $this->hrPayrollDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->all();
 
-        return $this->sendResponse($hrPayrollDetails->toArray(), 'Hr Payroll Details retrieved successfully');
+        return $this->sendResponse($hrPayrollDetails->toArray(), trans('custom.hr_payroll_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrPayrollDetailsAPIController extends AppBaseController
 
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->create($input);
 
-        return $this->sendResponse($hrPayrollDetails->toArray(), 'Hr Payroll Details saved successfully');
+        return $this->sendResponse($hrPayrollDetails->toArray(), trans('custom.hr_payroll_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrPayrollDetailsAPIController extends AppBaseController
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollDetails)) {
-            return $this->sendError('Hr Payroll Details not found');
+            return $this->sendError(trans('custom.hr_payroll_details_not_found'));
         }
 
-        return $this->sendResponse($hrPayrollDetails->toArray(), 'Hr Payroll Details retrieved successfully');
+        return $this->sendResponse($hrPayrollDetails->toArray(), trans('custom.hr_payroll_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrPayrollDetailsAPIController extends AppBaseController
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollDetails)) {
-            return $this->sendError('Hr Payroll Details not found');
+            return $this->sendError(trans('custom.hr_payroll_details_not_found'));
         }
 
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($hrPayrollDetails->toArray(), 'HrPayrollDetails updated successfully');
+        return $this->sendResponse($hrPayrollDetails->toArray(), trans('custom.hrpayrolldetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrPayrollDetailsAPIController extends AppBaseController
         $hrPayrollDetails = $this->hrPayrollDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollDetails)) {
-            return $this->sendError('Hr Payroll Details not found');
+            return $this->sendError(trans('custom.hr_payroll_details_not_found'));
         }
 
         $hrPayrollDetails->delete();
