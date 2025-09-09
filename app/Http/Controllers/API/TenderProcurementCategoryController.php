@@ -45,17 +45,17 @@ class TenderProcurementCategoryController extends AppBaseController
         $level = 0;
         $parent_id = 0;
         $input = $request->all();
-        $successMessageContent = 'Procurement Category ';
+        $successMessageContent = 'procurement_category_';
 
         if(isset($input['level'])){
             $level = $input['level'];
 
             if($level == 0){
-                $successMessageContent = 'Procurement Category ';
+                $successMessageContent = 'procurement_category_';
             } elseif ($level == 1) {
-                $successMessageContent = 'Procurement sub Category ';
+                $successMessageContent = 'procurement_sub_category_';
             } elseif ($level == 2){
-                $successMessageContent = 'Procurement activity ';
+                $successMessageContent = 'procurement_activity_';
             }
         }
 
@@ -67,7 +67,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
             'description' => 'required',
-           // 'description_in_secondary' => 'required',
+            // 'description_in_secondary' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -88,9 +88,13 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCatCodeExist)) {
             if(is_null($procurementCatCodeExist['deleted_at'])){
-                return $this->sendError('Procurement code \'' . $input['code'] . '\' already exists');
+                return $this->sendError(trans('srm_masters.procurement_code_already_exists', [
+                    'code' => $input['code'],
+                ]));
             } else {
-                $errorMessage = 'Procurement code \''. $input['code'] . '\'  already exist, Do you really want to restore this?';
+                $errorMessage = trans('srm_masters.procurement_code_already_exist_do_you_really_want_to_restore_this', [
+                    'code' => $input['code'],
+                ]);
                 return $this->sendError([$procurementCatCodeExist['id'], $errorMessage], 409);
             }
         }
@@ -109,9 +113,13 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCatDesExist)) {
             if(is_null($procurementCatDesExist['deleted_at'])){
-                return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
+                return $this->sendError(trans('srm_masters.procurement_category_description_already_exists', [
+                    'code' => $input['description'],
+                ]));
             } else {
-                $errorMessage = 'Procurement category description \''. $input['description'] . '\' already exist, Do you really want to restore this?';
+                $errorMessage = trans('srm_masters.procurement_category_description_already_exist_do_you_really_want_to_restore_this', [
+                    'code' => $input['description'],
+                ]);
                 return $this->sendError([$procurementCatDesExist['id'], $errorMessage], 409);
             }
         }
@@ -123,7 +131,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = $parent_id;
         $procurementCategories = $this->procurementCategoryRepository->create($input);
 
-        return $this->sendResponse($procurementCategories->toArray(), $successMessageContent . ' saved successfully');
+        return $this->sendResponse($procurementCategories->toArray(), trans('srm_masters.' . $successMessageContent . 'saved_successfully'));
     }
 
     /**
@@ -137,10 +145,10 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($procurementCategory)) {
-            return $this->sendError(trans('custom.procurement_category_not_found'));
+            return $this->sendError('Procurement Category not found');
         }
 
-        return $this->sendResponse($procurementCategory->toArray(), trans('custom.procurement_category_retrieved_successfully'));
+        return $this->sendResponse($procurementCategory->toArray(), 'Procurement Category retrieved successfully');
     }
 
     /**
@@ -163,11 +171,11 @@ class TenderProcurementCategoryController extends AppBaseController
             $level = $input['level'];
 
             if($level == 0){
-                $successMessageContent = 'Procurement Category ';
+                $successMessageContent = 'procurement_category_';
             } elseif ($level == 1) {
-                $successMessageContent = 'Procurement sub Category ';
+                $successMessageContent = 'procurement_sub_category_';
             } elseif ($level == 2){
-                $successMessageContent = 'Procurement activity ';
+                $successMessageContent = 'procurement_activity_';
             }
         }
 
@@ -178,7 +186,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($procurementCategory)) {
-            return $this->sendError(trans('custom.procurement_category_not_found'));
+            return $this->sendError(trans('srm_masters.procurement_category_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -207,9 +215,13 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCodeExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
-                return $this->sendError('Procurement code \'' . $input['code'] . '\' already exists');
+                return $this->sendError(trans('srm_masters.procurement_code_already_exists', [
+                    'code' => $input['code'],
+                ]));
             } else {
-                $errorMessage = 'Procurement code '. $input['code'] . '  already exist, Do you really want to restore this?';
+                $errorMessage = trans('srm_masters.procurement_code_already_exist_do_you_really_want_to_restore_this', [
+                    'code' => $input['code'],
+                ]);
                 return $this->sendError([$procurementCodeExist['id'], $errorMessage], 409);
             }
         }
@@ -230,9 +242,13 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if(!empty($procurementDesExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
-                return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
+                return $this->sendError(trans('srm_masters.procurement_category_description_already_exists', [
+                    'code' => $input['description'],
+                ]));
             } else {
-                $errorMessage = 'Procurement category description '. $input['description'] . ' already exist, Do you really want to restore this?';
+                $errorMessage = trans('srm_masters.procurement_category_description_already_exist_do_you_really_want_to_restore_this', [
+                    'code' => $input['description'],
+                ]);
                 return $this->sendError([$procurementCodeExist['id'], $errorMessage], 409);
             }
         }
@@ -240,7 +256,7 @@ class TenderProcurementCategoryController extends AppBaseController
         // Used for tender creation
         $editCondition = $this->checkEditCondition($id, $request, $level);
         if(isset($editCondition) && !$editCondition){
-            return $this->sendError($successMessageContent .' is already used in tender creation');
+            return $this->sendError(trans('srm_masters.' . $successMessageContent . 'is_already_used_in_tender_creation'));
         }
 
         $input['updated_pc'] = gethostname();
@@ -251,7 +267,7 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $procurementCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
-        return $this->sendResponse($procurementCategory, $successMessageContent.' updated successfully');
+        return $this->sendResponse($procurementCategory, trans('srm_masters.' . $successMessageContent . 'updated_successfully'));
     }
 
     /**
@@ -265,33 +281,33 @@ class TenderProcurementCategoryController extends AppBaseController
         $tenderProcurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($tenderProcurementCategory)) {
-            return $this->sendError(trans('custom.procurement_category_not_found'));
+            return $this->sendError(trans('srm_masters.procurement_category_not_found'));
         }
 
         $level = $tenderProcurementCategory['level'];
 
         if($level == 0){
-            $successMessageContent = 'Procurement Category ';
+            $successMessageContent = 'procurement_category_';
         } elseif ($level == 1) {
-            $successMessageContent = 'Procurement sub Category ';
+            $successMessageContent = 'procurement_sub_category_';
 
             $tenderMasterNotConfirmedCount = TenderMaster::where('procument_sub_cat_id', $tenderProcurementCategory['id'])->count();
 
             if($tenderMasterNotConfirmedCount > 0){
-                return $this->sendError($successMessageContent. ' is already used');
+                return $this->sendError(trans('srm_masters.' . $successMessageContent . 'is_already_used'));
             }
         } elseif ($level == 2){
-            $successMessageContent = 'Procurement activity ';
+            $successMessageContent = 'procurement_activity_';
         }
 
         $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->where('id', $id)->get();
         if(sizeof($categoryHasTenders) != 0){
-            return $this->sendError($successMessageContent. ' is already used');
+            return $this->sendError(trans('srm_masters.' . $successMessageContent . 'is_already_used'));
         }
 
         $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->where('id', $id)->get();
         if(sizeof($categoryHasActivity) != 0){
-            return $this->sendError($successMessageContent . ' is already used');
+            return $this->sendError(trans('srm_masters.' . $successMessageContent . 'is_already_used'));
         }
 
         $input['deleted_by'] = Helper::getEmployeeSystemID();
@@ -301,7 +317,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $tenderProcurementCategory->delete();
         }
 
-        return $this->sendResponse($id, $successMessageContent . ' deleted successfully');
+        return $this->sendResponse($id, trans('srm_masters.' . $successMessageContent . 'deleted_successfully'));
     }
 
     public function getAllProcurementCategory(Request $request)
@@ -357,7 +373,9 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('level', '=', $level)->first();
 
         if (!empty($procurementCatCodeExist)) {
-            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+            return $this->sendError(trans('srm_masters.procurement_code_already_exists', [
+                'code' => $input['code'],
+            ]));
         }
 
         $procurementCatDesExist = TenderProcurementCategory::select('id')
@@ -365,9 +383,11 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('level', '=', $level)->first();
 
         if (!empty($procurementCatDesExist)) {
-            return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
+            return $this->sendError(trans('srm_masters.procurement_category_description_already_exists', [
+                'code' => $input['description'],
+            ]));
         }
-        
+
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
 
         if($procurementCategory) {
@@ -375,7 +395,7 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
 
-        return $this->sendResponse($procurementCategory, trans('custom.procurement_category_restored_successfully'));
+        return $this->sendResponse($procurementCategory, trans('srm_masters.procurement_activity_restored_successfully'));
     }
 
     private function checkEditCondition($id, $request, $level){
@@ -569,4 +589,3 @@ class TenderProcurementCategoryController extends AppBaseController
         }
     }
 }
-

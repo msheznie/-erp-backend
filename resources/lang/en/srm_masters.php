@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'procurement_category_not_found' => 'Procurement Category not found',
+    'procurement_category_is_already_used' => 'Procurement Category is already used',
+    'procurement_category_deleted_successfully' => 'Procurement Category deleted successfully',
+    'procurement_category_saved_successfully' => 'Procurement Category saved successfully',
+    'procurement_sub_category_is_already_used' => 'Procurement sub Category is already used',
+    'procurement_sub_category_deleted_successfully' => 'Procurement sub Category deleted successfully',
+    'procurement_sub_category_saved_successfully' => 'Procurement sub Category saved successfully',
+    'procurement_activity_is_already_used' => 'Procurement activity is already used',
+    'procurement_activity_deleted_successfully' => 'Procurement activity deleted successfully',
+    'procurement_activity_saved_successfully' => 'Procurement activity saved successfully',
+    'procurement_code_already_exist_do_you_really_want_to_restore_this' => 'Procurement code \':code\'  already exist, Do you really want to restore this?',
+    'procurement_category_description_already_exist_do_you_really_want_to_restore_this' => 'Procurement category description \':code\'  already exist, Do you really want to restore this?',
+    'procurement_code_already_exists' => 'Procurement code \':code\' already exists',
+    'procurement_category_description_already_exists' => 'Procurement category description \':code\' already exists',
+    'procurement_category_is_already_used_in_tender_creation' => 'Procurement Category is already used in tender creation',
+    'procurement_sub_category_is_already_used_in_tender_creation' => 'Procurement sub Category is already used in tender creation',
+    'procurement_activity_is_already_used_in_tender_creation' => 'Procurement activity is already used in tender creation',
+    'procurement_category_updated_successfully' => 'Procurement Category updated successfully',
+    'procurement_sub_category_updated_successfully' => 'Procurement sub Category updated successfully',
+    'procurement_activity_updated_successfully' => 'Procurement activity updated successfully',
+    'procurement_activity_restored_successfully' => 'Procurement activity restored successfully',
+];
