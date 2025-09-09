@@ -259,6 +259,7 @@ class BudgetDelegateAPIController extends AppBaseController
         $data = $request->all();
         $departmentID = $data['department_id'];
         $budgetPlanningId = $data['budget_planning_id'];
+        $budgetPlanningDetailId = $data['budget_planning_detail_id'] ?? 0;
 
         if (!isset($data['department_id'])) {
             return $this->sendError('Department ID is required');
@@ -269,9 +270,37 @@ class BudgetDelegateAPIController extends AppBaseController
         }
 
         try {
-            $accessTypes = $this->budgetDelegateService->getActiveAccessTypes();
-            $employees = $this->budgetDelegateService->getDepartmentEmployees($departmentID);
 
+            // Get the specific budget planning detail with assigned employees
+            $budgetPlanningDetail = DepartmentBudgetPlanningDetail::with([
+                'budgetDelegateAccessDetails.delegatee' => function ($q) {
+                    $q->select('departmentEmployeeSystemID', 'employeeSystemID');
+                }
+            ])->where('id', $budgetPlanningDetailId)->first();
+
+            // Get assigned employees directly from the budget planning detail
+            $assignedEmployees = $budgetPlanningDetail;
+
+            
+
+            $accessTypes = $this->budgetDelegateService->getActiveAccessTypes();
+            $allEmployees = $this->budgetDelegateService->getDepartmentEmployees($departmentID);
+
+            // Extract already assigned employeeSystemID values from the budget planning detail
+            $assignedEmployeeSystemIDs = collect();
+            if ($assignedEmployees && $assignedEmployees->budgetDelegateAccessDetails) {
+                foreach ($assignedEmployees->budgetDelegateAccessDetails as $delegateAccess) {
+                    if ($delegateAccess->delegatee) {
+                        $assignedEmployeeSystemIDs->push($delegateAccess->delegatee->employeeSystemID);
+                    }
+                }
+            }
+            $assignedEmployeeSystemIDs = $assignedEmployeeSystemIDs->unique()->values()->toArray();
+
+            // Filter employees to exclude already assigned ones
+            $employees = $allEmployees->filter(function ($employee) use ($assignedEmployeeSystemIDs) {
+                return !in_array($employee->employeeSystemID, $assignedEmployeeSystemIDs);
+            })->values();
             if ($data['type'] == 0) {
                 $data = [
                     'accessTypes' => $accessTypes,
