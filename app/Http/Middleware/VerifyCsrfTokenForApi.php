@@ -56,9 +56,10 @@ class VerifyCsrfTokenForApi
             $normalizedParams = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             //operation data
             $operation = strtolower($request->method());
-
+            
             $requestString = "{$normalizedJson}|{$normalizedParams}|{$operation}";
             $encodedRequest = ($data == "{}") ? base64_encode($data) : base64_encode($normalizedJson);
+            // return response()->json(['success' => false, 'message' => $data], 403);
             
             $dataWithTimestamp = "{$encodedRequest}|{$timestamp}";
             $expectedToken = hash_hmac('sha256', $dataWithTimestamp, env('CSRF_SECRET_KEY'));
@@ -122,6 +123,7 @@ class VerifyCsrfTokenForApi
             'api/v1/purchase_requests/pull/items/',
             'api/v1/purchase_request_details',
             'api/v1/purchase_request_details_delete/{id}',
+            'api/v1/department_budget_plannings/{id}',
             'api/v1/delete_segment_allocated_items/{id}',
             'api/v1/purchase-request/remove-all-items/{id}',
             'api/v1/get-item-qnty-by-pr',
@@ -131,6 +133,8 @@ class VerifyCsrfTokenForApi
             'api/v1/get_purchase_request_referreds',
             'api/v1/getPrItemsForAmendHistory',
             'api/v1/getBudgetConsumptionByDocument',
+            'api/v1/getTimeExtensionRequests',
+            'api/v1/getReversions',
             'api/v1/getAllApprovalDocuments',
             'api/v1/postEmployeeFromPortal',
             'api/v1/getAllcompaniesByDepartment',
