@@ -6156,5 +6156,9 @@ return [
     
     // Inventory Reclassification translations
     'e_reclassification_code' => 'رمز إعادة التصنيف',
-    'e_reclassification_date' => 'تاريخ إعادة التصنيف'
+    'e_reclassification_date' => 'تاريخ إعادة التصنيف',
+    'supplier_employee_code' => 'رمز المورّد / الموظف',
+    'supplier_employee_name' => 'اسم المورّد / الموظف',
+    'amount_local' => 'المبلغ (محلي)',
+    'amount_rpt' => 'المبلغ (عملة التقارير)',
 ];

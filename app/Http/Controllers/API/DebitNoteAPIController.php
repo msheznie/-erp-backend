@@ -1611,6 +1611,11 @@ class DebitNoteAPIController extends AppBaseController
 
     public function getDebitNoteFormData(Request $request)
     {
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
+                                         
         $companyId = $request['companyId'];
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -1650,12 +1655,15 @@ class DebitNoteAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
-        $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
+        $companyBasePO = [];
+        
+        ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
             ->where('companySystemID', $companyId)
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
             ->where('approved', -1)
             ->get();
+
 
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
             ->where('companySystemID', $companyId)
@@ -1667,7 +1675,7 @@ class DebitNoteAPIController extends AppBaseController
 
 
           
-        $debite_note_type = [["id"=>1,"name"=>"Supplier"],["id"=>2,"name"=>"Employee",]];                                
+        $debite_note_type = [["id"=>1,"name"=>__('custom.supplier')],["id"=>2,"name"=> __('custom.employee')]];
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -2468,7 +2476,11 @@ UNION ALL
     {
 
         $input = $request->all();
-
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
+        
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -2493,21 +2505,21 @@ UNION ALL
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Debit Note Code'] = $value->debitNoteCode;
+                $data[$x][__('custom.debit_note_code')] = $value->debitNoteCode;
 
                 if ($value->postedDate) {
-                    $data[$x]['Posted Date'] = \Helper::convertDateWithTime($value->postedDate);
+                    $data[$x][__('custom.posted_date')] = \Helper::convertDateWithTime($value->postedDate);
                 } else {
-                    $data[$x]['Posted Date'] = '';
+                    $data[$x][__('custom.posted_date')] = '';
                 }
 
-                $data[$x]['Narration'] = $value->comments;
+                $data[$x][__('custom.narration')] = $value->comments;
                 if ($value->supplier) {
-                    $data[$x]['Supplier/Employee Code'] = $value->supplier->primarySupplierCode;
-                    $data[$x]['Supplier/Employee Name'] = $value->supplier->supplierName;
+                    $data[$x][__('custom.supplier_employee_code')] = $value->supplier->primarySupplierCode;
+                    $data[$x][__('custom.supplier_employee_name')] = $value->supplier->supplierName;
                 } else {
-                    $data[$x]['Supplier/Employee Code'] = $value->employee->empID;;
-                    $data[$x]['Supplier/Employee Name'] = $value->employee->empFullName;;
+                    $data[$x][__('custom.supplier_employee_code')] = 1;;
+                    $data[$x][__('custom.supplier_employee_name')] = 'tet';;
                 }
 
                 $decimalPlaces = 2;
@@ -2515,10 +2527,10 @@ UNION ALL
                 $rptDecimalPlaces = 2;
 
                 if ($value->transactioncurrency) {
-                    $data[$x]['Currency'] = $value->transactioncurrency->CurrencyCode;
+                    $data[$x][__('custom.currency')] = $value->transactioncurrency->CurrencyCode;
                     $decimalPlaces = $value->transactioncurrency->DecimalPlaces;
                 } else {
-                    $data[$x]['Currency'] = '';
+                    $data[$x][__('custom.currency')] = '';
                 }
 
                 if ($value->localcurrency) {
@@ -2529,20 +2541,20 @@ UNION ALL
                     $rptDecimalPlaces = $value->rptcurrency->DecimalPlaces;
                 }
 
-                $data[$x]['Amount'] = round($value->debitAmountTrans, $decimalPlaces);
-                $data[$x]['Amount (Local)'] = round($value->debitAmountLocal, $localDecimalPlaces);
-                $data[$x]['Amount (Rpt)'] = round($value->debitAmountRpt, $rptDecimalPlaces);
+                $data[$x][__('custom.amount')] = round($value->debitAmountTrans, $decimalPlaces);
+                $data[$x][__('custom.amount_local')] = round($value->debitAmountLocal, $localDecimalPlaces);
+                $data[$x][__('custom.amount_rpt')] = round($value->debitAmountRpt, $rptDecimalPlaces);
 
                 if ($value->final_approved_by) {
-                    $data[$x]['Approved By'] = $value->final_approved_by->empName;
+                    $data[$x][__('custom.approved_by')] = $value->final_approved_by->empName;
                 } else {
-                    $data[$x]['Approved By'] = '';
+                    $data[$x][__('custom.approved_by')] = '';
                 }
 
                 if ($value->approvedDate) {
-                    $data[$x]['Approved Date'] = \Helper::convertDateWithTime($value->approvedDate);
+                    $data[$x][__('custom.approved_date')] = \Helper::convertDateWithTime($value->approvedDate);
                 } else {
-                    $data[$x]['Approved Date'] = '';
+                    $data[$x][__('custom.approved_date')] = '';
                 }
 
                 $x++;
