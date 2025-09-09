@@ -1783,7 +1783,9 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where("companySystemID", $companyId)
             ->get();
 
-        $PoPaymentTermTypes = PoPaymentTermTypes::with('translations')->get();
+            $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
+            ->select('paymentTermsCategoryID', 'categoryDescription')
+            ->get();
         if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->where('companySystemID', $companyId)
