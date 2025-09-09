@@ -422,7 +422,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             }
 
-            $this->updateLinkAmount($budgetDetailId);
 
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
@@ -463,6 +462,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ]);
             }
 
+            $this->updateLinkAmount($budgetDetailId);
+            
             $newValue = BudgetDetTemplateEntryData::with('templateColumn.preColumn')->where('entryID', $entryID)->get();
 
             // Add audit log
