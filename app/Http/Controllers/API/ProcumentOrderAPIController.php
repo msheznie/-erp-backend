@@ -135,6 +135,7 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\PoCategory;
+use App\Models\PoPaymentTermTypes;
 use App\Models\PaymentTermTemplateAssigned;
 use App\Models\PaymentTermConfig;
 use App\Models\PaymentTermTemplate;
@@ -1705,7 +1706,13 @@ class ProcumentOrderAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $month = Months::all();
+        $month = Months::get()->map(function($month) {
+            return [
+                'monthID' => $month->monthID,
+                'monthDes' => $month->monthDes,
+                'translated_month_des' => $month->translated_month_des
+            ];
+        });
 
         $po_category = PoCategory::where('isActive',true)->get();
 
@@ -1776,7 +1783,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where("companySystemID", $companyId)
             ->get();
 
-        $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
+            $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
             ->select('paymentTermsCategoryID', 'categoryDescription')
             ->get();
         if (!empty($purchaseOrderID)) {
@@ -1793,9 +1800,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0, 'allowItemToType' => 0);
 
-        $grvRecieved = array(['id' => 0, 'value' => 'Not Received'], ['id' => 1, 'value' => 'Partial Received'], ['id' => 2, 'value' => 'Fully Received']);
+        $grvRecieved = array(['id' => 0, 'value' => trans('custom.not_received')], ['id' => 1, 'value' => trans('custom.partial_received')], ['id' => 2, 'value' => trans('custom.fully_received')]);
 
-        $invoiceBooked = array(['id' => 0, 'value' => 'Not Invoiced'], ['id' => 1, 'value' => 'Partial Invoiced'], ['id' => 2, 'value' => 'Fully Invoiced']);
+        $invoiceBooked = array(['id' => 0, 'value' => trans('custom.not_invoiced')], ['id' => 1, 'value' => trans('custom.partial_invoiced')], ['id' => 2, 'value' => trans('custom.fully_invoiced')]);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;

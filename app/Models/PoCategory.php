@@ -45,8 +45,7 @@ class PoCategory extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $appends = ['description'];
 
     public $fillable = [
         'description',
@@ -76,6 +75,40 @@ class PoCategory extends Model
     public static $rules = [
         
     ];
+
+    public function translations()
+    {
+        return $this->hasMany(PoCategoryLanguage::class, 'poCategoryID', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->description;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->description;
+            }
+        }
+        
+        return $this->description;
+    }
 
     
 }
