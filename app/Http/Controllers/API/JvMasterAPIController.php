@@ -1417,7 +1417,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $formatChk2 = '';
 
             if (!$formatChk) {
-                return $this->sendError('No records found', 500);
+                return $this->sendError(trans('custom.no_records_found'), 500);
             } else {
                 $formatChk2 = collect($formatChk)->toArray();
             }
@@ -1570,7 +1570,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     }
                 }
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('custom.no_records_found'), 500);
             }
 
             if (count($finalData) > 0) {
@@ -1594,13 +1594,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 {
                     $details['detail'] = $failed_gl;
                     $details['valid'] = false;
-                    return $this->sendResponse($details, 'Out Of '.$count.' All JV Details fail to upload ');
+                    return $this->sendResponse($details, trans('custom.out_of') . $count. trans('custom.all_jv_details_fail_to_upload'));
                 }
                 else
                 {
                     $details['detail'] = $failed_gl;
                     $details['valid'] = true;
-                    return $this->sendResponse($details, 'Out Of '.$count.' JV Details '.$valid.' JV Details uploaded successfully');
+                    return $this->sendResponse($details, trans('custom.out_of') . $count.' ' . trans('custom.jv_details') . ' ' . $valid . trans('custom.jv_details_uploaded_successfully'));
                 }
             }
             
@@ -2032,7 +2032,7 @@ HAVING
                 ->get();
 
             if (count($glData) == 0) {
-                return $this->sendError('There is no data to update', 500);
+                return $this->sendError(trans('custom.there_is_no_data_to_update'), 500);
             }
 
             foreach ($glData as $val) {
@@ -2091,7 +2091,7 @@ HAVING
                                                 ->first();
 
         if (!$companyFinanceYear) {
-            return $this->sendError("Financial year not created or not active");
+            return $this->sendError(trans('custom.financial_year_not_created_or_not_active'));
         }
 
 
@@ -2103,7 +2103,7 @@ HAVING
                                                      ->first();
 
         if (!$companyFinancePeriod) {
-            return $this->sendError("Financial period not created or not active");
+            return $this->sendError(trans('custom.financial_period_not_created_or_not_active'));
         }
 
 
@@ -2236,7 +2236,7 @@ HAVING
             $compId = $input['company_id'];
             $company = Company::where('companySystemID', $compId)->first();
             if (empty($company)) {
-                return $this->sendError("Company details not found", 404);
+                return $this->sendError(trans('company_details_not_found'), 404);
             }
 
             // Get tracking parameters from ThirdPartyApiLogger middleware
@@ -2252,10 +2252,10 @@ HAVING
                 $externalReference,
                 $tenantUuid
             );
-            return $this->sendResponse(['externalReference' => $externalReference],"Journal voucher request has been successfully queued for processing!");
+            return $this->sendResponse(['externalReference' => $externalReference], trans('journal_voucher_request_has_been_successfully_queu'));
         }
         else {
-            return $this->sendError("Invalid Data Format", 404);
+            return $this->sendError(trans('invalid_data_format'), 404);
         }
     }
 }
