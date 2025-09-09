@@ -6206,5 +6206,29 @@ return [
     'rv_confirmed_on' => 'تم التأكيد على',
     'rv_approved_on' => 'تمت الموافقة عليه في',
     'rv_bank_amount' => 'مبلغ البنك',
-    'rv_treasury_cleared' => 'الخزانة المقاصة'
+    'rv_treasury_cleared' => 'الخزانة المقاصة',
+
+      //     journal voucher
+    'configure_po_accrual_account' => 'يرجى تكوين حساب استحقاق أمر الشراء لهذه الشركة.',
+    'reversal_date_should_greater_the_jv_date' => 'يجب أن يكون تاريخ الانعكاس أكبر من تاريخ المشروع المشترك',
+    'pending_allocation_jv_exists' => 'هناك مشروع مشترك معلق للتخصيص، يرجى الموافقة على هذا المشروع المشترك للتخصيص.',
+    'jv_financial_period_validation' => 'تاريخ المشروع المشترك لا يقع ضمن الفترة المالية.',
+    'reversal_date_mandatory' => 'تاريخ الانعكاس إلزامي',
+    'document_date_financial_period_validation' => 'تاريخ المستند ليس ضمن الفترة المالية المحددة!',
+    'chart_of_account_inactive' => 'مخطط/مخططات الحسابات غير نشطة',
+    'jv_should_have_at_least_one_item' => 'يجب أن تحتوي قسيمة المجلة على عنصر واحد على الأقل',
+    'amount_should_be_greater_than_0_for_debit_amount_or_credit_amount' => 'يجب أن يكون المبلغ أكبر من 0 لمبلغ المدين أو مبلغ الائتمان',
+    'debit_amount_total_and_credit_amount_total_is_not_matching' => 'إجمالي مبلغ المدين وإجمالي مبلغ الائتمان غير متطابقين.',
+    'jv_confirmed_successfully' => 'تم تأكيد قسيمة المجلة بنجاح',
+    'jv_updated_successfully' => 'تم تحديث قسيمة اليومية بنجاح',
+    'jv_detail_saved_successfully' => 'تم حفظ تفاصيل قسيمة اليومية بنجاح',
+    'jv_detail_updated_successfully' => 'تم تحديث تفاصيل قسيمة اليومية بنجاح',
+    'select_active_department' => 'الرجاء تحديد القسم النشط',
+    'out_of' => 'خارج ',
+    'all_jv_details_fail_to_upload' => ' فشل تحميل جميع تفاصيل المشروع المشترك',
+    'jv_details' => 'تفاصيل المشروع المشترك',
+    'jv_details_uploaded_successfully' => ' تم تحميل تفاصيل قسيمة المجلة بنجاح',
+    'there_is_no_data_to_update' => 'لا توجد بيانات للتحديث',
+    'payroll' => 'كشوف المرتبات',
+    'non_payroll' => 'غير كشوف المرتبات'
 ];
