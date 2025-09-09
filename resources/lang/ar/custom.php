@@ -6206,5 +6206,10 @@ return [
     'rv_confirmed_on' => 'تم التأكيد على',
     'rv_approved_on' => 'تمت الموافقة عليه في',
     'rv_bank_amount' => 'مبلغ البنك',
-    'rv_treasury_cleared' => 'الخزانة المقاصة'
+    'rv_treasury_cleared' => 'الخزانة المقاصة',
+
+    // Delivery Order translations
+    'direct_order' => 'طلب مباشر',
+    'quotation_based' => 'طلب مبني على الاقتباس',
+    'sales_order_based' => 'طلب مبني على الطلب',
 ];

@@ -6187,5 +6187,10 @@ return [
     'rv_confirmed_on' => 'Confirmed on',
     'rv_approved_on' => 'Approved on',
     'rv_bank_amount' => 'Bank Amount',
-    'rv_treasury_cleared' => 'Treasury Cleared'
+    'rv_treasury_cleared' => 'Treasury Cleared',
+
+    // Delivery Order translations
+    'direct_order' => 'Direct Order',
+    'quotation_based' => 'Quotation Based',
+    'sales_order_based' => 'Sales Order Based',
 ];

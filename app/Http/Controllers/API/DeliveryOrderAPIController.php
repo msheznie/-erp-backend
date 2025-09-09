@@ -810,7 +810,7 @@ class DeliveryOrderAPIController extends AppBaseController
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
         $companyFinanceYear = Helper::companyFinanceYear($companyId, 1);
 
-        $orderType = array(array('value' => 1, 'label' => 'Direct Order'), array('value' => 2, 'label' => 'Quotation Based'),array('value' => 3, 'label' => 'Sales Order Based'));
+        $orderType = array(array('value' => 1, 'label' => trans('custom.direct_order')), array('value' => 2, 'label' => trans('custom.quotation_based')),array('value' => 3, 'label' => trans('custom.sales_order_based')));
         $wareHouses = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
 
         $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
