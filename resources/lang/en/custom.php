@@ -6189,6 +6189,11 @@ return [
     'rv_bank_amount' => 'Bank Amount',
     'rv_treasury_cleared' => 'Treasury Cleared',
 
+    // Delivery Order translations
+    'direct_order' => 'Direct Order',
+    'quotation_based' => 'Quotation Based',
+    'sales_order_based' => 'Sales Order Based',
+
     // Employee Department Error Messages
     'unable_to_delete_delegation' => 'Unable to delete, since the deligator has delegation documents',
     'unable_to_perform_delegation' => 'Unable to perform, since the deligator has delegation documents',
@@ -6246,5 +6251,17 @@ return [
     'expense_claim_date' => 'Expense Claim Date',
 
     'cancelled_by' => 'Cancelled By',
-    'cancelled_at' => 'Cancelled At'
+    'cancelled_at' => 'Cancelled At',
+    // AR Module Batch Submission
+    'tracking_no' => 'Tracking No',
+    'batch_no' => 'Batch No',
+    'month' => 'Month',
+    'batch_amount' => 'Batch Amount',
+    'rejected_amount' => 'Rejected Amount',
+    'under_process' => 'Under Process',
+
+    // AR Module RV matching
+    'cancelled_by' => 'Cancelled By',
+    'cancelled_at' => 'Cancelled At',
+    'receipt_amount' => 'Receipt Amount',
 ];

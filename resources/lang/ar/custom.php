@@ -6139,7 +6139,7 @@ return [
     'cn_date' => 'CN التاريخ',
     'credit_note_code' => 'رمز مذكرة الائتمان',
     'user_already_assigned' => 'هناك :attribute مستخدمين معينين بالفعل لهذه المجموعة. قم بإزالة المستخدمين وحاول مرة أخرى',
-    
+
     // Navigation Report
     'erp_navigation' => 'التنقل في نظام تخطيط موارد المؤسسة',
     'portal_navigation' => 'تنقل البوابة',
@@ -6159,7 +6159,7 @@ return [
     'export_to_csv' => 'تصدير إلى CSV',
     'not_available' => 'غير متاح',
     'na' => 'غير متاح',
-    
+
     'confirmed_on' => 'تم التأكيد في',
     'approved_on' => 'تم الموافقة على',
 
@@ -6208,6 +6208,11 @@ return [
     'rv_bank_amount' => 'مبلغ البنك',
     'rv_treasury_cleared' => 'الخزانة المقاصة',
 
+    // Delivery Order translations
+    'direct_order' => 'طلب مباشر',
+    'quotation_based' => 'طلب مبني على الاقتباس',
+    'sales_order_based' => 'طلب مبني على الطلب',
+
     // Employee Department Error Messages
     'unable_to_delete_delegation' => 'غير قادر على الحذف، حيث أن المفوض لديه مستندات تفويض',
     'unable_to_perform_delegation' => 'غير قادر على التنفيذ، حيث أن المفوض لديه مستندات تفويض',
@@ -6232,7 +6237,7 @@ return [
     'group_description' => 'وصف المجموعة',
     'approver_name' => 'اسم الموافق',
     'approver_status' => 'حالة الموافق',
-      //     journal voucher
+    //     journal voucher
     'configure_po_accrual_account' => 'يرجى تكوين حساب استحقاق أمر الشراء لهذه الشركة.',
     'reversal_date_should_greater_the_jv_date' => 'يجب أن يكون تاريخ الانعكاس أكبر من تاريخ المشروع المشترك',
     'pending_allocation_jv_exists' => 'هناك مشروع مشترك معلق للتخصيص، يرجى الموافقة على هذا المشروع المشترك للتخصيص.',
@@ -6262,5 +6267,18 @@ return [
     'sup_emp_other' => 'المورد / الموظف / أخرى',
     'expense_claim_date' => 'تاريخ المطالبة بالمصروفات',
     'cancelled_by' => 'ألغاه',
-    'cancelled_at' => 'أُلغي في'
+    'cancelled_at' => 'أُلغي في',
+
+    // AR Module Batch Submission
+    'tracking_no' => 'رقم التتبع',
+    'batch_no' => 'رقم الدفعة',
+    'month' => 'الشهر',
+    'batch_amount' => 'مبلغ الدفعة',
+    'rejected_amount' => 'المبلغ المرفوض',
+    'under_process' => 'قيد المعالجة',
+
+    // AR Module RV matching
+    'cancelled_by' => 'تم إلغاؤه بواسطة',
+    'cancelled_at' => 'تم إلغاؤه في',
+    'receipt_amount' => 'مبلغ الإيصال',
 ];
