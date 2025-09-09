@@ -93,5 +93,25 @@ class YesNoSelectionForMinus extends Model
         return $value;
     }
 
+    public function getSelectionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->YesNo;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->YesNo;
+            }
+        }
+        
+        return $value;
+    }
+
     
 }

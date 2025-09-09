@@ -42,13 +42,12 @@ use Eloquent as Model;
  */
 class DocumentRestrictionPolicy extends Model
 {
-
     public $table = 'documentrestrictionpolicy';
     
     const CREATED_AT = NULL;
     const UPDATED_AT = NULL;
 
-
+    protected $appends = ['policy_description_translated'];
 
     public $fillable = [
         'documentSystemID',
@@ -81,5 +80,30 @@ class DocumentRestrictionPolicy extends Model
         return $this->hasMany('App\Models\DocumentRestrictionAssign','documentRestrictionPolicyID');
     }
 
+    public function translations()
+    {
+        return $this->hasMany(DocumentRestrictionPolicyTranslation::class, 'policyId', 'id');
+    }
 
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getPolicyDescriptionTranslatedAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->description;
+        }
+        
+        return $value;
+    }
 }

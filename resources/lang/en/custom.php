@@ -6105,5 +6105,26 @@ return [
     'no' => 'No',
     'other' => 'Other',
     'cn_date' => 'CN Date',
-    'credit_note_code' => 'Credit Note Code'
+    'credit_note_code' => 'Credit Note Code',
+    'user_already_assigned' => 'There are :attribute users already assigned to this group. Remove users and try again',
+    
+    // Navigation Report
+    'erp_navigation' => 'ERP Navigation',
+    'portal_navigation' => 'Portal Navigation',
+    'operation_navigation' => 'Operation Navigation',
+    'hrms_navigation' => 'HRMS Navigation',
+    'manufacturing_navigation' => 'Manufacturing Navigation',
+    'document_restriction_policy' => 'Document Restriction Policy',
+    'module_name' => 'Module Name',
+    'navigation' => 'Navigation',
+    'document' => 'Document',
+    'action' => 'Action',
+    'readonly' => 'Readonly',
+    'create' => 'Create',
+    'edit' => 'Edit',
+    'delete' => 'Delete',
+    'print' => 'Print',
+    'export_to_csv' => 'Export to CSV',
+    'not_available' => 'Not Available',
+    'na' => 'N/A'
 ];

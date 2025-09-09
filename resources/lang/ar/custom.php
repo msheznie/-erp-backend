@@ -6124,5 +6124,26 @@ return [
     'no' => 'لا',
     'other' => 'أخرى',
     'cn_date' => 'CN التاريخ',
-    'credit_note_code' => 'رمز مذكرة الائتمان'
+    'credit_note_code' => 'رمز مذكرة الائتمان',
+    'user_already_assigned' => 'هناك :attribute مستخدمين معينين بالفعل لهذه المجموعة. قم بإزالة المستخدمين وحاول مرة أخرى',
+    
+    // Navigation Report
+    'erp_navigation' => 'التنقل في نظام تخطيط موارد المؤسسة',
+    'portal_navigation' => 'تنقل البوابة',
+    'operation_navigation' => 'تنقل العمليات',
+    'hrms_navigation' => 'تنقل نظام إدارة الموارد البشرية',
+    'manufacturing_navigation' => 'تنقل التصنيع',
+    'document_restriction_policy' => 'سياسة تقييد المستندات',
+    'module_name' => 'اسم الوحدة',
+    'navigation' => 'التنقل',
+    'document' => 'المستند',
+    'action' => 'الإجراء',
+    'readonly' => 'للقراءة فقط',
+    'create' => 'إنشاء',
+    'edit' => 'تعديل',
+    'delete' => 'حذف',
+    'print' => 'طباعة',
+    'export_to_csv' => 'تصدير إلى CSV',
+    'not_available' => 'غير متاح',
+    'na' => 'غير متاح'
 ];

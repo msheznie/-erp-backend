@@ -5,17 +5,17 @@
         <td>
         <h1>
           @if($cat == 0)
-            ERP Navigation
+            {{ __('custom.erp_navigation') }}
           @elseif($cat == 1)
-           Portal Navigation
+           {{ __('custom.portal_navigation') }}
           @elseif($cat == 2)
-           Operation Navigation
+           {{ __('custom.operation_navigation') }}
           @elseif($cat == 3)
-           Hrms Navigation
+           {{ __('custom.hrms_navigation') }}
           @elseif($cat == 4)
-           Manufacturing Navigation
+           {{ __('custom.manufacturing_navigation') }}
            @elseif($cat == 5)
-           Document Restriction Policy
+           {{ __('custom.document_restriction_policy') }}
            @endif
         </h1>  </td>
         <td colspan="3"> </td>
@@ -26,24 +26,24 @@
    @if($cat != 5 )
     <thead>
          <tr style="background-color: #6798da;">
-                    <th >Module Name</th>
-                    <th >Navigation</th>
-                    <th >Document</th>
-                    <th >Action</th>
+                    <th >{{ __('custom.module_name') }}</th>
+                    <th >{{ __('custom.navigation') }}</th>
+                    <th >{{ __('custom.document') }}</th>
+                    <th >{{ __('custom.action') }}</th>
          </tr>
       
     </thead>
     <tbody>
           @foreach ($mainMenus as $item)
           <tr style="">
-                <td >{{$item->description}}<br></td>
+                <td >{{ $item->secondaryLanguageDescription ?: $item->description }}<br></td>
                 @isset($item->children)
                 @foreach ($item->children as $nav)
                 <tr>
                 <td colspan="1"> </td>
                 <td >
                     <div>
-                      {{$nav->description}} <br />
+                      {{ $nav->secondaryLanguageDescription ?: $nav->description }} <br />
                     </div>
                 </td>
 
@@ -53,7 +53,7 @@
                 <td colspan="2"> </td>
                 <td>
                         <div>
-                        <span> {{ $nav3->description }}  <br /></span> <br />
+                        <span> {{ $nav3->secondaryLanguageDescription ?: $nav3->description }}  <br /></span> <br />
                         </div>   
 
                        
@@ -62,63 +62,63 @@
 
                             @if($nav3->readonly == true)
                             <span>
-                            Readonly,
+                            {{ __('custom.readonly') }},
                             </span>
                             @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                             @if($nav3->create == true)
                             <span>
-                            Create,
+                            {{ __('custom.create') }},
                             </span>
                             @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
 
                             @if($nav3->update == true)
                             <span>
-                                Edit,
+                                {{ __('custom.edit') }},
                             </span>
                             @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
 
                             @if($nav3->delete == true)
                             <span>
-                                Delete,
+                                {{ __('custom.delete') }},
                             </span>
                             @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                             @if($nav3->print == true)
                             <span>
-                            Print,
+                            {{ __('custom.print') }},
                             </span>
                             @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                             @if($nav3->export == true)
                             <span>
-                            Export to CSV
+                            {{ __('custom.export_to_csv') }}
                             </span>
                             @else
                             <span>
-                             N/A
+                             {{ __('custom.na') }}
                             </span>
                             @endif
 
@@ -135,70 +135,70 @@
                 <td colspan="2"> </td>
                 <td>
                          <div>
-                        <span> Not Available<br /></span> <br />
+                        <span> {{ __('custom.not_available') }}<br /></span> <br />
                         </div>   
                         
                          <td>
 
                             @if($nav->readonly == true)
                            <span>
-                              Readonly,
+                              {{ __('custom.readonly') }},
                            </span>
                            @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                            @if($nav->create == true)
                            <span>
-                              Create,
+                              {{ __('custom.create') }},
                            </span>
                            @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
 
                            @if($nav->update == true)
                            <span>
-                               Edit,
+                               {{ __('custom.edit') }},
                            </span>
                            @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
 
                            @if($nav->delete == true)
                            <span>
-                                Delete,
+                                {{ __('custom.delete') }},
                            </span>
                            @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                            @if($nav->print == true)
                            <span>
-                              Print,
+                              {{ __('custom.print') }},
                            </span>
                            @else
                             <span>
-                             N/A,
+                             {{ __('custom.na') }},
                             </span>
                             @endif
 
                            @if($nav->export == true)
                            <span>
-                           Export to CSV
+                           {{ __('custom.export_to_csv') }}
                            </span>
                            @else
                             <span>
-                             N/A
+                             {{ __('custom.na') }}
                             </span>
                             @endif
 
@@ -229,11 +229,11 @@
        
                     @if($item->isChecked == true)
                     <div>
-                        <span >{{nl2br(e($item->policyDescription)) }} <br /></span> <br />
+                        <span >{{nl2br(e($item->policy_description_translated ?: $item->policyDescription)) }} <br /></span> <br />
                     </div>
                     @else 
                     <div>
-                        <span >{{nl2br(e($item->policyDescription)) }} -<b> N/A</b> <br /></span> <br />
+                        <span >{{nl2br(e($item->policy_description_translated ?: $item->policyDescription)) }} -<b> {{ __('custom.na') }}</b> <br /></span> <br />
                     </div>
                     @endif
          

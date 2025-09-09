@@ -201,7 +201,7 @@ class UserGroupAPIController extends AppBaseController
 
         $countUsers = EmployeeNavigation::where('userGroupID', $id)->get();
         if ($countUsers && count($countUsers) > 0){
-            return $this->sendError('There are ' .count($countUsers). ' users already assigned to this group. Remove users and try again');
+            return $this->sendError(trans('custom.user_already_assigned', ['attribute' => count($countUsers)]));
         }
 
         $userGroup->navigationusergroup()->delete();
