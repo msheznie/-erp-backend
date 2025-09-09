@@ -1655,7 +1655,9 @@ class DebitNoteAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId)
             ->where('isActive', 1)->get();
 
-        $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
+        $companyBasePO = [];
+        
+        ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
             ->where('companySystemID', $companyId)
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
@@ -1673,7 +1675,7 @@ class DebitNoteAPIController extends AppBaseController
 
 
           
-        $debite_note_type = [["id"=>1,"name"=>"Supplier","label" => __('custom.supplier')],["id"=>2,"name"=>"Employee","label" => __('custom.employee')]];
+        $debite_note_type = [["id"=>1,"name"=>__('custom.supplier')],["id"=>2,"name"=> __('custom.employee')]];
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
