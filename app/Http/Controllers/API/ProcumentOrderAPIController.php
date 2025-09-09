@@ -1706,13 +1706,7 @@ class ProcumentOrderAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $month = Months::get()->map(function($month) {
-            return [
-                'monthID' => $month->monthID,
-                'monthDes' => $month->monthDes,
-                'translated_month_des' => $month->translated_month_des
-            ];
-        });
+        $month = Months::all();
 
         $po_category = PoCategory::where('isActive',true)->get();
 
