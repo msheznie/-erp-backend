@@ -3211,6 +3211,11 @@ return [
     'no_budget_found' => 'No budget found for the current financial year.',
     'no_grv_selected_to_add' => 'No GRV selected to add',
     'no_items_found_for_print' => 'No items found for print',
+    'no_items_selected_to_add' => 'No items selected to add.',
+    'item_already_exist' => 'already exist',
+    'request_department_is_different_from_order' => 'Request department is different from order',
+    'different_budget_year_found_cannot_pull_different_budget_year_pr' => 'Different Budget Year Found. You can not pull different budget year PR for same PO',
+    'item_po_qty_cannot_be_greater_than_balance_qty' => 'item PO qty cannot be greater than balance qty',
     'no_of_quantity_is_required' => 'No of quantity is required',
     'no_records_found' => 'No Records Found',
     'no_templates' => 'There is no template assign to this bank',
@@ -3661,6 +3666,7 @@ return [
     'po_payment_terms_saved_successfully' => 'Po Payment Terms saved successfully',
     'po_payment_terms_total_percentage_cannot_be_greate' => 'Po Payment Terms total percentage cannot be greater than 100',
     'po_qty_cannot_be_greater_than_requested_qty' => 'PO qty cannot be greater than requested qty',
+    'po_quantity_field_is_required' => 'PO quantity field is required.',
     'po_return_back_to_amend_successfully' => 'PO return back to amend successfully ',
     'po_vat_update_error' => 'PO VAT update error',
     'poaddons_updated_successfully' => 'PoAddons updated successfully',
@@ -6076,6 +6082,13 @@ return [
     'e_status' => 'Status',
     'registration_number' => 'Registration Number',
     // Purchase Order specific translations
+    'not_received' => 'Not Received',
+    'partial_received' => 'Partial Received',
+    'fully_received' => 'Fully Received',
+    'not_invoiced' => 'Not Invoiced',
+    'partial_invoiced' => 'Partial Invoiced',
+    'fully_invoiced' => 'Fully Invoiced',
+    'inventory' => 'Inventory',
     'specifications' => 'Specifications',
     'payment_terms_and_conditions' => 'Payment Terms and Conditions',
     'company_id' => 'Company ID',
@@ -6126,5 +6139,53 @@ return [
     'print' => 'Print',
     'export_to_csv' => 'Export to CSV',
     'not_available' => 'Not Available',
-    'na' => 'N/A'
+    'na' => 'N/A',
+    
+    'confirmed_on' => 'Confirmed on',
+    'approved_on' => 'Approved on',
+    
+    // Material Request translations
+    'e_request_code' => 'Request Code',
+    'e_comments' => 'Comments',
+    'e_requested_date' => 'Requested Date',
+    'e_priority' => 'Priority',
+    
+    // Item Issue translations
+    'e_issue_code' => 'Issue Code',
+    'e_issue_date' => 'Issue Date',
+    'e_comment' => 'Comment',
+    'e_created_at' => 'Created At',
+    'e_confirmed_at' => 'Confirmed At',
+    'e_approved_at' => 'Approved At',
+    
+    // Item Return translations
+    'e_item_return_code' => 'Item Return Code',
+    'e_department' => 'Department',
+    'e_return_date' => 'Return Date',
+    'e_warehouse' => 'Warehouse',
+    
+    // Stock Transfer translations
+    'e_stock_transfer_code' => 'Stock Transfer Code',
+    'e_transfer_date' => 'Transfer Date',
+    
+    // Common document translations
+    'e_doc_code' => 'Doc Code',
+    'e_date' => 'Date',
+    
+    // Inventory Reclassification translations
+    'e_reclassification_code' => 'Reclassification Code',
+    'e_reclassification_date' => 'Reclassification Date',
+    'supplier_employee_code' => 'Supplier/Employee Code',
+    'supplier_employee_name' => 'Supplier/Employee Name',
+    'amount_local' => 'Amount (Local)',
+    'amount_rpt' => 'Amount (Rpt)',
+
+    // Accounts Receivable receipt voucher
+    'rv_brv_code' => 'BRV Code',
+    'rv_receipt_type' => 'Receipt Type',
+    'rv_brv_date' => 'BRV Date',
+    'rv_confirmed_on' => 'Confirmed on',
+    'rv_approved_on' => 'Approved on',
+    'rv_bank_amount' => 'Bank Amount',
+    'rv_treasury_cleared' => 'Treasury Cleared'
 ];

@@ -22,7 +22,7 @@ Route::group([], function () {
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser')->name("Get Credit Note Approved By User");
     Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote')->name("Approval Pre Check Credit Note");
 
-    Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData')->name("Get Reciept Voucher Form Data");
+    Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData')->middleware('print_lang')->name("Get Reciept Voucher Form Data");
     Route::post('getReceiptVoucherApproval', 'CustomerReceivePaymentAPIController@getReceiptVoucherApproval')->name("Get Receipt Voucher Approval");
     Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser')->name("Get Approved RV For Current User");
     Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher')->name("Approval Pre Check Receipt Voucher");

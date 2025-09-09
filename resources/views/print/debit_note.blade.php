@@ -212,11 +212,11 @@
             --}}{{--<span style="font-weight: bold;">
                 <h3 class="text-muted">
                     @if($entity->confirmedYN == 0 && $entity->approved == 0)
-                        Not Confirmed
+                       {{ __('custom.not_confirmed') }}
                     @elseif($entity->confirmedYN == 1 && $entity->approved == 0)
-                        Pending Approval
+                       {{ __('custom.pending_approval') }}
                     @elseif($entity->confirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
-                        Fully Approved
+                        {{ __('custom.fully_approved') }}
                     @endif
                     </h3>
 `             </span>--}}{{--
@@ -392,20 +392,20 @@
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-center">GL Code</th>
+                <th class="text-center">{{ __('custom.gl_code') }}</th>
                 <th class="text-center">{{ __('custom.gl_code_description') }}</th>
-                <th class="text-center">Segment</th>
+                <th class="text-center">{{ __('custom.segment') }}</th>
                 <th class="text-center">{{ __('custom.amount') }}</th>
                 @if($entity->isVATApplicable)
                     <th class="text-center">{{ __('custom.vat_amount') }}</th>
                     <th class="text-center">{{ __('custom.net_amount') }}</th>
                 @endif
-                {{--<th class="text-center">Local Amt (
+                {{--<th class="text-center">{{ __('custom.amount_local') }} (
                     @if($entity->localcurrency)
                         {{$entity->localcurrency->CurrencyCode}}
                     @endif
                     )</th>
-                <th class="text-center">Rpt Amt (@if($entity->rptcurrency)
+                <th class="text-center">{{ __('custom.amount_rpt') }} (@if($entity->rptcurrency)
                         {{$entity->rptcurrency->CurrencyCode}}
                     @endif)</th>--}}
             </tr>
@@ -451,7 +451,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold;">Confirmed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)

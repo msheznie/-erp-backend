@@ -545,14 +545,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] && $newValidation['poQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'PO quantity field is required.',
+                    'required' => trans('custom.po_quantity_field_is_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -578,7 +578,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if (!empty($prDetailExist)) {
                     foreach ($prDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
+                        $itemDrt = $row['itemPrimaryCode'] . " " . trans('custom.item_already_exist');
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -592,7 +592,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError("Request department is different from order");
+            return $this->sendError(trans('custom.request_department_is_different_from_order'));
         }
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -629,7 +629,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)->orderBy('purchaseOrderDetailsID', 'DESC')->first();
         if (!empty($poDetails)) {
             if (isset($poDetails->budgetYear) && $poDetails->budgetYear && ($prDetailsBY != $poDetails->budgetYear)) {
-                return $this->sendError("Different Budget Year Found. You can not pull different budget year PR for same PO");
+                return $this->sendError(trans('custom.different_budget_year_found_cannot_pull_different_budget_year_pr'));
             }
         }
 
@@ -652,7 +652,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $totalAddedQty = PurchaseOrderDetails::RequestDetailSum($new['purchaseRequestDetailsID']);
                         $totalAddedQty = $new['poQty'] + $totalAddedQty;
                         if ($totalAddedQty > $new['quantityRequested']) {
-                            return $this->sendError($new['itemPrimaryCode']." item PO qty cannot be greater than balance qty", 500);
+                            return $this->sendError($new['itemPrimaryCode']." " . trans('custom.item_po_qty_cannot_be_greater_than_balance_qty'), 500);
                         }
 
                         if ($new['quantityRequested'] == $totalAddedQty) {

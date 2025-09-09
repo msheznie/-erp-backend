@@ -6,6 +6,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetTemplateComment;
 use App\Http\Requests\API\CreateBudgetTemplateCommentAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTemplateCommentAPIRequest;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -129,6 +130,14 @@ class BudgetTemplateCommentAPIController extends AppBaseController
      */
     public function getByBudgetDetail($budgetDetailId)
     {
+
+        $employees = Employee::where('empActive', true)
+            ->where('empCompanySystemID', 1)
+            ->where('discharegedYN', 0)
+            ->select(['employeeSystemID as id','empFullName','empID',DB::raw("CONCAT(empID, ' - ', empFullName) as name")])
+            ->limit(20)
+            ->get();
+
         $comments = BudgetTemplateComment::with(['user', 'budgetDetail'])
             ->where('budget_detail_id', $budgetDetailId)
             ->whereNull('parent_comment_id') // Only top-level comments
@@ -145,8 +154,10 @@ class BudgetTemplateCommentAPIController extends AppBaseController
 
         $detail['comments'] = $comments;
         $detail['currentUserId'] = Auth::id();
+        $detail['employees'] = $employees;
 
         return $this->sendResponse($detail, trans('custom.budgettemplatecomments_retrieved_successfully'));
+
     }
 
     /**
