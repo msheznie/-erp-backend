@@ -1737,7 +1737,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
-        $financeCategories = FinanceItemCategoryMaster::get();
+        $financeCategories = FinanceItemCategoryMaster::all();
 
         $locations = Location::where('is_deleted',0)->get();
 

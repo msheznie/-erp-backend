@@ -272,13 +272,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $currencies = CurrencyMaster::all();
 
-        $financeCategories = FinanceItemCategoryMaster::with('translations')->get()->map(function($category) {
-            return [
-                'itemCategoryID' => $category->itemCategoryID,
-                'categoryDescription' => $category->categoryDescription,
-                'translated_category_description' => $category->translated_category_description
-            ];
-        });
+        $financeCategories = FinanceItemCategoryMaster::all();
 
         $locations = Location::where('is_deleted',0)->get();
 
