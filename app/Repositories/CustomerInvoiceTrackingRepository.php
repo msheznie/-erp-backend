@@ -124,17 +124,17 @@ class CustomerInvoiceTrackingRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Tracking No'] = $val->customerInvoiceTrackingCode;
-                $data[$x]['Batch No'] = $val->manualTrackingNo;
-                $data[$x]['Customer'] = $val->customer? $val->customer->CustomerName : '';
-                $data[$x]['Date'] = \Helper::dateFormat($val->submittedDate);
-                $data[$x]['Month'] = date('M', strtotime($val->submittedDate));
-                $data[$x]['Year'] = date('Y', strtotime($val->submittedYear));
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Batch Amount'] = $val->totalBatchAmount? number_format($val->totalBatchAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Approved Amount'] = $val->totalApprovedAmount? number_format($val->totalApprovedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Rejected Amount'] = $val->totalRejectedAmount? number_format($val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Under Process'] = $val->totalBatchAmount? number_format($val->totalBatchAmount - $val->totalApprovedAmount - $val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][__('custom.tracking_no')] = $val->customerInvoiceTrackingCode;
+                $data[$x][__('custom.batch_no')] = $val->manualTrackingNo;
+                $data[$x][__('custom.customer')] = $val->customer? $val->customer->CustomerName : '';
+                $data[$x][__('custom.date')] = \Helper::dateFormat($val->submittedDate);
+                $data[$x][__('custom.month')] = date('M', strtotime($val->submittedDate));
+                $data[$x][__('custom.year')] = date('Y', strtotime($val->submittedYear));
+                $data[$x][__('custom.comments')] = $val->comments;
+                $data[$x][__('custom.batch_amount')] = $val->totalBatchAmount? number_format($val->totalBatchAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][__('custom.approved_amount')] = $val->totalApprovedAmount? number_format($val->totalApprovedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][__('custom.rejected_amount')] = $val->totalRejectedAmount? number_format($val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][__('custom.under_process')] = $val->totalBatchAmount? number_format($val->totalBatchAmount - $val->totalApprovedAmount - $val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
 
                 $x++;
             }

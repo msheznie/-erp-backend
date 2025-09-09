@@ -118,11 +118,11 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Date'] = \Helper::dateFormat($val->dateMA);
-                $data[$x]['Document Code'] = $val->monthlyAdditionsCode;
-                $data[$x]['Description'] = $val->description;
-                $data[$x]['Currency'] = $val->currency_by? $val->currency_by->CurrencyCode : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->timesReferred);
+                $data[$x][__('custom.date')] = \Helper::dateFormat($val->dateMA);
+                $data[$x][__('custom.document_code')] = $val->monthlyAdditionsCode;
+                $data[$x][__('custom.description')] = $val->description;
+                $data[$x][__('custom.currency')] = $val->currency_by? $val->currency_by->CurrencyCode : '';
+                $data[$x][__('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->timesReferred);
 
                 $x++;
             }
