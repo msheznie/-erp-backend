@@ -6187,5 +6187,30 @@ return [
     'rv_confirmed_on' => 'Confirmed on',
     'rv_approved_on' => 'Approved on',
     'rv_bank_amount' => 'Bank Amount',
-    'rv_treasury_cleared' => 'Treasury Cleared'
+    'rv_treasury_cleared' => 'Treasury Cleared',
+
+    // Employee Department Error Messages
+    'unable_to_delete_delegation' => 'Unable to delete, since the deligator has delegation documents',
+    'unable_to_perform_delegation' => 'Unable to perform, since the deligator has delegation documents',
+    'unable_to_export_excel' => 'Unable to export excel',
+    'approval_group_not_selected' => 'The approval group has not been selected at the approval level',
+    'unable_to_assign_delegation' => 'Unable to assign, The employee included in delegation process',
+
+    // Status Values
+    'active' => 'Active',
+    'inactive' => 'In Active',
+    'deleted' => 'Deleted',
+
+    // Export Column Headers
+    'department' => 'Department',
+    'document_type' => 'Document Type',
+    'segment' => 'Segment',
+    'limit' => 'Limit',
+    'category' => 'Category',
+    'level_description' => 'Level Description',
+    'level_status' => 'Level Status',
+    'approval_level' => 'Approval Level',
+    'group_description' => 'Group Description',
+    'approver_name' => 'Approver Name',
+    'approver_status' => 'Approver Status'
 ];

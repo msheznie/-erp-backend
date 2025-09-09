@@ -6206,5 +6206,30 @@ return [
     'rv_confirmed_on' => 'تم التأكيد على',
     'rv_approved_on' => 'تمت الموافقة عليه في',
     'rv_bank_amount' => 'مبلغ البنك',
-    'rv_treasury_cleared' => 'الخزانة المقاصة'
+    'rv_treasury_cleared' => 'الخزانة المقاصة',
+
+    // Employee Department Error Messages
+    'unable_to_delete_delegation' => 'غير قادر على الحذف، حيث أن المفوض لديه مستندات تفويض',
+    'unable_to_perform_delegation' => 'غير قادر على التنفيذ، حيث أن المفوض لديه مستندات تفويض',
+    'unable_to_export_excel' => 'غير قادر على تصدير ملف Excel',
+    'approval_group_not_selected' => 'لم يتم اختيار مجموعة الموافقة في مستوى الموافقة',
+    'unable_to_assign_delegation' => 'غير قادر على التعيين، الموظف مشمول في عملية التفويض',
+
+    // Status Values
+    'active' => 'نشط',
+    'inactive' => 'غير نشط',
+    'deleted' => 'محذوف',
+
+    // Export Column Headers
+    'department' => 'القسم',
+    'document_type' => 'نوع المستند',
+    'segment' => 'القطاع',
+    'limit' => 'الحد',
+    'category' => 'الفئة',
+    'level_description' => 'وصف المستوى',
+    'level_status' => 'حالة المستوى',
+    'approval_level' => 'مستوى الموافقة',
+    'group_description' => 'وصف المجموعة',
+    'approver_name' => 'اسم الموافق',
+    'approver_status' => 'حالة الموافق'
 ];
