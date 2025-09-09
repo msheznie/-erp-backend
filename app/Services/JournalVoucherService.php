@@ -59,14 +59,14 @@ class JournalVoucherService
                 {
                     return [
                         "status" => false,
-                        "message" => "Please configure PO accrual account for this company.",
+                        "message" => trans('custom.configure_po_accrual_account'),
                         "httpCode" => 500
                     ];
                 }
             }else {
                 return [
                     "status" => false,
-                    "message" => "Gl Code scenario not found for PO Accrual.",
+                    "message" => trans('custom.gl_code_scenario_not_found_for_po_accrual'),
                     "httpCode" => 500
                 ];
             }
@@ -75,7 +75,7 @@ class JournalVoucherService
             {
                 return [
                     "status" => false,
-                    "message" => "Reversal date should greater the JV date.",
+                    "message" => trans('custom.reversal_date_should_greater_the_jv_date'),
                     "httpCode" => 500
                 ];
             }else {
@@ -92,7 +92,7 @@ class JournalVoucherService
             if ($checkPendingJv) {
                 return [
                     "status" => false,
-                    "message" => "There is a pending allocation JV, please approve those allocation JVs.",
+                    "message" => trans('custom.pending_allocation_jv_exists'),
                     "httpCode" => 500
                 ];
             }
@@ -116,7 +116,7 @@ class JournalVoucherService
         if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
             return [
                 "status" => false,
-                "message" => "JV date is not within the financial period.",
+                "message" => trans('custom.jv_financial_period_validation'),
                 "httpCode" => 500
             ];
         }
@@ -194,7 +194,7 @@ class JournalVoucherService
         return [
             'status' => true,
             'data' => $jvMaster->refresh()->toArray(),
-            'message' => 'Pay Supplier Invoice Master saved successfully',
+            'message' =>  trans('custom.jv_created_successfully'),
             "httpCode" => 200
         ];
     }
@@ -206,7 +206,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Jv Master not found",
+                'message' =>  trans('custom.jv_master_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -248,14 +248,14 @@ class JournalVoucherService
                     {
                         return [
                             "status" => false,
-                            "message" => "Please configure PO accrual account for this company",
+                            'message' =>  trans('custom.configure_po_accrual_account'),
                             "httpCode" => 500
                         ];
                     }
                 }else {
                     return [
                         "status" => false,
-                        "message" => "Gl Code scenario not found for PO Accrual",
+                        'message' =>  trans('custom.gl_code_scenario_not_found_for_po_accrual'),
                         "httpCode" => 500
                     ];
                 }
@@ -264,7 +264,7 @@ class JournalVoucherService
                 {
                     return [
                         "status" => false,
-                        "message" => "Reversal date should greater the JV date",
+                        'message' =>  trans('custom.reversal_date_should_greater_the_jv_date'),
                         "httpCode" => 500
                     ];
                 }else {
@@ -282,7 +282,7 @@ class JournalVoucherService
                 if ($checkPendingJv) {
                     return [
                         "status" => false,
-                        "message" => "There is a pending allocation JV, please approve those allocation JVs",
+                        'message' =>  trans('custom.pending_allocation_jv_exists'),
                         "httpCode" => 500
                     ];
                 }
@@ -292,7 +292,7 @@ class JournalVoucherService
                 if($input['reversalDate'] == null) {
                     return [
                         "status" => false,
-                        "message" => "Reversal Date is mandatory",
+                        'message' =>  trans('custom.reversal_date_mandatory'),
                         "httpCode" => 500
                     ];
                 }
@@ -332,7 +332,7 @@ class JournalVoucherService
             if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
                 return [
                     "status" => false,
-                    "message" => "Document date is not within the selected financial period !",
+                    'message' =>  trans('custom.document_date_financial_period_validation'),
                     "httpCode" => 500
                 ];
             }
@@ -364,7 +364,7 @@ class JournalVoucherService
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
                     return [
                         "status" => false,
-                        "message" => "The Chart of Account/s are Inactive",
+                        'message' =>  trans('custom.chart_of_account_inactive'),
                         "httpCode" => 500
                     ];
                 }
@@ -384,7 +384,7 @@ class JournalVoucherService
             if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
                 return [
                     "status" => false,
-                    "message" => "Document date is not within the selected financial period !",
+                    'message' =>  trans('custom.document_date_financial_period_validation'),
                     "httpCode" => 500
                 ];
             }
@@ -394,7 +394,7 @@ class JournalVoucherService
             if ($checkItems == 0) {
                 return [
                     "status" => false,
-                    "message" => "Journal Voucher should have at least one item",
+                    'message' =>  trans('custom.jv_should_have_at_least_one_item'),
                     "httpCode" => 500
                 ];
             }
@@ -407,7 +407,7 @@ class JournalVoucherService
                 if ($checkQuantity > 0) {
                     return [
                         "status" => false,
-                        "message" => "Amount should be greater than 0 for debit amount or credit amount",
+                        'message' =>  trans('custom.amount_should_be_greater_than_0_for_debit_amount_or_credit_amount'),
                         "httpCode" => 500
                     ];
                 }
@@ -466,14 +466,14 @@ class JournalVoucherService
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "status" => false,
-                        "message" => "You cannot confirm this document.",
+                        'message' =>  trans('custom.you_cannot_confirm_this_document'),
                         "httpCode" => 500
                     ];
                 }
                 else{
                     return [
                         "status" => false,
-                        "message" => "Amount should be greater than 0 for debit amount or credit amount",
+                        'message' =>  trans('custom.amount_should_be_greater_than_0_for_debit_amount_or_credit_amount'),
                         "error_details" => $confirm_error,
                         "httpCode" => 500
                     ];
@@ -489,7 +489,7 @@ class JournalVoucherService
             if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
                 return [
                     "status" => false,
-                    "message" => "Debit amount total and credit amount total is not matching.",
+                    'message' =>  trans('custom.debit_amount_total_and_credit_amount_total_is_not_matching'),
                     "httpCode" => 500
                 ];
             }
@@ -547,7 +547,7 @@ class JournalVoucherService
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
             return [
                 "status" => true,
-                "message" => "Journal Voucher confirmed successfully",
+                'message' =>  trans('custom.jv_confirmed_successfully'),
                 "data" => $input,
                 "confirm_data" => $confirm['data'] ?? null,
                 "httpCode" => 200
@@ -555,7 +555,7 @@ class JournalVoucherService
         }
         return [
             "status" => true,
-            "message" => "Journal Voucher updated successfully",
+            'message' =>  trans('custom.jv_updated_successfully'),
             "data" => $input,
             "httpCode" => 200
         ];
@@ -567,7 +567,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Journal Voucher not found",
+                'message' =>  trans('custom.journal_voucher_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -581,7 +581,7 @@ class JournalVoucherService
         if (empty($chartOfAccount)) {
             return [
                 "status" => false,
-                "message" => "Chart of Account not found",
+                'message' =>  trans('custom.chart_of_account_not_found_1'),
                 "httpCode" => 500
             ];
         }
@@ -632,7 +632,7 @@ class JournalVoucherService
             return [
                 'status' => true,
                 'data' => $jvDetails->refresh()->toArray(),
-                'message' => 'Jv Detail saved successfully',
+                'message' =>  trans('custom.jv_detail_saved_successfully'),
                 "httpCode" => 200
             ];
         }
@@ -645,7 +645,7 @@ class JournalVoucherService
         if (empty($jvDetail)) {
             return [
                 "status" => false,
-                "message" => "Jv Detail not found",
+                'message' =>  trans('custom.jv_detail_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -654,7 +654,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Journal Voucher not found",
+                'message' =>  trans('custom.journal_voucher_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -672,7 +672,7 @@ class JournalVoucherService
                 if (empty($checkDepartmentActive)) {
                     return [
                         "status" => false,
-                        "message" => "Department not found",
+                        'message' =>  trans('custom.department_not_found'),
                         "httpCode" => 500
                     ];
                 }
@@ -680,7 +680,7 @@ class JournalVoucherService
                     JvDetail::where('jvDetailAutoID', $id)->update(['serviceLineSystemID' => null, 'serviceLineCode' => null]);
                     return [
                         "status" => false,
-                        "message" => "Please select an active department",
+                        'message' =>  trans('custom.select_active_department'),
                         "error_details" => $serviceLineError,
                         "httpCode" => 500
                     ];
@@ -708,7 +708,7 @@ class JournalVoucherService
         JvDetail::where('jvDetailAutoID', $id)->update(array_except($input, ['isAutoCreateDocument']));
         return [
             "status" => true,
-            "message" => "JvDetail updated successfully",
+            'message' =>  trans('custom.jv_detail_updated_successfully'),
             "data" => $input,
             "httpCode" => 200
         ];
