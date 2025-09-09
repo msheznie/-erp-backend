@@ -45,7 +45,7 @@ class PoCategory extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $appends = ['translated_description'];
+    protected $appends = ['description'];
 
     public $fillable = [
         'description',
@@ -90,7 +90,7 @@ class PoCategory extends Model
         return $this->translations()->where('languageCode', $languageCode)->first();
     }
 
-    public function getTranslatedDescriptionAttribute($value)
+    public function getDescriptionAttribute($value)
     {
         $currentLanguage = app()->getLocale() ?: 'en';
         

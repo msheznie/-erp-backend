@@ -100,3 +100,4 @@ class PoPaymentTermTypesLanguage extends Model
 
     
 }
+

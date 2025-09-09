@@ -41,7 +41,7 @@ class FinanceItemCategoryMaster extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'itemCategoryID';
-
+    protected $appends = ['categoryDescription'];
 
     protected $dates = ['deleted_at'];
 
@@ -127,7 +127,7 @@ class FinanceItemCategoryMaster extends Model
     /**
      * Get translated category description
      */
-    public function getTranslatedCategoryDescriptionAttribute()
+    public function getCategoryDescriptionAttribute()
     {
         $currentLanguage = app()->getLocale() ?: 'en';
         

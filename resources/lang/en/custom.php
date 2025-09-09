@@ -6082,6 +6082,12 @@ return [
     'e_status' => 'Status',
     'registration_number' => 'Registration Number',
     // Purchase Order specific translations
+    'not_received' => 'Not Received',
+    'partial_received' => 'Partial Received',
+    'fully_received' => 'Fully Received',
+    'not_invoiced' => 'Not Invoiced',
+    'partial_invoiced' => 'Partial Invoiced',
+    'fully_invoiced' => 'Fully Invoiced',
     'inventory' => 'Inventory',
     'specifications' => 'Specifications',
     'payment_terms_and_conditions' => 'Payment Terms and Conditions',

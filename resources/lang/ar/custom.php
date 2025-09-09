@@ -6081,6 +6081,12 @@ return [
     "estimated_unit_cost" => "التكلفة المقدرة للوحدة",
     
     // Purchase Order specific translations
+    'not_received' => 'لم يتم الاستلام',	
+    'partial_received' => 'استلام مقطوع',
+    'fully_received' => 'استلام مكتمل',
+    'not_invoiced' => 'لم يتم الفاتورة',
+    'partial_invoiced' => 'فاتورة مقطوعة',
+    'fully_invoiced' => 'فاتورة مكتملة',
     'inventory' => 'المخزون',
     'specifications' => 'المواصفات',
     'payment_terms_and_conditions' => 'شروط وأحكام الدفع',

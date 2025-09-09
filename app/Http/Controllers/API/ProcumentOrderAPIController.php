@@ -1706,7 +1706,7 @@ class ProcumentOrderAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $month = Months::with('translations')->get()->map(function($month) {
+        $month = Months::get()->map(function($month) {
             return [
                 'monthID' => $month->monthID,
                 'monthDes' => $month->monthDes,
@@ -1714,7 +1714,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ];
         });
 
-        $po_category = PoCategory::with('translations')->where('isActive',true)->get();
+        $po_category = PoCategory::where('isActive',true)->get();
 
         $po_category_default = PoCategory::where('isActive',true)->where('isDefault',true)->pluck('id');
 
@@ -1737,13 +1737,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
-        $financeCategories = FinanceItemCategoryMaster::with('translations')->get()->map(function($category) {
-            return [
-                'itemCategoryID' => $category->itemCategoryID,
-                'categoryDescription' => $category->categoryDescription,
-                'translated_category_description' => $category->translated_category_description
-            ];
-        });
+        $financeCategories = FinanceItemCategoryMaster::get();
 
         $locations = Location::where('is_deleted',0)->get();
 

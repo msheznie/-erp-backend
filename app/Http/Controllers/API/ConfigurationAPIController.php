@@ -57,7 +57,7 @@ class ConfigurationAPIController extends AppBaseController
             }
         }
 
-        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version, 'serverTime' => $serverTime);
+        $configuration = array('environment' => $environment, 'isLang' => 1, 'version' => $version, 'serverTime' => $serverTime);
 
         return $this->sendResponse($configuration, trans('custom.configurations_retrieved_successfully'));
 
