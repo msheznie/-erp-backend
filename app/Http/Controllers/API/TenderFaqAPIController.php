@@ -69,7 +69,7 @@ class TenderFaqAPIController extends AppBaseController
         $this->tenderFaqRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderFaqs = $this->tenderFaqRepository->all();
 
-        return $this->sendResponse($tenderFaqs->toArray(), trans('custom.tender_faqs_retrieved_successfully'));
+        return $this->sendResponse($tenderFaqs->toArray(), 'Tender Faqs retrieved successfully');
     }
 
     /**
@@ -116,7 +116,7 @@ class TenderFaqAPIController extends AppBaseController
 
         $tenderFaq = $this->tenderFaqRepository->create($input);
 
-        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tender_faq_saved_successfully'));
+        return $this->sendResponse($tenderFaq->toArray(), 'Tender Faq saved successfully');
     }
 
     /**
@@ -163,10 +163,10 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError(trans('custom.tender_faq_not_found'));
+            return $this->sendError('Tender Faq not found');
         }
 
-        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tender_faq_retrieved_successfully'));
+        return $this->sendResponse($tenderFaq->toArray(), 'Tender Faq retrieved successfully');
     }
 
     /**
@@ -223,12 +223,12 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError(trans('custom.tender_faq_not_found'));
+            return $this->sendError('Tender Faq not found');
         }
 
         $tenderFaq = $this->tenderFaqRepository->update($input, $id);
 
-        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tenderfaq_updated_successfully'));
+        return $this->sendResponse($tenderFaq->toArray(), 'TenderFaq updated successfully');
     }
 
     /**
@@ -275,15 +275,15 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError(trans('custom.tender_faq_not_found'));
+            return $this->sendError(trans('srm_rfq.tender_faq_not_found'));
         }
 
         $tenderFaq->delete();
 
-        return $this->sendSuccess('Tender Faq deleted successfully');
+        return $this->sendSuccess(trans('srm_rfq.tender_faq_deleted_successfully'));
     }
     public function createFaq(Request $request)
-    { 
+    {
         $input = $this->convertArrayToSelectedValue($request->all(), array('tender_master_id'));
         //$input =$request->all();
         $date_time = Carbon::now();
@@ -308,10 +308,10 @@ class TenderFaqAPIController extends AppBaseController
             } else {
                 $result = TenderFaq::create($data);
             }
-            
+
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_faq.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -347,16 +347,16 @@ class TenderFaqAPIController extends AppBaseController
             ->where('id', $id)
             ->first();
     }
-    public function deleteFaq(Request $request){ 
+    public function deleteFaq(Request $request){
         $input = $request->all();
         $id = $input['id'];
 
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError(trans('custom.not_found_1'));
-        } 
-        $tenderFaq->delete(); 
-        return $this->sendResponse($id,trans('custom.file_deleted'));
+            return $this->sendError(trans('srm_faq.g'));
+        }
+        $tenderFaq->delete();
+        return $this->sendResponse($id,trans('srm_faq.tender_faq_deleted'));
     }
 }
