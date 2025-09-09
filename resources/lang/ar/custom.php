@@ -6161,4 +6161,13 @@ return [
     'supplier_employee_name' => 'اسم المورّد / الموظف',
     'amount_local' => 'المبلغ (محلي)',
     'amount_rpt' => 'المبلغ (عملة التقارير)',
+
+    // Account Receivable receipt voucher
+    'rv_brv_code' => 'BRV كود',
+    'rv_receipt_type' => 'نوع الإيصال',
+    'rv_brv_date' => 'تاريخ BRV',
+    'rv_confirmed_on' => 'تم التأكيد على',
+    'rv_approved_on' => 'تمت الموافقة عليه في',
+    'rv_bank_amount' => 'مبلغ البنك',
+    'rv_treasury_cleared' => 'الخزانة المقاصة'
 ];
