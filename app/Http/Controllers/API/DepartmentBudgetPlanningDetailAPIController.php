@@ -7,7 +7,9 @@ use App\Http\Requests\API\UpdateDepartmentBudgetPlanningDetailAPIRequest;
 use App\Models\BudgetDetTemplateEntry;
 use App\Models\BudgetDetTemplateEntryData;
 use App\Models\BudgetPlanningDetailTempAttachment;
+use App\Models\BudgetTemplate;
 use App\Models\BudgetTemplateColumn;
+use App\Models\BudgetTemplatePreColumn;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
@@ -173,6 +175,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $employeeID =  \Helper::getEmployeeSystemID();
 
+//        $employeeID = 110;
         $newRequest = new Request();
         $newRequest->replace([
             'companyId' => $request->input('companySystemID'),
@@ -391,7 +394,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => 1,
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  Auth::user()->employee_id
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -402,22 +405,30 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
 
 
-            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser'])
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
             {
                 $delegateUserAccess = $userPermission['data']['delegateUser'];
 
-                if(empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
                 {
-                    $this->sendError("no Aaccess");
+                   return  $this->sendError("User doesn't have permission to input data");
+                }
+
+
+                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['edit_input'])
+                {
+                    return  $this->sendError("User doesn't have permission to edit data");
                 }
 
             }
+
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
             $entryID = null;
             $state = null;
 
             $newValue = [];
             $oldValue = [];
+
 
             if ($record) {
                 $state = "update";
@@ -449,6 +460,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ]);
             }
 
+            $this->updateLinkAmount($budgetDetailId);
+            
             $newValue = BudgetDetTemplateEntryData::with('templateColumn.preColumn')->where('entryID', $entryID)->get();
 
             // Add audit log
@@ -494,6 +507,86 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
     }
 
+    public function updateLinkAmount($budgetDetailId)
+    {
+
+        $budgetDetailData = DepartmentBudgetPlanningDetail::with(['budgetTemplate'])->find($budgetDetailId);
+
+        $budgetTemplateColumn = BudgetTemplateColumn::where('templateColumnID',$budgetDetailData->budgetTemplate->linkRequestAmount)->first();
+
+        $preColumn = BudgetTemplatePreColumn::where('preColumnID',$budgetTemplateColumn->preColumnID)->first();
+
+        switch ($preColumn->columnType)
+        {
+            case 2: //number;
+                $entries = BudgetDetTemplateEntry::where('budget_detail_id',$budgetDetailId)->pluck('entryID')->toArray();
+
+                $total = BudgetDetTemplateEntryData::whereIn('entryID',$entries)->where('templateColumnID',$budgetTemplateColumn->templateColumnID)->sum('value');
+                $budgetDetailData->request_amount = $total;
+                $budgetDetailData->save();
+                break;
+
+            case 4 : // formula;
+                $formula = $budgetTemplateColumn->formulaExpression;
+                $clean = str_replace(['#', '|'], '', $formula);
+                $parts = explode('~', $clean);
+
+                $total = 0;
+                $operator = null;
+                $values = [];
+
+                $entries = BudgetDetTemplateEntry::where('budget_detail_id',$budgetDetailId)->get();
+                foreach ($entries as $entry)
+                {
+                    $entryTotal = 0;
+                    $currentValue = 0;
+                    
+                    foreach ($parts as $part)
+                    {
+                        if (in_array($part, ['+', '-', '*', '/'])) {
+                            $operator = $part;
+                        } else {
+                            $row = BudgetDetTemplateEntryData::where('entryID', $entry->entryID)->where('templateColumnID', $part)->first();
+                            if ($row) {
+                                
+                                if(!empty($row->value)) {
+                                    $currentValue = $row->value;
+                                    if ($entryTotal == 0) {
+                                        $entryTotal = $currentValue;
+                                    } else {
+                                        switch ($operator) {
+                                            case '+':
+                                                $entryTotal += $currentValue;
+                                                break;
+                                            case '-':
+                                                $entryTotal -= $currentValue;
+                                                break;
+                                            case '*':
+                                                $entryTotal *= $currentValue;
+                                                break;
+                                            case '/':
+                                                if ($currentValue != 0) {
+                                                    $entryTotal /= $currentValue;
+                                                }
+                                                break;
+                                        }
+                                    }
+                                }
+                               
+                            }
+                        }
+                    }
+                    
+                    $total += $entryTotal;
+                }
+
+
+                $budgetDetailData->request_amount = $total;
+                $budgetDetailData->save();
+                break;
+        }
+
+    }
     /**
      * Get budget detail template entries
      *
@@ -714,6 +807,41 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving options - ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function updateDepartmentBudgetPlanningDetailAmount(Request $request)
+    {
+        $employeeID =  \Helper::getEmployeeSystemID();
+
+//        $employeeID = 110;
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $request->input('departmentSystemID'),
+            'delegateUser' =>  $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+        if(!empty($userPermission) && $userPermission['success'])
+        {
+            if(isset($userPermission['data']['delegateUser']))
+            {
+                if($userPermission['data']['delegateUser']['status'])
+                    return $this->sendError("Delegate User cannot update!",500);
+            }
+
+            $budgetPlanningDetailId = $request->input('budgetPlanningDetailId');
+
+            $budgetPlanningDetail = DepartmentBudgetPlanningDetail::find($budgetPlanningDetailId);
+
+            $budgetPlanningDetail[$request->input('field')] = (double) $request->input('value');
+            $budgetPlanningDetail->save();
+
+            return $this->sendResponse("Amount updated successfully",200);
+        }else {
+            return $this->sendError("Unable to update amount details",500);
         }
     }
 }

@@ -6126,5 +6126,41 @@ return [
     'cn_date' => 'CN التاريخ',
     'credit_note_code' => 'رمز مذكرة الائتمان',
     'confirmed_on' => 'تم التأكيد في',
-    'approved_on' => 'تم الموافقة على'
+    'approved_on' => 'تم الموافقة على',
+
+    // Material Request translations
+    'e_request_code' => 'رمز الطلب',
+    'e_comments' => 'التعليقات',
+    'e_requested_date' => 'تاريخ الطلب',
+    'e_priority' => 'الأولوية',
+    
+    // Item Issue translations
+    'e_issue_code' => 'رمز الإصدار',
+    'e_issue_date' => 'تاريخ الإصدار',
+    'e_comment' => 'تعليق',
+    'e_created_at' => 'تم الإنشاء في',
+    'e_confirmed_at' => 'تم التأكيد في',
+    'e_approved_at' => 'تم الموافقة في',
+    
+    // Item Return translations
+    'e_item_return_code' => 'رمز إرجاع العنصر',
+    'e_department' => 'القسم',
+    'e_return_date' => 'تاريخ الإرجاع',
+    'e_warehouse' => 'المستودع',
+    
+    // Stock Transfer translations
+    'e_stock_transfer_code' => 'رمز تحويل المخزون',
+    'e_transfer_date' => 'تاريخ التحويل',
+    
+    // Common document translations
+    'e_doc_code' => 'رمز المستند',
+    'e_date' => 'التاريخ',
+    
+    // Inventory Reclassification translations
+    'e_reclassification_code' => 'رمز إعادة التصنيف',
+    'e_reclassification_date' => 'تاريخ إعادة التصنيف',
+    'supplier_employee_code' => 'رمز المورّد / الموظف',
+    'supplier_employee_name' => 'اسم المورّد / الموظف',
+    'amount_local' => 'المبلغ (محلي)',
+    'amount_rpt' => 'المبلغ (عملة التقارير)',
 ];
