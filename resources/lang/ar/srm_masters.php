@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'procurement_category_not_found' => 'لم يتم العثور على فئة المشتريات',
+    'procurement_category_is_already_used' => 'فئة المشتريات مستخدمة بالفعل',
+    'procurement_category_deleted_successfully' => 'تم حذف فئة المشتريات بنجاح',
+    'procurement_category_saved_successfully' => 'تم حفظ فئة المشتريات بنجاح',
+    'procurement_sub_category_is_already_used' => 'الفئة الفرعية للمشتريات مستخدمة بالفعل',
+    'procurement_sub_category_deleted_successfully' => 'تم حذف الفئة الفرعية للمشتريات بنجاح',
+    'procurement_sub_category_saved_successfully' => 'تم حفظ الفئة الفرعية للمشتريات بنجاح',
+    'procurement_activity_is_already_used' => 'نشاط المشتريات مستخدم بالفعل',
+    'procurement_activity_deleted_successfully' => 'تم حذف نشاط المشتريات بنجاح',
+    'procurement_activity_saved_successfully' => 'تم حفظ نشاط المشتريات بنجاح',
+    'procurement_code_already_exist_do_you_really_want_to_restore_this' => 'رمز المشتريات ":code" موجود بالفعل، هل تريد حقًا استعادته؟',
+    'procurement_category_description_already_exist_do_you_really_want_to_restore_this' => 'وصف فئة المشتريات ":code" موجود بالفعل، هل تريد حقًا استعادته؟',
+    'procurement_code_already_exists' => 'رمز المشتريات ":code" موجود بالفعل',
+    'procurement_category_description_already_exists' => 'وصف فئة المشتريات ":code" موجود بالفعل',
+    'procurement_category_is_already_used_in_tender_creation' => 'فئة المشتريات مستخدمة بالفعل في إنشاء المناقصة',
+    'procurement_sub_category_is_already_used_in_tender_creation' => 'الفئة الفرعية للمشتريات مستخدمة بالفعل في إنشاء المناقصة',
+    'procurement_activity_is_already_used_in_tender_creation' => 'نشاط المشتريات مستخدم بالفعل في إنشاء المناقصة',
+    'procurement_category_updated_successfully' => 'تم تحديث فئة المشتريات بنجاح',
+    'procurement_sub_category_updated_successfully' => 'تم تحديث الفئة الفرعية للمشتريات بنجاح',
+    'procurement_activity_updated_successfully' => 'تم تحديث نشاط المشتريات بنجاح',
+    'procurement_activity_restored_successfully' => 'تمت استعادة نشاط المشتريات بنجاح',
+];
