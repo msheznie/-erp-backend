@@ -6138,7 +6138,9 @@ return [
     'other' => 'أخرى',
     'cn_date' => 'CN التاريخ',
     'credit_note_code' => 'رمز مذكرة الائتمان',
-    
+    'confirmed_on' => 'تم التأكيد في',
+    'approved_on' => 'تم الموافقة على',
+
     // Material Request translations
     'e_request_code' => 'رمز الطلب',
     'e_comments' => 'التعليقات',
