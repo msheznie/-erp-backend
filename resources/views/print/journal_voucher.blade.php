@@ -236,13 +236,13 @@
                 <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -297,7 +297,7 @@
                     @if($masterdata->jvType == 3)
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold;">Type </span>
+                                <span style="font-weight: bold;">{{ __('custom.type') }} </span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight: bold;">:</span>
@@ -305,9 +305,9 @@
                             <td>
                                 <span>
                                     @if($masterdata->type == 1)
-                                        Non-Payroll
+                                        {{ __('custom.non_payroll') }}
                                     @else
-                                        Payroll
+                                        {{ __('custom.payroll') }}
                                     @endif
                                 </span>
                             </td>
@@ -325,7 +325,7 @@
                 <table>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight: bold;">Narration</span>
+                            <span style="font-weight: bold;">{{ __('custom.narration') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>

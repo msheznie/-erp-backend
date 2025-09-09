@@ -6193,4 +6193,52 @@ return [
     'direct_order' => 'Direct Order',
     'quotation_based' => 'Quotation Based',
     'sales_order_based' => 'Sales Order Based',
+
+    // Employee Department Error Messages
+    'unable_to_delete_delegation' => 'Unable to delete, since the deligator has delegation documents',
+    'unable_to_perform_delegation' => 'Unable to perform, since the deligator has delegation documents',
+    'unable_to_export_excel' => 'Unable to export excel',
+    'approval_group_not_selected' => 'The approval group has not been selected at the approval level',
+    'unable_to_assign_delegation' => 'Unable to assign, The employee included in delegation process',
+
+    // Status Values
+    'active' => 'Active',
+    'inactive' => 'In Active',
+    'deleted' => 'Deleted',
+
+    // Export Column Headers
+    'department' => 'Department',
+    'document_type' => 'Document Type',
+    'segment' => 'Segment',
+    'limit' => 'Limit',
+    'category' => 'Category',
+    'level_description' => 'Level Description',
+    'level_status' => 'Level Status',
+    'approval_level' => 'Approval Level',
+    'group_description' => 'Group Description',
+    'approver_name' => 'Approver Name',
+    'approver_status' => 'Approver Status',
+    // Journal Voucher
+    'configure_po_accrual_account' => 'Please configure PO accrual account for this company.',
+    'reversal_date_should_greater_the_jv_date' => 'Reversal date should greater the JV date',
+    'pending_allocation_jv_exists' => 'There is a pending allocation JV, please approve those allocation JVs.',
+    'jv_financial_period_validation' => 'JV date is not within the financial period.',
+    'reversal_date_mandatory' => 'Reversal Date is mandatory',
+    'document_date_financial_period_validation' => 'Document date is not within the selected financial period!',
+    'chart_of_account_inactive' => 'The Chart of Account/s are Inactive',
+    'jv_should_have_at_least_one_item' => 'Journal Voucher should have at least one item',
+    'amount_should_be_greater_than_0_for_debit_amount_or_credit_amount' => 'Amount should be greater than 0 for debit amount or credit amount',
+    'debit_amount_total_and_credit_amount_total_is_not_matching' => 'Debit amount total and credit amount total is not matching.',
+    'jv_confirmed_successfully' => 'Journal Voucher confirmed successfully',
+    'jv_updated_successfully' => 'Journal Voucher updated successfully',
+    'jv_detail_saved_successfully' => 'Jv Detail saved successfully',
+    'jv_detail_updated_successfully' => 'JvDetail updated successfully',
+    'select_active_department' => 'Please select an active department',
+    'out_of' => 'Out of ',
+    'all_jv_details_fail_to_upload' => ' All JV Details fail to upload',
+    'jv_details' => 'JV Details',
+    'jv_details_uploaded_successfully' => ' JV Details uploaded successfully',
+    'there_is_no_data_to_update' => 'There is no data to update',
+    'non_payroll' => 'Non-Payroll',
+    'payroll' => 'Payroll'
 ];
