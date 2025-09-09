@@ -63,7 +63,7 @@ class PoCategoryAPIController extends AppBaseController
     {
         $this->poCategoryRepository->pushCriteria(new RequestCriteria($request));
         $this->poCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $poCategories = $this->poCategoryRepository->with('translations')->all();
+        $poCategories = $this->poCategoryRepository->all();
 
         return $this->sendResponse($poCategories->toArray(), trans('custom.po_categories_retrieved_successfully'));
     }
@@ -156,7 +156,7 @@ class PoCategoryAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PoCategory $poCategory */
-        $poCategory = $this->poCategoryRepository->with('translations')->findWithoutFail($id);
+        $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
         if (empty($poCategory)) {
             return $this->sendError(trans('custom.po_category_not_found'));
