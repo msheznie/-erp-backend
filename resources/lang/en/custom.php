@@ -6105,5 +6105,7 @@ return [
     'no' => 'No',
     'other' => 'Other',
     'cn_date' => 'CN Date',
-    'credit_note_code' => 'Credit Note Code'
+    'credit_note_code' => 'Credit Note Code',
+    'confirmed_on' => 'Confirmed on',
+    'approved_on' => 'Approved on'
 ];
