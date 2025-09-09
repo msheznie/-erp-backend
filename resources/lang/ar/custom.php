@@ -6208,6 +6208,11 @@ return [
     'rv_bank_amount' => 'مبلغ البنك',
     'rv_treasury_cleared' => 'الخزانة المقاصة',
 
+    // Delivery Order translations
+    'direct_order' => 'طلب مباشر',
+    'quotation_based' => 'طلب مبني على الاقتباس',
+    'sales_order_based' => 'طلب مبني على الطلب',
+
     // Employee Department Error Messages
     'unable_to_delete_delegation' => 'غير قادر على الحذف، حيث أن المفوض لديه مستندات تفويض',
     'unable_to_perform_delegation' => 'غير قادر على التنفيذ، حيث أن المفوض لديه مستندات تفويض',
