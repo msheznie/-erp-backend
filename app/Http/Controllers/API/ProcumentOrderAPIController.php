@@ -5625,7 +5625,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
 
                 if ($val->fcategory) {
-                    $data[$x][trans('custom.category')] = $val->fcategory->translated_category_description;
+                    $data[$x][trans('custom.category')] = $val->fcategory->categoryDescription;
                 } else {
                     $data[$x][trans('custom.category')] = trans('custom.other');  
                 }
