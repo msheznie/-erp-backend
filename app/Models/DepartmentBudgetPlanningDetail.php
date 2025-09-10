@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class DepartmentBudgetPlanningDetail extends Model
 {
@@ -57,6 +58,14 @@ class DepartmentBudgetPlanningDetail extends Model
     public function budgetDelegateAccessDetails()
     {
         return $this->hasMany(\App\Models\BudgetDelegateAccessRecord::class, 'budget_planning_detail_id', 'id');
+    }
+
+    public function budgetDelegateAccessDetailsUser()
+    {
+        return $this->hasOne(\App\Models\BudgetDelegateAccessRecord::class, 'budget_planning_detail_id', 'id')
+                    ->whereHas('delegatee', function($query) {
+                        $query->where('employeeSystemID', Auth::user()->employee_id);
+                    });
     }
     /**
      * Get the budget template.
