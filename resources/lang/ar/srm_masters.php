@@ -22,4 +22,14 @@ return [
     'procurement_sub_category_updated_successfully' => 'تم تحديث الفئة الفرعية للمشتريات بنجاح',
     'procurement_activity_updated_successfully' => 'تم تحديث نشاط المشتريات بنجاح',
     'procurement_activity_restored_successfully' => 'تمت استعادة نشاط المشتريات بنجاح',
+    'document_type_not_found' => 'نوع المستند غير موجود',
+    'document_type_deleted_successfully' => 'تم حذف نوع المستند بنجاح',
+    'document_type_already_exists' => 'نوع المستند \':code\' موجود بالفعل',
+    'document_type_saved_successfully' => 'تم حفظ نوع المستند بنجاح',
+    'document_type_updated_successfully' => 'تم تحديث نوع المستند بنجاح',
+    'calendar_date_description_saved_successfully' => 'تم حفظ وصف تاريخ التقويم بنجاح',
+    'calendar_date_description_already_exists' => 'وصف تاريخ التقويم \':code\' موجود بالفعل.',
+    'calendar_date_description_not_found' => 'وصف تاريخ التقويم غير موجود',
+    'calendar_date_description_updated_successfully' => 'تم تحديث وصف تاريخ التقويم بنجاح',
+    'calendar_date_description_deleted_successfully' => 'تم حذف وصف تاريخ التقويم بنجاح'
 ];

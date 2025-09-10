@@ -22,4 +22,14 @@ return [
     'procurement_sub_category_updated_successfully' => 'Procurement sub Category updated successfully',
     'procurement_activity_updated_successfully' => 'Procurement activity updated successfully',
     'procurement_activity_restored_successfully' => 'Procurement activity restored successfully',
+    'document_type_not_found' => 'Document Type not found',
+    'document_type_deleted_successfully' => 'Document Type deleted successfully',
+    'document_type_already_exists' => 'Document Type \':code\' already exists',
+    'document_type_saved_successfully' => 'Document Type saved successfully',
+    'document_type_updated_successfully' => 'Document Type updated successfully',
+    'calendar_date_description_saved_successfully' => 'Calendar date description saved successfully',
+    'calendar_date_description_already_exists' => 'Calendar date description \':code\' is already exists.',
+    'calendar_date_description_not_found' => 'Calendar date description not found',
+    'calendar_date_description_updated_successfully' => 'Calendar date description updated successfully',
+    'calendar_date_description_deleted_successfully' => 'Calendar date description deleted successfully'
 ];
