@@ -6438,4 +6438,7 @@ return [
     'ar_goods' => 'البضائع',
     'ar_service' => 'الخدمات',
     'ar_subscription' => 'الاشتراك',
+    'type_not_allowed' => 'هذا النوع من الملفات غير مسموح برفعه.',
+    'maximum_allowed_file_size' => 'تم تجاوز الحد الأقصى المسموح به لحجم الملف',
+    'unable_to_upload_the_attachment' => 'يتعذر رفع المرفق',
 ];
