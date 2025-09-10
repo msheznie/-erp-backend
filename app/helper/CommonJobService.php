@@ -61,6 +61,8 @@ class CommonJobService
                 return storage_path() . '/logs/delegation.log';  
             case 'absent-notification':
                 return storage_path() . '/logs/absent-notification.log';
+            case 'emp-designation-update-notification':
+                return storage_path() . '/logs/emp-designation-update-notification.log';
         }
     }
 
