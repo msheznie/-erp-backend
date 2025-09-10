@@ -246,13 +246,7 @@ class PurchaseRequestAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $month = Months::with('translations')->get()->map(function($month) {
-            return [
-                'monthID' => $month->monthID,
-                'monthDes' => $month->monthDes,
-                'translated_month_des' => $month->translated_month_des
-            ];
-        });
+        $month = Months::all();
         $buyers = Employee::where('discharegedYN', '!=', -1)
             ->where('empActive', 1)
             ->whereIn('empCompanySystemID', $childCompanies)
@@ -486,7 +480,7 @@ class PurchaseRequestAPIController extends AppBaseController
             else
             {
                 DB::rollBack();
-                return $this->sendError('Unable to create material items', 422);
+                return $this->sendError(trans('custom.unable_to_create_material_items'), 422);
             }
             
             
@@ -728,24 +722,24 @@ class PurchaseRequestAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Company ID'] = $value->companyID;
+                $data[$x][trans('custom.company_id')] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['Segment'] = $value->serviceLineCode;
-                $data[$x]['PR Number'] = $value->purchaseRequestCode;
+                $data[$x][trans('custom.segment')] = $value->serviceLineCode;
+                $data[$x][trans('custom.pr_number')] = $value->purchaseRequestCode;
 
                 if ($value->confirmed_by) {
-                    $data[$x]['Processed By'] = $value->confirmed_by->empName;
+                    $data[$x][trans('custom.processed_by')] = $value->confirmed_by->empName;
                 } else {
-                    $data[$x]['Processed By'] = '';
+                    $data[$x][trans('custom.processed_by')] = '';
                 }
 
-                $data[$x]['PR Date'] = \Helper::dateFormat($value->PRRequestedDate);
-                $data[$x]['PR Comment'] = $value->comments;
+                $data[$x][trans('custom.pr_date')] = \Helper::dateFormat($value->PRRequestedDate);
+                $data[$x][trans('custom.pr_comment')] = $value->comments;
 
                 if ($value->approved == -1) {
-                    $data[$x]['PR Approved'] = 'Yes';
+                    $data[$x][trans('custom.pr_approved')] = trans('custom.yes');
                 } else {
-                    $data[$x]['PR Approved'] = 'No';
+                    $data[$x][trans('custom.pr_approved')] = trans('custom.no');
                 }
 
                 if (count($value->details) > 0) {
@@ -754,105 +748,105 @@ class PurchaseRequestAPIController extends AppBaseController
 
                         if ($itemCount != 0) {
                             $x++;
-                            $data[$x]['Company ID'] = '';
+                            $data[$x][trans('custom.company_id')] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['PR Number'] = '';
-                            $data[$x]['Processed By'] = '';
-                            $data[$x]['PR Date'] = '';
-                            $data[$x]['PR Comment'] = '';
-                            $data[$x]['PR Approved'] = '';
+                            $data[$x][trans('custom.segment')] = '';
+                            $data[$x][trans('custom.pr_number')] = '';
+                            $data[$x][trans('custom.processed_by')] = '';
+                            $data[$x][trans('custom.pr_date')] = '';
+                            $data[$x][trans('custom.pr_comment')] = '';
+                            $data[$x][trans('custom.pr_approved')] = '';
                         }
 
                         if($value->cancelledYN) {
-                            $data[$x]['PR Status'] = 'Cancelled';
+                            $data[$x][trans('custom.pr_status')] = trans('custom.cancelled');
                         }elseif ($item->manuallyClosed){
-                            $data[$x]['PR Status'] = 'Closed';
+                            $data[$x][trans('custom.pr_status')] = trans('custom.closed');
                         }else{
-                            $data[$x]['PR Status'] = '';
+                            $data[$x][trans('custom.pr_status')] = '';
                         }
-                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
-                        $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part No / Ref.Number'] = $item->partNumber;
+                        $data[$x][trans('custom.item_code')] = $item->itemPrimaryCode;
+                        $data[$x][trans('custom.item_description')] = $item->itemDescription;
+                        $data[$x][trans('custom.part_no_ref_number')] = $item->partNumber;
                         if ($item->uom) {
-                            $data[$x]['Unit'] = $item->uom->UnitShortCode;
+                            $data[$x][trans('custom.unit')] = $item->uom->UnitShortCode;
                         } else {
-                            $data[$x]['Unit'] = '';
+                            $data[$x][trans('custom.unit')] = '';
                         }
-                        $data[$x]['PR Qty'] = $item->quantityRequested;
+                        $data[$x][trans('custom.pr_qty')] = $item->quantityRequested;
 
                         if (count($item->podetail) > 0) {
                             $poCount = 0;
                             foreach ($item->podetail as $poDetail) {
                                 if ($poCount != 0) {
                                     $x++;
-                                    $data[$x]['Company ID'] = '';
+                                    $data[$x][trans('custom.company_id')] = '';
                                     //$data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Segment'] = '';
-                                    $data[$x]['PR Number'] = '';
-                                    $data[$x]['Processed By'] = '';
-                                    $data[$x]['PR Date'] = '';
-                                    $data[$x]['PR Comment'] = '';
-                                    $data[$x]['PR Approved'] = '';
-                                    $data[$x]['PR Status'] = '';
-                                    $data[$x]['Item Code'] = '';
-                                    $data[$x]['Item Description'] = '';
-                                    $data[$x]['Part No / Ref.Number'] = '';
-                                    $data[$x]['Unit'] = '';
-                                    $data[$x]['PR Qty'] = '';
+                                    $data[$x][trans('custom.segment')] = '';
+                                    $data[$x][trans('custom.pr_number')] = '';
+                                    $data[$x][trans('custom.processed_by')] = '';
+                                    $data[$x][trans('custom.pr_date')] = '';
+                                    $data[$x][trans('custom.pr_comment')] = '';
+                                    $data[$x][trans('custom.pr_approved')] = '';
+                                    $data[$x][trans('custom.pr_status')] = '';
+                                    $data[$x][trans('custom.item_code')] = '';
+                                    $data[$x][trans('custom.item_description')] = '';
+                                    $data[$x][trans('custom.part_no_ref_number')] = '';
+                                    $data[$x][trans('custom.unit')] = '';
+                                    $data[$x][trans('custom.pr_qty')] = '';
                                 }
 
                                 if ($poDetail->order) {
-                                    $data[$x]['PO Number'] = $poDetail->order->purchaseOrderCode;
-                                    $data[$x]['ETA'] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
-                                    $data[$x]['Supplier Code'] = $poDetail->order->supplierPrimaryCode;
-                                    $data[$x]['Supplier Name'] = $poDetail->order->supplierName;
+                                    $data[$x][trans('custom.po_number')] = $poDetail->order->purchaseOrderCode;
+                                    $data[$x][trans('custom.eta')] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
+                                    $data[$x][trans('custom.supplier_code')] = $poDetail->order->supplierPrimaryCode;
+                                    $data[$x][trans('custom.supplier_name')] = $poDetail->order->supplierName;
                                 } else {
-                                    $data[$x]['PO Number'] = '';
-                                    $data[$x]['ETA'] = '';
-                                    $data[$x]['Supplier Code'] = '';
-                                    $data[$x]['Supplier Name'] = '';
+                                    $data[$x][trans('custom.po_number')] = '';
+                                    $data[$x][trans('custom.eta')] = '';
+                                    $data[$x][trans('custom.supplier_code')] = '';
+                                    $data[$x][trans('custom.supplier_name')] = '';
                                 }
 
-                                $data[$x]['PO Qty'] = $poDetail->manuallyClosed == 1 ?  round($poDetail->receivedQty,2) :  round($poDetail->noQty,2);
+                                $data[$x][trans('custom.po_qty')] = $poDetail->manuallyClosed == 1 ?  round($poDetail->receivedQty,2) :  round($poDetail->noQty,2);
 
                                 if ($poDetail->reporting_currency) {
-                                    $data[$x]['Currency'] = $poDetail->reporting_currency->CurrencyCode;
+                                    $data[$x][trans('custom.currency')] = $poDetail->reporting_currency->CurrencyCode;
                                 } else {
-                                    $data[$x]['Currency'] = '';
+                                    $data[$x][trans('custom.currency')] = '';
                                 }
 
 
-                                $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur, 2);
+                                $data[$x][trans('custom.po_cost')] = round($poDetail->GRVcostPerUnitComRptCur, 2);
 
                                 if ($poDetail->order) {
-                                    $data[$x]['PO Confirmed Date'] = \Helper::dateFormat($poDetail->order->poConfirmedDate);
+                                    $data[$x][trans('custom.po_confirmed_date')] = \Helper::dateFormat($poDetail->order->poConfirmedDate);
                                 } else {
-                                    $data[$x]['PO Confirmed Date'] = '';
+                                    $data[$x][trans('custom.po_confirmed_date')] = '';
                                 }
 
                                 if ($poDetail->order) {
                                     if ($poDetail->order->approved == -1) {
-                                        $data[$x]['PO Approved Status'] = 'Yes';
+                                        $data[$x][trans('custom.po_approved_status')] = trans('custom.yes');
                                     } else {
-                                        $data[$x]['PO Approved Status'] = 'No';
+                                        $data[$x][trans('custom.po_approved_status')] = trans('custom.no');
                                     }
                                 } else {
-                                    $data[$x]['PO Approved Status'] = '';
+                                    $data[$x][trans('custom.po_approved_status')] = '';
                                 }
 
                                 if ($poDetail->order) {
-                                    $data[$x]['Approved Date'] = \Helper::dateFormat($poDetail->order->approvedDate);
+                                    $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($poDetail->order->approvedDate);
                                 } else {
-                                    $data[$x]['Approved Date'] = '';
+                                    $data[$x][trans('custom.approved_date')] = '';
                                 }
 
                                 if($poDetail->order && $poDetail->order->poCancelledYN) {
-                                    $data[$x]['PO Status'] = 'Cancelled';
+                                    $data[$x][trans('custom.po_status')] = trans('custom.cancelled');
                                 }elseif ($poDetail->manuallyClosed){
-                                    $data[$x]['PO Status'] = 'Closed';
+                                    $data[$x][trans('custom.po_status')] = trans('custom.closed');
                                 }else{
-                                    $data[$x]['PO Status'] = '';
+                                    $data[$x][trans('custom.po_status')] = '';
                                 }
 
                                 if (count($poDetail->grv_details) > 0) {
@@ -860,57 +854,57 @@ class PurchaseRequestAPIController extends AppBaseController
                                     foreach ($poDetail->grv_details as $grvDetail) {
                                         if ($grvCount != 0) {
                                             $x++;
-                                            $data[$x]['Company ID'] = '';
+                                            $data[$x][trans('custom.company_id')] = '';
                                             //$data[$x]['Company Name'] = $val->CompanyName;
-                                            $data[$x]['Segment'] = '';
-                                            $data[$x]['PR Number'] = '';
-                                            $data[$x]['Processed By'] = '';
-                                            $data[$x]['PR Date'] = '';
-                                            $data[$x]['PR Comment'] = '';
-                                            $data[$x]['PR Approved'] = '';
-                                            $data[$x]['PR Status'] = '';
-                                            $data[$x]['Item Code'] = '';
-                                            $data[$x]['Item Description'] = '';
-                                            $data[$x]['Part No / Ref.Number'] = '';
-                                            $data[$x]['Unit'] = '';
-                                            $data[$x]['PR Qty'] = '';
-                                            $data[$x]['PO Number'] = '';
-                                            $data[$x]['ETA'] = '';
-                                            $data[$x]['Supplier Code'] = '';
-                                            $data[$x]['Supplier Name'] = '';
-                                            $data[$x]['PO Qty'] = '';
-                                            $data[$x]['Currency'] = '';
-                                            $data[$x]['PO Cost'] = '';
-                                            $data[$x]['PO Confirmed Date'] = '';
-                                            $data[$x]['PO Approved Status'] = '';
-                                            $data[$x]['Approved Date'] = '';
-                                            $data[$x]['PO Status'] = '';
+                                            $data[$x][trans('custom.segment')] = '';
+                                            $data[$x][trans('custom.pr_number')] = '';
+                                            $data[$x][trans('custom.processed_by')] = '';
+                                            $data[$x][trans('custom.pr_date')] = '';
+                                            $data[$x][trans('custom.pr_comment')] = '';
+                                            $data[$x][trans('custom.pr_approved')] = '';
+                                            $data[$x][trans('custom.pr_status')] = '';
+                                            $data[$x][trans('custom.item_code')] = '';
+                                            $data[$x][trans('custom.item_description')] = '';
+                                            $data[$x][trans('custom.part_no_ref_number')] = '';
+                                            $data[$x][trans('custom.unit')] = '';
+                                            $data[$x][trans('custom.pr_qty')] = '';
+                                            $data[$x][trans('custom.po_number')] = '';
+                                            $data[$x][trans('custom.eta')] = '';
+                                            $data[$x][trans('custom.supplier_code')] = '';
+                                            $data[$x][trans('custom.supplier_name')] = '';
+                                            $data[$x][trans('custom.po_qty')] = '';
+                                            $data[$x][trans('custom.currency')] = '';
+                                            $data[$x][trans('custom.po_cost')] = '';
+                                            $data[$x][trans('custom.po_confirmed_date')] = '';
+                                            $data[$x][trans('custom.po_approved_status')] = '';
+                                            $data[$x][trans('custom.approved_date')] = '';
+                                            $data[$x][trans('custom.po_status')] = '';
                                         }
 
                                         if ($grvDetail->grv_master) {
-                                            $data[$x]['Receipt Doc Number'] = $grvDetail->grv_master->grvPrimaryCode;
-                                            $data[$x]['Receipt Date'] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
+                                            $data[$x][trans('custom.receipt_doc_number')] = $grvDetail->grv_master->grvPrimaryCode;
+                                            $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
                                         } else {
-                                            $data[$x]['Receipt Doc Number'] = '';
-                                            $data[$x]['Receipt Date'] = '';
+                                            $data[$x][trans('custom.receipt_doc_number')] = '';
+                                            $data[$x][trans('custom.receipt_date')] = '';
                                         }
-                                        $data[$x]['Receipt Qty'] = $grvDetail->noQty;
+                                        $data[$x][trans('custom.receipt_qty')] = $grvDetail->noQty;
 
                                         if($grvDetail->grv_master && $grvDetail->grv_master->grvCancelledYN) {
-                                            $data[$x]['GRV Status'] = 'Cancelled';
+                                            $data[$x][trans('custom.grv_status')] = trans('custom.cancelled');
                                         }else{
-                                            $data[$x]['GRV Status'] = '';
+                                            $data[$x][trans('custom.grv_status')] = '';
                                         }
 
                                         if($poDetail->manuallyClosed == 1){
-                                            $data[$x]['Receipt Status'] = "Fully Received";
+                                            $data[$x]['Receipt Status'] = trans('custom.fully_received');
                                         }else{
                                             if ($poDetail->goodsRecievedYN == 2) {
-                                                $data[$x]['Receipt Status'] = "Fully Received";
+                                                $data[$x]['Receipt Status'] = trans('custom.fully_received');
                                             } else if ($poDetail->goodsRecievedYN == 0) {
-                                                $data[$x]['Receipt Status'] = "Not Received";
+                                                $data[$x]['Receipt Status'] = trans('custom.not_received');
                                             } else if ($poDetail->goodsRecievedYN == 1) {
-                                                $data[$x]['Receipt Status'] = "Partially Received";
+                                                $data[$x]['Receipt Status'] = trans('custom.partially_received');
                                             }
                                         }
 
@@ -921,52 +915,52 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['Receipt Date'] = '';
                                     $data[$x]['Receipt Qty'] = '';
                                     $data[$x]['GRV Status'] = '';
-                                    $data[$x]['Receipt Status'] = "Not Received";
+                                    $data[$x]['Receipt Status'] = trans('custom.not_received');
                                 }
                                 $poCount++;
                             }
                         } else {
-                            $data[$x]['PO Number'] = '';
-                            $data[$x]['ETA'] = '';
-                            $data[$x]['Supplier Code'] = '';
-                            $data[$x]['Supplier Name'] = '';
-                            $data[$x]['PO Qty'] = '';
-                            $data[$x]['Currency'] = '';
-                            $data[$x]['PO Cost'] = '';
-                            $data[$x]['PO Confirmed Date'] = '';
-                            $data[$x]['PO Approved Status'] = '';
-                            $data[$x]['Approved Date'] = '';
-                            $data[$x]['PO Status'] = '';
-                            $data[$x]['Receipt Doc Number'] = '';
-                            $data[$x]['Receipt Date'] = '';
-                            $data[$x]['Receipt Qty'] = '';
-                            $data[$x]['GRV Status'] = '';
-                            $data[$x]['Receipt Status'] = "Not Received";
+                            $data[$x][trans('custom.po_number')] = '';
+                            $data[$x][trans('custom.eta')] = '';
+                            $data[$x][trans('custom.supplier_code')] = '';
+                            $data[$x][trans('custom.supplier_name')] = '';
+                            $data[$x][trans('custom.po_qty')] = '';
+                            $data[$x][trans('custom.currency')] = '';
+                            $data[$x][trans('custom.po_cost')] = '';
+                            $data[$x][trans('custom.po_confirmed_date')] = '';
+                            $data[$x][trans('custom.po_approved_status')] = '';
+                            $data[$x][trans('custom.approved_date')] = '';
+                            $data[$x][trans('custom.po_status')] = '';
+                            $data[$x][trans('custom.receipt_doc_number')] = '';
+                            $data[$x][trans('custom.receipt_date')] = '';
+                            $data[$x][trans('custom.receipt_qty')] = '';
+                            $data[$x][trans('custom.grv_status')] = '';
+                            $data[$x][trans('custom.receipt_status')] = trans('custom.not_received');
                         }
                         $itemCount++;
                     }
                 } else {
-                    $data[$x]['Item Code'] = 'Item Code';
-                    $data[$x]['Item Description'] = 'Item Description';
-                    $data[$x]['Part No / Ref.Number'] = '';
-                    $data[$x]['Unit'] = '';
-                    $data[$x]['PR Qty'] = '';
-                    $data[$x]['PO Number'] = '';
-                    $data[$x]['ETA'] = '';
-                    $data[$x]['Supplier Code'] = '';
-                    $data[$x]['Supplier Name'] = '';
-                    $data[$x]['PO Qty'] = '';
-                    $data[$x]['Currency'] = '';
-                    $data[$x]['PO Cost'] = '';
-                    $data[$x]['PO Confirmed Date'] = '';
-                    $data[$x]['PO Approved Status'] = '';
-                    $data[$x]['Approved Date'] = '';
-                    $data[$x]['PO Status'] = '';
-                    $data[$x]['Receipt Doc Number'] = '';
-                    $data[$x]['Receipt Date'] = '';
-                    $data[$x]['Receipt Qty'] = '';
-                    $data[$x]['GRV Status'] = '';
-                    $data[$x]['Receipt Status'] = "Not Received";
+                    $data[$x][trans('custom.item_code')] = trans('custom.item_code');
+                    $data[$x][trans('custom.item_description')] = trans('custom.item_description');
+                    $data[$x][trans('custom.part_no_ref_number')] = '';
+                    $data[$x][trans('custom.unit')] = '';
+                    $data[$x][trans('custom.pr_qty')] = '';
+                    $data[$x][trans('custom.po_number')] = '';
+                    $data[$x][trans('custom.eta')] = '';
+                    $data[$x][trans('custom.supplier_code')] = '';
+                    $data[$x][trans('custom.supplier_name')] = '';
+                    $data[$x][trans('custom.po_qty')] = '';
+                    $data[$x][trans('custom.currency')] = '';
+                    $data[$x][trans('custom.po_cost')] = '';
+                    $data[$x][trans('custom.po_confirmed_date')] = '';
+                    $data[$x][trans('custom.po_approved_status')] = '';
+                    $data[$x][trans('custom.approved_date')] = '';
+                    $data[$x][trans('custom.po_status')] = '';
+                    $data[$x][trans('custom.receipt_doc_number')] = '';
+                    $data[$x][trans('custom.receipt_date')] = '';
+                    $data[$x][trans('custom.receipt_qty')] = '';
+                    $data[$x][trans('custom.grv_status')] = '';
+                    $data[$x][trans('custom.receipt_status')] = trans('custom.not_received');
                 }
                 $x++;
             }
@@ -996,7 +990,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -1156,7 +1150,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $request, $input, $search, $serviceLineSystemID, $buyerEmpSystemId);
 
         return \DataTables::eloquent($purchaseRequests)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1278,7 +1272,7 @@ class PurchaseRequestAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
             ->make(true);
     }
 
@@ -1354,7 +1348,7 @@ class PurchaseRequestAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
             ->make(true);
     }
 
@@ -1898,7 +1892,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $x = count($insertedItems);
         if($x == 0){
-            return $this->sendError("No Items were added");
+            return $this->sendError(trans('custom.no_items_were_added'));
         }
         DB::commit();
 
@@ -2750,7 +2744,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = collect($purchaseRequests);
         return \DataTables::collection($purchaseRequests)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
              ->filter(function ($instance) {  
              })
             ->addIndexColumn()
@@ -2891,7 +2885,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -3216,7 +3210,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $sorted_mrDatas =  $mrDatas->sortBy('RequestID');
 
         $filtered = $sorted_mrDatas->filter(function ($value, $key) {
-         return $value->materialIssueStatusValue == "Pending";
+         return $value->materialIssueStatusValue == trans('custom.pending');
         });
 
         $filtered->all();

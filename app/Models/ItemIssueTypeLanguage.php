@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="PoCategoryLanguage",
+ *      schema="ItemIssueTypeLanguage",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,8 +17,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="poCategoryID",
- *          description="poCategoryID",
+ *          property="itemIssueTypeID",
+ *          description="itemIssueTypeID",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -32,8 +32,8 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="description",
- *          description="description",
+ *          property="issueTypeDes",
+ *          description="issueTypeDes",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
@@ -56,18 +56,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class PoCategoryLanguage extends Model
+class ItemIssueTypeLanguage extends Model
 {
 
-    public $table = 'erp_pocategory_languages';
+    public $table = 'erp_itemissuetype_languages';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     public $fillable = [
-        'poCategoryID',
+        'itemIssueTypeID',
         'languageCode',
-        'description'
+        'issueTypeDes'
     ];
 
     /**
@@ -77,9 +77,9 @@ class PoCategoryLanguage extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'poCategoryID' => 'integer',
+        'itemIssueTypeID' => 'integer',
         'languageCode' => 'string',
-        'description' => 'string'
+        'issueTypeDes' => 'string'
     ];
 
     /**
@@ -88,17 +88,13 @@ class PoCategoryLanguage extends Model
      * @var array
      */
     public static $rules = [
-        'poCategoryID' => 'required',
+        'itemIssueTypeID' => 'required',
         'languageCode' => 'required',
-        'description' => 'required'
+        'issueTypeDes' => 'required'
     ];
 
-    public function poCategory()
+    public function itemIssueType()
     {
-        return $this->belongsTo(PoCategory::class, 'poCategoryID', 'id');
+        return $this->belongsTo(ItemIssueType::class, 'itemIssueTypeID', 'itemIssueTypeID');
     }
-
-    
 }
-
-
