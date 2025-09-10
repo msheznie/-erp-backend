@@ -278,6 +278,11 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 $employee = \Helper::getEmployeeInfo();
 
                 if(count($input) == 1){
+                    $newDate = Carbon::parse($input[0]['date']);
+
+                    if ($newDate->isBefore(Carbon::today())) {
+                        return $this->sendError("past_dates_not_allow");
+                    }
                     if($input[0]['id'] == 0){
                         $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
                             ->where('rrvGeneratedYN',0)->where('stopYN',0)->get();
@@ -315,6 +320,11 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 }
                 else{
                     foreach ($input as $schedule){
+                        $newDate = Carbon::parse($schedule['date']);
+
+                        if ($newDate->isBefore(Carbon::today())) {
+                            return $this->sendError("past_dates_not_allow");
+                        }
                         $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
                             ->where('rrvSetupScheduleAutoID',$schedule['id'])->first();
 
