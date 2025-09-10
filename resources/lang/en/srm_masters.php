@@ -63,4 +63,13 @@ return [
     'score_configuration_deleted_successfully' => 'Score configuration deleted successfully',
     'score_configuration_not_found' => 'Score configuration not found',
     'evaluation_criteria_score_not_found' => 'Evaluation criteria score not found',
+    'employee_saved_successfully' => 'Employee saved successfully',
+    'employee_not_selected' => 'Employee not selected',
+    'data_deleted_successfully' => 'Data deleted successfully',
+    'data_updated_successfully' => 'Data updated successfully',
+    'department_not_found' => 'Department not found',
+    'department_updated_successfully' => 'Department updated successfully',
+    'department_description_already_exists' => 'Department Description \':code\' already exists.',
+    'department_saved_successfully' => 'Department saved successfully',
+    'department_is_already_pulled_to_tender_or_rfx' => 'Department is already pulled to Tender/RFX',
 ];
