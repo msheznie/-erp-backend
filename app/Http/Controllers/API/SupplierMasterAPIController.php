@@ -2247,7 +2247,7 @@ class SupplierMasterAPIController extends AppBaseController
         $companyId = $request->input('company_id');
         if (!empty($isExist)) {
             if($isExist['STATUS'] === 1){
-                return $this->sendError('Supplier Registration Details Already Exist',402);
+                return $this->sendError(trans('srm_supplier_master.supplier_registration_details_already_exist'),402);
             } else if ($isExist['STATUS'] === 0){
                 $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                 $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
@@ -2266,9 +2266,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                    return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+                    return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
                 } else{
-                    return $this->sendError('Supplier Registration Link Generation Failed',500);
+                    return $this->sendError(trans('srm_supplier_master.supplier_registration_link_generation_failed'),500);
                 }
             }
         } else {
@@ -2287,9 +2287,9 @@ class SupplierMasterAPIController extends AppBaseController
                 $dataEmail['emailAlertMessage'] = $body;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+                return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
             } else {
-                return $this->sendError('Supplier Registration Link Generation Failed',500);
+                return $this->sendError(trans('srm_supplier_master.supplier_registration_link_generation_failed'),500);
             }
         }
     }
@@ -2331,9 +2331,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
-                    return $this->sendResponse($loginUrl, 'Supplier Registration Link re-sent successfully');
+                    return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_resent_successfully'));
                 } else{
-                    return $this->sendError(' Failed to re-send Supplier Registration Link',500);
+                    return $this->sendError(trans('srm_supplier_master.failed_to_resent_supplier_registration_link'),500);
                 }
             }
         }
@@ -2652,14 +2652,14 @@ class SupplierMasterAPIController extends AppBaseController
         $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
 
         if (in_array($email, $emails)) {
-            return ['status' => false, 'message' => 'Email already exists'];
+            return ['status' => false, 'message' => trans('srm_supplier_master.email_already_exists')];
         }
 
         if (in_array($regNo, $registrationNumbers)) {
-            return ['status' => false, 'message' => 'Registration number already exists'];
+            return ['status' => false, 'message' => trans('srm_supplier_master.registration_number_already_exists')];
         }
 
-        return ['status' => true, 'message' => 'Success'];
+        return ['status' => true, 'message' => trans('srm_supplier_master.success')];
     }
 
 
