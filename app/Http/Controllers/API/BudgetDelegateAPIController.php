@@ -105,7 +105,7 @@ class BudgetDelegateAPIController extends AppBaseController
 
                 // validate submission time is not graeter than budget planning detail submission time
                 if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate)) {
-                    throw new Exception('Submission time cannot be greater than budget planning submission time');
+                    $this->sendError('Submission date must be less than the current submission date and greater than current date');
                 }
 
                 // Check if this is segment-based or GL-based
