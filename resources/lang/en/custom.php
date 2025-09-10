@@ -6327,4 +6327,9 @@ return [
     'cancelled_by' => 'Cancelled By',
     'cancelled_at' => 'Cancelled At',
     'receipt_amount' => 'Receipt Amount',
+
+    // AR customer invoice
+    'ar_goods' => 'Goods',
+    'ar_service' => 'Service',
+    'ar_subscription' => 'Subscription',
 ];

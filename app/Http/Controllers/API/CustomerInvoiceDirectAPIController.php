@@ -1673,7 +1673,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
+        $output['invoiceType'] = array(array('value' => 1, 'label' => trans('custom.proforma_invoice')), array('value' => 0, 'label' => trans('custom.direct_invoice')));
         $output['companyFinanceYear'] = Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')
@@ -1748,7 +1748,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (isset($AICINV->isYesNO) && $AICINV->isYesNO == 1) {
             $output['isPolicyOn'] = 1;
-            $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
+            $output['invoiceType'][] = array('value' => 2, 'label' => trans('custom.item_sales_invoice'));
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->approved()->withAssigned($companyId)->get();
         }
@@ -1760,7 +1760,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($EDOINV) {
             $output['isEDOINVPolicyOn'] = 1;
-            $output['invoiceType'][] = array('value' => 3, 'label' => 'From Delivery Note');
+            $output['invoiceType'][] = array('value' => 3, 'label' => trans('custom.from_delivery_note'));
         }
 
         $ESOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
@@ -1770,7 +1770,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($ESOINV) {
             $output['isESOINVPolicyOn'] = 1;
-            $output['invoiceType'][] = array('value' => 4, 'label' => 'From Sales Order');
+            $output['invoiceType'][] = array('value' => 4, 'label' => trans('custom.from_sales_order'));
         }
 
         $EQOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
@@ -1780,7 +1780,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($EQOINV) {
             $output['isEQOINVPolicyOn'] = 1;
-            $output['invoiceType'][] = array('value' => 5, 'label' => 'From Quotation');
+            $output['invoiceType'][] = array('value' => 5, 'label' => trans('custom.from_quotation'));
         }
 
         if($EDOINV || $ESOINV || $EQOINV) {
@@ -1813,9 +1813,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $output['salesTypes'] = [
-            ['value' => 1, 'label' => 'Goods'],
-            ['value' => 2, 'label' => 'Service'],
-            ['value' => 3, 'label' => 'Subscription'],
+            ['value' => 1, 'label' => __('custom.ar_goods')],
+            ['value' => 2, 'label' => __('custom.ar_service')],
+            ['value' => 3, 'label' => __('custom.ar_subscription')],
         ];
 
         $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);

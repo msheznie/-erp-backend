@@ -6344,4 +6344,9 @@ return [
     'cancelled_by' => 'تم إلغاؤه بواسطة',
     'cancelled_at' => 'تم إلغاؤه في',
     'receipt_amount' => 'مبلغ الإيصال',
+
+    // AR customer invoice
+    'ar_goods' => 'البضائع',
+    'ar_service' => 'الخدمات',
+    'ar_subscription' => 'الاشتراك',
 ];
