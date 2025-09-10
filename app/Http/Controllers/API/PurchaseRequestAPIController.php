@@ -2817,45 +2817,45 @@ class PurchaseRequestAPIController extends AppBaseController
             if($input['reportType'] == 1)
             {
                 $data[] = array(
-                    'PR Number' => $val->purchaseRequestCode,
-                    'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
-                    'Department' => $serviceLineDes,
-                    'Narration' => $val->comments,
-                    'Location' => $location,
-                    'Priority' => $priority,
-                    'Created By' => $createdBy,
-                    'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
-                    'Approved Date' => \Helper::dateFormat($val->approvedDate),
+                    trans('custom.pr_number') => $val->purchaseRequestCode,
+                    trans('custom.pr_requested_date') => \Helper::dateFormat($val->createdDateTime),
+                    trans('custom.department') => $serviceLineDes,
+                    trans('custom.narration') => $val->comments,
+                    trans('custom.location') => $location,
+                    trans('custom.priority') => $priority,
+                    trans('custom.created_by') => $createdBy,
+                    trans('custom.confirmed_date') => \Helper::dateFormat($val->PRConfirmedDate),
+                    trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
                 );
             }
             else
             {
             $data[] = array(
-                'PR Number' => $val->purchaseRequestCode,
-                'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
-                'Department' => $serviceLineDes,
+                trans('custom.pr_number') => $val->purchaseRequestCode,
+                trans('custom.pr_requested_date') => \Helper::dateFormat($val->createdDateTime),
+                trans('custom.department') => $serviceLineDes,
 
-                'Item Code' => '',
-                'Part No' => '',
-                'Item Description' => '',
-                'Req Qty' => '',
+                trans('custom.item_code') => '',
+                trans('custom.part_no') => '',
+                trans('custom.item_description') => '',
+                trans('custom.req_qty') => '',
 
 
-                'Narration' => $val->comments,
-                'Location' => $location,
-                'Priority' => $priority,
-                'Created By' => $createdBy,
-                'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
-                'Approved Date' => \Helper::dateFormat($val->approvedDate),
+                trans('custom.narration') => $val->comments,
+                trans('custom.location') => $location,
+                trans('custom.priority') => $priority,
+                trans('custom.created_by') => $createdBy,
+                trans('custom.confirmed_date') => \Helper::dateFormat($val->PRConfirmedDate),
+                trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
             );
 
             if (!empty($val->details)) {
                 foreach ($val->details as $detail) {
                     $data[count($data)-1]['details'][] = [
-                        'Item Code' => $detail['itemPrimaryCode'],
-                        'Part No / Ref.Number' => $detail['partNumber'],
-                        'Item Description' => $detail['itemDescription'],
-                        'Req Qty' => $detail['quantityRequested']
+                        trans('custom.item_code') => $detail['itemPrimaryCode'],
+                        trans('custom.part_no_ref_number') => $detail['partNumber'],
+                        trans('custom.item_description') => $detail['itemDescription'],
+                        trans('custom.req_qty') => $detail['quantityRequested']
                     ];
                 }
             }
