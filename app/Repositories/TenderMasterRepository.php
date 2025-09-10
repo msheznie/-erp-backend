@@ -2174,7 +2174,13 @@ class TenderMasterRepository extends BaseRepository
 
                 if (($input['min_approval_bid_opening'] != 0)) {
                     if (count($tenderBidEmployee) < $input['min_approval_bid_opening']) {
-                        return ['status' => false, 'message' => "Atleast " . $input['min_approval_bid_opening'] . " employee should selected"];
+                        return [
+                            'status' => false,
+                            trans(
+                                'srm_tender_rfx.at_least_min_employee_should_be_selected',
+                                ['count' => $input['min_approval_bid_opening']]
+                            )
+                        ];
                     }
                 }
 
@@ -2207,10 +2213,10 @@ class TenderMasterRepository extends BaseRepository
                         }
                     }
                 }
-                return ['success' => true, 'message' => 'Updated successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.updated_successfully')];
             });
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => $ex->getMessage()];
         }
     }
     public function saveSupplierAssigned($input){

@@ -2202,16 +2202,16 @@ class TenderMasterAPIController extends AppBaseController
             $total = ((int)$commercialWeightage + (int)$technicalWeightage);
             $employee = \Helper::getEmployeeInfo();
             if ($total != 100) {
-                return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
+                return ['status' => false, 'message' => trans('srm_tender_rfx.the_total_evaluation_criteria_weightage_cannot_be_less_than_hundred')];
             }
 
             if (!isset($input['rfx'])) {
                 if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
-                    return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.commercial_passing_weightage_is_required_dot')];
                 }
 
                 if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
-                    return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.technical_passing_weightage_is_required_dot')];
                 }
             }
 
@@ -2225,12 +2225,12 @@ class TenderMasterAPIController extends AppBaseController
     public function validateTenderStrategy($input)
     {
         $messages = [
-            'tender_type_id.required' => 'Type is required.',
-            'evaluation_type_id.required' => 'Evaluation Type is required.',
-            'stage.required' => 'Stage is required.',
-            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.'
+            'tender_type_id.required' => trans('srm_tender_rfx.type_is_required_dot'),
+            'evaluation_type_id.required' => trans('srm_tender_rfx.evaluation_type_is_required_dot'),
+            'stage.required' => trans('srm_tender_rfx.stage_is_required_dot'),
+            'no_of_alternative_solutions.required' => trans('srm_tender_rfx.number_of_alternative_solutions_is_required_dot'),
+            'commercial_weightage.required' => trans('srm_tender_rfx.commercial_criteria_weightage_is_required_dot'),
+            'technical_weightage.required' => trans('srm_tender_rfx.technical_criteria_weightage_is_required_dot')
         ];
 
         $validator = \Validator::make($input, [
@@ -2244,9 +2244,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!isset($input['rfx'])) {
             $messages = [
-                'envelop_type_id.required' => 'Envelop Type is required.',
-                'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
-                'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+                'envelop_type_id.required' => trans('srm_tender_rfx.envelop_type_is_required_dot'),
+                'commercial_passing_weightage.required' => trans('srm_tender_rfx.commercial_passing_weightage_is_required_dot'),
+                'technical_passing_weightage.required' =>  trans('srm_tender_rfx.technical_passing_weightage_is_required_dot')
             ];
 
             $validator = \Validator::make($input, [
@@ -2260,10 +2260,10 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if ($input['evaluation_type_id'] == 0) {
-            return ['status' => false, 'message' => 'Evaluation Type is required.'];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.evaluation_type_is_required_dot')];
         }
 
-        return ['status' => true, 'message' => "success"];
+        return ['status' => true, 'message' => trans('srm_tender_rfx.success')];
     }
 
     public function removeCalenderDate(Request $request)
