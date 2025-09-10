@@ -867,12 +867,12 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $assetDisposal->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetDisposal->disposalDocumentCode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetDisposal->disposalDocumentCode;
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetDisposal->disposalDocumentCode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetDisposal->disposalDocumentCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $assetDisposal->companySystemID)
                 ->where('documentSystemCode', $assetDisposal->assetdisposalMasterAutoID)
@@ -1182,8 +1182,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             }
         }
 
-        $emailBody = '<p>' . $masterData->disposalDocumentCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->disposalDocumentCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->disposalDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->disposalDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -1394,6 +1394,6 @@ class AssetDisposalMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse(null, 'Asset Disposal Can Review');
+        return $this->sendResponse(null, trans('custom.asset_disposal_can_review'));
     }
 }

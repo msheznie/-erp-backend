@@ -738,12 +738,12 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetDep->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetDep->depCode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetDep->depCode;
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $fixedAssetDep->depCode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $fixedAssetDep->depCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetDep->companySystemID)
                 ->where('documentSystemCode', $fixedAssetDep->depMasterAutoID)
@@ -1088,8 +1088,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         }
 
-        $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->faCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

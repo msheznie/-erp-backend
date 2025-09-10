@@ -145,7 +145,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $departmentBudgetPlanningDetail->delete();
 
-        return $this->sendSuccess('Department Budget Planning Detail deleted successfully');
+        return $this->sendSuccess(trans('custom.department_budget_planning_detail_deleted_successfully'));
     }
 
     /**

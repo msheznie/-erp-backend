@@ -796,12 +796,12 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $jvMasterData->bookingInvCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $jvMasterData->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $jvMasterData->companySystemID)
             ->where('documentSystemCode', $jvMasterData->consoleJvMasterAutoId)

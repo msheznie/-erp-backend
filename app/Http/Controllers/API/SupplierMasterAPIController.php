@@ -1848,7 +1848,7 @@ class SupplierMasterAPIController extends AppBaseController
                         'companySystemID' => $checkHash->companySystemID,
                         'alertMessage' => "Supplier Registartion",
                         'empEmail' => $input['supEmail'],
-                        'emailAlertMessage' => 'Thank you for registering with '.$companMaster->CompanyName.'. Your registration will be reviewed and notified'
+                        'emailAlertMessage' => trans('email.supplier_registration_thank_you', ['companyName' => $companMaster->CompanyName])
                       ];
 
             $sendEmail = \Email::sendEmailErp($emails);

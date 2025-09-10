@@ -526,7 +526,7 @@ class BankReconciliationAPIController extends AppBaseController
         if (empty($bankStatementMaster)) {
             $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
             if(!$validateAdditionalEntryApproved->isEmpty()) {
-                return $this->sendError('There are some pending additional entries to approve', 500);
+                return $this->sendError(trans('custom.there_are_some_pending_additional_entries_to_approve'), 500);
             }
         }
        
@@ -1230,12 +1230,12 @@ class BankReconciliationAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bankReconciliation->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankReconciliation->bankRecPrimaryCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bankReconciliation->bankRecPrimaryCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('documentSystemCode', $bankReconciliation->bankRecAutoID)
@@ -1387,8 +1387,8 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
 
-        $emailBody = '<p>' . $masterData->bankRecPrimaryCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->bankRecPrimaryCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->bankRecPrimaryCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankRecPrimaryCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

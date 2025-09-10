@@ -9987,7 +9987,7 @@ class Helper
                 'companySystemID' => $companySystemID,
                 'attachmentList' => $attachments,
                 'emailAlertMessage' => $emailMessage,
-                'alertMessage' => $documentName . ' Circular',
+                'alertMessage' => $documentName . ' ' . trans('email.circular'),
             ];
 
             \Email::sendEmailErp($dataEmail);

@@ -626,7 +626,7 @@ class BankAccountAPIController extends AppBaseController
         if(!empty($currency) && isset($currency['bank_currency'])){
             $bank_currency = $currency['bank_currency'];
         }else{
-            return $this->sendError('Please select a Currency', 500);
+            return $this->sendError(trans('custom.please_select_currency'), 500);
         }
         
         $document_currency = $currency['document_currency'];
@@ -861,12 +861,12 @@ class BankAccountAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bankAccount->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankAccount->AccountNo . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankAccount->AccountNo;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bankAccount->AccountNo . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bankAccount->AccountNo;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $bankAccount->companySystemID)
             ->where('documentSystemCode', $bankAccount->bankAccountAutoID)

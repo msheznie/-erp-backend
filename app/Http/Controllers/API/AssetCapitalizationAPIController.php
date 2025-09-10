@@ -303,7 +303,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
-            return $this->sendError(rans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
         }
 
         return $this->sendResponse($assetCapitalization->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization')]));
@@ -730,12 +730,12 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $assetCapitalization->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetCapitalization->BPVcode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetCapitalization->BPVcode;
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetCapitalization->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetCapitalization->BPVcode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $assetCapitalization->companySystemID)
                 ->where('documentSystemCode', $assetCapitalization->PayMasterAutoId)

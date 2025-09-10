@@ -358,13 +358,13 @@ ORDER BY
 
         if ($purchaseOrder->grvRecieved == 1) {
             if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
-                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+                return $this->sendError(trans('custom.please_select_grv_as_there_is_grv_done_for_this_po'));
             }
         }
 
         if ($purchaseOrder->grvRecieved == 2) {
             if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
-                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+                return $this->sendError(trans('custom.please_select_grv_as_there_is_grv_done_for_this_po'));
             } else if (empty($detail)) {
                 return $this->sendError(trans('custom.po_is_fully_received_you_cannot_add_logistic'));
             }

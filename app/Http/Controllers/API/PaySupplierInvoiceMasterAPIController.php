@@ -2863,12 +2863,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $document = DocumentMaster::where('documentSystemID', $payInvoice->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $payInvoice->BPVcode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $payInvoice->BPVcode;
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $payInvoice->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $payInvoice->BPVcode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $payInvoice->companySystemID)
                 ->where('documentSystemCode', $payInvoice->PayMasterAutoId)
@@ -3579,9 +3579,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             }
         }
 
-        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
 
-        $emailSubject = $paymentVoucherData->BPVcode . ' has been return back to amend';
+        $emailSubject = $paymentVoucherData->BPVcode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

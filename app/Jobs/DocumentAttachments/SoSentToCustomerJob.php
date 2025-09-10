@@ -143,7 +143,11 @@ class SoSentToCustomerJob implements ShouldQueue
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = $documentTypeTitle. " " .$quotationCode. " from " . $company->CompanyName;
+                        $dataEmail['alertMessage'] = trans('email.document_from_company', [
+                            'documentType' => $documentTypeTitle,
+                            'documentCode' => $quotationCode,
+                            'companyName' => $company->CompanyName
+                        ]);
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {

@@ -64,7 +64,7 @@ class VatDetailReportService
                 $objVatDetailReport->setVatGlCode($val->accountCode);
                 $objVatDetailReport->setVatGlDescription($val->accountDescription);
                 isset($val->transcurrency->CurrencyCode) ? $objVatDetailReport->setDocumentCurrency($val->transcurrency->CurrencyCode) : "";
-                isset($val->document_master->documentDescription) ? $objVatDetailReport->setDocumentType($val->document_master->documentDescription) : "";
+                isset($val->document_master->document_description_translated) ? $objVatDetailReport->setDocumentType($val->document_master->document_description_translated) : "";
                 $objVatDetailReport->setOriginalDocumentNo($val->originalInvoice);
                 $objVatDetailReport->setOriginalDocumentDate($val->originalInvoiceDate);
                 $objVatDetailReport->setDateOfSupply($val->dateOfSupply);
@@ -125,7 +125,7 @@ class VatDetailReportService
                 $objVatDetailReport->setVatGlCode($val->accountCode);
                 $objVatDetailReport->setVatGlDescription($val->accountDescription);
                 isset($val->transcurrency->CurrencyCode) ? $objVatDetailReport->setDocumentCurrency($val->transcurrency->CurrencyCode) : "";
-                isset($val->document_master->documentDescription) ? $objVatDetailReport->setDocumentType($val->document_master->documentDescription) : "";
+                isset($val->document_master->document_description_translated) ? $objVatDetailReport->setDocumentType($val->document_master->document_description_translated) : "";
                 $objVatDetailReport->setOriginalDocumentNo($val->originalInvoice);
                 $objVatDetailReport->setOriginalDocumentDate($val->originalInvoiceDate);
                 $objVatDetailReport->setPaymentDueDate("");

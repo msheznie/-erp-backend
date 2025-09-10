@@ -1195,8 +1195,8 @@ class StockTransferAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $stockTransfer->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockTransfer->stockTransferCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockTransfer->stockTransferCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $stockTransfer->stockTransferCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $stockTransfer->stockTransferCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

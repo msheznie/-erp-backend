@@ -1899,8 +1899,8 @@ class SalesReturnAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $salesReturn->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $salesReturn->salesReturnCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $salesReturn->salesReturnCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $salesReturn->salesReturnCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $salesReturn->salesReturnCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

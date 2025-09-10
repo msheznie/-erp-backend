@@ -625,8 +625,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $vatReturnFillingMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $vatReturnFillingMaster->returnFillingCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $vatReturnFillingMaster->returnFillingCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $vatReturnFillingMaster->returnFillingCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $vatReturnFillingMaster->returnFillingCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 
@@ -923,8 +923,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_vat_return_fi'));
         }
 
-        $emailBody = '<p>' . $masterData->returnFillingCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->returnFillingCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->returnFillingCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->returnFillingCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

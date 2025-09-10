@@ -868,10 +868,10 @@ class InventoryReclassificationAPIController extends AppBaseController
 
             $employee = \Helper::getEmployeeInfo();
             $document = DocumentMaster::where('documentSystemID', $inventoryReclassification->documentSystemID)->first();
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $inventoryReclassification->documentCode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $inventoryReclassification->documentCode;
-            $subject = $cancelDocNameSubject . ' is reopened';
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $inventoryReclassification->documentCode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $inventoryReclassification->documentCode;
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $inventoryReclassification->companySystemID)
                 ->where('documentSystemCode', $inventoryReclassification->inventoryreclassificationID)

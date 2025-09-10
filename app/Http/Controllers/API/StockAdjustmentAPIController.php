@@ -985,8 +985,8 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $stockAdjustment->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockAdjustment->stockAdjustmentCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockAdjustment->stockAdjustmentCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $stockAdjustment->stockAdjustmentCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $stockAdjustment->stockAdjustmentCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

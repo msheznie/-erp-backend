@@ -524,7 +524,7 @@ class TransactionsExportExcel extends AppBaseController
             $userId = \Helper::getEmployeeSystemID();
             ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode);
 
-            return $this->sendResponse('', 'PR Detailed report Export in progress, you will be notified once ready !!');
+            return $this->sendResponse('', trans('custom.pr_detailed_report_export_in_progress'));
         }
 
         $basePath = CreateExcel::process($data,$type,$input['docName'],$path, $detail_array);

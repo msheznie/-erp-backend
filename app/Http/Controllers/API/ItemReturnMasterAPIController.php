@@ -1021,12 +1021,12 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $itemReturnMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemReturnMaster->itemReturnCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemReturnMaster->itemReturnCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $itemReturnMaster->itemReturnCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $itemReturnMaster->itemReturnCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $itemReturnMaster->companySystemID)
             ->where('documentSystemCode', $itemReturnMaster->itemReturnAutoID)

@@ -847,12 +847,12 @@ class MaterielRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $materielRequest->RequestCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $materielRequest->companySystemID)
             ->where('documentSystemCode', $materielRequest->RequestID)
@@ -1291,11 +1291,11 @@ class MaterielRequestAPIController extends AppBaseController
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $materielRequest->RequestCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is cancelled';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_cancelled_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['cancelledComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_cancelled');
 
         if ($materielRequest->ConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $materielRequest->ConfirmedBySystemID,
@@ -1472,11 +1472,11 @@ class MaterielRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $materialRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materialRequest->RequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $materialRequest->RequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $materialRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $materialRequest->RequestCode;
        
-        $body = '<p>' . $cancelDocNameBody . ' is return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is return back to amend';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['ammendComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.has_been_returned_back_to_amend');
 
 
 

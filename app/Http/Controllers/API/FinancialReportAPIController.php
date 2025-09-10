@@ -5316,7 +5316,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Document Type'] = $val->documentID;
-                            $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
+                            $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->document_description_translated;
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Narration'] = $val->documentNarration;
@@ -5586,7 +5586,7 @@ class FinancialReportAPIController extends AppBaseController
                     $data[$x]['Company ID'] = $val->companyID;
                     $data[$x]['Company Name'] = $val->CompanyName;
                     $data[$x]['Document Type'] = $val->documentID;
-                    $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
+                    $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->document_description_translated;
                     $data[$x]['Document Code'] = $val->documentCode;
                     $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
                     $data[$x]['Document Narration'] = $val->documentNarration;

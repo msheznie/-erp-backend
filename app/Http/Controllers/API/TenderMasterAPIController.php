@@ -383,7 +383,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster->delete();
 
-        return $this->sendSuccess('Tender Master deleted successfully');
+        return $this->sendSuccess(trans('custom.tender_master_deleted_successfully'));
     }
 
     public function getTenderMasterList(Request $request)
@@ -536,9 +536,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($exist)) {
             if (isset($input['rfx']) && $input['rfx']) {
-                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
             }
         }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -592,7 +592,7 @@ class TenderMasterAPIController extends AppBaseController
 
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('custom.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -612,7 +612,7 @@ class TenderMasterAPIController extends AppBaseController
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('custom.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1051,9 +1051,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($existTndr)) {
             if ($rfq) {
-                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
             }
         }
 
@@ -1971,8 +1971,8 @@ class TenderMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $tenderMaster->document_system_id)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $tenderMaster->tender_code . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $tenderMaster->tender_code;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $tenderMaster->tender_code . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $tenderMaster->tender_code;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

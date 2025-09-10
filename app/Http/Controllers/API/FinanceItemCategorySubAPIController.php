@@ -542,7 +542,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
            if(!$include_pl_for_grvn) {
                if(!$balance_sheet_gl_code) {
                    if($consumption_gl_code) {
-                       return $this->sendError("Please check 'Include PL For GRV YN'",500);
+                       return $this->sendError(trans('custom.please_check_include_pl_for_grv_yn'),500);
                    }
                }
            }

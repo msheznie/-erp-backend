@@ -1282,12 +1282,12 @@ class CreditNoteAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $creditnote->documentSystemiD)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $creditnote->creditNoteCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $creditnote->creditNoteCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $creditnote->creditNoteCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $creditnote->creditNoteCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $creditnote->companySystemID)
             ->where('documentSystemCode', $creditnote->custInvoiceDirectAutoID)
@@ -1820,8 +1820,8 @@ WHERE
         }
 
 
-        $emailBody = '<p>' . $masterData->creditNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->creditNoteCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->creditNoteCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->creditNoteCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

@@ -87,17 +87,17 @@ class PurcahseRequestDetail
 
 
         if (empty($purchaseRequest)) {
-            return ['status' => false , 'message' => 'Purchase Request Details not found'];
+            return ['status' => false , 'message' => trans('email.purchase_request_details_not_found')];
             // return $this->sendError('Purchase Request Details not found');
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return ['status' => false , 'message' => 'This Purchase Request already closed. You can not add.'];
+            return ['status' => false , 'message' => trans('email.purchase_request_already_closed')];
             // return $this->sendError('This Purchase Request already closed. You can not add.', 500);
         }
 
         if ($purchaseRequest->approved == 1) {
-            return ['status' => false , 'message' => 'This Purchase Request fully approved. You can not add.'];
+            return ['status' => false , 'message' => trans('email.purchase_request_fully_approved')];
 
             // return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
         }
@@ -510,17 +510,17 @@ class PurcahseRequestDetail
 
 
         if (empty($purchaseRequest)) {
-            return ['status' => false , 'message' => 'Purchase Request Details not found'];
+            return ['status' => false , 'message' => trans('email.purchase_request_details_not_found')];
             // return $this->sendError('Purchase Request Details not found');
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return ['status' => false , 'message' => 'This Purchase Request already closed. You can not add.'];
+            return ['status' => false , 'message' => trans('email.purchase_request_already_closed')];
             // return $this->sendError('This Purchase Request already closed. You can not add.', 500);
         }
 
         if ($purchaseRequest->approved == 1) {
-            return ['status' => false , 'message' => 'This Purchase Request fully approved. You can not add.'];
+            return ['status' => false , 'message' => trans('email.purchase_request_fully_approved')];
 
             // return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
         }
@@ -562,7 +562,7 @@ class PurcahseRequestDetail
                     ->first();
 
                 if($alreadyAdded) {
-                    return ['status' => false , 'message' => 'Item Already Added'];
+                    return ['status' => false , 'message' => trans('email.item_already_added')];
                 }
             }
 
@@ -866,7 +866,7 @@ class PurcahseRequestDetail
         $input['itemCode'] =   $input['itemCodeSystem'];
         $input['itemCategoryID'] = 0;
         
-        return ['status' => true , 'message' => 'Validation Success'];
+        return ['status' => true , 'message' => trans('email.validation_success')];
 
 
     }
@@ -877,19 +877,19 @@ class PurcahseRequestDetail
         $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
         $emails = array();
         if (empty($purchaseRequest)) {
-            return ['status' => false, 'message' => 'Purchase Request not found'];
+            return ['status' => false, 'message' => trans('email.purchase_request_not_found')];
         }
 
         if ($purchaseRequest->RollLevForApp_curr > 1) {
-            return ['status' => false, 'message' => 'You cannot reopen this Request it is already partially approved'];
+            return ['status' => false, 'message' => trans('email.cannot_reopen_partially_approved')];
         }
 
         if ($purchaseRequest->approved == -1) {
-            return ['status' => false, 'message' => 'You cannot reopen this Request it is already fully approved'];
+            return ['status' => false, 'message' => trans('email.cannot_reopen_fully_approved')];
         }
 
         if ($purchaseRequest->PRConfirmedYN == 0) {
-            return ['status' => false, 'message' => 'You cannot reopen this Request, it is not confirmed'];
+            return ['status' => false, 'message' => trans('email.cannot_reopen_not_confirmed')];
         }
 
         // updating fields
@@ -905,12 +905,12 @@ class PurcahseRequestDetail
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)

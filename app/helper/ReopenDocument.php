@@ -18,7 +18,7 @@ class ReopenDocument
     {
     	$docInforArr = self::setDocumentArray($input);
         if (empty($docInforArr)) {
-            return ['success' => false, 'message' => 'Document ID not found'];
+            return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
 
 
@@ -37,19 +37,19 @@ class ReopenDocument
 
             $emails = array();
             if (empty($sourceModel)) {
-                return ['success' => false, 'message' => "Document not found"];
+                return ['success' => false, 'message' => trans('custom.document_not_found')];
             }
 
             if ($sourceModel['RollLevForApp_curr'] > 1) {
-                return ['success' => false, 'message' => "You cannot reopen this document, it is already partially approved"];
+                return ['success' => false, 'message' => trans('email.cannot_reopen_partially_approved_document')];
             }
 
             if ($sourceModel[$docInforArr['approvedColumnName']] == -1) {
-                return ['success' => false, 'message' => "You cannot reopen this document it is already fully approved"];
+                return ['success' => false, 'message' => trans('email.cannot_reopen_fully_approved_document')];
             }
 
             if ($sourceModel[$docInforArr['confirmColumnName']] == 0) {
-                return ['success' => false, 'message' => "You cannot reopen this document, it is not confirmed"];
+                return ['success' => false, 'message' => trans('email.cannot_reopen_document_not_confirmed')];
             }
 
             // updating fields
@@ -65,27 +65,27 @@ class ReopenDocument
 
             if($input["documentSystemID"] == 56 )
             {
-                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel->supplierName . '</b>';
-                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel->supplierName;
+                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel->supplierName . '</b>';
+                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel->supplierName;
             }
             else if($input["documentSystemID"] == 58 )
             {
-                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel->CustomerName . '</b>';
-                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel->CustomerName;
+                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel->CustomerName . '</b>';
+                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel->CustomerName;
             }
             else
             {
-                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
-                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
+                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
+                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
             }
 
 
 
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
            
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . Helper::getEmployeeCode($employeeSystemID) . ' - ' . Helper::getEmployeeName() . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => Helper::getEmployeeCode($employeeSystemID), 'empName' => Helper::getEmployeeName()]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
 
             $documentApproval = DocumentApproved::levelWiseDocumentApprover($input['documentSystemID'], $sourceModel[$docInforArr['primarykey']], 1, $sourceModel[$docInforArr['companyColumnName']]);
@@ -129,7 +129,7 @@ class ReopenDocument
             return ['success' => true, 'message' => 'Document reopened successfully'];
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => 'Error Occurred'];
+            return ['success' => false, 'message' => trans('custom.error_occurred')];
             // return ['success' => false, 'message' => $e->getMessage()];
         }
     }

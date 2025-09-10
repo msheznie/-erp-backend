@@ -486,7 +486,7 @@ class PurchaseRequestAPIController extends AppBaseController
             else
             {
                 DB::rollBack();
-                return $this->sendError('Unable to create material items', 422);
+                return $this->sendError(trans('custom.unable_to_create_material_items'), 422);
             }
             
             
@@ -2335,8 +2335,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
@@ -2441,8 +2441,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
@@ -2569,8 +2569,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is closed';

@@ -1154,7 +1154,7 @@ class GRVMasterAPIController extends AppBaseController
             if(isset($supplier) && !empty($supplier)){ 
                 $dataEmail['empEmail'] = $supplier->supEmail;
                 $dataEmail['companySystemID'] = $input['companySystemID'];
-                $dataEmail['alertMessage'] = "GRV  Confirmed";
+                $dataEmail['alertMessage'] = trans('email.grv_confirmed');
                 $dataEmail['emailAlertMessage'] = $body;
                 $sendEmail = \Email::sendEmailErp($dataEmail); 
             } 
@@ -1802,12 +1802,12 @@ class GRVMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->documentDescription . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
-            $cancelDocNameSubject = $document->documentDescription . ' ' . $grvMasterData->grvPrimaryCode;
+            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
+            $cancelDocNameSubject = $document->document_description_translated . ' ' . $grvMasterData->grvPrimaryCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $grvMasterData->companySystemID)
                 ->where('documentSystemCode', $grvMasterData->grvAutoID)
@@ -2357,11 +2357,11 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $grvCancelledComment . '</p>';
-        $subject = $cancelDocNameSubject . ' is cancelled';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_cancelled_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $grvCancelledComment . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_cancelled');
 
         if ($purchaseOrder->poConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,

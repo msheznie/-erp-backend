@@ -3413,12 +3413,12 @@ GROUP BY
 
         $document = DocumentMaster::where('documentSystemID', $invoice->documentSystemiD)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $invoice->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $invoice->bookingInvCode;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $invoice->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $invoice->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $invoice->companySystemID)
             ->where('documentSystemCode', $invoice->custInvoiceDirectAutoID)
@@ -4149,8 +4149,8 @@ WHERE
              if(isset($amendCI['status']) && $amendCI['status'] == false){
                 return $this->sendError($amendCI['message']);
             }
-             $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-             $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';
+             $emailBody = '<p>' . $masterData->bookingInvCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+             $emailSubject = $masterData->bookingInvCode . ' ' . trans('email.has_been_returned_back_to_amend');
              
             //sending email to relevant party
             if ($masterData->confirmedYN == 1) {

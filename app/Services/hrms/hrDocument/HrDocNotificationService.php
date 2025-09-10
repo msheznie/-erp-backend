@@ -64,7 +64,7 @@ class HrDocNotificationService
                $temp .= '<br><a href="'.$this->portalUrl.'"> Click here to view. </a> ';
             }
             $dataEmail['emailAlertMessage'] = $temp;
-            $dataEmail['alertMessage'] = 'New HR Document';
+            $dataEmail['alertMessage'] = trans('email.new_hr_document');
             $sendEmail = \Email::sendEmailErp($dataEmail);
             if (!$sendEmail["success"]) {
                 $msg = "HR Document notification not sent for {$val['EIdNo']} | {$val['Ename2']} "; 

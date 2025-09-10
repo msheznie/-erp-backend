@@ -135,7 +135,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'disposal_asset_already_exist', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("Error", 500, $confirm_error);
+                return $this->sendError(trans('custom.error'), 500, $confirm_error);
             }
 
             foreach ($input['detailTable'] as $new) {

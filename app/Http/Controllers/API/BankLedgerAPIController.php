@@ -294,7 +294,7 @@ class BankLedgerAPIController extends AppBaseController
                                     })
                                     ->first();
         if ($ExsistsInMatching) {
-            return $this->sendError('Selected document in matching process', 500);
+            return $this->sendError(trans('custom.selected_document_in_matching_process'), 500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -346,7 +346,7 @@ class BankLedgerAPIController extends AppBaseController
                     : 0;
 
                 if(!$bankLedger->trsClearedYN) {
-                    return $this->sendError('Treasury not cleared for this document '.$bankLedger->documentCode, 500);
+                    return $this->sendError(trans('custom.treasury_not_cleared_for_this_document', ['documentCode' => $bankLedger->documentCode]), 500);
                 }
 
                 if ($updateArray['bankClearedYN']) {
@@ -2418,8 +2418,8 @@ class BankLedgerAPIController extends AppBaseController
         }
 
 
-        $emailBody = '<p>' . $masterData->bankTransferDocumentCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->bankTransferDocumentCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->bankTransferDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankTransferDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

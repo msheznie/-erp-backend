@@ -782,12 +782,12 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', 103)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetTransfer->document_code . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $assetTransfer->document_code;
+        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetTransfer->document_code . '</b>';
+        $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetTransfer->document_code;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $document->companySystemID)
             ->where('documentSystemCode', $assetTransfer->id)
