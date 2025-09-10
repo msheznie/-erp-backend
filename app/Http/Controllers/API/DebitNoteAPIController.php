@@ -1961,8 +1961,8 @@ class DebitNoteAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $debitNote->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $debitNote->debitNoteCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $debitNote->debitNoteCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $debitNote->debitNoteCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $debitNote->debitNoteCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

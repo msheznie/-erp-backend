@@ -209,12 +209,12 @@ class AfterDocumentCreated
                     $dataEmail['docCode'] = null;
                     $dataEmail['ccEmailID'] = $email_id;
 
-                    $temp = "Following document is jumped/duplicated for " . $systemDocument->document_description_translated . " - " . $document['companyID'] . "<p>" . $range . "<p>" . $footer;
+                    $temp = "Following document is jumped/duplicated for " . $systemDocument->documentDescription . " - " . $document['companyID'] . "<p>" . $range . "<p>" . $footer;
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = null;
                     $dataEmail['alertMessage'] = trans('email.document_code_jumped_duplicated', [
-                        'documentDescription' => $systemDocument->document_description_translated,
+                        'documentDescription' => $systemDocument->documentDescription,
                         'companyID' => $document['companyID']
                     ]);
                     $dataEmail['emailAlertMessage'] = $temp;

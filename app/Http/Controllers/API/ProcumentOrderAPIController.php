@@ -1314,8 +1314,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
                 $document = DocumentMaster::where('documentSystemID', $procumentOrder->documentSystemID)->first();
 
-                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
-                $cancelDocNameSubject = $document->document_description_translated . ' ' . $procumentOrder->purchaseOrderCode;
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
 
                 $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.has_been_changed_by', ['empName' => $employee->empName]) . '. ' . trans('email.current_total_amount') . ' ' . $procumentOrderUpdate->poTotalSupplierTransactionCurrency . '. ' . trans('email.previous_total_amount') . ' ' . $oldPoTotalSupplierTransactionCurrency . '.</p>';
                 $subject = $cancelDocNameSubject . ' ' . trans('email.has_been_changed');
@@ -2537,8 +2537,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_cancelled_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['cancelComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_cancelled');
@@ -2601,8 +2601,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.has_been_returned_back_to_amend') . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' ' . trans('email.has_been_returned_back_to_amend');
@@ -3271,8 +3271,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $document = DocumentMaster::where('documentSystemID', $procumentOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $procumentOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_manually_closed_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['manuallyClosedComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_closed');
@@ -4934,8 +4934,8 @@ ORDER BY
 
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

@@ -1427,8 +1427,8 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $itemIssueMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $itemIssueMaster->itemIssueCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $itemIssueMaster->itemIssueCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemIssueMaster->itemIssueCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemIssueMaster->itemIssueCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

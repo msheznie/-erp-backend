@@ -1802,8 +1802,8 @@ class GRVMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $grvMasterData->grvPrimaryCode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $grvMasterData->grvPrimaryCode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
@@ -2357,8 +2357,8 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_cancelled_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $grvCancelledComment . '</p>';
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_cancelled');

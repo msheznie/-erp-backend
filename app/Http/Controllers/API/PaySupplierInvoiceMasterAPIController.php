@@ -2863,8 +2863,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $document = DocumentMaster::where('documentSystemID', $payInvoice->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $payInvoice->BPVcode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $payInvoice->BPVcode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $payInvoice->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $payInvoice->BPVcode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

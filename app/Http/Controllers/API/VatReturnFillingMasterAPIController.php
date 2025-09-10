@@ -625,8 +625,8 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $vatReturnFillingMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $vatReturnFillingMaster->returnFillingCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $vatReturnFillingMaster->returnFillingCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $vatReturnFillingMaster->returnFillingCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $vatReturnFillingMaster->returnFillingCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

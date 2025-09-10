@@ -1233,8 +1233,8 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $purchaseReturnMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseReturnMaster->itemReturnCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseReturnMaster->itemReturnCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseReturnMaster->itemReturnCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseReturnMaster->itemReturnCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

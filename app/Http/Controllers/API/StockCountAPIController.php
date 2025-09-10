@@ -721,8 +721,8 @@ class StockCountAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $stockCount->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $stockCount->stockCountCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $stockCount->stockCountCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockCount->stockCountCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockCount->stockCountCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

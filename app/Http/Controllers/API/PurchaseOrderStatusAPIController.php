@@ -436,8 +436,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $emailBody = $document->document_description_translated . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
-        $emailSubject = $document->document_description_translated . ' ' . $purchaseOrder->purchaseOrderCode;
+        $emailBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $emailSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $emailBody . '  is updated with a new status by ' . $purchaseOrderStatus->updatedByEmpName . '.</p><p>Status : ' . $statusCategory->description . '</p><p>Comment : ' . $purchaseOrderStatus->comments . '</p>';
         $subject = $emailSubject . ' is updated with a new status';

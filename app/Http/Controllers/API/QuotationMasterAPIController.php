@@ -1228,8 +1228,8 @@ class QuotationMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $quotationMasterData->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $quotationMasterData->quotationCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $quotationMasterData->quotationCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $quotationMasterData->quotationCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $quotationMasterData->quotationCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

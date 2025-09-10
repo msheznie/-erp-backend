@@ -782,8 +782,8 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', 103)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetTransfer->document_code . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetTransfer->document_code;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetTransfer->document_code . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $assetTransfer->document_code;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

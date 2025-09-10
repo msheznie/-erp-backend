@@ -861,8 +861,8 @@ class BankAccountAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bankAccount->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bankAccount->AccountNo . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bankAccount->AccountNo;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankAccount->AccountNo . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankAccount->AccountNo;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

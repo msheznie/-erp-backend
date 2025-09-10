@@ -1111,7 +1111,7 @@ class Helper
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
-                                        $approvedDocNameBody = $document->document_description_translated . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
                                         //     if (in_array($params["document"], [1, 50, 51])) {
@@ -1129,7 +1129,7 @@ class Helper
 
 
 
-                                        $pushNotificationMessage = trans('email.is_pending_approval', ['attribute' => $document->document_description_translated . " " . $documentApproved->documentCode]);
+                                        $pushNotificationMessage = trans('email.is_pending_approval', ['attribute' => $document->documentDescription . " " . $documentApproved->documentCode]);
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
 
@@ -2410,8 +2410,8 @@ class Helper
                         $pushNotificationArray = [];
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
-                            $subjectName = $document->document_description_translated . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->document_description_translated . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
@@ -3503,12 +3503,12 @@ class Helper
 
                                             if($params["document"] == 117 )
                                             {
-                                                $document->document_description_translated = $sorceDocument->type == 1?'Edit request':'Amend request';
+                                                $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
                                             }
 
                                             if($params["document"] == 118 )
                                             {
-                                                $document->document_description_translated = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
+                                                $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
                                                 $companySystemId = $documentApproved->companySystemID;
 
                                                 $amendmentsList = DocumentModifyRequest::select('id','documentSystemCode','document_master_id')
@@ -3535,28 +3535,28 @@ class Helper
                                                 }
                                             }
 
-                                            $subject = trans('email.pending_approval', ['documentDescription' => $document->document_description_translated, 'documentCode' => $documentApproved->documentCode]);
+                                            $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $documentApproved->documentCode]);
 
                                             if($params["document"] == 56 )
                                             {
-                                                $approvedDocNameBody = $document->document_description_translated . ' <b>' . $masterRec->supplierName . '</b>';
-                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->document_description_translated, 'documentCode' => $masterRec->supplierName]);
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $masterRec->supplierName]);
                                             }
                                             else if($params["document"] == 58 )
                                             {
-                                                $approvedDocNameBody = $document->document_description_translated . ' <b>' . $masterRec->CustomerName . '</b>';
-                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->document_description_translated, 'documentCode' => $masterRec->CustomerName]);
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->CustomerName . '</b>';
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $masterRec->CustomerName]);
                                             }
                                             else
                                             {
-                                                $approvedDocNameBody = $document->document_description_translated . ' <b>' . $documentApproved->documentCode . '</b>';
-                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->document_description_translated, 'documentCode' => $documentApproved->documentCode]);
+                                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $documentApproved->documentCode]);
                                             }
 
 
 
                                             if($document->documentSystemID == 107){
-                                                $approvedDocNameBody = $document->document_description_translated . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
+                                                $approvedDocNameBody = $document->documentDescription . ', <b> "' . $documentApproved->suppliername->name . '"</b>';
                                             }
 
                                             if($document->documentSystemID == 108 || $document->documentSystemID == 113){
@@ -3596,7 +3596,7 @@ class Helper
                                             $body .= '<a href="' . $redirectUrl . '">' . trans('email.click_here_to_approve') . '</a></p>';
 
                                             if ($document->documentSystemID == 107){
-                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->document_description_translated, 'documentCode' => '"' . $documentApproved->suppliername->name . '"']);
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => '"' . $documentApproved->suppliername->name . '"']);
                                             }
 
                                             if($document->documentSystemID == 108 || $document->documentSystemID == 113){
@@ -3604,7 +3604,7 @@ class Helper
                                                 $subject = trans('email.pending_approval', ['documentDescription' => $type[$params["document_type"]], 'documentCode' => $documentApproved->documentCode]);
                                             }
 
-                                            $pushNotificationMessage = $document->document_description_translated . " " . $documentApproved->documentCode . " is pending for your approval.";
+                                            $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                             foreach ($approvalList as $da) {
                                                 if ($da->employee) {
                                                     $emails[] = array(
@@ -5588,35 +5588,35 @@ class Helper
 
                                 if($input["documentSystemID"] == 117 )
                                 {
-                                    $document->document_description_translated = $sourceModel->type == 1?'Edit Request':'Amend Request';
+                                    $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
                                 }
 
                                 if($input["documentSystemID"] == 118)
                                 {
-                                    $document->document_description_translated = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
+                                    $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                                 }
 
                                 if($input["documentSystemID"] == 56)
                                 {
-                                    $subjectName = $document->document_description_translated . ' ' . $isConfirmed['supplierName'];
-                                    $bodyName = $document->document_description_translated . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
+                                    $subjectName = $document->documentDescription . ' ' . $isConfirmed['supplierName'];
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['supplierName'] . '</b>';
                                 }
                                 else if($input["documentSystemID"] == 58 )
                                 {
-                                    $subjectName = $document->document_description_translated . ' ' . $isConfirmed['CustomerName'];
-                                    $bodyName = $document->document_description_translated . ' ' . '<b>' . $isConfirmed['CustomerName'] . '</b>';
+                                    $subjectName = $document->documentDescription . ' ' . $isConfirmed['CustomerName'];
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $isConfirmed['CustomerName'] . '</b>';
                                 }
                                 else
                                 {
-                                    $subjectName = $document->document_description_translated . ' ' . $currentApproved->documentCode;
-                                    $bodyName = $document->document_description_translated . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                                    $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                    $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
                                 }
 
 
 
                                 if($input["documentSystemID"] == 107){
-                                    $subjectName = $document->document_description_translated . ' ' .'"' . $currentApproved->suppliername->name .'"';
-                                    $bodyName = $document->document_description_translated . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
+                                    $subjectName = $document->documentDescription . ' ' .'"' . $currentApproved->suppliername->name .'"';
+                                    $bodyName = $document->documentDescription . ', ' . '<b>"' . $currentApproved->suppliername->name . '"</b>';
                                 }
 
                                 if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
@@ -6532,25 +6532,25 @@ class Helper
 
                             if($input["documentSystemID"] == 117 )
                             {
-                                $document->document_description_translated = $sourceModel->type == 1?'Edit Request':'Amend Request';
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
                             }
 
                             if($input["documentSystemID"] == 118)
                             {
-                                $document->document_description_translated = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
 
 
                             if($input["documentSystemID"] == 56 )
                             {
-                                $subjectName = $document->document_description_translated . ' ' . $sourceModel->supplierName;
-                                $bodyName = '<p>'.$document->document_description_translated . ' ' . '<b>' . $sourceModel->supplierName . '</b>';
+                                $subjectName = $document->documentDescription . ' ' . $sourceModel->supplierName;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->supplierName . '</b>';
                             }
                             else if($input["documentSystemID"] == 58 )
                             {
-                                $subjectName = $document->document_description_translated . ' ' . $sourceModel->CustomerName;
-                                $bodyName = '<p>'.$document->document_description_translated . ' ' . '<b>' . $sourceModel->CustomerName . '</b>';
+                                $subjectName = $document->documentDescription . ' ' . $sourceModel->CustomerName;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $sourceModel->CustomerName . '</b>';
                             }
                             else if(!empty($input["document_system_id"]) && $input["document_system_id"] == 108)
                             {
@@ -6558,8 +6558,8 @@ class Helper
                             }
                             else
                             {
-                                $subjectName = $document->document_description_translated . ' ' . $currentApproved->documentCode;
-                                $bodyName = '<p>'.$document->document_description_translated . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                                $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                                $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
                             }
 
                             $subject = $subjectName . " is rejected.";

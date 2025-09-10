@@ -3967,8 +3967,8 @@ class BudgetMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $budget->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $budget->budgetmasterID . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $budget->budgetmasterID;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $budget->budgetmasterID . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $budget->budgetmasterID;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

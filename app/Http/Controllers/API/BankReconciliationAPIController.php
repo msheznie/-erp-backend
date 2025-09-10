@@ -1230,8 +1230,8 @@ class BankReconciliationAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bankReconciliation->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bankReconciliation->bankRecPrimaryCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankReconciliation->bankRecPrimaryCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

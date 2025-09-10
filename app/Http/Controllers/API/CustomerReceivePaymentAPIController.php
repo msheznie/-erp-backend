@@ -2664,8 +2664,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $custReceivePaymentMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $custReceivePaymentMaster->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $custReceivePaymentMaster->bookingInvCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $custReceivePaymentMaster->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $custReceivePaymentMaster->bookingInvCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

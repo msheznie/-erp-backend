@@ -1174,8 +1174,8 @@ WHERE
 
         $document = DocumentMaster::where('documentSystemID', $deliveryOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $deliveryOrder->deliveryOrderCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $deliveryOrder->deliveryOrderCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $deliveryOrder->deliveryOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $deliveryOrder->deliveryOrderCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

@@ -3413,8 +3413,8 @@ GROUP BY
 
         $document = DocumentMaster::where('documentSystemID', $invoice->documentSystemiD)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $invoice->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $invoice->bookingInvCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $invoice->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $invoice->bookingInvCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

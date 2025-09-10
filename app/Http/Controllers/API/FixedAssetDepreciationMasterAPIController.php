@@ -738,8 +738,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetDep->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $fixedAssetDep->depCode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $fixedAssetDep->depCode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetDep->depCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetDep->depCode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

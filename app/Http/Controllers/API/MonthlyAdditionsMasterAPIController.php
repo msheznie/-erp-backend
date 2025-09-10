@@ -575,8 +575,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $monthlyAddition->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $monthlyAddition->monthlyAdditionsCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $monthlyAddition->monthlyAdditionsCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $monthlyAddition->monthlyAdditionsCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $monthlyAddition->monthlyAdditionsCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

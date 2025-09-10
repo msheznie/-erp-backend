@@ -867,8 +867,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $assetDisposal->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetDisposal->disposalDocumentCode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetDisposal->disposalDocumentCode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetDisposal->disposalDocumentCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetDisposal->disposalDocumentCode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

@@ -1514,8 +1514,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetMaster->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $fixedAssetMaster->faCode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $fixedAssetMaster->faCode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetMaster->faCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetMaster->faCode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

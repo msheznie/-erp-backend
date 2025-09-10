@@ -928,8 +928,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $budgetAddition->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $budgetAddition->additionVoucherNo . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $budgetAddition->additionVoucherNo;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetAddition->additionVoucherNo . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetAddition->additionVoucherNo;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

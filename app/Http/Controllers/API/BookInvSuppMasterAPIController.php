@@ -2492,8 +2492,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bookInvSuppMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bookInvSuppMaster->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bookInvSuppMaster->bookingInvCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bookInvSuppMaster->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bookInvSuppMaster->bookingInvCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

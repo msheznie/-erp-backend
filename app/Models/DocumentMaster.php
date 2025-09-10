@@ -25,7 +25,7 @@ class DocumentMaster extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'documentSystemID';
 
-    protected $appends = ['document_description_translated'];
+    protected $appends = ['documentDescription'];
 
     protected $dates = ['deleted_at'];
 

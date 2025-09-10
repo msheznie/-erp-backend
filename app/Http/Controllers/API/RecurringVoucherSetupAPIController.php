@@ -1039,8 +1039,8 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $rrvMasterData->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $rrvMasterData->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $rrvMasterData->bookingInvCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $rrvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $rrvMasterData->bookingInvCode;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

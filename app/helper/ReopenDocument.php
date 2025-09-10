@@ -65,18 +65,18 @@ class ReopenDocument
 
             if($input["documentSystemID"] == 56 )
             {
-                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel->supplierName . '</b>';
-                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel->supplierName;
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel->supplierName . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel->supplierName;
             }
             else if($input["documentSystemID"] == 58 )
             {
-                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel->CustomerName . '</b>';
-                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel->CustomerName;
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel->CustomerName . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel->CustomerName;
             }
             else
             {
-                $cancelDocNameBody = $document->document_description_translated . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
-                $cancelDocNameSubject = $document->document_description_translated . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $sourceModel[$docInforArr['documentCodeColumnName']] . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $sourceModel[$docInforArr['documentCodeColumnName']];
             }
 
 

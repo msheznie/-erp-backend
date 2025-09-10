@@ -905,8 +905,8 @@ class PurcahseRequestDetail
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

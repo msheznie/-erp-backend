@@ -796,8 +796,8 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $jvMasterData->bookingInvCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $jvMasterData->bookingInvCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

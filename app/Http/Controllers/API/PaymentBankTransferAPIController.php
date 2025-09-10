@@ -1139,8 +1139,8 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $bankTransfer->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $bankTransfer->bankTransferDocumentCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $bankTransfer->bankTransferDocumentCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankTransfer->bankTransferDocumentCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankTransfer->bankTransferDocumentCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

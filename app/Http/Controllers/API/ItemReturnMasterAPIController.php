@@ -1021,8 +1021,8 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $itemReturnMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $itemReturnMaster->itemReturnCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $itemReturnMaster->itemReturnCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemReturnMaster->itemReturnCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemReturnMaster->itemReturnCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

@@ -2329,8 +2329,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
@@ -2435,8 +2435,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
@@ -2563,8 +2563,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $purchaseRequest->purchaseRequestCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is closed';

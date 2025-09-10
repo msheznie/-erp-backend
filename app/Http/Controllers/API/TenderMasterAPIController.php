@@ -1971,8 +1971,8 @@ class TenderMasterAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $tenderMaster->document_system_id)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $tenderMaster->tender_code . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $tenderMaster->tender_code;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $tenderMaster->tender_code . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $tenderMaster->tender_code;
 
         $subject = $cancelDocNameSubject . ' is reopened';
 

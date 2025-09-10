@@ -730,8 +730,8 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $document = DocumentMaster::where('documentSystemID', $assetCapitalization->documentSystemID)->first();
 
-            $cancelDocNameBody = $document->document_description_translated . ' <b>' . $assetCapitalization->BPVcode . '</b>';
-            $cancelDocNameSubject = $document->document_description_translated . ' ' . $assetCapitalization->BPVcode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetCapitalization->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetCapitalization->BPVcode;
 
             $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 

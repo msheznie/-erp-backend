@@ -1282,8 +1282,8 @@ class CreditNoteAPIController extends AppBaseController
 
         $document = DocumentMaster::where('documentSystemID', $creditnote->documentSystemiD)->first();
 
-        $cancelDocNameBody = $document->document_description_translated . ' <b>' . $creditnote->creditNoteCode . '</b>';
-        $cancelDocNameSubject = $document->document_description_translated . ' ' . $creditnote->creditNoteCode;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $creditnote->creditNoteCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $creditnote->creditNoteCode;
 
         $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
