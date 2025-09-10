@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="ItemCategoryTypeMaster",
+ *      schema="ItemCategoryTypeMasterTranslation",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -15,6 +15,21 @@ use Eloquent as Model;
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="typeId",
+ *          description="typeId",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="languageCode",
+ *          description="languageCode",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="string"
  *      ),
  *      @OA\Property(
  *          property="name",
@@ -41,10 +56,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class ItemCategoryTypeMaster extends Model
+class ItemCategoryTypeMasterTranslation extends Model
 {
 
-    public $table = 'item_category_type_master';
+    public $table = 'item_category_type_master_translations';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -53,6 +68,8 @@ class ItemCategoryTypeMaster extends Model
 
 
     public $fillable = [
+        'typeId',
+        'languageCode',
         'name'
     ];
 
@@ -63,6 +80,8 @@ class ItemCategoryTypeMaster extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'typeId' => 'integer',
+        'languageCode' => 'string',
         'name' => 'string'
     ];
 
@@ -72,55 +91,15 @@ class ItemCategoryTypeMaster extends Model
      * @var array
      */
     public static $rules = [
+        'typeId' => 'required',
+        'languageCode' => 'required',
         'name' => 'required'
     ];
 
-    public static function purchaseItems()
+    public function itemCategoryTypeMaster()
     {
-        return [1];
+        return $this->belongsTo(ItemCategoryTypeMaster::class, 'typeId', 'id');
     }
 
-    public static function salesItems()
-    {
-        return [2];
-    }
-
-    public static function allItemTypes()
-    {
-        return [1,2];
-    }
-
-    public function translations()
-    {
-        return $this->hasMany(ItemCategoryTypeMasterTranslation::class, 'typeId', 'id');
-    }
-
-    public function translation($languageCode = null)
-    {
-        if (!$languageCode) {
-            $languageCode = app()->getLocale() ?: 'en';
-        }
-
-        return $this->translations()->where('languageCode', $languageCode)->first();
-    }
-
-    public function getNameAttribute($value)
-    {
-        $currentLanguage = app()->getLocale() ?: 'en';
-
-        $translation = $this->translation($currentLanguage);
-
-        if ($translation) {
-            return $translation->name;
-        }
-
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->name;
-            }
-        }
-
-        return $value;
-    }
+    
 }
