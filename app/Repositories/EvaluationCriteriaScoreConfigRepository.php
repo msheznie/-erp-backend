@@ -51,7 +51,7 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
                     EvaluationCriteriaScoreConfig::find($input['id'])->first();
 
                 if(empty($ScoreConfig)){
-                    return ['success' => false, 'message' => 'Evaluation criteria score not found'];
+                    return ['success' => false, 'message' => trans('srm_masters.evaluation_criteria_score_not_found')];
                 }
 
                 $data['score']=$input['score'];
@@ -81,9 +81,9 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
                         $x++;
                     }
                 } else {
-                    return ['success' => false, 'message' => 'Update failed'];
+                    return ['success' => false, 'message' => trans('srm_masters.failed_to_update')];
                 }
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated'), 'data' => $result];
             });
         } catch (\Exception $exception){
             return ['success' => false, 'message' => $exception];
@@ -145,9 +145,9 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
                         }
                         $x++;
                     }
-                    return ['success' => true, 'message' => 'Successfully Created'];
+                    return ['success' => true, 'message' => trans('srm_masters.successfully_created')];
                 }else {
-                    return ['success' => false, 'message' => 'Failed to create',];
+                    return ['success' => false, 'message' => trans('srm_masters.failed_to_create'),];
                 }
 
             });
@@ -171,7 +171,7 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
 
                 $exists = $configModel::find($input[$key]);
                 if (empty($exists)) {
-                    return ['success' => false, 'message' => 'Score configuration not found'];
+                    return ['success' => false, 'message' => trans('srm_masters.score_configuration_not_found')];
                 }
 
                 $editOrAmend
@@ -196,10 +196,10 @@ class EvaluationCriteriaScoreConfigRepository extends BaseRepository
                     'min_value' => $min_value
                 ]);
 
-                return ['success' => true, 'message' => 'Score configuration deleted successfully.'];
+                return ['success' => true, 'message' => trans('srm_masters.score_configuration_deleted_successfully')];
             });
         } catch (\Exception $exception) {
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error') . $exception->getMessage()];
         }
     }
 }
