@@ -25,6 +25,7 @@ class DocumentMaster extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'documentSystemID';
 
+    protected $appends = ['document_description_translated'];
 
     protected $dates = ['deleted_at'];
 
@@ -71,6 +72,33 @@ class DocumentMaster extends Model
         return DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', $documentSystemId)
             ->first();
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(DocumentMasterTranslation::class, 'documentSystemID', 'documentSystemID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDocumentDescriptionTranslatedAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        
+        return $value;
     }
 
 }

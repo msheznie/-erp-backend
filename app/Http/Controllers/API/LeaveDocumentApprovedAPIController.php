@@ -408,7 +408,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'companySystemID' => $input['companySystemID'],
                     'docSystemID' => $input['documentSystemID'],
                     'alertMessage' => "Referred Back ".$documentName." ".$leaveDetails->leaveDataMasterCode,
-                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDetails->leaveDataMasterCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'emailAlertMessage' => trans('email.hi') . " ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDetails->leaveDataMasterCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
                     'docSystemCode' => $documentSystemCode);
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDetails->leaveDataMasterCode." is referred back by ". $user->empName." from ".$companyName;
@@ -1020,7 +1020,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'companySystemID' => $input['companySystemID'],
                     'docSystemID' => $input['documentSystemID'],
                     'alertMessage' => "Referred Back ".$documentName." ".$leaveDocumentApproved->documentCode,
-                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDocumentApproved->documentCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'emailAlertMessage' => trans('email.hi') . " ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDocumentApproved->documentCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
                     'docSystemCode' => $documentSystemCode);
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDocumentApproved->documentCode." is referred back by ". $user->empName." from ".$companyName;

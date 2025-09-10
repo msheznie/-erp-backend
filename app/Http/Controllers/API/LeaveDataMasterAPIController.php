@@ -995,7 +995,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $alert["alertViewedDateTime"] = Null;
                 $alert["empName"] = $empManager->empName;
                 $alert["empEmail"] = $empManager->empEmail;
-                $alert["emailAlertMessage"] = "Hi " . $empManager->empName . ",<p>" . $myDocumentName . " <b> LA </b> is pending for your approval from <b>" . $employee->empName . "<b/>.<a href=http://gears.gulfenergy-int.com/portal/leave_approval.php>Click here to approve.</a>.<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
+                $alert["emailAlertMessage"] = trans('email.hi') . " " . $empManager->empName . ",<p>" . $myDocumentName . " <b> LA </b> is pending for your approval from <b>" . $employee->empName . "<b/>.<a href=http://gears.gulfenergy-int.com/portal/leave_approval.php>Click here to approve.</a>.<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
                 $alert["isEmailSend"] = 0;
                 $alert["timeStamp"] = date('Y-m-d');
 
@@ -1035,7 +1035,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $alert["alertViewedDateTime"] = Null;
             $alert["empName"] = $employee->empName;
             $alert["empEmail"] = $employee->empEmail;
-            $alert["emailAlertMessage"] = "Hi " . $employee->empName . ",<p>Your Leave Application <b>" . $leaveDataMasters->leaveDataMasterCode . "<b/> has been submitted to <b>" . $empManager->empName . "<b/> for Approval.<br><p style='color:#FF0000'><b>Note : Employees are strictly instructed not to go on the applied leave until they receive an approval of the leave application from their Supervisor/Manager.<b/></p><br><font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
+            $alert["emailAlertMessage"] = trans('email.hi') . " " . $employee->empName . ",<p>Your Leave Application <b>" . $leaveDataMasters->leaveDataMasterCode . "<b/> has been submitted to <b>" . $empManager->empName . "<b/> for Approval.<br><p style='color:#FF0000'><b>Note : Employees are strictly instructed not to go on the applied leave until they receive an approval of the leave application from their Supervisor/Manager.<b/></p><br><font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
             $alert["isEmailSend"] = 0;
             $alert["timeStamp"] = date('Y-m-d');
 

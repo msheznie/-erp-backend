@@ -4073,7 +4073,7 @@ class TenderMasterAPIController extends AppBaseController
                 if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
                     $name = $mail->employee->empFullName;
                     $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
-                    $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                    $body = trans('email.hi') . " $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                     $dataEmail['empEmail'] = $mail->employee->empUserName;
                     $dataEmail['companySystemID'] = $request['companySystemID'];
                     $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -4156,10 +4156,10 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>" . trans('email.hi') . " " . $name . $tenderCustomEmail->email_body . $company . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
-                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+                $body = trans('email.hi') . " $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br><br> Regards,<br>$company.";
             }
@@ -4193,7 +4193,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = trans('email.hi') . " $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
