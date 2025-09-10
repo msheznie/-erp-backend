@@ -53,6 +53,15 @@ class BudgetDelegateAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if(!isset($input['type']) && isset($input['id']))
+        {
+            $input = $this->convertArrayToValue($input);
+            $updateWorkStatus = BudgetDelegateAccessRecord::find($input['id']);
+            $updateWorkStatus->work_status = $input['work_status'];
+            $updateWorkStatus->save();
+            return $this->sendResponse($updateWorkStatus ,"Workstatus update successfully!");
+        }
+        
         if ($input['type'] == "single") {
             try {
                 $request->validate([
