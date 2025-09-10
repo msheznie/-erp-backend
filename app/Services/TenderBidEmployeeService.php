@@ -61,11 +61,11 @@ class TenderBidEmployeeService
                     SrmTenderBidEmployeeDetailsEditLog::insert($insertData) :
                     SrmTenderBidEmployeeDetails::insert($insertData);
 
-                return ['success' => true, 'message' => 'Employee created successfully', 'code' => 200];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.employee_created_successfully'), 'code' => 200];
             });
         } catch(\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
-            return ['success' => false, 'message' => 'Unable to create: '. $ex->getMessage(), 'code' => $error_code];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unable_to_create', ['message' => $ex->getMessage()]), 'code' => $error_code];
         }
 
     }
@@ -99,11 +99,11 @@ class TenderBidEmployeeService
                     SrmTenderUserAccessEditLog::insert($data) :
                     SRMTenderUserAccess::insert($data);
 
-                return ['status' => true, 'message' => 'Employee added successfully', 'code' => 200];
+                return ['status' => true, 'message' => trans('srm_tender_rfx.employee_added_successfully'), 'code' => 200];
             });
         } catch(\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
-            return ['status' => false, 'message' => 'Unable to add: '. $ex->getMessage(), 'code' => $error_code];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.unable_to_add', ['message' => $ex->getMessage()]), 'code' => $error_code];
         }
     }
 
@@ -120,15 +120,15 @@ class TenderBidEmployeeService
                 } else {
                     $tenderBidDetails = SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderID);
                     if ($tenderBidDetails->isEmpty()) {
-                        return ['status' => false, 'message' => 'Employees not found', 'code' => 404];
+                        return ['status' => false, 'message' => trans('srm_tender_rfx.employees_not_found'), 'code' => 404];
                     }
                     $tenderBidDetails->each->delete();
                 }
-                return ['status' => true, 'message' => 'Successfully deleted', 'code' => 200];
+                return ['status' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'code' => 200];
             });
         } catch (\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
-            return ['status' => false, 'message' => 'Unable to delete: '. $ex->getMessage(), 'code' => $error_code];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.unable_to_delete', ['message' => $ex->getMessage()]), 'code' => $error_code];
         }
     }
     public function deleteAllTenderUserAccess(Request $request)
@@ -148,15 +148,27 @@ class TenderBidEmployeeService
                 } else {
                     $getUsers = SRMTenderUserAccess::getTenderUserAccessByModule($tenderID, $companyID, $moduleID);
                     if ($getUsers->isEmpty()) {
-                        return ['status' => false, 'message' => 'Employees not found', 'code' => 404];
+                        return [
+                            'status' => false,
+                            'message' => trans('srm_tender_rfx.employees_not_found'),
+                            'code' => 404
+                        ];
                     }
                     $getUsers->each->delete();
                 }
-                return ['status' => true, 'message' => 'Successfully deleted', 'code' => 200];
+                return [
+                    'status' => true,
+                    'message' => trans('srm_tender_rfx.successfully_deleted'),
+                    'code' => 200
+                ];
             });
         } catch (\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
-            return ['status' => false, 'message' => 'Unable to delete: '. $ex->getMessage(), 'code' => $error_code];
+            return [
+                'status' => false,
+                'message' => trans('srm_tender_rfx.unable_to_delete', ['message' => $ex->getMessage()]),
+                'code' => $error_code
+            ];
         }
     }
 
@@ -183,11 +195,11 @@ class TenderBidEmployeeService
                 $result = SrmTenderBidEmployeeDetails::find($tenderEmployeeDetails->id);
 
                 if (empty($result)) {
-                    return ['success' => false, 'message' => 'Employee Details not found'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.employee_details_not_found')];
                 }
                 $result->delete();
             }
-            return ['success' => true, 'message' => 'Employee deleted successfully'];
+            return ['success' => true, 'message' => trans('srm_tender_rfx.employee_deleted_successfully')];
         });
     }
     public function removeTenderUserAccess($input){
@@ -209,14 +221,14 @@ class TenderBidEmployeeService
                 } else {
                     $tenderUser = SRMTenderUserAccess::find($id);
                     if (empty($tenderUser)){
-                        return ['success' => false, 'message' => 'User access details not found'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.user_access_details_not_found')];
                     }
                     $tenderUser->delete();
                 }
-                return ['success' => true, 'message' => 'Employee deleted successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.employee_deleted_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
 
     }
