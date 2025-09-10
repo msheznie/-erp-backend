@@ -606,13 +606,52 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 return $this->sendError('Budget detail not found');
             }
 
-            // Get entries with their data and template column information using Eloquent
-            $entries = BudgetDetTemplateEntry::with([
-                'entryData.templateColumn'
-            ])
-            ->where('budget_detail_id', $input['id'])
-            ->orderByEntryID()
-            ->get();
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => $input['companyId'],
+                'departmentBudgetPlanningDetailID' => $input['id'],
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
+            ]);
+
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                // Get entries with their data and template column information using Eloquent
+                $entries = BudgetDetTemplateEntry::with([
+                    'entryData.templateColumn'
+                ]);
+
+                if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']))
+                {
+                    $entries = $entries->where('created_by',\Helper::getEmployeeSystemID());
+                }
+
+                $entries = $entries->where('budget_detail_id', $input['id'])
+                    ->orderByEntryID()
+                    ->get();
+
+
+            }else {
+                // Get entries with their data and template column information using Eloquent
+                $entries = BudgetDetTemplateEntry::with([
+                    'entryData.templateColumn'
+                ])
+                    ->where('budget_detail_id', $input['id'])
+                    ->orderByEntryID()
+                    ->get();
+            }
+
 
             // Group entries by row using Eloquent relationships
             $groupedEntries = [];
@@ -624,7 +663,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'created_at' => $entry->created_at,
                     'updated_at' => $entry->updated_at,
                     'entryData' => [],
-                    'unitItems' => []
+                    'unitItems' => [],
+                    'edit' => isset($userPermission['data']['delegateUser']) ? 
+                        ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] ? true : false)) : 
+                        true,
+                    'delete' => isset($userPermission['data']['delegateUser']) ? 
+                        ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] ? true : false)) : 
+                        true
                 ];
 
                 $rowData = [];
