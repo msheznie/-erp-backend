@@ -861,6 +861,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     return $this->sendError("Delegate User cannot update!",500);
             }
 
+            if(isset($userPermission['data']['financeUser']))
+            {
+                if($userPermission['data']['financeUser']['status'])
+                    return $this->sendError("Finance User cannot update!",500);
+            }
             $budgetPlanningDetailId = $request->input('budgetPlanningDetailId');
 
             $budgetPlanningDetail = DepartmentBudgetPlanningDetail::find($budgetPlanningDetailId);
