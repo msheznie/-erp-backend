@@ -662,10 +662,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'updated_at' => $entry->updated_at,
                     'entryData' => [],
                     'unitItems' => [],
-                    'edit' => isset($userPermission['data']['delegateUser']) ? 
+                    'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ? 
                         ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] ? true : false)) : 
                         true,
-                    'delete' => isset($userPermission['data']['delegateUser']) ? 
+                    'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ? 
                         ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] ? true : false)) : 
                         true
                 ];
