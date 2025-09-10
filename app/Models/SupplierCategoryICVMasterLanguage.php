@@ -98,3 +98,4 @@ class SupplierCategoryICVMasterLanguage extends Model
         return $this->belongsTo(SupplierCategoryICVMaster::class, 'supCategoryICVMasterID', 'supCategoryICVMasterID');
     }
 }
+

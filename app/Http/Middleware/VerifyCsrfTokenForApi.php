@@ -153,6 +153,11 @@ class VerifyCsrfTokenForApi
             'api/v1/getBudgetPlanningFormData',
             'api/v1/validateBudgetPlanning',
             'api/v1/company_budget_plannings',
+            'api/v1/department_budget_plannings',
+            'api/v1/getDepartmentBudgetPlanningDetails',
+            'api/v1/getBudgetDelegateFormData',
+            'api/v1/getAllDeptBudgetPlDetColumns',
+            'api/v1/verifyBudgetTemplateConfiguration',
         ];
     }
 }

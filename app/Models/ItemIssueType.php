@@ -38,6 +38,7 @@ class ItemIssueType extends Model
     const CREATED_AT = NULL;
     const UPDATED_AT = NULL;
     protected $primaryKey  = 'itemIssueTypeID';
+    protected $appends = ['issueTypeDes'];
 
 
     public $fillable = [
@@ -63,5 +64,47 @@ class ItemIssueType extends Model
         
     ];
 
+    /**
+     * Relationship to ItemIssueTypeLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(ItemIssueTypeLanguage::class, 'itemIssueTypeID', 'itemIssueTypeID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated issue type description
+     */
+    public function getIssueTypeDesAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->issueTypeDes;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->issueTypeDes;
+            }
+        }
+        
+        return $this->attributes['issueTypeDes'] ?? '';
+    }
     
 }

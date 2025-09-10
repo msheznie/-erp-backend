@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title> __('custom.purchase_request') </title>
+    <title> {{ __('custom.purchase_request') }} </title>
     <style>
         @page {
             margin-left: 30px;
