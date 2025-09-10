@@ -325,7 +325,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         ->where('attachmentDescription',$attachmentDescription)
         ->count(); 
         if($isExist >= 1){ 
-           return ['status' => false, 'message' => 'Description already exists'];  
+           return ['status' => false, 'message' => trans('srm_bid.document_attachments_saved_successfully')];
         }else {
             
 
@@ -342,13 +342,13 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
             ];
 
             if (in_array($extension, $blockExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                return $this->sendError(trans('srm_bid.max_file_type_not_allowed'), 500);
             }
 
 
             if (isset($input['sizeInKbs'])) {
                 if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
        
@@ -402,13 +402,13 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
             $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
         
             DB::commit();
-            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+            return $this->sendResponse($documentAttachments->toArray(), trans('srm_bid.document_attachments_saved_successfully'));
         }
             
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Unable to upload the attachment', 500);
+            return $this->sendError(trans('srm_faq.unable_to_upload_the_attachment'), 500);
         }
 
       
