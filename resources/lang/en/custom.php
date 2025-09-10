@@ -6423,4 +6423,5 @@ return [
     'ar_subscription' => 'Subscription',
     'type_not_allowed' => 'This type of file not allow to upload.',
     'maximum_allowed_file_size' => 'Maximum allowed file size is exceeded',
+    'unable_to_upload_the_attachment' => 'Unable to upload the attachment',
 ];
