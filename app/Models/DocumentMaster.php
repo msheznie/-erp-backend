@@ -88,7 +88,7 @@ class DocumentMaster extends Model
         return $this->translations()->where('languageCode', $languageCode)->first();
     }
 
-    public function getDocumentDescriptionTranslatedAttribute($value)
+    public function getDocumentDescriptionAttribute($value)
     {
         $currentLanguage = app()->getLocale() ?: 'en';
         
@@ -100,5 +100,4 @@ class DocumentMaster extends Model
         
         return $value;
     }
-
 }
