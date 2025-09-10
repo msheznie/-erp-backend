@@ -63,4 +63,13 @@ return [
     'score_configuration_deleted_successfully' => 'تم حذف إعداد الدرجات بنجاح',
     'score_configuration_not_found' => 'إعداد الدرجات غير موجود',
     'evaluation_criteria_score_not_found' => 'درجة معيار التقييم غير موجودة',
+    'employee_saved_successfully' => 'تم حفظ الموظف بنجاح',
+    'employee_not_selected' => 'لم يتم اختيار الموظف',
+    'data_deleted_successfully' => 'تم حذف البيانات بنجاح',
+    'data_updated_successfully' => 'تم تحديث البيانات بنجاح',
+    'department_not_found' => 'القسم غير موجود',
+    'department_updated_successfully' => 'تم تحديث القسم بنجاح',
+    'department_description_already_exists' => 'وصف القسم \':code\' موجود بالفعل.',
+    'department_saved_successfully' => 'تم حفظ القسم بنجاح',
+    'department_is_already_pulled_to_tender_or_rfx' => 'القسم مستخدم بالفعل في المناقصة / طلب العروض',
 ];
