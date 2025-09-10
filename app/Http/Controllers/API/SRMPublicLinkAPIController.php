@@ -66,7 +66,7 @@ class SRMPublicLinkAPIController extends AppBaseController
         $this->sRMPublicLinkRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sRMPublicLinks = $this->sRMPublicLinkRepository->all();
 
-        return $this->sendResponse($sRMPublicLinks->toArray(), trans('custom.s_r_m_public_links_retrieved_successfully'));
+        return $this->sendResponse($sRMPublicLinks->toArray(), 'S R M Public Links retrieved successfully');
     }
 
     /**
@@ -120,7 +120,7 @@ class SRMPublicLinkAPIController extends AppBaseController
 
         $sRMPublicLink = $this->sRMPublicLinkRepository->create($input);
 
-        return $this->sendResponse($sRMPublicLink->toArray(), trans('custom.s_r_m_public_link_saved_successfully'));
+        return $this->sendResponse($sRMPublicLink->toArray(), 'S R M Public Link saved successfully');
     }
 
     /**
@@ -168,10 +168,10 @@ class SRMPublicLinkAPIController extends AppBaseController
         $sRMPublicLink = $this->sRMPublicLinkRepository->findWithoutFail($id);
 
         if (empty($sRMPublicLink)) {
-            return $this->sendError(trans('custom.s_r_m_public_link_not_found'));
+            return $this->sendError('S R M Public Link not found');
         }
 
-        return $this->sendResponse($sRMPublicLink->toArray(), trans('custom.s_r_m_public_link_retrieved_successfully'));
+        return $this->sendResponse($sRMPublicLink->toArray(), 'S R M Public Link retrieved successfully');
     }
 
     /**
@@ -237,12 +237,12 @@ class SRMPublicLinkAPIController extends AppBaseController
         $sRMPublicLink = $this->sRMPublicLinkRepository->findWithoutFail($id);
 
         if (empty($sRMPublicLink)) {
-            return $this->sendError(trans('custom.s_r_m_public_link_not_found'));
+            return $this->sendError('S R M Public Link not found');
         }
 
         $sRMPublicLink = $this->sRMPublicLinkRepository->update($input, $id);
 
-        return $this->sendResponse($sRMPublicLink->toArray(), trans('custom.srmpubliclink_updated_successfully'));
+        return $this->sendResponse($sRMPublicLink->toArray(), 'SRMPublicLink updated successfully');
     }
 
     /**
@@ -290,7 +290,7 @@ class SRMPublicLinkAPIController extends AppBaseController
         $sRMPublicLink = $this->sRMPublicLinkRepository->findWithoutFail($id);
 
         if (empty($sRMPublicLink)) {
-            return $this->sendError(trans('custom.s_r_m_public_link_not_found'));
+            return $this->sendError('S R M Public Link not found');
         }
 
         $sRMPublicLink->delete();
@@ -300,14 +300,14 @@ class SRMPublicLinkAPIController extends AppBaseController
 
     public function getPublicSupplierLinkData(Request $request)
     {
-       try
-       {
+        try
+        {
             return $this->sRMPublicLinkRepository->getPublicLinkSupplierData($request);
-       }
-       catch (Exception $e)
-       {
-           return $this->sendError(trans('custom.an_error_occurred_while_retrieving_data'));
-       }
+        }
+        catch (Exception $e)
+        {
+            return $this->sendError('An error occurred while retrieving data.');
+        }
     }
 
     public function saveSupplierPublicLink(SrmPublicLinkRequest $request)
@@ -315,12 +315,12 @@ class SRMPublicLinkAPIController extends AppBaseController
         $request->validated();
         try
         {
-             $this->sRMPublicLinkRepository->saveSupplierPublicLink($request);
-            return $this->sendResponse([],trans('custom.link_successfully_created'));
+            $this->sRMPublicLinkRepository->saveSupplierPublicLink($request);
+            return $this->sendResponse([],trans('srm_supplier_master.link_successfully_created'));
         }
         catch (Exception $e)
-       {
-           return $this->sendError($e->getMessage());
-       }
+        {
+            return $this->sendError($e->getMessage());
+        }
     }
 }
