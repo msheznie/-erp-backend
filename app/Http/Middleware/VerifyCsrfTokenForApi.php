@@ -21,7 +21,7 @@ class VerifyCsrfTokenForApi
             
             $routePrefix = $request->route()->uri;
             // Check if request is from portal and route should be ignored
-            if ($request->header('From-Portal') && $request->header('From-Portal') == 1 && in_array($routePrefix, $this->portalIgnoreRoutes())) {
+            if ($request->header('From-Portal') && $request->header('From-Portal') == 1) {
                 return $next($request);
             }
             
