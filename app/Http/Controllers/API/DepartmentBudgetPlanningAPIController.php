@@ -404,7 +404,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             // Update only the status field
             $updateData = ['workStatus' => $input['workStatus']];
-//            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
+            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
 
             if ($input['workStatus'] == 2) {
 
