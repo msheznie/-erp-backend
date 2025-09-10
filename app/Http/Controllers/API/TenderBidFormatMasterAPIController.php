@@ -334,7 +334,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
            ->where('company_id',$input['companySystemID'])->first();
 
        if(!empty($exist)){
-           return ['success' => false, 'message' => 'Description already exist'];
+           return ['success' => false, 'message' => trans('srm_masters.description_already_exists')];
        }
 
         DB::beginTransaction();
@@ -359,7 +359,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                $detail_result = TenderBidFormatDetail::create($detail_data);
                if($detail_result) {
                    DB::commit();
-                   return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                   return ['success' => true, 'message' => trans('srm_masters.successfully_saved'), 'data' => $result];
                }
            }
 
@@ -394,11 +394,11 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
-            return ['success' => false, 'message' => 'Label is required'];
+            return ['success' => false, 'message' => trans('srm_masters.label_is_required')];
         }
 
         if(!isset($input['field_type']) || empty($input['field_type'])){
-            return ['success' => false, 'message' => 'Field Type is required'];
+            return ['success' => false, 'message' => trans('srm_masters.field_type_is_required')];
         }
 
         if(isset($input['is_disabled']) && $input['is_disabled']){
@@ -413,7 +413,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             ->where('tender_id',$input['tender_id'])->first();
 
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Label already exist'];
+            return ['success' => false, 'message' => trans('srm_masters.label_already_exists')];
         }
 
         DB::beginTransaction();
@@ -429,7 +429,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_saved')];
             }
 
         } catch (\Exception $e) {
@@ -453,11 +453,11 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
-            return ['success' => false, 'message' => 'Label is required'];
+            return ['success' => false, 'message' => trans('srm_masters.label_is_required')];
         }
 
         if(!isset($input['field_type']) || empty($input['field_type'])){
-            return ['success' => false, 'message' => 'Field Type is required'];
+            return ['success' => false, 'message' => trans('srm_masters.field_type_is_required')];
         }
 
         if(isset($input['is_disabled']) && $input['is_disabled']){
@@ -472,7 +472,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             ->where('tender_id',$input['tender_id'])->where('id','!=',$input['id'])->first();
 
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Label already exist'];
+            return ['success' => false, 'message' => trans('srm_masters.label_already_exists')];
         }
         $tender_id = $input['tender_id'];
         $id = $input['id'];
@@ -487,7 +487,9 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result['is_exit'])
             {
-                return ['success' => false, 'message' => 'Unable to update the line item,The item is used in the following formula '.$result['formulas']];
+                return ['success' => false, 'message' => trans('srm_masters.unable_to_update_the_line_item_item_is_used_in_formula', [
+                    'code' => $result['formulas'],
+                ])];
             }
         }
   
@@ -526,7 +528,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated')];
             }
 
         } catch (\Exception $e) {
@@ -551,7 +553,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             ->where('company_id',$input['companySystemID'])->first();
 
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Description already exist'];
+            return ['success' => false, 'message' => trans('srm_masters.description_already_exists')];
         }
 
         DB::beginTransaction();
@@ -567,7 +569,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated'), 'data' => $result];
             }
 
         } catch (\Exception $e) {
@@ -592,14 +594,16 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result['is_exit'])
             {
-                return ['success' => false, 'message' => 'Unable to delete the line item,The item is used in the following formula '.$result['formulas']];
+                return ['success' => false, 'message' => trans('srm_masters.unable_to_delete_the_line_item_item_is_used_in_formula', [
+                    'code' => $result['formulas'],
+                ])];
             }
             $data['deleted_by'] = $employee->employeeSystemID;
             TenderBidFormatDetail::where('id',$input['id'])->update($data);
             $result = TenderBidFormatDetail::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -617,7 +621,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             $pricebid = self::priceBidExistInTender($input['id']);
 
             if(!empty($pricebid)){
-                return ['success' => false, 'message' => 'Price bid format cannot be deleted it has been used in tenders'];
+                return ['success' => false, 'message' => trans('srm_masters.price_bid_format_cannot_be_deleted_it_has_been_used_in_tenders')];
             }
 
             $data['deleted_by'] = $employee->employeeSystemID;
@@ -626,7 +630,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             TenderBidFormatDetail::where('tender_id',$input['id'])->delete();
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -652,7 +656,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $data['result'] = $result;
         $data['formula'] = $formula->formula_string;
 
-        return $this->sendResponse($data, 'TenderBidFormatMaster updated successfully');
+        return $this->sendResponse($data, trans('srm_masters.tender_bid_format_master_updated_successfully'));
 
 
     }
@@ -759,7 +763,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated')];
             }
 
         } catch (\Exception $e) {
@@ -877,7 +881,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($details, 'TenderBidFormatMaster updated successfully');
+        return $this->sendResponse($details, trans('srm_masters.tender_bid_format_master_updated_successfully'));
 
     }
 
