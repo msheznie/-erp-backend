@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="PoCategoryLanguage",
+ *      schema="ClientPerformaAppTypeLanguage",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,8 +17,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="poCategoryID",
- *          description="poCategoryID",
+ *          property="performaAppTypeID",
+ *          description="performaAppTypeID",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -56,16 +56,16 @@ use Eloquent as Model;
  *      )
  * )
  */
-class PoCategoryLanguage extends Model
+class ClientPerformaAppTypeLanguage extends Model
 {
 
-    public $table = 'erp_pocategory_languages';
+    public $table = 'clientperformaapptype_languages';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     public $fillable = [
-        'poCategoryID',
+        'performaAppTypeID',
         'languageCode',
         'description'
     ];
@@ -77,7 +77,7 @@ class PoCategoryLanguage extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'poCategoryID' => 'integer',
+        'performaAppTypeID' => 'integer',
         'languageCode' => 'string',
         'description' => 'string'
     ];
@@ -88,17 +88,13 @@ class PoCategoryLanguage extends Model
      * @var array
      */
     public static $rules = [
-        'poCategoryID' => 'required',
+        'performaAppTypeID' => 'required',
         'languageCode' => 'required',
         'description' => 'required'
     ];
 
-    public function poCategory()
+    public function clientPerformaAppType()
     {
-        return $this->belongsTo(PoCategory::class, 'poCategoryID', 'id');
+        return $this->belongsTo(ClientPerformaAppType::class, 'performaAppTypeID', 'performaAppTypeID');
     }
-
-    
 }
-
-

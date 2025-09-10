@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="PoCategoryLanguage",
+ *      schema="PriorityLanguage",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,8 +17,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="poCategoryID",
- *          description="poCategoryID",
+ *          property="priorityID",
+ *          description="priorityID",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -32,8 +32,8 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="description",
- *          description="description",
+ *          property="priorityDescription",
+ *          description="priorityDescription",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
@@ -56,18 +56,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class PoCategoryLanguage extends Model
+class PriorityLanguage extends Model
 {
 
-    public $table = 'erp_pocategory_languages';
+    public $table = 'erp_priority_languages';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     public $fillable = [
-        'poCategoryID',
+        'priorityID',
         'languageCode',
-        'description'
+        'priorityDescription'
     ];
 
     /**
@@ -77,9 +77,9 @@ class PoCategoryLanguage extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'poCategoryID' => 'integer',
+        'priorityID' => 'integer',
         'languageCode' => 'string',
-        'description' => 'string'
+        'priorityDescription' => 'string'
     ];
 
     /**
@@ -88,17 +88,14 @@ class PoCategoryLanguage extends Model
      * @var array
      */
     public static $rules = [
-        'poCategoryID' => 'required',
+        'priorityID' => 'required',
         'languageCode' => 'required',
-        'description' => 'required'
+        'priorityDescription' => 'required'
     ];
 
-    public function poCategory()
+    public function priority()
     {
-        return $this->belongsTo(PoCategory::class, 'poCategoryID', 'id');
+        return $this->belongsTo(Priority::class, 'priorityID', 'priorityID');
     }
-
-    
 }
-
 

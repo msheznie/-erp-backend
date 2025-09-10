@@ -35,7 +35,7 @@ class PoPaymentTermTypes extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $appends = ['translated_category_description'];
+    protected $appends = ['categoryDescription'];
 
     public $fillable = [
         'categoryDescription'
@@ -74,7 +74,7 @@ class PoPaymentTermTypes extends Model
         return $this->translations()->where('languageCode', $languageCode)->first();
     }
 
-    public function getTranslatedCategoryDescriptionAttribute($value)
+    public function getcategoryDescriptionAttribute($value)
     {
         $currentLanguage = app()->getLocale() ?: 'en';
         

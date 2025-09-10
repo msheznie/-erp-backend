@@ -21,7 +21,7 @@ class VerifyCsrfTokenForApi
             
             $routePrefix = $request->route()->uri;
             // Check if request is from portal and route should be ignored
-            if ($request->header('From-Portal') && $request->header('From-Portal') == 1 && in_array($routePrefix, $this->portalIgnoreRoutes())) {
+            if ($request->header('From-Portal') && $request->header('From-Portal') == 1) {
                 return $next($request);
             }
             
@@ -153,6 +153,11 @@ class VerifyCsrfTokenForApi
             'api/v1/getBudgetPlanningFormData',
             'api/v1/validateBudgetPlanning',
             'api/v1/company_budget_plannings',
+            'api/v1/department_budget_plannings',
+            'api/v1/getDepartmentBudgetPlanningDetails',
+            'api/v1/getBudgetDelegateFormData',
+            'api/v1/getAllDeptBudgetPlDetColumns',
+            'api/v1/verifyBudgetTemplateConfiguration',
         ];
     }
 }
