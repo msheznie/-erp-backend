@@ -690,8 +690,8 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $types = array(array('value' => 1, "label" => "Issue Return"),
-            array('value' => 2, "label" => "Damaged/Repaired Return"));
+        $types = array(array('value' => 1, "label" => trans('custom.issue_return')),
+            array('value' => 2, "label" => trans('custom.damaged_repaired_return')));
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));

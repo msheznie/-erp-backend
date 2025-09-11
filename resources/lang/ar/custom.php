@@ -6350,6 +6350,22 @@ return [
     'excel_total' => 'المجموع',
     'excel_qty_on_order' => 'الكمية في الطلب',
     'excel_qty_in_hand' => 'الكمية المتوفرة',
+    
+    // PR Controller Report Headers
+    'pr_number' => 'رقم طلب الشراء',
+    'pr_requested_date' => 'تاريخ طلب الشراء',
+    'department' => 'القسم',
+    'narration' => 'الرواية',
+    'location' => 'الموقع',
+    'priority' => 'الأولوية',
+    'created_by' => 'تم الإنشاء بواسطة',
+    'confirmed_date' => 'تاريخ التأكيد',
+    'approved_date' => 'تاريخ الموافقة',
+    'item_code' => 'رمز العنصر',
+    'part_no' => 'رقم القطعة',
+    'item_description' => 'وصف العنصر',
+    'req_qty' => 'الكمية المطلوبة',
+    'part_no_ref_number' => 'رقم القطعة / الرقم المرجعي',
 
     // Account Receivable receipt voucher
     'rv_brv_code' => 'BRV كود',
@@ -6434,6 +6450,13 @@ return [
     'cancelled_at' => 'تم إلغاؤه في',
     'receipt_amount' => 'مبلغ الإيصال',
 
+    // Quotation SO Report
+    'expire_date' => 'تاريخ الإنتهاء',
+    'document_status' => 'حالة المستند',
+    'customer_status' => 'حالة العميل',
+    'paid_amount' => 'مبلغ الدفع',
+    'delivery_return_status' => 'حالة التسليم/الإرجاع',
+
     // AR customer invoice
     'ar_goods' => 'البضائع',
     'ar_service' => 'الخدمات',
@@ -6441,4 +6464,23 @@ return [
     'type_not_allowed' => 'هذا النوع من الملفات غير مسموح برفعه.',
     'maximum_allowed_file_size' => 'تم تجاوز الحد الأقصى المسموح به لحجم الملف',
     'unable_to_upload_the_attachment' => 'يتعذر رفع المرفق',
+    'issue_return' => 'إرجاع الإصدار',
+    'damaged_repaired_return' => 'إرجاع تالف/مُصلح',
+    'mfg_no' => 'رقم التصنيع',
+    'main_category' => 'الفئة الرئيسية',
+    'sub_category' => 'الفئة الفرعية',
+    'finance_bs_code' => 'كود الميزانية العمومية',
+    'finance_pl_code' => 'كود قائمة الدخل',
+    'min_qty' => 'الحد الأدنى للكمية',
+    'max_qty' => 'الحد الأقصى للكمية',
+    'order_level' => 'مستوى الطلب',
+    'total_qty' => 'إجمالي الكمية',
+    'wac_value_local' => 'قيمة المتوسط المرجح المحلية',
+    'wac_value_rpt' => 'قيمة المتوسط المرجح للتقرير',
+    'bin_location' => 'موقع الصندوق',
+    'stock_qty' => 'كمية المخزون',
+    'wac_local' => 'المتوسط المرجح المحلي',
+    'wac_rpt' => 'المتوسط المرجح للتقرير',
+    'wac_local_val' => 'قيمة المتوسط المرجح المحلي',
+    'wac_rpt_val' => 'قيمة المتوسط المرجح للتقرير'
 ];

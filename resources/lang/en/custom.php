@@ -3025,6 +3025,8 @@ return [
     'multiple_pos_cannot_be_added_different_po_found_on_saved_details' => 'Multiple PO\'s cannot be added. Different PO found on saved details.',
     'multiple_pos_cannot_be_added_different_po_found_on_selected_details' => 'Multiple PO\'s cannot be added. Different PO found on selected details',
     'multiple_pos_cannot_be_added_different_po_found_on_selected_and_already_saved_details' => 'Multiple PO\'s cannot be added. Different PO found on selected and already saved details',
+    'issue_return' => 'Issue Return',
+    'damaged_repaired_return' => 'Damaged/Repaired Return',
     'narration' => 'Narration',
     'narration_field_is_required' => 'Narration field is required',
     'navigation_menus_deleted_successfully' => 'Navigation Menus deleted successfully',
@@ -6331,6 +6333,22 @@ return [
     'excel_total' => 'Total',
     'excel_qty_on_order' => 'Qty On Order',
     'excel_qty_in_hand' => 'Qty in Hand',
+    
+    // PR Controller Report Headers
+    'pr_number' => 'PR Number',
+    'pr_requested_date' => 'PR Requested Date',
+    'department' => 'Department',
+    'narration' => 'Narration',
+    'location' => 'Location',
+    'priority' => 'Priority',
+    'created_by' => 'Created By',
+    'confirmed_date' => 'Confirmed Date',
+    'approved_date' => 'Approved Date',
+    'item_code' => 'Item Code',
+    'part_no' => 'Part No',
+    'item_description' => 'Item Description',
+    'req_qty' => 'Req Qty',
+    'part_no_ref_number' => 'Part No / Ref.Number',
 
     // Accounts Receivable receipt voucher
     'rv_brv_code' => 'BRV Code',
@@ -6417,6 +6435,13 @@ return [
     'cancelled_at' => 'Cancelled At',
     'receipt_amount' => 'Receipt Amount',
 
+    // Quotation SO Report
+    'expire_date' => 'Expire Date',
+    'document_status' => 'Document Status',
+    'customer_status' => 'Customer Status',
+    'paid_amount' => 'Paid Amount',
+    'delivery_return_status' => 'Delivery/Return Status',
+
     // AR customer invoice
     'ar_goods' => 'Goods',
     'ar_service' => 'Service',
@@ -6424,4 +6449,21 @@ return [
     'type_not_allowed' => 'This type of file not allow to upload.',
     'maximum_allowed_file_size' => 'Maximum allowed file size is exceeded',
     'unable_to_upload_the_attachment' => 'Unable to upload the attachment',
+    'mfg_no' => 'Mfg No',
+    'main_category' => 'Main Category',
+    'sub_category' => 'Sub Category',
+    'finance_bs_code' => 'Finance BS Code',
+    'finance_pl_code' => 'Finance PL Code',
+    'min_qty' => 'Min Qty',
+    'max_qty' => 'Max Qty',
+    'order_level' => 'Order level',
+    'total_qty' => 'Total Qty',
+    'wac_value_local' => 'WAC Value Local',
+    'wac_value_rpt' => 'WAC Value Rpt',
+    'bin_location' => 'Bin Location',
+    'stock_qty' => 'Stock Qty',
+    'wac_local' => 'WAC Local',
+    'wac_rpt' => 'WAC Rpt',
+    'wac_local_val' => 'WAC Local Val',
+    'wac_rpt_val' => 'WAC Rpt Val'
 ];
