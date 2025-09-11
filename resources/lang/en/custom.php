@@ -6304,4 +6304,11 @@ return [
     'cancelled_by' => 'Cancelled By',
     'cancelled_at' => 'Cancelled At',
     'receipt_amount' => 'Receipt Amount',
+
+    // Quotation SO Report
+    'expire_date' => 'Expire Date',
+    'document_status' => 'Document Status',
+    'customer_status' => 'Customer Status',
+    'paid_amount' => 'Paid Amount',
+    'delivery_return_status' => 'Delivery/Return Status',
 ];

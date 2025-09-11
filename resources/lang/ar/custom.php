@@ -6321,4 +6321,11 @@ return [
     'cancelled_by' => 'تم إلغاؤه بواسطة',
     'cancelled_at' => 'تم إلغاؤه في',
     'receipt_amount' => 'مبلغ الإيصال',
+
+    // Quotation SO Report
+    'expire_date' => 'تاريخ الإنتهاء',
+    'document_status' => 'حالة المستند',
+    'customer_status' => 'حالة العميل',
+    'paid_amount' => 'مبلغ الدفع',
+    'delivery_return_status' => 'حالة التسليم/الإرجاع',
 ];
