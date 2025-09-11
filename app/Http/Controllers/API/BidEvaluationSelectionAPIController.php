@@ -138,7 +138,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
 
-        return $this->sendResponse($bids, 'Bid Evaluation Selection saved successfully');
+        return $this->sendResponse($bids, trans('srm_faq.bid_evaluation_selection_saved'));
     }
 
     /**

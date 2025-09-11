@@ -409,7 +409,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderPreBidClarification = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderPreBidClarification)) {
-            return $this->sendError('Not Found');
+            return $this->sendError(trans('srm_faq.not_found'));
         } 
 
         $isLastSupplierResponse = TenderBidClarifications::select('id')
@@ -441,7 +441,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 ->update($updateRec);
         }
 
-        return $this->sendResponse($id, 'File Deleted');
+        return $this->sendResponse($id, trans('srm_faq.file_deleted'));
     }
     public function getPreBidEditData(Request $request)
     {
@@ -479,7 +479,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated'];
+            return ['success' => true, 'message' => trans('srm_faq.successfully_updated')];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -493,12 +493,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx','docx'];
 
             if (!in_array(strtolower($extension), $allowExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                return $this->sendError(trans('srm_faq.file_type_not_allowed'), 500);
             }
 
             if (isset($attachment['size'])) {
                 if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    return $this->sendError('srm_faq.file_size_exceeded', 500);
                 }
             }
             $file = $attachment['file'];

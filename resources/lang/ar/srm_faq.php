@@ -9,4 +9,11 @@ return [
     "emails_sent_successfully" => "تم إرسال البريد/البريدات بنجاح",
     "not_valid_emails_enter_valid" => "بريد إلكتروني غير صالح. يرجى إدخال بريد/بريدات صالحة.",
     "emails_already_exist" => "البريد/البريدات الإلكتروني/الإلكترونية موجودة بالفعل.",
+    "bid_evaluation_selection_saved" => "تم حفظ اختيار تقييم العطاء بنجاح",
+    "successfully_updated" => "تم التحديث بنجاح",
+    "not_found" => "غير موجود",
+    "file_type_not_allowed" => "هذا النوع من الملفات غير مسموح برفعه.",
+    "file_size_exceeded" => "الحد الأقصى المسموح به لحجم الملف هو 2 ميغابايت. يرجى رفع ملف أصغر من 2 ميغابايت.",
+    "file_deleted" => "تم الحذف بنجاح"
+
 ];
