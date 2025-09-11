@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [10.83.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.82.0...v10.83.0) (2025-09-11)
+
+
+### Features
+
+* **configuration:** Tender calendar date reminder setup [GSUP-2213] ([#8604](https://github.com/pbsgears/Gears_BackEnd/issues/8604)) ([9727874](https://github.com/pbsgears/Gears_BackEnd/commit/972787414d6f777d235a28334598f261186d914b))
+* **srm:** Allow Multiple Document Attachment During the Bid Submission [GSUP-3642] ([#8634](https://github.com/pbsgears/Gears_BackEnd/issues/8634)) ([966e00b](https://github.com/pbsgears/Gears_BackEnd/commit/966e00b3be7b31e20948638d62ca584f2c32b9f4))
+* **srm:** Supplier PO Documents attachment option in Supplier portal [GSUP-2218] ([#8501](https://github.com/pbsgears/Gears_BackEnd/issues/8501)) ([dc8c0f1](https://github.com/pbsgears/Gears_BackEnd/commit/dc8c0f19cdaae0e68c4e1bab921e263336d423f7))
+* **srm:** View Multiple Documents During the Document Verification [Common Documents] [GSUP-3851] ([#8644](https://github.com/pbsgears/Gears_BackEnd/issues/8644)) ([dcda4e7](https://github.com/pbsgears/Gears_BackEnd/commit/dcda4e7c1210e39e3160171247a18a4f704d64df))
+
+
+### Bug Fixes
+
+* **Commercial Bid Opening:** Commercial bid records are visible before approval of bid opening [GSUP-4064] ([#8651](https://github.com/pbsgears/Gears_BackEnd/issues/8651)) ([5b26359](https://github.com/pbsgears/Gears_BackEnd/commit/5b263593ecfced44f76e120d170af022509e88b6))
+
 ## [10.82.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.1...v10.82.0) (2025-09-07)
 
 
