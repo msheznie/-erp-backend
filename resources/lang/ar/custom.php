@@ -6484,6 +6484,20 @@ return [
     'wac_local_val' => 'قيمة المتوسط المرجح المحلي',
     'wac_rpt_val' => 'قيمة المتوسط المرجح للتقرير',
 
+    // Sales Order to Receipt Report
+    'so_number' => 'رقم الطلب',
+    'so_approved_date' => 'تاريخ الموافقة',
+    'customer_code' => 'رمز العميل',
+    'customer_name' => 'اسم العميل',
+    'so_amount' => 'مبلغ الطلب',
+    'delivery_code' => 'رمز التسليم',
+    'delivery_date' => 'تاريخ التسليم',
+    'delivery_amount' => 'مبلغ التسليم',
+    'invoice_code' => 'رمز الفاتورة',
+    'receipt_code' => 'رمز الايصال',
+    'receipt_date' => 'تاريخ الايصال',
+    'receipt_posted_date' => 'تاريخ الايصال المنشور',
+    'po_amount' => 'مبلغ الطلب',
     // Sales Detail Report
     'document_system_code' => 'رمز المستند',
     'total_sales_value' => 'قيمة المبيعات الإجمالية',
