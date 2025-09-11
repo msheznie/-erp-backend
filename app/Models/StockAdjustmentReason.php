@@ -79,18 +79,12 @@ class StockAdjustmentReason extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->reasonDescription) {
             return $translation->reasonDescription;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->reasonDescription;
-            }
-        }
         
-        return $this->reason;
+        return $this->attributes['reason'] ?? '';
     }
  
 }

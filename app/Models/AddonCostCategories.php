@@ -44,6 +44,7 @@ class AddonCostCategories extends Model
     const UPDATED_AT = 'timesStamp';
 
     protected $primaryKey  = 'idaddOnCostCategories';
+    protected $appends = ['costCatDes'];
 
     public $fillable = [
         'costCatDes',
@@ -77,4 +78,41 @@ class AddonCostCategories extends Model
     {
         return $this->belongsTo('App\Models\ItemMaster', 'itemSystemCode', 'itemCodeSystem');
     }
+
+    /**
+     * Get the translations for the addon cost category.
+     */
+    public function translations()
+    {
+        return $this->hasMany('App\Models\AddonCostCategoriesTranslation', 'idaddOnCostCategories', 'idaddOnCostCategories');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated cost category description
+     */
+    public function getCostCatDesAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->costCatDes) {
+            return $translation->costCatDes;
+        }
+        
+        return $this->attributes['costCatDes'] ?? '';
+    }
+    
 }

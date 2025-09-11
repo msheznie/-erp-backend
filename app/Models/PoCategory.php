@@ -96,18 +96,12 @@ class PoCategory extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->description) {
             return $translation->description;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->description;
-            }
-        }
         
-        return $this->description;
+        return $this->attributes['description'] ?? '';
     }
 
     
