@@ -578,9 +578,9 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $monthlyAddition->monthlyAdditionsCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $monthlyAddition->monthlyAdditionsCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $monthlyAddition->companySystemID)
             ->where('documentSystemCode', $monthlyAddition->monthlyAdditionsMasterID)
@@ -648,7 +648,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $emails = array();
         $masterData = MonthlyAdditionsMaster::find($id);
-        $documentName = "Monthly Additions";
+        $documentName = trans('email.monthly_additions');
 
         if (empty($masterData)) {
             return $this->sendError($documentName.' not found');
@@ -658,8 +658,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$documentName.', it is not confirmed');
         }
 
-        $emailBody = '<p>' . $masterData->monthlyAdditionsCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->monthlyAdditionsCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->monthlyAdditionsCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->monthlyAdditionsCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

@@ -1317,8 +1317,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
                 $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
 
-                $body = '<p>' . $cancelDocNameBody . ' has been changed by ' . $employee->empName . '. Current total amount of the order is ' . $procumentOrderUpdate->poTotalSupplierTransactionCurrency . '.Previous total amount was ' . $oldPoTotalSupplierTransactionCurrency . '.';
-                $subject = $cancelDocNameSubject . ' has been changed';
+                $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.has_been_changed_by', ['empName' => $employee->empName]) . '. ' . trans('email.current_total_amount') . ' ' . $procumentOrderUpdate->poTotalSupplierTransactionCurrency . '. ' . trans('email.previous_total_amount') . ' ' . $oldPoTotalSupplierTransactionCurrency . '.</p>';
+                $subject = $cancelDocNameSubject . ' ' . trans('email.has_been_changed');
 
                 if ($procumentOrder->poConfirmedYN == 1) {
                     $emails[] = array(
@@ -2540,8 +2540,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelComments'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is cancelled';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_cancelled_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['cancelComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_cancelled');
 
         if ($purchaseOrder->poConfirmedYN == 1) {
             $emails[] = array(
@@ -2604,8 +2604,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is return back to amend';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.has_been_returned_back_to_amend') . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.has_been_returned_back_to_amend');
 
         if ($purchaseOrder->poConfirmedYN == 1) {
             $emails[] = array(
@@ -3274,8 +3274,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is closed';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_manually_closed_due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_closed');
 
         if ($procumentOrder->poConfirmedYN == 1) {
             $emails[] = array(
@@ -4937,9 +4937,9 @@ ORDER BY
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
             ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
@@ -4954,7 +4954,7 @@ ORDER BY
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

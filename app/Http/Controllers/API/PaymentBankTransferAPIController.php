@@ -1142,9 +1142,9 @@ class PaymentBankTransferAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankTransfer->bankTransferDocumentCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $bankTransfer->bankTransferDocumentCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $bankTransfer->companySystemID)
             ->where('documentSystemCode', $bankTransfer->paymentBankTransferID)

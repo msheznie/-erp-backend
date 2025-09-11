@@ -201,11 +201,11 @@ class DeliveryOrderAPIController extends AppBaseController
 
 
         if(!$customer->custGLAccountSystemID){
-            return $this->sendError('GL account is not configured for this customer',500);
+            return $this->sendError(trans('custom.gl_account_not_configured_for_this_customer'),500);
         }
 
         if(!$customer->custUnbilledAccountSystemID){
-            return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+            return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'),500);
         }
 
         $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
@@ -465,11 +465,11 @@ class DeliveryOrderAPIController extends AppBaseController
                 $customer = CustomerMaster::find($input['customerID']);
 
                 if(!$customer->custGLAccountSystemID){
-                    return $this->sendError('GL account is not configured for this customer',500);
+                    return $this->sendError(trans('custom.gl_account_not_configured_for_this_customer'),500);
                 }
 
                 if(!$customer->custUnbilledAccountSystemID){
-                    return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+                    return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'),500);
                 }
 
                 $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
@@ -1678,8 +1678,8 @@ WHERE
         }
         
 
-        $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->quotationCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->quotationCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->quotationCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

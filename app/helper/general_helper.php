@@ -329,15 +329,15 @@ class Helper
 
         /** check document is already confirmed*/
         if (!array_key_exists('autoID', $params)) {
-            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_missing')];
         }
 
         if (!array_key_exists('company', $params)) {
-            return ['success' => false, 'message' => 'Parameter company is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_company_missing')];
         }
 
         if (!array_key_exists('document', $params)) {
-            return ['success' => false, 'message' => 'Parameter document is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_missing')];
         }
         DB::beginTransaction();
         try {
@@ -869,7 +869,7 @@ class Helper
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
                     break;
                 default:
-                    return ['success' => false, 'message' => 'Document ID not found'];
+                    return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
 
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -903,7 +903,7 @@ class Helper
                     $supplierValidate = self::validateSupplierBlockedStatus($params["document"], $masterRec);
 
                     if ($supplierValidate) {
-                        return ['success' => false, 'message' => 'Supplier is blocked, you cannot confirm this document'];
+                        return ['success' => false, 'message' => trans('custom.supplier_blocked_cannot_confirm')];
                     }
                 }
 
@@ -948,11 +948,11 @@ class Helper
                                 if ($isAttachment == -1) {
                                     $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
-                                        return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+                                        return ['success' => false, 'message' => trans('custom.no_attachments_attached')];
                                     }
                                 }
                             } else {
-                                return ['success' => false, 'message' => 'Policy not available for this document.'];
+                                return ['success' => false, 'message' => trans('custom.policy_not_available')];
                             }
 
                             // get approval rolls
@@ -965,10 +965,10 @@ class Helper
                                         $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                         $approvalLevel->where('serviceLineWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                    return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
                                 }
                             }
 
@@ -978,10 +978,10 @@ class Helper
                                         $approvalLevel->where('categoryID', $params["category"]);
                                         $approvalLevel->where('isCategoryWiseApproval', -1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Category parameter are missing'];
+                                    return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
                                 }
                             }
 
@@ -995,10 +995,10 @@ class Helper
                                         });
                                         $approvalLevel->where('valueWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                    return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
                                 }
                             }
 
@@ -1015,10 +1015,10 @@ class Helper
                                                 $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                                 $approvalLevel->where('serviceLineWise', 1);
                                             } else {
-                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                             }
                                         } else {
-                                            return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                            return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
                                         }
                                     }
 
@@ -1032,10 +1032,10 @@ class Helper
                                                 });
                                                 $approvalLevel->where('valueWise', 1);
                                             } else {
-                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                             }
                                         } else {
-                                            return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                            return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
                                         }
                                     }
 
@@ -1063,11 +1063,11 @@ class Helper
                                             if ($val->approvalGroupID) {
                                                 $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
                                             } else {
-                                                return ['success' => false, 'message' => 'Please set the approval group'];
+                                                return ['success' => false, 'message' => trans('custom.please_set_approval_group')];
                                             }
                                         }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 }
                                 // insert rolls to document approved table
@@ -1085,7 +1085,7 @@ class Helper
                                             ->first();
 
                                         if (empty($companyDocument)) {
-                                            return ['success' => false, 'message' => 'Policy not found for this document'];
+                                            return ['success' => false, 'message' => trans('custom.policy_not_found')];
                                         }
 
                                         $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
@@ -1129,7 +1129,7 @@ class Helper
 
 
 
-                                        $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
+                                        $pushNotificationMessage = trans('email.is_pending_approval', ['attribute' => $document->documentDescription . " " . $documentApproved->documentCode]);
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
 
@@ -1176,32 +1176,32 @@ class Helper
                                 }
 
                                 DB::commit();
-                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                                return ['success' => true, 'message' => trans('custom.successfully_document_confirmed')];
                             } else {
                                 DB::rollback();
-                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                             }
                         } else {
                             DB::rollback();
-                            return ['success' => false, 'message' => 'Document is already confirmed'];
+                            return ['success' => false, 'message' => trans('custom.document_already_confirmed')];
                         }
                     } else {
                         DB::rollback();
-                        return ['success' => false, 'message' => 'Document not found'];
+                        return ['success' => false, 'message' => trans('custom.document_not_found')];
                     }
                 } else {
                     DB::rollback();
-                    return ['success' => false, 'message' => 'Document approval data is already generated.'];
+                    return ['success' => false, 'message' => trans('custom.document_approval_data_generated')];
                 }
             } else {
                 DB::rollback();
-                return ['success' => false, 'message' => 'No records found'];
+                return ['success' => false, 'message' => trans('custom.no_records_found')];
             }
             // all good
         } catch (\Exception $e) {
             DB::rollback();
             //dd($e);
-            return ['success' => false, 'message' => $e . 'Error Occurred'];
+            return ['success' => false, 'message' => $e . trans('custom.error_occurred')];
         }
     }
 
@@ -1781,7 +1781,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
             default:
-                return ['success' => false, 'message' => 'Document ID not found'];
+                return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
 
 
@@ -1809,7 +1809,7 @@ class Helper
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
-                    return ['success' => false, 'message' => 'Document is not confirmed'];
+                    return ['success' => false, 'message' => trans('custom.document_not_confirmed')];
                 }
 
                 $policyConfirmedUserToApprove = '';
@@ -1829,7 +1829,7 @@ class Helper
                     ->where('documentSystemID', $input["documentSystemID"])
                     ->first();
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found.'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
                 }
 
                 $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
@@ -1854,12 +1854,12 @@ class Helper
                         ->exists();
 
                     if (!$checkUserHasApprovalAccess) {
-                        return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                        return ['success' => false, 'message' => trans('custom.no_access_approve_document')];
                     }
 
                     if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                         if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                            return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                            return ['success' => false, 'message' => trans('custom.not_authorized_confirmed_person')];
                         }
                     }
                 }
@@ -1867,12 +1867,12 @@ class Helper
 
                 if (["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
-                        return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
+                        return ['success' => false, 'message' => trans('custom.budget_transfer_not_current_year')];
                     }
                 }
 
                 if ($docApproved->rejectedYN == -1) {
-                    return ['success' => false, 'message' => 'Level is already rejected'];
+                    return ['success' => false, 'message' => trans('custom.level_already_rejected')];
                 }
 
                 //check document is already approved
@@ -2022,7 +2022,7 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
                                 $outputGL = Models\GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputGL) {
-                                    return ['success' => false, 'message' => 'GL entries are already passed for this document'];
+                                    return ['success' => false, 'message' => trans('custom.gl_entries_already_passed')];
                                 }
                             }
 
@@ -2055,7 +2055,7 @@ class Helper
                                 $supplierAssignRes = SupplierAssignService::assignSupplier($input["documentSystemCode"], $docApproved->companySystemID);
                                 if (!$supplierAssignRes['status']) {
                                     DB::rollback();
-                                    return ['success' => false, 'message' => "Error occured while assign supplier"];
+                                    return ['success' => false, 'message' => trans('custom.error_assign_supplier')];
                                 }
                             }
 
@@ -2063,7 +2063,7 @@ class Helper
                                 $supplierAssignRes = CustomerAssignService::assignCustomer($input["documentSystemCode"], $docApproved->companySystemID);
                                 if (!$supplierAssignRes['status']) {
                                     DB::rollback();
-                                    return ['success' => false, 'message' => "Error occured while assign customer"];
+                                    return ['success' => false, 'message' => trans('custom.error_assign_customer')];
                                 }
                             }
 
@@ -2196,7 +2196,7 @@ class Helper
                             if ($input["documentSystemID"] == 69) {
                                 $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputEL) {
-                                    return ['success' => false, 'message' => 'Elimination Ledger entries are already passed for this document'];
+                                    return ['success' => false, 'message' => trans('custom.elimination_ledger_entries_already_passed')];
                                 }
 
                                 $jobGL = EliminationLedgerInsert::dispatch($masterData);
@@ -2416,8 +2416,8 @@ class Helper
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
-                                    $subject = $subjectName . " is fully approved";
-                                    $body = $bodyName . " is fully approved . ";
+                                    $subject = trans('email.is_fully_approved', ['attribute' => $subjectName]);
+                                    $body = trans('email.is_fully_approved', ['attribute' => $bodyName]) . " . ";
                                     $pushNotificationMessage = $subject;
                                     $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
@@ -2427,7 +2427,7 @@ class Helper
                                         ->first();
 
                                     if (empty($companyDocument)) {
-                                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                                        return ['success' => false, 'message' => trans('custom.policy_not_found')];
                                     }
 
                                     $nextLevel = $currentApproved->rollLevelOrder + 1;
@@ -2465,10 +2465,10 @@ class Helper
                                     //     } else {
                                     //         $redirectUrl =  env("APPROVE_URL");
                                     //     }
-                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    //     $nextApprovalBody = trans('email.level_approved_pending_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'redirectUrl' => $redirectUrl]);
                                     // } else {
                                     //     $redirectUrl =  env("ERP_APPROVE_URL");
-                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    //     $nextApprovalBody = trans('email.level_approved_pending_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'redirectUrl' => $redirectUrl]);
                                     // }
 
 
@@ -2476,9 +2476,9 @@ class Helper
 
                                     $redirectUrl =  self::checkDomai();
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    $nextApprovalBody = trans('email.level_approved_pending_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'redirectUrl' => $redirectUrl]);
 
-                                    $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
+                                    $nextApprovalSubject = trans('email.level_approved_pending', ['attribute' => $subjectName, 'level' => $currentApproved->rollLevelOrder]);
                                     $nextApproveNameList = "";
                                     foreach ($approvalList as $da) {
                                         if ($da->employee) {
@@ -2498,8 +2498,8 @@ class Helper
                                         }
                                     }
 
-                                    $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
+                                    $subject = trans('email.level_approved_sent_next', ['attribute' => $subjectName, 'level' => $currentApproved->rollLevelOrder]);
+                                    $body = trans('email.level_approved_sent_next_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'nextApproveNameList' => $nextApproveNameList]);
                                 }
 
 
@@ -2552,15 +2552,15 @@ class Helper
                         // WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
 
                     } else {
-                        return ['success' => false, 'message' => 'Approval level not found'];
+                        return ['success' => false, 'message' => trans('custom.approval_level_not_found')];
                     }
                     DB::commit();
                     return ['success' => true, 'message' => $userMessage, 'data' => $more_data];
                 } else {
-                    return ['success' => false, 'message' => 'Level is already approved'];
+                    return ['success' => false, 'message' => trans('custom.level_already_approved')];
                 }
             } else {
-                return ['success' => false, 'message' => 'No records found'];
+                return ['success' => false, 'message' => trans('custom.no_records_found')];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -2595,15 +2595,15 @@ class Helper
 
         /** check document is already confirmed*/
         if (!array_key_exists('autoID', $params)) {
-            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_missing')];
         }
 
         if (!array_key_exists('company', $params)) {
-            return ['success' => false, 'message' => 'Parameter company is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_company_missing')];
         }
 
         if (!array_key_exists('document', $params)) {
-            return ['success' => false, 'message' => 'Parameter document is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_missing')];
         }
 
         DB::beginTransaction();
@@ -3202,7 +3202,7 @@ class Helper
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     break;
                 default:
-                    return ['success' => false, 'message' => 'Document ID not found'];
+                    return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
 
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -3242,7 +3242,7 @@ class Helper
                     $supplierValidate = self::validateSupplierBlockedStatus($params["document"], $masterRec);
 
                     if ($supplierValidate) {
-                        return ['success' => false, 'message' => 'Supplier is blocked, you cannot confirm this document'];
+                        return ['success' => false, 'message' => trans('custom.supplier_blocked_cannot_confirm')];
                     }
                 }
 
@@ -3306,13 +3306,13 @@ class Helper
                                     if ($isAttachment == -1) {
                                         $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
                                         if (!$docAttachment) {
-                                            return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+                                            return ['success' => false, 'message' => trans('custom.no_attachments_attached')];
                                         }
                                     }
                                 }
 
                             } else {
-                                return ['success' => false, 'message' => 'Policy not available for this document.'];
+                                return ['success' => false, 'message' => trans('custom.policy_not_available')];
                             }
 
 
@@ -3327,10 +3327,10 @@ class Helper
                                         $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                         $approvalLevel->where('serviceLineWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                    return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
                                 }
                             }
 
@@ -3340,16 +3340,16 @@ class Helper
                                         $approvalLevel->where('categoryID', $params["category"]);
                                         $approvalLevel->where('isCategoryWiseApproval', -1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Category parameter are missing'];
+                                    return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
                                 }
                             }
 
                             if ($params["document"] == 108) {
                                 if (!array_key_exists('tenderTypeId', $params)) {
-                                    return ['success' => false, 'message' => 'Tender Type parameter is missing'];
+                                    return ['success' => false, 'message' => trans('custom.tender_type_parameter_missing')];
                                 }
 
                                 $tenderTypeId = $params["tenderTypeId"];
@@ -3371,10 +3371,10 @@ class Helper
                                         });
                                         $approvalLevel->where('valueWise', 1);
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                    return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
                                 }
                             }
 
@@ -3391,10 +3391,10 @@ class Helper
                                                 $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                                 $approvalLevel->where('serviceLineWise', 1);
                                             } else {
-                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                             }
                                         } else {
-                                            return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                            return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
                                         }
                                     }
 
@@ -3408,10 +3408,10 @@ class Helper
                                                 });
                                                 $approvalLevel->where('valueWise', 1);
                                             } else {
-                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                             }
                                         } else {
-                                            return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                            return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
                                         }
                                     }
 
@@ -3425,7 +3425,7 @@ class Helper
                                 $documentApprovedAuto = DocumentAutoApproveService::setDocumentApprovedData($params, $sorceDocument, $docInforArr, $empInfo);
                                 Models\DocumentApproved::insert($documentApprovedAuto);
                                 DB::commit();
-                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                                return ['success' => true, 'message' => trans('custom.successfully_document_confirmed')];
                             }
 
                             if ($output) {
@@ -3450,11 +3450,11 @@ class Helper
                                             if ($val->approvalGroupID) {
                                                 $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
                                             } else {
-                                                return ['success' => false, 'message' => 'Please set the approval group'];
+                                                return ['success' => false, 'message' => trans('custom.please_set_approval_group')];
                                             }
                                         }
                                     } else {
-                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
                                 }
                                 // insert rolls to document approved table
@@ -3474,7 +3474,7 @@ class Helper
                                                 ->first();
 
                                             if (empty($companyDocument)) {
-                                                return ['success' => false, 'message' => 'Policy not found for this document'];
+                                                return ['success' => false, 'message' => trans('custom.policy_not_found')];
                                             }
 
                                             $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
@@ -3535,22 +3535,22 @@ class Helper
                                                 }
                                             }
 
-                                            $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+                                            $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $documentApproved->documentCode]);
 
                                             if($params["document"] == 56 )
                                             {
                                                 $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->supplierName . '</b>';
-                                                $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->supplierName;
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $masterRec->supplierName]);
                                             }
                                             else if($params["document"] == 58 )
                                             {
                                                 $approvedDocNameBody = $document->documentDescription . ' <b>' . $masterRec->CustomerName . '</b>';
-                                                $subject = "Pending " . $document->documentDescription . " approval " . $masterRec->CustomerName;
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $masterRec->CustomerName]);
                                             }
                                             else
                                             {
                                                 $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
-                                                $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => $documentApproved->documentCode]);
                                             }
 
 
@@ -3579,7 +3579,7 @@ class Helper
                                             $documentValues = [107,108,113,117,118]; // srm related documents.
                                             $redirectUrl = (in_array($params["document"], $documentValues)) ? self::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : self::checkDomai();
 
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
+                                            $body = '<p>' . trans('email.is_pending_approval', ['attribute' => $approvedDocNameBody]) . '. <br><br>';
 
                                             if ($params["document"] == 117) {
                                                 $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
@@ -3589,19 +3589,19 @@ class Helper
 
                                             if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                                $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
-                                                $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
+                                                $body .= '<p>' . trans('email.tender_title', ['type' => $type[$params["document_type"]], 'title' => $params["tender_title"]]) . '</p>';
+                                                $body .= '<p>' . trans('email.tender_description', ['type' => $type[$params["document_type"]], 'description' => $params["tender_description"]]) . '</p>';
                                             }
 
-                                            $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                            $body .= '<a href="' . $redirectUrl . '">' . trans('email.click_here_to_approve') . '</a></p>';
 
                                             if ($document->documentSystemID == 107){
-                                                $subject = "Pending " . $document->documentDescription . " approval " .'"' . $documentApproved->suppliername->name .'"';
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => '"' . $documentApproved->suppliername->name . '"']);
                                             }
 
                                             if($document->documentSystemID == 108 || $document->documentSystemID == 113){
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                                $subject = "Pending " . $type[$params["document_type"]] . " approval " . $documentApproved->documentCode;
+                                                $subject = trans('email.pending_approval', ['documentDescription' => $type[$params["document_type"]], 'documentCode' => $documentApproved->documentCode]);
                                             }
 
                                             $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
@@ -3676,33 +3676,33 @@ class Helper
                                 }
 
                                 DB::commit();
-                                return ['success' => true, 'message' => 'Successfully document confirmed', 'data' => $unverifiedEmails];
+                                return ['success' => true, 'message' => trans('custom.successfully_document_confirmed'), 'data' => $unverifiedEmails];
 
                             } else {
                                 DB::rollback();
-                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                             }
                         } else {
                             DB::rollback();
-                            return ['success' => false, 'message' => 'Document is already confirmed'];
+                            return ['success' => false, 'message' => trans('custom.document_already_confirmed')];
                         }
                     } else {
                         DB::rollback();
-                        return ['success' => false, 'message' => 'Document not found'];
+                        return ['success' => false, 'message' => trans('custom.document_not_found')];
                     }
                 } else {
                     DB::rollback();
-                    return ['success' => false, 'message' => 'Document approval data is already generated.'];
+                    return ['success' => false, 'message' => trans('custom.document_approval_data_generated')];
                 }
             } else {
                 DB::rollback();
-                return ['success' => false, 'message' => 'No records found'];
+                return ['success' => false, 'message' => trans('custom.no_records_found')];
             }
             // all good
         } catch (\Exception $e) {
             DB::rollback();
             //dd($e);
-            return ['success' => false, 'message' => $e . 'Error Occurred'];
+            return ['success' => false, 'message' => $e . trans('custom.error_occurred')];
         }
     }
 
@@ -3941,18 +3941,18 @@ class Helper
                         }
                         $masterDocumentDate = Carbon::parse($masterDocumentDate);
                         $masterDocumentDate = $masterDocumentDate->format('d/m/Y');
-                        return ['success' => true, 'message' => 'Document will be posted on ' . $masterDocumentDate . '. Are you sure you want to continue?', 'type' => 1];
+                        return ['success' => true, 'message' => trans('custom.document_will_be_posted_on') . ' ' . $masterDocumentDate . '. ' . trans('custom.are_you_sure_continue'), 'type' => 1];
                     } else {
-                        return ['success' => false, 'message' => 'Financial period not found', 'type' => 3];
+                        return ['success' => false, 'message' => trans('custom.financial_period_not_found'), 'type' => 3];
                     }
                 } else {
-                    return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+                    return ['success' => false, 'message' => trans('custom.no_records_found_caps'), 'type' => 2];
                 }
             } else {
-                return ['success' => true, 'message' => 'Success', 'type' => 5];
+                return ['success' => true, 'message' => trans('custom.success'), 'type' => 5];
             }
         } else {
-            return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+            return ['success' => false, 'message' => trans('custom.no_records_found_caps'), 'type' => 2];
         }
     }
 
@@ -4599,7 +4599,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
             default:
-                return ['success' => false, 'message' => 'Document ID not found'];
+                return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
 
 
@@ -4637,7 +4637,7 @@ class Helper
                 }
 
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
-                    return ['success' => false, 'message' => 'Document is not confirmed'];
+                    return ['success' => false, 'message' => trans('custom.document_not_confirmed')];
                 }
 
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -4660,7 +4660,7 @@ class Helper
                         ->where('documentSystemID', $reference_document_id)
                         ->first();
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found.'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
                     }
 
                     $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
@@ -4683,13 +4683,13 @@ class Helper
 
                     if (!$checkUserHasApprovalAccess) {
                         if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
-                            return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                            return ['success' => false, 'message' => trans('custom.no_access_approve_document')];
                         }
                     }
 
                     if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                         if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                            return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
+                            return ['success' => false, 'message' => trans('custom.not_authorized_confirmed_person')];
                         }
                     }
                 }
@@ -4701,7 +4701,7 @@ class Helper
                         $month = explode('-',$input['FYPeriodDateFrom']);
                         $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
                         if ($financePeriodCheck->isActive == 0) {
-                            return ['success' => false, 'message' => 'The finance period has not been activated for the Accounts Receivable department'];
+                            return ['success' => false, 'message' => trans('custom.finance_period_not_activated_ar')];
                         }
 
                         $checkApprovalAccess = Models\EmployeesDepartment::where('employeeSystemID', $empInfo->employeeSystemID)
@@ -4713,7 +4713,7 @@ class Helper
                             ->exists();
 
                         if(!$checkApprovalAccess){
-                            return ['success' => false, 'message' => 'The user does not have approval access to the customer invoice'];
+                            return ['success' => false, 'message' => trans('custom.user_no_approval_access_customer_invoice')];
                         }
 
                         $assetDisposalMaster = Models\AssetDisposalMaster::find($input["documentSystemCode"]);
@@ -4722,7 +4722,7 @@ class Helper
                             $toCompany = Company::find($assetDisposalMaster->toCompanySystemID);
 
                             if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN != 1) {
-                                return ['success' => false, 'message' => 'Company ' . $toCompany->CompanyName . ' is not registered for VAT'];
+                                return ['success' => false, 'message' => trans('custom.company_not_registered_vat') . ' ' . $toCompany->CompanyName];
                             }
 
                             if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN == 1) {
@@ -4730,7 +4730,7 @@ class Helper
                                     $q->where('isActive', 1);
                                 })->where('isActive', 1)->first();
                                 if (empty($vatSubCategories)) {
-                                    return ['success' => false, 'message' => 'VAT not configured in company ' . $toCompany->CompanyName];
+                                    return ['success' => false, 'message' => trans('custom.vat_not_configured_company') . ' ' . $toCompany->CompanyName];
                                 }
                             }
                         }
@@ -4739,12 +4739,12 @@ class Helper
 
                 if (["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
-                        return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
+                        return ['success' => false, 'message' => trans('custom.budget_transfer_not_current_year')];
                     }
                 }
 
                 if ($docApproved->rejectedYN == -1) {
-                    return ['success' => false, 'message' => 'Level is already rejected'];
+                    return ['success' => false, 'message' => trans('custom.level_already_rejected')];
                 }
 
                 //check document is already approved
@@ -5009,7 +5009,7 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
                                 $outputGL = Models\GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputGL) {
-                                    return ['success' => false, 'message' => 'GL entries are already passed for this document'];
+                                    return ['success' => false, 'message' => trans('custom.gl_entries_already_passed')];
                                 }
                             }
 
@@ -5033,12 +5033,12 @@ class Helper
                                         {
                                             if($fxedAsset->selectedForDisposal) {
                                                 DB::rollback();
-                                                return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already selected for disposal'];
+                                                return ['success' => false, 'message' => trans('custom.asset_cannot_transfer_disposal') . ' ' . $fxedAsset->faCode];
                                             }
 
                                             if($fxedAsset->DIPOSED) {
                                                 DB::rollback();
-                                                return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already disposed'];
+                                                return ['success' => false, 'message' => trans('custom.asset_cannot_transfer_disposed') . ' ' . $fxedAsset->faCode];
                                             }
 
                                             if($input['type'] == 2) {
@@ -5094,7 +5094,7 @@ class Helper
                                 $supplierAssignRes = SupplierAssignService::assignSupplier($input["documentSystemCode"], $docApproved->companySystemID);
                                 if (!$supplierAssignRes['status']) {
                                     DB::rollback();
-                                    return ['success' => false, 'message' => "Error occured while assign supplier"];
+                                    return ['success' => false, 'message' => trans('custom.error_assign_supplier')];
                                 }
                             }
 
@@ -5102,7 +5102,7 @@ class Helper
                                 $supplierAssignRes = CustomerAssignService::assignCustomer($input["documentSystemCode"], $docApproved->companySystemID);
                                 if (!$supplierAssignRes['status']) {
                                     DB::rollback();
-                                    return ['success' => false, 'message' => "Error occured while assign customer"];
+                                    return ['success' => false, 'message' => trans('custom.error_assign_customer')];
                                 }
                             }
 
@@ -5199,7 +5199,7 @@ class Helper
                             if ($input["documentSystemID"] == 69) {
                                 $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputEL) {
-                                    return ['success' => false, 'message' => 'Elimination Ledger entries are already passed for this document'];
+                                    return ['success' => false, 'message' => trans('custom.elimination_ledger_entries_already_passed')];
                                 }
 
                                 $jobGL = EliminationLedgerInsert::dispatch($masterData);
@@ -5380,8 +5380,8 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
-                                    $dataEmail['alertMessage'] = "Registration Approved";
+                                    $temp = trans('email.kyc_approved_body');
+                                    $dataEmail['alertMessage'] = trans('email.registration_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -5406,7 +5406,7 @@ class Helper
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
 
-                                    $dataEmail['alertMessage'] = "Payment Proof Document Approved";
+                                    $dataEmail['alertMessage'] = trans('email.payment_proof_document_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -5419,8 +5419,8 @@ class Helper
                                 if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved. <br><br> Thank You. </p>';
-                                    $dataEmail['alertMessage'] = "Appoinment Approved";
+                                    $temp = trans('email.appointment_approved_body');
+                                    $dataEmail['alertMessage'] = trans('email.appointment_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -5475,7 +5475,7 @@ class Helper
                                                 }
                                             }
                                         }else {
-                                            return ['success' => false, 'message' => 'Published failed'];
+                                            return ['success' => false, 'message' => trans('custom.published_failed')];
                                         }
                                     }
                                 }
@@ -5629,8 +5629,8 @@ class Helper
                                 if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
                                     if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
-                                        $subject = $subjectName . " is fully approved";
-                                        $body = "<p>". $bodyName . " is fully approved . ";
+                                        $subject = trans('email.is_fully_approved', ['attribute' => $subjectName]);
+                                        $body = "<p>". trans('email.is_fully_approved', ['attribute' => $bodyName]) . " . ";
                                         $pushNotificationMessage = $subject;
                                         $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                     } else {
@@ -5640,7 +5640,7 @@ class Helper
                                             ->first();
 
                                         if (empty($companyDocument)) {
-                                            return ['success' => false, 'message' => 'Policy not found for this document'];
+                                            return ['success' => false, 'message' => trans('custom.policy_not_found')];
                                         }
 
                                         $nextLevel = $currentApproved->rollLevelOrder + 1;
@@ -5670,7 +5670,7 @@ class Helper
                                             ->groupBy('employeeSystemID')
                                             ->get();
 
-                                        $pushNotificationMessage = $subjectName . " is pending for your approval.";
+                                        $pushNotificationMessage = trans('email.is_pending_approval', ['attribute' => $subjectName]);
 
                                         // if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
                                         //     if (in_array($input["documentSystemID"], [1, 50, 51])) {
@@ -5678,10 +5678,10 @@ class Helper
                                         //     } else {
                                         //         $redirectUrl =  env("APPROVE_URL");
                                         //     }
-                                        //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        //     $nextApprovalBody = trans('email.level_approved_pending_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'redirectUrl' => $redirectUrl]);
                                         // } else {
                                         //     $redirectUrl =  env("ERP_APPROVE_URL");
-                                        //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        //     $nextApprovalBody = trans('email.level_approved_pending_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'redirectUrl' => $redirectUrl]);
                                         // }
 
 
@@ -5689,12 +5689,12 @@ class Helper
 
                                         $redirectUrl = (in_array($input["documentSystemID"], $documentValues)) ? self::checkDomainErp($input["documentSystemID"], $currentApproved->documentSystemCode) : self::checkDomai();
                                         //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
+                                        $nextApprovalBody = '<p>' . trans('email.level_approved_pending', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder]) . '. <br><br>';
 
                                         if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                             $tenderMaster = TenderMaster::find($input["id"]);
                                             $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                            $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                            $nextApprovalBody .= '<p>' . trans('email.tender_title', ['type' => $type[$tenderMaster->document_type], 'title' => $tenderMaster->title]) . '</p>' . '<p>' . trans('email.tender_description', ['type' => $type[$tenderMaster->document_type], 'description' => $tenderMaster->description]) . '</p>';
                                         }
 
                                         if ($input["documentSystemID"] == 117)
@@ -5704,9 +5704,9 @@ class Helper
                                             $nextApprovalBody .= $ammendText;
                                         }
 
-                                        $nextApprovalBody .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        $nextApprovalBody .= '<a href="' . $redirectUrl . '">' . trans('email.click_here_to_approve') . '</a></p>';
 
-                                        $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
+                                        $nextApprovalSubject = trans('email.level_approved_pending', ['attribute' => $subjectName, 'level' => $currentApproved->rollLevelOrder]);
                                         $nextApproveNameList = "";
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
@@ -5726,13 +5726,13 @@ class Helper
                                             }
                                         }
 
-                                        $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                        $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+                                        $subject = trans('email.level_approved_sent_next', ['attribute' => $subjectName, 'level' => $currentApproved->rollLevelOrder]);
+                                        $body = '<p>'. trans('email.level_approved_sent_next_body', ['attribute' => $bodyName, 'level' => $currentApproved->rollLevelOrder, 'nextApproveNameList' => $nextApproveNameList]);
 
                                         if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                             $tenderMaster = TenderMaster::find($input["id"]);
                                             $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                            $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                            $body .= '<p>' . trans('email.tender_title', ['type' => $type[$tenderMaster->document_type], 'title' => $tenderMaster->title]) . '</p>' . '<p>' . trans('email.tender_description', ['type' => $type[$tenderMaster->document_type], 'description' => $tenderMaster->description]) . '</p>';
                                         }
                                     }
 
@@ -5787,15 +5787,15 @@ class Helper
                         }
 
                     } else {
-                        return ['success' => false, 'message' => 'Approval level not found'];
+                        return ['success' => false, 'message' => trans('custom.approval_level_not_found')];
                     }
                     DB::commit();
                     return ['success' => true, 'message' => $userMessage, 'data' => $more_data];
                 } else {
-                    return ['success' => false, 'message' => 'Level is already approved'];
+                    return ['success' => false, 'message' => trans('custom.level_already_approved')];
                 }
             } else {
-                return ['success' => false, 'message' => 'No records found'];
+                return ['success' => false, 'message' => trans('custom.no_records_found')];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -6396,7 +6396,7 @@ class Helper
                     $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
                 default:
-                    return ['success' => false, 'message' => 'Document ID not set'];
+                    return ['success' => false, 'message' => trans('custom.document_id_not_set')];
             }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
@@ -6404,7 +6404,7 @@ class Helper
             if ($docApprove) {
 
                 if ($docApprove->approvedYN == -1) {
-                    return ['success' => false, 'message' => 'Level is already approved'];
+                    return ['success' => false, 'message' => trans('custom.level_already_approved')];
                 }
 
                 $reference_document_id = $input['documentSystemID'];
@@ -6441,7 +6441,7 @@ class Helper
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found.'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
                 }
 
 
@@ -6465,14 +6465,14 @@ class Helper
 
                 if (!$checkUserHasApprovalAccess) {
                     if (($input["documentSystemID"] == 9 && ($docModal && $docModal->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
-                        return ['success' => false, 'message' => 'You do not have access to reject this document.'];
+                        return ['success' => false, 'message' => trans('custom.no_access_reject_document')];
                     }
                 }
 
 
                 if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($docModal[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot reject!'];
+                        return ['success' => false, 'message' => trans('custom.not_authorized_confirmed_person_reject')];
                     }
                 }
 
@@ -6572,10 +6572,10 @@ class Helper
                                         "<p>Reject Comment: " . $input["rejectedComments"] . "</p>" .
                                         "<p>Thank You.</p>";
                                 }else {
-                                    $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
+                                    $body = trans('email.is_rejected', ['attribute' => $bodyName, 'empName' => $empInfo->empName, 'rejectedComments' => $input["rejectedComments"]]);
                                 }
                             }else {
-                                $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
+                                $body = trans('email.is_rejected', ['attribute' => $bodyName, 'empName' => $empInfo->empName, 'rejectedComments' => $input["rejectedComments"]]);
                             }
 
                             // get previously approved person for send Emil
@@ -6649,20 +6649,21 @@ class Helper
                                         $link = env('SRM_LINK');
                                         $loginLink = str_replace("/register/", "/", $link);
 
-                                        $sub = "
-                                        <p>Dear Supplier,</p>
-                                        <p>Please be informed that your KYC form has been referred back by ".$empInfo->empName.", for the following reason.</p>
-                                        <p>Reason : <b>" .$input["rejectedComments"]."</b></p>
-                                        <p>Please click on the \"Amend\" button to do the changes into KYC and resubmit for approval.</p>
-                                        <p><a href='$loginLink'>Supplier Portal Login</a></p>
-                                        <p>Click the above link to login to system. Thank You.</p>";
+                                        $sub = trans('email.kyc_referred_back_body', [
+                                            'empName' => $empInfo->empName,
+                                            'rejectedComments' => $input["rejectedComments"],
+                                            'loginLink' => $loginLink
+                                        ]);
 
-                                        $msg = " Registration Referred Back";
+                                        $msg = trans('email.registration_referred_back');
                                     }
                                     else if($input["documentSystemID"] == 106)
                                     {
-                                        $sub = "<p>Dear Supplier" . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
-                                        $msg = " Delivery Appointment Rejected";
+                                        $sub = trans('email.delivery_appointment_rejected_body', [
+                                            'empName' => $empInfo->empName,
+                                            'rejectedComments' => $input["rejectedComments"]
+                                        ]);
+                                        $msg = trans('email.delivery_appointment_rejected');
                                     }
 
                                     else if ($input["documentSystemID"] == 127)
@@ -6694,7 +6695,7 @@ class Helper
                                 }
                                 else
                                 {
-                                    return ['success' => false, 'message' => "Unable to send the email"];
+                                    return ['success' => false, 'message' => trans('email.unable_to_send')];
                                 }
                             }else if((!isset($input['rejectedStatus']) || $input['rejectedStatus'] == 0)  && ($input["document_system_id"] == 108 || $input["document_system_id"] == 113)){
                                 $confirmedUserEmail = Employee::select('empName','empEmail')
@@ -6715,7 +6716,7 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }else {
-                                    return ['success' => false, 'message' => "Unable to send the email"];
+                                    return ['success' => false, 'message' => trans('email.unable_to_send')];
                                 }
 
                             }else
@@ -6729,22 +6730,22 @@ class Helper
                             }
                         }
                     } else {
-                        return ['success' => false, 'message' => 'Approval level not found'];
+                        return ['success' => false, 'message' => trans('custom.approval_level_not_found')];
                     }
                     DB::commit();
 
                     $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
-                    return ['success' => true, 'message' => 'Document is successfully '.$rejectedMsg];
+                    return ['success' => true, 'message' => trans('custom.document_successfully') . ' ' . $rejectedMsg];
 
                 } else {
-                    return ['success' => false, 'message' => 'Level is already rejected'];
+                    return ['success' => false, 'message' => trans('custom.level_already_rejected')];
                 }
             } else {
-                return ['success' => false, 'message' => 'No record found'];
+                return ['success' => false, 'message' => trans('custom.no_record_found')];
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error Occurred'];
+            return ['success' => false, 'message' => $e . trans('custom.error_occurred')];
         }
     }
 
@@ -6788,11 +6789,11 @@ class Helper
     {
 
         if (!array_key_exists('Authorization', $input) || $input['Authorization'] == "") {
-            return ['success' => false, 'message' => 'Unauthorized'];
+            return ['success' => false, 'message' => trans('custom.unauthorized')];
         }
 
         if (strpos($input['Authorization'], 'Bearer') === false) {
-            return ['success' => false, 'message' => 'Unauthorized'];
+            return ['success' => false, 'message' => trans('custom.unauthorized')];
         }
 
         $token = trim(str_replace("", "", $input['Authorization']));
@@ -6803,7 +6804,7 @@ class Helper
             ->get();
 
         if (empty($oauth)) {
-            return ['success' => false, 'message' => 'Unauthorized'];
+            return ['success' => false, 'message' => trans('custom.unauthorized')];
         }
 
         $id = 2637;
@@ -6813,7 +6814,7 @@ class Helper
         if ($employee) {
             return ['success' => true, 'message' => $employee];
         } else {
-            return ['success' => false, 'message' => 'Unauthorized'];
+            return ['success' => false, 'message' => trans('custom.unauthorized')];
         }
     }
 
@@ -7105,16 +7106,16 @@ class Helper
         $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         if ($companyFinanceYear) {
             if ($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1) {
-                return ['success' => false, 'message' => 'Selected financial year is not active'];
+                return ['success' => false, 'message' => trans('custom.selected_financial_year_not_active')];
             } else {
                 return ['success' => true, 'message' => $companyFinanceYear];
             }
         } else {
             $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->first();
             if (empty($companyFinanceYear)) {
-                return ['success' => false, 'message' => 'Financial year not selected/not active'];
+                return ['success' => false, 'message' => trans('custom.financial_year_not_selected_active')];
             } else {
-                return ['success' => false, 'message' => 'Please select a finance year'];
+                return ['success' => false, 'message' => trans('custom.please_select_finance_year')];
             }
         }
     }
@@ -7126,16 +7127,16 @@ class Helper
         $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         if ($companyFinancePeriod) {
             if ($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1) {
-                return ['success' => false, 'message' => 'Selected financial period is not active'];
+                return ['success' => false, 'message' => trans('custom.selected_financial_period_not_active')];
             } else {
                 return ['success' => true, 'message' => $companyFinancePeriod];
             }
         } else {
             $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->where('departmentSystemID', $input['departmentSystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
             if (!$companyFinancePeriod) {
-                return ['success' => false, 'message' => 'Financial period not selected/not active'];
+                return ['success' => false, 'message' => trans('custom.financial_period_not_selected_active')];
             } else {
-                return ['success' => false, 'message' => 'Please select a finance period'];
+                return ['success' => false, 'message' => trans('custom.please_select_finance_period')];
             }
         }
     }
@@ -7334,7 +7335,7 @@ class Helper
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
             default:
-                return ['success' => false, 'message' => 'Document ID not found'];
+                return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
 
         $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -7422,7 +7423,7 @@ class Helper
                 }
             }
         } else {
-            return ['success' => false, 'message' => 'No records found'];
+            return ['success' => false, 'message' => trans('custom.no_records_found')];
         }
 
 
@@ -8044,15 +8045,15 @@ class Helper
     {
         /** check document is already confirmed*/
         if (!array_key_exists('autoID', $params)) {
-            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_missing')];
         }
 
         if (!array_key_exists('company', $params)) {
-            return ['success' => false, 'message' => 'Parameter company is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_company_missing')];
         }
 
         if (!array_key_exists('document', $params)) {
-            return ['success' => false, 'message' => 'Parameter document is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_missing')];
         }
 
 
@@ -8393,7 +8394,7 @@ class Helper
                 $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
                 break;
             default:
-                return ['success' => false, 'message' => 'Document ID not found'];
+                return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
 
         $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -8746,8 +8747,8 @@ class Helper
                     if (!empty($fetchingUsers)) {
                         foreach ($fetchingUsers as $value) {
 
-                            $subject = 'A new request ' . $masterRec->purchaseRequestCode . ' is approved.';
-                            $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
+                            $subject = trans('email.new_request_approved', ['requestCode' => $masterRec->purchaseRequestCode]);
+                            $body = trans('email.new_request_approved_body', ['requestCode' => $masterRec->purchaseRequestCode]);
 
                             $emails[] = array(
                                 'empSystemID' => $value->employeeSystemID,
@@ -8914,9 +8915,9 @@ class Helper
 
         if ($isGroup) {
             if (is_null($documentType)) {
-                return ['success' => false, 'message' => 'Primary company cannot be a group of company.'];
+                return ['success' => false, 'message' => trans('custom.primary_company_cannot_group')];
             } else {
-                return ['success' => false, 'message' => 'Assigned company cannot be a group of company.'];
+                return ['success' => false, 'message' => trans('custom.assigned_company_cannot_group')];
             }
         }
 
@@ -8924,20 +8925,20 @@ class Helper
             case 'supplier':
                 $supplierAssigned = Models\SupplierAssigned::where('supplierCodeSytem', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($supplierAssigned)) {
-                    return ['success' => false, 'message' => 'This is supplier is already assign to this company.'];
+                    return ['success' => false, 'message' => trans('custom.supplier_already_assign_company')];
                 }
                 break;
             case 'item':
                 $itemAssigned = Models\ItemAssigned::where('itemCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($itemAssigned)) {
-                    return ['success' => false, 'message' => 'This is item is already assign to this company.'];
+                    return ['success' => false, 'message' => trans('custom.item_already_assign_company')];
                 }
                 break;
             case 'customer':
                 if (!$edit) {
                     $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
                     if (!is_null($customerAssigned)) {
-                        return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                        return ['success' => false, 'message' => trans('custom.customer_already_assign_company')];
                     }
                 }
 
@@ -8945,7 +8946,7 @@ class Helper
                 if ($customerMasterData && !is_null($customerMasterData->customerCategoryID)) {
                     $checkAssignedStatusOfCategory = Models\CustomerMasterCategoryAssigned::checkCustomerCategoryAssignedStatus($customerMasterData->customerCategoryID, $companyID);
                     if (!$checkAssignedStatusOfCategory) {
-                        return ['success' => false, 'message' => 'Customer category of this customer is not assign to this company.'];
+                        return ['success' => false, 'message' => trans('custom.customer_category_not_assign_company')];
                     }
                 }
 
@@ -8953,7 +8954,7 @@ class Helper
                     if (!is_null($customerMasterData->custGLAccountSystemID)) {
                         $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custGLAccountSystemID, $companyID);
                         if (!$checkAssignedStatusOfGL) {
-                            return ['success' => false, 'message' => 'GL Account of this customer is not assign to this company.'];
+                            return ['success' => false, 'message' => trans('custom.gl_account_not_assign_company')];
                         }
                     }
 
@@ -8961,7 +8962,7 @@ class Helper
                     if (!is_null($customerMasterData->custUnbilledAccountSystemID)) {
                         $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custUnbilledAccountSystemID, $companyID);
                         if (!$checkAssignedStatusOfGL) {
-                            return ['success' => false, 'message' => 'Unbilled Account of this customer is not assign to this company.'];
+                            return ['success' => false, 'message' => trans('custom.unbilled_account_not_assign_company')];
                         }
                     }
                 }
@@ -8970,13 +8971,13 @@ class Helper
             case 'customerCategory':
                 $customerAssigned = Models\CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($customerAssigned)) {
-                    return ['success' => false, 'message' => 'This is customer catgeory is already assign to this company.'];
+                    return ['success' => false, 'message' => trans('custom.customer_category_already_assign_company')];
                 }
                 break;
             case 'chartofaccounts':
                 $chartOfAccountAssigned = Models\ChartOfAccountsAssigned::where('chartOfAccountSystemID', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($chartOfAccountAssigned)) {
-                    return ['success' => false, 'message' => 'This is chart of account is already assign to this company.'];
+                    return ['success' => false, 'message' => trans('custom.chart_account_already_assign_company')];
                 }
                 break;
 
@@ -9841,7 +9842,7 @@ class Helper
         if(!$isValidate)
         {
 
-            return ['success' => false, 'message' => 'The selected supplier has been blocked. Please change the supplier to proceed.'];
+            return ['success' => false, 'message' => trans('custom.selected_supplier_blocked')];
         }
 
         return ['success' => true, 'message' => "supplier checked successfully"];
@@ -9986,7 +9987,7 @@ class Helper
                 'companySystemID' => $companySystemID,
                 'attachmentList' => $attachments,
                 'emailAlertMessage' => $emailMessage,
-                'alertMessage' => $documentName . ' Circular',
+                'alertMessage' => $documentName . ' ' . trans('email.circular'),
             ];
 
             \Email::sendEmailErp($dataEmail);

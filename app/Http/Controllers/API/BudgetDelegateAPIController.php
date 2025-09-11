@@ -53,6 +53,15 @@ class BudgetDelegateAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if(!isset($input['type']) && isset($input['id']))
+        {
+            $input = $this->convertArrayToValue($input);
+            $updateWorkStatus = BudgetDelegateAccessRecord::find($input['id']);
+            $updateWorkStatus->work_status = $input['work_status'];
+            $updateWorkStatus->save();
+            return $this->sendResponse($updateWorkStatus ,"Workstatus update successfully!");
+        }
+        
         if ($input['type'] == "single") {
             try {
                 $request->validate([
@@ -105,7 +114,7 @@ class BudgetDelegateAPIController extends AppBaseController
 
                 // validate submission time is not graeter than budget planning detail submission time
                 if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate)) {
-                    throw new Exception('Submission time cannot be greater than budget planning submission time');
+                    $this->sendError('Submission date must be less than the current submission date and greater than current date');
                 }
 
                 // Check if this is segment-based or GL-based

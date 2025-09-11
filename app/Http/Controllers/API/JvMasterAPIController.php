@@ -189,7 +189,7 @@ class JvMasterAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Error"
+                    "message" => trans('custom.error')
                 ];
             }
             else{
@@ -1916,8 +1916,8 @@ HAVING
             }
         }
 
-        $emailBody = '<p>' . $jvMaster->JVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $jvMaster->JVcode . ' has been return back to amend';
+        $emailBody = '<p>' . $jvMaster->JVcode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $jvMaster->JVcode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

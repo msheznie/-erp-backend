@@ -235,7 +235,7 @@ class DebitNoteAPIController extends AppBaseController
 
             if(!($is_valid))
             {
-                return $this->sendError('Employee Control Account not Configured !', 500);
+                return $this->sendError(trans('custom.employee_control_account_not_configured'), 500);
             }
             
         }
@@ -589,7 +589,7 @@ class DebitNoteAPIController extends AppBaseController
 
                     if(!($is_valid))
                     {
-                    return $this->sendError('Employee Control Account not Configured !', 500);
+                    return $this->sendError(trans('custom.employee_control_account_not_configured'), 500);
                     }
 
 
@@ -2324,8 +2324,8 @@ UNION ALL
             }
         }
 
-        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $debitNoteMasterData->debitNoteCode . ' has been return back to amend';
+        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $debitNoteMasterData->debitNoteCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

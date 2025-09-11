@@ -83,3 +83,4 @@ class DocumentRestrictionPolicyTranslation extends Model
         return $this->belongsTo(DocumentRestrictionPolicy::class, 'policyId', 'id');
     }
 }
+

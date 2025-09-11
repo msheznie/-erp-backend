@@ -378,7 +378,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!', 500);
+            return $this->sendError(trans('custom.document_date_is_not_within_financial_period'), 500);
         }
 
 
@@ -1390,7 +1390,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!', 500);
+            return $this->sendError(trans('custom.document_date_is_not_within_financial_period'), 500);
         }
 
         $validator = \Validator::make($input, [
@@ -3275,9 +3275,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
-        $emailBody = '<p>' . $masterData->custPaymentReceiveCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailBody = '<p>' . $masterData->custPaymentReceiveCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
 
-        $emailSubject = $masterData->custPaymentReceiveCode . ' has been return back to amend';
+        $emailSubject = $masterData->custPaymentReceiveCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

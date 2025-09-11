@@ -1517,9 +1517,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetMaster->faCode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetMaster->faCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetMaster->companySystemID)
                 ->where('documentSystemCode', $fixedAssetMaster->faID)
@@ -2406,8 +2406,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             
 
 
-            $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-            $emailSubject = $masterData->faCode . ' has been return back to amend';
+            $emailBody = '<p>' . $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+            $emailSubject = $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend');
     
             DB::beginTransaction();
             try {

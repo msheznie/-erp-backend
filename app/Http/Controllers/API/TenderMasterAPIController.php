@@ -383,7 +383,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster->delete();
 
-        return $this->sendSuccess('Tender Master deleted successfully');
+        return $this->sendSuccess(trans('custom.tender_master_deleted_successfully'));
     }
 
     public function getTenderMasterList(Request $request)
@@ -536,9 +536,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($exist)) {
             if (isset($input['rfx']) && $input['rfx']) {
-                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
             }
         }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -592,7 +592,7 @@ class TenderMasterAPIController extends AppBaseController
 
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('custom.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -612,7 +612,7 @@ class TenderMasterAPIController extends AppBaseController
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('custom.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1051,9 +1051,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($existTndr)) {
             if ($rfq) {
-                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
             }
         }
 
@@ -4073,7 +4073,7 @@ class TenderMasterAPIController extends AppBaseController
                 if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
                     $name = $mail->employee->empFullName;
                     $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
-                    $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                    $body = trans('email.hi') . " $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                     $dataEmail['empEmail'] = $mail->employee->empUserName;
                     $dataEmail['companySystemID'] = $request['companySystemID'];
                     $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -4156,10 +4156,10 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>" . trans('email.hi') . " " . $name . $tenderCustomEmail->email_body . $company . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
-                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+                $body = trans('email.hi') . " $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br><br> Regards,<br>$company.";
             }
@@ -4193,7 +4193,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = trans('email.hi') . " $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";

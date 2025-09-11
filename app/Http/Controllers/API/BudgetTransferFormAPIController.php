@@ -729,9 +729,9 @@ class BudgetTransferFormAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetTransfer->transferVoucherNo . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetTransfer->transferVoucherNo;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $budgetTransfer->companySystemID)
             ->where('documentSystemCode', $budgetTransfer->budgetTransferFormAutoID)

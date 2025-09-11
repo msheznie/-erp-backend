@@ -23,12 +23,13 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     public $color;
     public $text;
     public $fromName;
+    public $locale;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($subject, $content, $attachment = '', $attachmentList = [],$color = '#C23C32',$text = 'GEARS', $fromName = 'GEARS')
+    public function __construct($subject, $content, $attachment = '', $attachmentList = [],$color = '#C23C32',$text = 'GEARS', $fromName = 'GEARS', $locale = null)
     {
         $this->subject = $subject;
         $this->content = $content;
@@ -37,6 +38,7 @@ class EmailForQueuing extends Mailable implements ShouldQueue
         $this->color = $color;
         $this->text = $text;
         $this->fromName = $fromName;
+        $this->locale = $locale ?? app()->getLocale();
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
@@ -53,7 +55,7 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     {
 
        $mail = $this->from(env('MAIL_FROM_ADDRESS'), $this->fromName)
-                    ->view('email.default_email',['color' => $this->color,'text' => $this->text])
+                    ->view('email.default_email',['color' => $this->color,'text' => $this->text,'locale' => $this->locale])
                     ->subject($this->subject)
                     ->sendgrid([
                         'personalizations' => [

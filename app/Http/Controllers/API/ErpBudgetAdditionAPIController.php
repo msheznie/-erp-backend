@@ -931,9 +931,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetAddition->additionVoucherNo . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetAddition->additionVoucherNo;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $budgetAddition->companySystemID)
             ->where('documentSystemCode', $budgetAddition->id)

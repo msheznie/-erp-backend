@@ -624,7 +624,7 @@ class ExpenseClaimAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $emails = array();
         $masterData = ExpenseClaim::find($id);
-        $documentName = "Expense Claim";
+        $documentName = trans('email.expense_claim');
 
         if (empty($masterData)) {
             return $this->sendError($documentName . ' not found');
@@ -634,8 +634,8 @@ class ExpenseClaimAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this') . $documentName . ', it is not confirmed');
         }
 
-        $emailBody = '<p>' . $masterData->expenseClaimCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->expenseClaimCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->expenseClaimCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->expenseClaimCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {

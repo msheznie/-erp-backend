@@ -206,6 +206,12 @@ class DocumentAttachmentsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
+            $local = $request->get('lang');
+            
+            if(!empty($local)) {
+                app()->setLocale($local);
+            }
+
             $input = $request->all();
             $extension = $input['fileType'];
 
@@ -223,11 +229,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
-                        "message" => "This type of file not allow to upload."
+                        "message" => trans('custom.type_not_allowed')
                     ];
                 }
                 else{
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return $this->sendError(trans('custom.type_not_allowed'), 500);
                 }
             }
 
@@ -237,7 +243,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
-                            "message" => "Maximum allowed file size is exceeded"
+                            "message" => trans('custom.maximum_allowed_file_size')
                         ];
                     }
                     else{
@@ -339,11 +345,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Unable to upload the attachment"
+                    "message" =>  trans('custom.unable_to_upload_the_attachment')
                 ];
             }
             else{
-                return $this->sendError('Unable to upload the attachment' . $exception->getLine(), 500);
+                return $this->sendError( trans('custom.unable_to_upload_the_attachment') . $exception->getLine(), 500);
             }
         }
     }

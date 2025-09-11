@@ -400,15 +400,22 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 $this->updateLeaveMaster($documentSystemCode);
                 $this->updateLeaveDetail($documentSystemCode,$input['rejectedComments']);
 
-                $documentName = ($leaveDetails->EntryType == 1)? "Leave Application":"Leave Claim";
+                $documentName = ($leaveDetails->EntryType == 1)? trans('email.leave_application'):trans('email.leave_claim');
 
                 $originator = Employee::where('empID',$leaveDetails->confirmedby)->first();
 
                 $emails[] = array('empSystemID' => $input['empSystemID'],
                     'companySystemID' => $input['companySystemID'],
                     'docSystemID' => $input['documentSystemID'],
-                    'alertMessage' => "Referred Back ".$documentName." ".$leaveDetails->leaveDataMasterCode,
-                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDetails->leaveDataMasterCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'alertMessage' => trans('email.referred_back') . " " . $documentName . " " . $leaveDetails->leaveDataMasterCode,
+                    'emailAlertMessage' => trans('email.leave_referred_back_message', [
+                        'empName' => $originator->empName,
+                        'documentName' => $documentName,
+                        'documentCode' => $leaveDetails->leaveDataMasterCode,
+                        'userName' => $user->empName,
+                        'companyName' => $companyName,
+                        'comments' => $input["rejectedComments"]
+                    ]),
                     'docSystemCode' => $documentSystemCode);
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDetails->leaveDataMasterCode." is referred back by ". $user->empName." from ".$companyName;
@@ -484,7 +491,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                             ->first();
 
         if(empty($isManagerMatch)){
-            return $this->sendError('Not Allowed, Only Reporting Manager can approve');
+            return $this->sendError(trans('email.not_allowed_only_manager'));
         }
 
         //update document approved
@@ -509,7 +516,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
             $empData = Employee::where('empID',$leaveDetails->confirmedby)->first();
 
-            $documentName = ($leaveDetails->EntryType == 1)? "Leave Application":"Leave Claim";
+            $documentName = ($leaveDetails->EntryType == 1)? trans('email.leave_application'):trans('email.leave_claim');
             $pushNotificationUserIds = [];
             $pushNotificationArray = [];
             $emails[] = array(
@@ -730,7 +737,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'modelName' => 'ExpenseClaim',
                     'primarykey' => 'expenseClaimMasterAutoID',
                     'child' => 'details',
-                    'documentName'=> 'Expense Claim'
+                    'documentName'=> trans('email.expense_claim')
                 );
                 break;
             case 37:
@@ -739,7 +746,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'modelName' => 'LeaveDataMaster',
                     'primarykey' => 'leavedatamasterID',
                     'child' => 'detail',
-                    'documentName'=> 'Leave Application'
+                    'documentName'=> trans('email.leave_application')
                 );
                 break;
             default:
@@ -774,7 +781,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 ->first();
 
             if(empty($isManagerMatch)){
-                return $this->sendError('Not Allowed, Only Reporting Manager can approve');
+                return $this->sendError(trans('email.not_allowed_only_manager'));
             }
             $notificationType = 2;
         }elseif ($documentSystemID==6){
@@ -866,8 +873,12 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                                     'empSystemID' => $value->employee->employeeSystemID,
                                     'companySystemID' => $value->employee->empCompanySystemID,
                                     'docSystemID' => $documentSystemID,
-                                    'alertMessage' => $docInforArr['documentName']." Approved Mail to Account Payable Department",
-                                    'emailAlertMessage' => "Dear " .$value->employee->empName. ",<p>Expense Claim <strong>". $leaveDocumentApproved->documentCode ."</strong> is approved in <strong>". $empCompany ."<strong/> Please process the payment.<br><br>Regards,<br>Team Gears<br>",
+                                    'alertMessage' => $docInforArr['documentName'] . " " . trans('email.leave_approved_mail_account_payable'),
+                                    'emailAlertMessage' => trans('email.expense_claim_approved_message', [
+                                        'empName' => $value->employee->empName,
+                                        'documentCode' => $leaveDocumentApproved->documentCode,
+                                        'companyName' => $empCompany
+                                    ]),
                                     'docSystemCode' => $documentSystemCode);
 
                                 $pushNotificationMessage = "Expense Claim ". $leaveDocumentApproved->documentCode ." is approved in ". $empCompany ." Please process the payment";
@@ -896,8 +907,11 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                             'empSystemID' => $hr->employeeSystemID,
                             'companySystemID' => $hr->empCompanySystemID,
                             'docSystemID' => $documentSystemID,
-                            'alertMessage' => "Approved " .$modelDetails->leaveDataMasterCode,
-                            'emailAlertMessage' => $docInforArr['documentName'] ." <b>".$modelDetails->leaveDataMasterCode."</b> has been approved.",
+                            'alertMessage' => trans('email.approved') . " " . $modelDetails->leaveDataMasterCode,
+                            'emailAlertMessage' => trans('email.leave_approved_message', [
+                                'documentName' => $docInforArr['documentName'],
+                                'documentCode' => $modelDetails->leaveDataMasterCode
+                            ]),
                             'docSystemCode' => $documentSystemCode);
 
                         $pushNotificationMessage = $docInforArr['documentName'] ." ".$modelDetails->leaveDataMasterCode." has been approved.";
@@ -975,7 +989,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 $pushNotificationArray = [];
                 if($input['documentSystemID'] == 6){
                     $notificationType = 3;
-                    $documentName = "Expense Claim";
+                    $documentName = trans('email.expense_claim');
 
                     $entityDetail = ExpenseClaim::with(['details'])
                         ->where('expenseClaimMasterAutoID',$documentSystemCode)
@@ -997,7 +1011,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
                 }else if($input['documentSystemID'] == 37){
                     $notificationType = 2;
-                    $documentName = "Leave Application";
+                    $documentName = trans('email.leave_application');
 
                     $entityDetail = LeaveDataMaster::with(['detail'])
                         ->where('leavedatamasterID',$documentSystemCode)
@@ -1019,8 +1033,15 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'empSystemID' => $originator->employeeSystemID,
                     'companySystemID' => $input['companySystemID'],
                     'docSystemID' => $input['documentSystemID'],
-                    'alertMessage' => "Referred Back ".$documentName." ".$leaveDocumentApproved->documentCode,
-                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDocumentApproved->documentCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'alertMessage' => trans('email.referred_back') . " " . $documentName . " " . $leaveDocumentApproved->documentCode,
+                    'emailAlertMessage' => trans('email.leave_referred_back_message', [
+                        'empName' => $originator->empName,
+                        'documentName' => $documentName,
+                        'documentCode' => $leaveDocumentApproved->documentCode,
+                        'userName' => $user->empName,
+                        'companyName' => $companyName,
+                        'comments' => $input["rejectedComments"]
+                    ]),
                     'docSystemCode' => $documentSystemCode);
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDocumentApproved->documentCode." is referred back by ". $user->empName." from ".$companyName;

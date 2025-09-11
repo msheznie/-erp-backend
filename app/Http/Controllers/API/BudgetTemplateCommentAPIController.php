@@ -109,7 +109,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
 
         // Check if user can delete this comment
         if ($comment->user_id !== Auth::id()) {
-            return $this->sendError('You can only delete your own comments');
+            return $this->sendError(trans('custom.you_can_only_delete_your_own_comments'));
         }
 
         try {
