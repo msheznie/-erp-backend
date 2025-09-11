@@ -283,7 +283,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
     {
         try{
             $supplierValidation = $this->srmService->supplierValidation($request);
-            return $this->sendResponse($supplierValidation, 'Record retrieved successfully');
+            return $this->sendResponse($supplierValidation, trans('srm_supplier_management.record_retrieved_successfully'));
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -640,7 +640,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
       
-        return $this->sendResponse($dataPrimary['primarySupplierCode'] ,"Supplier created successfully");
+        return $this->sendResponse($dataPrimary['primarySupplierCode'] ,trans('srm_supplier_management.supplier_created_successfully'));
     }
 
     public function isSupplierMasterCreated($supplierId){ 

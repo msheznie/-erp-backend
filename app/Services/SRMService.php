@@ -6723,8 +6723,7 @@ class SRMService
         if (!empty($registrationNumber) && SupplierMaster::checkFieldExists($companyId, 'registrationNumber', $registrationNumber)) {
             return [
                 'success' => false,
-                'message' => 'Same CR number already exists, cannot create as new supplier, please link with the
-                 existing supplier',
+                'message' => trans('srm_supplier_management.same_cr_number_already_exists_cannot_create_as_new_supplier_please_link_with_the_existing_supplier'),
                 'data' => 1
             ];
         }
@@ -6734,14 +6733,14 @@ class SRMService
         ){
             return [
                 'success' => false,
-                'message' => 'Supplier name or Email already exist, Do you wish to continue?',
+                'message' => trans('srm_supplier_management.supplier_name_or_email_exists_do_you_wish_to_continue'),
                 'data' => 0
             ];
         }
 
         return [
             'success' => true,
-            'message' => 'Supplier validation successfully',
+            'message' => trans('srm_supplier_management.supplier_validation_successfully'),
             'data' => []
         ];
     }
@@ -6764,10 +6763,10 @@ class SRMService
 
 
         $messages = [
-            'company_id.required' => 'Company ID is required.',
-            'registrationNumber.required' => 'Registration number is required.',
-            'email.email' => 'Email is required.',
-            'name.required' => 'Name is required.',
+            'company_id.required' => trans('srm_supplier_management.company_id_is_required'),
+            'registrationNumber.required' => trans('srm_supplier_management.registration_number_is_required'),
+            'email.email' => trans('srm_supplier_management.email_is_required'),
+            'name.required' => trans('srm_supplier_management.name_is_required'),
         ];
 
         $validator = Validator::make($validationData, $rules, $messages);
