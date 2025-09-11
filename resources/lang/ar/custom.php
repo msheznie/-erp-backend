@@ -6350,6 +6350,22 @@ return [
     'excel_total' => 'المجموع',
     'excel_qty_on_order' => 'الكمية في الطلب',
     'excel_qty_in_hand' => 'الكمية المتوفرة',
+    
+    // PR Controller Report Headers
+    'pr_number' => 'رقم طلب الشراء',
+    'pr_requested_date' => 'تاريخ طلب الشراء',
+    'department' => 'القسم',
+    'narration' => 'الرواية',
+    'location' => 'الموقع',
+    'priority' => 'الأولوية',
+    'created_by' => 'تم الإنشاء بواسطة',
+    'confirmed_date' => 'تاريخ التأكيد',
+    'approved_date' => 'تاريخ الموافقة',
+    'item_code' => 'رمز العنصر',
+    'part_no' => 'رقم القطعة',
+    'item_description' => 'وصف العنصر',
+    'req_qty' => 'الكمية المطلوبة',
+    'part_no_ref_number' => 'رقم القطعة / الرقم المرجعي',
 
     // Account Receivable receipt voucher
     'rv_brv_code' => 'BRV كود',
@@ -6433,6 +6449,13 @@ return [
     'cancelled_by' => 'تم إلغاؤه بواسطة',
     'cancelled_at' => 'تم إلغاؤه في',
     'receipt_amount' => 'مبلغ الإيصال',
+
+    // Quotation SO Report
+    'expire_date' => 'تاريخ الإنتهاء',
+    'document_status' => 'حالة المستند',
+    'customer_status' => 'حالة العميل',
+    'paid_amount' => 'مبلغ الدفع',
+    'delivery_return_status' => 'حالة التسليم/الإرجاع',
 
     // AR customer invoice
     'ar_goods' => 'البضائع',

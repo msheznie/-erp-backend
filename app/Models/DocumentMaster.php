@@ -97,7 +97,7 @@ class DocumentMaster extends Model
         if ($translation && $translation->description) {
             return $translation->description;
         }
-        
-        return $value;
+
+        return $this->attributes['documentDescription'] ?? '';
     }
 }

@@ -6333,6 +6333,22 @@ return [
     'excel_total' => 'Total',
     'excel_qty_on_order' => 'Qty On Order',
     'excel_qty_in_hand' => 'Qty in Hand',
+    
+    // PR Controller Report Headers
+    'pr_number' => 'PR Number',
+    'pr_requested_date' => 'PR Requested Date',
+    'department' => 'Department',
+    'narration' => 'Narration',
+    'location' => 'Location',
+    'priority' => 'Priority',
+    'created_by' => 'Created By',
+    'confirmed_date' => 'Confirmed Date',
+    'approved_date' => 'Approved Date',
+    'item_code' => 'Item Code',
+    'part_no' => 'Part No',
+    'item_description' => 'Item Description',
+    'req_qty' => 'Req Qty',
+    'part_no_ref_number' => 'Part No / Ref.Number',
 
     // Accounts Receivable receipt voucher
     'rv_brv_code' => 'BRV Code',
@@ -6418,6 +6434,13 @@ return [
     'cancelled_by' => 'Cancelled By',
     'cancelled_at' => 'Cancelled At',
     'receipt_amount' => 'Receipt Amount',
+
+    // Quotation SO Report
+    'expire_date' => 'Expire Date',
+    'document_status' => 'Document Status',
+    'customer_status' => 'Customer Status',
+    'paid_amount' => 'Paid Amount',
+    'delivery_return_status' => 'Delivery/Return Status',
 
     // AR customer invoice
     'ar_goods' => 'Goods',
