@@ -82,7 +82,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $this->tenderBidClarificationsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->all();
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_retrieved_successfully'));
+        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications retrieved successfully');
     }
 
     /**
@@ -129,7 +129,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->create($input);
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_saved_successfully'));
+        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications saved successfully');
     }
 
     /**
@@ -176,10 +176,10 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
+            return $this->sendError('Tender Bid Clarifications not found');
         }
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_retrieved_successfully'));
+        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications retrieved successfully');
     }
 
     /**
@@ -236,12 +236,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
+            return $this->sendError('Tender Bid Clarifications not found');
         }
 
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tenderbidclarifications_updated_successfully'));
+        return $this->sendResponse($tenderBidClarifications->toArray(), 'TenderBidClarifications updated successfully');
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
+            return $this->sendError('Tender Bid Clarifications not found');
         }
 
         $tenderBidClarifications->delete();
@@ -351,8 +351,8 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
-        } 
-        
+        }
+
         $employeeId = Helper::getEmployeeSystemID();
         $response = $input['comments'];
         $id = $input['id'];
@@ -409,13 +409,13 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderPreBidClarification = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderPreBidClarification)) {
-            return $this->sendError(trans('custom.not_found_1'));
-        } 
+            return $this->sendError(trans('srm_faq.not_found'));
+        }
 
         $isLastSupplierResponse = TenderBidClarifications::select('id')
             ->where('tender_master_id', $tenderMasterId)
-            ->where('parent_id', $masterResponseId) 
-            ->where('posted_by_type', 0) 
+            ->where('parent_id', $masterResponseId)
+            ->where('posted_by_type', 0)
             ->orderBy('id', 'desc')
             ->first();
 
@@ -441,7 +441,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 ->update($updateRec);
         }
 
-        return $this->sendResponse($id, trans('custom.file_deleted'));
+        return $this->sendResponse($id, trans('srm_faq.file_deleted'));
     }
     public function getPreBidEditData(Request $request)
     {
@@ -479,7 +479,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated'];
+            return ['success' => true, 'message' => trans('srm_faq.successfully_updated')];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -493,12 +493,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx','docx'];
 
             if (!in_array(strtolower($extension), $allowExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                return $this->sendError(trans('srm_faq.file_type_not_allowed'), 500);
             }
 
             if (isset($attachment['size'])) {
                 if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    return $this->sendError('srm_faq.file_size_exceeded', 500);
                 }
             }
             $file = $attachment['file'];
@@ -578,9 +578,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $attachments = $bidClarification->attachment;
             if($attachments) {
                 foreach ($attachments as $attachment) {
-                if ($attachment) {
-                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
-                }
+                    if ($attachment) {
+                        $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
+                    }
                     $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
                 }
             }
@@ -619,14 +619,14 @@ class TenderBidClarificationsAPIController extends AppBaseController
             return response()->json(['message' => $errorMessage,], 422);
         } else {
             foreach ($emailString as $email){
-            $forwardEmail = email::emailAddressFormat($email);
-            $dataEmail['companySystemID'] = $companyId;
-            $dataEmail['alertMessage'] = "Pre Bid Clarification";
-            $dataEmail['empEmail'] = $forwardEmail;
-            $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
-            $dataEmail['emailAlertMessage'] = $body;
-            $dataEmail['attachmentList'] = $file;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+                $forwardEmail = email::emailAddressFormat($email);
+                $dataEmail['companySystemID'] = $companyId;
+                $dataEmail['alertMessage'] = "Pre Bid Clarification";
+                $dataEmail['empEmail'] = $forwardEmail;
+                $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
+                $dataEmail['emailAlertMessage'] = $body;
+                $dataEmail['attachmentList'] = $file;
+                $sendEmail = \Email::sendEmailErp($dataEmail);
             }
         }
         return ['success' => true, 'message' => trans('srm_faq.emails_sent_successfully')];
@@ -639,6 +639,6 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
 
-        return $this->sendResponse($raiseAsPrivate, trans('custom.prebid_clarifications_policy_retrieved_successfull'));
+        return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
     }
 }

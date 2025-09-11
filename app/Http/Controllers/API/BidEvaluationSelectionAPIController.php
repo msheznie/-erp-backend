@@ -75,7 +75,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $this->bidEvaluationSelectionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidEvaluationSelections = $this->bidEvaluationSelectionRepository->all();
 
-        return $this->sendResponse($bidEvaluationSelections->toArray(), trans('custom.bid_evaluation_selections_retrieved_successfully'));
+        return $this->sendResponse($bidEvaluationSelections->toArray(), 'Bid Evaluation Selections retrieved successfully');
     }
 
     /**
@@ -138,7 +138,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
 
-        return $this->sendResponse($bids, trans('custom.bid_evaluation_selection_saved_successfully'));
+        return $this->sendResponse($bids, trans('srm_faq.bid_evaluation_selection_saved'));
     }
 
     /**
@@ -186,10 +186,10 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
+            return $this->sendError('Bid Evaluation Selection not found');
         }
 
-        return $this->sendResponse($bidEvaluationSelection->toArray(), trans('custom.bid_evaluation_selection_retrieved_successfully'));
+        return $this->sendResponse($bidEvaluationSelection->toArray(), 'Bid Evaluation Selection retrieved successfully');
     }
 
     /**
@@ -251,39 +251,39 @@ class BidEvaluationSelectionAPIController extends AppBaseController
     {
         $input = $request->all();
 
-      
 
-            $type = $input['type'];
-            $tender_id = $input['tender_id'];
-            $bucket_id = $input['id'];
-            unset($input['type']);
-            unset($input['tender_id']);
-            unset($input['id']);
-    
-           
-            if($type == 2)
+
+        $type = $input['type'];
+        $tender_id = $input['tender_id'];
+        $bucket_id = $input['id'];
+        unset($input['type']);
+        unset($input['tender_id']);
+        unset($input['id']);
+
+
+        if($type == 2)
+        {
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+
+            $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
+                $q->where('critera_type_id',2);
+            })->count();
+
+
+            if($evaluation > 0)
             {
-                $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
-    
-                $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
-                    $q->where('critera_type_id',2);
-                })->count();
-    
-             
-                if($evaluation > 0)
-                {
-                    return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
-                }
-         
+                return $this->sendError(trans('srm_ranking.enter_remaining_user_values'),500);
             }
 
-        
+        }
+
+
 
         /** @var BidEvaluationSelection $bidEvaluationSelection */
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
+            return $this->sendError('Bid Evaluation Selection not found');
         }
 
         if($type == 1){
@@ -307,7 +307,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             // $status =  BidEvaluationSelection::where('tender_id',$tender_id)->where('status',0)->count();
 
-            
+
 
             // if(($bids_bucket == $count) && $status == 0)
             // {
@@ -321,35 +321,35 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
                 ['technical_verify_status'=>1,
-                'technical_verify_by'=>\Helper::getEmployeeSystemID(),
-                'technical_verify_at'=>Carbon::now(),
-                'technical_eval_remarks'=>$input['remarks']]
+                    'technical_verify_by'=>\Helper::getEmployeeSystemID(),
+                    'technical_verify_at'=>Carbon::now(),
+                    'technical_eval_remarks'=>$input['remarks']]
             );
 
             $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('doc_verifiy_status',1)->where('status',1)->count();
             if($query == 0)
             {
-                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
-                    $tenderMaster->technical_eval_status = 1;;
-                    $tenderMaster->save();
+                $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
+                $tenderMaster->technical_eval_status = 1;;
+                $tenderMaster->save();
             }
         }
 
         if($type == 3){
-                unset($input['status']);
-                unset($input['updated_at']);
-                $input['remarks'] = $input['remarks'];
-                $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+            unset($input['status']);
+            unset($input['updated_at']);
+            $input['remarks'] = $input['remarks'];
+            $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
 
-                $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
-                BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
-                    ['technical_eval_remarks'=>$input['remarks']]
-                );
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+            BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
+                ['technical_eval_remarks'=>$input['remarks']]
+            );
 
 
         }
 
-        return $this->sendResponse($bidEvaluationSelection->toArray(), trans('custom.bidevaluationselection_updated_successfully'));
+        return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
     }
 
     /**
@@ -397,7 +397,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
 
         if (empty($bidEvaluationSelection)) {
-            return $this->sendError(trans('custom.bid_evaluation_selection_not_found'));
+            return $this->sendError('Bid Evaluation Selection not found');
         }
 
         $bidEvaluationSelection->delete();
@@ -424,7 +424,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->where('description', 'like', "%{$search}%");
-                 });
+            });
         }
 
         return \DataTables::eloquent($query)
@@ -442,7 +442,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
     public function removeBid(Request $request)
     {
-  
+
 
         DB::beginTransaction();
         try {
@@ -450,11 +450,11 @@ class BidEvaluationSelectionAPIController extends AppBaseController
             $id = $input['id'];
             $selection_id = $input['selection_id'];
             $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$selection_id)->pluck('bids')[0],true);
-    
+
             $newArray = array_diff($bid_master_ids, (array)$id);
-    
+
             $result = (array_values($newArray));
-    
+
             $temp['bids'] =  json_encode($result);
             $output = BidEvaluationSelection::where('id',$selection_id)->update($temp);
 
@@ -472,8 +472,8 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
     public function addBid(Request $request)
     {
-  
-        
+
+
         DB::beginTransaction();
         try {
             $input = $request->all();
@@ -482,11 +482,11 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             $selection_id = $input['group_id'];
             $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$selection_id)->pluck('bids')[0],true);
-            
+
 
             $final_array = array_merge($bid_master_ids,$bids);
 
-    
+
             $temp['bids'] =  json_encode($final_array);
             $output = BidEvaluationSelection::where('id',$selection_id)->update($temp);
 

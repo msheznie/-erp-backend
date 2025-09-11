@@ -21,7 +21,7 @@ class ConfigurationAPIController extends AppBaseController
 
     public function getConfigurationInfo(Request $request){
 
-        $isLang = 0;
+        $isLang = 1;
         $environment = 'Local';
         $version = $this->getVersion();
         $serverTime = time();
