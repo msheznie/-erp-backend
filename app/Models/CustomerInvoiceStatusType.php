@@ -33,6 +33,7 @@ class CustomerInvoiceStatusType extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    protected $appends = ['description'];
 
 
 
@@ -61,6 +62,49 @@ class CustomerInvoiceStatusType extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Relationship to CustomerInvoiceStatusTypeLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(CustomerInvoiceStatusTypeLanguage::class, 'typeAutoID', 'typeAutoID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated description
+     */
+    public function getDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->description;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->description;
+            }
+        }
+        
+        return $this->attributes['description'] ?? '';
+    }
 
     
 }
