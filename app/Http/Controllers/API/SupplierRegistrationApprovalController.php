@@ -93,7 +93,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 'erp_documentapproved.rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode'
-                // 'employees.empName As created_user'
+            // 'employees.empName As created_user'
             )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -164,15 +164,15 @@ class SupplierRegistrationApprovalController extends AppBaseController
     {
         switch ($request->input('mode')) {
             case 'approve': {
-                    $this->approveSupplierKYC($request);
-                    break;
-                }
+                $this->approveSupplierKYC($request);
+                break;
+            }
             case 'reject': {
-                    $this->rejectSupplierKYC($request);
-                    break;
-                }
+                $this->rejectSupplierKYC($request);
+                break;
+            }
             default: {
-                }
+            }
         }
     }
 
@@ -186,15 +186,15 @@ class SupplierRegistrationApprovalController extends AppBaseController
     {
         $db = isset($request->db) ? $request->db : "";
 
-       $supplierMasterId = $this->isSupplierMasterCreated($request['id']);  
-       
-       $approve = Helper::approveDocument($request);
+        $supplierMasterId = $this->isSupplierMasterCreated($request['id']);
+
+        $approve = Helper::approveDocument($request);
 
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
             if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
-                 ThirdPartySystemNotificationJob::dispatch($db,107,$request['id']);
+                ThirdPartySystemNotificationJob::dispatch($db,107,$request['id']);
 
                 $getUpdatedValues = SRMSupplierValues::select('user_name','name')
                     ->where('company_id',$request['company_id'])
@@ -208,7 +208,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                     ->update([
                         'email' => $userName,
                         'name' => $name
-                ]);
+                    ]);
 
                 $response = $this->srmService->callSRMAPIs([
                     'apiKey' => $request->input('api_key'),
@@ -222,7 +222,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                     ]
                 ]);
 
-                if($supplierMasterId['supplier_master_id'] > 0){ 
+                if($supplierMasterId['supplier_master_id'] > 0){
                     $getSupplierData = $this->getKYCData($request);
                     $supData = $getSupplierData->data;
                     $supDataArray = json_decode(json_encode($supData), true);
@@ -233,17 +233,17 @@ class SupplierRegistrationApprovalController extends AppBaseController
                         'isApprovalAmmend'=> 1,
                         'primarySupplierCode'=> $supplierMasterId['supplier']['primarySupplierCode']
                     ];
-        
+
                     $request->merge([
                         'data' => $supDataArray,
                         'supplierRegistration' => $supplierReg,
                     ]);
-        
-                    $this->supplierCreation($request); 
-               }
-        
 
-                if ($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+                    $this->supplierCreation($request);
+                }
+
+
+                if ($response && $response->success === false) return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_status_couldnt_be_updated'));
             }
 
             return $this->sendResponse(array(), $approve["message"]);
@@ -273,7 +273,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 ]
             ]);
 
-            if ($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+            if ($response && $response->success === false) return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_status_couldnt_be_updated'));
 
             return $this->sendResponse(array(), $reject["message"]);
         }
@@ -283,7 +283,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
     {
         try{
             $supplierValidation = $this->srmService->supplierValidation($request);
-            return $this->sendResponse($supplierValidation, trans('custom.record_retrieved_successfully_1'));
+            return $this->sendResponse($supplierValidation, trans('srm_supplier_management.record_retrieved_successfully'));
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -302,31 +302,31 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
 
         $liabilityAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-liability-account')
-                        ->with(['detail'=>function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        }])
-                        ->whereHas('detail',function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        })
-                        ->first();
+            ->with(['detail'=>function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            }])
+            ->whereHas('detail',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            })
+            ->first();
 
         $unbilledAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-unbilled-account')
-                        ->with(['detail'=>function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        }])                        
-                        ->whereHas('detail',function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        })
-                        ->first();
+            ->with(['detail'=>function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            }])
+            ->whereHas('detail',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            })
+            ->first();
 
         $advanceAccountConfigs = SystemGlCodeScenario::where('slug','account-payable-advance-account')
-                        ->with(['detail'=>function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        }])                        
-                        ->whereHas('detail',function($query) use($selectedCompanyId){
-                            $query->where('companySystemID',$selectedCompanyId);
-                        })
-                        ->first();
+            ->with(['detail'=>function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            }])
+            ->whereHas('detail',function($query) use($selectedCompanyId){
+                $query->where('companySystemID',$selectedCompanyId);
+            })
+            ->first();
 
 
         if($liabilityAccountConfigs->detail !== null && $liabilityAccountConfigs->detail->chartOfAccountSystemID !== null){
@@ -369,7 +369,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             $supplierCat = SupplierCategoryMaster::select('supCategoryMasterID')->where('supCategoryMasterID', $supplierFormValues['supCategoryMasterID'])->first();
             $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
         }
-        
+
         if (isset($supplierFormValues['supCategory']) && !empty($supplierFormValues['supCategory']) && $supplierFormValues['supCategory'] != "0") {
             $supplierCat = SupplierCategory::select('id')->where('id', $supplierFormValues['supCategory'])->first();
             $data['supplier_category_id'] = $supplierCat['id'];
@@ -411,7 +411,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }else {
 
             $supplierMasterUpdate = SupplierMaster::where('supplierCodeSystem',$supplierMasterData['supplierMasterId'])
-            ->update($data);
+                ->update($data);
 
             if($supplierMasterUpdate && !empty($supplierMasterData['supplierMasterId']) && !empty($data)) {
                 $keysToRemove = ['primaryCompanySystemID', 'primaryCompanyID', 'documentSystemID', 'documentID',
@@ -599,12 +599,12 @@ class SupplierRegistrationApprovalController extends AppBaseController
             $supplierCurrency->save();
         }else {
             SupplierCurrency::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
-            ->update([
-                'supplierCodeSystem' => $supplierMasters['supplierCodeSystem'],
-                'currencyID' => $supplierMasters['currency'],
-                'isAssigned' => -1,
-                'isDefault' => -1
-            ]);
+                ->update([
+                    'supplierCodeSystem' => $supplierMasters['supplierCodeSystem'],
+                    'currencyID' => $supplierMasters['currency'],
+                    'isAssigned' => -1,
+                    'isDefault' => -1
+                ]);
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
@@ -614,7 +614,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $empName = $employee['empName'];
         $temBankMemo = new BankMemoSupplier();
 
-        if($isApprovalAmmend!=1){ 
+        if($isApprovalAmmend!=1){
             foreach ($companyDefaultBankMemos as $value) {
                 $temBankMemo->memoHeader = $value['bankMemoHeader'];
                 $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
@@ -627,49 +627,49 @@ class SupplierRegistrationApprovalController extends AppBaseController
             }
 
             $isUpdated = SupplierRegistrationLink::where('id', $supplierMasterData['id'])
-            ->update([
-                'supplier_master_id' => $supplier->supplierCodeSystem
-            ]);
+                ->update([
+                    'supplier_master_id' => $supplier->supplierCodeSystem
+                ]);
         }else {
             BankMemoSupplier::where('supplierCodeSystem', $supplierMasterData['supplierMasterId'])
-            ->update([
-                'supplierCurrencyID' => $supplierCurrency->supplierCurrencyID
-            ]);
+                ->update([
+                    'supplierCurrencyID' => $supplierCurrency->supplierCurrencyID
+                ]);
 
             $dataPrimary['primarySupplierCode'] = $supplierMasterData['primarySupplierCode'];
         }
 
-      
-        return $this->sendResponse($dataPrimary['primarySupplierCode'] ,"Supplier created successfully");
+
+        return $this->sendResponse($dataPrimary['primarySupplierCode'] ,trans('srm_supplier_management.supplier_created_successfully'));
     }
 
-    public function isSupplierMasterCreated($supplierId){ 
+    public function isSupplierMasterCreated($supplierId){
         $isMasterCreate = SupplierRegistrationLink::select('supplier_master_id','company_id')
-        ->with(['supplier'=>function ($q){ 
-            $q->select('supplierCodeSystem','supplierName','primarySupplierCode');
-        }])
-        ->where('id',$supplierId)
-        ->first();
+            ->with(['supplier'=>function ($q){
+                $q->select('supplierCodeSystem','supplierName','primarySupplierCode');
+            }])
+            ->where('id',$supplierId)
+            ->first();
 
         return $isMasterCreate;
     }
 
     public function getKYCData($request){
-        
+
         $response = $this->srmService->callSRMAPIs([
             'apiKey' => $request->input('api_key'),
             'request' => 'GET_SUPPLIER_DETAIL_CREATIONS',
-            'extra' => [ 
+            'extra' => [
                 'auth'      => $request->user(),
                 'uuid'      => $request->input('uuid')
             ]
         ]);
 
-        if ($response && $response->success === true){ 
+        if ($response && $response->success === true){
             return $response;
         }
 
-        return $this->sendError("Something went wrong!, Supplier data couldn't be fetched");
+        return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_data_couldnt_be_fetched'));
 
     }
 }
