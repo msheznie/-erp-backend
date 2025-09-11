@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\DepartmentBudgetPlanning;
@@ -308,8 +309,9 @@ class BudgetDelegateAPIController extends AppBaseController
 
             // Filter employees to exclude already assigned ones
             $employees = $allEmployees->filter(function ($employee) use ($assignedEmployeeSystemIDs) {
-                return !in_array($employee->employeeSystemID, $assignedEmployeeSystemIDs);
+                return !in_array($employee->employeeSystemID, $assignedEmployeeSystemIDs) && ($employee->employeeSystemID != Helper::getEmployeeSystemID());
             })->values();
+
             if ($data['type'] == 0) {
                 $data = [
                     'accessTypes' => $accessTypes,
