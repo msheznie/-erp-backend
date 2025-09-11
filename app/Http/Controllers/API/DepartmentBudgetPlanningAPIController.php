@@ -173,7 +173,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department'])->findWithoutFail($id);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department','delegateAccess'])->findWithoutFail($id);
 
         if (empty($departmentBudgetPlanning)) {
             return $this->sendError('Department Budget Planning not found');

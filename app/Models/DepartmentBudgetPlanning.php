@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Schema(
@@ -199,6 +200,12 @@ class DepartmentBudgetPlanning extends Model
     public function budgetPlanningDetails()
     {
         return $this->hasMany(DepartmentBudgetPlanningDetail::class, 'department_planning_id');
+    }
+
+    public function delegateAccess()
+    {
+        return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', 110);
+
     }
 
     /**
