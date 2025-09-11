@@ -126,7 +126,7 @@ class GRVMasterRepository extends BaseRepository
         if (empty($grvMaster)) {
             return [
                 'status' => 0,
-                'msg' => 'GRV not found'
+                'msg' => trans('custom.grv_not_found')
             ];
         }
 
@@ -134,21 +134,22 @@ class GRVMasterRepository extends BaseRepository
         {
             return [
                 'status' => 0,
-                'msg' => 'companySystemID not found'
+                'msg' => trans('custom.company_system_id_not_found')
             ];
         }
 
         if ($grvMaster->approved != -1) {
+            $message = $type == 'reversal' ? trans('custom.cannot_reverse_document_not_approved') : trans('custom.cannot_cancel_document_not_approved');
             return [
                 'status' => 0,
-                'msg' => 'You cannot '.$document.', This document not approved.'
+                'msg' => $message
             ];
         }
 
         if ($grvMaster->grvCancelledYN == -1) {
             return [
                 'status' => 0,
-                'msg' => 'GRV already cancelled'
+                'msg' => trans('custom.grv_already_cancelled')
             ];
         }
 
@@ -176,7 +177,7 @@ class GRVMasterRepository extends BaseRepository
         if($isPullPurchaseReturn) {
             return [
                 'status' => 0,
-                'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
+                'msg' => trans('custom.cannot_reverse_grv_already_added')
             ];
         }
         else {
@@ -185,7 +186,7 @@ class GRVMasterRepository extends BaseRepository
             if($isPullSupplierInvoice) {
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
+                    'msg' => trans('custom.cannot_reverse_grv_already_added')
                 ];
             }
         }
@@ -215,7 +216,7 @@ class GRVMasterRepository extends BaseRepository
             if($deliveryNote || $directItemInvoice || $materialIssue || $stockTransferOut) {
                 return [
                     'status' => 0,
-                    'msg' => 'The Stock-Out Document Created for Selected GRV'
+                    'msg' => trans('custom.stock_out_document_created_for_grv')
                 ];
             }
 
@@ -308,7 +309,7 @@ class GRVMasterRepository extends BaseRepository
             if (!empty($invalidItemData)) {
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot reverse the GRV. Item not sufficient to reverse the GRV',
+                    'msg' => trans('custom.cannot_reverse_grv_insufficient_items'),
                     'data' => $invalidItemData,
                     'code' => 502
                 ];
@@ -319,9 +320,10 @@ class GRVMasterRepository extends BaseRepository
         if(empty($inventoryItems) && !empty($otherItems) || (!empty($inventoryItems) && !empty($otherItems))) {
             $checkInAllocation = FixedAssetMaster::where('docOriginDocumentSystemID', 3)->where('docOriginSystemCode', $input['grvAutoID'])->first();
             if ($checkInAllocation) {
+                $message = $type == 'reversal' ? trans('custom.cannot_reverse_grv_already_added_asset') : trans('custom.cannot_cancel_grv_already_added_asset');
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
+                    'msg' => $message,
                 ];
             }
         }

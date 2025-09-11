@@ -273,25 +273,25 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Warehouse stock Qty is 0. You cannot return.", 500,$qtyError);
+            return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_return'), 500,$qtyError);
         }
         if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Stock Qty is 0. You cannot return.", 500,$qtyError);
+            return $this->sendError(trans('custom.stock_qty_zero_cannot_return'), 500,$qtyError);
         }
         if ($input['noQty'] > $itemCurrentCostAndQty['currentStockQty']) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Current stock Qty is: " . $itemCurrentCostAndQty['currentStockQty'] . " .You cannot return more than the current stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_stock_qty_cannot_return_more', ['qty' => $itemCurrentCostAndQty['currentStockQty']]), 500, $qtyError);
         }
 
         if ($input['noQty'] > $itemCurrentCostAndQty['currentWareHouseStockQty']) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Current warehouse stock Qty is: " . $itemCurrentCostAndQty['currentWareHouseStockQty'] . " .You cannot return more than the current warehouse stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_warehouse_stock_qty_cannot_return_more', ['qty' => $itemCurrentCostAndQty['currentWareHouseStockQty']]), 500, $qtyError);
         }
 
         if ($input['noQty'] > $purchaseReturnDetails->GRVQty) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Return qty cannot be greater than GRV qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.return_qty_cannot_greater_grv_qty'), 500, $qtyError);
         }
 
         $input['netAmount'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitSupTransCur;

@@ -280,7 +280,7 @@ class StockCountRefferedBackAPIController extends AppBaseController
 
         $stockCountRefferedBack->delete();
 
-        return $this->sendSuccess('Stock Count Reffered Back deleted successfully');
+        return $this->sendSuccess(trans('custom.stock_count_reffered_back_deleted_successfully'));
     }
 
 

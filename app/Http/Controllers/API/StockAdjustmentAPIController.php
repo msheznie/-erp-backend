@@ -196,7 +196,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.document_date_not_within_financial_period'), 500);
         }
 
         DB::beginTransaction();
@@ -389,7 +389,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->stockAdjustmentRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
-                return $this->sendError('Please select a active Segment', 500,$serviceLineError);
+                return $this->sendError(trans('custom.please_select_active_segment'), 500,$serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -403,7 +403,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
             if ($checkWareHouseActive->isActive == 0) {
                 $this->stockAdjustmentRepository->update(["location" => null],$id);
-                return $this->sendError('Please select a active location', 500, $wareHouseError);
+                return $this->sendError(trans('custom.please_select_active_location'), 500, $wareHouseError);
             }
         }
 
@@ -452,7 +452,7 @@ class StockAdjustmentAPIController extends AppBaseController
             }
             
             if(isset($input['reason']) && $input['reason'] == 0) {
-                return $this->sendError('Please select reason', 500);
+                return $this->sendError(trans('custom.please_select_reason'), 500);
             }
 
             $documentDate = $input['stockAdjustmentDate'];
@@ -460,13 +460,13 @@ class StockAdjustmentAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document  date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.document_date_not_within_financial_period_2'), 500);
             }
 
             $checkItems = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every document should have at least one item', 500);
+                return $this->sendError(trans('custom.every_document_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
@@ -536,7 +536,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $stockAdjustment = $this->stockAdjustmentRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockAdjustment->toArray(), 'StockAdjustment updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($stockAdjustment->toArray(), trans('custom.stock_adjustment_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -1005,7 +1005,7 @@ class StockAdjustmentAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

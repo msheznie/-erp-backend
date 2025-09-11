@@ -219,7 +219,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Purchase Return Date not between Financial period !', 500);
+            return $this->sendError(trans('custom.purchase_return_date_not_between_financial_period'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -427,7 +427,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                return $this->sendError('Please select a active segment ', 500, $serviceLineError);
+                return $this->sendError(trans('custom.please_select_active_segment_return'), 500, $serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -441,7 +441,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
             if ($checkWareHouseActive->isActive == 0) {
                 $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $id);
-                return $this->sendError('Please select a active location', 500, $wareHouseError);
+                return $this->sendError(trans('custom.please_select_active_location_return'), 500, $wareHouseError);
             }
         }
 

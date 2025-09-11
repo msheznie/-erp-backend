@@ -276,7 +276,7 @@ class PurchaseReturnDetailsRefferedBackAPIController extends AppBaseController
 
         $purchaseReturnDetailsRefferedBack->delete();
 
-        return $this->sendSuccess('Purchase Return Details Reffered Back deleted successfully');
+        return $this->sendSuccess(trans('custom.purchase_return_details_reffered_back_deleted_successfully'));
     }
 
     public function getPRDetailsAmendHistory(Request $request)

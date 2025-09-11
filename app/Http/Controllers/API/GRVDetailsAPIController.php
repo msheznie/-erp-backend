@@ -217,11 +217,11 @@ class GRVDetailsAPIController extends AppBaseController
                     // }
 
                     if ($input['noQty'] == 0) {
-                        return $this->sendError('Number of quantity should not be greater than zero', 422);
+                        return $this->sendError(trans('custom.quantity_should_not_greater_zero'), 422);
                     }
 
                     if ($input['noQty'] > ($input['poQty'] - $input['prvRecievedQty'])) {
-                        return $this->sendError('Number of quantity should not be greater than received qty', 422);
+                        return $this->sendError(trans('custom.quantity_should_not_greater_received_qty'), 422);
                     }
 
                     $detailPOSUM = GRVDetails::WHERE('purhaseReturnAutoID', $input['purhaseReturnAutoID'])->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purhasereturnDetailID', $input['purhasereturnDetailID'])->sum('noQty');
@@ -280,7 +280,7 @@ class GRVDetailsAPIController extends AppBaseController
                     }
 
                     if ($input['noQty'] > ($input['poQty'] - $input['prvRecievedQty'])) {
-                        return $this->sendError('Number of quantity should not be greater than received qty', 422);
+                        return $this->sendError(trans('custom.quantity_should_not_greater_received_qty'), 422);
                     }
 
                     $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
@@ -779,10 +779,10 @@ class GRVDetailsAPIController extends AppBaseController
                     }
 
                     if ($grvMasterData['stampDate'] > $currentDate) {
-                        return $this->sendError('Stamp date can not be greater than current date', 500);
+                        return $this->sendError(trans('custom.stamp_date_cannot_be_greater_than_current'), 500);
                     }
                 } else {
-                    return $this->sendError('Stamp Date Not Selected', 500);
+                    return $this->sendError(trans('custom.stamp_date_not_selected'), 500);
                 }
 
                 if(isset($grvMasterData['grvLocation'])){
@@ -797,16 +797,16 @@ class GRVDetailsAPIController extends AppBaseController
 
                     if ($warehouse->manufacturingYN == 1) {
                         if (is_null($warehouse->WIPGLCode)) {
-                            return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                            return $this->sendError(trans('custom.please_assign_wip_glcode_warehouse'), 500);
                         } else {
                             $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
                             if (!$checkGLIsAssigned) {
-                                return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                                return $this->sendError(trans('custom.wip_gl_code_not_assigned_company'), 500);
                             }
                         }
                     }
                 } else {
-                    return $this->sendError('Location Not Selected', 500);
+                    return $this->sendError(trans('custom.location_not_selected'), 500);
                 }
 
 
@@ -952,7 +952,7 @@ class GRVDetailsAPIController extends AppBaseController
                                                     ->where('goodsRecievedYN', '<>', 2)
                                                     ->count();
             if ($poDetailTotal != $frontDetailcount) {
-                return $this->sendError('All PO detail items should be pulled for this grv', 422);
+                return $this->sendError(trans('custom.all_po_detail_items_should_pulled'), 422);
             }
         }
 
@@ -992,14 +992,14 @@ class GRVDetailsAPIController extends AppBaseController
                         if ($POMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
                             if ($new['isChecked'] && ((float)$new['noQty'] != ($new['poQty'] - (float)$new['receivedQty']))) {
-                                return $this->sendError('Full order quantity should be received', 422);
+                                return $this->sendError(trans('custom.full_order_quantity_should_received'), 422);
                             }
                         }
                     }
 
                     $epsilon = 0.000001;
                     if ($new['noQty'] - ($new['poQty'] - $new['receivedQty']) > $epsilon) {
-                        return $this->sendError('Number of quantity should not be greater than received qty for item '.$new['itemPrimaryCode']. ' - ' .$new['itemDescription'], 422);
+                        return $this->sendError(trans('custom.quantity_greater_received_qty_item', ['item' => $new['itemPrimaryCode'], 'description' => $new['itemDescription']]), 422);
                     }
 
                     if ($allowMultiplePO->isYesNO == 0) {
@@ -1327,10 +1327,10 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         } else {
-            return $this->sendError('Please select a department.', 500);
+            return $this->sendError(trans('custom.please_select_department'), 500);
         }
 
         if ($grvMaster->grvLocation) {
@@ -1339,11 +1339,11 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
-                return $this->sendError('Please select an active warehouse', 500);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
             }
         }
         else {
-            return $this->sendError('Please select a warehouse.', 500);
+            return $this->sendError(trans('custom.please_select_warehouse'), 500);
         }
         
         DB::beginTransaction();
@@ -1351,7 +1351,7 @@ class GRVDetailsAPIController extends AppBaseController
             $itemAssign = ItemAssigned::with(['item_master'])->find($input['itemCode']);
 
             if (empty($itemAssign)) {
-                return $this->sendError('Item not assigned');
+                return $this->sendError(trans('custom.item_not_assigned'));
             }
 
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -1544,10 +1544,10 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         } else {
-            return $this->sendError('Please select a department.', 500);
+            return $this->sendError(trans('custom.please_select_department'), 500);
         }
 
         if ($grvMaster->grvLocation) {
@@ -1556,11 +1556,11 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
-                return $this->sendError('Please select an active warehouse', 500);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
             }
         }
         else {
-            return $this->sendError('Please select a warehouse.', 500);
+            return $this->sendError(trans('custom.please_select_warehouse'), 500);
         }
 
         DB::beginTransaction();
@@ -1665,7 +1665,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.no_details_to_delete'));
         }
 
         $grvMasterData = GRVMaster::find($grvAutoID);
@@ -1972,14 +1972,14 @@ class GRVDetailsAPIController extends AppBaseController
                         // if ($allowPartialGRVPolicy->isYesNO == 0 && $PRMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
                             // if ($new['isChecked'] && ((float)$new['noQty'] != ($new['prnQty'] - (float)$new['receivedQty']))) {
-                            //     return $this->sendError('Full order quantity should be received', 422);
+                            //     return $this->sendError(trans('custom.full_order_quantity_should_received'), 422);
                             // }
                         // }
                     }
 
 
                     if ($new['noQty'] > ($new['prnQty'] - $new['receivedQty'])) {
-                        return $this->sendError('Number of quantity should not be greater than received qty', 422);
+                        return $this->sendError(trans('custom.quantity_should_not_greater_received_qty'), 422);
                     }
 
                     // if ($allowMultiplePO->isYesNO == 0) {
