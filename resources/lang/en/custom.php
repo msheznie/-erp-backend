@@ -6510,4 +6510,19 @@ return [
     'profit_margin' => 'Profit Margin',
     'average_cost' => 'Average Cost',
     'up_to_date' => 'Up to Date',
+
+    // Sales Analysis Detail Report
+    'sales_detail' => 'Sales Detail',
+    'from_date' => 'From Date',
+    'to_date' => 'To Date',
+    'location_code' => 'Location Code',
+    'transaction_type' => 'Transaction Type',
+    'transaction_code' => 'Transaction Code',
+    'transaction_date' => 'Transaction Date',
+    'barcode' => 'Barcode',
+    'revenue_acc_code' => 'Revenue Acc Code',
+    'sold_qty' => 'Sold Qty',
+    'currency' => 'Currency',
+    'sold_price' => 'Sold Price',
+    'net_sales_amount' => 'Net Sales Amount',
 ];
