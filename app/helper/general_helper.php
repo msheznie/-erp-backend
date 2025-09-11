@@ -6562,7 +6562,7 @@ class Helper
                                 $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
                             }
 
-                            $subject = $subjectName . " is rejected.";
+                            $subject = trans('email.is_rejected_subject', ['attribute' => $subjectName]);
                             if(isset($input['rejectedStatus']) && $input['rejectedStatus'] == 1) {
                                 if(($input["document_system_id"] == 108 || $input["document_system_id"] == 113)){
                                     $documentType = ($input["document_system_id"]) == 108 ? 'Tender' : 'RFX';

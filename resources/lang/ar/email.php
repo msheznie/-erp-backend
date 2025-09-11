@@ -20,6 +20,7 @@ return [
     'level_approved_sent_next' => ':attribute المستوى :level تم الموافقة عليه وإرساله للموافقة على المستوى التالي',
     'level_approved_sent_next_body' => ':attribute المستوى :level تم الموافقة عليه وإرساله للموافقة على المستوى التالي للموظفين التاليين <br>:nextApproveNameList',
     'is_rejected' => ':attribute تم رفضه للأسباب التالية من قبل :empName<br> :rejectedComments',
+    'is_rejected_subject' => ':attribute تم رفضه.',
     'pending_approval' => 'في انتظار موافقة :documentDescription :documentCode',
     
     // Additional Email Messages
