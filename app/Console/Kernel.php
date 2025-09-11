@@ -89,7 +89,12 @@ class Kernel extends ConsoleKernel
             ->timezone('Asia/Muscat')
             ->hourly()
             ->between('00:00', '12:00')
-            ->withoutOverlapping();      
+            ->withoutOverlapping();
+
+      /*  $schedule->command('sendTenderBidOpeningReminders')
+            ->timezone('Asia/Muscat')
+            ->everyMinute()
+            ->withoutOverlapping();*/
     }
 
     /**

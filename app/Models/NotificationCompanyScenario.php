@@ -115,4 +115,19 @@ class NotificationCompanyScenario extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companyID', 'companySystemID');
     }
+    public static function getCompanyScenario(){
+        return self::select('id', 'scenarioID', 'companyID', 'isActive')
+            ->where('isActive', 1)
+            ->whereIn('scenarioID', [45, 46])
+            ->with([
+                'notification_day_setup' => function ($q) {
+                    $q->select('id', 'companyScenarionID', 'beforeAfter', 'days', 'isActive', 'frequency')
+                        ->where('isActive', 1);
+                }
+            ])
+            ->whereHas('notification_day_setup', function ($q) {
+                $q->where('isActive', 1);
+            })
+            ->get();
+    }
 }
