@@ -10,6 +10,7 @@
 
 * **Employee Designation:** EA | Setup for Designation Update Notification in Employee Master [GHR-6977] ([#8719](https://github.com/pbsgears/Gears_BackEnd/issues/8719)) ([5968897](https://github.com/pbsgears/Gears_BackEnd/commit/596889712e413822c1d3cc7b57ca682fcfbf6c7e))
 
+
 ## [10.83.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.82.0...v10.83.0) (2025-09-11)
 
 
