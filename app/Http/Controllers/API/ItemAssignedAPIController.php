@@ -286,36 +286,36 @@ class ItemAssignedAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Item code'] = $value->itemPrimaryCode;
-                $data[$x]['Mfg No'] = $value->secondaryItemCode;
-                $data[$x]['Item Description'] = $value->itemDescription;
+                $data[$x][__('custom.item_code')] = $value->itemPrimaryCode;
+                $data[$x][__('custom.mfg_no')] = $value->secondaryItemCode;
+                $data[$x][__('custom.item_description')] = $value->itemDescription;
 
                 if ($value->unit) {
-                    $data[$x]['Unit'] = $value->unit->UnitShortCode;
+                    $data[$x][__('custom.unit')] = $value->unit->UnitShortCode;
                 } else {
-                    $data[$x]['Unit'] = '';
+                    $data[$x][__('custom.unit')] = '';
                 }
 
                 if ($value->financeMainCategory) {
-                    $data[$x]['Main Category'] = $value->financeMainCategory->categoryDescription;
+                    $data[$x][__('custom.main_category')] = $value->financeMainCategory->categoryDescription;
                 } else {
-                    $data[$x]['Main Category'] = '';
+                    $data[$x][__('custom.main_category')] = '';
                 }
 
                 if ($value->financeSubCategory) {
-                    $data[$x]['Sub Category'] = $value->financeSubCategory->categoryDescription;
-                    $data[$x]['Finance BS Code'] = $value->financeSubCategory->financeGLcodebBS;
-                    $data[$x]['Finance PL Code'] = $value->financeSubCategory->financeGLcodePL;
+                    $data[$x][__('custom.sub_category')] = $value->financeSubCategory->categoryDescription;
+                    $data[$x][__('custom.finance_bs_code')] = $value->financeSubCategory->financeGLcodebBS;
+                    $data[$x][__('custom.finance_pl_code')] = $value->financeSubCategory->financeGLcodePL;
                 } else {
-                    $data[$x]['Sub Category'] = '';
-                    $data[$x]['Finance BS Code'] = '';
-                    $data[$x]['Finance PL Code'] = '';
+                    $data[$x][__('custom.sub_category')] = '';
+                    $data[$x][__('custom.finance_bs_code')] = '';
+                    $data[$x][__('custom.finance_pl_code')] = '';
                 }
 
-                $data[$x]['Min Qty'] = round($value->minimumQty, 2);
-                $data[$x]['MAx Qty'] = round($value->maximunQty, 2);
-                $data[$x]['Order level'] = $value->rolQuantity;
-                $data[$x]['Total Qty'] = round($value->totalQty, 2);
+                $data[$x][__('custom.min_qty')] = round($value->minimumQty, 2);
+                $data[$x][__('custom.max_qty')] = round($value->maximunQty, 2);
+                $data[$x][__('custom.order_level')] = $value->rolQuantity;
+                $data[$x][__('custom.total_qty')] = round($value->totalQty, 2);
                 $localDecimal = 3;
                 $rptDecimal = 2;
                 if ($value->local_currency) {
@@ -325,15 +325,15 @@ class ItemAssignedAPIController extends AppBaseController
                     $rptDecimal = $value->rpt_currency->DecimalPlaces;
                 }
 
-                $data[$x]['WAC Value Local'] = round($value->wacValueLocal, $localDecimal);
-                $data[$x]['WAC Value Rpt'] = round($value->wacValueReporting, $rptDecimal);
-                $data[$x]['Category'] = $value->itemMovementCategory;
+                $data[$x][__('custom.wac_value_local')] = round($value->wacValueLocal, $localDecimal);
+                $data[$x][__('custom.wac_value_rpt')] = round($value->wacValueReporting, $rptDecimal);
+                $data[$x][__('custom.category')] = $value->itemMovementCategory;
                 $status = "Not Active";
                 if ($value->isActive == 1) {
                     $status = "Active Only";
                 }
 
-                $data[$x]['Status'] = $status;
+                $data[$x][__('custom.status')] = $status;
                 $x++;
             }
         }
