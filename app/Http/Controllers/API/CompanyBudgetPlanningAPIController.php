@@ -15,6 +15,7 @@ use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\CompanyFinanceYear;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\DepartmentUserBudgetControl;
 use App\Models\WorkflowConfiguration;
@@ -23,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -687,7 +689,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -700,7 +702,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             $query->where('employeeSystemID',$employeeID)->where('isActive',true);
                         }])->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
@@ -1089,5 +1091,48 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         return $this->sendResponse(null, 'Budget Planning validation successful');
+    }
+
+
+    public function updateBudgetPlanningDelegateWorkStatus(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            $input['empID'] =  \Helper::getEmployeeSystemID();
+            $input['created_by'] = \Helper::getEmployeeSystemID();
+            // Validate that we have the required data
+            if (empty($input)) {
+                return $this->sendError('No data provided', 400);
+            }
+
+            // Validate required fields for single record
+            if (!isset($input['empID']) || !isset($input['budgetPlanningID'])) {
+                return $this->sendError('Missing required fields: empID and budgetPlanningID are required', 400);
+            }
+
+            
+
+            // Process single record
+            $result = DepartmentBudgetPlanningsDelegateAccess::createOrUpdateDelegateAccess($input);
+            
+            // Update the main budget planning work status
+            $budgetPlanning = DepartmentBudgetPlanning::with('delegateAccess','department','financeYear','masterBudgetPlannings')->find($input['budgetPlanningID']);
+            if ($budgetPlanning) {
+                $budgetPlanning->update([
+                    'workStatus' =>  $input['workStatus'],
+                    'updated_at' => now()
+                ]);
+            }
+            
+            return $this->sendResponse([
+                'record' => $result,
+                'budgetPlanning' => $budgetPlanning,
+                'message' => 'Delegate access record and budget planning work status updated successfully'
+            ], 'Success');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error processing delegate access: ' . $e->getMessage(), 500);
+        }
     }
 }

@@ -35,6 +35,7 @@ Route::resource('budget_template_columns', 'BudgetTemplateColumnAPIController');
 
 // Budget Planning Routes
 Route::post('getBudgetPlanningUserPermissions', 'CompanyBudgetPlanningAPIController@getBudgetPlanningUserPermissions')->name('Get budget planning user permissions');
+Route::post('updateBudgetPlanningDelegateWorkStatus', 'CompanyBudgetPlanningAPIController@updateBudgetPlanningDelegateWorkStatus')->name('Update Budget Planning Deletegate Work Status');
 Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
 Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
 Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
