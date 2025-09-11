@@ -20,6 +20,7 @@ return [
     'level_approved_sent_next' => ':attribute Level :level is approved and sent to next level approval',
     'level_approved_sent_next_body' => ':attribute Level :level is approved and sent to next level approval to below employees <br>:nextApproveNameList',
     'is_rejected' => ':attribute is rejected for below reason by :empName<br> :rejectedComments',
+    'is_rejected_subject' => ':attribute is rejected.',
     'pending_approval' => 'Pending :documentDescription approval :documentCode',
     
     // Additional Email Messages
