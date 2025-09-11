@@ -923,19 +923,19 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                         $data[] = array(
-                            'Document Code' => $val['quotationCode'],
-                            'Document Date' => Helper::dateFormat($val['documentDate']),
-                            'Segment' => $val['serviceLine'],
-                            'Ref No' => $val['referenceNo'],
-                            'Customer' => $val['customer'],
-                            'Currency' => $val['currency'],
-                            'Expire Date' => Helper::dateFormat($val['documentExpDate']),
-                            'Document Status' => $doc_status,
-                            'Customer Status' => $val['customer_status'],
-                            'Document Amount' => round($val['document_amount'], $dp),
-                            'Delivery/Return Status' => $delivery_status.''.$return_status,
-                            'Invoice Amount' => round($val['invoice_amount'], $dp),
-                            'Paid Amount' => round($val['paid_amount'], $dp)
+                            trans('custom.document_code') => $val['quotationCode'],
+                            trans('custom.document_date') => Helper::dateFormat($val['documentDate']),
+                            trans('custom.segment') => $val['serviceLine'],
+                            trans('custom.ref_no') => $val['referenceNo'],
+                            trans('custom.customer') => $val['customer'],
+                            trans('custom.currency') => $val['currency'],
+                            trans('custom.expire_date') => Helper::dateFormat($val['documentExpDate']),
+                            trans('custom.document_status') => $doc_status,
+                            trans('custom.customer_status') => $val['customer_status'],
+                            trans('custom.document_amount') => round($val['document_amount'], $dp),
+                            trans('custom.delivery_return_status') => $delivery_status.''.$return_status,
+                            trans('custom.invoice_amount') => round($val['invoice_amount'], $dp),
+                            trans('custom.paid_amount') => round($val['paid_amount'], $dp)
                         );
                     }
 

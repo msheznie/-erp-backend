@@ -6450,6 +6450,13 @@ return [
     'cancelled_at' => 'تم إلغاؤه في',
     'receipt_amount' => 'مبلغ الإيصال',
 
+    // Quotation SO Report
+    'expire_date' => 'تاريخ الإنتهاء',
+    'document_status' => 'حالة المستند',
+    'customer_status' => 'حالة العميل',
+    'paid_amount' => 'مبلغ الدفع',
+    'delivery_return_status' => 'حالة التسليم/الإرجاع',
+
     // AR customer invoice
     'ar_goods' => 'البضائع',
     'ar_service' => 'الخدمات',
