@@ -6498,4 +6498,12 @@ return [
     'receipt_date' => 'تاريخ الايصال',
     'receipt_posted_date' => 'تاريخ الايصال المنشور',
     'po_amount' => 'مبلغ الطلب',
+    // Sales Detail Report
+    'document_system_code' => 'رمز المستند',
+    'total_sales_value' => 'قيمة المبيعات الإجمالية',
+    'total_cost' => 'التكلفة الإجمالية',
+    'profit' => 'الربح',
+    'profit_margin' => 'هامش الربح',
+    'average_cost' => 'التكلفة المتوسطة',
+    'up_to_date' => 'حتى التاريخ',
 ];

@@ -6481,4 +6481,12 @@ return [
     'receipt_date' => 'Receipt Date',
     'receipt_posted_date' => 'Receipt Posted Date',
     'po_amount' => 'PO Amount',
+    // Sales Detail Report
+    'document_system_code' => 'Document System Code',
+    'total_sales_value' => 'Total Sales Value',
+    'total_cost' => 'Total Cost',
+    'profit' => 'Profit',
+    'profit_margin' => 'Profit Margin',
+    'average_cost' => 'Average Cost',
+    'up_to_date' => 'Up to Date',
 ];
