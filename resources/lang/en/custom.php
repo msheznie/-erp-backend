@@ -6465,5 +6465,20 @@ return [
     'wac_local' => 'WAC Local',
     'wac_rpt' => 'WAC Rpt',
     'wac_local_val' => 'WAC Local Val',
-    'wac_rpt_val' => 'WAC Rpt Val'
+    'wac_rpt_val' => 'WAC Rpt Val',
+
+    // Sales Order to Receipt Report
+    'so_number' => 'SO Number',
+    'so_approved_date' => 'SO Approved Date',
+    'customer_code' => 'Customer Code',
+    'customer_name' => 'Customer Name',
+    'so_amount' => 'SO Amount',
+    'delivery_code' => 'Delivery Code',
+    'delivery_date' => 'Delivery Date',
+    'delivery_amount' => 'Delivery Amount',
+    'invoice_code' => 'Invoice Code',
+    'receipt_code' => 'Receipt Code',
+    'receipt_date' => 'Receipt Date',
+    'receipt_posted_date' => 'Receipt Posted Date',
+    'po_amount' => 'PO Amount',
 ];
