@@ -354,9 +354,9 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError(trans('srm_rfq.tender_faq_not_found'));
+            return $this->sendError(trans('srm_faq.g'));
         } 
         $tenderFaq->delete();
-        return $this->sendResponse($id,trans('srm_rfq.tender_faq_deleted_successfully'));
+        return $this->sendResponse($id,trans('srm_faq.tender_faq_deleted'));
     }
 }
