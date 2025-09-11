@@ -6482,5 +6482,14 @@ return [
     'wac_local' => 'المتوسط المرجح المحلي',
     'wac_rpt' => 'المتوسط المرجح للتقرير',
     'wac_local_val' => 'قيمة المتوسط المرجح المحلي',
-    'wac_rpt_val' => 'قيمة المتوسط المرجح للتقرير'
+    'wac_rpt_val' => 'قيمة المتوسط المرجح للتقرير',
+
+    // Sales Detail Report
+    'document_system_code' => 'رمز المستند',
+    'total_sales_value' => 'قيمة المبيعات الإجمالية',
+    'total_cost' => 'التكلفة الإجمالية',
+    'profit' => 'الربح',
+    'profit_margin' => 'هامش الربح',
+    'average_cost' => 'التكلفة المتوسطة',
+    'up_to_date' => 'حتى التاريخ',
 ];

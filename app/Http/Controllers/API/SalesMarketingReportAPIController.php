@@ -1381,20 +1381,20 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
 
                         $data[] = array(
-                            'Customer Code' => $value->customerCode,
-                            'Customer Name' => $value->customerName,
-                            'Document System Code' => $value->documentCode,
-                            'Document Date' => Helper::dateFormat($value->documentDate),
-                            'Item Code' => $value->itemCode,
-                            'Item Description' => $value->itemDescription,
-                            'Sub Category' => $value->categoryDescription,
-                            'UOM' => $value->unitShortCode,
-                            'Quantity' => $value->quantity,
-                            'Total Sales Value ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
-                            'Total Cost ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
-                            'Profit ('.$currency->CurrencyCode.')' => round($profit, $currency->DecimalPlaces),
-                            'Profit Margin' => $profitMargin,
-                            'Average Cost ('.$currency->CurrencyCode.') Up to Date' => $this->getAverageCostUpToDate($value, $input, $currency)
+                            trans('custom.customer_code') => $value->customerCode,
+                            trans('custom.customer_name') => $value->customerName,
+                            trans('custom.document_system_code') => $value->documentCode,
+                            trans('custom.document_date') => Helper::dateFormat($value->documentDate),
+                            trans('custom.item_code') => $value->itemCode,
+                            trans('custom.item_description') => $value->itemDescription,
+                            trans('custom.sub_category') => $value->categoryDescription,
+                            trans('custom.uom') => $value->unitShortCode,
+                            trans('custom.quantity') => $value->quantity,
+                            trans('custom.total_sales_value') . ' (' . $currency->CurrencyCode . ')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
+                            trans('custom.total_cost') . ' (' . $currency->CurrencyCode . ')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
+                            trans('custom.profit') . ' (' . $currency->CurrencyCode . ')' => round($profit, $currency->DecimalPlaces),
+                            trans('custom.profit_margin') => $profitMargin,
+                            trans('custom.average_cost') . ' (' . $currency->CurrencyCode . ') ' . trans('custom.up_to_date') => $this->getAverageCostUpToDate($value, $input, $currency)
                            
                         );
                     }

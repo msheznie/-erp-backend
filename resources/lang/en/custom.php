@@ -6465,5 +6465,14 @@ return [
     'wac_local' => 'WAC Local',
     'wac_rpt' => 'WAC Rpt',
     'wac_local_val' => 'WAC Local Val',
-    'wac_rpt_val' => 'WAC Rpt Val'
+    'wac_rpt_val' => 'WAC Rpt Val',
+
+    // Sales Detail Report
+    'document_system_code' => 'Document System Code',
+    'total_sales_value' => 'Total Sales Value',
+    'total_cost' => 'Total Cost',
+    'profit' => 'Profit',
+    'profit_margin' => 'Profit Margin',
+    'average_cost' => 'Average Cost',
+    'up_to_date' => 'Up to Date',
 ];
