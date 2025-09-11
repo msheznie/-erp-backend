@@ -1446,17 +1446,16 @@ class TenderMasterRepository extends BaseRepository
             if($assignSupplier == 0){
                 return [
                     'success' => false,
-                    'message' => 'At least one supplier should be added'
+                    'message' => trans('srm_tender_rfx.at_least_one_supplier_should_be_added')
                 ];
             }
         } else {
-            $type = $rfq ? 'RFX' : 'Tender';
-            if ($assignSupplier != 1) {
-                return [
-                    'success' => false,
-                    'message' => 'Single Sourcing ' .$type. ' allows only one supplier. Please remove
-                                         additional suppliers before confirming'];
-            }
+            $type = $rfq ? trans('srm_tender_rfx.rfx') : trans('srm_tender_rfx.tender');
+
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.single_sourcing_allows_only_one_supplier', ['type' => $type]),
+            ];
         }
         return ['success' => true];
     }
@@ -1755,7 +1754,7 @@ class TenderMasterRepository extends BaseRepository
             if (empty($calendarDatesDetail)) {
                 return [
                     'success' => false,
-                    'message' => 'Calendar Date Type not found'
+                    'message' => trans('srm_tender_rfx.calendar_date_type_not_found')
                 ];
             }
             $calendarDateDetail = $requestData['enableRequestChange'] ?
@@ -1768,7 +1767,7 @@ class TenderMasterRepository extends BaseRepository
             } else {
                 $calendarDateDetail->delete();
             }
-            return ['success' => true, 'message' => 'Successfully Deleted'];
+            return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
         });
     }
     public function deleteCalenderDetails($id, $company_id, $requestData)
@@ -1792,7 +1791,7 @@ class TenderMasterRepository extends BaseRepository
                         }
                     }
                 }
-                return ['success' => true, 'message' => 'Successfully Deleted'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
             });
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1801,15 +1800,18 @@ class TenderMasterRepository extends BaseRepository
     public function checkTenderBidEmployeesAdded($tenderMasterID, $editOrAmend, $amdID, $versionID){
         $tenderMaster = $editOrAmend ? SrmTenderMasterEditLog::find($amdID) : TenderMaster::find($tenderMasterID);
         if(empty($tenderMaster)) {
-            return ['success' => false, 'message' => "Tender not found"];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
         }
         $tenderBidEmployee = $editOrAmend ?
             SrmTenderBidEmployeeDetailsEditLog::getTenderBidEmployeesAmd($tenderMasterID, $versionID) :
             SrmTenderBidEmployeeDetails::getTenderBidEmployees($tenderMasterID);
         if(count($tenderBidEmployee) < $tenderMaster->min_approval_bid_opening){
-            return ['success' => false, 'message' => "Atleast " . $tenderMaster->min_approval_bid_opening . " employee should selected"];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.at_least_min_employee_should_be_selected', ['count' => $tenderMaster->min_approval_bid_opening])
+            ];
         }
-        return ['success' => true, 'message' => "Success"];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
 
     public function getTenderExistData($tenderID, $editOrAmend, $versionID){
@@ -1824,7 +1826,7 @@ class TenderMasterRepository extends BaseRepository
                 } else {
                     TenderMaster::where('id', $tenderMasterID)->update($updateData);
                 }
-                return ['success' => true, 'message' => 'Updated successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.updated_successfully')];
             });
         } catch (\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -1835,7 +1837,7 @@ class TenderMasterRepository extends BaseRepository
         try {
             return DB::transaction(function () use ($procurementActivity, $tenderID, $companyID, $employee, $editOrAmend, $versionID) {
                 if (empty($procurementActivity)) {
-                    return ['success' => true, 'message' => 'No procurement activity to be added'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.no_procurement_activity_to_be_added')];
                 }
 
                 $requestedIds = collect($procurementActivity)->pluck('id')->toArray();
@@ -1877,7 +1879,7 @@ class TenderMasterRepository extends BaseRepository
                     }
                 }
 
-                return ['success' => true, 'message' => 'Procurement Activity updated successfully'];
+                return ['success' => true, 'message' => trans('srm_procurement_activity_updated_successfully')];
             });
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1901,7 +1903,7 @@ class TenderMasterRepository extends BaseRepository
                 } else {
                     TenderSiteVisitDates::create($site);
                 }
-                return ['success' => true, 'message' => 'Site visit date created successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.site_visit_date_created_successfully')];
             });
         } catch (\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -1912,7 +1914,10 @@ class TenderMasterRepository extends BaseRepository
         try {
             return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
                 if (empty($tenderPurchaseRequestData)) {
-                    return ['success' => true, 'message' => 'No purchase request to update.'];
+                    return [
+                        'success' => true,
+                        'message' => trans('srm_tender_rfx.no_purchase_request_to_update')
+                    ];
                 }
 
                 $newPRIds = collect($tenderPurchaseRequestData)->pluck('id')->unique()->toArray();
@@ -1966,7 +1971,11 @@ class TenderMasterRepository extends BaseRepository
         try {
             return DB::transaction(function () use ($budgetItemList, $tenderID, $companyID, $editOrAmend, $versionID) {
                 if (empty($budgetItemList)) {
-                    return ['success' => true, 'message' => 'No budget items to update.'];
+                    return [
+                        'success' => true,
+                        'message' => trans('srm_tender_rfx.no_budget_items_to_update')
+                    ];
+
                 }
 
                 $existingItems = $editOrAmend
@@ -2047,7 +2056,7 @@ class TenderMasterRepository extends BaseRepository
                 if (!empty($commonIds)) {
                     return [
                         'success' => false,
-                        'message' => 'Selected Department is currently deactivated in Masters. Please activate it or remove it from your selection to proceed.'
+                        'message' => trans('srm_tender_rfx.department_deactivated_error')
                     ];
                 }
 
@@ -2413,7 +2422,10 @@ class TenderMasterRepository extends BaseRepository
             PricingScheduleMaster::getTenderScheduleMaster($tenderID, 'first');
 
         if (empty($schedule)) {
-            return ['success' => false, 'message' => 'At least one work schedule should be added'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.at_least_one_work_schedule')
+            ];
         }
         $scheduleAll = $editOrAmend ?
             PricingScheduleMasterEditLog::getTenderScheduleMaster($tenderID, $versionID, 'get') :
@@ -2432,7 +2444,10 @@ class TenderMasterRepository extends BaseRepository
                         ScheduleBidFormatDetails::checkScheduleBidFormatExists($val['id'], $shed['id']);
 
                     if (empty($scheduleDetailInfo)) {
-                        return ['success' => false, 'message' => 'All work schedules should be completed'];
+                        return [
+                            'success' => false,
+                            'message' => trans('srm_tender_rfx.all_work_schedules_completed')
+                        ];
                     }
                 }
             }
@@ -2444,7 +2459,10 @@ class TenderMasterRepository extends BaseRepository
                 $mainworks = $mainwork->get();
                 foreach ($mainworks as $main) {
                     if (count($main->tender_boq_items) == 0) {
-                        return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
+                        return [
+                            'success' => false,
+                            'message' => trans('srm_tender_rfx.boq_main_work_item_required')
+                        ];
                     }
                 }
             }
@@ -2456,17 +2474,17 @@ class TenderMasterRepository extends BaseRepository
         $tenderCircular = TenderCircularsEditLog::getTenderCirculars($tenderMasterID, $versionID);
         if(count($tenderCircular) == 0)
         {
-            return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.please_attach_a_circular_to_confirm_amended_changes')];
         }
         $circularIDs = $tenderCircular->pluck('amd_id');
         foreach($circularIDs as $id)
         {
             $circularAmends = CircularAmendmentsEditLog::getAllCircularAmendments($id, $versionID);
             if (count($circularAmends) == 0) {
-                return ['success' => false, 'message' => 'Please attach at least one amendment to a circular'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.please_attach_at_least_one_amendment_to_a_circular')];
             }
         }
-        return ['success' => true, 'message' => 'Valid Circular'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
     public function checkEvaluationCriteriaValid($tenderMasterID, $versionID, $editOrAmend, $is_active_go_no_go){
         $parentsWithoutSubLevels = EvaluationCriteriaDetails::getCriteriaWithoutChildren($tenderMasterID, $versionID, $editOrAmend, true);
@@ -2474,10 +2492,16 @@ class TenderMasterRepository extends BaseRepository
 
 
         if (!$parentsWithoutSubLevels->isEmpty()) {
-            return ['success' => false, 'message' => 'If there is no child Technical Evaluation criteria, parent Technical Evaluation criteria should be marked as Final'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.no_child_criteria_final')
+            ];
         }
         if (!$subLevelsWithoutFurtherSubLevels->isEmpty()) {
-            return ['success' => false, 'message' => 'At least one Criteria should be marked as Final under a parent Technical Evaluation Criteria'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.at_least_one_final_under_parent')
+            ];
         }
 
         if (($is_active_go_no_go == 1) || $is_active_go_no_go == true) {
@@ -2485,10 +2509,13 @@ class TenderMasterRepository extends BaseRepository
                 EvaluationCriteriaDetailsEditLog::where('tender_id', $tenderMasterID)->where('critera_type_id', 1)->where('tender_version_id', $versionID)->where('is_deleted', 0)->first():
                 EvaluationCriteriaDetails::where('tender_id', $tenderMasterID)->where('critera_type_id', 1)->first();
             if (empty($goNoGo)) {
-                return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.at_least_one_go_no_go')
+                ];
             }
         }
-        return ['success' => true, 'message' => 'Valid Go No Go and Technical Evaluation'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
     public function getEvaluationCriteriaForTenderConfirm($tenderMasterID, $editOrAmend, $versionID){
         try{
@@ -2498,7 +2525,7 @@ class TenderMasterRepository extends BaseRepository
 
             return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $evaluationData];
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public function checkTenderTechnicalCriteriaAdded($tenderMasterID, $versionID, $editOrAmend){
@@ -2508,11 +2535,17 @@ class TenderMasterRepository extends BaseRepository
                 EvaluationCriteriaDetails::getTenderTechnicalCriteria($tenderMasterID, 2);
 
             if(empty($checkTechnicalExists)){
-                return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.at_least_one_technical_criteria_should_be_added')];
             }
-            return ['success' => true, 'message' => 'Technical criteria has been added'];
+            return ['success' => true, 'message' => trans('srm_tender_rfx.technical_criteria_has_been_added')];
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return [
+                'success' => false,
+                'message' => trans(
+                    'srm_tender_rfx.unexpected_error',
+                    ['message' => $exception->getMessage()]
+                )
+            ];
         }
     }
     public function getCalendarDateData($input, $versionID, $editOrAmend){
@@ -2520,12 +2553,27 @@ class TenderMasterRepository extends BaseRepository
             $calendarDateDetail = $editOrAmend ?
                 CalendarDatesDetailEditLog::getCalendarDateDetailForAmd($input['tenderMasterId'], $input['companyID'], $input['calenderDateTypeId'], $versionID) :
                 CalendarDatesDetail::getCalendarDateDetail($input['tenderMasterId'], $input['companyID'], $input['calenderDateTypeId']);
-            if(empty($calendarDateDetail)){
-                return ['success' => false, 'message' => 'Calendar Date Type not found', 'data' => []];
+            if (empty($calendarDateDetail)) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.calendar_date_type_not_found'),
+                    'data' => []
+                ];
             }
-            return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $calendarDateDetail];
+            return [
+                'success' => true,
+                'message' => trans('srm_tender_rfx.data_retrieved_successfully'),
+                'data' => $calendarDateDetail
+            ];
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: '. $ex->getMessage(), 'data' => []];
+            return [
+                'success' => false,
+                'message' => trans(
+                    'srm_tender_rfx.unexpected_error',
+                    ['message' => $ex->getMessage()]
+                ),
+                'data' => []
+            ];
         }
     }
     public static function getTenderData($request, $versionID, $editOrAmend)
@@ -2535,11 +2583,21 @@ class TenderMasterRepository extends BaseRepository
                 SrmTenderMasterEditLog::tenderMasterHistory($request['tenderMasterId'], $versionID):
                 TenderMaster::getTenderMasterData($request['tenderMasterId']);
             if(empty($tenderMaster)){
-                return ['success' => false, 'message' => 'Tender record not found'];
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.tender_record_not_found')
+                ];
             }
-            return ['success' => true, 'message' => 'Data retrieved successfully', 'data' => $tenderMaster];
+            return [
+                'success' => true,
+                'message' => trans('srm_tender_rfx.data_retrieved_successfully'),
+                'data' => $tenderMaster
+            ];
         }  catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])
+            ];
         }
     }
 }
