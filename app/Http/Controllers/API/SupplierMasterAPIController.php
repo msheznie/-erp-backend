@@ -208,6 +208,11 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function exportSupplierMaster(Request $request)
     {
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
+
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -238,8 +243,8 @@ class SupplierMasterAPIController extends AppBaseController
         $x = 0;
         foreach ($supplierMasters as $val) {
             $x++;
-            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-            $data[$x]['Supplier Name'] = $val->supplierName;
+            $data[$x][trans('custom.e_supplier_code')] = $val->primarySupplierCode;
+            $data[$x][trans('custom.e_supplier_name')] = $val->supplierName;
             $currency = "";
             $country = "";
             $businessCategory = "";
@@ -304,32 +309,32 @@ class SupplierMasterAPIController extends AppBaseController
                 }
             }
 
-            $data[$x]['Country'] = $country;
-            $data[$x]['Supplier Group'] = $val['supplier_group']['group'];
-            $data[$x]['Registration Number'] = $val->registrationNumber;
-            $data[$x]['Supplier Business Category'] = $businessCategory;
-            $data[$x]['Supplier Business Sub Category'] = $businessSubCategory;
-            $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
-            $data[$x]['Currency'] = $currency;
-            $data[$x]['Address'] = $val->address;
-            $data[$x]['Telephone'] = $val->telephone;
-            $data[$x]['Fax'] = $val->fax;
-            $data[$x]['Email'] = $val->supEmail;
-            $data[$x]['Website'] = $val->webAddress;
-            $data[$x]['Credit Limit'] = $val->creditLimit;
-            $data[$x]['Credit Period'] = $val->creditPeriod;
-            $data[$x]['ICV Category'] = ($val->supplierICVCategories!=null && isset($val->supplierICVCategories->categoryDescription))?$val->supplierICVCategories->categoryDescription:'';
-            $data[$x]['ICV Sub Category'] = ($val->supplierICVSubCategories!=null && isset($val->supplierICVSubCategories->categoryDescription))?$val->supplierICVSubCategories->categoryDescription:'';
-            $data[$x]['Critical Status'] = isset($val->critical->description)?$val->critical->description:'';
-            $data[$x]['Liability Account'] = isset($val->liablity_account) ? $val->liablity_account->AccountCode. '-'. $val->liablity_account->AccountDescription : '';
-            $data[$x]['Un-billed Account'] = isset($val->unbilled_account) ? $val->unbilled_account->AccountCode. '-'. $val->unbilled_account->AccountDescription : '';
-            $data[$x]['LCC'] = ($val->isLCCYN==1)?'Yes':'No';
-            $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
-            $data[$x]['JSRS Number'] = $val->jsrsNo;
-            $data[$x]['JSRS Expiry'] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
-            $data[$x]['VAT Eligible'] = ($val->vatEligible) ? "Yes" : "No";
-            $data[$x]['VAT Number'] = $val->vatNumber;
-            $data[$x]['VAT Percentage'] = $val->vatPercentage;
+            $data[$x][trans('custom.country')] = $country;
+            $data[$x][trans('custom.supplier_group')] = $val['supplier_group']['group'];
+            $data[$x][trans('custom.registration_number')] = $val->registrationNumber;
+            $data[$x][trans('custom.supplier_business_category')] = $businessCategory;
+            $data[$x][trans('custom.supplier_business_sub_category')] = $businessSubCategory;
+            $data[$x][trans('custom.category')] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
+            $data[$x][trans('custom.currency')] = $currency;
+            $data[$x][trans('custom.address')] = $val->address;
+            $data[$x][trans('custom.telephone')] = $val->telephone;
+            $data[$x][trans('custom.fax')] = $val->fax;
+            $data[$x][trans('custom.email')] = $val->supEmail;
+            $data[$x][trans('custom.website')] = $val->webAddress;
+            $data[$x][trans('custom.credit_limit')] = $val->creditLimit;
+            $data[$x][trans('custom.credit_period')] = $val->creditPeriod;
+            $data[$x][trans('custom.icv_category')] = ($val->supplierICVCategories!=null && isset($val->supplierICVCategories->categoryDescription))?$val->supplierICVCategories->categoryDescription:'';
+            $data[$x][trans('custom.icv_sub_category')] = ($val->supplierICVSubCategories!=null && isset($val->supplierICVSubCategories->categoryDescription))?$val->supplierICVSubCategories->categoryDescription:'';
+            $data[$x][trans('custom.critical_status')] = isset($val->critical->description)?$val->critical->description:'';
+            $data[$x][trans('custom.liability_account')] = isset($val->liablity_account) ? $val->liablity_account->AccountCode. '-'. $val->liablity_account->AccountDescription : '';
+            $data[$x][trans('custom.unbilled_account')] = isset($val->unbilled_account) ? $val->unbilled_account->AccountCode. '-'. $val->unbilled_account->AccountDescription : '';
+            $data[$x][trans('custom.lcc')] = ($val->isLCCYN==1)?'Yes':'No';
+            $data[$x][trans('custom.sme')] = ($val->isSMEYN==1)?'Yes':'No';
+            $data[$x][trans('custom.jsrs_number')] = $val->jsrsNo;
+            $data[$x][trans('custom.jsrs_expiry')] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
+            $data[$x][trans('custom.vat_eligible')] = ($val->vatEligible) ? "Yes" : "No";
+            $data[$x][trans('custom.vat_number')] = $val->vatNumber;
+            $data[$x][trans('custom.vat_percentage')] = $val->vatPercentage;
         }
 
         $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
