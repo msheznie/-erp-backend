@@ -1508,7 +1508,7 @@ class GRVMasterAPIController extends AppBaseController
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
             'warehousemaster.wareHouseDescription as wareHouseSet',
-            'erp_grvtpes.des'
+            DB::raw('COALESCE(grvtypes_languages.des, erp_grvtpes.des) as des')
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -1533,6 +1533,10 @@ class GRVMasterAPIController extends AppBaseController
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
             ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
+            ->leftJoin('grvtypes_languages', function($join) {
+                $join->on('grvtypes_languages.grvTypeID', '=', 'erp_grvtpes.grvTypeID')
+                     ->where('grvtypes_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID);
@@ -1603,7 +1607,7 @@ class GRVMasterAPIController extends AppBaseController
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
             'warehousemaster.wareHouseDescription as wareHouseSet',
-            'erp_grvtpes.des'
+            DB::raw('COALESCE(grvtypes_languages.des, erp_grvtpes.des) as des')
         )->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
                 ->where('erp_grvmaster.companySystemID', $companyID)
@@ -1615,6 +1619,10 @@ class GRVMasterAPIController extends AppBaseController
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
             ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
+            ->leftJoin('grvtypes_languages', function($join) {
+                $join->on('grvtypes_languages.grvTypeID', '=', 'erp_grvtpes.grvTypeID')
+                     ->where('grvtypes_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
 
