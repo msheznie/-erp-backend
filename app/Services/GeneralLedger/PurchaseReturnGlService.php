@@ -281,16 +281,16 @@ class PurchaseReturnGlService
                         }
                     } else {
                         if ($masterData->isInvoiceCreatedForGrv == 1) {
-                            return ['status' => false, 'error' => ['message' => "Input Vat GL Account not assigned to company"]];
+                            return ['status' => false, 'error' => ['message' => trans('custom.input_vat_gl_account_not_assigned_company')]];
                         } else {
-                            return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not assigned to company"]];
+                            return ['status' => false, 'error' => ['message' => trans('custom.input_vat_transfer_gl_account_not_assigned_company')]];
                         }
                     }
                 } else {
                     if ($masterData->isInvoiceCreatedForGrv == 1) {
-                        return ['status' => false, 'error' => ['message' => "Input Vat GL Account not configured"]];
+                        return ['status' => false, 'error' => ['message' => trans('custom.input_vat_gl_account_not_configured')]];
                     } else {
-                        return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not configured"]];
+                        return ['status' => false, 'error' => ['message' => trans('custom.input_vat_transfer_gl_account_not_configured')]];
                     }
 
                 }
@@ -318,10 +318,10 @@ class PurchaseReturnGlService
 
                             $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not assigned to company"]];
+                            return ['status' => false, 'error' => ['message' => trans('custom.output_vat_transfer_gl_account_not_assigned_company')]];
                         }
                     } else {
-                        return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not configured"]];
+                        return ['status' => false, 'error' => ['message' => trans('custom.output_vat_transfer_gl_account_not_configured')]];
                     }
                 }
             }

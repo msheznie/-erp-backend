@@ -276,6 +276,6 @@ class InterCompanyStockTransferAPIController extends AppBaseController
 
         $interCompanyStockTransfer->delete();
 
-        return $this->sendSuccess('Inter Company Stock Transfer deleted successfully');
+        return $this->sendSuccess(trans('custom.inter_company_stock_transfer_deleted_successfully'));
     }
 }

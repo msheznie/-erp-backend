@@ -165,7 +165,7 @@ class GRVMasterAPIController extends AppBaseController
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
                 if ($input['grvDate'] > $currentDate) {
-                    return $this->sendError('GRV date can not be greater than current date', 500);
+                    return $this->sendError(trans('custom.grv_date_cannot_be_greater_than_current'), 500);
                 }
             }
         }
@@ -176,7 +176,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             if ($input['stampDate'] > $currentDate) {
-                return $this->sendError('Stamp date can not be greater than current date', 500);
+                return $this->sendError(trans('custom.stamp_date_cannot_be_greater_than_current'), 500);
             }
         }
 
@@ -194,11 +194,11 @@ class GRVMasterAPIController extends AppBaseController
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
-                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                return $this->sendError(trans('custom.please_assign_wip_glcode_warehouse'), 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
                 if (!$checkGLIsAssigned) {
-                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                    return $this->sendError(trans('custom.wip_gl_code_not_assigned_company'), 500);
                 }
             }
         }
@@ -389,7 +389,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['grvDate'] = $input['grvDate']->format('Y-m-d');
 
                 if ($input['grvDate'] > $currentDate) {
-                    return $this->sendError('GRV date can not be greater than current date', 500);
+                    return $this->sendError(trans('custom.grv_date_cannot_be_greater_than_current'), 500);
                 }
             }
         }
@@ -400,7 +400,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['stampDate'] = $input['stampDate']->format('Y-m-d');
 
                 if ($input['stampDate'] > $currentDate) {
-                    return $this->sendError('Stamp date can not be greater than current date', 500);
+                    return $this->sendError(trans('custom.stamp_date_cannot_be_greater_than_current'), 500);
                 }
             }
         }
@@ -417,7 +417,7 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_not_active'));
         }
 
         //checking selected warehouse is active
@@ -427,7 +427,7 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($warehouse)) {
-            return $this->sendError('Selected location is not active. Please select an active location');
+            return $this->sendError(trans('custom.selected_location_not_active'));
         }
 
         $financeYear = CompanyFinanceYear::where("companyFinanceYearID", $input['companyFinanceYearID'])
@@ -436,16 +436,16 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($financeYear)) {
-            return $this->sendError('Selected finance year is not current. Please select current year');
+            return $this->sendError(trans('custom.selected_finance_year_not_current'));
         }
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
-                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                return $this->sendError(trans('custom.please_assign_wip_glcode_warehouse'), 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
                 if (!$checkGLIsAssigned) {
-                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                    return $this->sendError(trans('custom.wip_gl_code_not_assigned_company'), 500);
                 }
             }
         }
@@ -539,7 +539,7 @@ class GRVMasterAPIController extends AppBaseController
                 foreach ($grvVatDetails as $grvVatDetail) {
                     if ($grvVatDetail->VATAmount > 0) {
                         if ($grvVatDetail->vatMasterCategoryID == null || $grvVatDetail->vatSubCategoryID == null) {
-                            return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
+                            return $this->sendError(trans('custom.please_assign_vat_category_item'));
                         }
                     }
 
@@ -547,7 +547,7 @@ class GRVMasterAPIController extends AppBaseController
                     {
                         if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
                         {
-                            return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                            return $this->sendError(trans('custom.exempt_vat_category_not_created'),500);
                         }
                     }
                 }
@@ -595,7 +595,7 @@ class GRVMasterAPIController extends AppBaseController
 
                 $validatorResult = \Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
                 if (!$validatorResult['success']) {              
-                    return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+                    return $this->sendError(trans('custom.supplier_blocked_confirm_proceed'), 500,['type' => 'blockSupplier']);
     
                 }
             }
@@ -651,7 +651,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least a qty', 500);
+                return $this->sendError(trans('custom.every_item_should_have_qty'), 500);
             }
 
             //  remove validation GWL-657
@@ -671,11 +671,11 @@ class GRVMasterAPIController extends AppBaseController
                 ->selectRaw('ROUND(netAmount,3)')
                 ->count();
             if ($checkNetAmount > 0) {
-                return $this->sendError('Every item net amount should be greater than or equal to zero', 500);
+                return $this->sendError(trans('custom.every_item_net_amount_greater_zero'), 500);
             }
 
             if ($grvMasterSum->masterTotalSum < 0) {
-                return $this->sendError('Total net amount should be greater than or equal to zero', 500);
+                return $this->sendError(trans('custom.total_net_amount_greater_zero'), 500);
             }
 
             if ($gRVMaster->grvTypeID == 2) {
@@ -827,7 +827,7 @@ class GRVMasterAPIController extends AppBaseController
 
 
                     if (is_null($row->itemFinanceCategoryID)) {
-                        $accountValidationArray[] = "Finance category of " . $row->itemPrimaryCode . " not found";
+                        $accountValidationArray[] = trans('custom.finance_category_not_found', ['item' => $row->itemPrimaryCode]);
                     } else {
                         switch ($row->itemFinanceCategoryID) {
                             case 1:
@@ -840,7 +840,7 @@ class GRVMasterAPIController extends AppBaseController
                             case 3:
                             case 4:
                                 if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && (is_null($row->financeGLcodePLSystemID) || $row->financeGLcodePLSystemID == 0)) {
-                                    $accountValidationArray[1][] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item " . $row->itemPrimaryCode;
+                                    $accountValidationArray[1][] = trans('custom.finance_category_accounts_not_updated', ['item' => $row->itemPrimaryCode]);
                                 }
 
                                 if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && !is_null($row->financeGLcodePLSystemID) && $row->financeGLcodePLSystemID != 0 && $row->includePLForGRVYN != -1) {
@@ -861,12 +861,12 @@ class GRVMasterAPIController extends AppBaseController
                     $accountValidationErrrArray = [];
                     if (isset($accountValidationArray[1])) {
                         $itemsA = implode(", ", $accountValidationArray[1]);
-                        $accountValidationErrrArray[] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item(s) " . $itemsA;
+                        $accountValidationErrrArray[] = trans('custom.finance_category_accounts_not_updated_items', ['items' => $itemsA]);
                     }
 
                     if (isset($accountValidationArray[2])) {
                         $itemsB = implode(", ", $accountValidationArray[2]);
-                        $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                        $accountValidationErrrArray[] = trans('custom.expense_account_configuration_not_done', ['items' => $itemsB]);
                     }
                     return $this->sendError($accountValidationErrrArray, 420);
                 }
@@ -1442,7 +1442,7 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_not_active'));
         }
 
         return $this->sendResponse($grvAutoID, 'sucess');
@@ -1754,7 +1754,7 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
         if ($attachmentFound == 0) {
-            return $this->sendError('No Attachments Found', 500);
+            return $this->sendError(trans('custom.no_attachments_found'), 500);
         } else {
             return $this->sendResponse($grvAutoID, trans('custom.po_attachments_pulled_successfully'));
         }
@@ -2102,7 +2102,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                     $temp['documentDate'] = now();
                     $temp['documentYear'] = date("Y");
                     $temp['documentMonth'] = date("n");
-                    $temp['documentNarration'] = 'Reversal Entry';
+                    $temp['documentNarration'] = trans('custom.reversal_entry');
                     $temp['documentTransAmount'] = ($gl['documentTransAmount']) * -1;
                     $temp['documentLocalAmount'] = ($gl['documentLocalAmount']) * -1;
                     $temp['documentRptAmount'] = ($gl['documentRptAmount']) * -1;
@@ -2142,7 +2142,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $masterData = $this->gRVMasterRepository->findWithoutFail($input['grvAutoID']);
 
         if ($isExistBSI) {
-            return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
+            return $this->sendError(trans('custom.cannot_reverse_grv_added_purchase_return'), 500);
         }
 
         $MasterData = GRVMaster::find($input['grvAutoID']);
@@ -2290,7 +2290,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                                                ->first();
 
                 if ($checkAnyGrvExists) {
-                    return ['status' => false, 'message' => "Order cannot be cancelled as there is another GRV created."];
+                    return ['status' => false, 'message' => trans('custom.order_cannot_cancelled_another_grv')];
                 }
 
                 // $poData = ProcumentOrder::find($purchaseOrderMastertID);
@@ -2322,7 +2322,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
-            return ['status' => false, 'message' => "Purchase Order not found."];
+            return ['status' => false, 'message' => trans('custom.purchase_order_not_found')];
         }
 
         $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)

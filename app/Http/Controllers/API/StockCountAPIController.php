@@ -199,7 +199,7 @@ class StockCountAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.document_date_not_within_financial_period_stock_count'), 500);
         }
 
         $input['documentSystemID'] = 97;
@@ -228,7 +228,7 @@ class StockCountAPIController extends AppBaseController
 
         if ($segment->isActive == 0) {
             DB::rollBack();
-            return $this->sendError('Please select a active Segment', 500);
+            return $this->sendError(trans('custom.please_select_active_segment_stock_count'), 500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
@@ -239,7 +239,7 @@ class StockCountAPIController extends AppBaseController
 
         if ($warehouse->isActive == 0) {
             DB::rollBack();
-            return $this->sendError('Please select a active location.', 500);
+            return $this->sendError(trans('custom.please_select_active_location_stock_count'), 500);
         }
 
         $items = ItemAssigned::where('companySystemID', $input['companySystemID'])
@@ -314,7 +314,7 @@ class StockCountAPIController extends AppBaseController
             }
         
             DB::commit();
-            return $this->sendResponse(['stockCount' => $stockCount->toArray(), trans('custom.errormessage') => $errorMessage], 'Stock Count saved successfully');
+            return $this->sendResponse(['stockCount' => $stockCount->toArray(), trans('custom.errormessage') => $errorMessage], trans('custom.stock_count_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());
