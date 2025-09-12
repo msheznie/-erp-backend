@@ -52,6 +52,7 @@ return [
     'parameter_company_missing' => 'معامل الشركة مفقود',
     'parameter_document_missing' => 'معامل المستند مفقود',
     'document_id_not_found' => 'معرف المستند غير موجود',
+    'successfully_approved_the_document' => 'تم الموافقة على المستند بنجاح',
     'supplier_blocked_cannot_confirm' => 'المورد محظور، لا يمكنك تأكيد هذا المستند',
     'no_attachments_attached' => 'لا توجد مرفقات مرفقة. يرجى إرفاق مرفق قبل تأكيد المستند',
     'policy_not_available' => 'السياسة غير متاحة لهذا المستند.',
@@ -6702,4 +6703,10 @@ return [
     'aging_over_730_qty' => 'أكثر من 730 (الكمية)',
     'aging_over_730_value' => 'أكثر من 730 (القيمة)',
     'stock_aging_report' => 'تقرير تقادم المخزون'
-];
+ 
+    'debit' => 'مدين',
+    'credit' => 'دائن',
+    
+    // Status Indicators
+    'cancelled_status' => ' -- @ملغي@'
+ ];

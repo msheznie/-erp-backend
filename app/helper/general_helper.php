@@ -1788,7 +1788,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
-            $userMessage = 'Successfully approved the document';
+            $userMessage = trans('custom.successfully_approved_the_document');
             $more_data = [];
             $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
@@ -4607,7 +4607,7 @@ class Helper
         DB::beginTransaction();
         try {
 
-            $userMessage = 'Successfully approved the document';
+            $userMessage = trans('custom.successfully_approved_the_document');
             $more_data = [];
             $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
