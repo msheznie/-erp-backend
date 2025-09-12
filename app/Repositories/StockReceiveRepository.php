@@ -177,16 +177,16 @@ class StockReceiveRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Stock Receive Code'] = $val->stockReceiveCode;
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->refNo;
-                $data[$x]['Received Date'] = \Helper::dateFormat($val->receivedDate);
-                $data[$x]['Comment'] = $val->comment;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.e_stock_receive_code')] = $val->stockReceiveCode;
+                $data[$x][trans('custom.e_segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.e_reference_no')] = $val->refNo;
+                $data[$x][trans('custom.e_received_date')] = \Helper::dateFormat($val->receivedDate);
+                $data[$x][trans('custom.e_comment')] = $val->comment;
+                $data[$x][trans('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.e_created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.e_confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.e_approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.e_status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

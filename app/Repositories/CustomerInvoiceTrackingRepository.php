@@ -124,17 +124,17 @@ class CustomerInvoiceTrackingRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][__('custom.tracking_no')] = $val->customerInvoiceTrackingCode;
-                $data[$x][__('custom.batch_no')] = $val->manualTrackingNo;
-                $data[$x][__('custom.customer')] = $val->customer? $val->customer->CustomerName : '';
-                $data[$x][__('custom.date')] = \Helper::dateFormat($val->submittedDate);
-                $data[$x][__('custom.month')] = date('M', strtotime($val->submittedDate));
-                $data[$x][__('custom.year')] = date('Y', strtotime($val->submittedYear));
-                $data[$x][__('custom.comments')] = $val->comments;
-                $data[$x][__('custom.batch_amount')] = $val->totalBatchAmount? number_format($val->totalBatchAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x][__('custom.approved_amount')] = $val->totalApprovedAmount? number_format($val->totalApprovedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x][__('custom.rejected_amount')] = $val->totalRejectedAmount? number_format($val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
-                $data[$x][__('custom.under_process')] = $val->totalBatchAmount? number_format($val->totalBatchAmount - $val->totalApprovedAmount - $val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.tracking_no')] = $val->customerInvoiceTrackingCode;
+                $data[$x][trans('custom.batch_no')] = $val->manualTrackingNo;
+                $data[$x][trans('custom.customer')] = $val->customer? $val->customer->CustomerName : '';
+                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->submittedDate);
+                $data[$x][trans('custom.month')] = date('M', strtotime($val->submittedDate));
+                $data[$x][trans('custom.year')] = date('Y', strtotime($val->submittedYear));
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.batch_amount')] = $val->totalBatchAmount? number_format($val->totalBatchAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.approved_amount')] = $val->totalApprovedAmount? number_format($val->totalApprovedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.rejected_amount')] = $val->totalRejectedAmount? number_format($val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.under_process')] = $val->totalBatchAmount? number_format($val->totalBatchAmount - $val->totalApprovedAmount - $val->totalRejectedAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "") : 0;
 
                 $x++;
             }

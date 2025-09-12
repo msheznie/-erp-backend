@@ -6370,6 +6370,10 @@ return [
     'e_confirmed_at' => 'تم التأكيد في',
     'e_approved_at' => 'تم الموافقة في',
     
+    // Stock Receive translations
+    'e_stock_receive_code' => 'رمز استلام المخزون',
+    'e_received_date' => 'تاريخ الاستلام',
+    
     // Item Return translations
     'e_item_return_code' => 'رمز إرجاع العنصر',
     'e_department' => 'القسم',
@@ -6772,5 +6776,16 @@ return [
     'credit' => 'دائن',
     
     // Status Indicators
-    'cancelled_status' => ' -- @ملغي@'
+    'cancelled_status' => ' -- @ملغي@',
+
+     // Additional GRV Master Translation Keys
+     'grv_date_not_within_financial_period' => 'تاريخ GRV ليس ضمن الفترة المالية!',
+     'pl_account_not_assigned_company' => 'حساب PL غير مخصص للشركة',
+     'bs_account_not_assigned_company' => 'حساب BS غير مخصص للشركة',
+     'grv_markup_update_process_restricted' => 'عملية تحديث هامش GRV مقيدة',
+     'policy_not_found_for_document' => 'لم يتم العثور على السياسة لهذا المستند',
+     'thank_you' => 'شكراً لك.',
+     'actions' => 'الإجراءات',
+     'reopened' => 'تم إعادة الفتح',
+     'grv_updated_successfully' => 'تم تحديث GRV بنجاح'
  ];
