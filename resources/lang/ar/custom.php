@@ -6527,6 +6527,21 @@ return [
     'profit_margin' => 'هامش الربح',
     'average_cost' => 'التكلفة المتوسطة',
     'up_to_date' => 'حتى التاريخ',
+
+    // Sales Analysis Detail Report
+    'sales_detail' => 'تفاصيل المبيعات',
+    'from_date' => 'من تاريخ',
+    'to_date' => 'إلى تاريخ',
+    'location_code' => 'رمز الموقع',
+    'transaction_type' => 'نوع المعاملة',
+    'transaction_code' => 'رمز المعاملة',
+    'transaction_date' => 'تاريخ المعاملة',
+    'barcode' => 'الباركود',
+    'revenue_acc_code' => 'كود الحساب الدائن',
+    'sold_qty' => 'الكمية المباعة',
+    'currency' => 'العملة',
+    'sold_price' => 'سعر البيع',
+    'net_sales_amount' => 'قيمة المبيعات الصافية',
      // GRV Translation Keys
      'grv_not_found' => 'لم يتم العثور على إيصال استلام البضائع',
      'company_system_id_not_found' => 'معرف نظام الشركة غير موجود',
