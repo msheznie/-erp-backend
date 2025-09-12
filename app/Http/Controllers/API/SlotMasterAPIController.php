@@ -75,7 +75,7 @@ class SlotMasterAPIController extends AppBaseController
         $this->slotMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $slotMasters = $this->slotMasterRepository->all();
 
-        return $this->sendResponse($slotMasters->toArray(), trans('custom.slot_masters_retrieved_successfully'));
+        return $this->sendResponse($slotMasters->toArray(), 'Slot Masters retrieved successfully');
     }
 
     /**
@@ -122,7 +122,7 @@ class SlotMasterAPIController extends AppBaseController
 
         $slotMaster = $this->slotMasterRepository->create($input);
 
-        return $this->sendResponse($slotMaster->toArray(), trans('custom.slot_master_saved_successfully'));
+        return $this->sendResponse($slotMaster->toArray(), 'Slot Master saved successfully');
     }
 
     /**
@@ -169,10 +169,10 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError(trans('custom.slot_master_not_found'));
+            return $this->sendError('Slot Master not found');
         }
 
-        return $this->sendResponse($slotMaster->toArray(), trans('custom.slot_master_retrieved_successfully'));
+        return $this->sendResponse($slotMaster->toArray(), 'Slot Master retrieved successfully');
     }
 
     /**
@@ -229,12 +229,12 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError(trans('custom.slot_master_not_found'));
+            return $this->sendError('Slot Master not found');
         }
 
         $slotMaster = $this->slotMasterRepository->update($input, $id);
 
-        return $this->sendResponse($slotMaster->toArray(), trans('custom.slotmaster_updated_successfully'));
+        return $this->sendResponse($slotMaster->toArray(), 'SlotMaster updated successfully');
     }
 
     /**
@@ -281,7 +281,7 @@ class SlotMasterAPIController extends AppBaseController
         $slotMaster = $this->slotMasterRepository->findWithoutFail($id);
 
         if (empty($slotMaster)) {
-            return $this->sendError(trans('custom.slot_master_not_found'));
+            return $this->sendError('Slot Master not found');
         }
 
         $slotMaster->delete();
@@ -292,7 +292,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         $calanderSlots = $this->slotMasterRepository->saveCalanderSlots($request);
         if ($calanderSlots['status']) {
-            return $this->sendResponse([], trans('custom.successfully_updated'));
+            return $this->sendResponse([], trans('srm_supplier_management.successfully_updated'));
         } else {
             $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
             return $this->sendError($calanderSlots['message'], $statusCode);
@@ -302,7 +302,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         try{
             $calendarSlots = $this->slotMasterRepository->getFormDataCalendar($request);
-            return $this->sendResponse($calendarSlots, trans('custom.record_retrieved_successfully_1'));
+            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -311,7 +311,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         try{
             $calendarSlots = $this->slotMasterRepository->getCalendarSlotData($request);
-            return $this->sendResponse($calendarSlots, trans('custom.record_retrieved_successfully_1'));
+            return $this->sendResponse($calendarSlots, 'Record retrieved successfully');
         } catch (\Exception $ex){
             return $this->sendError($ex->getMessage(), 500);
         }
@@ -327,9 +327,9 @@ class SlotMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'wareHouse.required' => 'Warehouse is required.',
-            'dateFrom.required' => 'From Date is required.',
-            'dateTo.required' => 'To Date is required.'
+            'wareHouse.required' => trans('srm_supplier_management.warehouse_is_required'),
+            'dateFrom.required' => trans('srm_supplier_management.from_date_is_required'),
+            'dateTo.required' => trans('srm_supplier_management.to_date_is_required')
         ];
 
         $validator = \Validator::make($input, [
@@ -347,7 +347,7 @@ class SlotMasterAPIController extends AppBaseController
         $toDate =  new Carbon($input['dateTo']);
 
         if (isset($fromDate) && isset($toDate) && ($toDate->format('Y-m-d') < $fromDate->format('Y-m-d'))) {
-            return $this->sendError('To Date must be greater than the From Date');
+            return $this->sendError(trans('srm_supplier_management.to_date_must_be_greater_than_the_from'));
         }
 
         $begin = new DateTime($fromDate);
@@ -366,7 +366,7 @@ class SlotMasterAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($weekDayArr, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($weekDayArr, trans('srm_supplier_management.record_retrieved_successfully'));
     }
 
 
@@ -430,7 +430,7 @@ class SlotMasterAPIController extends AppBaseController
         $slotMasterId = $input['slotMasterId'];
         $calanderSlots = $this->slotMasterRepository->deleteSlot($slotMasterId);
         if ($calanderSlots['status']) {
-            return $this->sendResponse([], trans('custom.successfully_deleted_1'));
+            return $this->sendResponse([], 'Successfully deleted');
         } else {
             $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
             return $this->sendError($calanderSlots['message'], $statusCode);

@@ -66,7 +66,7 @@ class SlotDetailsAPIController extends AppBaseController
         $this->slotDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $slotDetails = $this->slotDetailsRepository->all();
 
-        return $this->sendResponse($slotDetails->toArray(), trans('custom.slot_details_retrieved_successfully'));
+        return $this->sendResponse($slotDetails->toArray(), 'Slot Details retrieved successfully');
     }
 
     /**
@@ -113,7 +113,7 @@ class SlotDetailsAPIController extends AppBaseController
 
         $slotDetails = $this->slotDetailsRepository->create($input);
 
-        return $this->sendResponse($slotDetails->toArray(), trans('custom.slot_details_saved_successfully'));
+        return $this->sendResponse($slotDetails->toArray(), 'Slot Details saved successfully');
     }
 
     /**
@@ -160,10 +160,10 @@ class SlotDetailsAPIController extends AppBaseController
         $slotDetails = $this->slotDetailsRepository->findWithoutFail($id);
 
         if (empty($slotDetails)) {
-            return $this->sendError(trans('custom.slot_details_not_found'));
+            return $this->sendError('Slot Details not found');
         }
 
-        return $this->sendResponse($slotDetails->toArray(), trans('custom.slot_details_retrieved_successfully'));
+        return $this->sendResponse($slotDetails->toArray(), 'Slot Details retrieved successfully');
     }
 
     /**
@@ -220,12 +220,12 @@ class SlotDetailsAPIController extends AppBaseController
         $slotDetails = $this->slotDetailsRepository->findWithoutFail($id);
 
         if (empty($slotDetails)) {
-            return $this->sendError(trans('custom.slot_details_not_found'));
+            return $this->sendError('Slot Details not found');
         }
 
         $slotDetails = $this->slotDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($slotDetails->toArray(), trans('custom.slotdetails_updated_successfully'));
+        return $this->sendResponse($slotDetails->toArray(), 'SlotDetails updated successfully');
     }
 
     /**
@@ -272,7 +272,7 @@ class SlotDetailsAPIController extends AppBaseController
         $slotDetails = $this->slotDetailsRepository->findWithoutFail($id);
 
         if (empty($slotDetails)) {
-            return $this->sendError(trans('custom.slot_details_not_found'));
+            return $this->sendError('Slot Details not found');
         }
 
         $slotDetails->delete();
@@ -286,7 +286,7 @@ class SlotDetailsAPIController extends AppBaseController
         $deleteSlotDetail = $this->slotDetailsRepository->deleteSlotDetail($slotDetailID);
         if($deleteSlotDetail['success'])
         {
-            return $this->sendResponse([], trans('custom.slot_detail_successfully_deleted'));
+            return $this->sendResponse([], trans('srm_supplier_management.slot_detail_successfully_deleted'));
         } else{
             $statusCode = $deleteSlotDetail['code'] ?? 404;
             return $this->sendError($deleteSlotDetail['message'], $statusCode);
@@ -297,7 +297,7 @@ class SlotDetailsAPIController extends AppBaseController
     {
         $removeMultipleSlots = $this->slotDetailsRepository->removeMultipleSlots($request);
         if($removeMultipleSlots['status']){
-            return $this->sendResponse([], $removeMultipleSlots['message'] ?? 'Slots deleted successfully');
+            return $this->sendResponse([], $removeMultipleSlots['message'] ?? trans('srm_supplier_management.slots_deleted_successfully'));
         } else {
             $statusCode = $removeMultipleSlots['code'] ?? 404;
             return $this->sendError($removeMultipleSlots['message'], $statusCode);
@@ -307,6 +307,6 @@ class SlotDetailsAPIController extends AppBaseController
     public function getSlotDetailsFormData(Request $request){
         $companyID = $request->input('companyID');
         $filterData = $this->slotDetailsRepository->getSlotDetailsFormData($companyID);
-        return $this->sendResponse($filterData, trans('custom.slot_details_from_data_retrieved_successfully'));
+        return $this->sendResponse($filterData, 'Slot details from data retrieved successfully');
     }
 }

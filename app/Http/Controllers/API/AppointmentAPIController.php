@@ -74,7 +74,7 @@ class AppointmentAPIController extends AppBaseController
         $this->appointmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $appointments = $this->appointmentRepository->all();
 
-        return $this->sendResponse($appointments->toArray(), trans('custom.appointments_retrieved_successfully'));
+        return $this->sendResponse($appointments->toArray(), 'Appointments retrieved successfully');
     }
 
     /**
@@ -121,7 +121,7 @@ class AppointmentAPIController extends AppBaseController
 
         $appointment = $this->appointmentRepository->create($input);
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_saved_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment saved successfully');
     }
 
     /**
@@ -168,10 +168,10 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_retrieved_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment retrieved successfully');
     }
 
     /**
@@ -228,12 +228,12 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
         $appointment = $this->appointmentRepository->update($input, $id);
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_updated_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment updated successfully');
     }
 
     /**
@@ -280,7 +280,7 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
         $appointment->delete();
@@ -424,7 +424,7 @@ class AppointmentAPIController extends AppBaseController
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
-                'documentSystemID' => $input['document_system_id'],
+            'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']
@@ -442,7 +442,7 @@ class AppointmentAPIController extends AppBaseController
     public function rejectCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-    
+
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -498,7 +498,7 @@ class AppointmentAPIController extends AppBaseController
 
         return \DataTables::of($appointmentDetail)
             ->order(function ($query) use ($input) {
-               if (request()->has('order')) {
+                if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('attachmentID', 'asc');
                     }
@@ -515,20 +515,26 @@ class AppointmentAPIController extends AppBaseController
         $input = $request->all();
 
         $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
-        ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
-        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
-        ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
-        ->get();
+            ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
+            ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
+            ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
+            ->get();
 
         $is_valid = true;
-        $msg = 'Approval failed,please check the below details.'. "<br>";;
+        $text = trans('srm_supplier_management.approval_failed_please_check_the_below_details');
+        $msg = $text. "<br>";;
         foreach($appointments as $detail)
         {
-          
+
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
+                $info = trans('srm_masters.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
+                    'code1' => $detail->itemPrimaryCode,
+                    'code2' => $detail->purchaseOrderCode,
+                    'code3' => $detail->planned_qty,
+                    'code4' => $detail->balance_qty,
+                ]);
                 $msg .= $info . "<br>";
                 $is_valid = false;
             }
@@ -551,11 +557,11 @@ class AppointmentAPIController extends AppBaseController
         try
         {
             $serviceLineSystemID = $this->appointmentRepository->getServiceLineSystemIDs($request);
-            return $this->sendResponse($serviceLineSystemID , trans('custom.data_retrieved_successfully_3'));
+            return $this->sendResponse($serviceLineSystemID , trans('srm_supplier_management.data_retrieved_successfully'));
         }
         catch (\Exception $e)
         {
-            return $this->sendError('Something went wrong '.$e->getMessage());
+            return $this->sendError(trans('srm_supplier_management.something_went_wrong').$e->getMessage());
         }
     }
 
@@ -565,6 +571,6 @@ class AppointmentAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, trans('custom.succesfully_created'));
+        return $this->sendResponse($acc_d, trans('srm_supplier_management.successfully_created'));
     }
 }
