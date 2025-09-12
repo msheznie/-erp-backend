@@ -71,5 +71,6 @@ return [
     'department_updated_successfully' => 'تم تحديث القسم بنجاح',
     'department_description_already_exists' => 'وصف القسم \':code\' موجود بالفعل.',
     'department_saved_successfully' => 'تم حفظ القسم بنجاح',
-    'department_is_already_pulled_to_tender_or_rfx' => 'القسم مستخدم بالفعل في المناقصة / طلب العروض'
+    'department_is_already_pulled_to_tender_or_rfx' => 'القسم مستخدم بالفعل في المناقصة / طلب العروض',
+    'successfully_created' => 'تم الإنشاء بنجاح'
 ];

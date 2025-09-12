@@ -71,5 +71,6 @@ return [
     'department_updated_successfully' => 'Department updated successfully',
     'department_description_already_exists' => 'Department Description \':code\' already exists.',
     'department_saved_successfully' => 'Department saved successfully',
-    'department_is_already_pulled_to_tender_or_rfx' => 'Department is already pulled to Tender/RFX'
+    'department_is_already_pulled_to_tender_or_rfx' => 'Department is already pulled to Tender/RFX',
+    'successfully_created' => 'Successfully created'
 ];
