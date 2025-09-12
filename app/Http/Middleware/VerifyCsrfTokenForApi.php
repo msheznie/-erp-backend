@@ -165,6 +165,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getBudgetDelegateFormData',
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration',
+            'api/v1/getBudgetPlanningUserPermissions',
         ];
     }
 }
