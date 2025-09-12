@@ -30,10 +30,38 @@ class VerifyCsrfTokenForApi
             }
 
             // Get just the API path with query parameters (sorted for consistency)
-            $queryParams = $request->query();
+            // Parse raw query string to preserve empty parameters
+            $rawQueryString = $request->getQueryString();
+            $queryParams = [];
+            
+            if ($rawQueryString) {
+                $pairs = explode('&', $rawQueryString);
+                foreach ($pairs as $pair) {
+                    if (strpos($pair, '=') !== false) {
+                        list($key, $value) = explode('=', $pair, 2);
+                        $queryParams[urldecode($key)] = urldecode($value);
+                    } else {
+                        // Handle parameters without values
+                        $queryParams[urldecode($pair)] = '';
+                    }
+                }
+            }
+            
             ksort($queryParams); // Sort query parameters alphabetically by key
-            $queryString = http_build_query($queryParams);
+            
+            // Manually build query string without re-encoding to match frontend
+            // Filter out empty parameters to match frontend behavior
+            $queryParts = [];
+            foreach ($queryParams as $key => $value) {
+                // Only include non-empty parameters
+                if ($value !== '' && $value !== null) {
+                    $queryParts[] = $key . '=' . $value;
+                }
+            }
+            $queryString = implode('&', $queryParts);
+            
             $apiPath = $request->path() . ($queryString ? '?' . $queryString : '');
+            
 
             $signature = $request->header('X-CSRF-TOKEN');
             if (!$signature) {
@@ -48,7 +76,14 @@ class VerifyCsrfTokenForApi
             
             [$csrfToken, $timestamp] = $parts;
             
-            $timeExpiry = env('CSRF_TOKEN_EXPIRY_TIME', 5);
+            // Check if request contains files and adjust expiry time accordingly
+            $hasFiles = $request->hasFile('file') || 
+                       (is_array($request->allFiles()) && count($request->allFiles()) > 0) ||
+                       $request->hasFile('files') ||
+                       $request->hasFile('upload');
+            
+            $baseExpiry = env('CSRF_TOKEN_EXPIRY_TIME', 5);
+            $timeExpiry = $hasFiles ? $baseExpiry * 3 : $baseExpiry; // 3x longer for file uploads
             
             if (!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) {
                 return $this->sendError();
@@ -65,6 +100,7 @@ class VerifyCsrfTokenForApi
             $bodyString = ($data == "{}") ? $data : $normalizedJson;
             
             $requestString = "{$bodyString}|{$apiPath}|{$operation}";
+
             $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
             
