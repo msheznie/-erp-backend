@@ -81,7 +81,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $this->pricingScheduleMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pricingScheduleMasters = $this->pricingScheduleMasterRepository->all();
 
-        return $this->sendResponse($pricingScheduleMasters->toArray(), trans('custom.pricing_schedule_masters_retrieved_successfully'));
+        return $this->sendResponse($pricingScheduleMasters->toArray(), 'Pricing Schedule Masters retrieved successfully');
     }
 
     /**
@@ -128,7 +128,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->create($input);
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricing_schedule_master_saved_successfully'));
+        return $this->sendResponse($pricingScheduleMaster->toArray(), 'Pricing Schedule Master saved successfully');
     }
 
     /**
@@ -175,10 +175,10 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
+            return $this->sendError('Pricing Schedule Master not found');
         }
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricing_schedule_master_retrieved_successfully'));
+        return $this->sendResponse($pricingScheduleMaster->toArray(), 'Pricing Schedule Master retrieved successfully');
     }
 
     /**
@@ -235,12 +235,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
+            return $this->sendError('Pricing Schedule Master not found');
         }
 
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pricingScheduleMaster->toArray(), trans('custom.pricingschedulemaster_updated_successfully'));
+        return $this->sendResponse($pricingScheduleMaster->toArray(), 'PricingScheduleMaster updated successfully');
     }
 
     /**
@@ -287,7 +287,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $pricingScheduleMaster = $this->pricingScheduleMasterRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleMaster)) {
-            return $this->sendError(trans('custom.pricing_schedule_master_not_found'));
+            return $this->sendError('Pricing Schedule Master not found');
         }
 
         $pricingScheduleMaster->delete();
@@ -389,7 +389,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         }
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.updated_successfully'), 'data' => $result];
                 }
             }else{
 
@@ -411,7 +411,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         return ['success' => false, 'message' => $detailUpdate['message']];
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
                 }
             }
         } catch (\Exception $e) {
@@ -425,7 +425,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $response = $this->pricingScheduleMasterRepository->getPricingScheduleMasterEditData($input);
-        return $this->sendResponse($response, trans('custom.pricing_schedule_master_record_retrieved_successfu'));
+        return $this->sendResponse($response, trans('srm_tender_rfx.pricing_schedule_master_retrieved_successfully'));
     }
 
     public function deletePricingSchedule(Request $request)
@@ -434,7 +434,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
             $validator = Validator::make($request->all(), [
                 'tender_id' => 'required'
             ],[
-                'tender_id.required' => 'Tender Master ID is required',
+                'tender_id.required' => trans('srm_tender_rfx.tender_master_id_required'),
             ]);
 
             if ($validator->fails()) {

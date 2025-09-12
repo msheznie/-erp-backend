@@ -70,29 +70,46 @@ class PricingScheduleMasterRepository extends BaseRepository
                 PricingScheduleMaster::checkScheduleNameExists($id, $tenderMasterId, $scheduler_name, $companySystemID);
         }
         if(!empty($existData)){
-            return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.scheduler_name_cannot_be_duplicated')
+            ];
         }
-        return ['success' => true, 'message' => 'Valid schedule name'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
     public function checkTenderBidFormatFormulaExists($price_bid_format_id){
         if(TenderBidFormatDetail::checkTenderBidFormatFormulaExists($price_bid_format_id, 4, 0) > 0)
         {
-            return ['success' => false, 'message' => 'Pricing Bid format should have a defined formula'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.pricing_bid_format_formula_required')
+            ];
         }
         else if(TenderBidFormatDetail::checkTenderBidFormatFormulaExists($price_bid_format_id, 4, 1) > 0)
         {
-            return ['success' => false, 'message' => 'Formula is required for the “Final Total” total line'];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.final_total_formula_required')
+            ];
         }
-        return ['success' => true, 'message' => 'Valid formula'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
     public function getPricingScheduleMasterRecord($id, $amd_id, $editOrAmend){
         $scheduleMaster = $editOrAmend ?
             PricingScheduleMasterEditLog::find($amd_id) :
             PricingScheduleMaster::find($id);
         if(empty($scheduleMaster)) {
-            return ['success' => false, 'message' => 'Pricing schedule master not found', 'data' => null];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.pricing_schedule_master_not_found'),
+                'data' => null
+            ];
         }
-        return ['success' => true, 'message' => 'Pricing schedule master retrieved', 'data' => $scheduleMaster];
+        return [
+            'success' => true,
+            'message' => trans('srm_tender_rfx.pricing_schedule_master_retrieved'),
+            'data' => $scheduleMaster
+        ];
     }
 
     public function updateTenderPricingScheduleDetail($price_bid_format_id, $tenderMasterId, $pricing_schedule_master, $companySystemID, $employee, $editOrAmend, $versionID){
@@ -137,7 +154,7 @@ class PricingScheduleMasterRepository extends BaseRepository
                 $editOrAmend ?
                     PricingScheduleMasterEditLog::where('amd_id', $pricing_schedule_master['amd_id'])->update($status_updated) :
                     PricingScheduleMaster::where('id',$pricing_schedule_master['id'])->update($status_updated);
-                return ['success' => true, 'message' => 'Created Successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.created_successfully')];
             });
         } catch (\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -201,7 +218,7 @@ class PricingScheduleMasterRepository extends BaseRepository
                 } else {
                     $data = PricingScheduleMaster::where('id', $id)->update($updateData);
                 }
-                return ['success' => true , 'message' => 'Updated successfully', 'data' => $data];
+                return ['success' => true , 'message' => trans('srm_tender_rfx.updated_successfully'), 'data' => $data];
             });
         } catch (\Exception $exception){
             return ['success' => false , 'message' => $exception->getMessage()];
@@ -302,7 +319,7 @@ class PricingScheduleMasterRepository extends BaseRepository
                         $editOrAmend ?
                             PricingScheduleMasterEditLog::where('amd_id', $scheduleID)->update($master) :
                             PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
-                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                        return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
                     } else {
                         if(empty($exist)){
                             $master['status']=0;
@@ -310,10 +327,13 @@ class PricingScheduleMasterRepository extends BaseRepository
                                 PricingScheduleMasterEditLog::where('amd_id', $scheduleID)->update($master) :
                                 PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
                         }
-                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                        return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
                     }
                 } else {
-                    return ['success' => false, 'message' => 'Price bid format does not exist'];
+                    return [
+                        'success' => false,
+                        'message' => trans('srm_tender_rfx.price_bid_format_not_exist')
+                    ];
                 }
             });
         } catch (\Exception $ex){
@@ -331,7 +351,10 @@ class PricingScheduleMasterRepository extends BaseRepository
                     ScheduleBidFormatDetails::where('schedule_id',$scheduleID)->delete();
                 }
 
-                return ['success' => true, 'message' => 'Schedule bid format deleted successfully'];
+                return [
+                    'success' => true,
+                    'message' => trans('srm_tender_rfx.schedule_bid_format_deleted_successfully')
+                ];
             });
         } catch (\Exception $ex){
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -348,7 +371,10 @@ class PricingScheduleMasterRepository extends BaseRepository
 
                 $tenderMaster = TenderMaster::find($tender_id);
                 if(empty($tenderMaster)){
-                    return ['success' => false, 'message' => 'Tender Master not found'];
+                    return [
+                        'success' => false,
+                        'message' => trans('srm_tender_rfx.tender_master_not_found')
+                    ];
                 }
 
                 $scheduleMaster = $enableRequestChange ?
@@ -377,14 +403,17 @@ class PricingScheduleMasterRepository extends BaseRepository
                         PricingScheduleMasterEditLog::where('amd_id', $id)->update(['is_deleted' => 1]) :
                         PricingScheduleMaster::where('id', $id)->delete();
 
-                    return ['success' => true, 'message' => 'Deleted successfully'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
                 } else {
-                    return ['success' => false, 'message' => 'Pricing schedule master not found.'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.pricing_schedule_master_not_found')];
                 }
 
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: '. $exception->getMessage()];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])
+            ];
         }
     }
     public function deleteScheduleBidFormat($scheduleID, $editOrAmend, $versionID){
@@ -404,10 +433,10 @@ class PricingScheduleMasterRepository extends BaseRepository
                         $schedule->delete();
                     }
                 }
-                return ['success' => true, 'message' => 'Deleted successfully.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: '. $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error') . $exception->getMessage()];
         }
     }
     public function deleteBoqItems($boqItems, $versionID, $enableRequestChange){
@@ -424,7 +453,7 @@ class PricingScheduleMasterRepository extends BaseRepository
                         $boqItem->delete();
                     }
                 }
-                return ['success' => true, 'message' => 'Successfully Deleted'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
             });
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];

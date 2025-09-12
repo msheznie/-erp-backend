@@ -99,16 +99,16 @@ class TenderMainWorksRepository extends BaseRepository
                     PricingScheduleDetailEditLog::find($input['id']) :
                     PricingScheduleDetail::find($input['id']);
                 if(empty($pricingScheduleDetail)){
-                    return ['success' => false, 'message' => 'Pricing schedule detail record not found.'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.pricing_schedule_detail_not_found')];
                 }
 
                 $data['description']=$input['description'];
                 $data['updated_by'] = $employee->employeeSystemID;
                 $pricingScheduleDetail->update($data);
-                return ['success' => true, 'message' => 'Updated successfully.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.updated_successfully')];
             });
         } catch (\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
 }

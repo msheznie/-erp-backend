@@ -84,7 +84,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $this->tenderBoqItemsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBoqItems = $this->tenderBoqItemsRepository->all();
 
-        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_retrieved_successfully'));
+        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items retrieved successfully');
     }
 
     /**
@@ -131,7 +131,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         $tenderBoqItems = $this->tenderBoqItemsRepository->create($input);
 
-        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_saved_successfully'));
+        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items saved successfully');
     }
 
     /**
@@ -178,10 +178,10 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError(trans('custom.tender_boq_items_not_found'));
+            return $this->sendError('Tender Boq Items not found');
         }
 
-        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tender_boq_items_retrieved_successfully'));
+        return $this->sendResponse($tenderBoqItems->toArray(), 'Tender Boq Items retrieved successfully');
     }
 
     /**
@@ -238,12 +238,12 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError(trans('custom.tender_boq_items_not_found'));
+            return $this->sendError('Tender Boq Items not found');
         }
 
         $tenderBoqItems = $this->tenderBoqItemsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBoqItems->toArray(), trans('custom.tenderboqitems_updated_successfully'));
+        return $this->sendResponse($tenderBoqItems->toArray(), 'TenderBoqItems updated successfully');
     }
 
     /**
@@ -290,7 +290,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $tenderBoqItems = $this->tenderBoqItemsRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItems)) {
-            return $this->sendError(trans('custom.tender_boq_items_not_found'));
+            return $this->sendError('Tender Boq Items not found');
         }
 
         $tenderBoqItems->delete();
@@ -320,7 +320,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $main_work_id = $input['main_work_id'];
 
         if($input['qty'] <=0 ){
-            return $this->sendError(trans('custom.qty_cannot_be_less_than_or_equal_to_zero'));
+            return $this->sendError('QTY cannot be less than or equal to zero');
         }
 
         $exist = $this->tenderBoqItemsRepository->checkBoqItemsExists($input, $editOrAmend, $input['item_name'], $main_work_id);
@@ -392,9 +392,9 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved')];
             }
-            return ['success' => false, 'message' => 'Unable to create'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unable_to_create')];
         } catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => $e->getMessage()];
@@ -407,18 +407,18 @@ class TenderBoqItemsAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
 
         if(!isset($input['item_name']) || empty($input['item_name'])){
-            return ['success' => false, 'message' => 'Item is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.item_required')];
         }
 
         if(!isset($input['uom']) || empty($input['uom'])){
-            return ['success' => false, 'message' => 'UOM is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.uom_required')];
         }
 
         if(!isset($input['qty']) || empty($input['qty'])){
-            return ['success' => false, 'message' => 'QTY is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.qty_required')];
         }else{
             if($input['qty'] <=0 ){
-                return ['success' => false, 'message' => trans('custom.qty_cannot_be_less_than_or_equal_to_zero')];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.qty_greater_than_zero')];
             }
         }
         $versionID = $input['versionID'] ?? 0;
@@ -431,7 +431,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID);
 
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Item already exist'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.item_already_exists')];
         }
 
         DB::beginTransaction();
@@ -446,7 +446,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             $result = $model->update($data);
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated')];
             }
 
         } catch (\Exception $e) {
@@ -484,21 +484,21 @@ class TenderBoqItemsAPIController extends AppBaseController
                     foreach($details as $main)
                     {
                         if(count($main->tender_boq_items) == 0)
-                        {   
+                        {
                             $isMainWorksComplete = false;
                             break;
                         }
-                       
+
                     }
-                   
+
                 }
 
                 $master['boq_status'] = ($isMainWorksComplete) ? 1 : 0;
                 $editOrAmend ? PricingScheduleMasterEditLog::where('amd_id', $mainwork->amd_pricing_schedule_master_id)->update($master) :
-                PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
-            
+                    PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -514,7 +514,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx', 'tender_boq_item_upload_template.xlsx');
         } else {
-            return $this->sendError(trans('custom.attachments_not_found'), 500);
+            return $this->sendError(trans('srm_tender_rfx.attachments_not_found'), 500);
         }
     }
 
@@ -542,11 +542,11 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('srm_tender_rfx.file_type_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('srm_tender_rfx.file_size_exceeded'),500);
             }
 
             $disk = 'local';
@@ -582,7 +582,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
 
                 if (!$validateItem || !$validateQty) {
-                    return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
+                    return $this->sendError(trans('srm_tender_rfx.items_null_values'), 500);
                 }
             }
 
@@ -633,12 +633,12 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                 }
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('srm_tender_rfx.no_records_found'), 500);
             }
 
             if (!empty($duplicateEntries)) {
                 foreach ($duplicateEntries as $key => $dupl) {
-                    $dataItm['err'] = 'Item ' . $dupl['item'] . ' already exist and has been skipped';
+                    $dataItm['err'] = trans('srm_tender_rfx.item_already_exist', ['item' => $dupl['item']]);
                     $dataItm['type'] = 'error';
                     array_push($skipRecords, $dataItm);
                 }
@@ -646,20 +646,23 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (!empty($duplicates)) {
                 foreach ($duplicates as $duple) {
-                    $dataItm['err'] = 'Item ' . $duple->item . ' duplicated and has been skipped';
+                    $dataItm['err'] = trans('srm_tender_rfx.item_duplicated', ['item' => $duple->item]);
                     $dataItm['type'] = 'error';
                     array_push($skipRecords, $dataItm);
                 }
             }
             DB::commit();
             if (!empty($skipRecords)) {
-                $dataItm['err'] = $success.' Items successfully uploaded out of '.count($record);
+                $dataItm['err'] = trans('srm_tender_rfx.items_uploaded_summary', [
+                    'success' => $success,
+                    'total'   => count($record)
+                ]);
                 $dataItm['type'] = 'success';
                 array_push($skipRecords, $dataItm);
                 return $this->sendError($skipRecords, 200);
             }
 
-            return $this->sendResponse([], trans('custom.items_uploaded_successfully'));
+            return $this->sendResponse([], trans('srm_tender_rfx.items_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -681,6 +684,6 @@ class TenderBoqItemsAPIController extends AppBaseController
             PricingScheduleDetailEditLog::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->amd_pricing_schedule_master_id, $versionID) :
             PricingScheduleDetail::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->pricing_schedule_master_id);
 
-         return $output;                               
+        return $output;
     }
 }
