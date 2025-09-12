@@ -130,7 +130,7 @@ class VerifyCsrfTokenForApi
             'api/v1/purchase_requests/pull/items/',
             'api/v1/purchase_request_details',
             'api/v1/purchase_request_details_delete/{id}',
-            'api/v1/department_budget_plannings/{id}',
+            'api/v1/department_budget_plannings/{department_budget_planning}',
             'api/v1/delete_segment_allocated_items/{id}',
             'api/v1/purchase-request/remove-all-items/{id}',
             'api/v1/get-item-qnty-by-pr',
@@ -166,6 +166,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration',
             'api/v1/getBudgetPlanningUserPermissions',
+            'api/v1/getDepBudgetPlDetEmpColumns',
         ];
     }
 }
