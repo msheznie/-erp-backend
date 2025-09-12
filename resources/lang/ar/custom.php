@@ -6360,7 +6360,7 @@ return [
     'excel_total' => 'المجموع',
     'excel_qty_on_order' => 'الكمية في الطلب',
     'excel_qty_in_hand' => 'الكمية المتوفرة',
-    
+
     // PR Controller Report Headers
     'pr_number' => 'رقم طلب الشراء',
     'pr_requested_date' => 'تاريخ طلب الشراء',
@@ -6599,7 +6599,7 @@ return [
      'please_select_warehouse' => 'يرجى تحديد مستودع.',
      'item_not_assigned' => 'العنصر غير مخصص',
      'no_details_to_delete' => 'لا توجد تفاصيل للحذف',
-     
+
      // Stock Adjustment Translation Keys
      'document_date_not_within_financial_period' => 'تاريخ المستند ليس ضمن الفترة المالية المحددة !',
      'please_select_active_segment' => 'يرجى تحديد قطاع نشط',
@@ -6609,7 +6609,7 @@ return [
      'every_document_should_have_at_least_one_item' => 'يجب أن يحتوي كل مستند على عنصر واحد على الأقل',
      'stock_adjustment_updated_successfully' => 'تم تحديث تعديل المخزون بنجاح',
      'policy_not_found_for_document' => 'السياسة غير موجودة لهذا المستند',
-     
+
      // Stock Adjustment Details Translation Keys
      'please_select_active_location_details' => 'يرجى تحديد موقع نشط.',
      'please_select_location_details' => 'يرجى تحديد موقع.',
@@ -6619,7 +6619,7 @@ return [
      'account_code_not_updated' => 'لم يتم تحديث كود الحساب.',
      'selected_item_already_added' => 'العنصر المحدد مضاف بالفعل. يرجى التحقق مرة أخرى',
      'stock_adjustment_details_saved_successfully' => 'تم حفظ تفاصيل تعديل المخزون بنجاح',
-     
+
      // Stock Transfer Translation Keys
      'please_assign_wip_glcode_warehouse_transfer' => 'يرجى تعيين كود دفتر الأستاذ للعمل قيد التنفيذ لهذا المستودع',
      'wip_gl_code_not_assigned_company_transfer' => 'كود دفتر الأستاذ للعمل قيد التنفيذ المعين غير مخصص لهذه الشركة!',
@@ -6643,7 +6643,7 @@ return [
      'inter_company_stock_transfer_deleted_successfully' => 'تم حذف نقل المخزون بين الشركات بنجاح',
      'stock_transfer_pl_account_inter_company_not_configured' => 'حساب قائمة الدخل لنقل المخزون بين الشركات غير مُكوَّن',
      'stock_transfer_pl_account_not_configured' => 'حساب قائمة الدخل لنقل المخزون غير مُكوَّن',
-     
+
      // Purchase Return Translation Keys
      'purchase_return_date_not_between_financial_period' => 'تاريخ إرجاع الشراء ليس ضمن الفترة المالية !',
      'please_select_active_segment_return' => 'يرجى تحديد قطاع نشط ',
@@ -6662,7 +6662,7 @@ return [
      'input_vat_transfer_gl_account_not_configured' => 'حساب نقل ضريبة القيمة المضافة المدخلة غير مُكوَّن',
      'output_vat_transfer_gl_account_not_assigned_company' => 'حساب نقل ضريبة القيمة المضافة المخرجة غير مخصص للشركة',
      'output_vat_transfer_gl_account_not_configured' => 'حساب نقل ضريبة القيمة المضافة المخرجة غير مُكوَّن',
-     
+
      // Stock Count Translation Keys
      'document_date_not_within_financial_period_stock_count' => 'تاريخ المستند ليس ضمن الفترة المالية المحددة !',
      'please_select_active_segment_stock_count' => 'يرجى تحديد قطاع نشط',
@@ -6670,5 +6670,36 @@ return [
      'stock_count_saved_successfully' => 'تم حفظ عد المخزون بنجاح',
      'stock_count_not_found' => 'لم يتم العثور على عد المخزون',
      'stock_count_reffered_back_deleted_successfully' => 'تم حذف عد المخزون المُعاد بنجاح',
-     'stock_count_details_reffered_back_deleted_successfully' => 'تم حذف تفاصيل عد المخزون المُعاد بنجاح' 
+     'stock_count_details_reffered_back_deleted_successfully' => 'تم حذف تفاصيل عد المخزون المُعاد بنجاح',
+    'movement_category' => 'فئة الحركة',
+    'wac_local' => 'متوسط التكلفة المحلي',
+    'wac_rep' => 'متوسط التكلفة المحول',
+    'transaction' => 'المعاملة',
+    'aging_1_year_qty' => '<= سنة واحدة (الكمية)',
+    'aging_1_year_value' => '<= سنة واحدة (القيمة)',
+    'aging_1_to_2_years_qty' => '1 إلى 2 سنوات (الكمية)',
+    'aging_1_to_2_years_value' => '1 إلى 2 سنوات (القيمة)',
+    'aging_2_to_3_years_qty' => '2 إلى 3 سنوات (الكمية)',
+    'aging_2_to_3_years_value' => '2 إلى 3 سنوات (القيمة)',
+    'aging_3_to_4_years_qty' => '3 إلى 4 سنوات (الكمية)',
+    'aging_3_to_4_years_value' => '3 إلى 4 سنوات (القيمة)',
+    'aging_4_to_5_years_qty' => '4 إلى 5 سنوات (الكمية)',
+    'aging_4_to_5_years_value' => '4 إلى 5 سنوات (القيمة)',
+    'aging_over_5_years_qty' => 'أكثر من 5 سنوات (الكمية)',
+    'aging_over_5_years_value' => 'أكثر من 5 سنوات (القيمة)',
+    'aging_30_days_qty' => '<=30 (الكمية)',
+    'aging_30_days_value' => '<=30 (القيمة)',
+    'aging_31_to_60_qty' => '31 إلى 60 (الكمية)',
+    'aging_31_to_60_value' => '31 إلى 60 (القيمة)',
+    'aging_61_to_90_qty' => '61 إلى 90 (الكمية)',
+    'aging_61_to_90_value' => '61 إلى 90 (القيمة)',
+    'aging_91_to_120_qty' => '91 إلى 120 (الكمية)',
+    'aging_91_to_120_value' => '91 إلى 120 (القيمة)',
+    'aging_121_to_365_qty' => '121 إلى 365 (الكمية)',
+    'aging_121_to_365_value' => '121 إلى 365 (القيمة)',
+    'aging_366_to_730_qty' => '366 إلى 730 (الكمية)',
+    'aging_366_to_730_value' => '366 إلى 730 (القيمة)',
+    'aging_over_730_qty' => 'أكثر من 730 (الكمية)',
+    'aging_over_730_value' => 'أكثر من 730 (القيمة)',
+    'stock_aging_report' => 'تقرير تقادم المخزون'
 ];
