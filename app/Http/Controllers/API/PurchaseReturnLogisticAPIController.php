@@ -276,6 +276,6 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
 
         $purchaseReturnLogistic->delete();
 
-        return $this->sendSuccess('Purchase Return Logistic deleted successfully');
+        return $this->sendSuccess(trans('custom.purchase_return_logistic_deleted_successfully'));
     }
 }

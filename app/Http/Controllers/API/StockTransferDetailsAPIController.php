@@ -190,7 +190,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($segment)) {
-            return $this->sendError('Selected department is not active. Please select an active department', 500);
+            return $this->sendError(trans('custom.selected_department_not_active'), 500);
         }
 
 
@@ -200,7 +200,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         }
 
         if ($checkWareHouseActiveFrom->isActive == 0) {
-            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+            return $this->sendError(trans('custom.selected_location_from_not_active'), 500);
         }
 
 
@@ -210,7 +210,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         }
 
         if ($checkWareHouseActiveTo->isActive == 0) {
-            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
+            return $this->sendError(trans('custom.selected_location_to_not_active'), 500);
         }
 
 
@@ -237,7 +237,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherItemIssuePending)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssuePending->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.material_issue_pending_approval_item', ['code' => $checkWhetherItemIssuePending->itemIssueCode]), 500);
         }
 
         $checkWhetherStockTransfer = StockTransfer::where('stockTransferAutoID', '!=', $stockTransferMaster->stockTransferAutoID)
@@ -264,7 +264,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.stock_transfer_pending_approval_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
         }
 
         /*check item sales invoice*/
@@ -291,7 +291,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherInvoice)) {
-            return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.customer_invoice_pending_approval_item', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
         }
 
         // check in delivery order
@@ -311,7 +311,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkWhetherDeliveryOrder)) {
-            return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.delivery_order_pending_approval_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]), 500);
         }
 
         /*Check in purchase return*/
@@ -335,7 +335,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherPR)) {
-            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.purchase_return_pending_approval_item', ['code' => $checkWhetherPR->purchaseReturnCode]), 500);
         }
 
         $input['stockTransferCode'] = $stockTransferMaster->stockTransferCode;
@@ -378,19 +378,19 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['warehouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
         if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue", 500);
+            return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_issue'), 500);
         }
 
         if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue", 500);
+            return $this->sendError(trans('custom.stock_qty_zero_cannot_issue'), 500);
         }
 
         if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_zero_cannot_issue'), 500);
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_negative_cannot_issue'), 500);
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -528,13 +528,13 @@ class StockTransferDetailsAPIController extends AppBaseController
         if ($stockTransferDetails->unitCostLocal == 0 || $stockTransferDetails->unitCostRpt == 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
-            return $this->sendError("Cost is 0. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_zero_cannot_issue'), 500);
         }
 
         if ($stockTransferDetails->unitCostLocal < 0 || $stockTransferDetails->unitCostRpt < 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
-            return $this->sendError("Cost is negative. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_negative_cannot_issue'), 500);
         }
 
         if ($stockTransferDetails->currentStockQty <= 0) {

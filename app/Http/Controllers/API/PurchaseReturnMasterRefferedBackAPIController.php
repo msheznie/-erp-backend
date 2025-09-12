@@ -280,7 +280,7 @@ class PurchaseReturnMasterRefferedBackAPIController extends AppBaseController
 
         $purchaseReturnMasterRefferedBack->delete();
 
-        return $this->sendSuccess('Purchase Return Master Reffered Back deleted successfully');
+        return $this->sendSuccess(trans('custom.purchase_return_master_reffered_back_deleted_successfully'));
     }
 
 

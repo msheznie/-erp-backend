@@ -143,10 +143,10 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.location_not_found'), 500);
             }
             if ($wareHouse->isActive == 0) {
-                return $this->sendError('Please select a active location.', 500);
+                return $this->sendError(trans('custom.please_select_active_location_details'), 500);
             }
         } else {
-            return $this->sendError('Please select a location.', 500);
+            return $this->sendError(trans('custom.please_select_location_details'), 500);
         }
 
         if ($stockAdjustment->serviceLineSystemID) {
@@ -155,10 +155,10 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.segment_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active Segment', 500);
+                return $this->sendError(trans('custom.please_select_active_segment_details'), 500);
             }
         } else {
-            return $this->sendError('Please select a Segment.', 500);
+            return $this->sendError(trans('custom.please_select_segment_details'), 500);
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
@@ -206,7 +206,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Stock Adjustment (" . $checkWhether->stockAdjustmentCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.stock_adjustment_pending_approval_item', ['code' => $checkWhether->stockAdjustmentCode]), 500);
         }
 
         $data = array('companySystemID' => $companySystemID,
@@ -253,11 +253,11 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         } else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if ($input['itemFinanceCategoryID'] == 1) {
@@ -268,7 +268,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                return $this->sendError(trans('custom.selected_item_already_added'), 500);
             }
         }
 

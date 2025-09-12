@@ -93,16 +93,10 @@ class ItemIssueType extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->issueTypeDes) {
             return $translation->issueTypeDes;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->issueTypeDes;
-            }
-        }
         
         return $this->attributes['issueTypeDes'] ?? '';
     }

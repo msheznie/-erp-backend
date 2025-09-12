@@ -210,11 +210,11 @@ class StockTransferAPIController extends AppBaseController
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
-                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                return $this->sendError(trans('custom.please_assign_wip_glcode_warehouse_transfer'), 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
                 if (!$checkGLIsAssigned) {
-                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                    return $this->sendError(trans('custom.wip_gl_code_not_assigned_company_transfer'), 500);
                 }
             }
         }
@@ -226,7 +226,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Transfer date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.transfer_date_not_within_financial_period'), 500);
         }
 
 
@@ -235,13 +235,13 @@ class StockTransferAPIController extends AppBaseController
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->where('approvedYN',1)->count();
             if ($checkCustomer == 0) {
                 $cusError = array('type' => 'cus_not');
-                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500, $cusError);
+                return $this->sendError(trans('custom.customer_not_linked_company'), 500, $cusError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->where('approvedYN',1)->count();
             if ($checkSupplier == 0) {
                 $supError = array('type' => 'sup_not');
-                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500, $supError);
+                return $this->sendError(trans('custom.supplier_not_linked_company'), 500, $supError);
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
@@ -258,7 +258,7 @@ class StockTransferAPIController extends AppBaseController
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 
             if ($toCompanyFinancePeriod == 0) {
-                return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
+                return $this->sendError(trans('custom.financial_year_period_not_activated', ['company' => $companyTo->CompanyName]), 500);
             }
         }
         DB::beginTransaction();
@@ -282,7 +282,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (empty($segments)) {
             DB::rollBack();
-            return $this->sendError('Selected segment is not active. Please select an active segment', 500);
+            return $this->sendError(trans('custom.selected_segment_not_active_transfer'), 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
@@ -514,11 +514,11 @@ class StockTransferAPIController extends AppBaseController
 
                 if ($checkWareHouseActiveTo->manufacturingYN == 1) {
                     if (is_null($checkWareHouseActiveTo->WIPGLCode)) {
-                        return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                        return $this->sendError(trans('custom.please_assign_wip_glcode_warehouse_transfer'), 500);
                     } else {
                         $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkWareHouseActiveTo->WIPGLCode, $input['companyToSystemID']);
                         if (!$checkGLIsAssigned) {
-                            return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                            return $this->sendError(trans('custom.wip_gl_code_not_assigned_company_transfer'), 500);
                         }
                     }
                 }
@@ -605,7 +605,7 @@ class StockTransferAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Transfer date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.transfer_date_not_within_financial_period'), 500);
             }
 
             $validator = \Validator::make($input, [
