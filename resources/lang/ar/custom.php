@@ -6713,7 +6713,7 @@ return [
     'active_only' => 'نشط فقط',
     'not_active' => 'غير نشط',
 
-    'stock_aging_report' => 'تقرير تقادم المخزون'
+    'stock_aging_report' => 'تقرير تقادم المخزون',
  
     'debit' => 'مدين',
     'credit' => 'دائن',

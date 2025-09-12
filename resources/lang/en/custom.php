@@ -6660,9 +6660,7 @@ return [
     'credit' => 'Credit',
     
     // Status Indicators
-    'cancelled_status' => ' -- @Cancelled@'
-
-    'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
+    'cancelled_status' => ' -- @Cancelled@',
     'movement_category' => 'Movement Category',
     'wac_local' => 'WAC Local',
     'wac_rep' => 'WAC Rep',
