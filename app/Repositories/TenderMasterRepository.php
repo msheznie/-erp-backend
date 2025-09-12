@@ -282,7 +282,7 @@ class TenderMasterRepository extends BaseRepository
         if ($result) {
             return [
                 'success' => false,
-                'message' => 'Line items are already added',
+                'message' => trans('srm_tender_rfx.line_items_already_added'),
                 'data' => ''
             ];
         }
@@ -297,7 +297,7 @@ class TenderMasterRepository extends BaseRepository
         $result['prDetail'] = $pr;
         return [
             'success' => true,
-            'message' => 'PR Details Retrieved',
+            'message' => trans('srm_tender_rfx.pr_details_retrieved'),
             'data' => $result
         ];
     }
@@ -2184,8 +2184,8 @@ class TenderMasterRepository extends BaseRepository
                 if (($input['min_approval_bid_opening'] != 0)) {
                     if (count($tenderBidEmployee) < $input['min_approval_bid_opening']) {
                         return [
-                            'status' => false,
-                            trans(
+                            'success' => false,
+                            'message' => trans(
                                 'srm_tender_rfx.at_least_min_employee_should_be_selected',
                                 ['count' => $input['min_approval_bid_opening']]
                             )
