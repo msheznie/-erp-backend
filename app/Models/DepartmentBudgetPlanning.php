@@ -204,7 +204,7 @@ class DepartmentBudgetPlanning extends Model
 
     public function delegateAccess()
     {
-        return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', 110);
+        return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', Auth::user()->employee_id);
 
     }
 
