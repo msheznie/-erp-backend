@@ -697,10 +697,12 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             ->orderBy('id', $sort);
                     }else {
                         // delegate
-
-                        $uniqueIds = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning','delegatee'=> function ($query) use ($employeeID) {
-                            $query->where('employeeSystemID',$employeeID)->where('isActive',true);
-                        }])->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
+                        
+                        $uniqueIds = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning', 'delegatee'])
+                            ->whereHas('delegatee', function ($query) use ($employeeID) {
+                                $query->where('employeeSystemID', $employeeID)
+                                    ->where('isActive', true);
+                            })->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
                         $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
