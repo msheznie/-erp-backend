@@ -186,10 +186,10 @@ class CreateExcel
                                 $i = $i - 0;
                                 self::branch($array, $sheet, 'Branch ');
                                 self::selectedCurrency($array, $sheet, 'Currency');
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             } else {
                                 $i = $i - 2;
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             }
                         }
                         else if(($array['type']) == 3)
@@ -207,7 +207,7 @@ class CreateExcel
                         else if(($array['type']) == 5)
                         {
                             $i = $i - 1;
-                            self::fromDate($array,$sheet,'As of Date');
+                            self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             self::currency($array,$sheet,'A4');
 
                         }

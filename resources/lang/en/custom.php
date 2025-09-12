@@ -6284,7 +6284,7 @@ return [
     'reporting_debit_amount' => 'Reporting Debit Amount',
     'reporting_credit_amount' => 'Reporting Credit Amount',
     'status' => 'Status',
-    
+
     // Material Request translations
     'e_request_code' => 'Request Code',
     'e_comments' => 'Comments',
@@ -6343,7 +6343,7 @@ return [
     'excel_total' => 'Total',
     'excel_qty_on_order' => 'Qty On Order',
     'excel_qty_in_hand' => 'Qty in Hand',
-    
+
     // PR Controller Report Headers
     'pr_number' => 'PR Number',
     'pr_requested_date' => 'PR Requested Date',
@@ -6582,7 +6582,7 @@ return [
     'please_select_warehouse' => 'Please select a warehouse.',
     'item_not_assigned' => 'Item not assigned',
     'no_details_to_delete' => 'There are no details to delete',
-    
+
     // Stock Adjustment Translation Keys
     'document_date_not_within_financial_period' => 'Document date is not within the selected financial period !',
     'please_select_active_segment' => 'Please select a active Segment',
@@ -6592,7 +6592,7 @@ return [
     'every_document_should_have_at_least_one_item' => 'Every document should have at least one item',
     'stock_adjustment_updated_successfully' => 'StockAdjustment updated successfully',
     'policy_not_found_for_document' => 'Policy not found for this document',
-    
+
     // Stock Adjustment Details Translation Keys
     'please_select_active_location_details' => 'Please select a active location.',
     'please_select_location_details' => 'Please select a location.',
@@ -6602,7 +6602,7 @@ return [
     'account_code_not_updated' => 'Account code not updated.',
     'selected_item_already_added' => 'Selected item is already added. Please check again',
     'stock_adjustment_details_saved_successfully' => 'Stock Adjustment Details saved successfully',
-    
+
     // Stock Transfer Translation Keys
     'please_assign_wip_glcode_warehouse_transfer' => 'Please assigned WIP GLCode for this warehouse',
     'wip_gl_code_not_assigned_company_transfer' => 'Assigned WIP GL Code is not assigned to this company!',
@@ -6626,7 +6626,7 @@ return [
     'inter_company_stock_transfer_deleted_successfully' => 'Inter Company Stock Transfer deleted successfully',
     'stock_transfer_pl_account_inter_company_not_configured' => 'Stock Transfer Pl Account for inter company transfer is not configured',
     'stock_transfer_pl_account_not_configured' => 'Stock Transfer Pl Account is not configured',
-    
+
     // Purchase Return Translation Keys
     'purchase_return_date_not_between_financial_period' => 'Purchase Return Date not between Financial period !',
     'please_select_active_segment_return' => 'Please select a active segment ',
@@ -6645,7 +6645,7 @@ return [
     'input_vat_transfer_gl_account_not_configured' => 'Input Vat Transfer GL Account not configured',
     'output_vat_transfer_gl_account_not_assigned_company' => 'Output Vat Transfer GL Account not assigned to company',
     'output_vat_transfer_gl_account_not_configured' => 'Output Vat Transfer GL Account not configured',
-    
+
     // Stock Count Translation Keys
     'document_date_not_within_financial_period_stock_count' => 'Document date is not within the selected financial period !',
     'please_select_active_segment_stock_count' => 'Please select a active Segment',
@@ -6656,6 +6656,38 @@ return [
     'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
 
     'debit' => 'Debit',
-    'credit' => 'Credit'
+    'credit' => 'Credit',
 
+    'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
+    'movement_category' => 'Movement Category',
+    'wac_local' => 'WAC Local',
+    'wac_rep' => 'WAC Rep',
+    'transaction' => 'Transaction',
+    'aging_1_year_qty' => '<= 1 year (Qty)',
+    'aging_1_year_value' => '<= 1 year (Value)',
+    'aging_1_to_2_years_qty' => '1 to 2 years (Qty)',
+    'aging_1_to_2_years_value' => '1 to 2 years (Value)',
+    'aging_2_to_3_years_qty' => '2 to 3 years (Qty)',
+    'aging_2_to_3_years_value' => '2 to 3 years (Value)',
+    'aging_3_to_4_years_qty' => '3 to 4 years (Qty)',
+    'aging_3_to_4_years_value' => '3 to 4 years (Value)',
+    'aging_4_to_5_years_qty' => '4 to 5 years (Qty)',
+    'aging_4_to_5_years_value' => '4 to 5 years (Value)',
+    'aging_over_5_years_qty' => 'Over 5 years (Qty)',
+    'aging_over_5_years_value' => 'Over 5 years (Value)',
+    'aging_30_days_qty' => '<=30 (Qty)',
+    'aging_30_days_value' => '<=30 (Value)',
+    'aging_31_to_60_qty' => '31 to 60 (Qty)',
+    'aging_31_to_60_value' => '31 to 60 (Value)',
+    'aging_61_to_90_qty' => '61 to 90 (Qty)',
+    'aging_61_to_90_value' => '61 to 90 (Value)',
+    'aging_91_to_120_qty' => '91 to 120 (Qty)',
+    'aging_91_to_120_value' => '91 to 120 (Value)',
+    'aging_121_to_365_qty' => '121 to 365 (Qty)',
+    'aging_121_to_365_value' => '121 to 365 (Value)',
+    'aging_366_to_730_qty' => '366 to 730 (Qty)',
+    'aging_366_to_730_value' => '366 to 730 (Value)',
+    'aging_over_730_qty' => 'Over 730 (Qty)',
+    'aging_over_730_value' => 'Over 730 (Value)',
+    'stock_aging_report' => 'Stock Aging Report'
 ];
