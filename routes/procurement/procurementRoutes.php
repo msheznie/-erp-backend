@@ -40,7 +40,7 @@ Route::group([], function() {
     Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails')->name('Get warehouse stock details');
     Route::post('getWarehouse', 'PurchaseRequestAPIController@getWarehouse')->name('Get purchase request warehouse');
     Route::get('getPurchaseRequestTotal', 'PurchaseRequestAPIController@getPurchaseRequestTotal')->name('Get purchase request total');
-    Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->middleware('print_lang')->name('Export Purchase History');
+    Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->name('Export Purchase History');
     Route::get('purchase_request_data', 'PurchaseRequestAPIController@show')->name('Get purchase request data for portal');
     Route::get('get_purchase_request_referreds', 'PurchaseRequestReferredAPIController@get_purchase_request_referreds')->name('Get purchase request refferreds');
 

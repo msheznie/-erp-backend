@@ -228,16 +228,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
-                __('custom.company_name') => $order->CompanyName,
-                __('custom.po_number') => $order->purchaseOrderCode,
-                __('custom.supplier_code') => $order->supplierPrimaryCode,
-                __('custom.approved_date') => date("Y-m-d", strtotime($order->approvedDate)),
-                __('custom.supplier_name') => $order->supplierName,
-                __('custom.part_no_ref_number') => $order->supplierPartNumber,
-                __('custom.uom') => $order->UnitShortCode,
-                __('custom.currency') => $order->CurrencyCode,
-                __('custom.po_qty') => $qua_req,
-                __('custom.unit_cost') => $tran_amount,
+                trans('custom.company_name') => $order->CompanyName,
+                trans('custom.po_number') => $order->purchaseOrderCode,
+                trans('custom.supplier_code') => $order->supplierPrimaryCode,
+                trans('custom.approved_date') => date("Y-m-d", strtotime($order->approvedDate)),
+                trans('custom.supplier_name') => $order->supplierName,
+                trans('custom.part_no_ref_number') => $order->supplierPartNumber,
+                trans('custom.uom') => $order->UnitShortCode,
+                trans('custom.currency') => $order->CurrencyCode,
+                trans('custom.po_qty') => $qua_req,
+                trans('custom.unit_cost') => $tran_amount,
             );
         }
 

@@ -2412,8 +2412,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                                               array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                                               array('value' => 14, 'label' => trans('custom.direct_receipt')));
                 $output['paymentType'] = PaymentType::all();
                 
                 if(Helper::checkPolicy($companySystemID,49)){
