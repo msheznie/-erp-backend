@@ -551,11 +551,11 @@ class AppointmentAPIController extends AppBaseController
         try
         {
             $serviceLineSystemID = $this->appointmentRepository->getServiceLineSystemIDs($request);
-            return $this->sendResponse($serviceLineSystemID , 'Data Retrieved successfully');
+            return $this->sendResponse($serviceLineSystemID , trans('srm_supplier_management.data_retrieved_successfully'));
         }
         catch (\Exception $e)
         {
-            return $this->sendError('Something went wrong '.$e->getMessage());
+            return $this->sendError(trans('srm_supplier_management.something_went_wrong').$e->getMessage());
         }
     }
 
@@ -565,6 +565,6 @@ class AppointmentAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, 'succesfully created');
+        return $this->sendResponse($acc_d, trans('srm_supplier_management.successfully_created'));
     }
 }
