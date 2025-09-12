@@ -332,7 +332,7 @@ class TenderMainWorksAPIController extends AppBaseController
 
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -348,7 +348,7 @@ class TenderMainWorksAPIController extends AppBaseController
         if ($exists = Storage::disk($disk)->exists('main_works_item_upload_template/main_works_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('main_works_item_upload_template/main_works_item_upload_template.xlsx', 'main_works_item_upload_template.xlsx');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('srm_tender_rfx.attachments_not_found'), 500);
         }
     }
 
@@ -371,11 +371,11 @@ class TenderMainWorksAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('srm_tender_rfx.file_type_not_allowed'), 500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('srm_tender_rfx.file_size_exceeded'), 500);
             }
 
             $disk = 'local';
@@ -411,7 +411,7 @@ class TenderMainWorksAPIController extends AppBaseController
             }
 
             if (!$validateItem || !$validateDescription) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('srm_tender_rfx.items_null_values'), 500);
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -427,7 +427,7 @@ class TenderMainWorksAPIController extends AppBaseController
                     $exist = TenderMainWorks::where('item', $vl['item'])->where('tender_id', $input['tender_id'])->where('schedule_id', $input['schedule_id'])->where('company_id', $input['companySystemID'])->first();
 
                     if(!empty($exist)){
-                        return $this->sendError('Item can not be duplicated', 500);
+                        return $this->sendError(trans('srm_tender_rfx.item_duplicate'), 500);
                     }
                 }
                 $employee = \Helper::getEmployeeInfo();
@@ -441,11 +441,11 @@ class TenderMainWorksAPIController extends AppBaseController
                     $result = TenderMainWorks::create($data);
                 }
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('srm_tender_rfx.no_records_found'), 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], trans('srm_tender_rfx.items_uploaded'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -460,7 +460,7 @@ class TenderMainWorksAPIController extends AppBaseController
             $result = PricingScheduleDetail::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -476,7 +476,7 @@ class TenderMainWorksAPIController extends AppBaseController
         try{
             return $this->tenderMainWorksRepository->updateWorkOrderDescription($input);
         } catch(\Exception $ex) {
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 }
