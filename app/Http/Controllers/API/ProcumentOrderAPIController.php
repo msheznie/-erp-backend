@@ -7054,7 +7054,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['cssClass'] = "ngx-org-step-five";
             }
 
-            $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? " -- @Cancelled@" : "";
+            $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? trans('custom.cancelled_status') : "";
             $temp2['name'] = trans('custom.payment_voucher');
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
@@ -7181,7 +7181,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $poData = $poMasters->toArray();
 
-        $cancelStatus = ($purchaseRequest->cancelledYN == -1) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($purchaseRequest->cancelledYN == -1) ? trans('custom.cancelled_status') : "";
         $tracingData['name'] = trans('custom.purchase_request');
         if ($type == 'pr' && ($purchaseRequest->purchaseRequestID == $purchaseRequestID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
@@ -7198,7 +7198,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             // {
             //     continue;
             // }
-            $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+            $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? trans('custom.cancelled_status') : "";
             $tempPo = [];
             $tempPo['name'] = trans('custom.purchase_order');
             if ($type == 'po' && ($valuePo['order']['purchaseOrderID'] == $purchaseOrderID)) {
@@ -7214,7 +7214,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $grvTototal = 0;
 
             foreach ($valuePo['grv'] as $key => $value) {
-                $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+                $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? trans('custom.cancelled_status') : "";
 
                 $temp = [];
                 $temp['name'] = trans('custom.good_receipt_voucher');
@@ -7239,7 +7239,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 foreach ($value['invoices'] as $key1 => $value1) {
 
-                    $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                    $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                     $temp1 = [];
                     $temp1['name'] = trans('custom.supplier_invoice');
                     if ($type == 'supInv' && ($value1['suppinvmaster']['bookingSuppMasInvAutoID'] == $bookingSuppMasInvAutoID)) {
@@ -7269,7 +7269,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             } else {
                                 $temp2['cssClass'] = "ngx-org-step-five";
                             }
-                            $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                            $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                             $temp2['name'] = trans('custom.payment');
                             $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
@@ -7436,7 +7436,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $procumentOrderData = ProcumentOrder::with(['currency'])
                     ->find($poID)
                     ->toArray();
-                $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
+                $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? trans('custom.cancelled_status') : "";
                 $tempPo = [];
                 $tempPo['name'] = trans('custom.purchase_order');
                 if ($type == 'po' && ($procumentOrder->purchaseOrderID == $purchaseOrderID)) {
@@ -7452,7 +7452,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $grvData = $this->getPOtoPaymentChainForTracing($procumentOrder, $grvAutoID, $bookingSuppMasInvAutoID, $type, $debitNoteID);
                 if (sizeof($grvData) > 0) {
                     foreach ($grvData as $key => $value) {
-                        $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+                        $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? trans('custom.cancelled_status') : "";
 
                         $temp = [];
                         $temp['name'] = trans('custom.good_receipt_voucher');
@@ -7476,7 +7476,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         $temp['title'] = "{" . trans('custom.doc_code') . " :} " . $value['grv_master']['grvPrimaryCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.document_amount') . " :} " . number_format($detailTotalAmount, $value['grv_master']['currency_by']['DecimalPlaces']) ." -- {" . trans('custom.total_amount') . " :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']). $cancelStatus;
 
                         foreach ($value['invoices'] as $key1 => $value1) {
-                            $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                            $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                             $temp1 = [];
                             $temp1['name'] = trans('custom.supplier_invoice');
                             if ($type == 'supInv' && ($value1['suppinvmaster']['bookingSuppMasInvAutoID'] == $bookingSuppMasInvAutoID)) {
@@ -7507,7 +7507,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         $temp2['cssClass'] = "ngx-org-step-five";
                                     }
 
-                                    $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                                    $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                                     $temp2['name'] = trans('custom.payment');
                                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
@@ -7632,7 +7632,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['cssClass'] = "ngx-org-step-five";
             }
 
-            $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? " -- @Cancelled@" : "";
+            $cancelStatus = ($paymount_vaoucher->cancelYN == -1) ? trans('custom.cancelled_status') : "";
             $temp2['name'] = trans('custom.payment_voucher');
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
@@ -7881,7 +7881,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $invoiceData = $invoices->toArray();
-        $cancelStatus = ($grvMaster->grvCancelledYN == -1) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($grvMaster->grvCancelledYN == -1) ? trans('custom.cancelled_status') : "";
 
         $tracingData['name'] = trans('custom.good_received_voucher');
         $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
@@ -7891,7 +7891,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
         foreach ($invoiceData as $key1 => $value1) {
-            $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+            $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
             $temp1 = [];
             $temp1['name'] = trans('custom.supplier_invoice');
             $temp1['cssClass'] = "ngx-org-step-two";
@@ -8026,7 +8026,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         //$totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
         $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
-        $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($invoiceMaster->cancelYN == -1) ? trans('custom.cancelled_status') : "";
         $tracingData['name'] = trans('custom.supplier_invoice');
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
@@ -8141,7 +8141,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         // $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
         $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
-        $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($invoiceMaster->cancelYN == -1) ? trans('custom.cancelled_status') : "";
         $tracingData['name'] = trans('custom.supplier_invoice');
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
@@ -8542,7 +8542,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $salesOrderData = $salesOrderDeatils->toArray() + $deliveryOrderData + $customerInvoiceData;
 
-        $cancelStatus = ($quotationMaster->isDeleted != 0) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($quotationMaster->isDeleted != 0) ? trans('custom.cancelled_status') : "";
         $tracingData['name'] = ($documentSystemID == 67) ? trans('custom.quotation') : trans('custom.sales_order');
         if (($type == 'quo' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 67)) || ($type == 'so' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 68))) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
@@ -8607,7 +8607,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function setSalesOrderChainData($valueSo, $type, $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $tempSo = [];
-        $cancelStatus = ($valueSo['master']['isDeleted'] != 0) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($valueSo['master']['isDeleted'] != 0) ? trans('custom.cancelled_status') : "";
         $tempSo['name'] = trans('custom.sales_order');
         if ($type == 'so' && ($valueSo['master']['quotationMasterID'] == $salesOrderID)) {
             $tempSo['cssClass'] = "ngx-org-step-two root-tracing-node";
@@ -8704,7 +8704,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp1 = [];
-        $cancelStatus = ($value1['master']['canceledYN'] != 0) ? " -- @Cancelled@" : "";
+        $cancelStatus = ($value1['master']['canceledYN'] != 0) ? trans('custom.cancelled_status') : "";
         $temp1['name'] = trans('custom.customer_invoice');
         if ($type == 'inv' && ($value1['master']['custInvoiceDirectAutoID'] == $custInvoiceDirectAutoID)) {
             $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
@@ -8778,7 +8778,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp2['cssClass'] = "ngx-org-step-five";
         }
         if (isset($value2['master'])) {
-            $cancelStatus = ($value2['master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+            $cancelStatus = ($value2['master']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
             $temp2['name'] = trans('custom.receipt_voucher');
             $temp2['documentSystemID'] = $value2['master']['documentSystemID'];
             $temp2['docAutoID'] = $value2['master']['custReceivePaymentAutoID'];
@@ -8988,7 +8988,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->first();
 
         if (!empty($purchaseRequest)) {
-            $cancelStatus =   (isset($purchaseRequest->cancelledYN) && $purchaseRequest->cancelledYN == -1)  ? " -- @Cancelled@" : "";
+            $cancelStatus =   (isset($purchaseRequest->cancelledYN) && $purchaseRequest->cancelledYN == -1)  ? trans('custom.cancelled_status') : "";
             $tempPR['name'] = trans('custom.purchase_request');
             $tempPR['cssClass'] = "ngx-org-step-two";
 
@@ -9011,7 +9011,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $poData = $poMasters->toArray();
 
             foreach ($poData as $keyPo => $valuePo) {
-                $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+                $cancelStatus = ($valuePo['order']['poCancelledYN'] == -1) ? trans('custom.cancelled_status') : "";
                 $tempPO = [];
                 $tempPO['name'] = trans('custom.purchase_order');
                 $tempPO['cssClass'] = "ngx-org-step-three";
@@ -9020,7 +9020,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $tempPO['title'] = "{" . trans('custom.doc_code') . " :} " . $valuePo['order']['purchaseOrderCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $valuePo['order']['currency']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces']) . $cancelStatus;
 
                 foreach ($valuePo['grv'] as $key => $value) {
-                    $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+                    $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? trans('custom.cancelled_status') : "";
                     $tempGRV = [];
                     $tempGRV['name'] = trans('custom.good_receipt_voucher');
                     $tempGRV['cssClass'] = "ngx-org-step-four";
@@ -9029,7 +9029,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $tempGRV['title'] = "{" . trans('custom.doc_code') . " :} " . $value['grv_master']['grvPrimaryCode'] . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {" . trans('custom.amount') . " :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
 
                     foreach ($value['invoices'] as $key1 => $value1) {
-                        $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                        $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                         $suppINV = [];
                         $suppINV['name'] = trans('custom.supplier_invoice');
                         $suppINV['cssClass'] = "ngx-org-step-five";
@@ -9041,7 +9041,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $temp2 = [];
                             if (isset($value2['payment_master'])) {
                                 $temp2['cssClass'] = "ngx-org-step-six";
-                                $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                                $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? trans('custom.cancelled_status') : "";
                                 $temp2['name'] = trans('custom.payment');
                                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
