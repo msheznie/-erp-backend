@@ -102,12 +102,12 @@ class ConsoleJVMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Document Date'] = \Helper::dateFormat($val->consoleJVdate);
-                $data[$x]['Document Code'] = $val->consoleJVcode;
-                $data[$x]['Narration'] = $val->consoleJVNarration;
-                $data[$x]['Type'] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Confirmed'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, NULL, NULL);
+                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->consoleJVdate);
+                $data[$x][trans('custom.document_code')] = $val->consoleJVcode;
+                $data[$x][trans('custom.e_narration')] = $val->consoleJVNarration;
+                $data[$x][trans('custom.e_type')] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');
+                $data[$x][trans('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.confirmed')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, NULL, NULL);
 
                 $x++;
             }

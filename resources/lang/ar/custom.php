@@ -6291,6 +6291,16 @@ return [
 
     'confirmed_on' => 'تم التأكيد في',
     'approved_on' => 'تم الموافقة على',
+    'jv_code' => 'رمز المشروع المشترك',
+    'jv_date' => 'تاريخ المشروع المشترك',
+    'type' => 'النوع',
+    'transaction_debit_amount' => 'مبلغ المدين للمعاملة',
+    'transaction_credit_amount' => 'مبلغ الائتمان للمعاملة',
+    'local_debit_amount' => 'مبلغ المدين المحلي',
+    'local_credit_amount' => 'مبلغ الائتمان المحلي',
+    'reporting_debit_amount' => 'مبلغ المدين للتقارير',
+    'reporting_credit_amount' => 'مبلغ الائتمان للتقارير',
+    'status' => 'الحالة',
 
     // Material Request translations
     'e_request_code' => 'رمز الطلب',

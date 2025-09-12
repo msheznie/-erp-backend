@@ -1080,22 +1080,22 @@ GROUP BY
             if($item->currency_by){
                 $decimal = $item->currency_by->DecimalPlaces;
             }
-            $data[$x]['GL Code'] = $item->glAccount;
-            $data[$x]['GL Description'] = $item->glAccountDescription;
+            $data[$x][trans('custom.gl_code')] = $item->glAccount;
+            $data[$x][trans('custom.gl_description')] = $item->glAccountDescription;
             if ($checkProjectSelectionPolicy->isYesNO == 1) {
                 $project = ErpProjectMaster::find($item->detail_project_id);
                 if(!empty($project)) {
-                    $data[$x]['Project'] = $project->projectCode . ' - ' .  $project->description;
+                    $data[$x][trans('custom.project')] = $project->projectCode . ' - ' .  $project->description;
                 }else{
-                    $data[$x]['Project'] = '';
+                    $data[$x][trans('custom.project')] = '';
                 }       
             }
-            $data[$x]['Department'] = $item->segment?$item->segment->ServiceLineDes:'-';
-            $data[$x]['Contract'] = $item->clientContractID;
-            $data[$x]['Comment'] = $item->comments;
-            $data[$x]['Currency'] = $item->currency_by?$item->currency_by->CurrencyCode:'-';
-            $data[$x]['Debit'] = sprintf("%.".$decimal."f", $item->debitAmount);
-            $data[$x]['Credit'] = sprintf("%.".$decimal."f", $item->creditAmount);
+            $data[$x][trans('custom.e_department')] = $item->segment?$item->segment->ServiceLineDes:'-';
+            $data[$x][trans('custom.contract')] = $item->clientContractID;
+            $data[$x][trans('custom.e_comment')] = $item->comments;
+            $data[$x][trans('custom.currency')] = $item->currency_by?$item->currency_by->CurrencyCode:'-';
+            $data[$x][trans('custom.debit')] = sprintf("%.".$decimal."f", $item->debitAmount);
+            $data[$x][trans('custom.credit')] = sprintf("%.".$decimal."f", $item->creditAmount);
             $x++;
         }
 
@@ -1110,7 +1110,7 @@ GROUP BY
         $basePath = CreateExcel::process($data,$type,'jv_details',$path, $detail_array);
         
         if($basePath == ''){     
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.failed_export'));
         }else{     
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }
