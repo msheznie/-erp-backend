@@ -6274,6 +6274,16 @@ return [
     
     'confirmed_on' => 'Confirmed on',
     'approved_on' => 'Approved on',
+    'jv_code' => 'JV Code',
+    'jv_date' => 'JV Date',
+    'type' => 'Type',
+    'transaction_debit_amount' => 'Transaction Debit Amount',
+    'transaction_credit_amount' => 'Transaction Credit Amount',
+    'local_debit_amount' => 'Local Debit Amount',
+    'local_credit_amount' => 'Local Credit Amount',
+    'reporting_debit_amount' => 'Reporting Debit Amount',
+    'reporting_credit_amount' => 'Reporting Credit Amount',
+    'status' => 'Status',
     
     // Material Request translations
     'e_request_code' => 'Request Code',
@@ -6643,5 +6653,9 @@ return [
     'stock_count_saved_successfully' => 'Stock Count saved successfully',
     'stock_count_not_found' => 'Stock Count not found',
     'stock_count_reffered_back_deleted_successfully' => 'Stock Count Reffered Back deleted successfully',
-    'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully'
+    'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
+
+    'debit' => 'Debit',
+    'credit' => 'Credit'
+
 ];
