@@ -57,6 +57,7 @@ return [
     'parameter_company_missing' => 'Parameter company is missing',
     'parameter_document_missing' => 'Parameter document is missing',
     'document_id_not_found' => 'Document ID not found',
+    'successfully_approved_the_document' => 'Successfully approved the document',
     'supplier_blocked_cannot_confirm' => 'Supplier is blocked, you cannot confirm this document',
     'no_attachments_attached' => 'There is no attachments attached. Please attach an attachment before you confirm the document',
     'policy_not_available' => 'Policy not available for this document.',
@@ -6657,6 +6658,9 @@ return [
 
     'debit' => 'Debit',
     'credit' => 'Credit',
+    
+    // Status Indicators
+    'cancelled_status' => ' -- @Cancelled@'
 
     'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
     'movement_category' => 'Movement Category',
