@@ -1289,20 +1289,20 @@ class SegmentMasterAPIController extends AppBaseController
         $x = 0;
         foreach ($segmentMasters as $val) {
             $x++;
-            $data[$x]['Segment Code'] = $val->ServiceLineCode;
-            $data[$x]['Segment Description'] = $val->ServiceLineDes;
-            $data[$x]['Active Status'] = ($val->isActive == 1) ? 'Yes' : 'No';
-            $data[$x]['Type'] = ($val->isFinalLevel == 1) ? 'Final' : 'Parent';
-            $data[$x]['Is Public'] = ($val->isPublic == 1) ? 'Yes' : 'No';
+            $data[$x][trans('custom.segment_code')] = $val->ServiceLineCode;
+            $data[$x][trans('custom.segment_description')] = $val->ServiceLineDes;
+            $data[$x][trans('custom.active_status')] = ($val->isActive == 1) ? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.type')] = ($val->isFinalLevel == 1) ? trans('custom.final') : trans('custom.parent');
+            $data[$x][trans('custom.is_public')] = ($val->isPublic == 1) ? trans('custom.yes') : trans('custom.no');
 
             if ($val->confirmed_yn == 1 && $val->approved_yn == 1) {
-                $data[$x]['status'] = 'Fully Approved';
+                $data[$x][trans('custom.status')] = trans('custom.fully_approved');
             } elseif ($val->confirmed_yn == 1 && $val->approved_yn == 0) {
-                $data[$x]['status'] = 'Not Approved';
+                $data[$x][trans('custom.status')] = trans('custom.not_approved');
             } elseif ($val->confirmed_yn == 0 && $val->isActive == 1) {
-                $data[$x]['status'] = 'Active only';
+                $data[$x][trans('custom.status')] = trans('custom.active_only');
             } else {
-                $data[$x]['status'] = 'Not Active';
+                $data[$x][trans('custom.status')] = trans('custom.not_active');
             }
         }
 
@@ -1319,7 +1319,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

@@ -6620,7 +6620,7 @@ return [
      'account_code_not_updated' => 'لم يتم تحديث كود الحساب.',
      'selected_item_already_added' => 'العنصر المحدد مضاف بالفعل. يرجى التحقق مرة أخرى',
      'stock_adjustment_details_saved_successfully' => 'تم حفظ تفاصيل تعديل المخزون بنجاح',
-
+     
      // Stock Transfer Translation Keys
      'please_assign_wip_glcode_warehouse_transfer' => 'يرجى تعيين كود دفتر الأستاذ للعمل قيد التنفيذ لهذا المستودع',
      'wip_gl_code_not_assigned_company_transfer' => 'كود دفتر الأستاذ للعمل قيد التنفيذ المعين غير مخصص لهذه الشركة!',
@@ -6702,6 +6702,17 @@ return [
     'aging_366_to_730_value' => '366 إلى 730 (القيمة)',
     'aging_over_730_qty' => 'أكثر من 730 (الكمية)',
     'aging_over_730_value' => 'أكثر من 730 (القيمة)',
+    'stock_aging_report' => 'تقرير تقادم المخزون',
+
+    // Export Segment Master translations
+    'segment_code' => 'رمز القطاع',
+    'segment_description' => 'وصف القطاع',
+    'active_status' => 'حالة النشاط',
+    'is_public' => 'عام',
+    'not_approved' => 'غير معتمد',
+    'active_only' => 'نشط فقط',
+    'not_active' => 'غير نشط',
+
     'stock_aging_report' => 'تقرير تقادم المخزون'
  
     'debit' => 'مدين',
