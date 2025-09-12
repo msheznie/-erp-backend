@@ -88,18 +88,11 @@ class Months extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->monthDes) {
             return $translation->monthDes;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->monthDes;
-            }
-        }
-        
-        return $this->monthDes;
+        return $this->attributes['monthDes'] ?? '';
     }
     
 }

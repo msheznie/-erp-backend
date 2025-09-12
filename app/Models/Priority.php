@@ -86,18 +86,12 @@ class Priority extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->priorityDescription) {
             return $translation->priorityDescription;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->priorityDescription;
-            }
-        }
         
-        return $this->priorityDescription;
+        return $this->attributes['priorityDescription'] ?? '';
     }
     
 }

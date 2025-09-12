@@ -80,18 +80,12 @@ class PoPaymentTermTypes extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation) {
+        if ($translation && $translation->categoryDescription) {
             return $translation->categoryDescription;
         }
         
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->categoryDescription;
-            }
-        }
         
-        return $this->categoryDescription;
+        return $this->attributes['categoryDescription'] ?? '';
     }
 
     
