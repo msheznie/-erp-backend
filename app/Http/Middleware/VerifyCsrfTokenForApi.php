@@ -21,13 +21,19 @@ class VerifyCsrfTokenForApi
             
             $routePrefix = $request->route()->uri;
             // Check if request is from portal and route should be ignored
-            if ($request->header('From-Portal') && $request->header('From-Portal') == 1) {
+            if ($request->header('From-Portal') && $request->header('From-Portal') == 1 && in_array($routePrefix, $this->portalIgnoreRoutes())) {
                 return $next($request);
             }
             
             if (in_array($routePrefix, $this->ignoreRoutes())) {
                 return $next($request);
             }
+
+            // Get just the API path with query parameters (sorted for consistency)
+            $queryParams = $request->query();
+            ksort($queryParams); // Sort query parameters alphabetically by key
+            $queryString = http_build_query($queryParams);
+            $apiPath = $request->path() . ($queryString ? '?' . $queryString : '');
 
             $signature = $request->header('X-CSRF-TOKEN');
             if (!$signature) {
@@ -56,9 +62,10 @@ class VerifyCsrfTokenForApi
             $normalizedParams = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             //operation data
             $operation = strtolower($request->method());
+            $bodyString = ($data == "{}") ? $data : $normalizedJson;
             
-            $requestString = "{$normalizedJson}|{$normalizedParams}|{$operation}";
-            $encodedRequest = ($data == "{}") ? base64_encode($data) : base64_encode($normalizedJson);
+            $requestString = "{$bodyString}|{$apiPath}|{$operation}";
+            $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
             
             $dataWithTimestamp = "{$encodedRequest}|{$timestamp}";
