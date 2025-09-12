@@ -1568,7 +1568,7 @@ class GRVMasterAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
-            ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
+            ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
