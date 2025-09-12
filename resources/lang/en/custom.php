@@ -6689,5 +6689,13 @@ return [
     'aging_366_to_730_value' => '366 to 730 (Value)',
     'aging_over_730_qty' => 'Over 730 (Qty)',
     'aging_over_730_value' => 'Over 730 (Value)',
-    'stock_aging_report' => 'Stock Aging Report'
+    'stock_aging_report' => 'Stock Aging Report',
+    // Export Segment Master translations
+    'segment_code' => 'Segment Code',
+    'segment_description' => 'Segment Description',
+    'active_status' => 'Active Status',
+    'is_public' => 'Is Public',
+    'not_approved' => 'Not Approved',
+    'active_only' => 'Active only',
+    'not_active' => 'Not Active'
 ];
