@@ -470,7 +470,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Please select an active department', 500,$serviceLineError);
+                return $this->sendError(trans('custom.please_select_active_department'), 500,$serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -484,7 +484,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if ($checkWareHouseActive->isActive == 0) {
                  $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
-                return $this->sendError('Please select an active warehouse', 500, $wareHouseError);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500, $wareHouseError);
             }
 
             $input['wareHouseFromCode'] = $checkWareHouseActive->wareHouseCode;
@@ -610,12 +610,12 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                     if($job['closedYN'] == 1)
                     {
-                        return $this->sendError('The selected job is closed');
+                        return $this->sendError(trans('custom.selected_job_is_closed'));
                     }
                 }
                 else
                 {
-                    return $this->sendError('Unable to get the MFQJob Status');
+                    return $this->sendError(trans('custom.unable_to_get_mfqjob_status'));
                 }
             }
 
@@ -780,7 +780,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), 'Material Issue updated successfully',1, $confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), 'Material Issue updated successfully',1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**

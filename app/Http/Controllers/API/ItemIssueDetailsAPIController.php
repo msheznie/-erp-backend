@@ -217,7 +217,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select an active department', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         } else {
             return $this->sendError('Please select a department.', 500);
@@ -250,7 +250,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 }
             }
         } else {
-            return $this->sendError('Please select Issue Type', 500);
+            return $this->sendError(trans('custom.please_select_issue_type'), 500);
         }
 
         if (empty($item)) {
@@ -1509,7 +1509,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     return $this->sendError(trans('custom.department_not_found'));
                 }
                 if ($checkDepartmentActive->isActive == 0) {
-                    return $this->sendError('Please select an active department', 500);
+                    return $this->sendError(trans('custom.please_select_active_department'), 500);
                 }
             } else {
                 return $this->sendError('Please select a department.', 500);

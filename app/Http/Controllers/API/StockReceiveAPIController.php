@@ -216,7 +216,7 @@ class StockReceiveAPIController extends AppBaseController
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
                 DB::rollBack();
-                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                return $this->sendError(trans('custom.please_assigned_wip_glcode_warehouse'), 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
                 if (!$checkGLIsAssigned) {
@@ -246,7 +246,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (empty($segments)) {
             DB::rollBack();
-            return $this->sendError('Selected segment is not active. Please select an active segment', 500);
+            return $this->sendError(trans('custom.selected_segment_not_active'), 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
@@ -444,7 +444,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if (empty($segment)) {
                 $this->stockReceiveRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Selected segment is not active. Please select an active segment',500,$serviceLineError);
+                return $this->sendError(trans('custom.selected_segment_not_active'),500,$serviceLineError);
             }
 
             if ($segment) {
@@ -477,7 +477,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if ($checkWareHouseActiveTo->manufacturingYN == 1) {
                 if (is_null($checkWareHouseActiveTo->WIPGLCode)) {
-                    return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                    return $this->sendError(trans('custom.please_assigned_wip_glcode_warehouse'), 500);
                 } else {
                     $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkWareHouseActiveTo->WIPGLCode, $input['companyToSystemID']);
                     if (!$checkGLIsAssigned) {
@@ -631,7 +631,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockReceive->toArray(), 'StockReceive updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($stockReceive->toArray(), 'StockReceive updated successfully',1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
