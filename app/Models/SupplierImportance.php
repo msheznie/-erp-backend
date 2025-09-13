@@ -57,5 +57,35 @@ class SupplierImportance extends Model
         
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['importanceDescription'];
+
+    /**
+     * Get the description based on current language.
+     *
+     * @return string
+     */
+    public function getImportanceDescriptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->importanceDescription : $this->attributes['importanceDescription'];
+    }
+
+    /**
+     * Get the translations for the supplier importance.
+     */
+    public function translations()
+    {
+        return $this->hasMany(SupplierImportanceTranslation::class, 'supplierImportanceID', 'supplierImportanceID');
+    }
     
 }
