@@ -1964,9 +1964,14 @@ class DebitNoteAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $debitNote->debitNoteCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $debitNote->debitNoteCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $debitNote->companySystemID)
             ->where('documentSystemCode', $debitNote->debitNoteAutoID)

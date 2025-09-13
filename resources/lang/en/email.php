@@ -65,6 +65,8 @@ return [
     'monthly_additions' => 'Monthly Additions',
     'is_reopened' => 'is reopened',
     'is_reopened_by' => 'is reopened by :empID - :empName',
+    'is_reopened_subject' => ':attribute is reopened',
+    'is_reopened_body' => '<p>:attribute is reopened by :empID - :empName</p><p>Comment : :reopenComments</p>',
     'comment' => 'Comment',
     'purchase_request_details_not_found' => 'Purchase Request Details not found',
     'purchase_request_already_closed' => 'This Purchase Request already closed. You can not add.',

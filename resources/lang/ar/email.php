@@ -71,6 +71,8 @@ return [
     'monthly_additions' => 'الإضافات الشهرية',
     'is_reopened' => 'تم إعادة فتحه',
     'is_reopened_by' => 'تم إعادة فتحه بواسطة :empID - :empName',
+    'is_reopened_subject' => ':attribute تم إعادة فتحه',
+    'is_reopened_body' => '<p>:attribute تم إعادة فتحه بواسطة :empID - :empName</p><p>تعليق : :reopenComments</p>',
     'comment' => 'تعليق',
     'purchase_request_details_not_found' => 'تفاصيل طلب الشراء غير موجودة',
     'purchase_request_already_closed' => 'طلب الشراء هذا مغلق بالفعل. لا يمكنك الإضافة.',

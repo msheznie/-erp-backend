@@ -1177,9 +1177,14 @@ WHERE
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $deliveryOrder->deliveryOrderCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $deliveryOrder->deliveryOrderCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $deliveryOrder->companySystemID)
             ->where('documentSystemCode', $deliveryOrder->deliveryOrderID)

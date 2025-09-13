@@ -1042,9 +1042,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $rrvMasterData->bookingInvCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $rrvMasterData->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $rrvMasterData->companySystemID)
             ->where('documentSystemCode', $rrvMasterData->bookingSuppMasInvAutoID)
