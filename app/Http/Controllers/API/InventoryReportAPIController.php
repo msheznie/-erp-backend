@@ -1710,17 +1710,17 @@ FROM
                         foreach ($output['categories'] as $key => $vale) {
                             foreach ($output['categories'][$key] as $val) {
                                 $data[] = array(
-                                    'Item Code' => $val->itemPrimaryCode,
-                                    'Item Description' => $val->itemDescription,
-                                    'UOM' => $val->UnitShortCode,
-                                    'Part No / Ref.Number' => $val->secondaryItemCode,
-                                    'Sub Category' => $val->categoryDescription,
-                                    'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
-                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
-                                    'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
-                                    'Last Issued Qty' => $val->lastIssuedQty
+                                    trans('custom.excel_item_code') => $val->itemPrimaryCode,
+                                    trans('custom.excel_item_description') => $val->itemDescription,
+                                    trans('custom.excel_uom') => $val->UnitShortCode,
+                                    trans('custom.part_no_ref_number') => $val->secondaryItemCode,
+                                    trans('custom.sub_category') => $val->categoryDescription,
+                                    trans('custom.stock_qty') => $val->Qty,
+                                    trans('custom.total_value_usd') => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    trans('custom.last_receipt_date') => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
+                                    trans('custom.last_receipt_qty') => $val->lastReceiptQty,
+                                    trans('custom.last_issued_date') => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
+                                    trans('custom.last_issued_qty') => $val->lastIssuedQty
                                 );
                             }
                         }
@@ -1732,18 +1732,18 @@ FROM
                         foreach ($output['categories'] as $key => $vale) {
                             foreach ($output['categories'][$key] as $val) {
                                 $data[] = array(
-                                    'Company' => $val->companyID,
-                                    'Item Code' => $val->itemPrimaryCode,
-                                    'Item Description' => $val->itemDescription,
-                                    'UOM' => $val->UnitShortCode,
-                                    'Part No / Ref.Number' => $val->secondaryItemCode,
-                                    'Sub Category' => $val->categoryDescription,
-                                    'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
-                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
-                                    'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
-                                    'Last Issued Qty' => $val->lastIssuedQty
+                                    trans('custom.company') => $val->companyID,
+                                    trans('custom.excel_item_code') => $val->itemPrimaryCode,
+                                    trans('custom.excel_item_description') => $val->itemDescription,
+                                    trans('custom.excel_uom') => $val->UnitShortCode,
+                                    trans('custom.part_no_ref_number') => $val->secondaryItemCode,
+                                    trans('custom.sub_category') => $val->categoryDescription,
+                                    trans('custom.stock_qty') => $val->Qty,
+                                    trans('custom.total_value_usd') => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    trans('custom.last_receipt_date') => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
+                                    trans('custom.last_receipt_qty') => $val->lastReceiptQty,
+                                    trans('custom.last_issued_date') => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
+                                    trans('custom.last_issued_qty') => $val->lastIssuedQty
                                 );
                             }
                         }
@@ -1756,7 +1756,7 @@ FROM
                 ];
 
                 $fileName = 'stock_detail';
-                $title = 'Stock Details Report';
+                $title = trans('custom.stock_details_report');
                 $path = 'inventory/report/stock_Detail/excel/';
                 $cur = NULL;
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1780,7 +1780,7 @@ FROM
                     ->generateExcel();
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
