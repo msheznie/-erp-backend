@@ -206,6 +206,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getBudgetPlanningUserPermissions',
             'api/v1/getDepBudgetPlDetEmpColumns',
             'api/v1/updateDepartmentBudgetPlanningDetailAmount',
+            'api/v1/getAllDepartmentSegments',
 
         ];
     }
