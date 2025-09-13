@@ -6752,5 +6752,8 @@ return [
     'is_public' => 'Is Public',
     'not_approved' => 'Not Approved',
     'active_only' => 'Active only',
-    'not_active' => 'Not Active'
+    'not_active' => 'Not Active',
+
+    // Item Master
+    'item_type' =>'Item Type'
 ];

@@ -6772,5 +6772,8 @@ return [
     'credit' => 'دائن',
     
     // Status Indicators
-    'cancelled_status' => ' -- @ملغي@'
+    'cancelled_status' => ' -- @ملغي@',
+
+    // Item Master
+    'item_type' => 'نوع العنصر'
  ];
