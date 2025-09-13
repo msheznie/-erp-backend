@@ -1611,10 +1611,6 @@ class DebitNoteAPIController extends AppBaseController
 
     public function getDebitNoteFormData(Request $request)
     {
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
                                          
         $companyId = $request['companyId'];
         /** Yes and No Selection */
@@ -1675,7 +1671,7 @@ class DebitNoteAPIController extends AppBaseController
 
 
           
-        $debite_note_type = [["id"=>1,"name"=>__('custom.supplier')],["id"=>2,"name"=> __('custom.employee')]];
+        $debite_note_type = [["id"=>1,"name"=> trans('custom.supplier')],["id"=>2,"name"=> trans('custom.employee')]];
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -2481,10 +2477,6 @@ UNION ALL
     {
 
         $input = $request->all();
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
         
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
 
@@ -2510,21 +2502,21 @@ UNION ALL
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x][__('custom.debit_note_code')] = $value->debitNoteCode;
+                $data[$x][trans('custom.debit_note_code')] = $value->debitNoteCode;
 
                 if ($value->postedDate) {
-                    $data[$x][__('custom.posted_date')] = \Helper::convertDateWithTime($value->postedDate);
+                    $data[$x][trans('custom.posted_date')] = \Helper::convertDateWithTime($value->postedDate);
                 } else {
-                    $data[$x][__('custom.posted_date')] = '';
+                    $data[$x][trans('custom.posted_date')] = '';
                 }
 
-                $data[$x][__('custom.narration')] = $value->comments;
+                $data[$x][trans('custom.narration')] = $value->comments;
                 if ($value->supplier) {
-                    $data[$x][__('custom.supplier_employee_code')] = $value->supplier->primarySupplierCode;
-                    $data[$x][__('custom.supplier_employee_name')] = $value->supplier->supplierName;
+                    $data[$x][trans('custom.supplier_employee_code')] = $value->supplier->primarySupplierCode;
+                    $data[$x][trans('custom.supplier_employee_name')] = $value->supplier->supplierName;
                 } else {
-                    $data[$x][__('custom.supplier_employee_code')] = 1;;
-                    $data[$x][__('custom.supplier_employee_name')] = 'tet';;
+                    $data[$x][trans('custom.supplier_employee_code')] = 1;;
+                    $data[$x][trans('custom.supplier_employee_name')] = 'tet';;
                 }
 
                 $decimalPlaces = 2;
@@ -2532,10 +2524,10 @@ UNION ALL
                 $rptDecimalPlaces = 2;
 
                 if ($value->transactioncurrency) {
-                    $data[$x][__('custom.currency')] = $value->transactioncurrency->CurrencyCode;
+                    $data[$x][trans('custom.currency')] = $value->transactioncurrency->CurrencyCode;
                     $decimalPlaces = $value->transactioncurrency->DecimalPlaces;
                 } else {
-                    $data[$x][__('custom.currency')] = '';
+                    $data[$x][trans('custom.currency')] = '';
                 }
 
                 if ($value->localcurrency) {
@@ -2546,20 +2538,20 @@ UNION ALL
                     $rptDecimalPlaces = $value->rptcurrency->DecimalPlaces;
                 }
 
-                $data[$x][__('custom.amount')] = round($value->debitAmountTrans, $decimalPlaces);
-                $data[$x][__('custom.amount_local')] = round($value->debitAmountLocal, $localDecimalPlaces);
-                $data[$x][__('custom.amount_rpt')] = round($value->debitAmountRpt, $rptDecimalPlaces);
+                $data[$x][trans('custom.amount')] = round($value->debitAmountTrans, $decimalPlaces);
+                $data[$x][trans('custom.amount_local')] = round($value->debitAmountLocal, $localDecimalPlaces);
+                $data[$x][trans('custom.amount_rpt')] = round($value->debitAmountRpt, $rptDecimalPlaces);
 
                 if ($value->final_approved_by) {
-                    $data[$x][__('custom.approved_by')] = $value->final_approved_by->empName;
+                    $data[$x][trans('custom.approved_by')] = $value->final_approved_by->empName;
                 } else {
-                    $data[$x][__('custom.approved_by')] = '';
+                    $data[$x][trans('custom.approved_by')] = '';
                 }
 
                 if ($value->approvedDate) {
-                    $data[$x][__('custom.approved_date')] = \Helper::convertDateWithTime($value->approvedDate);
+                    $data[$x][trans('custom.approved_date')] = \Helper::convertDateWithTime($value->approvedDate);
                 } else {
-                    $data[$x][__('custom.approved_date')] = '';
+                    $data[$x][trans('custom.approved_date')] = '';
                 }
 
                 $x++;

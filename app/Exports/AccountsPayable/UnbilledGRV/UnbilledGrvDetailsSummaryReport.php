@@ -103,15 +103,15 @@ class UnbilledGrvDetailsSummaryReport
     }
     public function getHeader() :Array {
         return [
-            'Company ID',
-            'Supplier Code',
-            'Supplier Name',
-            'Doc Value (Local Currency)',
-            'Matched Value (Local Currency)',
-            'Balance (Local Currency)',
-            'Doc Value (Reporting Currency)',
-            'Matched Value (Reporting Currency)',
-            'Balance (Reporting Currency)'
+            trans('custom.company_id'),
+            trans('custom.supplier_code'),
+            trans('custom.supplier_name'),
+            trans('custom.doc_value_local_currency'),
+            trans('custom.matched_value_local_currency'),
+            trans('custom.balance_local_currency'),
+            trans('custom.doc_value_reporting_currency'),
+            trans('custom.matched_value_reporting_currency'),
+            trans('custom.balance_reporting_currency')
         ];
     }
 }
