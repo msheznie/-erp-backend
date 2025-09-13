@@ -54,7 +54,7 @@ class VerifyCsrfTokenForApi
             $queryParts = [];
             foreach ($queryParams as $key => $value) {
                 // Only include non-empty parameters
-                if ($value !== '' && $value !== null) {
+                if ($value !== '' && $value !== null && $value !== 'null') {
                     $queryParts[] = $key . '=' . $value;
                 }
             }
@@ -100,6 +100,8 @@ class VerifyCsrfTokenForApi
             $bodyString = ($data == "{}") ? $data : $normalizedJson;
             
             $requestString = "{$bodyString}|{$apiPath}|{$operation}";
+
+            // \Log::info($requestString);
 
             $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
