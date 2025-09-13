@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default' => 'Default',
     'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
     'a_default_rule_already_exists_for_same_transaction' => 'A default rule already exists for same transaction type and matching type',
     'a_matching_document_for_the_selected_advanced_paym' => 'A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.',

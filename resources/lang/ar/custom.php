@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default' => 'افتراضي',
     'Budget_planning_detail_template_deleted_successfully' => 'تم حذف مرفق قالب تفاصيل تخطيط الميزانية المؤقت بنجاح',
     'a_default_rule_already_exists_for_same_transaction' => 'توجد قاعدة افتراضية بالفعل لنفس نوع المعاملة ونوع المطابقة',
     'a_matching_document_for_the_selected_advanced_paym' => 'تم إنشاء مستند مطابق للدفع المقدم المحدد ولم يتم تأكيده. يرجى تأكيد المستند الذي تم إنشاؤه مسبقًا والمحاولة مرة أخرى.',
