@@ -62,9 +62,11 @@ Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlann
 Route::post('getDelegateAccessRecords', 'BudgetDelegateAPIController@getDelegateAccessRecords')->name('Get delegate access records');
 Route::post('createOrUpdateDelegateAccess', 'BudgetDelegateAPIController@createOrUpdateDelegateAccess')->name('Create or update delegate access');
 Route::post('removeDelegateAccess', 'BudgetDelegateAPIController@removeDelegateAccess')->name('Remove delegate access');
+Route::post('deleteDelegateAccess', 'BudgetDelegateAPIController@deleteDelegateAccess')->name('Delete delegate access');
 Route::post('getDelegateAccessSummary', 'BudgetDelegateAPIController@getDelegateAccessSummary')->name('Get delegate access summary');
 Route::post('getBudgetDelegateFormData', 'BudgetDelegateAPIController@getBudgetDelegateFormData')->name('Get budget delegate form data');
 Route::post('updateDelegateStatus', 'BudgetDelegateAPIController@updateDelegateStatus')->name('Update budget delegate status');
+Route::post('updateDelegateAcccessStatus', 'BudgetDelegateAPIController@updateDelegateAcccessStatus')->name('Update delegate permission');
 
 Route::get('verifyBudgetTemplateConfiguration/{budgetTemplateId}', 'DepartmentBudgetPlanningDetailAPIController@verifyBudgetTemplateConfiguration')->name('Verify budget template configuration');
 Route::post('saveBudgetDetailTemplateEntries', 'DepartmentBudgetPlanningDetailAPIController@saveBudgetDetailTemplateEntries')->name('Save budget detail template entries');

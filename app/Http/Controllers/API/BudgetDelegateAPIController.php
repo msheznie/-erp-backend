@@ -231,7 +231,8 @@ class BudgetDelegateAPIController extends AppBaseController
             ]);
 
             $result = $this->budgetDelegateService->removeDelegateAccess($request->record_id);
-            
+
+
             if ($result['success']) {
                 return $this->sendResponse(null, $result['message']);
             } else {
@@ -319,8 +320,8 @@ class BudgetDelegateAPIController extends AppBaseController
                 ];
             }
             else {
-                $chartOfAccounts = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('budgetTemplateGl.chartOfAccount')->groupBy('budget_template_gl_id')->get();
-                $segments = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('departmentSegment.segment')->groupBy('department_segment_id')->get();
+                $chartOfAccounts = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('budgetTemplateGl.chartOfAccount')->whereHas('budgetTemplateGl.chartOfAccount')->groupBy('budget_template_gl_id')->get();
+                $segments = DepartmentBudgetPlanningDetail::where('department_planning_id', $budgetPlanningId)->with('departmentSegment.segment')->whereHas('departmentSegment.segment')->groupBy('department_segment_id')->get();
 
                 $data = [
                     'accessTypes' => $accessTypes,
@@ -353,5 +354,49 @@ class BudgetDelegateAPIController extends AppBaseController
         $data->save();
 
         return $this->sendResponse($data->refresh()->toArray(), 'Delegate status updated successfully');
+    }
+
+    public function updateDelegateAcccessStatus(Request $request)
+    {
+        $input = $request->all();
+
+        if(empty($input['id']))
+        {
+            return $this->sendError("Data not found!",500);
+        }
+
+        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::find($input['id']);
+
+        $actions = json_decode($budgetDelegateAccessRecord->access_permissions);
+        $actions = array_filter($actions, function ($item) use ($input) {
+            return $item !== $input['permission'];
+        });
+
+        $actions = array_values($actions);
+
+        $budgetDelegateAccessRecord->access_permissions = json_encode($actions);
+        $budgetDelegateAccessRecord->save();
+        return $this->sendResponse($budgetDelegateAccessRecord->refresh()->toArray(), 'Delegate status updated successfully');
+    }
+
+    public function deleteDelegateAccess(Request $request)
+    {
+        $input = $request->all();
+        if(empty($input['id']))
+        {
+            return $this->sendError("Data not found!",500);
+        }
+
+        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::find($input['id']);
+
+        if($budgetDelegateAccessRecord)
+        {
+            $budgetDelegateAccessRecord->delete();
+            return $this->sendResponse([], 'Delegate deleted successfully');
+        }else {
+            return $this->sendError("Data not found!",500);
+
+        }
+
     }
 } 
