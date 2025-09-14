@@ -1,0 +1,2594 @@
+{
+  "version": 1,
+  "dataSets": [
+    {
+      "id": "vizzly_data_set_13aeqp3",
+      "sql": "SELECT * from users;",
+      "testParameters": "{}",
+      "fields": [
+        {
+          "id": "vizzly_field_1kaomc1",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "id"
+          ],
+          "publicName": "Id",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1o2k4fg",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "employee_id"
+          ],
+          "publicName": "Employee id",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_jillzb",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empID"
+          ],
+          "publicName": "EmpID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_cvhiyh",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "name"
+          ],
+          "publicName": "Name",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1erp1ra",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "email"
+          ],
+          "publicName": "Email",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1060k5m",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "username"
+          ],
+          "publicName": "Username",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_hthcfl",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "password"
+          ],
+          "publicName": "Password",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_19gjczw",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "remember_token"
+          ],
+          "publicName": "Remember token",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_ow4huc",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "login_token"
+          ],
+          "publicName": "Login token",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_yjknmn",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "created_at"
+          ],
+          "publicName": "Created at",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1479rza",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "updated_at"
+          ],
+          "publicName": "Updated at",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1gsnlfo",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "uuid"
+          ],
+          "publicName": "Uuid",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_iqulu2",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "userType"
+          ],
+          "publicName": "UserType",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        }
+      ],
+      "name": "User Data [ERP]",
+      "description": "",
+      "secureFilterGuards": [],
+      "connectionId": "5030b4dc-1d09-4661-a59c-e4da901a17xx"
+    },
+    {
+      "id": "vizzly_data_set_enb9tk",
+      "sql": "SELECT * from employees",
+      "testParameters": "{}",
+      "fields": [
+        {
+          "id": "vizzly_field_1u0h9b4",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "employeeSystemID"
+          ],
+          "publicName": "EmployeeSystemID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_shnxs3",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empID"
+          ],
+          "publicName": "EmpID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1mc4qse",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "hrmsEmpID"
+          ],
+          "publicName": "HrmsEmpID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_ev3g6",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "serial"
+          ],
+          "publicName": "Serial",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1pc8bj9",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empLeadingText"
+          ],
+          "publicName": "EmpLeadingText",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_15mwafk",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empUserName"
+          ],
+          "publicName": "EmpUserName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1u1djpb",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empTitle"
+          ],
+          "publicName": "EmpTitle",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_ibna1t",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empInitial"
+          ],
+          "publicName": "EmpInitial",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1s8p2cr",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empName"
+          ],
+          "publicName": "EmpName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1whvv9z",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empName_O"
+          ],
+          "publicName": "EmpName O",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1pa9o9l",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFullName"
+          ],
+          "publicName": "EmpFullName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_j2lk68",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empSurname"
+          ],
+          "publicName": "EmpSurname",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_d1qymg",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empSurname_O"
+          ],
+          "publicName": "EmpSurname O",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_i59fyp",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFirstName"
+          ],
+          "publicName": "EmpFirstName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_pif6a4",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFirstName_O"
+          ],
+          "publicName": "EmpFirstName O",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_2vta00",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFamilyName"
+          ],
+          "publicName": "EmpFamilyName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1cwg2ph",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFamilyName_O"
+          ],
+          "publicName": "EmpFamilyName O",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_12mvuse",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFatherName"
+          ],
+          "publicName": "EmpFatherName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1qsaoul",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFatherName_O"
+          ],
+          "publicName": "EmpFatherName O",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_hteexu",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empManagerAttached"
+          ],
+          "publicName": "EmpManagerAttached",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1w7jrmq",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empDateRegistered"
+          ],
+          "publicName": "EmpDateRegistered",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_9fowic",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empTelOffice"
+          ],
+          "publicName": "EmpTelOffice",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_mkfba7",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empTelMobile"
+          ],
+          "publicName": "EmpTelMobile",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1drnyvj",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empLandLineNo"
+          ],
+          "publicName": "EmpLandLineNo",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_rhu3f6",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "extNo"
+          ],
+          "publicName": "ExtNo",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_u044ch",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empFax"
+          ],
+          "publicName": "EmpFax",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_hu4ad1",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empEmail"
+          ],
+          "publicName": "EmpEmail",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_rxe1tj",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empLocation"
+          ],
+          "publicName": "EmpLocation",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_15bvp79",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empDateTerminated"
+          ],
+          "publicName": "EmpDateTerminated",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_nfpmaj",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empLoginActive"
+          ],
+          "publicName": "EmpLoginActive",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_15r79x2",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empActive"
+          ],
+          "publicName": "EmpActive",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_14w5cax",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "userGroupID"
+          ],
+          "publicName": "UserGroupID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_8we7w0",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empCompanySystemID"
+          ],
+          "publicName": "EmpCompanySystemID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1cgad1f",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "empCompanyID"
+          ],
+          "publicName": "EmpCompanyID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_14o3z43",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "religion"
+          ],
+          "publicName": "Religion",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_4ezcce",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isLoggedIn"
+          ],
+          "publicName": "IsLoggedIn",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1r7a7k2",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isLoggedOutFailYN"
+          ],
+          "publicName": "IsLoggedOutFailYN",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1h3pg1h",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "logingFlag"
+          ],
+          "publicName": "LogingFlag",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_v2qj0r",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isSuperAdmin"
+          ],
+          "publicName": "IsSuperAdmin",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_wbuns",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "discharegedYN"
+          ],
+          "publicName": "DischaregedYN",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1400336",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isFinalSettlementDone"
+          ],
+          "publicName": "IsFinalSettlementDone",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_syijbz",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "hrusergroupID"
+          ],
+          "publicName": "HrusergroupID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_3bzmes",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "employmentType"
+          ],
+          "publicName": "EmploymentType",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_xt2bis",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isConsultant"
+          ],
+          "publicName": "IsConsultant",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_19vzgim",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isTrainee"
+          ],
+          "publicName": "IsTrainee",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1w5qcnh",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "is3rdParty"
+          ],
+          "publicName": "Is3rdParty",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1wx6pvx",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "3rdPartyCompanyName"
+          ],
+          "publicName": "3rdPartyCompanyName",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_rq65mb",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "gender"
+          ],
+          "publicName": "Gender",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1q4wmkh",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "designation"
+          ],
+          "publicName": "Designation",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1msq8h",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "nationality"
+          ],
+          "publicName": "Nationality",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1wwvdwf",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isManager"
+          ],
+          "publicName": "IsManager",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_esxt2f",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isApproval"
+          ],
+          "publicName": "IsApproval",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1suy18r",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isDashBoard"
+          ],
+          "publicName": "IsDashBoard",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_j3dnml",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isAdmin"
+          ],
+          "publicName": "IsAdmin",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_yccilg",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isBasicUser"
+          ],
+          "publicName": "IsBasicUser",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_rsyswo",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "ActivationCode"
+          ],
+          "publicName": "ActivationCode",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_vkl6n4",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "ActivationFlag"
+          ],
+          "publicName": "ActivationFlag",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1aliifa",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isHR_admin"
+          ],
+          "publicName": "IsHR admin",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1ebcw5r",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isLock"
+          ],
+          "publicName": "IsLock",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1bsx3tw",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "basicDataIngCount"
+          ],
+          "publicName": "BasicDataIngCount",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_9seqfb",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "opRptManagerAccess"
+          ],
+          "publicName": "OpRptManagerAccess",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1wci0gr",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isSupportAdmin"
+          ],
+          "publicName": "IsSupportAdmin",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_vl8gkh",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isHSEadmin"
+          ],
+          "publicName": "IsHSEadmin",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1wakft9",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "excludeObjectivesYN"
+          ],
+          "publicName": "ExcludeObjectivesYN",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1vkgneq",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "machineID"
+          ],
+          "publicName": "MachineID",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1yluuth",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "timestamp"
+          ],
+          "publicName": "Timestamp",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1g14vlc",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "createdFrom"
+          ],
+          "publicName": "CreatedFrom",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_m9dc46",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isNewPortal"
+          ],
+          "publicName": "IsNewPortal",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_c1gbom",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "uuid"
+          ],
+          "publicName": "Uuid",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_pdjvtr",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "isEmailVerified"
+          ],
+          "publicName": "IsEmailVerified",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_8r0qc5",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "verificationToken"
+          ],
+          "publicName": "VerificationToken",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        },
+        {
+          "id": "vizzly_field_1hrwazq",
+          "address": [
+            "_",
+            "vizzly_data_set",
+            "verificationSendAt"
+          ],
+          "publicName": "VerificationSendAt",
+          "dataType": "CHAR",
+          "canBeDimension": true,
+          "canBeMeasure": true,
+          "allowedGranularities": [
+            "month",
+            "year",
+            "day",
+            "hour",
+            "minute",
+            "second"
+          ],
+          "allowedOperators": [
+            "=",
+            "!=",
+            "is_one_of",
+            "is_not_one_of",
+            "starts_with",
+            "ends_with",
+            "contains_substring",
+            "does_not_contain_substring"
+          ]
+        }
+      ],
+      "name": "Employees [ERP]",
+      "description": "",
+      "secureFilterGuards": [],
+      "connectionId": "5030b4dc-1d09-4661-a59c-e4da901a17xx"
+    }
+  ],
+  "connections": {
+    "5030b4dc-1d09-4661-a59c-e4da901a17xx": {
+      "client": "mysql",
+      "name": "OSOS QA",
+      "unencryptedCredentials": {
+        "host": "10.0.0.13",
+        "database": "gears_erp_gutech",
+        "user": "zakeeul",
+        "password": "ZkfnbeT&(Gfuygwb87",
+        "port": "3306",
+        "ssl": false
+      }
+    }
+  },
+  "publicKeys": [],
+  "sqlViews": {},
+  "executableDashboardConfigForPDF": null
+}
