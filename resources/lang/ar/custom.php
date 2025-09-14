@@ -21,6 +21,8 @@ return [
     'account_field_is_can_not_be_empty_on_db' => 'لا يمكن أن يكون حقل الحساب فارغًا في قاعدة البيانات',
     'account_no' => 'رقم الحساب',
     'account_not_found' => 'الحساب غير موجود',
+    'grv_number' => 'رقم الإيصال المرجعي',
+    'warehouse_name' => 'اسم المخزن',
     'account_number' => 'رقم الحساب',
     'accounts_types' => 'أنواع الحسابات',
     'accruaval_from_o_p_masters' => 'Accruaval From O P Masters',

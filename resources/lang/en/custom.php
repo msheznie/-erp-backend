@@ -34,6 +34,8 @@ return [
     'addon_cost_categories' => 'Addon Cost Categories',
     'address_types' => 'Address Types',
     'addresses' => 'Addresses',
+    'grv_number' => 'GRV Number',
+    'warehouse_name' => 'Warehouse Name',
     'adjusted_quantity_cannot_be_less_than_current_stoc' => 'Adjusted quantity cannot be less than current stock quantity',
     'advance_payment' => 'Advance payment',
     'advance_payment_detail_not_found' => 'Advance payment detail not found',
