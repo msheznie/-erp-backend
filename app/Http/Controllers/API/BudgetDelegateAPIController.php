@@ -8,6 +8,7 @@ use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\BudgetDelegateAccessRecord;
 use App\Services\BudgetDelegateService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Exception;
@@ -112,6 +113,13 @@ class BudgetDelegateAPIController extends AppBaseController
                 if (!$departmentBudgetPlanning) {
                     return $this->sendError(trans('custom.department_budget_planning_not_found_1'));
                 }
+
+
+                if(Carbon::parse($input['submission_time'])->isSameDay(Carbon::parse($departmentBudgetPlanning->submissionDate)))
+                {
+                    return $this->sendError('Selected submission date cannot be equal to original submission date');
+                }
+
 
                 // validate submission time is not graeter than budget planning detail submission time
                 if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate)) {
