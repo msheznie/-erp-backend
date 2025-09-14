@@ -523,7 +523,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
 
-                if ($isFinanceUser) {
+
+                $newRequest = new Request();
+                $newRequest->replace([
+                    'companyId' => $companyId,
+                    'delegateUser' =>  $employeeID
+                ]);
+                $controller = app(CompanyBudgetPlanningAPIController::class);
+                $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+                if ($userPermission['success'] && $userPermission['data']['financeUser']['status']) {
                     $departmentPlanningCodes = $companyPlanningCodes;
 
                     $departments = DepartmentBudgetPlanning::with('department')
@@ -539,7 +548,39 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             ];
                         });
                 }
-                else {
+
+                if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
+
+                    $delegateBudgetDetails = BudgetDelegateAccessRecord::with('delegatee')->whereHas('delegatee',function ($q) use ($employeeID) {
+                        $q->where('employeeSystemID',$employeeID);
+                    })->pluck('id')->toArray();
+
+                    $companyPlanningCodes = CompanyBudgetPlanning::with('departmentBudgetPlannings')
+                        ->whereHas('departmentBudgetPlannings.budgetPlanningDetails', function ($q) use ($delegateBudgetDetails) {
+                            $q->whereIn('id', $delegateBudgetDetails);
+                        })
+                        ->select('planningCode','id')
+                        ->get();
+
+                    $departmentPlanningCodes = $companyPlanningCodes;
+
+                    $departments = DepartmentBudgetPlanning::with('department')
+                        ->whereHas('department', function($query) use ($companyId) {
+                            $query->whereHas('employees',function ($q) {
+                                $q->where('employeeSystemID',Auth::user()->employee_id);
+                            })->where('companySystemID', $companyId);
+                        })
+                        ->groupBy('departmentID')
+                        ->get()
+                        ->map(function($item) {
+                            return [
+                                'departmentID' => $item->departmentID,
+                                'departmentCode' => $item->department->departmentCode ?? ''
+                            ];
+                        });
+                }
+
+                if($userPermission['success'] && $userPermission['data']['hodUser']['status']) {
                     $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
                         ->where('isHOD', 1)
                         ->whereHas('department', function($query) use ($companyId) {
