@@ -1007,26 +1007,26 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $data = array();
                     if ($request->reportTypeID == 'APPSY') {
                         $typ_re = 1;
-                        $fileName = 'Payment Suppliers By Year -' . $year;
-                        $title = 'Payment Suppliers By Year -' . $year;
+                        $fileName = trans('custom.payment_suppliers_by_year') . ' -' . $year;
+                        $title = trans('custom.payment_suppliers_by_year') . ' -' . $year;
                         $requestCurrency = $request->currency;
 
                     } else if ($request->reportTypeID == 'APDPY') {
                         $typ_re = 1;
-                        $fileName = 'Direct Payments By Year -' . $year;
-                        $title = 'Direct Payments By Year -' . $year;
+                        $fileName = trans('custom.direct_payments_by_year') . ' -' . $year;
+                        $title = trans('custom.direct_payments_by_year') . ' -' . $year;
                         $requestCurrency = $request->currency;
 
                     } else if ($request->reportTypeID == 'APAPY') {
                         $typ_re = 1;
-                        $fileName = 'All Payments By Year -' . $year;
-                        $title = 'All Payments By Year -' . $year;
+                        $fileName = trans('custom.all_payments_by_year') . ' -' . $year;
+                        $title = trans('custom.all_payments_by_year') . ' -' . $year;
                         $requestCurrency = $request->currency;
 
                     } else if ($request->reportTypeID == 'APLWS' && $request->reportSD != 'detail') {
                         $typ_re = 2;
-                        $fileName = 'Payments Lists Status By Year';
-                        $title = 'Payments Lists Status By Year';
+                        $fileName = trans('custom.payments_lists_status_by_year');
+                        $title = trans('custom.payments_lists_status_by_year');
                         $requestCurrency = NULL;
                         $to_date = $request->toDate;
                         $to_date = ((new Carbon($to_date))->format('d/m/Y'));
@@ -1047,45 +1047,45 @@ class AccountsPayableReportAPIController extends AppBaseController
                             if ($reportSD == 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                    $data[$x]['Payment Type'] = $val->PaymentType;
-                                    $data[$x]['Payment Document Number'] = $val->documentCode;
-                                    $data[$x]['Supplier Code'] = $val->supplierCode;
-                                    $data[$x]['Supplier Name'] = $val->supplierName;
-                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x][trans('custom.payment_type')] = $val->PaymentType;
+                                    $data[$x][trans('custom.payment_document_number')] = $val->documentCode;
+                                    $data[$x][trans('custom.supplier_code')] = $val->supplierCode;
+                                    $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                                    $data[$x][trans('custom.supplier_group')] = $val->supplierGroupName;
 
                                     if ($currency == 2) {
-                                        $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                        $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                        $data[$x][trans('custom.currency')] = $val->documentLocalCurrency;
+                                        $data[$x][trans('custom.amount')] = round($val->documentLocalAmount, $decimalPlace);
                                     } else if ($currency == 3) {
-                                        $data[$x]['Currency'] = $val->documentRptCurrency;
-                                        $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                        $data[$x][trans('custom.currency')] = $val->documentRptCurrency;
+                                        $data[$x][trans('custom.amount')] = round($val->documentRptAmount, $decimalPlace);
                                     }
                                     $x++;
                                 }
                             } else {
                                 $x = 0;
                                 foreach ($output as $val) {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Supplier Code'] = $val->supplierCode;
-                                    $data[$x]['Supplier Name'] = $val->supplierName;
-                                    $data[$x]['Supplier Group'] = $val->supplierGroupName;
-                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                    $data[$x]['March'] = round($val->March, $decimalPlace);
-                                    $data[$x]['April'] = round($val->April, $decimalPlace);
-                                    $data[$x]['May'] = round($val->May, $decimalPlace);
-                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                    $data[$x]['July'] = round($val->July, $decimalPlace);
-                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                    $data[$x][trans('custom.supplier_code')] = $val->supplierCode;
+                                    $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                                    $data[$x][trans('custom.supplier_group')] = $val->supplierGroupName;
+                                    $data[$x][trans('custom.jan')] = round($val->Jan, $decimalPlace);
+                                    $data[$x][trans('custom.feb')] = round($val->Feb, $decimalPlace);
+                                    $data[$x][trans('custom.march')] = round($val->March, $decimalPlace);
+                                    $data[$x][trans('custom.april')] = round($val->April, $decimalPlace);
+                                    $data[$x][trans('custom.may')] = round($val->May, $decimalPlace);
+                                    $data[$x][trans('custom.jun')] = round($val->June, $decimalPlace);
+                                    $data[$x][trans('custom.july')] = round($val->July, $decimalPlace);
+                                    $data[$x][trans('custom.aug')] = round($val->Aug, $decimalPlace);
+                                    $data[$x][trans('custom.sept')] = round($val->Sept, $decimalPlace);
+                                    $data[$x][trans('custom.oct')] = round($val->Oct, $decimalPlace);
+                                    $data[$x][trans('custom.nov')] = round($val->Nov, $decimalPlace);
+                                    $data[$x][trans('custom.dec')] = round($val->Dece, $decimalPlace);
+                                    $data[$x][trans('custom.total')] = round($val->Total, $decimalPlace);
                                     $x++;
                                 }
                             }
@@ -1095,42 +1095,42 @@ class AccountsPayableReportAPIController extends AppBaseController
                             if ($reportSD == 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                    $data[$x]['Payment Document Number'] = $val->documentCode;
-                                    $data[$x]['GL Code'] = $val->glCode;
-                                    $data[$x]['Account Description'] = $val->AccountDescription;
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x][trans('custom.payment_document_number')] = $val->documentCode;
+                                    $data[$x][trans('custom.gl_code')] = $val->glCode;
+                                    $data[$x][trans('custom.account_description')] = $val->AccountDescription;
 
                                     if ($currency == 2) {
-                                        $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                        $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                        $data[$x][trans('custom.currency')] = $val->documentLocalCurrency;
+                                        $data[$x][trans('custom.amount')] = round($val->documentLocalAmount, $decimalPlace);
                                     } else if ($currency == 3) {
-                                        $data[$x]['Currency'] = $val->documentRptCurrency;
-                                        $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                        $data[$x][trans('custom.currency')] = $val->documentRptCurrency;
+                                        $data[$x][trans('custom.amount')] = round($val->documentRptAmount, $decimalPlace);
                                     }
                                     $x++;
                                 }
                             } else {
                                 $x = 0;
                                 foreach ($output as $val) {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['GL Code'] = $val->glCode;
-                                    $data[$x]['Account Description'] = $val->AccountDescription;
-                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                    $data[$x]['March'] = round($val->March, $decimalPlace);
-                                    $data[$x]['April'] = round($val->April, $decimalPlace);
-                                    $data[$x]['May'] = round($val->May, $decimalPlace);
-                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                    $data[$x]['July'] = round($val->July, $decimalPlace);
-                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                    $data[$x][trans('custom.gl_code')] = $val->glCode;
+                                    $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                                    $data[$x][trans('custom.jan')] = round($val->Jan, $decimalPlace);
+                                    $data[$x][trans('custom.feb')] = round($val->Feb, $decimalPlace);
+                                    $data[$x][trans('custom.march')] = round($val->March, $decimalPlace);
+                                    $data[$x][trans('custom.april')] = round($val->April, $decimalPlace);
+                                    $data[$x][trans('custom.may')] = round($val->May, $decimalPlace);
+                                    $data[$x][trans('custom.jun')] = round($val->June, $decimalPlace);
+                                    $data[$x][trans('custom.july')] = round($val->July, $decimalPlace);
+                                    $data[$x][trans('custom.aug')] = round($val->Aug, $decimalPlace);
+                                    $data[$x][trans('custom.sept')] = round($val->Sept, $decimalPlace);
+                                    $data[$x][trans('custom.oct')] = round($val->Oct, $decimalPlace);
+                                    $data[$x][trans('custom.nov')] = round($val->Nov, $decimalPlace);
+                                    $data[$x][trans('custom.dec')] = round($val->Dece, $decimalPlace);
+                                    $data[$x][trans('custom.total')] = round($val->Total, $decimalPlace);
                                     $x++;
                                 }
                             }
@@ -1140,23 +1140,23 @@ class AccountsPayableReportAPIController extends AppBaseController
                             if ($reportSD != 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Supplier Code / GL Code'] = $val->docCode;
-                                    $data[$x]['Supplier Name / Account Description'] = $val->docDes;
-                                    $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                                    $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                                    $data[$x]['March'] = round($val->March, $decimalPlace);
-                                    $data[$x]['April'] = round($val->April, $decimalPlace);
-                                    $data[$x]['May'] = round($val->May, $decimalPlace);
-                                    $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                                    $data[$x]['July'] = round($val->July, $decimalPlace);
-                                    $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                                    $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                                    $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                                    $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                                    $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                                    $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                    $data[$x][trans('custom.supplier_code_gl_code')] = $val->docCode;
+                                    $data[$x][trans('custom.supplier_name_account_description')] = $val->docDes;
+                                    $data[$x][trans('custom.jan')] = round($val->Jan, $decimalPlace);
+                                    $data[$x][trans('custom.feb')] = round($val->Feb, $decimalPlace);
+                                    $data[$x][trans('custom.march')] = round($val->March, $decimalPlace);
+                                    $data[$x][trans('custom.april')] = round($val->April, $decimalPlace);
+                                    $data[$x][trans('custom.may')] = round($val->May, $decimalPlace);
+                                    $data[$x][trans('custom.jun')] = round($val->June, $decimalPlace);
+                                    $data[$x][trans('custom.july')] = round($val->July, $decimalPlace);
+                                    $data[$x][trans('custom.aug')] = round($val->Aug, $decimalPlace);
+                                    $data[$x][trans('custom.sept')] = round($val->Sept, $decimalPlace);
+                                    $data[$x][trans('custom.oct')] = round($val->Oct, $decimalPlace);
+                                    $data[$x][trans('custom.nov')] = round($val->Nov, $decimalPlace);
+                                    $data[$x][trans('custom.dec')] = round($val->Dece, $decimalPlace);
+                                    $data[$x][trans('custom.total')] = round($val->Total, $decimalPlace);
                                     $x++;
                                 }
                             }
@@ -1170,29 +1170,29 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $x = 0;
                             foreach ($output as $val) {
 
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['BPVcode'] = $val->BPVcode;
-                                $data[$x]['Doc.Date'] = \Helper::dateFormat($val->BPVdate);
-                                $data[$x]['Doc.Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
-                                $data[$x]['Payee Name'] = $val->PayeeName;
-                                $data[$x]['Credit Period'] = $val->creditPeriod;
-                                $data[$x]['Bank'] = $val->bankName;
-                                $data[$x]['Bank Account No'] = $val->AccountNo;
-                                $data[$x]['Cheque No'] = $val->BPVchequeNo;
-                                $data[$x]['Cheque Date'] = \Helper::dateFormat($val->ChequeDate);
-                                $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
-                                $data[$x]['Cheque Printed Date'] = \Helper::dateFormat($val->chequePrintedDate);
+                                $data[$x][trans('custom.company_id')] = $val->companyID;
+                                $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                $data[$x][trans('custom.bpvcode')] = $val->BPVcode;
+                                $data[$x][trans('custom.doc_date')] = \Helper::dateFormat($val->BPVdate);
+                                $data[$x][trans('custom.doc_confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                                $data[$x][trans('custom.payee_name')] = $val->PayeeName;
+                                $data[$x][trans('custom.credit_period')] = $val->creditPeriod;
+                                $data[$x][trans('custom.bank')] = $val->bankName;
+                                $data[$x][trans('custom.bank_account_no')] = $val->AccountNo;
+                                $data[$x][trans('custom.cheque_no')] = $val->BPVchequeNo;
+                                $data[$x][trans('custom.cheque_date')] = \Helper::dateFormat($val->ChequeDate);
+                                $data[$x][trans('custom.cheque_printed_by')] = $val->chequePrintedByEmpName;
+                                $data[$x][trans('custom.cheque_printed_date')] = \Helper::dateFormat($val->chequePrintedDate);
 
                                 if ($currency == 1) {
-                                    $data[$x]['Currency'] = $val->documentTransCurrency;
-                                    $data[$x]['Amount'] = round($val->payAmountSuppTrans, $val->documentTransDecimalPlaces);
+                                    $data[$x][trans('custom.currency')] = $val->documentTransCurrency;
+                                    $data[$x][trans('custom.amount')] = round($val->payAmountSuppTrans, $val->documentTransDecimalPlaces);
                                 } else if ($currency == 2) {
-                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                    $data[$x]['Amount'] = round($val->payAmountCompLocal, $val->documentLocalDecimalPlaces);
+                                    $data[$x][trans('custom.currency')] = $val->documentLocalCurrency;
+                                    $data[$x][trans('custom.amount')] = round($val->payAmountCompLocal, $val->documentLocalDecimalPlaces);
                                 } else if ($currency == 3) {
-                                    $data[$x]['Currency'] = $val->documentRptCurrency;
-                                    $data[$x]['Amount'] = round($val->payAmountCompRpt, $val->documentRptDecimalPlaces);
+                                    $data[$x][trans('custom.currency')] = $val->documentRptCurrency;
+                                    $data[$x][trans('custom.amount')] = round($val->payAmountCompRpt, $val->documentRptDecimalPlaces);
                                 }
 
                                 $status = "";
@@ -1205,7 +1205,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     $status = trans('custom.payment_not_print');
                                 }
 
-                                $data[$x]['Approval Status'] = $status;
+                                $data[$x][trans('custom.approval_status')] = $status;
                                 $x++;
                             }
                         }
@@ -1282,8 +1282,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
 
-                        $fileName = 'Supplier Statement';
-                        $title = 'Supplier Statement';
+                        $fileName =  trans('custom.supplier_statement');
+                        $title =  trans('custom.supplier_statement');
                         $excelColumnFormat = $supplierStatementReportHeader->getCloumnFormat();
 
 
@@ -1324,7 +1324,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $totalPayable = array_sum(array_column($data, 'totalPayable'));
                             $totalPrepayment = array_sum(array_column($data, 'totalPrepayment'));
                             $totalNetOutstanding = array_sum(array_column($data, 'netOutstanding'));
-
+                            
 
                             $supplierStatementDetailsFooter = new SupplierStatementDetails();
 
@@ -1341,8 +1341,8 @@ class AccountsPayableReportAPIController extends AppBaseController
 
 
                         $excelColumnFormat = $supplierStatementDetailsFooter->getCloumnFormat();
-                        $fileName = 'Supplier Statement Details';
-                        $title = 'Supplier Statement Details';
+                        $fileName = trans('custom.supplier_statment_details');
+                        $title = trans('custom.supplier_statment_details');
 
                     }
                     else if ($reportTypeID == 'SBSR') {
@@ -1448,7 +1448,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID : null;
                     $templateName = "export_report.payment_suppliers";
 
-                    $reportData = ['reportData' => $outputArr, 'Title' => 'Supplier Ledger', 'companyName' => $checkIsGroup->CompanyName, 'companyCode' => $companyCode, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
+                    $reportData = ['reportData' => $outputArr, 'Title' => trans('custom.supplier_ledger'), 'companyName' => $checkIsGroup->CompanyName, 'companyCode' => $companyCode, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
                     $fileName = 'Supplier Ledger';
                     $path = 'accounts-payable/report/supplier_ledger/excel/';
@@ -1501,8 +1501,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
                     $cur = NULL;
-                    $fileName = 'Supplier Balance Summary';
-                    $title = 'Supplier Balance Summary';
+                    $fileName = trans('custom.supplier_balance_summary');
+                    $title = trans('custom.supplier_balance_summary');
                     $path = 'accounts-payable/report/supplier_balance_summary/excel/';
                     $excelColumnFormat = [
                         'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -1543,11 +1543,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     if ($reportTypeID == 'SAD') { //supplier aging detail
                         if($typeAging == 1){
-                            $fileName = 'Supplier Aging Detail Report';
-                            $title = 'Supplier Aging Detail Report';
+                            $fileName = trans('custom.supplier_aging_detail_report');
+                            $title = trans('custom.supplier_aging_detail_report');
                         } else {
-                            $fileName = 'Employee Aging Detail Report';
-                            $title = 'Employee Aging Detail Report';
+                            $fileName = trans('custom.employee_aging_detail_report');
+                            $title = trans('custom.employee_aging_detail_report');
                         }
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailQRY($request);
@@ -1586,11 +1586,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
                         if($typeAging == 1){
-                            $fileName = 'Supplier Aging Summary Report';
-                            $title = 'Supplier Aging Summary Report';
+                            $fileName = trans('custom.supplier_aging_summary_report');
+                            $title = trans('custom.supplier_aging_summary_report');
                         } else {
-                            $fileName = 'Employee Aging Summary Report';
-                            $title = 'Employee Aging Summary Report';
+                            $fileName = trans('custom.employee_aging_summary_report');
+                            $title = trans('custom.employee_aging_summary_report');
                         }
                         $data = $supplierAgingReportService->getSupplierAgingSummaryExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingSummaryReport();
@@ -1600,11 +1600,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                         if($typeAging == 1){
-                            $fileName = 'Supplier Aging Detail Advance';
-                            $title = 'Supplier Aging Detail Advance Report';
+                            $fileName = trans('custom.supplier_aging_detail_advance');
+                            $title = trans('custom.supplier_aging_detail_advance_report');
                         } else {
-                            $fileName = 'Employee Aging Detail Advance';
-                            $title = 'Employee Aging Detail Advance Report';
+                            $fileName = trans('custom.employee_aging_detail_advance');
+                            $title = trans('custom.employee_aging_detail_advance_report');
                         }
                         $data = $supplierAgingReportService->getSupplierAgingDetailAdvanceExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingDetailAdvanceReport();
@@ -1614,11 +1614,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                         if($typeAging == 1) {
-                            $fileName = 'Supplier Aging Summary Advance';
-                            $title = 'Supplier Aging Summary Advance Report';
+                            $fileName = trans('custom.supplier_aging_summary_advance');
+                            $title = trans('custom.supplier_aging_summary_advance_report');
                         } else {
-                            $fileName = 'Employee Aging Summary Advance';
-                            $title = 'Employee Aging Summary Advance Report';
+                            $fileName = trans('custom.employee_aging_summary_advance');
+                            $title = trans('custom.employee_aging_summary_advance_report');
                         }
                         $data = $supplierAgingReportService->getSupplierAgingSummaryAdvanceExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingSummaryAdvanceReport();
@@ -1717,8 +1717,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $from_date = ((new Carbon($from_date))->format('d/m/Y'));
                     $dataType=2;
                     if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
-                        $fileName = 'Unbilled GRV Detail Report ';
-                        $title = 'Unbilled GRV Detail Report ';
+                        $fileName = trans('custom.unbilled_grv_detail_report');
+                        $title = trans('custom.unbilled_grv_detail_report');
                         $output = $this->getUnbilledDetailQRY($request);
                         $name = "detail";
                         $data = $unbilledGrvReportService->getUnbilledGrvExportToExcelData($output);
@@ -1727,16 +1727,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                         $output = $this->getUnbilledDetailQRY($request);
-                        $fileName = 'Unbilled GRV Summary Report';
-                        $title = 'Unbilled GRV Summary Report';
+                        $fileName = trans('custom.unbilled_grv_summary_report');
+                        $title = trans('custom.unbilled_grv_summary_report');
                         $name = "summary";
                         $data = $unbilledGrvReportService->getUnbilledGrvSummaryExportToExcelData($output);
                         $objUnbilledGrvDetailsReport = new UnbilledGrvDetailsSummaryReport();
                         $excelColumnFormat = $objUnbilledGrvDetailsReport->getCloumnFormat();
                     }
                     else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
-                        $fileName = 'Unbilled GRV Aging Detail';
-                        $title = 'Unbilled GRV Aging Detail Report';
+                        $fileName = trans('custom.unbilled_grv_aging_detail');
+                        $title = trans('custom.unbilled_grv_aging_detail_report');
                         $dataType = 1;
                         $output = $this->getUnbilledGRVDetailAgingQRY($request);
                         $name = "aging_detail";
@@ -1745,8 +1745,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $excelColumnFormat = $objUnbilledGrvAgingSummaryReport->getCloumnFormat();
                     }
                     else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
-                        $fileName = 'Unbilled GRV Aging Summary';
-                        $title = 'Unbilled GRV Aging Summary Report';
+                        $fileName = trans('custom.unbilled_grv_aging_summary');
+                        $title = trans('custom.unbilled_grv_aging_summary_report');
                         $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                         $name = "aging_summary";
                         $data = $unbilledGrvReportService->getUnbilledGrvAgingSummaryExportToExcelData($output,$request);
@@ -1755,8 +1755,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     else if ($reportTypeID == 'ULD') {
 
-                        $fileName = 'Unbilled Logistics Detail';
-                        $title = 'Unbilled Logistics Detail Report';
+                        $fileName = trans('custom.unbilled_logistics_detail');
+                        $title = trans('custom.unbilled_logistics_detail_report');
                         $output = $this->getUnbilledLogisticsDetailQRY($request);
                         $name = "logistics_detail";
                         $data = $unbilledGrvReportService->getUnbilledGrvLogisticDetailExportToExcelData($output);

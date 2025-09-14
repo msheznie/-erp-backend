@@ -177,7 +177,7 @@ class CreateExcel
                             }
                             
                            
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                         }
                         else if(($array['type']) == 2)
@@ -185,7 +185,7 @@ class CreateExcel
                             if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
                                 $i = $i - 0;
                                 self::branch($array, $sheet, 'Branch ');
-                                self::selectedCurrency($array, $sheet, 'Currency');
+                                self::selectedCurrency($array, $sheet, trans('custom.currency'));
                                 self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             } else {
                                 $i = $i - 2;
@@ -199,7 +199,7 @@ class CreateExcel
                         }
                         else if(($array['type']) == 4)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             self::currency($array,$sheet,'A5');
 
@@ -213,7 +213,7 @@ class CreateExcel
                         }
                         else if(($array['type']) == 6)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             $sheet->cell('A5', function($cell) use($array)
                             {

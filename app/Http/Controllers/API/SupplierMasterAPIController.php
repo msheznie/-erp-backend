@@ -208,10 +208,6 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function exportSupplierMaster(Request $request)
     {
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
