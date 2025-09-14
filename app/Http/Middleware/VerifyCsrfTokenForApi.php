@@ -207,7 +207,9 @@ class VerifyCsrfTokenForApi
             'api/v1/getDepBudgetPlDetEmpColumns',
             'api/v1/updateDepartmentBudgetPlanningDetailAmount',
             'api/v1/getAllDepartmentSegments',
-
+            'api/v1/getTemplateDetailFormData',
+            'api/v1/budget_template_comments_by_detail/{budgetDetailId}',
+            'api/v1/auditLogs',
         ];
     }
 }
