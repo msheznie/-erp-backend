@@ -6753,6 +6753,9 @@ return [
     'not_approved' => 'Not Approved',
     'active_only' => 'Active only',
     'not_active' => 'Not Active',
+
+    // Item Master
+    'item_type' =>'Item Type',
     'stock_details_report' => 'Stock Details Report',
     'total_value_usd' => 'Total Value (USD)',
     'last_receipt_date' => 'Last Receipt Date',

@@ -6773,6 +6773,9 @@ return [
     
     // Status Indicators
     'cancelled_status' => ' -- @ملغي@',
+
+    // Item Master
+    'item_type' => 'نوع العنصر',
     'stock_details_report' => 'تقرير تفاصيل المخزون',
     'total_value_usd' => 'إجمالي القيمة (دولار أمريكي)',
     'last_receipt_date' => 'تاريخ آخر استلام',
