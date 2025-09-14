@@ -218,25 +218,25 @@ class BookInvSuppMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][__('custom.invoice_code')] = $val->bookingInvCode;
-                $data[$x][__('custom.type')] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
-                $data[$x][__('custom.supplier')] = $val->supplier? $val->supplier->supplierName : '';
-                $data[$x][__('custom.invoice_no')] = $val->supplierInvoiceNo;
-                $data[$x][__('custom.booking_invoice_date')] = \Helper::dateFormat($val->bookingDate);
-                $data[$x][__('custom.comments')] = $val->comments;
-                $data[$x][__('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][__('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateAndTime);
-                $data[$x][__('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][__('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.invoice_code')] = $val->bookingInvCode;
+                $data[$x][trans('custom.type')] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
+                $data[$x][trans('custom.supplier')] = $val->supplier? $val->supplier->supplierName : '';
+                $data[$x][trans('custom.invoice_no')] = $val->supplierInvoiceNo;
+                $data[$x][trans('custom.booking_invoice_date')] = \Helper::dateFormat($val->bookingDate);
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateAndTime);
+                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
  
-                $data[$x][__('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
-                $data[$x][__('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
-                $data[$x][__('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
-                $data[$x][__('custom.local_amount')] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
-                $data[$x][__('custom.reporting_currency')] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
-                $data[$x][__('custom.reporting_amount')] = $val->rptcurrency? number_format($val->bookingAmountRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->bookingAmountRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
 
-                $data[$x][__('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

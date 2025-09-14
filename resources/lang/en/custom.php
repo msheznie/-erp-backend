@@ -6353,6 +6353,10 @@ return [
     'e_confirmed_at' => 'Confirmed At',
     'e_approved_at' => 'Approved At',
     
+    // Stock Receive translations
+    'e_stock_receive_code' => 'Stock Receive Code',
+    'e_received_date' => 'Received Date',
+    
     // Item Return translations
     'e_item_return_code' => 'Item Return Code',
     'e_department' => 'Department',
@@ -6708,7 +6712,17 @@ return [
     'stock_count_not_found' => 'Stock Count not found',
     'stock_count_reffered_back_deleted_successfully' => 'Stock Count Reffered Back deleted successfully',
     'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
-
+    
+    // Additional GRV Master Translation Keys
+    'grv_date_not_within_financial_period' => 'GRV date is not within the financial period!',
+    'pl_account_not_assigned_company' => 'PL account is not assigned to the company',
+    'bs_account_not_assigned_company' => 'BS account is not assigned to the company',
+    'grv_markup_update_process_restricted' => 'GRV markup update process restricted',
+    'policy_not_found_for_document' => 'Policy not found for this document',
+    'thank_you' => 'Thank You.',
+    'actions' => 'Actions',
+    'reopened' => 'Reopened',
+    'grv_updated_successfully' => 'GRV updated successfully',
     'debit' => 'Debit',
     'credit' => 'Credit',
     
