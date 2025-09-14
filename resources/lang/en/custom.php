@@ -7062,5 +7062,11 @@ return [
     'start_date' => 'Start Date',
     'end_date' => 'End Date',
     'no_of_day_month_year' => 'No Of Day/Month/Year',
-    'process_date' => 'Process Date'
+    'process_date' => 'Process Date',
+    // Bank Account Export Translations
+    'bank_short_code' => 'Bank Short Code',
+    'swift' => 'Swift',
+    'is_temporary_acc' => 'Is Temporary Acc',
+    'is_default' => 'Is Default',
+    'wht' => 'WHT'
 ];

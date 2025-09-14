@@ -6971,5 +6971,11 @@ return [
     'start_date' => 'تاريخ البداية',
     'end_date' => 'تاريخ النهاية',
     'no_of_day_month_year' => 'عدد الأيام/الشهر/السنة',
-    'process_date' => 'تاريخ المعالجة'
+    'process_date' => 'تاريخ المعالجة',
+    // Bank Account Export Translations
+    'bank_short_code' => 'رمز البنك المختصر',
+    'swift' => 'رمز سويفت',
+    'is_temporary_acc' => 'حساب مؤقت',
+    'is_default' => 'افتراضي',
+    'wht' => 'ضريبة الاستقطاع'
 ];
