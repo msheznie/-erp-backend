@@ -6972,6 +6972,12 @@ return [
     'end_date' => 'تاريخ النهاية',
     'no_of_day_month_year' => 'عدد الأيام/الشهر/السنة',
     'process_date' => 'تاريخ المعالجة',
+    // Bank Account Export Translations
+    'bank_short_code' => 'رمز البنك المختصر',
+    'swift' => 'رمز سويفت',
+    'is_temporary_acc' => 'حساب مؤقت',
+    'is_default' => 'افتراضي',
+    'wht' => 'ضريبة الاستقطاع',
 
     // PO Analysis Report Excel Headers - Itemwise
     'company_id' => 'معرف الشركة',

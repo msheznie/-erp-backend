@@ -530,34 +530,34 @@ class BankAccountAPIController extends AppBaseController
         $x = 0;
         foreach ($bankAccounts as $val) {
             $x++;
-            $data[$x]['Company ID'] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
-            $data[$x]['Bank Short Code'] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
-            $data[$x]['Bank Name'] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
-            $data[$x]['Account No'] = $val->AccountNo;
-            $data[$x]['Currency'] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
-            $data[$x]['GL Code'] = $val->glCodeLinked;
-            $data[$x]['Branch'] = $val->bankBranch;
-            $data[$x]['Swift'] = $val->accountSwiftCode;
-            $data[$x]['Is Temporary Acc'] = ($val->isTempBank == 1) ? "Yes" : "No";
-            $data[$x]['Is Active'] = ($val->isAccountActive == 1) ? "Yes" : "No";
-            $data[$x]['Is Default'] = ($val->isDefault == 1) ? "Yes" : "No";
+            $data[$x][trans('custom.company_id')] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
+            $data[$x][trans('custom.bank_short_code')] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
+            $data[$x][trans('custom.bank_name')] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
+            $data[$x][trans('custom.account_no')] = $val->AccountNo;
+            $data[$x][trans('custom.currency')] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
+            $data[$x][trans('custom.gl_code')] = $val->glCodeLinked;
+            $data[$x][trans('custom.branch')] = $val->bankBranch;
+            $data[$x][trans('custom.swift')] = $val->accountSwiftCode;
+            $data[$x][trans('custom.is_temporary_acc')] = ($val->isTempBank == 1) ? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.is_active')] = ($val->isAccountActive == 1) ? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.is_default')] = ($val->isDefault == 1) ? trans('custom.yes') : trans('custom.no');
 
             $status = "";
             if ($val->CancelledYN == -1) {
-                $status = "Cancelled";
+                $status = trans('custom.cancelled');
             } else if ($val->confirmedYN == 0 && $val->approvedYN == 0) {
-                $status = " Not Confirmed";
+                $status = trans('custom.not_confirmed');
             }
             else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == 0) {
-                $status = "Pending Approval";
+                $status = trans('custom.pending_approval');
             } else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == -1) {
-                $status = "Referred Back";
+                $status = trans('custom.referred_back');
             }
             else if ($val->confirmedYN == 1 && ($val->approvedYN == -1 || $val->approvedYN == 1 )) {
-                $status = "Fully Approved";
+                $status = trans('custom.fully_approved');
             }
 
-            $data[$x]['Status'] = $status;
+            $data[$x][trans('custom.status')] = $status;
         }
 
          \Excel::create('bank_accounts', function ($excel) use ($data) {

@@ -516,7 +516,7 @@ class TaxAPIController extends AppBaseController
 
         $taxType = TaxType::all();
 //        $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
-        $taxCategory = array(array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
+        $taxCategory = array(array('value' => 2, 'label' => trans('custom.vat')), array('value' => 3, 'label' => trans('custom.wht')));
 
         $suppliers = SupplierAssigned::where('companySystemID',$selectedCompanyId)
             ->where('isAssigned',-1)

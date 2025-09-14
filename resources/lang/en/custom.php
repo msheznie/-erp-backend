@@ -7063,6 +7063,12 @@ return [
     'end_date' => 'End Date',
     'no_of_day_month_year' => 'No Of Day/Month/Year',
     'process_date' => 'Process Date',
+    // Bank Account Export Translations
+    'bank_short_code' => 'Bank Short Code',
+    'swift' => 'Swift',
+    'is_temporary_acc' => 'Is Temporary Acc',
+    'is_default' => 'Is Default',
+    'wht' => 'WHT',
 
     // PO Analysis Report Excel Headers - Itemwise
     'company_id' => 'CompanyID',
