@@ -206,12 +206,6 @@ class DocumentAttachmentsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $local = $request->get('lang');
-            
-            if(!empty($local)) {
-                app()->setLocale($local);
-            }
-
             $input = $request->all();
             $extension = $input['fileType'];
 

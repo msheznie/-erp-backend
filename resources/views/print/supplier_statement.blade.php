@@ -146,8 +146,8 @@
                     <td valign="top" style="width: 55%">
                         <br><br>
                         <span class="font-weight-bold">{{$companyName}}</span><br>
-                        <span class="font-weight-bold">Supplier Statement</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                        <span class="font-weight-bold">{{ __('custom.supplier_statement') }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;{{ __('custom.as_of') }} {{ $fromDate }}</span>
                     </td>
                 </tr>
             </table>
@@ -178,26 +178,26 @@
                 @foreach ($val2 as $key3 => $val3)
                     <tr style="width:100%">
                         @if(!$sentEmail)
-                            <td colspan="10"><span style="font-size: 9px; font-weight: bold">Supplier Group: {{$key3}}</span></td>
+                            <td colspan="10"><span style="font-size: 9px; font-weight: bold">{{ __('custom.supplier_group') }}: {{$key3}}</span></td>
                         @endif
                         @if($sentEmail)
-                            <td colspan="9"><span style="font-size: 9px; font-weight: bold">Supplier Group: {{$key3}}</span></td>
+                            <td colspan="9"><span style="font-size: 9px; font-weight: bold">{{ __('custom.supplier_group') }}: {{$key3}}</span></td>
                         @endif
                     </tr>
                     <tr style="width:100%">
-                        <th>Doc ID</th>
-                        <th>Document Code</th>
-                        <th>Doc Date</th>
-                        <th>Account</th>
+                        <th>{{ __('custom.document_id') }}</th>
+                        <th>{{ __('custom.document_code') }}</th>
+                        <th>{{ __('custom.document_date') }}</th>
+                        <th>{{ __('custom.account') }}</th>
                         @if(!$sentEmail)
-                            <th>Narration</th>
+                            <th>{{ __('custom.narration') }}</th>
                         @endif
-                        <th>Invoice Number</th>
-                        <th>Invoice Date</th>
-                        <th>Currency</th>
-                        <th>Age Days</th>
-                        <th>Doc Amount</th>
-                        <th>BalanceAmount</th>
+                        <th>{{ __('custom.invoice_number') }}</th>
+                        <th>{{ __('custom.invoice_date') }}</th>
+                        <th>{{ __('custom.currency') }}</th>
+                        <th>{{ __('custom.age_days') }}</th>
+                        <th>{{ __('custom.doc_amount') }}</th>
+                        <th>{{ __('custom.balance_amount') }}</th>
                     </tr>
                     <tbody>
                     {{ $lineTotal = 0 }}
