@@ -7037,7 +7037,15 @@ return [
     'selected_department_not_active' => 'Selected Department is not active. Please select an active segment',
     'stock_receive_updated_successfully' => 'StockReceive updated successfully',
     'success' => 'Success',
-
+    "this_category_can_be_delete" => "This category can be delete",
+    // Customer Master Export Column Headers
+    'primary_code' => 'Primary Code',
+    'secondary_code' => 'Secondary Code',
+    'report_title' => 'Report Title',
+    'city' => 'City',
+    // Chart of Account Export translations
+    'category_bl_or_pl' => 'Category BL or PL',
+    'allocation' => 'Allocation',
 
     // Recurring Voucher Export Data Translations
     'rrv_code' => 'RRV Code',

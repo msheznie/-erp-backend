@@ -1089,27 +1089,27 @@ class ChartOfAccountAPIController extends AppBaseController
             $data = array();
             foreach ($chartOfAccount as $val) {
                 if ($val->confirmedYN == 1 && $val->isApproved == 0 && $val->refferedBackYN == -1) {
-                    $status = "Referred Back";
+                    $status = trans('custom.referred_back');
                 } else if ($val->isActive == 0) {
-                    $status = "Not Active";
+                    $status = trans('custom.not_active');
                 } else if (($val->isActive == 1 || $val->isActive == -1) && $val->confirmedYN == 0 && $val->isApproved == 0) {
-                    $status = "Active Only";
+                    $status = trans('custom.active_only');
                 } else if (($val->isActive == 1 || $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && $val->isApproved == 0) {
-                    $status = "Not Approved";
+                    $status = trans('custom.not_approved');
                 } else if (($val->isActive == 1 || $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && ($val->isApproved == 1 || $val->isApproved == -1)) {
-                    $status = "Fully Approved";
+                    $status = trans('custom.fully_approved');
                 }
 
-                $data[$x]['Account Code'] = $val->AccountCode;
-                $data[$x]['Account Description'] = $val->AccountDescription;
+                $data[$x][trans('custom.account_code')] = $val->AccountCode;
+                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
                 // $data[$x]['Master Account'] = $val->masterAccount;
-                $data[$x]['Control Account'] = isset($val->controlAccount->description) ? $val->controlAccount->description : '';
-                $data[$x]['Category BL or PL'] = isset($val->accountType->description) ? $val->accountType->description : '';
-                $data[$x]['Report Template'] = isset($val->templateCategoryDetails->master->description) ? $val->templateCategoryDetails->master->description : '';
-                $data[$x]['Default Template Category'] = isset($val->templateCategoryDetails->description) ? $val->templateCategoryDetails->description : '';
-                $data[$x]['isBank'] = ($val->isBank) ? "Yes" : 'No';
-                $data[$x]['Allocation'] = isset($val->allocation->Desciption) ? $val->allocation->Desciption : '';
-                $data[$x]['Status'] = $status;
+                $data[$x][trans('custom.control_account')] = isset($val->controlAccount->description) ? $val->controlAccount->description : '';
+                $data[$x][trans('custom.category_bl_or_pl')] = isset($val->accountType->description) ? $val->accountType->description : '';
+                $data[$x][trans('custom.report_template')] = isset($val->templateCategoryDetails->master->description) ? $val->templateCategoryDetails->master->description : '';
+                $data[$x][trans('custom.default_template_category')] = isset($val->templateCategoryDetails->description) ? $val->templateCategoryDetails->description : '';
+                $data[$x][trans('custom.is_bank')] = ($val->isBank) ? trans('custom.yes') : trans('custom.no');
+                $data[$x][trans('custom.allocation')] = isset($val->allocation->Desciption) ? $val->allocation->Desciption : '';
+                $data[$x][trans('custom.status')] = $status;
                 $x++;
             }
         } else {

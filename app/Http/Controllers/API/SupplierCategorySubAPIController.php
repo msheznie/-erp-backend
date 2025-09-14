@@ -218,10 +218,10 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign= SupplierSubCategoryAssign::where('supSubCategoryID', $id)->first();
 
         if ($subCategoryAssign) {
-            return $this->sendError("This sub category has already been pulled to Supplier Master, cannot be deleted");
+            return $this->sendError(trans('custom.this_category_has_already_been_pulled_to_supplier_'));
         }
 
-        return $this->sendResponse($id,"This sub category can be delete");
+        return $this->sendResponse($id,trans('custom.this_category_can_be_delete'));
     }
 
     public function getAllSupplierBusinessSubCategories(Request $request){
@@ -255,7 +255,7 @@ class SupplierCategorySubAPIController extends AppBaseController
 
     public function getSupplierBusinessSubCategoryFormData(Request $request)
     {
-        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $yesNoSelection = YesNoSelection::all();
 
         $output = array('yesNoSelection' => $yesNoSelection);
 
