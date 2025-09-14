@@ -18,16 +18,16 @@ class CompanyWisePoAnalysisReport
     public function getHeaders()
     {
         return [
-            'CompanyID',
-            'Company Name',
-            'PO Capex Amount',
-            'PO Opex Amount',
-            'Total PO Amount',
-            'GRV Capex Amount',
-            'GRV Opex Amount',
-            'Total GRV Amount',
-            'Capex Balance',
-            'Opex Balance',
+            __('custom.company_id'),
+            __('custom.company_name'),
+            __('custom.po_capex_amount'),
+            __('custom.po_opex_amount'),
+            __('custom.total_po_amount'),
+            __('custom.grv_capex_amount'),
+            __('custom.grv_opex_amount'),
+            __('custom.total_grv_amount'),
+            __('custom.capex_balance'),
+            __('custom.opex_balance'),
         ];
     }
 
