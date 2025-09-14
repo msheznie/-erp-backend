@@ -3912,17 +3912,17 @@ AND PODet.supplierID = ' . $supplierID . '');
 
             $data = array();
             foreach ($detail as $order) {
-                $testArray['PO Number'] = $order->purchaseOrderCode;
-                $testArray['GRV Date'] = date("d/m/Y", strtotime($order->grvDate));
-                $testArray['GRV Number'] = $order->grvPrimaryCode;
-                $testArray['Supplier Name'] = $order->supplierName;
-                $testArray['WareHouse Name'] = $order->wareHouseDescription;
-                $testArray['Item Code'] = $order->itemPrimaryCode;
-                $testArray['Item Description'] = $order->itemDescription;
+                $testArray[trans('custom.po_number')] = $order->purchaseOrderCode;
+                $testArray[trans('custom.grv_date')] = date("d/m/Y", strtotime($order->grvDate));
+                $testArray[trans('custom.grv_number')] = $order->grvPrimaryCode;
+                $testArray[trans('custom.supplier_name')] = $order->supplierName;
+                $testArray[trans('custom.warehouse_name')] = $order->wareHouseDescription;
+                $testArray[trans('custom.item_code')] = $order->itemPrimaryCode;
+                $testArray[trans('custom.item_description')] = $order->itemDescription;
                 if ($input['currency'] == 1) {
-                    $testArray['Amount'] = number_format($order->LinelocalTotal, 2);
+                    $testArray[trans('custom.amount')] = number_format($order->LinelocalTotal, 2);
                 } else {
-                    $testArray['Amount'] = number_format($order->LineRptTotal, 2);
+                    $testArray[trans('custom.amount')] = number_format($order->LineRptTotal, 2);
                 }
                 array_push($data, $testArray);
             }
@@ -3954,16 +3954,16 @@ WHERE
 
             $data = array();
             foreach ($detail as $order) {
-                $testArray['GRV Code'] = $order->grvPrimaryCode;
-                $testArray['Invoice Doc Code'] = $order->bookingInvCode;
-                $testArray['Document Date'] = date("d/m/Y", strtotime($order->bookingDate));
-                $testArray['Supplier Invoice No'] = $order->supplierInvoiceNo;
-                $testArray['Comments'] = $order->comments;
-                $testArray['Currency'] = $order->CurrencyCode;
+                $testArray[trans('custom.grv_code')] = $order->grvPrimaryCode;
+                $testArray[trans('custom.invoice_doc_code')] = $order->bookingInvCode;
+                $testArray[trans('custom.document_date')] = date("d/m/Y", strtotime($order->bookingDate));
+                $testArray[trans('custom.supplier_invoice_no')] = $order->supplierInvoiceNo;
+                $testArray[trans('custom.comments')] = $order->comments;
+                $testArray[trans('custom.currency')] = $order->CurrencyCode;
                 if ($input['currency'] == 1) {
-                    $testArray['Amount'] = number_format($order->totLocalAmount, 2);
+                    $testArray[trans('custom.amount')] = number_format($order->totLocalAmount, 2);
                 } else {
-                    $testArray['Amount'] = number_format($order->totRptAmount, 2);
+                    $testArray[trans('custom.amount')] = number_format($order->totRptAmount, 2);
                 }
                 array_push($data, $testArray);
             }
