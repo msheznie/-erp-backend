@@ -6720,5 +6720,12 @@ return [
     'credit' => 'دائن',
     
     // Status Indicators
-    'cancelled_status' => ' -- @ملغي@'
+    'cancelled_status' => ' -- @ملغي@',
+    
+    // Approval Level validation messages
+    'approval_level_already_exists' => 'مستوى الموافقة موجود بالفعل بهذه المعايير',
+    'approval_level_category_wise_exists' => 'تم إنشاء مستوى موافقة مع تفعيل الفئة، لذلك لا يمكنك :action بدون فئة',
+    'approval_level_segment_wise_exists' => 'تم إنشاء مستوى موافقة مع تفعيل القطاع، لذلك لا يمكنك :action بدون قطاع',
+    'approval_level_value_wise_exists' => 'تم إنشاء مستوى موافقة مع تفعيل القيمة، لذلك لا يمكنك :action بدون قيمة',
+    'approval_level_criteria_differ' => 'معايير مستوى الموافقة تختلف عن إعدادات المستند'
  ];

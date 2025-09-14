@@ -6700,5 +6700,12 @@ return [
     'is_public' => 'Is Public',
     'not_approved' => 'Not Approved',
     'active_only' => 'Active only',
-    'not_active' => 'Not Active'
+    'not_active' => 'Not Active',
+    
+    // Approval Level validation messages
+    'approval_level_already_exists' => 'Approval level already exists with this criteria',
+    'approval_level_category_wise_exists' => 'An approval level is created with category wise enabled, therefore you cannot :action without category',
+    'approval_level_segment_wise_exists' => 'An approval level is created with segment wise enabled, therefore you cannot :action without segment',
+    'approval_level_value_wise_exists' => 'An approval level is created with value wise enabled, therefore you cannot :action without value',
+    'approval_level_criteria_differ' => 'Approval level criteria differ from document configuration'
 ];

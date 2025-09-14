@@ -330,7 +330,7 @@ class ApprovalLevelAPIController extends AppBaseController
                                                ->first();
 
         if ($checkDuplicateApproval) {
-            return ['status' => false, 'message' => "Appoval level is already exists with this criteria"];
+            return ['status' => false, 'message' => trans('custom.approval_level_already_exists')];
         }
 
         $checkPreviousLevels = ApprovalLevel::where('companySystemID', $input["companySystemID"])
@@ -346,15 +346,15 @@ class ApprovalLevelAPIController extends AppBaseController
         $action = $activate ? "active/inactive" : "create";
 
         if (($checkPreviousLevels && $checkPreviousLevels->isCategoryWiseApproval == -1) && ((isset($input['isCategoryWiseApproval']) && !$input['isCategoryWiseApproval']) || !isset($input['isCategoryWiseApproval']))) {
-            return ['status' => false, 'message' => "An Appoval level is created with category wise enabled, therefore you cannot ".$action." without category"];
+            return ['status' => false, 'message' => trans('custom.approval_level_category_wise_exists', ['action' => $action])];
         }
 
         if (($checkPreviousLevels && $checkPreviousLevels->serviceLineWise) && ((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']))) {
-            return ['status' => false, 'message' => "An Appoval level is created with segment wise enabled, therefore you cannot ".$action." without segment"];
+            return ['status' => false, 'message' => trans('custom.approval_level_segment_wise_exists', ['action' => $action])];
         }
 
         if (($checkPreviousLevels && $checkPreviousLevels->valueWise) && ((isset($input['valueWise']) && !$input['valueWise']) || !isset($input['valueWise']))) {
-            return ['status' => false, 'message' => "An Appoval level is created with value wise enabled, therefore you cannot ".$action." without value"];
+            return ['status' => false, 'message' => trans('custom.approval_level_value_wise_exists', ['action' => $action])];
         }
 
 
@@ -369,7 +369,7 @@ class ApprovalLevelAPIController extends AppBaseController
                 $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
 
                 if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval)) {
-                    return ['status' => false, 'message' => "Appoval level criteria differ from document configuration"];
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
             }
         }
