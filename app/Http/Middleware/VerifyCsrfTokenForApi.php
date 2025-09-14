@@ -210,11 +210,19 @@ class VerifyCsrfTokenForApi
             'api/v1/getTemplateDetailFormData',
             'api/v1/budget_template_comments_by_detail/{budgetDetailId}',
             'api/v1/auditLogs',
-            'api/v1/getBudgetTemplateColumns',
+            'api/v1/getBudgetTemplateColumns/{templateId}',
             'api/v1/getDelegateAccessRecords',
             'api/v1/generateTimeExtensionRequestCode',
             'api/v1/getTimeExtensionRequestAttachments/{timeRequestId}',
             'api/v1/cancelDepartmentTimeExtensionRequests',
+            'api/v1/updateBudgetPlanningStatus',
+            'api/v1/getBudgetDetailTemplateEntries',
+            'api/v1/saveBudgetDetailTemplateEntries',
+            'api/v1/deleteBudgetPlanningTemplateDetailRow',
+            'api/v1/budget_pl_temp_attachments/{budget_pl_temp_attachment}',
+            'api/v1/budget_pl_temp_attachments',
+            'api/v1/budget_template_comments',
+            'api/v1/deleteBudgetTemplateComment',
         ];
     }
 }
