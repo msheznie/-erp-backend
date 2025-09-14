@@ -6945,5 +6945,13 @@ return [
     'thank_you' => 'شكراً لك.',
     'actions' => 'الإجراءات',
     'reopened' => 'تم إعادة الفتح',
-    'grv_updated_successfully' => 'تم تحديث GRV بنجاح'
+    'grv_updated_successfully' => 'تم تحديث GRV بنجاح',
+
+     // Recurring Voucher Export Data Translations
+    'rrv_code' => 'رمز القسيمة المتكررة',
+    'schedule' => 'الجدولة',
+    'start_date' => 'تاريخ البداية',
+    'end_date' => 'تاريخ النهاية',
+    'no_of_day_month_year' => 'عدد الأيام/الشهر/السنة',
+    'process_date' => 'تاريخ المعالجة'
 ];

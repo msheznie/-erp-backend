@@ -7036,5 +7036,14 @@ return [
     'please_configure_pl_account_stock_receive' => 'Please configure PL account for stock receive',
     'selected_department_not_active' => 'Selected Department is not active. Please select an active segment',
     'stock_receive_updated_successfully' => 'StockReceive updated successfully',
-    'success' => 'Success'
+    'success' => 'Success',
+
+
+    // Recurring Voucher Export Data Translations
+    'rrv_code' => 'RRV Code',
+    'schedule' => 'Schedule',
+    'start_date' => 'Start Date',
+    'end_date' => 'End Date',
+    'no_of_day_month_year' => 'No Of Day/Month/Year',
+    'process_date' => 'Process Date'
 ];
