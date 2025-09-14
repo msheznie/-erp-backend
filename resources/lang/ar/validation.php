@@ -17,7 +17,7 @@ return [
     'active_url' => 'حقل :attribute ليس عنوان URL صالحًا.',
     'after' => 'حقل :attribute يجب أن يكون تاريخًا بعد :date.',
     'after_or_equal' => 'حقل :attribute يجب أن يكون تاريخًا بعد :date أو مساويًا له.',
-    'alpha' => 'حقل :attribute قد يحتوي على أحرف فقط.',
+    'alpha' => 'حقل :attribute يجب أن يحتوي على أحرف فقط.',
     'alpha_dash' => 'حقل :attribute لا يجوز أن يحتوي إلا على أحرف وأرقام وشرطات.',
     'alpha_num' => 'حقل :attribute لا يجوز أن يحتوي إلا على أحرف وأرقام.',
     'array' => 'حقل :attribute يجب أن يكون مصفوفة.',
@@ -29,7 +29,7 @@ return [
         'string' => 'حقل :attribute يجب أن يكون بين :min و :max من الأحرف.',
         'array' => 'حقل :attribute يجب أن يحتوي على ما بين :min و :max من العناصر.',
     ],
-    'boolean' => 'حقل :attribute يجب أن يكون صح أو خطأ.',
+    'boolean' => 'حقل :attribute يجب أن يكون صحيح أو خطأ.',
     'confirmed' => 'تأكيد حقل :attribute غير مطابق.',
     'date' => 'حقل :attribute ليس تاريخًا صالحًا.',
     'date_format' => 'حقل :attribute لا يطابق التنسيق :format.',
@@ -104,7 +104,7 @@ return [
             'rule-name' => 'رسالة-مخصصة',
         ],
         'select' => [
-            'select' => ': حقل الخصائص مطلوب.'
+            'select' => 'حقل :attribute مطلوب.'
         ]
     ],
 
@@ -189,7 +189,7 @@ return [
         'secondaryItemCode' => 'رقم الجزء / الرقم المرجعي',
         'itemDescription' => 'وصف المادة',
         'unit' => 'وحدة القياس',
-        'shiftID' => 'Shift',
+        'shiftID' => 'الوردية',
         'wareHouseAutoID' => 'المنفذ',
         'supCategoryICVMasterID' => 'فئة إعتماد الموردين',
         'supCategorySubICVID' => 'الفئة الفرعية لإعتماد الموردين',
@@ -214,7 +214,9 @@ return [
         'directPaymentPayee' => 'أخر',
         'asOfDate' => 'حتى تاريخ',
         'currencyID' => 'معرف العملة',
-        'warehouse' => 'المستودع'
+        'warehouse' => 'المستودع',
+        'fromDate' => 'من تاريخ',
+        'segment' => 'القطاع'
     ],
 
 ];

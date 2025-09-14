@@ -208,10 +208,6 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function exportSupplierMaster(Request $request)
     {
-        $local = $request->get('lang');
-        if(!empty($local)) {
-            app()->setLocale($local);
-        }
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
@@ -328,11 +324,11 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x][trans('custom.critical_status')] = isset($val->critical->description)?$val->critical->description:'';
             $data[$x][trans('custom.liability_account')] = isset($val->liablity_account) ? $val->liablity_account->AccountCode. '-'. $val->liablity_account->AccountDescription : '';
             $data[$x][trans('custom.unbilled_account')] = isset($val->unbilled_account) ? $val->unbilled_account->AccountCode. '-'. $val->unbilled_account->AccountDescription : '';
-            $data[$x][trans('custom.lcc')] = ($val->isLCCYN==1)?'Yes':'No';
-            $data[$x][trans('custom.sme')] = ($val->isSMEYN==1)?'Yes':'No';
+            $data[$x][trans('custom.lcc')] = ($val->isLCCYN==1)? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.sme')] = ($val->isSMEYN==1)? trans('custom.yes') : trans('custom.no');
             $data[$x][trans('custom.jsrs_number')] = $val->jsrsNo;
             $data[$x][trans('custom.jsrs_expiry')] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
-            $data[$x][trans('custom.vat_eligible')] = ($val->vatEligible) ? "Yes" : "No";
+            $data[$x][trans('custom.vat_eligible')] = ($val->vatEligible) ? trans('custom.yes') : trans('custom.no');
             $data[$x][trans('custom.vat_number')] = $val->vatNumber;
             $data[$x][trans('custom.vat_percentage')] = $val->vatPercentage;
         }

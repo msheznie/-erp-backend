@@ -19,9 +19,9 @@
 <table>
     <thead>
     <tr>
-        <td><B>Period From: </B></td>
+        <td><B>{{ __('custom.period_from') }}: </B></td>
         <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
-        <td><B>Period To:</B></td>
+        <td><B>{{ __('custom.period_to') }}:</B></td>
         <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
 
     </tr>
@@ -33,7 +33,7 @@
     @foreach($reportData as $name => $key)
     <div>
         <h4>{{ $name }}</h4>
-        <h4>Supplier Group :    @if (isset($reportData[$name]['supplierGroupName']))
+        <h4>{{ __('custom.supplier_group') }} :    @if (isset($reportData[$name]['supplierGroupName']))
                                     {{ $reportData[$name]['supplierGroupName'] }}</h4>
                                 @endif
     </div>
@@ -42,14 +42,14 @@
         <table>
         <thead>
     <tr>
-        <th>Document Code</th>
-        <th>Posted Date</th>
-        <th>Account</th>
-        <th>Invoice Number</th>
-        <th>Invoice date</th>
-        <th>Document Narration</th>
-        <th>Currency</th>
-        <th>Document Amount</th>
+        <th>{{ __('custom.document_code') }}</th>
+        <th>{{ __('custom.posted_date') }}</th>
+        <th>{{ __('custom.account') }}</th>
+        <th>{{ __('custom.invoice_number') }}</th>
+        <th>{{ __('custom.invoice_date') }}</th>
+        <th>{{ __('custom.document_narration') }}</th>
+        <th>{{ __('custom.currency') }}</th>
+        <th>{{ __('custom.document_amount') }}</th>
     </tr>
     </thead>
     <tbody>
@@ -83,7 +83,7 @@
     <tfoot>
     <tr>
         <td colspan="6"></td>
-        <td><B>Total</B></td>
+        <td><B>{{ __('custom.total') }}</B></td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
             <td style="text-align: right; font-weight: bold;">{{ \App\Services\Currency\CurrencyService::convertNumberFormatToNumber(number_format(trim($total),$reportData[$name][$currencyKey][0]->balanceDecimalPlaces))}}</td>
         @endif
@@ -95,7 +95,7 @@
 <table>
     <tr>
         <td colspan="6"></td>
-        <td><B>Grand Total</B></td>
+        <td><B>{{ __('custom.grand_total') }}</B></td>
         <td style="text-align: right"><B>{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</B></td>
     </tr>
 </table>

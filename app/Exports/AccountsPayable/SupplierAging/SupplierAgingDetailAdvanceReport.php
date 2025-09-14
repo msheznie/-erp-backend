@@ -39,42 +39,42 @@ class SupplierAgingDetailAdvanceReport
     public function getHeader($typeAging, $header) :Array {
         if($typeAging == 1) {
             return array_merge([
-                'Company ID',
-                'Company Name',
-                'Doc Date',
-                'Doc Number',
-                'Account',
-                'Narration',
-                'Supplier Code',
-                'Supplier Name',
-                'Supplier Group',
-                'Invoice Number',
-                'Invoice Date',
-                'Currency',
-                'Aging Days',
+                trans('custom.company_id'),
+                trans('custom.company_name'),
+                trans('custom.doc_date'),
+                trans('custom.doc_number'),
+                trans('custom.account'),
+                trans('custom.narration'),
+                trans('custom.supplier_code'),
+                trans('custom.supplier_name'),
+                trans('custom.supplier_group'),
+                trans('custom.invoice_number'),
+                trans('custom.invoice_date'),
+                trans('custom.currency'),
+                trans('custom.aging_days'),
                 ],
                 $header,
                 [
-                'Advance/UnAllocated Amount'
+                trans('custom.advance_unallocated_amount'),
                 ]);
         } else {
             return array_merge([
-                'Company ID',
-                'Company Name',
-                'Doc Date',
-                'Doc Number',
-                'Account',
-                'Narration',
-                'Employee Code',
-                'Employee Name',
-                'Invoice Number',
-                'Invoice Date',
-                'Currency',
-                'Aging Days',
+                trans('custom.company_id'),
+                trans('custom.company_name'),
+                trans('custom.doc_date'),
+                trans('custom.doc_number'),
+                trans('custom.account'),
+                trans('custom.narration'),
+                trans('custom.employee_code'),
+                trans('custom.employee_name'),
+                trans('custom.invoice_number'),
+                trans('custom.invoice_date'),
+                trans('custom.currency'),
+                trans('custom.aging_days'),
                 ],
                 $header,
                 [
-                'Advance/UnAllocated Amount'
+                trans('custom.advance_unallocated_amount')
             ]);
         }
     }

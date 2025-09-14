@@ -47,14 +47,14 @@ class UnbilledGrvAgingSummaryReport
     public function getHeader($currencyId) :Array {
         if ($currencyId == 2) {
             return [
-                'Company ID',
-                'Supplier Code',
-                'Supplier Name',
-                'Doc Number',
-                'Doc Date',
-                'Doc Value (Local Currency)',
-                'Matched Value (Local Currency)',
-                'Balance (Local Currency)',
+                trans('custom.company_id'),
+                trans('custom.supplier_code'),
+                trans('custom.supplier_name'),
+                trans('custom.doc_number'),
+                trans('custom.doc_date'),
+                trans('custom.doc_value_local_currency'),
+                trans('custom.matched_value_local_currency'),
+                trans('custom.balance_local_currency'),
                 '<=30',
                 '31 to 60',
                 '61 to 90',
@@ -64,18 +64,18 @@ class UnbilledGrvAgingSummaryReport
                 '181 to 210',
                 '211 to 240',
                 '241 to 365',
-                'Over 365'
+                trans('custom.over_365')
             ];
         }else {
             return [
-                'Company ID',
-                'Supplier Code',
-                'Supplier Name',
-                'Doc Number',
-                'Doc Date',
-                'Doc Value (Reporting Currency)',
-                'Matched Value (Reporting Currency)',
-                'Balance (Reporting Currency)',
+                trans('custom.company_id'),
+                trans('custom.supplier_code'),
+                trans('custom.supplier_name'),
+                trans('custom.doc_number'),
+                trans('custom.doc_date'),
+                trans('custom.doc_value_reporting_currency'),
+                trans('custom.matched_value_reporting_currency'),
+                trans('custom.balance_reporting_currency'),
                 '<=30',
                 '31 to 60',
                 '61 to 90',
@@ -85,7 +85,7 @@ class UnbilledGrvAgingSummaryReport
                 '181 to 210',
                 '211 to 240',
                 '241 to 365',
-                'Over 365'
+                trans('custom.over_365')
             ];
         }
 
