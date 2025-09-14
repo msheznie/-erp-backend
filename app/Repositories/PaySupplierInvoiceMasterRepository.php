@@ -346,19 +346,30 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.payment_code')] = $val->BPVcode;
                 $data[$x][trans('custom.posted_date')] = $val->postedDate;
                 $data[$x][trans('custom.payment_type')] = StatusService::getInvoiceType($val->invoiceType);
+                $data[$x][trans('custom.payment_code')] = $val->BPVcode;
+                $data[$x][trans('custom.posted_date')] = $val->postedDate;
+                $data[$x][trans('custom.payment_type')] = StatusService::getInvoiceType($val->invoiceType);
                 if($val->supplier){
+                    $data[$x][trans('custom.payee_type')] = "Supplier";
+                    $data[$x][trans('custom.sup_emp_other')] = $val->supplier? $val->supplier->supplierName : '';
                     $data[$x][trans('custom.payee_type')] = "Supplier";
                     $data[$x][trans('custom.sup_emp_other')] = $val->supplier? $val->supplier->supplierName : '';
                 }
                 else if($val->directPaymentPayeeEmpID > 0){
                     $data[$x][trans('custom.payee_type')] = "Employee";
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
+                    $data[$x][trans('custom.payee_type')] = "Employee";
+                    $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                 }
                 else if($val->directPaymentPayeeEmpID == null && $val->supplier == null && $val->directPaymentPayee != null){
                     $data[$x][trans('custom.payee_type')] = "Other";
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
+                    $data[$x][trans('custom.payee_type')] = "Other";
+                    $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                 }
                 else{
+                    $data[$x][trans('custom.payee_type')] = "";
+                    $data[$x][trans('custom.sup_emp_other')] = "";
                     $data[$x][trans('custom.payee_type')] = "";
                     $data[$x][trans('custom.sup_emp_other')] = "";
                 }
@@ -367,8 +378,8 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.comments')] = $val->BPVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.e_confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.e_approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.supplier_currency')] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
                 $data[$x][trans('custom.supplier_amount')] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x][trans('custom.bank_currency')] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
@@ -378,7 +389,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
                 
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

@@ -177,16 +177,16 @@ class StockReceiveRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.e_stock_receive_code')] = $val->stockReceiveCode;
-                $data[$x][trans('custom.e_segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x][trans('custom.e_reference_no')] = $val->refNo;
-                $data[$x][trans('custom.e_received_date')] = \Helper::dateFormat($val->receivedDate);
-                $data[$x][trans('custom.e_comment')] = $val->comment;
-                $data[$x][trans('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.e_created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.e_confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.e_approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x][trans('custom.e_status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.stock_receive_code')] = $val->stockReceiveCode;
+                $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.reference_no')] = $val->refNo;
+                $data[$x][trans('custom.received_date')] = \Helper::dateFormat($val->receivedDate);
+                $data[$x][trans('custom.comment')] = $val->comment;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

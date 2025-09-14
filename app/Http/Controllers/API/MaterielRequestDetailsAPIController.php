@@ -183,7 +183,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         }
 
         if($materielRequest->approved == -1){
-            return $this->sendError('This Materiel Request fully approved. You can not add.',500);
+            return $this->sendError(trans('custom.materiel_request_fully_approved'),500);
         }
 
         $input['qtyIssuedDefaultMeasure'] = 0;
@@ -225,7 +225,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                     ->first();
 
                 if ($alreadyAdded) {
-                    return $this->sendError("Selected item is already added. Please check again", 500);
+                    return $this->sendError(trans('custom.selected_item_already_added'), 500);
                 }
             }
 
@@ -331,7 +331,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             }
     
             if($materielRequest->approved == -1){
-                return $this->sendError('This Materiel Request fully approved. You can not add.',500);
+                return $this->sendError(trans('custom.materiel_request_fully_approved'),500);
             }
 
             $companySystemID = $input['companySystemID'];
@@ -351,7 +351,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->update($data);
             MaterialRequestAddBulkItemJob::dispatch($db, $input);
 
-            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            return $this->sendResponse('', trans('custom.items_added_to_queue'));
         } else {
             DB::beginTransaction();
             try {
@@ -501,7 +501,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (empty($unitConvention)) {
-                    return $this->sendError("Unit conversion isn't valid or configured", 500);
+                    return $this->sendError(trans('custom.unit_conversion_not_valid'), 500);
                 }
 
                 if ($unitConvention) {
