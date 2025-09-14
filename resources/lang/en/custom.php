@@ -7045,5 +7045,13 @@ return [
     'city' => 'City',
     // Chart of Account Export translations
     'category_bl_or_pl' => 'Category BL or PL',
-    'allocation' => 'Allocation'
+    'allocation' => 'Allocation',
+
+    // Recurring Voucher Export Data Translations
+    'rrv_code' => 'RRV Code',
+    'schedule' => 'Schedule',
+    'start_date' => 'Start Date',
+    'end_date' => 'End Date',
+    'no_of_day_month_year' => 'No Of Day/Month/Year',
+    'process_date' => 'Process Date'
 ];

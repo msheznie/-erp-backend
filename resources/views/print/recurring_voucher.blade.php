@@ -201,7 +201,7 @@
     <table style="width:100%;">
         <tr>
             <td>
-                <span style="font-weight: bold;">Electronically Approved By :</span>
+                <span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span>
             </td>
         </tr>
         <tr>
@@ -242,7 +242,7 @@
                 <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span>
                 <br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}

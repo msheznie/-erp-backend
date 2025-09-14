@@ -6954,5 +6954,13 @@ return [
     'city' => 'المدينة',
     // Chart of Account Export translations
     'category_bl_or_pl' => 'فئة الميزانية العمومية أو الأرباح والخسائر',
-    'allocation' => 'التخصيص'
+    'allocation' => 'التخصيص',
+
+     // Recurring Voucher Export Data Translations
+    'rrv_code' => 'رمز القسيمة المتكررة',
+    'schedule' => 'الجدولة',
+    'start_date' => 'تاريخ البداية',
+    'end_date' => 'تاريخ النهاية',
+    'no_of_day_month_year' => 'عدد الأيام/الشهر/السنة',
+    'process_date' => 'تاريخ المعالجة'
 ];
