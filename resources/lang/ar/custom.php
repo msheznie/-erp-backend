@@ -6773,6 +6773,12 @@ return [
     
     // Status Indicators
     'cancelled_status' => ' -- @ملغي@',
+    'stock_details_report' => 'تقرير تفاصيل المخزون',
+    'total_value_usd' => 'إجمالي القيمة (دولار أمريكي)',
+    'last_receipt_date' => 'تاريخ آخر استلام',
+    'last_receipt_qty' => 'كمية آخر استلام',
+    'last_issued_date' => 'تاريخ آخر إصدار',
+    'last_issued_qty' => 'كمية آخر إصدار',
      'account' => 'حساب', 
      'period_from' => "الفترة من",
      'period_to' => "الفترة إلى",
