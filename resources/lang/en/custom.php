@@ -7022,5 +7022,19 @@ return [
     'delivery_order_pending_approval' => 'There is a Delivery Order (:code) pending for approval for the item you are trying to add. Please check again.',
     'purchase_return_pending_approval' => 'There is a Purchase Return (:code) pending for approval for the item you are trying to add. Please check again.',
     'supplier_ledger' => 'Supplier Ledger',
-    'report_title' => 'Title'
+    'report_title' => 'Title',
+    
+    // Stock Receive specific translations
+    'receive_date_not_within_financial_period' => 'Receive date is not within the selected financial period!',
+    'assigned_wip_gl_code_not_assigned_to_company' => 'Assigned WIP GL Code is not assigned to this company!',
+    'selected_location_from_not_active' => 'Selected location from is not active. Please select an active location from',
+    'selected_location_to_not_active' => 'Selected location to is not active. Please select an active location to',
+    'every_item_should_have_minimum_qty' => 'Every item should have at least one minimum Qty',
+    'receive_document_inter_company_same' => 'This receive document is marked as Inter company. Company from and Company to is same.',
+    'receive_date_cannot_be_less_than_transfer_date' => 'Receive date can not be less than transfer date',
+    'some_items_not_assigned_to_company' => 'Some items are not assigned to :company. Please assign and try again',
+    'please_configure_pl_account_stock_receive' => 'Please configure PL account for stock receive',
+    'selected_department_not_active' => 'Selected Department is not active. Please select an active segment',
+    'stock_receive_updated_successfully' => 'StockReceive updated successfully',
+    'success' => 'Success'
 ];

@@ -202,7 +202,7 @@ class StockReceiveAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Receive date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.receive_date_not_within_financial_period'), 500);
         }
 
         $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['locationTo'])
@@ -221,7 +221,7 @@ class StockReceiveAPIController extends AppBaseController
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
                 if (!$checkGLIsAssigned) {
                     DB::rollBack();
-                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                    return $this->sendError(trans('custom.assigned_wip_gl_code_not_assigned_to_company'), 500);
                 }
             }
         }
@@ -460,7 +460,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if ($checkWareHouseActiveFrom->isActive == 0) {
                 $this->stockReceiveRepository->update(['locationFrom' => null],$id);
-                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+                return $this->sendError(trans('custom.selected_location_from_not_active'), 500, $wareHouseFromError);
             }
         }
 
@@ -472,7 +472,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if ($checkWareHouseActiveTo->isActive == 0) {
                 $this->stockReceiveRepository->update(['locationTo' => null],$id);
-                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+                return $this->sendError(trans('custom.selected_location_to_not_active'), 500, $wareHouseToError);
             }
 
             if ($checkWareHouseActiveTo->manufacturingYN == 1) {
@@ -481,7 +481,7 @@ class StockReceiveAPIController extends AppBaseController
                 } else {
                     $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkWareHouseActiveTo->WIPGLCode, $input['companyToSystemID']);
                     if (!$checkGLIsAssigned) {
-                        return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                        return $this->sendError(trans('custom.assigned_wip_gl_code_not_assigned_to_company'), 500);
                     }
                 }
             }
@@ -529,7 +529,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Receive date is not within the selected financial period !',500);
+                return $this->sendError(trans('custom.receive_date_not_within_financial_period'),500);
             }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
@@ -544,7 +544,7 @@ class StockReceiveAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum Qty', 500);
+                return $this->sendError(trans('custom.every_item_should_have_minimum_qty'), 500);
             }
 
             $validator = \Validator::make($input, [
@@ -565,7 +565,7 @@ class StockReceiveAPIController extends AppBaseController
             }
 
             if ($input['companyFromSystemID'] == $input['companyToSystemID'] && $input['interCompanyTransferYN'] == -1) {
-                return $this->sendError('This receive document is marked as Inter company. Company from and Company to is same.', 500);
+                return $this->sendError(trans('custom.receive_document_inter_company_same'), 500);
             }
 
             $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->with(['transfer'])->get();
@@ -580,7 +580,7 @@ class StockReceiveAPIController extends AppBaseController
                         $transferDate = Carbon::parse($srDetail->transfer->tranferDate)->format('Y-m-d');
                         $documentDate = Carbon::parse($documentDate)->format('Y-m-d');
                         if($transferDate>$documentDate){
-                            return $this->sendError('Receive date can not be less than transfer date', 500);
+                            return $this->sendError(trans('custom.receive_date_cannot_be_less_than_transfer_date'), 500);
                         }
                     }
 
@@ -604,7 +604,7 @@ class StockReceiveAPIController extends AppBaseController
                         $notAssignItems = $notAssignItems . " are not assigned to " . $stockReceive->companyID . ". Please assign and try again";
                         return $this->sendError($notAssignItems, 500);
                     } else {
-                        return $this->sendError("Some items are not assigned to " . $stockReceive->companyID . ". Please assign and try again", 500);
+                        return $this->sendError(trans('custom.some_items_not_assigned_to_company', ['company' => $stockReceive->companyID]), 500);
                     }
                 }
             }
@@ -612,7 +612,7 @@ class StockReceiveAPIController extends AppBaseController
             $checkPlAccount = ($stockReceive->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer") : SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account");
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Please configure PL account for stock receive', 500);
+                return $this->sendError(trans('custom.please_configure_pl_account_stock_receive'), 500);
             }
 
 
@@ -631,7 +631,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockReceive->toArray(), 'StockReceive updated successfully',1, isset($confirm['data']) ? $confirm['data'] : null);
+        return $this->sendReponseWithDetails($stockReceive->toArray(), trans('custom.stock_receive_updated_successfully'),1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -844,7 +844,7 @@ class StockReceiveAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected Department is not active. Please select an active segment', 500);
+            return $this->sendError(trans('custom.selected_department_not_active'), 500);
         }
 
         $checkWareHouseActiveFrom = WarehouseMaster::find($stockReceive->locationFrom);
@@ -853,7 +853,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($checkWareHouseActiveFrom->isActive == 0) {
-            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+            return $this->sendError(trans('custom.selected_location_from_not_active'), 500);
         }
 
         $checkWareHouseActiveTo = WarehouseMaster::find($stockReceive->locationTo);
@@ -862,10 +862,10 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($checkWareHouseActiveTo->isActive == 0) {
-            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
+            return $this->sendError(trans('custom.selected_location_to_not_active'), 500);
         }
 
-        return $this->sendResponse($id, 'success');
+        return $this->sendResponse($id, trans('custom.success'));
     }
 
     public function getApprovedSRForCurrentUser(Request $request)
