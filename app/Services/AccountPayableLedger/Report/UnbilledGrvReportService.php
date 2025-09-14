@@ -71,20 +71,20 @@ class UnbilledGrvReportService
         if ($output) {
             $x = 0;
             foreach ($output as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Supplier Code'] = $val->supplierCode;
-                $data[$x]['Supplier Name'] = $val->supplierName;
-                $data[$x]['Doc Number'] = $val->documentCode;
-                $data[$x]['Doc Date'] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->documentDate)) : null;
+                $data[$x][ trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.supplier_code')] = $val->supplierCode;
+                $data[$x][ trans('custom.supplier_name')] = $val->supplierName;
+                $data[$x][trans('custom.doc_number')] = $val->documentCode;
+                $data[$x][trans('custom.doc_date')] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->documentDate)) : null;
                 if ($request->currencyID == 2) {
                     $decimal = 3;
-                    $data[$x]['Doc Value (Local Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
-                    $data[$x]['Matched Value (Local Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->matchedLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
-                    $data[$x]['Balance (Local Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->balanceLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.doc_value_local_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.matched_value_local_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->matchedLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.balance_local_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->balanceLocalAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
                 } else {
-                    $data[$x]['Doc Value (Reporting Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
-                    $data[$x]['Matched Value (Reporting Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->matchedRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
-                    $data[$x]['Balance (Reporting Currency)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->balanceRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.doc_value_reporting_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.matched_value_reporting_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->matchedRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
+                    $data[$x][trans('custom.balance_reporting_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->balanceRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
                 }
 
                 $data[$x]['<=30'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case1, $decimal));
