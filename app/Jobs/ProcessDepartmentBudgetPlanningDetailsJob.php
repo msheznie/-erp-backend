@@ -239,10 +239,10 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $departmentId = $departmentBudgetPlanning->departmentID;
 
         // Calculate previous year budget (you may need to adjust this query based on your actual budget data structure)
-        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear);
+        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear,$financeYear->companySystemID);
 
         // Calculate current year budget
-        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear);
+        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear,$financeYear->companySystemID);
 
         // Calculate difference
         $difference = $currentYearBudget - $previousYearBudget;
@@ -258,15 +258,17 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * Get budget amount for a specific year
      * This method should be adjusted based on your actual budget data structure
      */
-    private function getBudgetAmountForYear($departmentId, $glCode, $year)
+    private function getBudgetAmountForYear($departmentId, $glCode, $year,$companySystemID)
     {
         try {
 
             if($year) {
                 //get the sum of request_amount from the department budget planning details table
-                $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId, $year) {
-                    $query->where('departmentID', $departmentId)
-                        ->where('yearID', $year->companyFinanceYearID);
+                $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId, $year, $companySystemID) {
+                    $query->where('yearID', $year->companyFinanceYearID)
+                        ->whereHas('masterBudgetPlannings', function ($q) use ($companySystemID) {
+                            $q->where('companySystemID', $companySystemID);
+                        });
                 })->whereHas('budgetTemplateGl', function($query) use ($glCode) {
                         $query->where('chartOfAccountSystemID', $glCode);
                 })->sum('request_amount');
