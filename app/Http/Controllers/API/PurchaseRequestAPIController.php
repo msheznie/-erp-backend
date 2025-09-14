@@ -897,25 +897,25 @@ class PurchaseRequestAPIController extends AppBaseController
                                         }
 
                                         if($poDetail->manuallyClosed == 1){
-                                            $data[$x]['Receipt Status'] = trans('custom.fully_received');
+                                            $data[$x][trans('custom.receipt_status')] = trans('custom.fully_received');
                                         }else{
                                             if ($poDetail->goodsRecievedYN == 2) {
-                                                $data[$x]['Receipt Status'] = trans('custom.fully_received');
+                                                $data[$x][trans('custom.receipt_status')] = trans('custom.fully_received');
                                             } else if ($poDetail->goodsRecievedYN == 0) {
-                                                $data[$x]['Receipt Status'] = trans('custom.not_received');
+                                                $data[$x][trans('custom.receipt_status')] = trans('custom.not_received');
                                             } else if ($poDetail->goodsRecievedYN == 1) {
-                                                $data[$x]['Receipt Status'] = trans('custom.partially_received');
+                                                $data[$x][trans('custom.receipt_status')] = trans('custom.partially_received');
                                             }
                                         }
 
                                         $grvCount++;
                                     }
                                 } else {
-                                    $data[$x]['Receipt Doc Number'] = '';
-                                    $data[$x]['Receipt Date'] = '';
-                                    $data[$x]['Receipt Qty'] = '';
-                                    $data[$x]['GRV Status'] = '';
-                                    $data[$x]['Receipt Status'] = trans('custom.not_received');
+                                    $data[$x][trans('custom.receipt_doc_number')] = '';
+                                    $data[$x][trans('custom.receipt_date')] = '';
+                                    $data[$x][trans('custom.receipt_qty')] = '';
+                                    $data[$x][trans('custom.grv_status')] = '';
+                                    $data[$x][trans('custom.receipt_status')] = trans('custom.not_received');
                                 }
                                 $poCount++;
                             }
