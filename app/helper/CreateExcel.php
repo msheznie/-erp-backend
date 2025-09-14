@@ -184,7 +184,7 @@ class CreateExcel
                         {
                             if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
                                 $i = $i - 0;
-                                self::branch($array, $sheet, 'Branch ');
+                                self::branch($array, $sheet, __('custom.branch').' ');
                                 self::selectedCurrency($array, $sheet, trans('custom.currency'));
                                 self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             } else {
@@ -222,7 +222,7 @@ class CreateExcel
                     
                                 {
                     
-                                    $cell->setValue('Company VAT Registration No - '.$array['company_vat_registration_number']);  
+                                    $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);  
                     
                                     $cell->setFont(array(
                     
@@ -464,7 +464,7 @@ class CreateExcel
         {
             if(isset($array))
             {
-                $cell->setValue('To Date - '.$array['to_date']);
+                $cell->setValue(__('custom.to_date').' - '.$array['to_date']);
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -485,7 +485,7 @@ class CreateExcel
         {
             if(isset($array['cur']))
             {
-                $cell->setValue('Currency - '.$array['cur']);  
+                $cell->setValue(__('custom.currency').' - '.$array['cur']);  
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
