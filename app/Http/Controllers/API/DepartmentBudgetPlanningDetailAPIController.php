@@ -21,6 +21,7 @@ use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Traits\AuditLogsTrait;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -391,6 +392,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $entryID = $input['entryID'] ?? null;
             $data = $input['data'];
 
+            $values = collect($data)->pluck('value');
+
+            if ($values->filter()->isEmpty()) {
+                return $this->sendError('At least one item must have a non-empty value',500);
+            }
+
+
             $newRequest = new Request();
             $newRequest->replace([
                 'companyId' => $input['companySystemID'],
@@ -665,11 +673,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'updated_at' => $entry->updated_at,
                     'entryData' => [],
                     'unitItems' => [],
-                    'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ? 
-                        ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] ? true : false)) : 
+                    'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
+                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true,
-                    'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ? 
-                        ($entry->created_by == \Helper::getEmployeeSystemID() ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] ? true : false)) : 
+                    'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
+                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true
                 ];
 
