@@ -12,7 +12,6 @@ class VerifyCsrfTokenForApi
     public function handle(Request $request, Closure $next): Response
     {
         $csrfEnabled = env('CSRF_ENABLED', false);
-        $csrfEnabled = false;
         $normalizedJson = '';
         
         if ($csrfEnabled) {
