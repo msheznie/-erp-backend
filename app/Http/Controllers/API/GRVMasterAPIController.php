@@ -210,7 +210,7 @@ class GRVMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('GRV date is not within the financial period!');
+            return $this->sendError(trans('custom.grv_date_not_within_financial_period'));
         }
 
         DB::beginTransaction();
@@ -630,7 +630,7 @@ class GRVMasterAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('GRV date is not within the financial period!');
+                return $this->sendError(trans('custom.grv_date_not_within_financial_period'));
             }
 
             //getting total sum of PO detail Amount
@@ -814,14 +814,14 @@ class GRVMasterAPIController extends AppBaseController
                     if ($row['includePLForGRVYN'] == -1 && !is_null($row['financeGLcodePLSystemID']) && $row['financeGLcodePLSystemID'] > 0) {
                         $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodePLSystemID'], $gRVMaster->companySystemID);
                         if (!$checkGLIsAssigned) {
-                            return $this->sendError('PL account is not assigned to the company', 500);
+                            return $this->sendError(trans('custom.pl_account_not_assigned_company'), 500);
                         }
                     }
 
                     if (!is_null($row['financeGLcodebBSSystemID']) && $row['financeGLcodebBSSystemID'] > 0) {
                         $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodebBSSystemID'], $gRVMaster->companySystemID);
                         if (!$checkGLIsAssigned) {
-                            return $this->sendError('BS account is not assigned to the company', 500);
+                            return $this->sendError(trans('custom.bs_account_not_assigned_company'), 500);
                         }
                     }
 
@@ -1148,7 +1148,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "Thank You.";
+            $body .= trans('custom.thank_you');
 
             $supplier = $this->getSupplierDetails($input['supplierID']);
             if(isset($supplier) && !empty($supplier)){ 
@@ -1161,7 +1161,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendReponseWithDetails($gRVMaster->toArray(), 'GRV updated successfully',1, $confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($gRVMaster->toArray(), trans('custom.grv_updated_successfully'),1, $confirm['data'] ?? null);
     }
 
     /**
@@ -1508,7 +1508,7 @@ class GRVMasterAPIController extends AppBaseController
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
             'warehousemaster.wareHouseDescription as wareHouseSet',
-            'erp_grvtpes.des'
+            DB::raw('COALESCE(grvtypes_languages.des, erp_grvtpes.des) as des')
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -1533,6 +1533,10 @@ class GRVMasterAPIController extends AppBaseController
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
             ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
+            ->leftJoin('grvtypes_languages', function($join) {
+                $join->on('grvtypes_languages.grvTypeID', '=', 'erp_grvtpes.grvTypeID')
+                     ->where('grvtypes_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID);
@@ -1603,7 +1607,7 @@ class GRVMasterAPIController extends AppBaseController
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
             'warehousemaster.wareHouseDescription as wareHouseSet',
-            'erp_grvtpes.des'
+            DB::raw('COALESCE(grvtypes_languages.des, erp_grvtpes.des) as des')
         )->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
                 ->where('erp_grvmaster.companySystemID', $companyID)
@@ -1615,6 +1619,10 @@ class GRVMasterAPIController extends AppBaseController
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
             ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
+            ->leftJoin('grvtypes_languages', function($join) {
+                $join->on('grvtypes_languages.grvTypeID', '=', 'erp_grvtpes.grvTypeID')
+                     ->where('grvtypes_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
 
@@ -1822,7 +1830,7 @@ class GRVMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_for_document')];
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1866,7 +1874,7 @@ class GRVMasterAPIController extends AppBaseController
             UnbilledGRV::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
 
             /*Audit entry*/
-            AuditTrial::createAuditTrial($grvMasterData->documentSystemID,$grvAutoID,$input['reopenComments'],'Reopened');
+            AuditTrial::createAuditTrial($grvMasterData->documentSystemID,$grvAutoID,$input['reopenComments'],trans('custom.reopened'));
 
             DB::commit();
             return $this->sendResponse($grvMasterData->toArray(), trans('custom.good_receipt_voucher_reopened_successfully'));
@@ -2462,7 +2470,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError(trans('custom.grv_not_found'));
         }
         if ($grvMaster->isMarkupUpdated==1) {
-            return $this->sendError('GRV markup update process restricted',500);
+            return $this->sendError(trans('custom.grv_markup_update_process_restricted'),500);
         }
         $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
 

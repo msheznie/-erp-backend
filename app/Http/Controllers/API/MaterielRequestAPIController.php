@@ -575,7 +575,7 @@ class MaterielRequestAPIController extends AppBaseController
             }
 
             if($checkWareHouseActive->isActive == 0){
-                return $this->sendError('Selected Location is not active please select different location',500);
+                return $this->sendError(trans('custom.selected_location_not_active'),500);
             }
         }
 
@@ -596,7 +596,7 @@ class MaterielRequestAPIController extends AppBaseController
             $checkItems = MaterielRequestDetails::where('RequestID', $id)
                                                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every request should have at least one item', 500);
+                return $this->sendError(trans('custom.every_request_should_have_item'), 500);
             }
 
             $checkQuantity = MaterielRequestDetails::where('RequestID', $id)
@@ -604,7 +604,7 @@ class MaterielRequestAPIController extends AppBaseController
                                                     ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_min_qty'), 500);
             }
 
             $params = array('autoID' => $id,
@@ -623,7 +623,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $materielRequest = $this->materielRequestRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($materielRequest->toArray(), 'MaterielRequest updated successfully',1, $confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($materielRequest->toArray(), trans('custom.materiel_request_updated_successfully'),1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -1147,7 +1147,7 @@ class MaterielRequestAPIController extends AppBaseController
             }
             $x = count($insertedItems);
             if($x == 0){
-                return $this->sendError("No Items were added");
+                return $this->sendError(trans('custom.no_items_were_added'));
             }
             DB::commit();
 
@@ -1706,10 +1706,10 @@ class MaterielRequestAPIController extends AppBaseController
             $allowedExtensions = ['xlsx','xls'];
 
             if (!in_array($extension, $allowedExtensions)) {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.this_type_of_file_not_allowed'),500);
             }
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
             }
 
             $disk = 'local';
@@ -1725,21 +1725,21 @@ class MaterielRequestAPIController extends AppBaseController
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             if(empty($uniqueData)) {
-                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_excel_template'), 500);
             }
 
             $excelHeaders = array_keys(array_merge(...$uniqueData));
             $templateHeaders = ['item_code', 'item_description', 'qty', 'comment'];
             $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
             if ($unexpectedHeader) {
-                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_excel_template'), 500);
             }
 
             if ($materialRequest->cancelledYN == -1) {
                 return $this->sendError(trans('custom.this_purchase_order_already_closed_you_can_not_add'), 500);
             }
             if ($materialRequest->approved == -1) {
-                return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.this_purchase_order_fully_approved'), 500);
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -1753,7 +1753,7 @@ class MaterielRequestAPIController extends AppBaseController
                 $db = isset($request->db) ? $request->db : "";
                 mrBulkUploadItem::dispatch(array_filter($record),($materialRequest->toArray()), $db, Auth::id());
             } else {
-                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_excel_template'), 500);
             }
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();

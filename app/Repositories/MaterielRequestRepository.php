@@ -152,13 +152,13 @@ class MaterielRequestRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][__('custom.e_request_code')] = $val->RequestCode;
-                $data[$x][__('custom.e_comments')] = $val->comments;
-                $data[$x][__('custom.e_segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x][__('custom.e_location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
-                $data[$x][__('custom.e_requested_date')] = \Helper::dateFormat($val->RequestedDate);
-                $data[$x][__('custom.e_priority')] = $val->priority_by? $val->priority_by->priorityDescription : '';
-                $data[$x][__('custom.e_status')] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.request_code')] = $val->RequestCode;
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
+                $data[$x][trans('custom.requested_date')] = \Helper::dateFormat($val->RequestedDate);
+                $data[$x][trans('custom.priority')] = $val->priority_by? $val->priority_by->priorityDescription : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

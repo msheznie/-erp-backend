@@ -83,3 +83,5 @@ class AccountsTypeTranslation extends Model
         return $this->belongsTo(AccountsType::class, 'accountsType', 'accountsType');
     }
 }
+
+

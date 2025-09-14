@@ -57,5 +57,35 @@ class SupplierType extends Model
         
     ];
 
-    
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['typeDescription'];
+
+    /**
+     * Get the description based on current language.
+     *
+     * @return string
+     */
+    public function getTypeDescriptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->typeDescription : $this->attributes['typeDescription'];
+    }
+
+    /**
+     * Get the translations for the supplier type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(SupplierTypeTranslation::class, 'supplierTypeID', 'supplierTypeID');
+    }
+
 }

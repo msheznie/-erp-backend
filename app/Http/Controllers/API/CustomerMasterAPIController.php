@@ -894,18 +894,18 @@ class CustomerMasterAPIController extends AppBaseController
             $x = 0;
             $data = array();
             foreach ($customerMasters as $val) {
-                $data[$x]['Primary Code'] = $val->CutomerCode;
-                $data[$x]['Secondary Code'] = $val->customerShortCode;
-                $data[$x]['Customer Name'] = $val->CustomerName;
-                $data[$x]['Report Title'] = $val->ReportTitle;
-                $data[$x]['Currency'] = isset($val->customer_default_currency->currencyMaster->CurrencyCode)?$val->customer_default_currency->currencyMaster->CurrencyCode:'-';
-                $data[$x]['Credit Period'] = $val->creditDays;
-                $data[$x]['Credit Limit'] = $val->creditLimit;
-                $data[$x]['Address'] = $val->customerAddress1.", ".$val->customerAddress2;
-                $data[$x]['City'] = $val->customerCity;
-                $data[$x]['Country'] = isset($val->country->countryName)?$val->country->countryName:"-";
-                $data[$x]['Telephone'] = isset($val->customer_default_contacts->contactPersonTelephone)?$val->customer_default_contacts->contactPersonTelephone:0;
-                $data[$x]['Email'] = isset($val->customer_default_contacts->contactPersonEmail)?$val->customer_default_contacts->contactPersonEmail:'-';
+                $data[$x][trans('custom.primary_code')] = $val->CutomerCode;
+                $data[$x][trans('custom.secondary_code')] = $val->customerShortCode;
+                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                $data[$x][trans('custom.report_title')] = $val->ReportTitle;
+                $data[$x][trans('custom.currency')] = isset($val->customer_default_currency->currencyMaster->CurrencyCode)?$val->customer_default_currency->currencyMaster->CurrencyCode:'-';
+                $data[$x][trans('custom.credit_period')] = $val->creditDays;
+                $data[$x][trans('custom.credit_limit')] = $val->creditLimit;
+                $data[$x][trans('custom.address')] = $val->customerAddress1.", ".$val->customerAddress2;
+                $data[$x][trans('custom.city')] = $val->customerCity;
+                $data[$x][trans('custom.country')] = isset($val->country->countryName)?$val->country->countryName:"-";
+                $data[$x][trans('custom.telephone')] = isset($val->customer_default_contacts->contactPersonTelephone)?$val->customer_default_contacts->contactPersonTelephone:0;
+                $data[$x][trans('custom.email')] = isset($val->customer_default_contacts->contactPersonEmail)?$val->customer_default_contacts->contactPersonEmail:'-';
 
                 $x++;
             }
@@ -924,7 +924,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

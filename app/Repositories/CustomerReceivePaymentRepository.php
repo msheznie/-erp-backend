@@ -341,33 +341,33 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 } else {
                     $bankDecimal = 0;
                 }
-                $data[$x][__('custom.rv_brv_code')] = $val->custPaymentReceiveCode;
-                $data[$x][__('custom.rv_receipt_type')] = $receiptType;
-                $data[$x][__('custom.customer')] = $val->CutomerCode;
-                $data[$x][__('custom.customer_name')] = $val->CustomerName;
-                $data[$x][__('custom.bank')] = $val->bank? $val->bank->bankName : '';
-                $data[$x][__('custom.account_no')] = $val->bank? $val->bank->AccountNo : '';
-                $data[$x][__('custom.payee_type')] = $payeeType? $payeeType : '';
-                $data[$x][__('custom.other')] = $val->PayeeName? $val->PayeeName : '';
-                $data[$x][__('custom.project')] = $val->project? $val->project->description : '';
-                $data[$x][__('custom.rv_brv_date')] = \Helper::dateFormat($val->custPaymentReceiveDate);
-                $data[$x][__('custom.narration')] = $val->narration;
-                $data[$x][__('custom.created_by')] = $val->empName;
-                $data[$x][__('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][__('custom.rv_confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][__('custom.rv_approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x][__('custom.transaction_currency')] = $val->transCurrencyCode;
-                $data[$x][__('custom.transaction_amount')] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
-                $data[$x][__('custom.bank_currency')] = $val->bankCurrencyCode;
-                $data[$x][__('custom.rv_bank_amount')] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
+                $data[$x][trans('custom.rv_brv_code')] = $val->custPaymentReceiveCode;
+                $data[$x][trans('custom.rv_receipt_type')] = $receiptType;
+                $data[$x][trans('custom.customer')] = $val->CutomerCode;
+                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                $data[$x][trans('custom.bank')] = $val->bank? $val->bank->bankName : '';
+                $data[$x][trans('custom.account_no')] = $val->bank? $val->bank->AccountNo : '';
+                $data[$x][trans('custom.payee_type')] = $payeeType? $payeeType : '';
+                $data[$x][trans('custom.other')] = $val->PayeeName? $val->PayeeName : '';
+                $data[$x][trans('custom.project')] = $val->project? $val->project->description : '';
+                $data[$x][trans('custom.rv_brv_date')] = \Helper::dateFormat($val->custPaymentReceiveDate);
+                $data[$x][trans('custom.narration')] = $val->narration;
+                $data[$x][trans('custom.created_by')] = $val->empName;
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.rv_confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.rv_approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.transaction_currency')] = $val->transCurrencyCode;
+                $data[$x][trans('custom.transaction_amount')] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
+                $data[$x][trans('custom.bank_currency')] = $val->bankCurrencyCode;
+                $data[$x][trans('custom.rv_bank_amount')] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
 
-				$data[$x][__('custom.local_currency')] = $val->localCurrencyID? ($val->localCurrency? $val->localCurrency->CurrencyCode : '') : '';
-                $data[$x][__('custom.local_amount')] = $val->localCurrency? number_format($val->localAmount,  $val->localCurrency->DecimalPlaces, ".", "") : '';
-                $data[$x][__('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptCurrency? $val->rptCurrency->CurrencyCode : '') : '';
-                $data[$x][__('custom.reporting_amount')] = $val->rptCurrency? number_format($val->companyRptAmount,  $val->rptCurrency->DecimalPlaces, ".", "") : '';
+				$data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localCurrency? $val->localCurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = $val->localCurrency? number_format($val->localAmount,  $val->localCurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptCurrency? $val->rptCurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptCurrency? number_format($val->companyRptAmount,  $val->rptCurrency->DecimalPlaces, ".", "") : '';
 
-                $data[$x][__('custom.rv_treasury_cleared')] = $val->trsClearedYN == -1? trans('custom.yes') : trans('custom.no');
-                $data[$x][__('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.rv_treasury_cleared')] = $val->trsClearedYN == -1? trans('custom.yes') : trans('custom.no');
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

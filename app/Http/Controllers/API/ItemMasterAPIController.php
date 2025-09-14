@@ -291,29 +291,29 @@ class ItemMasterAPIController extends AppBaseController
                     $itemTypes[] = $type['category_type_master']['name'];
                 }
                 $itemTypesString = implode(', ', $itemTypes);
-                $data[$x]['Item Code'] = $val['primaryCode'];
-                $data[$x]['Item Type'] = $itemTypesString;
-                $data[$x]['Part No / Ref.Number'] = $val['secondaryItemCode'];
-                $data[$x]['Item Description'] = $val['itemDescription'];
+                $data[$x][trans('custom.item_code')] = $val['primaryCode'];
+                $data[$x][trans('custom.item_type')] = $itemTypesString;
+                $data[$x][trans('custom.part_no_ref_number')] = $val['secondaryItemCode'];
+                $data[$x][trans('custom.item_description')] = $val['itemDescription'];
 
                 if ($val['unit_by']) {
-                    $data[$x]['UOM'] = $val['unit_by']['UnitShortCode'];
+                    $data[$x][trans('custom.uom')] = $val['unit_by']['UnitShortCode'];
                 } else {
-                    $data[$x]['UOM'] = '-';
+                    $data[$x][trans('custom.uom')] = '-';
                 }
 
                 if ($val['financeMainCategory']) {
-                    $data[$x]['Category'] = $val['financeMainCategory']['categoryDescription'];
+                    $data[$x][trans('custom.category')] = $val['financeMainCategory']['categoryDescription'];
                 } else {
-                    $data[$x]['Category'] = '-';
+                    $data[$x][trans('custom.category')] = '-';
                 }
 
                 if ($val['financeSubCategory']) {
-                    $data[$x]['Sub Category'] = $val['financeSubCategory']['categoryDescription'];
-                    $data[$x]['Gl Code'] = $val['financeSubCategory']['financeGLcodePL'];
+                    $data[$x][trans('custom.sub_category')] = $val['financeSubCategory']['categoryDescription'];
+                    $data[$x][trans('custom.gl_code')] = $val['financeSubCategory']['financeGLcodePL'];
                 } else {
-                    $data[$x]['Sub Category'] = '-';
-                    $data[$x]['Gl Code'] = '-';
+                    $data[$x][trans('custom.sub_category')] = '-';
+                    $data[$x][trans('custom.gl_code')] = '-';
                 }
                 $x++;
             }

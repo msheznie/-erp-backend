@@ -59,7 +59,7 @@ class MaterialRequestService
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
-                return ['status' => false, 'message' => 'Item not found'];
+                return ['status' => false, 'message' => trans('custom.item_not_found')];
             } else {
                 $itemNotound = true;
             }
@@ -69,16 +69,16 @@ class MaterialRequestService
 
 
         if (empty($materielRequest)) {
-            return ['status' => false, 'message' => 'Materiel Request Details not found'];
+            return ['status' => false, 'message' => trans('custom.materiel_request_details_not_found')];
 
         }
 
         if($materielRequest->ClosedYN == -1){
-                return ['status' => false, 'message' => 'This Materiel Request already closed. You can not add.'];
+                return ['status' => false, 'message' => trans('custom.materiel_request_already_closed')];
         }
 
         if($materielRequest->approved == -1){
-                return ['status' => false, 'message' => 'This Materiel Request fully approved. You can not add.'];
+                return ['status' => false, 'message' => trans('custom.materiel_request_fully_approved')];
         }
 
 
@@ -89,7 +89,7 @@ class MaterialRequestService
         ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-                return ['status' => false, 'message' => 'Finance Category not found'];
+                return ['status' => false, 'message' => trans('custom.finance_category_not_found')];
         }
 
         if ($item->financeCategoryMaster == 1) {
@@ -101,7 +101,7 @@ class MaterialRequestService
                 ->first();
 
             if ($alreadyAdded) {
-                return ['status' => false, 'message' => 'Selected item is already added. Please check again'];
+                return ['status' => false, 'message' => trans('custom.selected_item_already_added')];
 
             }
         }
@@ -262,7 +262,7 @@ class MaterialRequestService
             ->first();
 
         if (empty($item)) {
-            return ['status' => false, 'message' => 'Item not found'];
+            return ['status' => false, 'message' => trans('custom.item_not_found')];
         }
 
         $itemMaster = ItemMaster::find($itemCode);
@@ -285,16 +285,16 @@ class MaterialRequestService
 
 
         if ($input['currentStockQty'] <= 0) {
-            return ['status' => false, 'message' => 'Stock Qty is 0. You cannot issue.'];
+            return ['status' => false, 'message' => trans('custom.stock_qty_zero_cannot_issue')];
         }
 
         if ($input['currentWareHouseStockQty'] <= 0) {
-            return ['status' => false, 'message' => 'Warehouse stock Qty is 0. You cannot issue'];
+            return ['status' => false, 'message' => trans('custom.warehouse_stock_qty_zero_cannot_issue')];
         }
 
 
         if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
-            return ['status' => false, 'message' => 'Cost is negative. You cannot issue.'];
+            return ['status' => false, 'message' => trans('custom.cost_negative_cannot_issue')];
         }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
@@ -325,11 +325,11 @@ class MaterialRequestService
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
         } else {
-            return ['status' => false, 'message' => 'Account code not updated.'];
+            return ['status' => false, 'message' => trans('custom.account_code_not_updated')];
         }
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return ['status' => false, 'message' => 'Account code not updated.'];
+            return ['status' => false, 'message' => trans('custom.account_code_not_updated')];
         }
 
         if ($item->financeCategoryMaster == 1) {
@@ -340,7 +340,7 @@ class MaterialRequestService
                 ->first();
 
             if ($alreadyAdded) {
-            return ['status' => false, 'message' => 'Selected item is already added. Please check again'];
+            return ['status' => false, 'message' => trans('custom.selected_item_already_added')];
             }
         }
 
