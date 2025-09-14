@@ -6945,5 +6945,14 @@ return [
     'thank_you' => 'شكراً لك.',
     'actions' => 'الإجراءات',
     'reopened' => 'تم إعادة الفتح',
-    'grv_updated_successfully' => 'تم تحديث GRV بنجاح'
+    'grv_updated_successfully' => 'تم تحديث GRV بنجاح',
+    "this_category_can_be_delete" => "يمكن حذف هذه الفئة",
+    // Customer Master Export Column Headers
+    'primary_code' => 'الرمز الأساسي',
+    'secondary_code' => 'الرمز الثانوي',
+    'report_title' => 'عنوان التقرير',
+    'city' => 'المدينة',
+    // Chart of Account Export translations
+    'category_bl_or_pl' => 'فئة الميزانية العمومية أو الأرباح والخسائر',
+    'allocation' => 'التخصيص'
 ];
