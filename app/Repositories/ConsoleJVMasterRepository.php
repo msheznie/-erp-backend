@@ -104,9 +104,9 @@ class ConsoleJVMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->consoleJVdate);
                 $data[$x][trans('custom.document_code')] = $val->consoleJVcode;
-                $data[$x][trans('custom.e_narration')] = $val->consoleJVNarration;
-                $data[$x][trans('custom.e_type')] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');
-                $data[$x][trans('custom.e_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.narration')] = $val->consoleJVNarration;
+                $data[$x][trans('custom.type')] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.confirmed')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, NULL, NULL);
 
                 $x++;

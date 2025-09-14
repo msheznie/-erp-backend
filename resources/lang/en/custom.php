@@ -1605,16 +1605,6 @@ return [
     'drill_down_type_not_found' => 'Drill down type not found',
     'due_date_cannot_be_null_as_retention_amount_is_gre' => 'Due Date cannot be null as retention amount is greater than zero',
     'duplicate_catalog_code_found' => 'Duplicate Catalog Code Found',
-    'e_approved_date' => 'Approved Date',
-    'e_confirmed_date' => 'Confirmed Date',
-    'e_created_by' => 'Created By',
-    'e_created_date' => 'Created Date',
-    'e_grv_code' => 'GRV Code',
-    'e_grv_date' => 'GRV Date',
-    'e_local_amount' => 'Local Amount',
-    'e_local_currency' => 'Local Currency',
-    'e_location' => 'Location',
-    'e_narration' => 'Narration',
     'e_r_p_asset_transfer_detail_not_found' => 'E R P Asset Transfer Detail not found',
     'e_r_p_asset_transfer_detail_retrieved_successfully' => 'E R P Asset Transfer Detail retrieved successfully',
     'e_r_p_asset_transfer_details_refferedback_not_foun' => 'E R P Asset Transfer Details Refferedback not found',
@@ -1635,16 +1625,6 @@ return [
     'e_r_p_asset_verification_referredbacks_retrieved_s' => 'E R P Asset Verification Referredbacks retrieved successfully',
     'e_r_p_language_master_not_found' => 'E R P Language Master not found',
     'e_r_p_language_master_retrieved_successfully' => 'E R P Language Master retrieved successfully',
-    'e_reference_no' => 'Reference No',
-    'e_reporting_amount' => 'Reporting Amount',
-    'e_reporting_currency' => 'Reporting Currency',
-    'e_segment' => 'Segment',
-    'e_status' => 'Status',
-    'e_supplier_code' => 'Supplier Code',
-    'e_supplier_name' => 'Supplier Name',
-    'e_transaction_amount' => 'Transaction Amount',
-    'e_transaction_currency' => 'Transaction Currency',
-    'e_type' => 'Type',
     'electronically_approved_by' => 'Electronically Approved By',
     'electronically_approved_date' => 'Electronically Approved Date',
     'elimination_ledger_not_found' => 'Elimination Ledger not found',
@@ -3290,7 +3270,6 @@ return [
     'vatin' => "VATIN",
     'name_of_customer' => "Name of Customer",
     "taxable_rate" => "Taxable Rate",
-
     //segment Master
     'segment_not_found' => 'Segment not found',
     'segment_code_exists' => 'Segment code already exists',
@@ -4929,7 +4908,6 @@ return [
     'submodulemaster_updated_successfully' => 'SubModuleMaster updated successfully',
     'succesfully_created' => 'succesfully created',
     'success_export' => 'successfully export',
-    
     // Report API Controller translations
     'item_code' => 'Item Code',
     'item_description' => 'Item Description',
@@ -6205,27 +6183,6 @@ return [
     'tax_id' => 'Tax ID',
     'registration_number' => 'Registration Number',
     //GRV Excel
-    'e_grv_code' => 'GRV Code',
-    'e_type' => 'Type',
-    'e_segment' => 'Segment',
-    'e_reference_no' => 'Reference No',
-    'e_grv_date' => 'GRV Date',
-    'e_supplier_code' => 'Supplier Code',
-    'e_supplier_name' => 'Supplier Name',
-    'e_location' => 'Location',
-    'e_narration' => 'Narration',
-    'e_created_by' => 'Created By',
-    'e_created_date' => 'Created Date',
-    'e_confirmed_date' => 'Confirmed Date',
-    'e_approved_date' => 'Approved Date',
-    'e_transaction_currency' => 'Transaction Currency',
-    'e_transaction_amount' => 'Transaction Amount',
-    'e_local_currency' => 'Local Currency',
-    'e_local_amount' => 'Local Amount',
-    'e_reporting_currency' => 'Reporting Currency',
-    'e_reporting_amount' => 'Reporting Amount',
-    'e_status' => 'Status',
-    'registration_number' => 'Registration Number',
     // Purchase Order specific translations
     'not_received' => 'Not Received',
     'partial_received' => 'Partial Received',
@@ -6233,7 +6190,6 @@ return [
     'fully_received' => 'Fully Received',
     'no_items_were_added' => 'No Items were added',
     'actions' => 'Actions',
-    
     //PR
     'unable_to_create_material_items' => 'Unable to create material items',
     'company_id' => 'Company ID',
@@ -6305,7 +6261,6 @@ return [
     'cn_date' => 'CN Date',
     'credit_note_code' => 'Credit Note Code',
     'user_already_assigned' => 'There are :attribute users already assigned to this group. Remove users and try again',
-    
     // Navigation Report
     'erp_navigation' => 'ERP Navigation',
     'portal_navigation' => 'Portal Navigation',
@@ -6325,7 +6280,6 @@ return [
     'export_to_csv' => 'Export to CSV',
     'not_available' => 'Not Available',
     'na' => 'N/A',
-    
     'confirmed_on' => 'Confirmed on',
     'approved_on' => 'Approved on',
     'jv_code' => 'JV Code',
@@ -6338,47 +6292,17 @@ return [
     'reporting_debit_amount' => 'Reporting Debit Amount',
     'reporting_credit_amount' => 'Reporting Credit Amount',
     'status' => 'Status',
-
     // Material Request translations
-    'e_request_code' => 'Request Code',
-    'e_comments' => 'Comments',
-    'e_requested_date' => 'Requested Date',
-    'e_priority' => 'Priority',
-    
     // Item Issue translations
-    'e_issue_code' => 'Issue Code',
-    'e_issue_date' => 'Issue Date',
-    'e_comment' => 'Comment',
-    'e_created_at' => 'Created At',
-    'e_confirmed_at' => 'Confirmed At',
-    'e_approved_at' => 'Approved At',
-    
     // Stock Receive translations
-    'e_stock_receive_code' => 'Stock Receive Code',
-    'e_received_date' => 'Received Date',
-    
     // Item Return translations
-    'e_item_return_code' => 'Item Return Code',
-    'e_department' => 'Department',
-    'e_return_date' => 'Return Date',
-    'e_warehouse' => 'Warehouse',
-    
     // Stock Transfer translations
-    'e_stock_transfer_code' => 'Stock Transfer Code',
-    'e_transfer_date' => 'Transfer Date',
-    
     // Common document translations
-    'e_doc_code' => 'Doc Code',
-    'e_date' => 'Date',
-    
     // Inventory Reclassification translations
-    'e_reclassification_code' => 'Reclassification Code',
-    'e_reclassification_date' => 'Reclassification Date',
     'supplier_employee_code' => 'Supplier/Employee Code',
     'supplier_employee_name' => 'Supplier/Employee Name',
     'amount_local' => 'Amount (Local)',
     'amount_rpt' => 'Amount (Rpt)',
-    
     // Excel Export Headers - Purchase Request
     'excel_pr_code' => 'PR Code',
     'excel_category' => 'Category',
@@ -6962,17 +6886,16 @@ return [
     'this_request_already_selected_please_check_again' => 'This request already selected please check again',
     'selected_job_is_closed' => 'The selected job is closed',
     'unable_to_get_mfqjob_status' => 'Unable to get the MFQJob Status',
-    'e_issue_code' => 'Issue Code',
-    'e_segment' => 'Segment',
-    'e_reference_no' => 'Reference No',
-    'e_issue_date' => 'Issue Date',
-    'e_location' => 'Location',
-    'e_comment' => 'Comment',
-    'e_created_by' => 'Created By',
-    'e_created_at' => 'Created At',
-    'e_confirmed_at' => 'Confirmed at',
-    'e_approved_at' => 'Approved at',
-    'e_status' => 'Status',
+    'issue_code' => 'Issue Code',
+    'issue_date' => 'Issue Date',
+    'stock_transfer_code' => 'Stock Transfer Code',
+    'transfer_date' => 'Transfer Date',
+    'request_code' => 'Request Code',
+    'requested_date' => 'Requested Date',
+    'item_return_code' => 'Item Return Code',
+    'return_date' => 'Return Date',
+    'reclassification_code' => 'Reclassification Code',
+    'reclassification_date' => 'Reclassification Date',
 
     // Stock Adjustment Service Messages
     'stock_adjustments_retrieved_successfully' => 'Stock Adjustments retrieved successfully',

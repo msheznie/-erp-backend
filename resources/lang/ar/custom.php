@@ -1600,16 +1600,6 @@ return [
     'drill_down_type_not_found' => 'نوع العرض التفصيلي غير موجود',
     'due_date_cannot_be_null_as_retention_amount_is_gre' => 'لا يمكن أن يكون تاريخ الاستحقاق فارغًا لأن مبلغ الاستقطاع أكبر من صفر',
     'duplicate_catalog_code_found' => 'تم العثور على رمز كتالوج مكرر',
-    'e_approved_date' => 'تاريخ الموافقة',
-    'e_confirmed_date' => 'تاريخ التأكيد',
-    'e_created_by' => 'تم إنشاؤه بواسطة',
-    'e_created_date' => 'تاريخ الإنشاء',
-    'e_grv_code' => 'رمز إشعار استلام البضاعة',
-    'e_grv_date' => 'تاريخ إشعار استلام البضاعة',
-    'e_local_amount' => 'المبلغ المحلي',
-    'e_local_currency' => 'العملة المحلية',
-    'e_location' => 'الموقع',
-    'e_narration' => 'السرد',
     'e_r_p_asset_transfer_detail_not_found' => 'تفاصيل نقل أصول ERP غير موجودة',
     'e_r_p_asset_transfer_detail_retrieved_successfully' => 'تم استرداد تفاصيل نقل أصول ERP بنجاح',
     'e_r_p_asset_transfer_details_refferedback_not_foun' => 'إرجاع تفاصيل نقل أصول ERP غير موجود',
@@ -1630,16 +1620,6 @@ return [
     'e_r_p_asset_verification_referredbacks_retrieved_s' => 'تم استرداد إرجاعات التحقق من أصول ERP بنجاح',
     'e_r_p_language_master_not_found' => 'السجل الرئيسي للغة ERP غير موجود',
     'e_r_p_language_master_retrieved_successfully' => 'تم استرداد السجل الرئيسي للغة ERP بنجاح',
-    'e_reference_no' => 'الرقم المرجعي',
-    'e_reporting_amount' => 'مبلغ التقارير',
-    'e_reporting_currency' => 'عملة التقارير',
-    'e_segment' => 'الشريحة',
-    'e_status' => 'الحالة',
-    'e_supplier_code' => 'رمز المورد',
-    'e_supplier_name' => 'اسم المورد',
-    'e_transaction_amount' => 'مبلغ المعاملة',
-    'e_transaction_currency' => 'عملة المعاملة',
-    'e_type' => 'النوع',
     'electronically_approved_by' => 'تمت الموافقة إلكترونيًا بواسطة',
     'electronically_approved_date' => 'تاريخ الموافقة الإلكترونية',
     'elimination_ledger_not_found' => 'دفتر أستاذ الإلغاء غير موجود',
@@ -4923,7 +4903,6 @@ return [
     'submodulemaster_updated_successfully' => 'تم تحديث السجل الرئيسي للوحدة الفرعية بنجاح',
     'succesfully_created' => 'تم إنشاؤه بنجاح',
     'success_export' => 'تم التصدير بنجاح',
-    
     // Report API Controller translations
     'item_code' => 'كود الصنف',
     'item_description' => 'وصف الصنف',
@@ -6198,40 +6177,16 @@ return [
     'your_account_is_blocked' => 'حسابك محظور',
     'tax_id' => 'الرقم الضريبي',
     'registration_number' => 'رقم التسجيل',
-
-      //GRV Excel
-    'e_grv_code' => 'كود إيصال الاستلام',
-    'e_type' => 'النوع',
-    'e_segment' => 'القطاع',
-    'e_reference_no' => 'رقم المرجع',
-    'e_grv_date' => 'تاريخ إيصال الاستلام',
-    'e_supplier_code' => 'كود المورد',
-    'e_supplier_name' => 'اسم المورد',
-    'e_location' => 'الموقع',
-    'e_narration' => 'الوصف',
-    'e_created_by' => 'أنشأه',
-    'e_created_date' => 'تاريخ الإنشاء',
-    'e_confirmed_date' => 'تاريخ التأكيد',
-    'e_approved_date' => 'تاريخ الموافقة',
-    'e_transaction_currency' => 'عملة المعاملة',
-    'e_transaction_amount' => 'قيمة المعاملة',
-    'e_local_currency' => 'العملة المحلية',
-    'e_local_amount' => 'القيمة المحلية',
-    'e_reporting_currency' => 'عملة التقرير',
-    'e_reporting_amount' => 'قيمة التقرير',
-    'e_status' => 'الحالة',
-    'registration_number' => 'رقم التسجيل',
+    //GRV Excel
     "estimated_unit_cost" => "التكلفة المقدرة للوحدة",
-    
     // Purchase Order specific translations
-    'not_received' => 'لم يتم الاستلام',	
+    'not_received' => 'لم يتم الاستلام',
     'partial_received' => 'استلام مقطوع',
     'partially_received' => 'استلام جزئي',
     'fully_received' => 'استلام مكتمل',
     'no_items_were_added' => 'لم يتم إضافة أي عناصر',
     'actions' => 'الإجراءات',
-
-     //PR
+    //PR
     'unable_to_create_material_items' => 'غير قادر على إنشاء عناصر المواد',
     'company_id' => 'معرف الشركة',
     'segment' => 'القطاع',
@@ -6342,50 +6297,19 @@ return [
     'export_to_csv' => 'تصدير إلى CSV',
     'not_available' => 'غير متاح',
     'na' => 'غير متاح',
-
     'confirmed_on' => 'تم التأكيد في',
     'approved_on' => 'تم الموافقة على',
-
     // Material Request translations
-    'e_request_code' => 'رمز الطلب',
-    'e_comments' => 'التعليقات',
-    'e_requested_date' => 'تاريخ الطلب',
-    'e_priority' => 'الأولوية',
-    
     // Item Issue translations
-    'e_issue_code' => 'رمز الإصدار',
-    'e_issue_date' => 'تاريخ الإصدار',
-    'e_comment' => 'تعليق',
-    'e_created_at' => 'تم الإنشاء في',
-    'e_confirmed_at' => 'تم التأكيد في',
-    'e_approved_at' => 'تم الموافقة في',
-    
     // Stock Receive translations
-    'e_stock_receive_code' => 'رمز استلام المخزون',
-    'e_received_date' => 'تاريخ الاستلام',
-    
     // Item Return translations
-    'e_item_return_code' => 'رمز إرجاع العنصر',
-    'e_department' => 'القسم',
-    'e_return_date' => 'تاريخ الإرجاع',
-    'e_warehouse' => 'المستودع',
-    
     // Stock Transfer translations
-    'e_stock_transfer_code' => 'رمز تحويل المخزون',
-    'e_transfer_date' => 'تاريخ التحويل',
-    
     // Common document translations
-    'e_doc_code' => 'رمز المستند',
-    'e_date' => 'التاريخ',
-    
     // Inventory Reclassification translations
-    'e_reclassification_code' => 'رمز إعادة التصنيف',
-    'e_reclassification_date' => 'تاريخ إعادة التصنيف',
     'supplier_employee_code' => 'رمز المورّد / الموظف',
     'supplier_employee_name' => 'اسم المورّد / الموظف',
     'amount_local' => 'المبلغ (محلي)',
     'amount_rpt' => 'المبلغ (عملة التقارير)',
-    
     // Excel Export Headers - Purchase Request
     'excel_pr_code' => 'رمز طلب الشراء',
     'excel_category' => 'الفئة',
@@ -6972,17 +6896,16 @@ return [
     'this_request_already_selected_please_check_again' => 'هذا الطلب محدد بالفعل يرجى التحقق مرة أخرى',
     'selected_job_is_closed' => 'المهمة المحددة مغلقة',
     'unable_to_get_mfqjob_status' => 'غير قادر على الحصول على حالة مهمة التصنيع',
-    'e_issue_code' => 'رمز الإصدار',
-    'e_segment' => 'القطاع',
-    'e_reference_no' => 'رقم المرجع',
-    'e_issue_date' => 'تاريخ الإصدار',
-    'e_location' => 'الموقع',
-    'e_comment' => 'تعليق',
-    'e_created_by' => 'أنشأ بواسطة',
-    'e_created_at' => 'تاريخ الإنشاء',
-    'e_confirmed_at' => 'تاريخ التأكيد',
-    'e_approved_at' => 'تاريخ الموافقة',
-    'e_status' => 'الحالة',
+    'issue_code' => 'رمز الإصدار',
+    'issue_date' => 'تاريخ الإصدار',
+    'stock_transfer_code' => 'رمز تحويل المخزون',
+    'transfer_date' => 'تاريخ التحويل',
+    'request_code' => 'رمز الطلب',
+    'requested_date' => 'تاريخ الطلب',
+    'item_return_code' => 'رمز إرجاع العنصر',
+    'return_date' => 'تاريخ الإرجاع',
+    'reclassification_code' => 'رمز إعادة التصنيف',
+    'reclassification_date' => 'تاريخ إعادة التصنيف',
 
     // Stock Adjustment Service Messages
     'stock_adjustments_retrieved_successfully' => 'تم استرجاع تعديلات المخزون بنجاح',
