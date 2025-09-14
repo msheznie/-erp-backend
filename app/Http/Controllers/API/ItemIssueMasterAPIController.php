@@ -245,7 +245,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Issue date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.issue_date_not_within_financial_period'), 500);
         }
 
         $input['documentSystemID'] = 8;
@@ -665,13 +665,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Issue date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.issue_date_not_within_financial_period'), 500);
             }
 
             $checkItems = ItemIssueDetails::where('itemIssueAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every issue should have at least one item', 500);
+                return $this->sendError(trans('custom.every_issue_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = ItemIssueDetails::where('itemIssueAutoID', $id)
@@ -681,7 +681,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_minimum_qty_requested'), 500);
             }
 
             $itemIssueDetails = ItemIssueDetails::where('itemIssueAutoID', $id)->get();
@@ -750,7 +750,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             $amount = ItemIssueDetails::where('itemIssueAutoID', $id)
@@ -780,7 +780,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), 'Material Issue updated successfully',1, isset($confirm['data']) ? $confirm['data'] : null);
+        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), trans('custom.material_issue_updated_successfully'),1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -1724,7 +1724,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $details['is_manu'] = $is_manu;
 
 
-       return $this->sendResponse($details, 'Data retrived!');
+       return $this->sendResponse($details, trans('custom.data_retrieved'));
 
     }
 
@@ -1866,13 +1866,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
-                array_push($errorsArray,$itemPrimaryCode.'-'.'Please  map the original item');
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.please_map_the_original_item'));
 
             if(isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0)
-               array_push($errorsArray,$itemPrimaryCode.'-'.'Issuing quantity cannot be zero');
+               array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_zero'));
 
             if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
-               array_push($errorsArray,$itemPrimaryCode.'-'.'Issuing quantity cannot be empty');
+               array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_empty'));
 
 
             if(isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0)
@@ -1891,7 +1891,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ->first();
 
             if(empty($financeItemCategorySubAssigned))
-                array_push($errorsArray,$itemPrimaryCode.'-'.'Account code not updated');
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
 
             $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoId)->first();
 
@@ -1923,7 +1923,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if (!$detail['financeGLcodebBS'] || !$detail['financeGLcodebBSSystemID'] || !$detail['financeGLcodePL'] || !$detail['financeGLcodePLSystemID']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.'Account code not updated');
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
             }
 
             // check policy 18
@@ -1956,7 +1956,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkWhether)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.materiel_issue_pending_approval', ['code' => $checkWhether->itemIssueCode]));
             }
 
 
@@ -1984,7 +1984,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherStockTransfer)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.stock_transfer_pending_approval', ['code' => $checkWhetherStockTransfer->stockTransferCode]));
             }
 
             /*check item sales invoice*/
@@ -2011,7 +2011,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherInvoice)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]));
             }
 
             // check in delivery order
@@ -2031,7 +2031,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkWhetherDeliveryOrder)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.delivery_order_pending_approval', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]));
             }
 
             /*Check in purchase return*/
@@ -2055,7 +2055,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherPR)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.purchase_return_pending_approval', ['code' => $checkWhetherPR->purchaseReturnCode]));
             }
 
             $data = array('companySystemID' => $companySystemID,
@@ -2077,12 +2077,12 @@ class ItemIssueMasterAPIController extends AppBaseController
 
 
             if((int)$detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."Quantity Issuing is greater than the available quantity");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.quantity_issuing_greater_than_available'));
             }
 
 
             if((int)$detail['qtyIssued'] >  $detail['currentWareHouseStockQty']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'."Current warehouse stock Qty is: " .  $detail['currentWareHouseStockQty'] . " .You cannot issue more than the current warehouse stock qty.");
+                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.current_warehouse_stock_qty_message', ['qty' => $detail['currentWareHouseStockQty']]));
             }
 
 
@@ -2096,7 +2096,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                         $item = $itemMap['data'];
                     }
                 } else {
-                    array_push($errorsArray,$itemPrimaryCode.'-'.'Item not found, Please map this item with a original item');
+                    array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.item_not_found_please_map_this_item_with_a_origina'));
                 }
             }
 
@@ -2605,7 +2605,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         if(!empty($selectedAssets))
         {
             $selectedAssets = collect($selectedAssets)->map(function ($item) {
-                $parts = explode('|', $item['itemName'] ?? '');
+                $parts = explode('|', isset($item['itemName']) ? $item['itemName'] : '');
                 return isset($parts[1]) ? trim($parts[1]) : '';
             })->filter()
             ->implode(',');
@@ -2616,7 +2616,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         if(!empty($selectedSegments))
         {
             $selectedSegments = collect($selectedSegments)->map(function ($item) {
-                $itemName = $item['itemName'] ?? '';
+                $itemName = isset($item['itemName']) ? $item['itemName'] : '';
                 $parts = explode('|', $itemName);
                 return isset($parts[1]) ? trim($parts[1]) : '';
             })->filter() 
@@ -2627,7 +2627,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $reportData = [
             'reportData' => $data,
-            'Title' => 'Supplier Ledger',
+            'Title' => trans('custom.supplier_ledger'),
             'companyName' => $data->companyName,
             'reportType' => $input['reportType'],
             'groupByAsset' => $input['groupByAsset'],
@@ -2646,7 +2646,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
 
         if ($basePath == '') {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         } else {
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }
