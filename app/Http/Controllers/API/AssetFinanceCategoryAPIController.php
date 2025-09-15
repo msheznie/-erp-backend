@@ -577,7 +577,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
     public function getAssetFinanceCategoryFormData(Request $request)
     {
         $companyId = $request->get('selectedCompanyId');
-        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $yesNoSelection = YesNoSelection::all();
         $chartOfAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyId)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
