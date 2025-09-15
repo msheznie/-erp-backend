@@ -842,7 +842,7 @@ WHERE
 
         ];
         $fileName = 'stock_ledger_report';
-        $title = 'Stock Ledger Report';
+        $title = trans('custom.stock_ledger_report');
         $path = 'inventory/report/stock_ledger_report/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
@@ -1254,7 +1254,7 @@ WHERE
         }
 
         $fileName = 'stock_valuation_report';
-        $title = 'Stock Valuation Report';
+        $title = trans('custom.stock_valuation_report');
         $path = 'inventory/report/stock_valuation_report/excel/';
         $cur = NULL;
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
