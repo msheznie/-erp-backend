@@ -1725,24 +1725,24 @@ GROUP BY
 
         foreach ($stockTaking as $val) {
             $data[] = array(
-                'Warehouse' => $val->wareHouseDescription,
-                'Item Code' => $val->itemPrimaryCode,
-                'Item Description' => $val->itemDescription,
-                'UOM' => $val->UnitShortCode,
-                'Part No / Ref.Number' => $val->partNumber,
-                'Stock Qty' => $val->StockQty,
-                'Avg Cost Rpt' => round($val->AvgCostRpt, $val->RptCurrencyDecimals),
-                'Avg Cost Local' => round($val->AvgCostLocal, $val->LocalCurrencyDecimals),
-                'Total Cost Rpt' => round($val->TotalCostRpt, $val->RptCurrencyDecimals),
-                'Total Cost Local' => round($val->TotalCostLocal, $val->LocalCurrencyDecimals),
-                'Physical Qty' => '',
-                'Bin Location' => ''
+                trans('custom.warehouse') => $val->wareHouseDescription,
+                trans('custom.item_code') => $val->itemPrimaryCode,
+                trans('custom.item_description') => $val->itemDescription,
+                trans('custom.uom') => $val->UnitShortCode,
+                trans('custom.part_no_ref_number') => $val->partNumber,
+                trans('custom.stock_qty') => $val->StockQty,
+                trans('custom.avg_cost_rpt') => round($val->AvgCostRpt, $val->RptCurrencyDecimals),
+                trans('custom.avg_cost_local') => round($val->AvgCostLocal, $val->LocalCurrencyDecimals),
+                trans('custom.total_cost_rpt') => round($val->TotalCostRpt, $val->RptCurrencyDecimals),
+                trans('custom.total_cost_local') => round($val->TotalCostLocal, $val->LocalCurrencyDecimals),
+                trans('custom.physical_qty') => '',
+                trans('custom.bin_location') => ''
             );
         }
 
 
         $fileName = 'stock_taking_report';
-        $title = 'Stock Taking Report';
+        $title = trans('custom.stock_taking_report');
         $path = 'inventory/report/stock_taking_report/excel/';
         $cur = NULL;
         $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
@@ -1750,7 +1750,7 @@ GROUP BY
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

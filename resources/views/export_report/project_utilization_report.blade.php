@@ -17,12 +17,12 @@ use Carbon\CarbonPeriod;
             </tr>
             <tr></tr>
             <tr>
-              <th colspan="2" style="font-size:15px;">Date From: {{$fromDate}}</th>
-              <th colspan="2" style="font-size:15px;">Date To: {{$toDate}}</th>
+              <th colspan="2" style="font-size:15px;">{{ __('custom.date_from') }}: {{$fromDate}}</th>
+              <th colspan="2" style="font-size:15px;">{{ __('custom.date_to') }}: {{$toDate}}</th>
             </tr>
             <tr></tr>
             <tr>
-              <th>Project Details</th>
+              <th>{{ __('custom.project_details') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -42,19 +42,19 @@ use Carbon\CarbonPeriod;
             } 
             ?>
                 <tr>
-                  <td>Project Description</td>
+                  <td>{{ __('custom.project_description') }}</td>
                   <td> -  {{$projectDetail->description}}</td>
-                  <td>Project Currency</td>
+                  <td>{{ __('custom.project_currency') }}</td>
                   <td > -  {{$projectDetail->currency->CurrencyName}}</td>
-                  <td>Project Budget</td>
+                  <td>{{ __('custom.project_budget') }}</td>
                   <td > :-  {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
                 </tr>
                 <tr>
-                  <td>Segment</td>
+                  <td>{{ __('custom.segment') }}</td>
                   <td > -  {{$projectDetail->service_line->ServiceLineDes}}</td>
-                  <td>Reporting  Currency</td>
+                  <td>{{ __('custom.reporting_currency') }}</td>
                   <td > -  {{$CurrencyName}}</td>
-                  <td>Balance Amount</td>
+                  <td>{{ __('custom.balance_amount') }}</td>
                   <td > :-  {{ round(($closingBalance), $decimalPoint)}}({{$CurrencyCode}})</td>
                 </tr>
             <tr></tr>
@@ -62,16 +62,16 @@ use Carbon\CarbonPeriod;
           <tbody>
             <tr>
               <thead>
-                <th  style="background-color:#e4e5e6">GL Code</th>
-                <th  style="background-color:#e4e5e6">GL Description</th>
-                <th  style="background-color:#e4e5e6">Document Number</th>
-                <th  style="background-color:#e4e5e6">Document Date</th>
-                <th  style="background-color:#e4e5e6">Segment</th>
-                <th  style="background-color:#e4e5e6">Amount</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.gl_code') }}</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.gl_description') }}</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.document_number') }}</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.document_date') }}</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.segment') }}</th>
+                <th  style="background-color:#e4e5e6">{{ __('custom.amount') }}</th>
               </thead>
               <tbody>
                 <tr>
-                  <th>Opening Balance</th>
+                  <th>{{ __('custom.opening_balance') }}</th>
                   <th></th>
                   <th></th>
                   <th></th>
@@ -109,7 +109,7 @@ use Carbon\CarbonPeriod;
                 @endforeach
 
                 <tr>
-                    <th>Total Consumption</th>
+                    <th>{{ __('custom.total_consumption') }}</th>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -117,7 +117,7 @@ use Carbon\CarbonPeriod;
                     <th>{{round($budgetConsumptionAmount, $decimalPoint)}}</th>
                   </tr>
                   <tr>
-                    <th>Closing Balance</th>
+                    <th>{{ __('custom.closing_balance') }}</th>
                     <th></th>
                     <th></th>
                     <th></th>

@@ -123,15 +123,15 @@
     <table style="width:100%;">
         <tr>
             <td style="width:100%;text-align: center;">
-                <span class="font-weight-bold" style="font-size: 14px">Financial Trial Balance</span>
+                <span class="font-weight-bold" style="font-size: 14px">{{ __('custom.financial_trial_balance') }}</span>
             </td>
         </tr>
     </table>
     <table style="width:100%;">
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Period From :{{ $fromDate }} |
-                    Period To : {{ $toDate }}</span>
+                <span class="font-weight-bold">{{ __('custom.period_from') }} :{{ $fromDate }} |
+                    {{ __('custom.period_to') }} : {{ $toDate }}</span>
             </td>
         </tr>
         <tr>
@@ -146,11 +146,11 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
-                <span>Printed By : {{$employeeData->empName}}</span>
+                <span>{{ __('custom.printed_date_time') }} : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>{{ __('custom.printed_by') }} : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -159,22 +159,22 @@
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         <thead>
             <tr>
-                <th>Account Code</th>
-                <th>Account Description</th>
-                <th>Type</th>
+                <th>{{ __('custom.account_code') }}</th>
+                <th>{{ __('custom.account_description') }}</th>
+                <th>{{ __('custom.type') }}</th>
 
                 @if ($currencyId ==1 || $currencyId ==3)
-                    <th>Opening Balance (Local Currency - {{$requestCurrencyLocal->CurrencyCode}})</th>
-                    <th>Debit (Local Currency - {{$requestCurrencyLocal->CurrencyCode}})</th>
-                    <th>Credit (Local Currency - {{$requestCurrencyLocal->CurrencyCode}})</th>
-                    <th>Closing Balance (Local Currency - {{$requestCurrencyLocal->CurrencyCode}}) </th>
+                    <th>{{ __('custom.opening_balance_local_currency') }} - {{$requestCurrencyLocal->CurrencyCode}})</th>
+                    <th>{{ __('custom.debit_local_currency') }} - {{$requestCurrencyLocal->CurrencyCode}})</th>
+                    <th>{{ __('custom.credit_local_currency') }} - {{$requestCurrencyLocal->CurrencyCode}})</th>
+                    <th>{{ __('custom.closing_balance_local_currency') }} - {{$requestCurrencyLocal->CurrencyCode}}) </th>
                 @endif
 
                 @if ($currencyId ==2 || $currencyId ==3)
-                    <th>Opening Balance (Reporting Currency - {{$requestCurrencyRpt->CurrencyCode}})</th>
-                    <th>Debit (Reporting Currency - {{$requestCurrencyRpt->CurrencyCode}})</th>
-                    <th>Credit (Reporting Currency - {{$requestCurrencyRpt->CurrencyCode}})</th>
-                    <th>Closing Balance (Reporting Currency - {{$requestCurrencyRpt->CurrencyCode}}) </th>
+                    <th>{{ __('custom.opening_balance_reporting_currency') }} - {{$requestCurrencyRpt->CurrencyCode}})</th>
+                    <th>{{ __('custom.debit_reporting_currency') }} - {{$requestCurrencyRpt->CurrencyCode}})</th>
+                    <th>{{ __('custom.credit_reporting_currency') }} - {{$requestCurrencyRpt->CurrencyCode}})</th>
+                    <th>{{ __('custom.closing_balance_reporting_currency') }} - {{$requestCurrencyRpt->CurrencyCode}}) </th>
                 @endif
             </tr>
         </thead>
@@ -201,7 +201,7 @@
                 </tr>
             @endforeach
             <tr>
-                <th style="text-align: right;" colspan="3">Grand Total</th>
+                <th style="text-align: right;" colspan="3">{{ __('custom.grand_total') }}</th>
                 @if ($currencyId ==1 || $currencyId ==3)
                     <th style="text-align: right;">{{number_format($totalOpeningBalanceLocal, $decimalPlaceLocal)}}</th>
                     <th style="text-align: right;">{{number_format($totaldocumentLocalAmountDebit, $decimalPlaceLocal)}}</th>

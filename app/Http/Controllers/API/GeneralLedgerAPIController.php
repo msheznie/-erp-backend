@@ -1511,14 +1511,14 @@ class GeneralLedgerAPIController extends AppBaseController
  
 
         $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
-        $deb_cred = array("Debit","Credit","Balance");
+        $deb_cred = array(trans('custom.debit'), trans('custom.credit'), trans('custom.balance'));
         $reportData['deb_cred'] = $deb_cred;
         $reportData['length'] = ($reportData['j']*3)+3;
         $reportData['fromDate'] = $fromDate;
         $reportData['toDate'] = $toDate;
         $reportData['currency'] = ($type[0] == 1) ? $reportData['localcurrency']['CurrencyCode'] : $reportData['reportingcurrency']['CurrencyCode'];
         $reportData['company'] = $checkIsGroup->CompanyName;
-        $reportData['Title'] = 'Segment Wise GL Report';
+        $reportData['Title'] = trans('custom.segment_wise_gl_report');
         $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID: null;
         $reportData['companyCode'] = $companyCode;
 
@@ -1529,7 +1529,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.failed_export'));
         }
         else
         {
