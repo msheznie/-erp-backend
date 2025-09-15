@@ -1187,7 +1187,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendResponse($emailSentTo, trans('custom.customer_email_is_not_updated_report_is_not_sent'));
         } else {
             SoSentToCustomerJob::dispatch($request->db, $input);
-            return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
+            return $this->sendResponse($emailSentTo, trans('custom.customer_sales_quotation_report_sent'));
         }
     }
 

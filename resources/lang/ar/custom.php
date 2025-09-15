@@ -7080,6 +7080,13 @@ return [
     'oct_closing' => 'إغلاق أكتوبر',
     'nov_closing' => 'إغلاق نوفمبر',
     'dec_closing' => 'إغلاق ديسمبر',
+ 
+    // Quotation Master API Controller
+    'customer_sales_quotation_report_sent' => 'تم إرسال تقرير العميل للعرض التقديمي',
+
+    // GL Posted Date Service
+    'financial_posting_error_financial_period_is_not_active' => 'خطأ في المحاسبة: فترة مالية غير نشطة.',
+
      "currency_exchange_rate_to_local" => "يجب أن يكون سعر صرف العملة إلى العملة المحلية وعملة التقارير أكبر من صفر.",
      "supplier_invoice_number_already_used" => "رقم فاتورة المورد المدخل مستخدم بالفعل (:bookingInvCode). يرجى التحقق مرة أخرى",
      "customer_invoice_number_already_used" => "رقم فاتورة العميل المدخل مستخدم بالفعل في (:bookingInvCode). يرجى التحقق مرة أخرى",
