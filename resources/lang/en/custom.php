@@ -7167,5 +7167,11 @@ return [
     'sep_closing' => 'Sep Closing',
     'oct_closing' => 'Oct Closing',
     'nov_closing' => 'Nov Closing',
-    'dec_closing' => 'Dec Closing'
+    'dec_closing' => 'Dec Closing',
+
+    // Quotation Master API Controller
+    'customer_sales_quotation_report_sent' => 'Customer sales quotation report sent',
+
+    // GL Posted Date Service
+    'financial_posting_error_financial_period_is_not_active' => 'Financial posting error: Financial period is not active.'
 ];

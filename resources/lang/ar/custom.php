@@ -7080,4 +7080,10 @@ return [
     'oct_closing' => 'إغلاق أكتوبر',
     'nov_closing' => 'إغلاق نوفمبر',
     'dec_closing' => 'إغلاق ديسمبر',
+
+    // Quotation Master API Controller
+    'customer_sales_quotation_report_sent' => 'تم إرسال تقرير العميل للعرض التقديمي',
+
+    // GL Posted Date Service
+    'financial_posting_error_financial_period_is_not_active' => 'خطأ في المحاسبة: فترة مالية غير نشطة.'
 ];
