@@ -6147,7 +6147,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             });
         }
 
-        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+        $categories = FinanceItemCategoryMaster::select('itemCategoryID', 'categoryDescription')->get()->map(function($category) {
+            return [
+                'value' => $category->itemCategoryID,
+                'label' => $category->categoryDescription
+            ];
+        });
 
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
         $output = array('suppliers' => $suppliers, 'categories' => $categories);
@@ -6173,7 +6178,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $subCategories = FinanceItemcategorySubAssigned::whereIN('companySystemID', $companyID)->groupBy('itemCategorySubID')->get();
 
-        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+        $categories = FinanceItemCategoryMaster::select('itemCategoryID', 'categoryDescription')->get()->map(function($category) {
+            return [
+                'value' => $category->itemCategoryID,
+                'label' => $category->categoryDescription
+            ];
+        });
 
         $years = Year::orderby('year', 'desc')->get();
 
