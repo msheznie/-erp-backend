@@ -59,5 +59,14 @@ return [
     'slot_detail_cannot_be_deleted_because_a_confirmed_or_approved_delivery_appointment_existsslot_detail_cannot_be_deleted_because_a_confirmed_or_approved_delivery_appointment_exists' => 'Slot detail cannot be deleted because a confirmed or approved delivery appointment exists',
     'data_retrieved_successfully' => 'Data Retrieved successfully',
     'something_went_wrong' => 'Something went wrong ',
-    'successfully_created' => 'succesfully created'
+    'successfully_created' => 'succesfully created',
+    "Status couldn't uploaded" => "Status couldn't uploaded",
+    'Supplier KYC Status has been updated' => 'Supplier KYC Status has been updated',
+    'Invalid UUID pass for fetching supplier data' => 'Invalid UUID pass for fetching supplier data',
+    'Something went wrong!, User not found in userTenant table' => 'Something went wrong!, User not found in userTenant table',
+    'Supplier details successfully fetched' => 'Supplier details successfully fetched',
+    "something_went_wrong_supplier_data_couldnt_be_fetched" => "Something went wrong!, Supplier data couldn't be fetched",
+    "something_went_wrong_supplier_status_couldnt_be_updated" => "Something went wrong!, Supplier status couldn't be updated",
+    'approval_failed_please_check_the_below_details' => 'Approval failed,please check the below details.',
+    'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'The item :code1 from  purchase order :code2 has planned quantity(:code3) is greater than balance quantity(:code4).'
 ];

@@ -521,14 +521,20 @@ class AppointmentAPIController extends AppBaseController
         ->get();
 
         $is_valid = true;
-        $msg = 'Approval failed,please check the below details.'. "<br>";;
+        $text = trans('srm_supplier_management.approval_failed_please_check_the_below_details');
+        $msg = $text. "<br>";;
         foreach($appointments as $detail)
         {
           
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
+                $info = trans('srm_masters.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
+                    'code1' => $detail->itemPrimaryCode,
+                    'code2' => $detail->purchaseOrderCode,
+                    'code3' => $detail->planned_qty,
+                    'code4' => $detail->balance_qty,
+                ]);
                 $msg .= $info . "<br>";
                 $is_valid = false;
             }
