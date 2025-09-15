@@ -928,7 +928,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             // Get file contents
-            return \Storage::disk($disk)->download($attachment->file_path);
+            $fileContents = \Storage::disk($disk)->get($attachment->file_path);
 
             // Return file as response
             return response($fileContents, 200)

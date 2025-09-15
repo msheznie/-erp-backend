@@ -102,6 +102,11 @@ class BudgetDelegateAPIController extends AppBaseController
                     throw new Exception('Submission time cannot be in the past');
                 }
 
+                if(Carbon::parse($input['submission_time'])->isSameDay(Carbon::now()))
+                {
+                    return $this->sendError('Submission date must be less than current submission date and greater than current current date');
+                }
+
                 $delegateeIds = collect($input['delegatee_id'])->pluck('id')->toArray();
                 $chartOfAccounts = collect($input['chart_of_accounts'])->pluck('id')->toArray();
                 $segments = collect($input['segments'])->pluck('id')->toArray();
