@@ -7065,6 +7065,8 @@ return [
     'service_line' => 'خط الخدمة',
     'supplier_customer' => 'المورد/العميل',
     'due_amount' => 'المبلغ المستحق',
+    'e_supplier_code' => 'رمز المورد',
+    'e_supplier_name' => 'اسم المورد',
     'customer_short_code' => 'الرمز المختصر للعميل',
     'jv_type' => 'نوع قيد اليومية',
     'opening_balance' => 'الرصيد الافتتاحي',
