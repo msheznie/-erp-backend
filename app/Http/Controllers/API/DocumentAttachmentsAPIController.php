@@ -241,7 +241,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                         ];
                     }
                     else{
-                        return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                        return $this->sendError(trans('custom.maximum_allowed_file_size', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                     }
                 }
             }
@@ -478,7 +478,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 if ($invoice->confirmedYN == 1 || $invoice->approved == -1) {
                     return [
                         'status' => false,
-                        'message' => 'Customer invoice confirmed, you cannot delete the attachment',
+                        'message' => trans('custom.customer_invoice_confirmed_cannot_delete_attachment'),
                         'code' => 500
                     ];
                 }
@@ -512,7 +512,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
         return [
             'status' => true,
-            'message' => 'Document Attachments deleted successfully',
+            'message' => trans('custom.document_attachments_deleted_successfully'),
             'data' => $documentAttachments->attachmentID
         ];
     }
@@ -1305,7 +1305,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+                return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
@@ -1333,7 +1333,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
         
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+                return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
@@ -1367,7 +1367,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
         
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+                return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
@@ -1469,7 +1469,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if(!$getAttachment['success']){
                 return $this->sendError($getAttachment['message'], $getAttachment['code'] ?? 404);
             }
-            return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? 'Attachment retrieved successfully');
+            return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? trans('custom.attachment_retrieved_successfully'));
         } catch (\Exception $ex){
                 return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage(), 500);
         }

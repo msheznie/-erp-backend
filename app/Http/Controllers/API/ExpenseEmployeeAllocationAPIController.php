@@ -129,7 +129,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                                                   ->first();
 
         if ($checkForAssetDuplicate) {
-            return $this->sendError("This employee is alreday allocated", 500);
+            return $this->sendError(trans('custom.employee_already_allocated'), 500);
         }
 
         $detailTotal = 0;
@@ -183,7 +183,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
             $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']);
             if (!$meterialissue) {
-                return $this->sendError("Meterial issues detail not found");
+                return $this->sendError(trans('custom.material_issues_detail_not_found'));
             }
             $detailTotal = $meterialissue->issueCostRptTotal;
             $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
@@ -204,7 +204,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
 
                 if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
-                    return $this->sendError("Assigned qty cannot be greater than detail qty.");
+                    return $this->sendError(trans('custom.assigned_qty_cannot_be_greater_than_detail_qty'));
                 }
             }
 
@@ -212,11 +212,11 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             $input['dateOfDeduction'] = $issueDate;
 
             if ($meterialissue->issueCostRptTotal == 0) {
-                return $this->sendError("Total Value cannot be zero.");
+                return $this->sendError(trans('custom.total_value_cannot_be_zero'));
             }
 
             if(is_numeric($input['amount']) != 1){
-                return $this->sendError("Please enter a numeric value to the amount field.");
+                return $this->sendError(trans('custom.enter_numeric_value_amount_field'));
             }
 
             $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
@@ -232,7 +232,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
 
         if ($newTotal > $detailTotal) {
-            return $this->sendError("Allocated amount cannot be greater than detail amount.");
+            return $this->sendError(trans('custom.allocated_amount_cannot_be_greater_than_detail_amount'));
         }
 
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->create($input);
