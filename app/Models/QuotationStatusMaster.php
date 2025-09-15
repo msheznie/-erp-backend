@@ -82,19 +82,12 @@ class QuotationStatusMaster extends Model
         $currentLanguage = app()->getLocale() ?: 'en';
 
         $translation = $this->translation($currentLanguage);
-
-        if ($translation) {
+        
+        if ($translation && $translation->description) {
             return $translation->description;
         }
 
-        if ($currentLanguage !== 'en') {
-            $englishTranslation = $this->translation('en');
-            if ($englishTranslation) {
-                return $englishTranslation->description;
-            }
-        }
-
-        return $value;
+        return $this->attributes['quotationStatus'] ?? '';
     }
 
     
