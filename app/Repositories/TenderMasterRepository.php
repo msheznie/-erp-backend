@@ -514,7 +514,7 @@ class TenderMasterRepository extends BaseRepository
 
 
             if(empty($tenderData)){
-                return ['success' => false, 'message' => 'Tender data not found'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_data_not_found')];
             }
 
             $formattedDatesAndTime = $this->getFormattedDatesAndTime($input,$tenderData);
@@ -525,11 +525,11 @@ class TenderMasterRepository extends BaseRepository
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
 
-            $title = ($isTender == 1) ? "Tender" : "RFX";
+            $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : "trans('srm_tender_rfx.rfx')";
 
             return [
                 'success' => true,
-                'message' => $title . ' calendar days updated successfully.',
+                'message' => $title . trans('srm_tender_rfx.calendar_days_updated_successfully'),
                 'data' => $updatedData
             ];
 

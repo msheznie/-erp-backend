@@ -5237,7 +5237,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
