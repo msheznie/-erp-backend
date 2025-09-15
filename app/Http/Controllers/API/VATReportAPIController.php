@@ -124,7 +124,7 @@ class VATReportAPIController extends AppBaseController
                 break;
 
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
         return $this->sendResponse([],trans('custom.data_retrieved_successfully_2'));
     }
@@ -404,14 +404,14 @@ class VATReportAPIController extends AppBaseController
         $company = Company::find($request->companySystemID);
         $output = $this->getVatReportQuery($input);
         if($request->reportTypeID == 1){
-            $title = 'Output VAT Summary';
-            $fileName = 'output_vat_summary';
+            $title = trans('custom.output_vat_summary');
+            $fileName = 'Output VAT Summary';
         } elseif($request->reportTypeID == 2){
-            $title = 'Input VAT Summary';
-            $fileName = 'input_vat_summary';
+            $title = trans('custom.input_vat_summary');
+            $fileName = 'Input VAT Summary';
         } else{
-            $title = 'VAT Summary Report';
-            $fileName = 'vat_summary_report';
+            $title = trans('custom.vat_summary_report');
+            $fileName = 'VAT Summary Report';
         }
         $path = 'general-ledger/report/vat_report/excel/';
         if (count((array)$output)>0) {
@@ -440,14 +440,14 @@ class VATReportAPIController extends AppBaseController
 
             if(!$exportToExcel['success'])
             {
-                 return $this->sendError('Unable to export excel');
+                 return $this->sendError(trans('custom.unable_to_export_excel'));
             }
             else
             {
                  return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
             }
         }
-        return $this->sendError( 'No Records Found');
+        return $this->sendError(trans('custom.no_records_found_caps'));
     }
 
 
@@ -475,14 +475,14 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
             
 
             if($request->reportTypeID == 3){
-                $title = 'Details Of Outward Supply';
-                $fileName = 'details_of_outward_supply';
+                $title = trans('custom.details_of_outward_supply');
+                $fileName = trans('custom.details_of_outward_supply');
             } elseif($request->reportTypeID == 4){
-                $title = 'Details Of Inward Supply';
-                $fileName = 'details_of_inward_supply';
+                $title = trans('custom.details_of_inward_supply');
+                $fileName = trans('custom.details_of_inward_supply');
             } elseif($request->reportTypeID == 5){
-                $title = 'Details of Capital Asset Purchase';
-                $fileName = 'capital_asset_purchase_details';
+                $title = trans('custom.details_of_capital_asset_purchase');
+                $fileName = trans('custom.details_of_capital_asset_purchase');
             }
 
             $path = 'general-ledger/report/vat_report/excel/';
@@ -507,14 +507,14 @@ public function exportVATDetailReport(Request $request, ExportVatDetailReportSer
 
             if(!$exportToExcel['success'])
             {
-                return $this->sendError('Unable to export excel');
+                return $this->sendError(trans('custom.unable_to_export_excel'));
             }
             else
             {
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
             }
         }
-        return $this->sendError( 'No Records Found');
+        return $this->sendError(trans('custom.no_records_found_caps'));
     }
 
 

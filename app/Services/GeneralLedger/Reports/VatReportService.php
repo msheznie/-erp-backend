@@ -10,19 +10,19 @@ class VatReportService
 
     private function setHeaderObj() {
         $headerRow = new InputOutputVatReport();
-        $headerRow->setDocumentType('Document Type');
-        $headerRow->setDocumentCode('Document Code');
-        $headerRow->setReferenceNo("Reference No");
-        $headerRow->setDocumentDate('Document Date',false);
-        $headerRow->setPartyName("Party Name");
-        $headerRow->setCountry("Country");
-        $headerRow->setVatIn("VATIN");
-        $headerRow->setApporvedBy("Approved By");
-        $headerRow->setDocumentTotalAmount("Document Total Amount");
-        $headerRow->setDocumentVatAmount("Document Vat Amount");
-        $headerRow->setVatMainCategory("VAT Main Category");
-        $headerRow->setVatType('VAT Type');
-        $headerRow->setIsClaimed("Is Claimed");
+        $headerRow->setDocumentType(trans('custom.document_type'));
+        $headerRow->setDocumentCode(trans('custom.document_code'));
+        $headerRow->setReferenceNo(trans('custom.reference_no'));
+        $headerRow->setDocumentDate(trans('custom.document_date'),false);
+        $headerRow->setPartyName(trans('custom.party_name'));
+        $headerRow->setCountry(trans('custom.country'));
+        $headerRow->setVatIn(trans('custom.vat_in'));
+        $headerRow->setApporvedBy(trans('custom.approved_by'));
+        $headerRow->setDocumentTotalAmount(trans('custom.document_total_amount'));
+        $headerRow->setDocumentVatAmount(trans('custom.document_vat_amount'));
+        $headerRow->setVatMainCategory(trans('custom.vat_main_category'));
+        $headerRow->setVatType(trans('custom.vat_type'));
+        $headerRow->setIsClaimed(trans('custom.is_claimed'));
 
         return $headerRow;
     }
@@ -111,7 +111,7 @@ class VatReportService
 
             isset($val->main_category->mainCategoryDescription) ? $inputOutputVatReport->setVatMainCategory($val->main_category->mainCategoryDescription) : $inputOutputVatReport->setVatMainCategory('-');
             isset($val->sub_category->subCategoryDescription) ? $inputOutputVatReport->setVatType($val->sub_category->subCategoryDescription) : $inputOutputVatReport->setVatType('-');
-            ($val->isClaimed == 1) ? $inputOutputVatReport->setIsClaimed('Claimed') : $inputOutputVatReport->setIsClaimed("Not Claimed");
+            ($val->isClaimed == 1) ? $inputOutputVatReport->setIsClaimed(trans('custom.claimed')) : $inputOutputVatReport->setIsClaimed(trans('custom.not_claimed'));
             $rptAmountTotal += $val->rptAmount;
             $documentReportingAmountTotal += $val->documentReportingAmount;
             $localAmountTotal += $val->localAmount;
@@ -120,7 +120,7 @@ class VatReportService
         }
 
         $lastRowData = new InputOutputVatReport();
-        $lastRowData->setApporvedBy('Total');
+        $lastRowData->setApporvedBy(trans('custom.total'));
         $lastRowData->setDocumentTotalAmount(CurrencyService::convertNumberFormatToNumber(number_format($documentLocalAmountTotal,$localDecimalPlaces)));
         $lastRowData->setDocumentVatAmount(CurrencyService::convertNumberFormatToNumber(number_format($localAmountTotal,$localDecimalPlaces)));
 
