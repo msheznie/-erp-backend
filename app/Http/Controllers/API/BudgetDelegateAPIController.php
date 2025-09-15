@@ -104,7 +104,7 @@ class BudgetDelegateAPIController extends AppBaseController
 
                 if(Carbon::parse($input['submission_time'])->isSameDay(Carbon::now()))
                 {
-                    return $this->sendError('Submission date must be less than current submission date and greater than current current date');
+                    return $this->sendError('Submission date must be less than current submission date and greater than current date');
                 }
 
                 $delegateeIds = collect($input['delegatee_id'])->pluck('id')->toArray();

@@ -79,7 +79,7 @@ class BudgetDelegateService
 
             if(Carbon::parse($data['submission_time'])->isSameDay(Carbon::now()))
             {
-                throw new Exception('Submission date must be less than current submission date and greater than current current date');
+                throw new Exception('Submission date must be less than current submission date and greater than current date');
             }
 
             if(Carbon::parse($data['submission_time'])->isSameDay(Carbon::parse($budgetPlanningDetail->time_for_submission)))
