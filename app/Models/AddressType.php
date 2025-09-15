@@ -37,6 +37,8 @@ class AddressType extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    protected $appends = ['addressTypeDescription'];
+
     protected $primaryKey = 'addressTypeID';
 
 
@@ -64,5 +66,40 @@ class AddressType extends Model
         
     ];
 
-    
+    /**
+     * Get the translations for the address type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(AddressTypeTranslation::class, 'addressTypeID', 'addressTypeID');
+    }
+
+    /**
+     * Get the translation for a specific language.
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get the translated addressTypeDescription attribute.
+     */
+    public function getAddressTypeDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->addressTypeDescription;
+        }
+        
+        return $this->attributes['addressTypeDescription'] ?? '';
+    }
+
 }
