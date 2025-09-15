@@ -195,7 +195,7 @@ class DocumentModifyRequestRepository extends BaseRepository
                 $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
                 if(empty($tenderMaster))
                 {
-                    return ['success' => false, 'message' => 'Tender master not found.'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.tender_master_not_found')];
                 }
 
                 $insertData = self::prepareEditOrAmendSaveData($input, $tenderID, $companySystemID);
@@ -212,15 +212,22 @@ class DocumentModifyRequestRepository extends BaseRepository
                     'tenderTypeId' => $tenderMaster->tender_type_id
                 ];
                 $confirm = Helper::confirmDocument($params);
-                $title = $tenderMaster['document_system_id'] == 108 ? 'Tender' : 'RFX';
+                $title = $tenderMaster['document_system_id'] == 108
+                    ? trans('srm_tender_rfx.tender')
+                    : trans('srm_tender_rfx.rfx');
 
                 if (!$confirm["success"]) {
                     return ['success' => false, 'message' => $confirm["message"]];
                 }
-                return ['success' => true, 'message' => $title. ' modify request sent successfully'];
+                return ['success' => true, 'message' => $title . ' ' . trans('srm_tender_rfx.modify_request_sent_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.unexpected_error',
+                    ['message' => $exception->getMessage()]
+                )
+            ];
         }
     }
     public function approveDocumentEditAmendRequest(Request $request){

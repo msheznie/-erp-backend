@@ -151,7 +151,7 @@ return [
     'created_successfully' => 'Created Successfully',
     'pricing_schedule_master_retrieved_successfully' => 'Pricing Schedule Master record retrieved successfully',
     'tender_master_id_required' => 'Tender Master ID is required',
-    'tender_master_not_found' => 'Tender Master not found',
+    'tender_master_not_found' => 'Tender master not found',
     'deleted_successfully' => 'Deleted successfully.',
     'schedule_bid_format_deleted_successfully' => 'Schedule bid format deleted successfully',
     'price_bid_format_not_exist' => 'Price bid format does not exist',
@@ -177,5 +177,12 @@ return [
     'qty_greater_than_zero'       => 'QTY cannot be less than or equal to zero',
     'item_already_exists'         => 'Item already exists',
     'pricing_schedule_detail_not_found' => 'Pricing schedule detail record not found.',
-
+    "modify_request_sent_successfully" => "modify request sent successfully",
+    "edit" => "Edit",
+    "amend" => "Amend",
+    'requested_for_request_type_approval' => 'Requested for :requestType approval',
+    'requested_for_request_type_approved' => 'Requested for :requestType approved',
+    'requested_after_request_type_approval' => 'Requested after :requestType approval',
+    'tender_data_not_found' => 'Tender data not found',
+    'calendar_days_updated_successfully' => 'calendar days updated successfully.',
 ];

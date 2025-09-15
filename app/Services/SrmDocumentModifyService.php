@@ -75,7 +75,7 @@ class SrmDocumentModifyService
         if(!empty($documentModifyRequest) &&
             $documentModifyRequest->status == 1 &&
             $documentModifyRequest->confirmation_approved != -1){
-            return $documentModifyRequest->type == 1 ? 'Edit' : 'Amend';
+            return $documentModifyRequest->type == 1 ? trans('srm_tender_rfx.edit') : trans('srm_tender_rfx.amend');
         }
         return '';
     }
@@ -112,11 +112,11 @@ class SrmDocumentModifyService
         $requestType = self::getRequestType($documentModifyRequest);
         if ($documentModifyRequest->modify_type == 1) {
             return ($documentModifyRequest->approved == 0 && $documentModifyRequest->confirmation_approved == 0)
-                ? 'Requested for ' . $requestType . ' approval'
-                : 'Requested for ' . $requestType . ' approved';
+                ? trans('srm_tender_rfx.requested_for_request_type_approval', ['requestType' => $requestType])
+                : trans('srm_tender_rfx.requested_for_request_type_approved', ['requestType' => $requestType]);
         }
         if ($documentModifyRequest->modify_type != 1 && $documentModifyRequest->approved == 1 && $documentModifyRequest->confirmation_approved == 0) {
-            return 'Requested after ' . $requestType . ' approval';
+            return trans('srm_tender_rfx.requested_after_request_type_approval', ['requestType' => $requestType]);
         }
         return null;
     }
