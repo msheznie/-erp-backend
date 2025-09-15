@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\API;
-
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSrmBidDocumentattachmentsAPIRequest;
 use App\Http\Requests\API\UpdateSrmBidDocumentattachmentsAPIRequest;
 use App\Models\SrmBidDocumentattachments;
@@ -18,7 +18,6 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Finder\SplFileInfo;
-use App\helper\Helper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 /**
@@ -325,7 +324,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         ->where('attachmentDescription',$attachmentDescription)
         ->count(); 
         if($isExist >= 1){ 
-           return ['status' => false, 'message' => trans('srm_bid.document_attachments_saved_successfully')];
+           return ['status' => false, 'message' => trans('srm_ranking.document_attachments_saved_successfully')];
         }else {
             
 
@@ -400,15 +399,15 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         
 
             $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
-        
             DB::commit();
-            return $this->sendResponse($documentAttachments->toArray(), trans('srm_bid.document_attachments_saved_successfully'));
+            Log::info(app()->getLocale());
+            return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
         }
             
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError(trans('srm_faq.unable_to_upload_the_attachment'), 500);
+            return $this->sendError(trans('srm_ranking.unable_to_upload_the_attachment'), 500);
         }
 
       

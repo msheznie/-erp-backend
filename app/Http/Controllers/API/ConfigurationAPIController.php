@@ -21,7 +21,7 @@ class ConfigurationAPIController extends AppBaseController
 
     public function getConfigurationInfo(Request $request){
 
-        $isLang = 1;
+        $isLang = 0;
         $environment = 'Local';
         $version = $this->getVersion();
         if (env('IS_MULTI_TENANCY', false)) {
@@ -56,7 +56,7 @@ class ConfigurationAPIController extends AppBaseController
             }
         }
 
-        $configuration = array('environment' => $environment, 'isLang' => 1, 'version' => $version);
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
 
         return $this->sendResponse($configuration, 'Configurations retrieved successfully');
 

@@ -4459,7 +4459,7 @@ class TenderMasterAPIController extends AppBaseController
             $tender->save();
 
             DB::commit();
-            return $this->sendResponse($tender, 'Tender negotiation started successfully');
+            return $this->sendResponse($tender, trans('srm_ranking.tender_negotiation_started'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4473,7 +4473,7 @@ class TenderMasterAPIController extends AppBaseController
             $tenderId = $request['srm_tender_master_id'];
             TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1, 'negotiation_is_awarded' => 1]);
             DB::commit();
-            return $this->sendResponse('success', 'Tender negotiation closed successfully');
+            return $this->sendResponse('success', trans('srm_ranking.tender_negotiation_closed'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
