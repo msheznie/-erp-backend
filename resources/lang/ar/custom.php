@@ -7080,4 +7080,23 @@ return [
     'oct_closing' => 'إغلاق أكتوبر',
     'nov_closing' => 'إغلاق نوفمبر',
     'dec_closing' => 'إغلاق ديسمبر',
+
+    // PO to Payment Report Excel Headers
+    'po_number' => 'رقم أمر الشراء',
+    'category' => 'الفئة',
+    'po_approved_date' => 'تاريخ موافقة أمر الشراء',
+    'po_amount' => 'مبلغ أمر الشراء',
+    'grv_code' => 'رمز استلام البضائع',
+    'grv_date' => 'تاريخ استلام البضائع',
+    'grv_amount' => 'مبلغ استلام البضائع',
+    'invoice_code' => 'رمز الفاتورة',
+    'invoice_date' => 'تاريخ الفاتورة',
+    'invoice_amount' => 'مبلغ الفاتورة',
+    'payment_code' => 'رمز الدفع',
+    'payment_date' => 'تاريخ الدفع',
+    'payment_posted_date' => 'تاريخ ترحيل الدفع',
+    'paid_amount' => 'المبلغ المدفوع',
+
+    // PO to Payment Report Title
+    'po_to_payment_report' => 'تقرير من أمر الشراء إلى الدفع'
 ];

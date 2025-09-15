@@ -6104,7 +6104,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $excelColumnFormat = $report->getColumnFormat();
         $startDate = $request->fromDate;
         $endDate = $request->toDate;
-        $title = "PO to Payment Report";
+        $title = __('custom.po_to_payment_report');
 
         $exportToExcel = $exportReportToExcelService
             ->setTitle($title)

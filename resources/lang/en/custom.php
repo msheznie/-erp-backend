@@ -7167,5 +7167,24 @@ return [
     'sep_closing' => 'Sep Closing',
     'oct_closing' => 'Oct Closing',
     'nov_closing' => 'Nov Closing',
-    'dec_closing' => 'Dec Closing'
+    'dec_closing' => 'Dec Closing',
+
+    // PO to Payment Report Excel Headers
+    'po_number' => 'PO Number',
+    'category' => 'Category',
+    'po_approved_date' => 'PO Approved Date',
+    'po_amount' => 'PO Amount',
+    'grv_code' => 'GRV Code',
+    'grv_date' => 'GRV Date',
+    'grv_amount' => 'GRV Amount',
+    'invoice_code' => 'Invoice Code',
+    'invoice_date' => 'Invoice Date',
+    'invoice_amount' => 'Invoice Amount',
+    'payment_code' => 'Payment Code',
+    'payment_date' => 'Payment Date',
+    'payment_posted_date' => 'Payment Posted Date',
+    'paid_amount' => 'Paid Amount',
+
+    // PO to Payment Report Title
+    'po_to_payment_report' => 'PO to Payment Report'
 ];
