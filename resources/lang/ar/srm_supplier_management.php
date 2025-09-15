@@ -58,5 +58,14 @@ return [
     'slot_detail_cannot_be_deleted_because_a_confirmed_or_approved_delivery_appointment_exists' => 'لا يمكن حذف تفاصيل الفترة لوجود موعد تسليم مؤكد أو معتمد',
     'data_retrieved_successfully' => 'تم استرجاع البيانات بنجاح',
     'something_went_wrong' => 'حدث خطأ ما',
-    'successfully_created' => 'تم الإنشاء بنجاح'
+    'successfully_created' => 'تم الإنشاء بنجاح',
+    "Status couldn't uploaded" => "تعذر تحميل الحالة",
+    'Supplier KYC Status has been updated' => "تم تحديث حالة KYC للمورد",
+    'Invalid UUID pass for fetching supplier data' => "معرّف UUID غير صالح لجلب بيانات المورد",
+    'Something went wrong!, User not found in userTenant table' => "حدث خطأ ما!، لم يتم العثور على المستخدم في جدول userTenant",
+    'Supplier details successfully fetched' => "تم جلب تفاصيل المورد بنجاح",
+    "something_went_wrong_supplier_data_couldnt_be_fetched" => "حدث خطأ ما!، تعذر جلب بيانات المورد",
+    "something_went_wrong_supplier_status_couldnt_be_updated" => "حدث خطأ ما!، تعذر تحديث حالة المورد",
+    'approval_failed_please_check_the_below_details' => 'فشل الاعتماد، يرجى التحقق من التفاصيل أدناه.',
+    'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'الصنف :code1 من أمر الشراء :code2 لديه كمية مخططة (:code3) أكبر من الكمية المتبقية (:code4).'
 ];
