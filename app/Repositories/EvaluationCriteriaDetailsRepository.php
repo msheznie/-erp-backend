@@ -334,7 +334,7 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
         $validator = Validator::make($input, [
             'tender_id' => 'required'
         ], [
-            'tender_id.required' => 'Tender Master ID is required',
+            'tender_id.required' => trans('srm_tender_rfx.tender_master_id_required'),
         ]);
 
         if ($validator->fails()) {

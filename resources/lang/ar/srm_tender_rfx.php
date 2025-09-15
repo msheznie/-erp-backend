@@ -175,4 +175,12 @@ return [
     'item_already_exists' => 'العنصر موجود بالفعل',
     'qty_greater_than_zero'       => 'لا يمكن أن تكون الكمية أقل من أو تساوي الصفر',
     'pricing_schedule_detail_not_found' => 'لم يتم العثور على سجل تفاصيل جدول الأسعار.',
+    "modify_request_sent_successfully" => "تم إرسال طلب التعديل بنجاح",
+    "edit" => "تعديل",
+    "amend" => "تنقيح",
+    'requested_for_request_type_approval' => 'تم طلب موافقة :requestType',
+    'requested_for_request_type_approved' => 'تمت الموافقة على طلب :requestType',
+    'requested_after_request_type_approval' => 'تم الطلب بعد موافقة :requestType',
+    'tender_data_not_found' => 'بيانات المناقصة غير موجودة',
+    'calendar_days_updated_successfully' => 'تم تحديث أيام التقويم بنجاح.',
 ];
