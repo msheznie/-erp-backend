@@ -7110,6 +7110,8 @@ return [
      "maximum_allowed_file_size_exe" => "تم تجاوز الحد الأقصى المسموح لحجم الملف. يرجى رفع ملف أصغر من :sizeLimit",
      "customer_invoice_confirmed_cannot_delete_attachment" => "تم تأكيد فاتورة العميل، لا يمكنك حذف المرفق",
 
+    'YES' => 'نعم',
+    'NO' => 'لا',
     // PO to Payment Report Excel Headers
     'po_number' => 'رقم أمر الشراء',
     'category' => 'الفئة',

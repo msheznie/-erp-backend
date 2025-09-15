@@ -7198,6 +7198,8 @@ return [
     "maximum_allowed_file_size_exe" => "Maximum allowed file size is exceeded. Please upload lesser than :sizeLimit",
     "customer_invoice_confirmed_cannot_delete_attachment" => "Customer invoice confirmed, you cannot delete the attachment",
 
+    'YES' => 'Yes',
+    'NO' => 'No',
     // PO to Payment Report Excel Headers
     'po_number' => 'PO Number',
     'category' => 'Category',
