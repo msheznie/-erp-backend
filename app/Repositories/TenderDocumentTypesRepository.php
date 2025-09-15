@@ -73,9 +73,9 @@ class TenderDocumentTypesRepository extends BaseRepository
                         TenderDocumentTypeAssignLog::insert($docTypeAssign) :
                         TenderDocumentTypeAssign::insert($docTypeAssign);
 
-                    return ['success' => true, 'message' => 'Created successfully'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.created_successfully')];
                 } else {
-                    return ['success' => false, 'message' => 'Please select document type'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.please_select_document_type')];
                 }
             });
         } catch(\Exception $ex){

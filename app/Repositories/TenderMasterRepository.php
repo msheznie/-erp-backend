@@ -525,7 +525,7 @@ class TenderMasterRepository extends BaseRepository
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
 
-            $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : "trans('srm_tender_rfx.rfx')";
+            $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
                 'success' => true,
@@ -2246,7 +2246,7 @@ class TenderMasterRepository extends BaseRepository
 
                 $tenderMaster = TenderMaster::find($tenderId);
                 if(empty($tenderMaster)){
-                    return ['success' => false, 'message' => 'Tender not found'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
                 }
 
                 $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderId);
@@ -2285,9 +2285,9 @@ class TenderMasterRepository extends BaseRepository
                         TenderSupplierAssignee::insert($data);
                 }
                 if ($insertSupplierAssignee) {
-                    return ['success' => true, 'message' => 'New supplier(s) added'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.new_suppliers_added')];
                 } else {
-                    return ['success' => false, 'message' => 'Insertion failed', 'code' => 422];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.insertion_failed'), 'code' => 422];
                 }
             });
         } catch (\Exception $ex){
