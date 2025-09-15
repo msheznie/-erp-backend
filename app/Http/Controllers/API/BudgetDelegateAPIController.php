@@ -119,16 +119,9 @@ class BudgetDelegateAPIController extends AppBaseController
                     return $this->sendError('Department budget planning not found');
                 }
 
-
-                if(Carbon::parse($input['submission_time'])->isSameDay(Carbon::parse($departmentBudgetPlanning->submissionDate)))
-                {
-                    return $this->sendError('Selected submission date cannot be equal to original submission date');
-                }
-
-
                 // validate submission time is not graeter than budget planning detail submission time
-                if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate)) {
-                    $this->sendError('Submission date must be less than the current submission date and greater than current date');
+                if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate) || Carbon::parse($input['submission_time'])->isSameDay(Carbon::parse($departmentBudgetPlanning->submissionDate))) {
+                    return $this->sendError('Submission date must be less than the current submission date and greater than current date');
                 }
 
                 // Check if this is segment-based or GL-based
