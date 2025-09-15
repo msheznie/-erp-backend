@@ -2520,7 +2520,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('You can only close approved request');
+            return $this->sendError(trans('custom.you_can_only_close_approved_request'));
         }
 
         return $this->sendResponse($purchaseRequest, trans('custom.purchase_request_successfully_closed'));
@@ -2553,7 +2553,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('You can only close approved request');
+            return $this->sendError(trans('custom.you_can_only_close_approved_request'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -2992,7 +2992,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->checkBudgetYN == 0) {
-            return $this->sendError('Budget check is removed for the selected document.');
+            return $this->sendError(trans('custom.budget_check_is_removed_for_the_selected_document'));
         }
 
         $this->purchaseRequestRepository->update(['checkBudgetYN' => 0],$purchaseRequestId);

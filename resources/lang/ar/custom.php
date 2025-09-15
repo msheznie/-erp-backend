@@ -7066,6 +7066,8 @@ return [
     'supplier_customer' => 'المورد/العميل',
     'due_amount' => 'المبلغ المستحق',
     'e_supplier_code' => 'رمز المورد',
+    'you_can_only_close_approved_request' => 'يمكنك فقط إغلاق الطلب الموافق عليه',
+    'budget_check_is_removed_for_the_selected_document' => 'تم إزالة التحقق من الميزانية للمستند المحدد.',
     'e_supplier_name' => 'اسم المورد',
     'customer_short_code' => 'الرمز المختصر للعميل',
     'jv_type' => 'نوع قيد اليومية',
