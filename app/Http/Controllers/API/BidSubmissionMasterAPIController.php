@@ -264,7 +264,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     $hasExistingEvaluatedRecord = $this->bidSubmissionMasterRepository->identifyDuplicateBids($tender_id, $id);
 
                     if(!$hasExistingEvaluatedRecord){
-                        return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
+                        return $this->sendError(trans('srm_ranking.enter_remaining_user_values'),500);
                     }
                 }
 
@@ -646,7 +646,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             DB::commit();
             return [
                 'success' => true,
-                'message' => 'Successfully Saved',
+                'message' => trans('srm_ranking.successfully_saved'),
                 'data' => $result
             ];
         } catch (\Exception $e) {
@@ -689,7 +689,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             DB::commit();
             return [
                 'success' => true,
-                'message' => 'Successfully Saved',
+                'message' => trans('srm_ranking.successfully_saved'),
                 'data' => $result
             ];
         } catch (\Exception $e) {

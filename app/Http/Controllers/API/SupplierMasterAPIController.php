@@ -2691,7 +2691,7 @@ class SupplierMasterAPIController extends AppBaseController
                     'success' => false,
                     'message' => $result->data == 0
                         ? $result->message
-                        : "Something went wrong! Supplier Bid Tender status couldn't be updated."
+                        : trans('srm_ranking.supplier_bid_status_update_failed')
                 ], 400);
             }
 
@@ -2707,19 +2707,19 @@ class SupplierMasterAPIController extends AppBaseController
             if ($kycResult) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'KYC Enable Request sent successfully',
+                    'message' => trans('srm_ranking.kyc_enable_request_sent'),
                     'loginUrl' => $loginUrl
                 ], 200);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => trans('srm_ranking.unexpected_error_try_again'),
                 ], 500);
             }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred.',
+                'message' => trans('srm_ranking.unexpected_error'),
             ], 500);
         }
     }

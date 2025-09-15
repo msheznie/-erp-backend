@@ -1028,12 +1028,12 @@ class TenderMasterRepository extends BaseRepository
 
         $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
         if (empty($tenderData)) {
-            return ['success' => false, 'message' => 'Tender not found'];
+            return ['success' => false, 'message' => trans('srm_ranking.tender_not_found')];
         }
 
         $contractType = ContractTypes::getContractTypeId($input['contractType']);
         if (empty($contractType)) {
-            return ['success' => false, 'message' => 'Contract Type not found'];
+            return ['success' => false, 'message' => trans('srm_ranking.contract_type_not_found')];
         }
 
         $supplierId = SupplierRegistrationLink::getSupplierMasterId($input['supplierId'], $companySystemId);
@@ -1041,8 +1041,7 @@ class TenderMasterRepository extends BaseRepository
             $supplierId['supplier_master_id'], 1, $companySystemId, 1);
 
         if (empty($checkSupplierExists)) {
-            return ['success' => false, 'message' => 'The supplier does not exist in the contract management masters.
-             Please add the supplier to the contract management master'];
+            return ['success' => false, 'message' => trans('srm_ranking.supplier_not_in_contract_master')];
         }
 
         try {
@@ -1123,7 +1122,7 @@ class TenderMasterRepository extends BaseRepository
 
             return [
                 'success' => true,
-                'message' => 'Contract Master Created successfully.',
+                'message' => trans('srm_ranking.contract_master_created_success'),
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1274,7 +1273,7 @@ class TenderMasterRepository extends BaseRepository
 
             return [
                 'success' => true,
-                'message' => 'Technical Evaluation Attachment Created successfully.',
+                'message' => trans('srm_ranking.technical_eval_attachment_created'),
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];

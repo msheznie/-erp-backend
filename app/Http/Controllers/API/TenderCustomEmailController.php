@@ -26,11 +26,11 @@ class TenderCustomEmailController extends AppBaseController
         try {
             $result = $this->repository->storeCustomEmailData($request);
             if (!$result['success']) {
-                return $this->sendError(trans('custom.error_occurred_1'));
+                return $this->sendError($result['data']);
             }
-            return $this->sendResponse($result,trans('custom.saved_successfully'));
+            return $this->sendResponse($result,$result['data']);
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_occurred_1'));
+            return $this->sendError(trans('srm_ranking.error_occurred'));
         }
     }
 
@@ -43,13 +43,13 @@ class TenderCustomEmailController extends AppBaseController
             $record = $this->repository->getCustomEmailSupplier($tenderUUID, $supplierUuid, $documentCode);
 
             if (isset($responseData['success']) && $responseData['success']) {
-                return $this->sendError(trans('custom.error_occurred_1'), ['error' => $record['data']]);
+                return $this->sendError('Error occurred', ['error' => $record['data']]);
             }
 
-            return $this->sendResponse($record,trans('custom.the_email_record_successfully_received'));
+            return $this->sendResponse($record,'The Email Record successfully Received');
 
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_occurred_1'), ['error' => $e->getMessage()]);
+            return $this->sendError('Error occurred', ['error' => $e->getMessage()]);
         }
     }
 
@@ -61,13 +61,13 @@ class TenderCustomEmailController extends AppBaseController
             $responseData = $this->repository->getCustomEmailData($tenderId, $negotiationId);
 
             if (isset($responseData['success']) && $responseData['success']) {
-                return $this->sendError(trans('custom.error_occurred_1'));
+                return $this->sendError('Error occurred');
             }
 
-            return $this->sendResponse($responseData,trans('custom.supplier_list_successfully_received'));
+            return $this->sendResponse($responseData,'Supplier List successfully Received');
 
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_occurred_1'));
+            return $this->sendError('Error occurred');
         }
     }
 
@@ -80,13 +80,13 @@ class TenderCustomEmailController extends AppBaseController
             $deleted = $this->repository->deleteByTenderAndSupplier($tenderId, $supplierUuid);
 
             if (isset($deleted['success']) && $deleted['success']) {
-                return $this->sendError(trans('custom.error_occurred_1'), ['error' => $deleted['data']]);
+                return $this->sendError('Error occurred', ['error' => $deleted['data']]);
             }
 
-            return $this->sendResponse(true, trans('custom.records_deleted_successfully'));
+            return $this->sendResponse(true, trans('srm_ranking.records_deleted_success'));
 
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_occurred_1'), ['error' => $e->getMessage()]);
+            return $this->sendError('Error occurred', ['error' => $e->getMessage()]);
         }
     }
 }

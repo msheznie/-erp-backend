@@ -72,14 +72,14 @@ class TenderNegotiationController extends AppBaseController
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
         if(!isset($updateTenderMasterRecord)) {
-            return $this->sendError(trans('custom.tender_master_not_found_1'), 404);
+            return $this->sendError(trans('srm_ranking.tender_master_not_found'), 404);
         }
 
         $input['currencyId'] = $updateTenderMasterRecord->currency_id;
         $latestNegotiation = $this->tenderNegotiationRepository->getVersion($input['srm_tender_master_id']);
         $input['version'] = $latestNegotiation ? $latestNegotiation->version + 1 : 1;
         $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
-        return $this->sendResponse($tenderNeotiation->toArray(), trans('custom.tender_negotiation_started_successfully'));
+        return $this->sendResponse($tenderNeotiation->toArray(), trans('srm_ranking.tender_negotiation_started'));
 
 
     }
@@ -93,7 +93,7 @@ class TenderNegotiationController extends AppBaseController
     public function show($id)
     {
         $tenderNeotiation = $this->tenderNegotiationRepository->withRelations($id,['confirmed_by']);
-        return $this->sendResponse($tenderNeotiation->toArray(), trans('custom.data_reterived_successfully'));
+        return $this->sendResponse($tenderNeotiation->toArray(), 'Data reterived successfully');
     }
 
 
@@ -162,7 +162,7 @@ class TenderNegotiationController extends AppBaseController
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
 
 
-        return $this->sendResponse([], "Tender Negotiation Updated successfully");
+        return $this->sendResponse([], trans('srm_ranking.tender_negotiation_updated'));
 
     }
     /**
@@ -271,7 +271,7 @@ class TenderNegotiationController extends AppBaseController
 
     public function getFormData(Request $request) {
         $yesNoSelection = YesNoSelection::all();
-        return $this->sendResponse($yesNoSelection, trans('custom.data_reterived_successfully'));
+        return $this->sendResponse($yesNoSelection, 'Data reterived successfully');
     }
 
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
@@ -312,7 +312,7 @@ class TenderNegotiationController extends AppBaseController
                         $redirectUrl = env('ERP_APPROVE_URL');
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
                         // $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br> The Follwing bid submission are available $table <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                        $temp = trans('email.hi') . "  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                         $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -377,9 +377,9 @@ class TenderNegotiationController extends AppBaseController
 
 
         if($result) {
-            return $this->sendResponse($saveTenderNegotiation, trans('custom.record_updated_successfully'));
+            return $this->sendResponse($saveTenderNegotiation, trans('srm_ranking.record_updated_successfully'));
         }else {
-            return $this->sendError(trans('custom.sorry_cannot_update_record'), 404);
+            return $this->sendError(trans('srm_ranking.cannot_update_record'), 404);
 
         }
 
@@ -388,10 +388,10 @@ class TenderNegotiationController extends AppBaseController
     public function validateConfirmation($input){
 
         $messages = [
-            'id.required_if' => 'ID is required',
-            'comments.required'  => 'Comment is required',
-            'selectedSupplierList.required'  => 'Supplier is required',
-            'selectedArealList.required'  => 'Area is required',
+            'id.required_if' => trans('srm_ranking.id_required'),
+            'comments.required'  => trans('srm_ranking.comment_required'),
+            'selectedSupplierList.required'  => trans('srm_ranking.supplier_required'),
+            'selectedArealList.required'  => trans('srm_ranking.area_required'),
         ];
 
         $validator = \Validator::make($input, [
@@ -441,10 +441,10 @@ class TenderNegotiationController extends AppBaseController
             ->delete();
 
         if(!$supplierUnchecked){
-            return ['status' => false,'message' =>'Supplier deltation failed'];
+            return ['status' => false,'message' =>  trans('srm_ranking.supplier_deletion_failed')];
         }
 
-        return ['status' => true,'message' =>'Supplier deltation success'];
+        return ['status' => true,'message' => trans('srm_ranking.supplier_deletion_success')];
     }
 
 
@@ -463,10 +463,10 @@ class TenderNegotiationController extends AppBaseController
         $results = SupplierTenderNegotiation::insert($data);
 
         if(!$results){
-            return ['status' => false,'message' =>'Supplier insertion failed'];
+            return ['status' => false,'message' => trans('srm_ranking.supplier_insertion_failed')];
         }
 
-        return ['status' => true,'message' =>'Supplier insertion success'];
+        return ['status' => true,'message' => trans('srm_ranking.supplier_insertion_success')];
     }
 
     public function saveAreaList($checkedAreaList,$id){
@@ -474,20 +474,20 @@ class TenderNegotiationController extends AppBaseController
         $results = TenderNegotiationArea::create($checkedAreaList);
 
         if(!$results){
-            return ['status' => false,'message' =>'Area creation failed'];
+            return ['status' => false,'message' => trans('srm_ranking.area_creation_failed')];
         }
 
-        return ['status' => true,'message' =>'Area creation success'];
+        return ['status' => true,'message' => trans('srm_ranking.area_creation_success')];
     }
 
 
     public function updateAreaList($checkedAreaList,$id) {
         $updateArea = TenderNegotiationArea::where('tender_negotiation_id',$id)->update($checkedAreaList);
         if(!$updateArea){
-            return ['status' => false,'message' =>'Area cannot update'];
+            return ['status' => false,'message' => trans('srm_ranking.area_cannot_update')];
         }
 
-        return ['status' => true,'message' =>'Area updated success'];
+        return ['status' => true,'message' => trans('srm_ranking.area_updated_success')];
 
     }
 
@@ -526,7 +526,7 @@ class TenderNegotiationController extends AppBaseController
             $result =  $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId'], $validatedData['tenderUuid']);
             return $this->sendResponse($result,'Received supplier List');
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_occurred_1'));
+            return $this->sendError('Error occurred');
         }
     }
 }

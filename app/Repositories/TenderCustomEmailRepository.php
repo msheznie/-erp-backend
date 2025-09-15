@@ -38,7 +38,7 @@ class TenderCustomEmailRepository
                 if(!$tenderData){
                     return [
                         "success" => false,
-                        "data" => 'Not a Valid Tender UUID'
+                        "data" => trans('srm_ranking.invalid_tender_uuid')
                     ];
                 }
                 foreach ($data['supplier_uuid'] as $supplierUuid) {
@@ -46,7 +46,7 @@ class TenderCustomEmailRepository
                     if(!$supplierId){
                         return [
                             "success" => false,
-                            "data" => 'Not a Valid Supplier UUID'
+                            "data" =>  trans('srm_ranking.invalid_supplier_uuid')
                         ];
                     }
 
@@ -59,15 +59,15 @@ class TenderCustomEmailRepository
                     );
 
                     if (!$result) {
-                        return ['success' => false, 'data' => 'Failed to save record.'];
+                        return ['success' => false, 'data' =>  trans('srm_ranking.failed_to_save_record')];
                     }
                 }
 
-                return ['success' => true, 'data' => 'Saved successfully'];
+                return ['success' => true, 'data' =>  trans('srm_ranking.saved_successfully')];
 
             });
         } catch (\Exception $e) {
-            return ['success' => false, 'data' => 'Failed to save record.'];
+            return ['success' => false, 'data' => trans('srm_ranking.failed_to_save_record')];
         }
     }
 
@@ -131,14 +131,14 @@ class TenderCustomEmailRepository
                 if(!$tenderData){
                     return [
                         "success" => false,
-                        "data" => 'Not a Valid Tender UUID'
+                        "data" => trans('srm_ranking.invalid_tender_uuid')
                     ];
                 }
                 $supplierId = SRMService::getSupplierRegIdByUUID($supplierUuid);
                 if(!$supplierId){
                     return [
                         "success" => false,
-                        "data" => 'Not a Valid Supplier UUID'
+                        "data" => trans('srm_ranking.invalid_supplier_uuid')
                     ];
                 }
 
