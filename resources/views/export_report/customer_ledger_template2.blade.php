@@ -6,7 +6,7 @@
                 <h1 colspan="9" style="text-align: center;">{{$companyName}}</h1>
             </tr>
             <tr>
-                <h2  colspan="9" style="text-align: center;">Customer Ledger</h2>
+                <h2  colspan="9" style="text-align: center;">{{trans('custom.customer_ledger')}}</h2>
             </tr>
             <tr>
                 <h4  colspan="9" style="text-align: center;">From {{\App\helper\Helper::dateFormat($fromDate)}} To {{\App\helper\Helper::dateFormat($toDate)}}</h4>
@@ -26,14 +26,14 @@
                     <tr></tr>
                     <tr>
                         <th></th>
-                        <th>Document Code</th>
-                        <th>Posted Date</th>
-                        <th>Account</th>
-                        <th>Invoice Number</th>
-                        <th>Invoice Date</th>
-                        <th>Narration</th>
-                        <th>currency</th>
-                        <th>Amount</th>
+                        <th>{{ trans('custom.document_code') }}</th>
+                        <th>{{ trans('custom.posted_date') }}</th>
+                        <th>{{ trans('custom.account') }}</th>
+                        <th>{{ trans('custom.invoice_number') }}</th>
+                        <th>{{ trans('custom.invoice_date') }}</th>
+                        <th>{{ trans('custom.narration') }}</th>
+                        <th>{{ trans('custom.currency') }}</th>
+                        <th>{{ trans('custom.amount') }}</th>
                     </tr>
                 </thead>
                 
@@ -91,7 +91,7 @@
                         </tr>
                     @endforeach
                     <tr>
-                        <td colspan="8" style="text-align: right;"><b>Total:</b></td>
+                        <td colspan="8" style="text-align: right;"><b>{{ trans('custom.total') }}:</b></td>
                         <td style="text-align: left;  font-weight: bold">{{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(\App\helper\Helper::customerLedgerReportSum($reportData[$name][$currencyKey], 'invoice'))}}</td>
                         <td></td>
                     </tr>
@@ -100,7 +100,7 @@
         @endforeach
         <tbody>
             <tr>
-                <td colspan="8" style="text-align: right"><b>Grand Total:</b></td>
+                <td colspan="8" style="text-align: right"><b>{{ trans('custom.grand_total') }}:</b></td>
                 <td style="text-align: left; font-weight: bold;">
                         @if(isset($invoiceAmount))
                         {{\App\Services\Currency\CurrencyService::convertNumberFormatToNumber(round($invoiceAmount, $currencyDecimalPlace))}}

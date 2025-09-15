@@ -923,8 +923,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
 
-                    $fileName = 'Customer Balance Statement';
-                    $title = 'Customer Balance Statement';
+                    $fileName = trans('custom.customer_balance_statement');
+                    $title = trans('custom.customer_balance_statement');
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
@@ -977,8 +977,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
                     $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
 
-                    $fileName = 'Customer Statement of Account';
-                    $title = 'Customer Statement of Account';
+                    $fileName = trans('custom.customer_statement_of_account');
+                    $title = trans('custom.customer_statement_of_account');
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
 
@@ -1038,7 +1038,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ->generateExcel();
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -1055,8 +1055,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $dataType = 2;
                     $objCustomerAgingDetailReport = new CustomerAgingDetailReport();
                     $excelColumnFormat = $objCustomerAgingDetailReport->getCloumnFormat();
-                    $fileName = 'Customer Invoice Aging Report';
-                    $title = 'Customer Invoice Aging Report';
+                    $fileName = trans('custom.customer_invoice_aging_report');
+                    $title = trans('custom.customer_invoice_aging_report');
                 }else {
                     $dataType = 1;
                     $excelColumnFormat = [
@@ -1067,8 +1067,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
-                    $fileName = 'Customer Invoice Aging Summary';
-                    $title = 'Customer Invoice Aging Summary';
+                    $fileName = trans('custom.customer_invoice_aging_summary');
+                    $title = trans('custom.customer_invoice_aging_summary');
                 }
                 $data = $this->getAgingReportRecordForExcel($request,$reportTypeID);
                 $requestCurrency = NULL;
@@ -1092,7 +1092,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ->generateExcel();
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -1268,8 +1268,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
-                    $fileName = 'Customer Balance Summary';
-                    $title = 'Customer Balance Summary';
+                    $fileName = trans('custom.customer_balance_summary');
+                    $title = trans('custom.customer_balance_summary');
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
                     $requestCurrency = NULL;
                     $excelColumnFormat = [
@@ -1294,7 +1294,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         ->generateExcel();
 
                     if(!$exportToExcel['success'])
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
                     return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                     break;
@@ -1416,7 +1416,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if($basePath == '')
                     {
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
@@ -1441,36 +1441,36 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Invoice Type'] = $val->invoiceType;
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Customer Code'] = $val->CutomerCode;
-                        $data[$x]['Customer Name'] = $val->CustomerName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                        $data[$x]['Service Line'] = $val->serviceLineCode;
-                        $data[$x]['Contract'] = $val->clientContractID;
-                        $data[$x]['PO Number'] = $val->PONumber;
-                        $data[$x]['SE No'] = $val->wanNO;
-                        $data[$x]['Rig No'] = $val->rigNo;
-                        $data[$x]['Service Period'] = $val->servicePeriod;
-                        $data[$x]['Start Date'] = \Helper::dateFormat($val->serviceStartDate);
-                        $data[$x]['End Date'] = \Helper::dateFormat($val->serviceEndDate);
-                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Narration'] = $val->documentNarration;
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                        $data[$x]['Receipt Code'] = $val->ReceiptCode;
-                        $data[$x]['Receipt Date'] = \Helper::dateFormat($val->ReceiptDate);
-                        $data[$x]['Amount Matched'] = $val->receiptAmount;
-                        $data[$x]['Balance'] = $val->balanceAmount;
+                        $data[$x][trans('custom.invoice_type')] = $val->invoiceType;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                        $data[$x][trans('custom.customer_code')] = $val->CutomerCode;
+                        $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->PostedDate);
+                        $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                        $data[$x][trans('custom.contract')] = $val->clientContractID;
+                        $data[$x][trans('custom.po_number')] = $val->PONumber;
+                        $data[$x][trans('custom.se_no')] = $val->wanNO;
+                        $data[$x][trans('custom.rig_no')] = $val->rigNo;
+                        $data[$x][trans('custom.service_period')] = $val->servicePeriod;
+                        $data[$x][trans('custom.start_date')] = \Helper::dateFormat($val->serviceStartDate);
+                        $data[$x][trans('custom.end_date')] = \Helper::dateFormat($val->serviceEndDate);
+                        $data[$x][trans('custom.invoice_number')] = $val->invoiceNumber;
+                        $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($val->invoiceDate);
+                        $data[$x][trans('custom.narration')] = $val->documentNarration;
+                        $data[$x][trans('custom.currency')] = $val->documentCurrency;
+                        $data[$x][trans('custom.invoice_amount')] = $val->invoiceAmount;
+                        $data[$x][trans('custom.receipt_code')] = $val->ReceiptCode;
+                        $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($val->ReceiptDate);
+                        $data[$x][trans('custom.amount_matched')] = $val->receiptAmount;
+                        $data[$x][trans('custom.balance')] = $val->balanceAmount;
                         $x++;
                     }
                 }
 
-                $fileName = 'Sales Register';
-                $title = 'Sales Register';
+                $fileName = trans('custom.sales_register');
+                $title = trans('custom.sales_register');
                 $path = 'accounts-receivable/report/customer_sales_register/excel/';
                 $requestCurrency = NULL;
                 $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
@@ -1480,11 +1480,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
                 }
                 break;
 
@@ -1503,8 +1503,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 $data = [];
                 if ($reportTypeID == 'CCR') { //customer aging detail
-                    $fileName = 'Collection Report';
-                    $title = 'Collection Report';
+                    $fileName = trans('custom.collection_report');
+                    $title = trans('custom.collection_report');
                     $from_date = $request->fromDate;
                     $to_date = $request->toDate;
                     $company = Company::find($request->companySystemID);
@@ -1519,19 +1519,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Customer Code'] = $val->CutomerCode;
-                                $data[$x]['Customer Short Code'] = $val->customerShortCode;
-                                $data[$x]['Customer Name'] = $val->CustomerName;
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Bank Name'] = $val->bankName;
-                                $data[$x]['Account No'] = $val->AccountNo;
-                                $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
-                                $data[$x]['Document Narration'] = $val->documentNarration;
-                                $data[$x]['Currency Code'] = $selectedCurrency;
-                                $data[$x]['BRV Document Amount'] = $val->BRVDocumentAmount;
+                                $data[$x][trans('custom.company_id')] = $val->companyID;
+                                $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                $data[$x][trans('custom.customer_code')] = $val->CutomerCode;
+                                $data[$x][trans('custom.customer_short_code')] = $val->customerShortCode;
+                                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                                $data[$x][trans('custom.document_code')] = $val->documentCode;
+                                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                                $data[$x][trans('custom.bank_name')] = $val->bankName;
+                                $data[$x][trans('custom.account_no')] = $val->AccountNo;
+                                $data[$x][trans('custom.bank_currency')] = $val->bankCurrencyCode;
+                                $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                                $data[$x][trans('custom.currency_code')] = $selectedCurrency;
+                                $data[$x][trans('custom.brv_document_amount')] = $val->BRVDocumentAmount;
                                 $x++;
                             }
                         }
@@ -1543,16 +1543,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Customer Code'] = $val->CutomerCode;
-                                $data[$x]['Customer Short Code'] = $val->customerShortCode;
-                                $data[$x]['Customer Name'] = $val->CustomerName;
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Document Narration'] = $val->documentNarration;
-                                $data[$x]['Currency Code'] = $selectedCurrency;
-                                $data[$x]['CN Document Amount'] = $val->CNDocumentAmount;
+                                $data[$x][trans('custom.company_id')] = $val->companyID;
+                                $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                                $data[$x][trans('custom.customer_code')] = $val->CutomerCode;
+                                $data[$x][trans('custom.customer_short_code')] = $val->customerShortCode;
+                                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                                $data[$x][trans('custom.document_code')] = $val->documentCode;
+                                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                                $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                                $data[$x][trans('custom.currency_code')] = $selectedCurrency;
+                                $data[$x][trans('custom.cn_document_amount')] = $val->CNDocumentAmount;
                                 $x++;
                             }
                         }
@@ -1561,8 +1561,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else {
                     $output = $this->getCustomerCollectionMonthlyQRY($request);
                     $year = $request->year;
-                    $fileName = 'Collection Report By Year -'.$year;
-                    $title = 'Collection Report By Year -'.$year;
+                    $fileName = trans('custom.collection_report_by_year') . ' -'.$year;
+                    $title = trans('custom.collection_report_by_year') . ' -'.$year;
                     $from_date = \App\helper\Helper::dateFormat($request->fromDate);
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
@@ -1571,22 +1571,22 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyCode;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Jan'] = $val->Jan;
-                            $data[$x]['Feb'] = $val->Feb;
-                            $data[$x]['March'] = $val->March;
-                            $data[$x]['April'] = $val->April;
-                            $data[$x]['May'] = $val->May;
-                            $data[$x]['Jun'] = $val->June;
-                            $data[$x]['July'] = $val->July;
-                            $data[$x]['Aug'] = $val->Aug;
-                            $data[$x]['Sept'] = $val->Sept;
-                            $data[$x]['Oct'] = $val->Oct;
-                            $data[$x]['Nov'] = $val->Nov;
-                            $data[$x]['Dec'] = $val->Dece;
-                            $data[$x]['Tot'] = ($val->Jan + $val->Feb + $val->March + $val->April + $val->May + $val->June + $val->July + $val->Aug + $val->Sept + $val->Oct + $val->Nov + $val->Dece);
+                            $data[$x][trans('custom.company_id')] = $val->companyCode;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                            $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                            $data[$x][trans('custom.jan')] = $val->Jan;
+                            $data[$x][trans('custom.feb')] = $val->Feb;
+                            $data[$x][trans('custom.mar')] = $val->March;
+                            $data[$x][trans('custom.apr')] = $val->April;
+                            $data[$x][trans('custom.may')] = $val->May;
+                            $data[$x][trans('custom.jun')] = $val->June;
+                            $data[$x][trans('custom.jul')] = $val->July;
+                            $data[$x][trans('custom.aug')] = $val->Aug;
+                            $data[$x][trans('custom.sep')] = $val->Sept;
+                            $data[$x][trans('custom.oct')] = $val->Oct;
+                            $data[$x][trans('custom.nov')] = $val->Nov;
+                            $data[$x][trans('custom.dec')] = $val->Dece;
+                            $data[$x][trans('custom.total')] = ($val->Jan + $val->Feb + $val->March + $val->April + $val->May + $val->June + $val->July + $val->Aug + $val->Sept + $val->Oct + $val->Nov + $val->Dece);
                             $x++;
                         }
                     }
@@ -1611,11 +1611,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
                 }
                 break;
             case 'CR': //Customer Revenue
@@ -1624,8 +1624,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'RC') {
 
 
-                    $fileName = 'Revenue Detail';
-                    $title = 'Revenue Detail';
+                    $fileName = trans('custom.revenue_detail');
+                    $title = trans('custom.revenue_detail');
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
 
@@ -1665,36 +1665,36 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Segment'] = $val->serviceLineCode;
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                            $data[$x][trans('custom.customer_code')] = $val->CutomerCode;
+                            $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                            $data[$x][trans('custom.document_code')] = $val->documentCode;
+                            $data[$x][trans('custom.segment')] = $val->serviceLineCode;
                             // $data[$x]['Contract No'] = $val->ContractNumber;
                             // $data[$x]['Contract Description'] = $val->contractDescription;
                             // $data[$x]['Contract/PO'] = $val->CONTRACT_PO;
                             // $data[$x]['Contract End Date'] = \Helper::dateFormat($val->ContEndDate);
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['GL Desc'] = $val->AccountDescription;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Posting Month'] = Carbon::parse($val->documentDate)->shortEnglishMonth;
-                            $data[$x]['Posting Year'] = $val->PostingYear;
-                            $data[$x]['Narration'] = $val->documentNarration;
+                            $data[$x][trans('custom.gl_code')] = $val->glCode;
+                            $data[$x][trans('custom.gl_desc')] = $val->AccountDescription;
+                            $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.posting_month')] = Carbon::parse($val->documentDate)->shortEnglishMonth;
+                            $data[$x][trans('custom.posting_year')] = $val->PostingYear;
+                            $data[$x][trans('custom.narration')] = $val->documentNarration;
 
                             $decimalPlace = 0;
                             if ($currencyID == '2') {
                                 $decimalPlace = !empty($val->documentLocalDecimalPlaces) ? $val->documentLocalDecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
+                                $data[$x][trans('custom.currency')] = $val->documentLocalCurrency;
+                                $data[$x][trans('custom.amount')] = round($val->localAmount, $decimalPlace);
                             } else if ($currencyID == '3') {
                                 $decimalPlace = !empty($val->documentRptDecimalPlaces) ? $val->documentRptDecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentRptCurrency;
-                                $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
+                                $data[$x][trans('custom.currency')] = $val->documentRptCurrency;
+                                $data[$x][trans('custom.amount')] = round($val->RptAmount, $decimalPlace);
                             } else {
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = $val->localAmount;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
+                                $data[$x][trans('custom.currency')] = $val->documentLocalCurrency;
+                                $data[$x][trans('custom.amount')] = $val->localAmount;
+                                $data[$x][trans('custom.amount')] = round($val->localAmount, $decimalPlace);
                             }
                             $x++;
                         }
@@ -1703,18 +1703,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                     $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                     $requestCurrency = NULL;
-                    $fileName = 'Revenue Detail';
+                    $fileName = trans('custom.revenue_detail');
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
                     $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                     if($basePath == '')
                     {
-                         return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
                     }
 
                 } elseif ($reportTypeID == 'RMS') {
@@ -1725,8 +1725,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $type = $request->type;
                     $year = $request->year;
 
-                    $fileName = 'Revenue Report '.$year;
-                    $title = 'Revenue Report '.$year;
+                    $fileName = trans('custom.revenue_report') . ' '.$year;
+                    $title = trans('custom.revenue_report') . ' '.$year;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
 
@@ -1756,23 +1756,23 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Currency'] = $requestCurrency->CurrencyCode;
-                            $data[$x]['Jan'] = $val->Jan;
-                            $data[$x]['Feb'] = $val->Feb;
-                            $data[$x]['March'] = $val->March;
-                            $data[$x]['April'] = $val->April;
-                            $data[$x]['May'] = $val->May;
-                            $data[$x]['June'] = $val->June;
-                            $data[$x]['July'] = $val->July;
-                            $data[$x]['Aug'] = $val->Aug;
-                            $data[$x]['Sept'] = $val->Sept;
-                            $data[$x]['Oct'] = $val->Oct;
-                            $data[$x]['Nov'] = $val->Nov;
-                            $data[$x]['Dec'] = $val->Dece;
-                            $data[$x]['Total'] = $val->Total;
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                            $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                            $data[$x][trans('custom.currency')] = $requestCurrency->CurrencyCode;
+                            $data[$x][trans('custom.jan')] = $val->Jan;
+                            $data[$x][trans('custom.feb')] = $val->Feb;
+                            $data[$x][trans('custom.mar')] = $val->March;
+                            $data[$x][trans('custom.apr')] = $val->April;
+                            $data[$x][trans('custom.may')] = $val->May;
+                            $data[$x][trans('custom.jun')] = $val->June;
+                            $data[$x][trans('custom.jul')] = $val->July;
+                            $data[$x][trans('custom.aug')] = $val->Aug;
+                            $data[$x][trans('custom.sep')] = $val->Sept;
+                            $data[$x][trans('custom.oct')] = $val->Oct;
+                            $data[$x][trans('custom.nov')] = $val->Nov;
+                            $data[$x][trans('custom.dec')] = $val->Dece;
+                            $data[$x][trans('custom.total')] = $val->Total;
                             $x++;
                         }
                     } else {
@@ -1780,7 +1780,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
 
                     $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
-                    $fileName = 'Revenue Report '.$year;
+                    $fileName = trans('custom.revenue_report').' '.$year;
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
                     $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cure,'title'=>$title);
 
@@ -1788,7 +1788,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if($basePath == '')
                     {
-                         return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
@@ -1838,28 +1838,28 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         } else if ($val->matchingDocdate > $val->custReceiptDate) {
                             $matchingDocdate = $val->matchingDocdate;
                         }
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Customer Short Code'] = $val->CutomerCode;
-                        $data[$x]['Customer Name'] = $val->CustomerName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
-                        $data[$x]['Comments'] = $val->documentNarration;
-                        $data[$x]['Department'] = $val->ServiceLineDes;
-                        $data[$x]['Client Contract ID'] = $val->clientContractID;
-                        $data[$x]['GL Code'] = $val->AccountCode;
-                        $data[$x]['GL Description'] = $val->AccountDescription;
-                        $data[$x]['Currency'] = $val->CurrencyCode;
-                        $data[$x]['Credit Note Total Amount'] = round($val->documentRptAmount, $val->DecimalPlaces);
-                        $data[$x]['Receipt Matching Code'] = $matchingDocCode;
-                        $data[$x]['Receipt Matching Date'] = $matchingDocdate;
-                        $data[$x]['Receipt Amount'] = round(($val->detailSum + $val->custReceiptSum), $val->DecimalPlaces);
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                        $data[$x][trans('custom.customer_short_code')] = $val->CutomerCode;
+                        $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->postedDate);
+                        $data[$x][trans('custom.comments')] = $val->documentNarration;
+                        $data[$x][trans('custom.department')] = $val->ServiceLineDes;
+                        $data[$x][trans('custom.client_contract_id')] = $val->clientContractID;
+                        $data[$x][trans('custom.gl_code')] = $val->AccountCode;
+                        $data[$x][trans('custom.gl_description')] = $val->AccountDescription;
+                        $data[$x][trans('custom.currency')] = $val->CurrencyCode;
+                        $data[$x][trans('custom.credit_note_total_amount')] = round($val->documentRptAmount, $val->DecimalPlaces);
+                        $data[$x][trans('custom.receipt_matching_code')] = $matchingDocCode;
+                        $data[$x][trans('custom.receipt_matching_date')] = $matchingDocdate;
+                        $data[$x][trans('custom.receipt_amount')] = round(($val->detailSum + $val->custReceiptSum), $val->DecimalPlaces);
                     }
                 }
 
 
-                $fileName = 'Credit Note Register';
-                $title = 'Credit Note Register';
+                $fileName = trans('custom.credit_note_register');
+                $title = trans('custom.credit_note_register');
                 $path = 'accounts-receivable/report/credit_note_register/excel/';
                 $requestCurrency = NULL;
                 $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
@@ -1869,7 +1869,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1895,25 +1895,25 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Rig'] = $val->RigDescription." ".$val->regNo;
-                        $data[$x]['Year'] = $val->myRentYear;
-                        $data[$x]['Month'] = $val->myRentMonth;
-                        $data[$x]['Start Date'] = \Helper::dateFormat($val->rentalStartDate);
-                        $data[$x]['End Date'] = \Helper::dateFormat($val->rentalEndDate);
-                        $data[$x]['Rental'] = $val->billingCode;
-                        $data[$x]['Amount'] = $val->performaValue;
-                        $data[$x]['Proforma'] = $val->PerformaCode;
-                        $data[$x]['Pro Date'] = \Helper::dateFormat($val->performaOpConfirmedDate);
-                        $data[$x]['Client Status'] = $val->description;
-                        $data[$x]['Client App Date'] = \Helper::dateFormat($val->myClientapprovedDate);
-                        $data[$x]['Batch No'] = $val->batchNo;
-                        $data[$x]['Submitted Date'] = \Helper::dateFormat($val->mySubmittedDate);
-                        $data[$x]['Invoice No'] = $val->bookingInvCode;
-                        $data[$x]['Invoice App Date'] = \Helper::dateFormat($val->myApprovedDate);
-                        $data[$x]['Status'] = $val->status;
-                        $data[$x]['Receipt Code'] = $val->ReceiptCode;
-                        $data[$x]['Receipt Date'] = \Helper::dateFormat($val->ReceiptDate);
-                        $data[$x]['Receipt Amount'] = $val->ReceiptAmount;
+                        $data[$x][trans('custom.rig')] = $val->RigDescription." ".$val->regNo;
+                        $data[$x][trans('custom.year')] = $val->myRentYear;
+                        $data[$x][trans('custom.month')] = $val->myRentMonth;
+                        $data[$x][trans('custom.start_date')] = \Helper::dateFormat($val->rentalStartDate);
+                        $data[$x][trans('custom.end_date')] = \Helper::dateFormat($val->rentalEndDate);
+                        $data[$x][trans('custom.rental')] = $val->billingCode;
+                        $data[$x][trans('custom.amount')] = $val->performaValue;
+                        $data[$x][trans('custom.proforma')] = $val->PerformaCode;
+                        $data[$x][trans('custom.pro_date')] = \Helper::dateFormat($val->performaOpConfirmedDate);
+                        $data[$x][trans('custom.client_status')] = $val->description;
+                        $data[$x][trans('custom.client_app_date')] = \Helper::dateFormat($val->myClientapprovedDate);
+                        $data[$x][trans('custom.batch_no')] = $val->batchNo;
+                        $data[$x][trans('custom.submitted_date')] = \Helper::dateFormat($val->mySubmittedDate);
+                        $data[$x][trans('custom.invoice_no')] = $val->bookingInvCode;
+                        $data[$x][trans('custom.invoice_app_date')] = \Helper::dateFormat($val->myApprovedDate);
+                        $data[$x][trans('custom.status')] = $val->status;
+                        $data[$x][trans('custom.receipt_code')] = $val->ReceiptCode;
+                        $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($val->ReceiptDate);
+                        $data[$x][trans('custom.receipt_amount')] = $val->ReceiptAmount;
                         $x++;
                     }
                 } else {
@@ -1924,13 +1924,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $detail_array = array(
                     'company_code'=>$companyCode,
                 );
-                $fileName = 'invoice_tracker_';
+                $fileName = trans('custom.invoice_tracker').'_';
                 $path = 'accounts-receivable/report/invoice_tracker_/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1993,10 +1993,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$rowIndex][$val2] = $val[$val2];
                     }
 
-                    $data[$rowIndex]['Current Outstanding'] = $val['subsequentBalanceAmount'];
-                    $data[$rowIndex]['Subsequent Collection Amount'] = $val['subsequentAmount'];
-                    $data[$rowIndex]['Receipt Matching/BRVNo'] = $val['brvInv'];
-                    $data[$rowIndex]['Collection Tracker Status'] = $val['commentAndStatus'];
+                    $data[$rowIndex][trans('custom.current_outstanding')] = $val['subsequentBalanceAmount'];
+                    $data[$rowIndex][trans('custom.subsequent_collection_amount')] = $val['subsequentAmount'];
+                    $data[$rowIndex][trans('custom.receipt_matching_brv_no')] = $val['brvInv'];
+                    $data[$rowIndex][trans('custom.collection_tracker_status')] = $val['commentAndStatus'];
                 }
             }
         } else {
@@ -2006,16 +2006,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $x = 0;
                 foreach ($output['data'] as $val) {
                     $lineTotal = 0;
-                    $data[$x]['Company ID'] = $val->companyID;
-                    $data[$x]['Company Name'] = $val->CompanyName;
-                    $data[$x]['Credit Days'] = $val->creditDays;
-                    $data[$x]['Cust. Code'] = $val->CustomerCode;
-                    $data[$x]['Customer Name'] = $val->CustomerName;
-                    $data[$x]['Currency'] = $val->documentCurrency;
+                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                    $data[$x][trans('custom.credit_days')] = $val->creditDays;
+                    $data[$x][trans('custom.cust_code')] = $val->CustomerCode;
+                    $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                    $data[$x][trans('custom.currency')] = $val->documentCurrency;
                     foreach ($output['aging'] as $val2) {
                         $lineTotal += $val->$val2;
                     }
-                    $data[$x]['Amount'] = $lineTotal;
+                    $data[$x][trans('custom.amount')] = $lineTotal;
                     foreach ($output['aging'] as $val2) {
                         $data[$x][$val2] = $val->$val2;
                     }
@@ -2389,7 +2389,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $input = $request->all();
 
         if (isset($input['customers']) && count($input['customers']) != 1 && $request->reportTypeID == 'CBS') {
-            return $this->sendError("customer Statement cannot be sent to multiple customers",500);
+            return $this->sendError(trans('custom.customer_statement_cannot_be_sent_to_multiple_customers'),500);
         }
 
         if ($request->reportTypeID == 'CSA')
@@ -7716,11 +7716,11 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 $employeeID = \Helper::getEmployeeSystemID();
                 AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
-                return $this->sendResponse([], "Account receivable customer aging PDF report has been sent to queue");
+                return $this->sendResponse([], trans('custom.account_receivable_customer_aging_pdf_report_has_been_sent_to_queue'));
                 break;
 
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 }

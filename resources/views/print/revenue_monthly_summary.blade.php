@@ -129,9 +129,9 @@
                     </td>
                     <td valign="top" style="width: 55%">
                         <br><br>
-                        <span class="font-weight-bold">Revenue Report - {{ $year }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currency {{ $currency }}</span>
+                        <span class="font-weight-bold">{{ trans('custom.revenue_report_year') }} - {{ $year }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.as_of') }} {{ $fromDate }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.currency') }} {{ $currency }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -150,10 +150,10 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ trans('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -166,20 +166,20 @@
                 <td colspan="14"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="20%" style="background-color: #D7E4BD">Customer Name</th>
-                <th width="6%">Jan</th>
-                <th width="6%">Feb</th>
-                <th width="6%">March</th>
-                <th width="6%">April</th>
-                <th width="6%">May</th>
-                <th width="6%">Jun</th>
-                <th width="6%">July</th>
-                <th width="6%">Aug</th>
-                <th width="6%">Sept</th>
-                <th width="6%">Oct</th>
-                <th width="6%">Nov</th>
-                <th width="6%">Dec</th>
-                <th width="15%">Total</th>
+                <th width="20%" style="background-color: #D7E4BD">{{ trans('custom.customer_name') }}</th>
+                <th width="6%">{{ trans('custom.jan') }}</th>
+                <th width="6%">{{ trans('custom.feb') }}</th>
+                <th width="6%">{{ trans('custom.mar') }}</th>
+                <th width="6%">{{ trans('custom.apr') }}</th>
+                <th width="6%">{{ trans('custom.may') }}</th>
+                <th width="6%">{{ trans('custom.jun') }}</th>
+                <th width="6%">{{ trans('custom.jul') }}</th>
+                <th width="6%">{{ trans('custom.aug') }}</th>
+                <th width="6%">{{ trans('custom.sep') }}</th>
+                <th width="6%">{{ trans('custom.oct') }}</th>
+                <th width="6%">{{ trans('custom.nov') }}</th>
+                <th width="6%">{{ trans('custom.dec') }}</th>
+                <th width="15%">{{ trans('custom.total') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -229,7 +229,7 @@
             @endforeach
             <tr>
                 <td class="text-right"
-                    style=""><b>Total:</b>
+                    style=""><b>{{ trans('custom.total') }}:</b>
                 </td>
                 <td class="text-right"><b>{{number_format($janTotal,$decimalPlace)}}</b></td>
                 <td class="text-right"><b>{{number_format($febTotal,$decimalPlace)}}</b></td>
@@ -250,7 +250,7 @@
         <tfoot>
         <tr>
             <td class="text-right"
-                style=""><b>Grand Total:</b>
+                style=""><b>{{ trans('custom.grand_total') }}:</b>
             </td>
             <td class="text-right"><b>{{number_format($total['Jan'],$decimalPlace)}}</b></td>
             <td class="text-right"><b>{{number_format($total['Feb'],$decimalPlace)}}</b></td>

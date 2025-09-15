@@ -174,10 +174,10 @@
                     </td>
                     <td valign="top" style="width: 55%">
                         <br><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collection Report</span><br>
-                        <span class="font-weight-bold">Collection for the Period : {{ $fromDate }}
-                            to {{ $toDate }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currency {{ $selectedCurrency }}</span>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.collection_report') }}</span><br>
+                        <span class="font-weight-bold">{{ trans('custom.collection_for_the_period') }} : {{ $fromDate }}
+                            {{ trans('custom.to') }} {{ $toDate }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.currency') }} {{ $selectedCurrency }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -196,10 +196,10 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ trans('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -211,11 +211,11 @@
                 <td colspan="5"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="20%" style="text-align: center">Customer Code</th>
-                <th width="50%" style="text-align: center">Customer Name</th>
-                <th width="10%" style="text-align: center">Bank Payment</th>
-                <th width="10%" style="text-align: center">Credit Note Issued</th>
-                <th width="10%" style="text-align: center">Total</th>
+                <th width="20%" style="text-align: center">{{ trans('custom.customer_code') }}</th>
+                <th width="50%" style="text-align: center">{{ trans('custom.customer_name') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.bank_payment') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.credit_note_issued') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.total') }}</th>
             </tr>
             <tbody>
             {{ $lineTotalBank = 0 }}
@@ -236,7 +236,7 @@
                 @endforeach
                 <tr>
                     <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Total:</b></td>
+                        class="text-right"><b>{{ trans('custom.total') }}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotalBank, $decimalPlaces) }}</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotalCredit, $decimalPlaces) }}</b></td>
                     <td style="text-align: right">
@@ -249,7 +249,7 @@
         <tfoot>
         <tr>
             <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+                class="text-right"><b>{{ trans('custom.grand_total') }}:</b></td>
             <td style="text-align: right"><b>{{ number_format($bankPaymentTotal, $decimalPlaces) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($creditNoteTotal, $decimalPlaces) }}</b></td>
             <td style="text-align: right">

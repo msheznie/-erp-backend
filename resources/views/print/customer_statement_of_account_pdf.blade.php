@@ -128,15 +128,15 @@
     <table style="width:100%;">
         <tr>
             <td colspan="2" style="width:100%">
-                <span class="font-weight-bold">Kindly confirm the balance and settle the pending invoices at the earliest.</span>
+                <span class="font-weight-bold">{{ trans('custom.kindly_confirm_the_balance_and_settle_the_pending_invoices_at_the_earliest') }}</span>
             </td>
         </tr>
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ trans('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -151,8 +151,8 @@
                     </td>
                     <td valign="top" style="width: 60%">
                         <br><br>
-                        <span class="font-weight-bold">Statement of Account for the Period {{ $fromDate }}
-                            to {{ $toDate }}</span>
+                        <span class="font-weight-bold">{{ trans('custom.statement_of_account_for_the_period') }} {{ $fromDate }}
+                            {{ trans('custom.to') }} {{ $toDate }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -191,18 +191,18 @@
             <table style="width:95%;border:1px solid #9fcdff" class="table">
                 <thead>
                 <tr>
-                    <th width="10%">Document Code</th>
-                    <th width="6%">Posted Date</th>
-                    <th width="5%">Contract</th>
-                    <th width="5%">PO Number</th>
-                    <th width="7%">Invoice Date</th>
-                    <th width="10%">Narration</th>
-                    <th width="5%">Currency</th>
-                    <th width="10%">Invoice Amount</th>
-                    <th width="5%">Receipt/CN Code</th>
-                    <th width="5%">Receipt/CN Date</th>
-                    <th width="10%">Receipt Amount</th>
-                    <th width="10%">Balance Amount</th>
+                    <th width="10%">{{ trans('custom.document_code') }}</th>
+                    <th width="6%">{{ trans('custom.posted_date') }}</th>
+                    <th width="5%">{{ trans('custom.contract') }}</th>
+                    <th width="5%">{{ trans('custom.po_number') }}</th>
+                    <th width="7%">{{ trans('custom.invoice_date') }}</th>
+                    <th width="10%">{{ trans('custom.narration') }}</th>
+                    <th width="5%">{{ trans('custom.currency') }}</th>
+                    <th width="10%">{{ trans('custom.invoice_amount') }}</th>
+                    <th width="5%">{{ trans('custom.receipt_cn_code') }}</th>
+                    <th width="5%">{{ trans('custom.receipt_cn_date') }}</th>
+                    <th width="10%">{{ trans('custom.receipt_amount') }}</th>
+                    <th width="10%">{{ trans('custom.balance_amount') }}</th>
                 </tr>
                 </thead>
 
@@ -227,7 +227,7 @@
                 @endforeach
                     <tr style="background-color: #E7E7E7">
                         <td colspan="7" class="text-right"
-                            style=""><b>Sub Total:</b>
+                            style=""><b>{{ trans('custom.sub_total') }}:</b>
                         </td>
                         <td class="text-right">
                             <b>{{number_format($subInvoiceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
@@ -241,7 +241,7 @@
             @if($currencyID != 1)
                 <tr style="background-color: #E7E7E7">
                     <td colspan="7" class="text-right"
-                        style=""><b>Grand Total:</b></td>
+                        style=""><b>{{ trans('custom.grand_total') }}:</b></td>
                     <td class="text-right"><b>{{number_format($invoiceAmount, $currencyDecimalPlace)}}</b></td>
                     <td colspan="2" style=""
                         class="text-right"></td>
