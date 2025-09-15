@@ -223,6 +223,9 @@ class VerifyCsrfTokenForApi
             'api/v1/budget_pl_temp_attachments',
             'api/v1/budget_template_comments',
             'api/v1/deleteBudgetTemplateComment',
+            'api/v1/createOrUpdateDelegateAccess',
+            'api/v1/updateDelegateStatus',
+            'api/v1/deleteDelegateAccess',
         ];
     }
 }
