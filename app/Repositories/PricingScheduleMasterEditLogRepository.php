@@ -64,10 +64,10 @@ class PricingScheduleMasterEditLogRepository extends BaseRepository
                         self::saveTenderPricingScheduleDetails($tenderMasterID, $versionID, $pricingMaster);
                     }
                 }
-                return ['success' => false, 'message' => 'Pricing schedule master created successfully'];
+                return ['success' => false, 'message' => trans('srm_approvals.pricing_schedule_master_created_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public function saveTenderPricingScheduleDetails($tenderMasterID, $versionID, $pricingMaster){
@@ -87,10 +87,10 @@ class PricingScheduleMasterEditLogRepository extends BaseRepository
                         self::saveTenderBoqItems($tenderMasterID, $versionID, $pricingDetails);
                     }
                 }
-                return ['success' => false, 'message' => 'Pricing schedule details created successfully'];
+                return ['success' => false, 'message' => trans('srm_approvals.pricing_schedule_details_created_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public function saveScheduleBidFormatDetailsLog($tenderMasterID, $versionID, $pricingMaster, $pricingDetails){
@@ -109,10 +109,10 @@ class PricingScheduleMasterEditLogRepository extends BaseRepository
                         ScheduleBidFormatDetailsLog::create($recordData);
                     }
                 }
-                return ['success' => false, 'message' => 'Schedule bid format detail created successfully'];
+                return ['success' => false, 'message' => trans('srm_approvals.schedule_bid_format_detail_created_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public function saveTenderBoqItems($tenderMasterID, $versionID, $pricingDetails){
@@ -130,10 +130,10 @@ class PricingScheduleMasterEditLogRepository extends BaseRepository
                         TenderBoqItemsEditLog::create($recordData);
                     }
                 }
-                return ['success' => false, 'message' => 'Tender boq item/s created successfully'];
+                return ['success' => false, 'message' => trans('srm_approvals.tender_boq_items_created_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
 }
