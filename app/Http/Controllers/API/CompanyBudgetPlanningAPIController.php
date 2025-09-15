@@ -1204,7 +1204,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
 
-            $budgetPlan = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+            $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess')->find($input['budgetPlanningID']);
 
             return $this->sendResponse([
                 'record' => $result,
