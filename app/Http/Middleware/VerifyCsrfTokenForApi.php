@@ -227,7 +227,9 @@ class VerifyCsrfTokenForApi
             'api/v1/updateDelegateStatus',
             'api/v1/deleteDelegateAccess',
             'api/v1/createTimeExtensionRequest',
-            'api/v1/downloadTimeExtensionAttachment'
+            'api/v1/downloadTimeExtensionAttachment',
+            'api/v1/getOptionsForSelectedUnit',
+            'api/v1/saveDepBudgetPlEmpColumns'
         ];
     }
 }
