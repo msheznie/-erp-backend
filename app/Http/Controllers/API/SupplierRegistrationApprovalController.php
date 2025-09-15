@@ -243,7 +243,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                }
         
 
-                if ($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+                if ($response && $response->success === false) return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_status_couldnt_be_updated'));
             }
 
             return $this->sendResponse(array(), $approve["message"]);
@@ -273,7 +273,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 ]
             ]);
 
-            if ($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+            if ($response && $response->success === false) return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_status_couldnt_be_updated'));
 
             return $this->sendResponse(array(), $reject["message"]);
         }
@@ -669,7 +669,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
             return $response;
         }
 
-        return $this->sendError("Something went wrong!, Supplier data couldn't be fetched");
+        return $this->sendError(trans('srm_supplier_management.something_went_wrong_supplier_data_couldnt_be_fetched'));
 
     }
 }
