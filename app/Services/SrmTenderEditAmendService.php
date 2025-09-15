@@ -628,13 +628,13 @@ class SrmTenderEditAmendService
         try {
             $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
             if(empty($tenderMaster)){
-                return ['success' => false, 'message' => 'Tender data not found.'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_data_not_found')];
             }
 
             $tenderMasterID = $tenderMaster->id;
             $tenderHistory = SrmTenderMasterEditLog::tenderMasterHistory($tenderMasterID);
             if(empty($tenderHistory)){
-                return ['success' => false, 'message' => 'Tender history data not found.'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_history_data_not_found')];
             }
             $versionID = $tenderHistory->version_id;
             return DB::transaction(function () use ($tenderMasterID, $versionID) {
@@ -658,10 +658,10 @@ class SrmTenderEditAmendService
                         })->where('is_deleted', 0)->update(['is_deleted' => 1]);
                     }
                 }
-                return ['success' => true, 'message' => 'Deleted successfully.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
             });
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 }
