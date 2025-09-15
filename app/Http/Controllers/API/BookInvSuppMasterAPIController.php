@@ -263,7 +263,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!');
+            return $this->sendError(trans('custom.document_date_not_within_financial_period'));
         }
 
         if (!isset($input['supplierID'])) {
@@ -440,7 +440,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_to_local'),
                 500
             );
         }
@@ -534,7 +534,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-control-account");
 
             if (is_null($checkEmployeeControlAccount)) {
-                return $this->sendError('Please configure Employee control account for this company', 500);
+                return $this->sendError(trans('custom.configure_employee_control_account'), 500);
             }
 
             $input['employeeControlAcID'] = $checkEmployeeControlAccount;
@@ -650,7 +650,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.document_date_not_within_financial_period'), 500);
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
@@ -685,7 +685,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
        
                 $validatorResult = \Helper::checkBlockSuppliers($input['bookingDate'],$supplier_id);
                 if (!$validatorResult['success']) {              
-                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+                     return $this->sendError(trans('custom.supplier_blocked_proceed'), 500,['type' => 'blockSupplier']);
     
                 }
             }
@@ -726,7 +726,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
                         {
-                            return $this->sendError("The exempt VAT category has not been created. Please set up the required category before proceeding",500);
+                            return $this->sendError(trans('custom.exempt_vat_category_not_created'),500);
                         }
                     }
                 }
@@ -766,7 +766,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             if($bookInvSuppMaster->whtApplicable && $bookInvSuppMaster->documentType != 4  && $taxSetup)
             {
                 if($taxSetup->authorityAutoID <= 0 ||  $taxSetup->authorityAutoID == null){
-                    return $this->sendError("Tax Authority not assigned to Withholding Tax (WHT) setup", 500);
+                    return $this->sendError(trans('custom.tax_authority_not_assigned_wht'), 500);
                 }
             }
 
@@ -790,7 +790,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         $poIdArray = $details->pluck('purchaseOrderID')->toArray();
                         if (count(array_unique($poIdArray)) > 1) {
-                            return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                            return $this->sendError(trans('custom.multiple_pos_cannot_be_added'));
                         }
                     }
 
@@ -831,20 +831,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $isDetailConfigured = ($isConfigured) ? SystemGlCodeScenarioDetail::where('systemGLScenarioID', $isConfigured->id)->where('companySystemID', $companyID)->first() : null;
                 if($isConfigured && $isDetailConfigured) {
                     if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
-                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                        return $this->sendError(trans('custom.chart_of_account_not_configured_retention'), 500);
                     }
                     $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
                     if($isChartOfAccountConfigured){
                         if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
-                            return $this->sendError('Chart of account is not configured for retention control account', 500);
+                            return $this->sendError(trans('custom.chart_of_account_not_configured_retention'), 500);
                         }
                     }
                     else{
-                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                        return $this->sendError(trans('custom.chart_of_account_not_configured_retention'), 500);
                     }
                 }
                 else{
-                    return $this->sendError('Chart of account is not configured for retention control account', 500);
+                    return $this->sendError(trans('custom.chart_of_account_not_configured_retention'), 500);
                 }
             }
 
@@ -854,7 +854,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
                 if ($checkItems == 0) {
-                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                    return $this->sendError(trans('custom.supplier_invoice_should_have_one_item'), 500);
                 }
 
                 $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
@@ -907,7 +907,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
                 }
             }
 
@@ -916,7 +916,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkGRVItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->count();
                 if ($checkGRVItems == 0) {
-                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                    return $this->sendError(trans('custom.supplier_invoice_should_have_one_item'), 500);
                 }
 
                 $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
@@ -933,7 +933,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                                     })
                                                     ->count();
                 if ($checkGRVQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
                 }
 
                 //updating unbilled grv table all flags
@@ -966,7 +966,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkGRVItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
                     ->count();
                 if ($checkGRVItems == 0) {
-                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                    return $this->sendError(trans('custom.supplier_invoice_should_have_one_item'), 500);
                 }
 
                 $checkGRVQuantity = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
@@ -975,7 +975,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                                     })
                                                     ->count();
                 if ($checkGRVQuantity > 0) {
-                    return $this->sendError('No of qty should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.qty_should_be_greater_than_zero'), 500);
                 }
 
                 $dirItemDetails = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
@@ -1261,7 +1261,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     foreach($allocatedItems as $allocatedItem) {
                         $total += $allocatedItem->amount;
                         if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
-                            return $this->sendError("Detail amount cannot be less than allocated amount.",500);
+                            return $this->sendError(trans('custom.detail_amount_cannot_be_less_than_allocated'),500);
                         }
                     }
                 }
@@ -1270,7 +1270,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.cannot_confirm_document'), 500, $confirm_error);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -1446,7 +1446,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             \Helper::updateSupplierItemWhtAmount($id,$bookInvSuppMaster);
 
         }
-        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -1641,7 +1641,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.document_date_not_within_financial_period'), 500);
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
@@ -1691,7 +1691,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         $poIdArray = $details->pluck('purchaseOrderID')->toArray();
                         if (count(array_unique($poIdArray)) > 1) {
-                            return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                            return $this->sendError(trans('custom.multiple_pos_cannot_be_added'));
                         }
                     }
 
@@ -1703,7 +1703,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
                 if ($checkItems == 0) {
-                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                    return $this->sendError(trans('custom.supplier_invoice_should_have_one_item'), 500);
                 }
             }
 
@@ -1719,7 +1719,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
                 }
             }
 
@@ -1728,7 +1728,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checkGRVItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->count();
                 if ($checkGRVItems == 0) {
-                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                    return $this->sendError(trans('custom.supplier_invoice_should_have_one_item'), 500);
                 }
 
                 $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
@@ -1745,7 +1745,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkGRVQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
                 }
 
                 //updating unbilled grv table all flags
@@ -1933,7 +1933,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.cannot_confirm_document'), 500, $confirm_error);
             }
 
             $input['RollLevForApp_curr'] = 1;

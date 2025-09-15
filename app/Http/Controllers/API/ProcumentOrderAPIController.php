@@ -6104,7 +6104,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $excelColumnFormat = $report->getColumnFormat();
         $startDate = $request->fromDate;
         $endDate = $request->toDate;
-        $title = "PO to Payment Report";
+        $title = __('custom.po_to_payment_report');
 
         $exportToExcel = $exportReportToExcelService
             ->setTitle($title)
@@ -6147,7 +6147,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             });
         }
 
-        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+        $categories = FinanceItemCategoryMaster::select('itemCategoryID', 'categoryDescription')->get()->map(function($category) {
+            return [
+                'value' => $category->itemCategoryID,
+                'label' => $category->categoryDescription
+            ];
+        });
 
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
         $output = array('suppliers' => $suppliers, 'categories' => $categories);
@@ -6173,7 +6178,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $subCategories = FinanceItemcategorySubAssigned::whereIN('companySystemID', $companyID)->groupBy('itemCategorySubID')->get();
 
-        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+        $categories = FinanceItemCategoryMaster::select('itemCategoryID', 'categoryDescription')->get()->map(function($category) {
+            return [
+                'value' => $category->itemCategoryID,
+                'label' => $category->categoryDescription
+            ];
+        });
 
         $years = Year::orderby('year', 'desc')->get();
 

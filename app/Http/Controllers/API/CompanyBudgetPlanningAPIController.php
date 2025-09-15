@@ -193,7 +193,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         $uuid = $request->get('tenant_uuid', 'local');
 
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid);
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
@@ -1204,7 +1204,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
 
-            $budgetPlan = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+            $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess')->find($input['budgetPlanningID']);
 
             return $this->sendResponse([
                 'record' => $result,

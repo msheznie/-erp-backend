@@ -7173,5 +7173,54 @@ return [
     'customer_sales_quotation_report_sent' => 'Customer sales quotation report sent',
 
     // GL Posted Date Service
-    'financial_posting_error_financial_period_is_not_active' => 'Financial posting error: Financial period is not active.'
+    'financial_posting_error_financial_period_is_not_active' => 'Financial posting error: Financial period is not active.',
+
+    "currency_exchange_rate_to_local" => "Currency exchange rate to local and reporting currency must be greater than zero.",
+    "supplier_invoice_number_already_used" => "Entered supplier invoice number was already used (:bookingInvCode). Please check again",
+    "customer_invoice_number_already_used" => "Entered customer invoice number was already used in (:bookingInvCode). Please check again",
+    "configure_employee_control_account" => "Please configure Employee control account for this company",
+    "document_date_not_within_financial_period" => "Document date is not within the selected financial period !",
+    "supplier_blocked_proceed" => "The selected supplier has been blocked. Are you sure you want to proceed ?",
+    "exempt_vat_category_not_created" => "The exempt VAT category has not been created. Please set up the required category before proceeding",
+    "tax_authority_not_assigned_wht" => "Tax Authority not assigned to Withholding Tax (WHT) setup",
+    "multiple_pos_cannot_be_added" => "Multiple PO's cannot be added. Different PO found on saved details.",
+    "chart_of_account_not_configured_retention" => "Chart of account is not configured for retention control account",
+    "supplier_invoice_should_have_one_item" => "Every Supplier Invoice should have at least one item",
+    "allocate_full_amount" => "Please allocate the full amount of :glCode - :glCodeDes",
+    "set_deduction_type" => "Please set deduction Type for :glCode - :glCodeDes",
+    "amount_should_be_greater_than_zero" => "Amount should be greater than 0 for every items",
+    "qty_should_be_greater_than_zero" => "No of qty should be greater than 0 for every items",
+    "supplier_invoice_amount_greater_than_unbilled_grv" => "Supplier Invoice amount is greater than Unbilled GRV amount. Total Invoice amount is :invoiceAmount and Total Unbilled GRV amount is :grvAmount",
+    "supplier_invoice_amount_greater_than_grv" => "Supplier Invoice amount is greater than GRV amount. Total Invoice amount(Reporting Currency) is :invoiceAmount And Total GRV amount(Reporting Currency) is :grvAmount",
+    "detail_amount_cannot_be_less_than_allocated" => "Detail amount cannot be less than allocated amount.",
+    "cannot_confirm_document" => "You cannot confirm this document.",
+    "supplier_invoice_updated_successfully" => "Supplier Invoice updated successfully",
+    "asset_already_allocated" => "This asset already allocated",
+    "material_issues_detail_not_found" => "Material issues detail not found",
+    "enter_numeric_value_amount_field" => "Please enter a numeric value to the amount field.",
+    "allocated_amount_cannot_be_greater_than_detail_amount" => "Allocated amount cannot be greater than detail amount.",
+    "employee_already_allocated" => "This employee is already allocated",
+    "assigned_qty_cannot_be_greater_than_detail_qty" => "Assigned qty cannot be greater than detail qty.",
+    "total_value_cannot_be_zero" => "Total Value cannot be zero.",
+    "maximum_allowed_file_size_exe" => "Maximum allowed file size is exceeded. Please upload lesser than :sizeLimit",
+    "customer_invoice_confirmed_cannot_delete_attachment" => "Customer invoice confirmed, you cannot delete the attachment",
+
+    // PO to Payment Report Excel Headers
+    'po_number' => 'PO Number',
+    'category' => 'Category',
+    'po_approved_date' => 'PO Approved Date',
+    'po_amount' => 'PO Amount',
+    'grv_code' => 'GRV Code',
+    'grv_date' => 'GRV Date',
+    'grv_amount' => 'GRV Amount',
+    'invoice_code' => 'Invoice Code',
+    'invoice_date' => 'Invoice Date',
+    'invoice_amount' => 'Invoice Amount',
+    'payment_code' => 'Payment Code',
+    'payment_date' => 'Payment Date',
+    'payment_posted_date' => 'Payment Posted Date',
+    'paid_amount' => 'Paid Amount',
+
+    // PO to Payment Report Title
+    'po_to_payment_report' => 'PO to Payment Report'
 ];
