@@ -7196,5 +7196,24 @@ return [
     "assigned_qty_cannot_be_greater_than_detail_qty" => "Assigned qty cannot be greater than detail qty.",
     "total_value_cannot_be_zero" => "Total Value cannot be zero.",
     "maximum_allowed_file_size_exe" => "Maximum allowed file size is exceeded. Please upload lesser than :sizeLimit",
-    "customer_invoice_confirmed_cannot_delete_attachment" => "Customer invoice confirmed, you cannot delete the attachment"
+    "customer_invoice_confirmed_cannot_delete_attachment" => "Customer invoice confirmed, you cannot delete the attachment",
+
+    // PO to Payment Report Excel Headers
+    'po_number' => 'PO Number',
+    'category' => 'Category',
+    'po_approved_date' => 'PO Approved Date',
+    'po_amount' => 'PO Amount',
+    'grv_code' => 'GRV Code',
+    'grv_date' => 'GRV Date',
+    'grv_amount' => 'GRV Amount',
+    'invoice_code' => 'Invoice Code',
+    'invoice_date' => 'Invoice Date',
+    'invoice_amount' => 'Invoice Amount',
+    'payment_code' => 'Payment Code',
+    'payment_date' => 'Payment Date',
+    'payment_posted_date' => 'Payment Posted Date',
+    'paid_amount' => 'Paid Amount',
+
+    // PO to Payment Report Title
+    'po_to_payment_report' => 'PO to Payment Report'
 ];

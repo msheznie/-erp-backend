@@ -7108,5 +7108,24 @@ return [
      "assigned_qty_cannot_be_greater_than_detail_qty" => "لا يمكن أن تكون الكمية المخصصة أكبر من كمية التفصيل.",
      "total_value_cannot_be_zero" => "لا يمكن أن تكون القيمة الإجمالية صفراً.",
      "maximum_allowed_file_size_exe" => "تم تجاوز الحد الأقصى المسموح لحجم الملف. يرجى رفع ملف أصغر من :sizeLimit",
-     "customer_invoice_confirmed_cannot_delete_attachment" => "تم تأكيد فاتورة العميل، لا يمكنك حذف المرفق"
+     "customer_invoice_confirmed_cannot_delete_attachment" => "تم تأكيد فاتورة العميل، لا يمكنك حذف المرفق",
+
+    // PO to Payment Report Excel Headers
+    'po_number' => 'رقم أمر الشراء',
+    'category' => 'الفئة',
+    'po_approved_date' => 'تاريخ موافقة أمر الشراء',
+    'po_amount' => 'مبلغ أمر الشراء',
+    'grv_code' => 'رمز استلام البضائع',
+    'grv_date' => 'تاريخ استلام البضائع',
+    'grv_amount' => 'مبلغ استلام البضائع',
+    'invoice_code' => 'رمز الفاتورة',
+    'invoice_date' => 'تاريخ الفاتورة',
+    'invoice_amount' => 'مبلغ الفاتورة',
+    'payment_code' => 'رمز الدفع',
+    'payment_date' => 'تاريخ الدفع',
+    'payment_posted_date' => 'تاريخ ترحيل الدفع',
+    'paid_amount' => 'المبلغ المدفوع',
+
+    // PO to Payment Report Title
+    'po_to_payment_report' => 'تقرير من أمر الشراء إلى الدفع'
 ];

@@ -423,7 +423,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
 
     public function getAssetCategoryFormData(Request $request)
     {
-        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $yesNoSelection = YesNoSelection::all();
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
