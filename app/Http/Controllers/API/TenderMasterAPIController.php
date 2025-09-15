@@ -2192,7 +2192,7 @@ class TenderMasterAPIController extends AppBaseController
                 return $this->sendResponse([], $response['message']);
             }
         } catch (\Exception $exception) {
-            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()]));
         }
     }
     public function getSupplierAssignedList(Request $request)

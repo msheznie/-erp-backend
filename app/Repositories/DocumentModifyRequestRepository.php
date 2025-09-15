@@ -306,12 +306,12 @@ class DocumentModifyRequestRepository extends BaseRepository
 
         $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
         if(empty($tenderMaster)){
-            return ['success' => false, 'message' => 'Tender master not found'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.tender_master_not_found')];
         }
 
         $requestMaster = DocumentModifyRequest::getDocumentModifyData($requestID);
         if(empty($requestMaster)){
-            return ['success' => false, 'message' => 'Document modify request not found'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.document_modify_request_not_found')];
         }
 
         $allChanges = $this->srmTenderEditAmendService->getHistoryData($tenderID, $requestID);
