@@ -7,6 +7,7 @@ use App\Jobs\AttendanceCrossDayPulling;
 use App\Jobs\AttendanceDayEndPulling;
 use App\Jobs\AttendanceDayEndPullingInitiate;
 use App\Jobs\BirthdayWishInitiate;
+use App\Jobs\EmpDesignationUpdateNotificationJob;
 use App\Jobs\LeaveAccrualInitiate;
 use App\Services\hrms\attendance\SMAttendanceCrossDayPullingService;
 use App\Services\hrms\attendance\SMAttendancePullingService;
@@ -384,5 +385,19 @@ class HRJobInvokeAPIController extends AppBaseController
 
         DelegationActivation::dispatch($tdb);
         return $this->sendResponse(true, 'Delegation job added to queue');
+    }
+
+    function sendEmpDesignationUpdateNotification(Request $request)
+    {
+        $input = $request->all();
+        $tenantId = $input['tenantId'];
+        $dbName = CommonJobService::get_tenant_db($tenantId);
+        $companyId = $input['companyId'];
+        $id = $input['id'];
+        $masterDetails = $input['masterDetails'];
+
+        EmpDesignationUpdateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails);
+
+        return $this->sendResponse([], 'Employee designation update notification scenario added to queue');
     }
 }
