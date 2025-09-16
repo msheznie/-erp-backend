@@ -1273,19 +1273,19 @@ FROM
                     $outwardTotal = round($outwardTotal,$decimal_val) + round($val->outwards_value,$decimal_val);
 
                     $data[] = array(
-                        'Category' => $val->categoryDescription,
-                        'Item Code' => $val->itemPrimaryCode,
-                        'Part No / Reference No' => $val->secondaryItemCode,
-                        'Item Description' => $val->itemDescription,
-                        'UOM' => $val->UnitShortCode,
-                        'Opening Balance Qty' => $val->opening_balance_quantity,
-                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
-                        'Inwards Qty' => $val->inwards_quantity,
-                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $decimal_val, '.', ','),
-                        'Outwards Qty' => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
-                        'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
-                        'Closing Balance Qty' => $val->closing_balance_quantity,
-                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
+                        trans('custom.category') => $val->categoryDescription,
+                        trans('custom.item_code') => $val->itemPrimaryCode,
+                        trans('custom.Part No / Reference No') => $val->secondaryItemCode,
+                        trans('custom.item_description') => $val->itemDescription,
+                        trans('custom.uom') => $val->UnitShortCode,
+                        trans('custom.Opening Balance Qty') => $val->opening_balance_quantity,
+                        trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
+                        trans('custom.Inwards Qty') => $val->inwards_quantity,
+                        trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => number_format($val->inwards_value, $decimal_val, '.', ','),
+                        trans('custom.Outwards Qty') => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
+                        trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
+                        trans('custom.Closing Balance Qty') => $val->closing_balance_quantity,
+                        trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
 
                     );
                 }
@@ -1296,19 +1296,19 @@ FROM
                 $dataSorted = collect($data)->sortBy('Category');
 
                 $GrandTotal =  array(
-                    'Category' => '',
-                    'Item Code' => '',
-                    'Part No / Reference No' => '',
-                    'Item Description' => 'Grand Total',
-                    'UOM' => '',
-                    'Opening Balance Qty' => '',
-                    'Opening Balance Val ('.$currencyCode.')' =>  round($openeingBalanceTotal,3),
-                    'Inwards Qty' => '',
-                    'Inwards Val ('.$currencyCode.')' => $InwardsTotal,
-                    'Outwards Qty' => '',
-                    'Outwards Val ('.$currencyCode.')' => $outwardTotal,
-                    'Closing Balance Qty' => '',
-                    'Closing Balance Val ('.$currencyCode.')' => round($closingBalanceTotal,3),
+                    trans('custom.category') => '',
+                    trans('custom.item_code') => '',
+                    trans('custom.Part No / Reference No') => '',
+                    trans('custom.item_description') => trans('custom.grand_total'),
+                    trans('custom.uom') => '',
+                    trans('custom.Opening Balance Qty') => '',
+                    trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  round($openeingBalanceTotal,3),
+                    trans('custom.Inwards Qty') => '',
+                    trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => $InwardsTotal,
+                    trans('custom.Outwards Qty') => '',
+                    trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => $outwardTotal,
+                    trans('custom.Closing Balance Qty') => '',
+                    trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => round($closingBalanceTotal,3),
 
                 );
 
@@ -1886,7 +1886,7 @@ FROM
                     });
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download('csv');
+                })->download('xlsx');
                 return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:

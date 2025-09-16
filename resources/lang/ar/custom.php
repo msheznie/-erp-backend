@@ -7454,5 +7454,31 @@ return [
     'currency_dash' => 'العملة -',
     'supplier_label' => 'المورد:',
     'transfer_from' => 'نقل من',
-    'transfer_to' => 'نقل إلى'
+    'transfer_to' => 'نقل إلى',
+    
+    // Inventory Report Array Keys
+    'inventory_report_category' => 'الفئة',
+    'inventory_report_item_code' => 'كود الصنف',
+    'inventory_report_part_no_reference_no' => 'رقم القطعة / رقم المرجع',
+    'inventory_report_item_description' => 'وصف الصنف',
+    'inventory_report_uom' => 'وحدة القياس',
+    'inventory_report_opening_balance_qty' => 'كمية الرصيد الافتتاحي',
+    'inventory_report_opening_balance_val' => 'قيمة الرصيد الافتتاحي',
+    'inventory_report_inwards_qty' => 'كمية الوارد',
+    'inventory_report_inwards_val' => 'قيمة الوارد',
+    'inventory_report_outwards_qty' => 'كمية الصادر',
+    'inventory_report_outwards_val' => 'قيمة الصادر',
+    'inventory_report_closing_balance_qty' => 'كمية الرصيد الختامي',
+    'inventory_report_closing_balance_val' => 'قيمة الرصيد الختامي',
+    
+    // Direct text values for arrays
+    'Part No / Reference No' => 'رقم القطعة / رقم المرجع',
+    'Opening Balance Qty' => 'كمية الرصيد الافتتاحي',
+    'Opening Balance Val' => 'قيمة الرصيد الافتتاحي',
+    'Inwards Qty' => 'كمية الوارد',
+    'Inwards Val' => 'قيمة الوارد',
+    'Outwards Qty' => 'كمية الصادر',
+    'Outwards Val' => 'قيمة الصادر',
+    'Closing Balance Qty' => 'كمية الرصيد الختامي',
+    'Closing Balance Val' => 'قيمة الرصيد الختامي'
 ];

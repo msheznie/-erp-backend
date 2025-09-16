@@ -7536,6 +7536,32 @@ return [
      'to' => 'To',
      'currency_dash' => 'Currency -',
      'supplier_label' => 'Supplier:',
-     'transfer_from' => 'Transfer From',
-     'transfer_to' => 'Transfer To'
+    'transfer_from' => 'Transfer From',
+    'transfer_to' => 'Transfer To',
+    
+    // Inventory Report Array Keys
+    'inventory_report_category' => 'Category',
+    'inventory_report_item_code' => 'Item Code',
+    'inventory_report_part_no_reference_no' => 'Part No / Reference No',
+    'inventory_report_item_description' => 'Item Description',
+    'inventory_report_uom' => 'UOM',
+    'inventory_report_opening_balance_qty' => 'Opening Balance Qty',
+    'inventory_report_opening_balance_val' => 'Opening Balance Val',
+    'inventory_report_inwards_qty' => 'Inwards Qty',
+    'inventory_report_inwards_val' => 'Inwards Val',
+    'inventory_report_outwards_qty' => 'Outwards Qty',
+    'inventory_report_outwards_val' => 'Outwards Val',
+    'inventory_report_closing_balance_qty' => 'Closing Balance Qty',
+    'inventory_report_closing_balance_val' => 'Closing Balance Val',
+    
+    // Direct text values for arrays
+    'Part No / Reference No' => 'Part No / Reference No',
+    'Opening Balance Qty' => 'Opening Balance Qty',
+    'Opening Balance Val' => 'Opening Balance Val',
+    'Inwards Qty' => 'Inwards Qty',
+    'Inwards Val' => 'Inwards Val',
+    'Outwards Qty' => 'Outwards Qty',
+    'Outwards Val' => 'Outwards Val',
+    'Closing Balance Qty' => 'Closing Balance Qty',
+    'Closing Balance Val' => 'Closing Balance Val'
 ];
