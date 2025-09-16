@@ -22,13 +22,13 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
     public $db;
     public $companyBudgetPlanningID;
     public $uuid;
-
+    public $empID;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $companyBudgetPlanningID, $uuid)
+    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -45,6 +45,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
         $this->db = $db;
         $this->companyBudgetPlanningID = $companyBudgetPlanningID;
         $this->uuid = $uuid;
+        $this->empID = $empID;
     }
 
     /**
@@ -65,7 +66,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($this->companyBudgetPlanningID);
             if ($companyBudgetPlanning) {
-                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->whereNotNull('parentDepartmentID')->doesntHave('children')->get();
+                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
                 foreach ($finalDepartments as $department) {
                     $data = [
                         'companyBudgetPlanningID' => $companyBudgetPlanning->id,
@@ -91,7 +92,9 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                         "C",
                         $budgetPlanning->toArray(),
                         [],
-                        0
+                        0,
+                        null,
+                        $this->empID
                     );
                 }
             }

@@ -15,6 +15,7 @@ use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\CompanyFinanceYear;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\DepartmentUserBudgetControl;
 use App\Models\WorkflowConfiguration;
@@ -23,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -191,7 +193,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         $uuid = $request->get('tenant_uuid', 'local');
 
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid);
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), 'Budget Planning initiated successfully');
     }
@@ -387,15 +389,18 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $userPermissions = [
             'financeUser' => [
                 'status' => false,
-                'access' => []
+                'access' => [],
+                'isActive' => true
             ],
             'hodUser' => [
                 'status' => false,
-                'access' => []
+                'access' => [],
+                'isActive' => true
             ],
             'delegateUser' => [
                 'status' => false,
-                'access' => []
+                'access' => [],
+                'isActive' => true
             ]
         ];
 
@@ -461,6 +466,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 // only get permission if departmentBudgetPlanningDetailID is set
                 if (isset($input['departmentBudgetPlanningDetailID'])) {
                     $delegateUserAccessData = $delegateUserAccess->where('budget_planning_detail_id', $input['departmentBudgetPlanningDetailID'])->first();
+                    if(!empty($delegateUserAccessData) && ($delegateUserAccessData->status != 1 || $delegateUserAccessData->submission_time <= Carbon::today()->format('Y-m-d')))
+                    {
+                        $userPermissions['delegateUser']['isActive'] = false;
+                    }
                     if (!empty($delegateUserAccessData)) {
                         $preDelegateUserAccessData = BudgetDelegateAccess::where('is_active', 1)->get();
                         $userExistingPermissions = is_array($delegateUserAccessData->access_permissions) ? $delegateUserAccessData->access_permissions : json_decode($delegateUserAccessData->access_permissions);
@@ -506,7 +515,6 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 ->get();
 
             $companyPlanningCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)->select('planningCode','id')->get();
-            $companyCodes = CompanyBudgetPlanning::where('companySystemID', $companyId)->select('companyID','companySystemID')->groupBy('companySystemID')->get();
 
             $departmentPlanningCodes = [];
             $departments = [];
@@ -515,7 +523,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
 
-                if ($isFinanceUser) {
+
+                $newRequest = new Request();
+                $newRequest->replace([
+                    'companyId' => $companyId,
+                    'delegateUser' =>  $employeeID
+                ]);
+                $controller = app(CompanyBudgetPlanningAPIController::class);
+                $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+                if ($userPermission['success'] && $userPermission['data']['financeUser']['status']) {
                     $departmentPlanningCodes = $companyPlanningCodes;
 
                     $departments = DepartmentBudgetPlanning::with('department')
@@ -531,7 +548,39 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             ];
                         });
                 }
-                else {
+
+                if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
+
+                    $delegateBudgetDetails = BudgetDelegateAccessRecord::with('delegatee')->whereHas('delegatee',function ($q) use ($employeeID) {
+                        $q->where('employeeSystemID',$employeeID);
+                    })->pluck('id')->toArray();
+
+                    $companyPlanningCodes = CompanyBudgetPlanning::with('departmentBudgetPlannings')
+                        ->whereHas('departmentBudgetPlannings.budgetPlanningDetails', function ($q) use ($delegateBudgetDetails) {
+                            $q->whereIn('id', $delegateBudgetDetails);
+                        })
+                        ->select('planningCode','id')
+                        ->get();
+
+                    $departmentPlanningCodes = $companyPlanningCodes;
+
+                    $departments = DepartmentBudgetPlanning::with('department')
+                        ->whereHas('department', function($query) use ($companyId) {
+                            $query->whereHas('employees',function ($q) {
+                                $q->where('employeeSystemID',Auth::user()->employee_id);
+                            })->where('companySystemID', $companyId);
+                        })
+                        ->groupBy('departmentID')
+                        ->get()
+                        ->map(function($item) {
+                            return [
+                                'departmentID' => $item->departmentID,
+                                'departmentCode' => $item->department->departmentCode ?? ''
+                            ];
+                        });
+                }
+
+                if($userPermission['success'] && $userPermission['data']['hodUser']['status']) {
                     $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
                         ->where('isHOD', 1)
                         ->whereHas('department', function($query) use ($companyId) {
@@ -571,6 +620,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
             }
 
+
+            $companies = CompanyDepartmentEmployee::with('department.company')->where('employeeSystemID',Auth::user()->employee_id)->get()->pluck('department.company.companySystemID')->toArray();
+            $companyCodes = Company::whereIn('companySystemID', $companies)->select('companyID','companySystemID')->groupBy('companySystemID')->get();
+
             $output = array(
                 'companyFinanceYear' => $companyFinanceYear,
                 'years' => $years,
@@ -596,8 +649,18 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         if ($input['type'] == 'company') {
-            $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId'])->orderBy('id', $sort);
+//            $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId'])->orderBy('id', $sort);
+            $companyCodes = [$input['companyId']];
 
+            if (array_key_exists('company', $input)) {
+                if (!empty($request['company'])) {
+                    $companyCodes = collect($request['company'])->pluck('id')->toArray();
+                }else {
+                    $companyCodes = [$input['companyId']];
+                }
+            }
+
+            $data = CompanyBudgetPlanning::with(['financeYear'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
             /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
@@ -645,7 +708,18 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
         else {
-            $companyBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $input['companyId'])->get();
+
+            $companyCodes = [$input['companyId']];
+
+            if (array_key_exists('company', $input)) {
+                if (!empty($request['company'])) {
+                    $companyCodes = collect($request['company'])->pluck('id')->toArray();
+                }else {
+                    $companyCodes = [$input['companyId']];
+                }
+            }
+
+            $companyBudgetPlanning = CompanyBudgetPlanning::whereIn('companySystemID', $companyCodes)->get();
             $data = collect();
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
@@ -687,7 +761,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -695,12 +769,17 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             ->orderBy('id', $sort);
                     }else {
                         // delegate
+                        
+                        $uniqueIds = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning', 'delegatee'])
+//                            ->whereDate('submission_time', '>=', Carbon::today()->format('Y-m-d'))
+                            ->whereHas('delegatee', function ($query) use ($employeeID) {
+                                $query->where('employeeSystemID', $employeeID)
+                                    ->where('isActive', true);
+                            })
+//                            ->where('status',1)
+                            ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $uniqueIds = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning','delegatee'=> function ($query) use ($employeeID) {
-                            $query->where('employeeSystemID',$employeeID)->where('isActive',true);
-                        }])->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
-
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
@@ -735,6 +814,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                         $data->where('yearID', $input['yearID']);
                     }
                 }
+                
 
                 if (array_key_exists('typeID', $input)) {
                     if (!is_null($input['typeID'])) {
@@ -1089,5 +1169,51 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         return $this->sendResponse(null, 'Budget Planning validation successful');
+    }
+
+
+    public function updateBudgetPlanningDelegateWorkStatus(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            $input['empID'] =  \Helper::getEmployeeSystemID();
+            $input['created_by'] = \Helper::getEmployeeSystemID();
+            // Validate that we have the required data
+            if (empty($input)) {
+                return $this->sendError('No data provided', 400);
+            }
+
+            // Validate required fields for single record
+            if (!isset($input['empID']) || !isset($input['budgetPlanningID'])) {
+                return $this->sendError('Missing required fields: empID and budgetPlanningID are required', 400);
+            }
+
+            
+
+            // Process single record
+            $result = DepartmentBudgetPlanningsDelegateAccess::createOrUpdateDelegateAccess($input);
+            
+            // Update the main budget planning work status
+            $budgetDeleageAccessRecord = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning','delegatee'])
+                                         ->whereHas('budgetPlanningDetail.departmentBudgetPlanning',function ($query) use ($input) {
+                                             $query->where('id', $input['budgetPlanningID']);
+                                         })->whereHas('delegatee',function ($q) use ($input) {
+                                             $q->where('employeeSystemID',$input['empID']);
+                                        })->update(['work_status' => $input['workStatus']]);
+
+
+
+            $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess')->find($input['budgetPlanningID']);
+
+            return $this->sendResponse([
+                'record' => $result,
+                'budgetPlanning' => $budgetPlan,
+                'message' => 'Delegate access record and budget planning work status updated successfully'
+            ], 'Success');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error processing delegate access: ' . $e->getMessage(), 500);
+        }
     }
 }

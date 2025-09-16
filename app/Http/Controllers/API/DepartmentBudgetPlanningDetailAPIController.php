@@ -21,6 +21,7 @@ use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Traits\AuditLogsTrait;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -191,6 +192,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
                 'budgetDelegateAccessDetails',
+                'budgetDelegateAccessDetailsUser',
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
                 'responsiblePerson'
             ]);
@@ -390,9 +392,16 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $entryID = $input['entryID'] ?? null;
             $data = $input['data'];
 
+            $values = collect($data)->pluck('value');
+
+            if ($values->filter()->isEmpty()) {
+                return $this->sendError('At least one item must have a non-empty value',500);
+            }
+
+
             $newRequest = new Request();
             $newRequest->replace([
-                'companyId' => 1,
+                'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
                 'delegateUser' =>  \Helper::getEmployeeSystemID()
             ]);
@@ -409,20 +418,19 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             {
                 $delegateUserAccess = $userPermission['data']['delegateUser'];
 
-                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['input'])
+                if(!empty($delegateUserAccess['access']) && $delegateUserAccess['access']['input'] === false)
                 {
                    return  $this->sendError("User doesn't have permission to input data");
                 }
 
 
-                if(!empty($delegateUserAccess['access']) || !$delegateUserAccess['access']['edit_input'])
+                if((!empty($delegateUserAccess['access']) && !$delegateUserAccess['access']['edit_input']) && !empty($entryID))
                 {
                     return  $this->sendError("User doesn't have permission to edit data");
                 }
 
             }
 
-            $this->updateLinkAmount($budgetDetailId);
 
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
@@ -463,6 +471,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ]);
             }
 
+            $this->updateLinkAmount($budgetDetailId);
+            
             $newValue = BudgetDetTemplateEntryData::with('templateColumn.preColumn')->where('entryID', $entryID)->get();
 
             // Add audit log
@@ -605,13 +615,52 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 return $this->sendError('Budget detail not found');
             }
 
-            // Get entries with their data and template column information using Eloquent
-            $entries = BudgetDetTemplateEntry::with([
-                'entryData.templateColumn'
-            ])
-            ->where('budget_detail_id', $input['id'])
-            ->orderByEntryID()
-            ->get();
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => $input['companyId'],
+                'departmentBudgetPlanningDetailID' => $input['id'],
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
+            ]);
+
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                // Get entries with their data and template column information using Eloquent
+                $entries = BudgetDetTemplateEntry::with([
+                    'entryData.templateColumn'
+                ]);
+
+                if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']))
+                {
+                    $entries = $entries->where('created_by',\Helper::getEmployeeSystemID());
+                }
+
+                $entries = $entries->where('budget_detail_id', $input['id'])
+                    ->orderByEntryID()
+                    ->get();
+
+
+            }else {
+                // Get entries with their data and template column information using Eloquent
+                $entries = BudgetDetTemplateEntry::with([
+                    'entryData.templateColumn'
+                ])
+                    ->where('budget_detail_id', $input['id'])
+                    ->orderByEntryID()
+                    ->get();
+            }
+
 
             // Group entries by row using Eloquent relationships
             $groupedEntries = [];
@@ -623,7 +672,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'created_at' => $entry->created_at,
                     'updated_at' => $entry->updated_at,
                     'entryData' => [],
-                    'unitItems' => []
+                    'unitItems' => [],
+                    'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
+                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        true,
+                    'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
+                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        true
                 ];
 
                 $rowData = [];
@@ -726,6 +781,35 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             BudgetPlanningDetailTempAttachment::where('entry_id',$entry['entryID'])->delete();
 
             $budgetDetailId = $entry['budget_detail_id'];
+
+
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => $input['companySystemID'],
+                'departmentBudgetPlanningDetailID' => $budgetDetailId,
+                'delegateUser' =>  \Helper::getEmployeeSystemID()
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            if(empty($userPermission) || !$userPermission['success'])
+            {
+                return $this->sendError('User permissison not exists');
+            }
+
+
+            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
+            {
+                $delegateUserAccess = $userPermission['data']['delegateUser'];
+
+                if(!empty($delegateUserAccess['access']) && $delegateUserAccess['access']['delete_input'] === false)
+                {
+                    return  $this->sendError("User doesn't have permission to input data");
+                }
+
+            }
+
+
 
             $entry->delete();
 
@@ -833,6 +917,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     return $this->sendError("Delegate User cannot update!",500);
             }
 
+            if(isset($userPermission['data']['financeUser']))
+            {
+                if($userPermission['data']['financeUser']['status'])
+                    return $this->sendError("Finance User cannot update!",500);
+            }
             $budgetPlanningDetailId = $request->input('budgetPlanningDetailId');
 
             $budgetPlanningDetail = DepartmentBudgetPlanningDetail::find($budgetPlanningDetailId);

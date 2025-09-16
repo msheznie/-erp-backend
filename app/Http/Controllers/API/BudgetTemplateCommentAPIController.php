@@ -128,8 +128,18 @@ class BudgetTemplateCommentAPIController extends AppBaseController
      * @param  int  $budgetDetailId
      * @return \Illuminate\Http\Response
      */
-    public function getByBudgetDetail($budgetDetailId)
+    public function getByBudgetDetail($budgetDetailId,Request $request)
     {
+
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $budgetDetailId,
+            'delegateUser' => Auth::user()->employee_id
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
 
         $employees = Employee::where('empActive', true)
             ->where('empCompanySystemID', 1)
@@ -141,16 +151,28 @@ class BudgetTemplateCommentAPIController extends AppBaseController
         $comments = BudgetTemplateComment::with(['user', 'budgetDetail'])
             ->where('budget_detail_id', $budgetDetailId)
             ->whereNull('parent_comment_id') // Only top-level comments
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
 
-        // Load replies for each comment
-        foreach ($comments as $comment) {
-            $comment->replies = BudgetTemplateComment::with(['user'])
-                ->where('parent_comment_id', $comment->commentID)
-                ->orderBy('created_at', 'asc')
-                ->get();
+        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'])
+        {
+            $comments->where('user_id',Auth::id());
         }
+
+        $comments = $comments->get();
+
+        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'])
+        {
+        }else {
+            // Load replies for each comment
+            foreach ($comments as $comment) {
+                $comment->replies = BudgetTemplateComment::with(['user'])
+                    ->where('parent_comment_id', $comment->commentID)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+            }
+        }
+
+
 
         $detail['comments'] = $comments;
         $detail['currentUserId'] = Auth::id();

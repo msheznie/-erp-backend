@@ -6,6 +6,7 @@ use App\Repositories\BudgetDelegateAccessRepository;
 use App\Repositories\BudgetDelegateAccessRecordRepository;
 use App\Repositories\CompanyDepartmentEmployeeRepository;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -69,11 +70,19 @@ class BudgetDelegateService
      */
     public function createOrUpdateDelegateAccess($data)
     {
+
         try {
             DB::beginTransaction();
 
             // Validate budget planning detail exists
             $budgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($data['budget_planning_detail_id']);
+
+            if(Carbon::parse($data['submission_time'])->isSameDay(Carbon::now()) || Carbon::parse($data['submission_time'])->isSameDay(Carbon::parse($budgetPlanningDetail->time_for_submission)))
+            {
+                throw new Exception('Submission date must be less than current submission date and greater than current date');
+            }
+
+
             if (!$budgetPlanningDetail) {
                 throw new Exception('Budget planning detail not found');
             }
