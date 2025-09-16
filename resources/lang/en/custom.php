@@ -7569,5 +7569,15 @@ return [
     'Outwards Qty' => 'Outwards Qty',
     'Outwards Val' => 'Outwards Val',
     'Closing Balance Qty' => 'Closing Balance Qty',
-    'Closing Balance Val' => 'Closing Balance Val'
+    'Closing Balance Val' => 'Closing Balance Val',
+
+    'supplier_evaluation_code_prefix' => 'SE',
+    'supplier_evaluation_filename_prefix' => 'supplier_evaluation_',
+    'same_formula_type_cannot_be_multiple_times' => 'Same formula type can not be multiple times for a single table',
+    'column_type_or_header_cannot_be_empty' => 'Column type or column header can not be empty',
+    'only_general_master_evaluation_type_multiple_columns' => 'Only General Master evaluation type can be multiple columns',
+    'score_number' => 'Score(Number)',
+    'score_rating' => 'Score(Rating)',
+    'serial_length_should_be_greater_than_zero' => 'Serial Length should be greater than zero',
+    'report_template_linked_to_budget' => 'Report Template has linked to budget'
 ];

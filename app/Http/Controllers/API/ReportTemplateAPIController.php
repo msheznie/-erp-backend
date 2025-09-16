@@ -448,7 +448,7 @@ class ReportTemplateAPIController extends AppBaseController
         }
 
         if (isset($input['chartOfAccountSerialLength']) && ($input['chartOfAccountSerialLength'] < 0 || $input['chartOfAccountSerialLength'] == 0 || $input['chartOfAccountSerialLength'] == null)) {
-            return $this->sendError('Serial Length should be greater than zero', 500);
+            return $this->sendError(trans('custom.serial_length_should_be_greater_than_zero'), 500);
         }
 
 
@@ -586,7 +586,7 @@ class ReportTemplateAPIController extends AppBaseController
                                                ->first();
 
             if ($checkReportInBudget) {
-                return $this->sendError('Report Template has linked to budget');
+                return $this->sendError(trans('custom.report_template_linked_to_budget'));
             }
 
             $templateDetail = ReportTemplateDetails::ofMaster($id)->delete();

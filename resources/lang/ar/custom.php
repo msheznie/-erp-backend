@@ -7486,5 +7486,17 @@ return [
     'Outwards Qty' => 'كمية الصادر',
     'Outwards Val' => 'قيمة الصادر',
     'Closing Balance Qty' => 'كمية الرصيد الختامي',
-    'Closing Balance Val' => 'قيمة الرصيد الختامي'
+
+    'Closing Balance Val' => 'قيمة الرصيد الختامي',
+    'supplier_evaluation_code_prefix' => 'ت م',
+    'actions' => 'الإجراءات',
+    'supplier_evaluation_filename_prefix' => 'تقييم_المورد_',
+    'data_retrieved_successfully' => 'تم استرداد البيانات بنجاح',
+    'same_formula_type_cannot_be_multiple_times' => 'لا يمكن أن يكون نفس نوع الصيغة متعدد المرات لجدول واحد',
+    'column_type_or_header_cannot_be_empty' => 'لا يمكن أن يكون نوع العمود أو رأس العمود فارغًا',
+    'only_general_master_evaluation_type_multiple_columns' => 'يمكن أن يكون نوع التقييم الرئيسي العام فقط أعمدة متعددة',
+    'score_number' => 'النتيجة(رقم)',
+    'score_rating' => 'النتيجة(تقييم)',
+    'serial_length_should_be_greater_than_zero' => 'يجب أن يكون الطول التسلسلي أكبر من الصفر',
+    'report_template_linked_to_budget' => 'تم ربط قالب التقرير بالميزانية'
 ];
