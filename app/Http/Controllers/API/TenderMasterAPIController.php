@@ -1964,19 +1964,19 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = TenderMaster::find($tenderMasterId);
         $emails = array();
         if (empty($tenderMaster)) {
-            return $this->sendError('Tender not found');
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
         }
 
         if ($tenderMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Tender it is already partially approved');
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_partial'));
         }
 
         if ($tenderMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this Tender it is already fully approved');
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_full'));
         }
 
         if ($tenderMaster->confirmed_yn == 0) {
-            return $this->sendError('You cannot reopen this Tender, it is not confirmed');
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_not_confirmed'));
         }
 
         // updating fields
@@ -2012,7 +2012,7 @@ class TenderMasterAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.policy_not_found')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -2056,7 +2056,7 @@ class TenderMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($tenderMaster->document_system_id, $tenderMasterId, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($tenderMaster->toArray(), 'Tender reopened successfully');
+        return $this->sendResponse($tenderMaster->toArray(), trans('srm_tender_rfx.tender_reopened_success'));
     }
 
     public function tenderMasterPublish(Request $request)
@@ -4967,11 +4967,11 @@ class TenderMasterAPIController extends AppBaseController
 
             $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderMasterId);
             if (empty($tenderMaster)) {
-                return $this->sendError('Tender Master not found');
+                return $this->sendError(trans('srm_tender_rfx.tender_master_not_found'));
             }
 
             if ($tenderMaster->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('srm_tender_rfx.cannot_amend_document'));
             }
 
 
@@ -5014,7 +5014,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tenderMaster->toArray(), 'Tender amended successfully');
+            return $this->sendResponse($tenderMaster->toArray(), trans('srm_tender_rfx.tender_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

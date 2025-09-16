@@ -298,5 +298,13 @@ return [
     'assign_suppliers' => 'Assign Suppliers',
     'name' => 'Name',
     'completed' => 'Completed',
-    'pending' => 'Pending'
+    'pending' => 'Pending',
+    'tender_reopen_partial' => 'You cannot reopen this Tender it is already partially approved',
+    'tender_reopen_full' => 'You cannot reopen this Tender it is already fully approved',
+    'tender_reopen_not_confirmed' => 'You cannot reopen this Tender, it is not confirmed',
+    'policy_not_found' => 'Policy not found for this document',
+    'tender_reopened_success' => 'Tender reopened successfully',
+    'technical_eval_percentage_total' => 'Total of the Technical Evaluation Criteria percentage should be equal to 100',
+    'cannot_amend_document' => 'You cannot amend this document',
+    'tender_amended_successfully' => 'Tender amended successfully'
 ];

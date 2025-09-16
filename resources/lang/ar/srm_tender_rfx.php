@@ -296,5 +296,13 @@ return [
     'assign_suppliers' => 'تعيين الموردين',
     'name' => 'الاسم',
     'completed' => 'مكتمل',
-    'pending' => 'قيد الانتظار'
+    'pending' => 'قيد الانتظار',
+    'tender_reopen_partial' => 'لا يمكنك إعادة فتح هذه المناقصة لأنها تمت الموافقة عليها جزئياً',
+    'tender_reopen_full' => 'لا يمكنك إعادة فتح هذه المناقصة لأنها تمت الموافقة عليها بالكامل',
+    'tender_reopen_not_confirmed' => 'لا يمكنك إعادة فتح هذه المناقصة لأنها غير مؤكدة',
+    'policy_not_found' => 'لم يتم العثور على السياسة لهذا المستند',
+    'tender_reopened_success' => 'تمت إعادة فتح المناقصة بنجاح',
+    'technical_eval_percentage_total' => 'يجب أن يكون مجموع النسبة المئوية لمعايير التقييم الفني مساوياً لـ 100',
+    'cannot_amend_document' => 'لا يمكنك تعديل هذا المستند',
+    'tender_amended_successfully' => 'تم تعديل المناقصة بنجاح'
 ];
