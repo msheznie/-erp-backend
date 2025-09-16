@@ -7351,6 +7351,12 @@ return [
     'document_year' => 'سنة المستند',
     'gl_dump_report' => 'تقرير تفريغ دفتر الأستاذ',
     'general_ledger_pdf_report' => 'تم إرسال تقرير دفتر الأستاذ العام بصيغة PDF إلى قائمة الانتظار',
+
+    //Department master export excel
+    'department_code' => 'رمز القسم',
+    'department_description' => 'وصف القسم',
+    'parent_department' => 'القسم الرئيسي',
+    'hod' => 'رئيس القسم',
     // Material Issue Register Report Translations
     'employee_expense_register' => 'سجل مصروفات الموظفين',
     'assets_expense_register' => 'سجل مصروفات الأصول',

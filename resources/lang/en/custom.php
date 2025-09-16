@@ -7434,7 +7434,13 @@ return [
     'gl_dump_report' => 'GL Dump Report',
     'general_ledger_pdf_report' => 'General Ledger PDF report has been sent to queue',
 
-     // Material Issue Register Report Translations
+    //Department master export excel
+    'department_code' => 'Department Code',
+    'department_description' => 'Department Description',
+    'parent_department' => 'Parent Department',
+    'hod' => 'HOD',
+
+      // Material Issue Register Report Translations
      'employee_expense_register' => 'Employee expense register',
      'assets_expense_register' => 'Assets expense register',
      'segment_expense_register' => 'Segment expense register',
