@@ -559,7 +559,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $glCode->items->push(['budjetAmtRpt' => $budjetAmtRptSum,'isText' => true]);
         }
 
-        return $this->sendResponse(['glData' => $glCodes],"Data reterived successfully");
+        return $this->sendResponse(['glData' => $glCodes], trans('custom.data_retrieved_successfully'));
     }
 
     public function exportReport(Request $request)
@@ -893,7 +893,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
-            return $this->sendResponse([], "Budget details uploaded successfully");
+            return $this->sendResponse([], trans('custom.budget_details_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -925,7 +925,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
         if (!$budgetMaster) {
-            return $this->sendError("Budget master not fouund", 500);
+            return $this->sendError(trans('custom.budget_master_not_found'), 500);
         }
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
@@ -976,7 +976,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
 
         if (!$budgetMaster) {
-            return $this->sendError("Budget Master not found");
+            return $this->sendError(trans('custom.budget_master_not_found'));
         }
 
         $budgetHistoryData['initialBudget'] = BudgetDetailHistory::where('budgetmasterID', $input['budgetMasterID'])

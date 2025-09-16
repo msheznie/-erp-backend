@@ -434,7 +434,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         //$budgetMaster = $this->budgetMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($budgetMaster->toArray(), 'Budget Master updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($budgetMaster->toArray(), trans('custom.budget_master_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
