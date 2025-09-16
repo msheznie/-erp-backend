@@ -24,48 +24,48 @@ class MaterialIssueRegister
         if($reportType == 1)
         {
             return [
-                'Issue Code',
-                'Issue Date',
-                'Request No',
-                'Item Code',
-                'Item Description',
-                'UOM',
-                'Issued Qty',
-                'Issued to - Emp ID',
-                'Issued to - Emp Name',
-                'Qty',
-                'Cost',
-                'Amount'
+                trans('custom.issue_code'),
+                trans('custom.issue_date'),
+                trans('custom.request_no'),
+                trans('custom.item_code'),
+                trans('custom.item_description'),
+                trans('custom.uom'),
+                trans('custom.issued_qty'),
+                trans('custom.issued_to_emp_id'),
+                trans('custom.issued_to_emp_name'),
+                trans('custom.qty'),
+                trans('custom.cost'),
+                trans('custom.amount')
             ];
         }else if ($reportType == 2){
             return [
-                'Issue Code',
-                'Issue Date',
-                'Request No',
-                'Item Code',
-                'Item Description',
-                'UOM',
-                'Issued Qty',
-                'Issued to - Asset Code',
-                'Issued to - Asset Description',
-                'Qty',
-                'Cost',
-                'Amount'
+                trans('custom.issue_code'),
+                trans('custom.issue_date'),
+                trans('custom.request_no'),
+                trans('custom.item_code'),
+                trans('custom.item_description'),
+                trans('custom.uom'),
+                trans('custom.issued_qty'),
+                trans('custom.issued_to_asset_code'),
+                trans('custom.issued_to_asset_description'),
+                trans('custom.qty'),
+                trans('custom.cost'),
+                trans('custom.amount')
             ];
         }else {
             return [
-                'Issue Code',
-                'Issue Date',
-                'Request No',
-                'Item Code',
-                'Item Description',
-                'UOM',
-                'Issued Qty',
-                'Issued to - Segment Code',
-                'Issued to - Segment Description',
-                'Qty',
-                'Cost',
-                'Amount'
+                trans('custom.issue_code'),
+                trans('custom.issue_date'),
+                trans('custom.request_no'),
+                trans('custom.item_code'),
+                trans('custom.item_description'),
+                trans('custom.uom'),
+                trans('custom.issued_qty'),
+                trans('custom.issued_to_segment_code'),
+                trans('custom.issued_to_segment_description'),
+                trans('custom.qty'),
+                trans('custom.cost'),
+                trans('custom.amount')
             ];
         }
 
@@ -73,96 +73,84 @@ class MaterialIssueRegister
     /**
      * @param mixed $issueCode
      */
-    public function setIssueCode($issueCode): void
-    {
+    public function setIssueCode($issueCode)    {
         $this->issueCode = $issueCode;
     }
 
     /**
      * @param mixed $issueDate
      */
-    public function setIssueDate($issueDate): void
-    {
+    public function setIssueDate($issueDate)    {
         $this->issueDate = $issueDate;
     }
 
     /**
      * @param mixed $requestNo
      */
-    public function setRequestNo($requestNo): void
-    {
+    public function setRequestNo($requestNo)    {
         $this->requestNo = $requestNo;
     }
 
     /**
      * @param mixed $itemCode
      */
-    public function setItemCode($itemCode): void
-    {
+    public function setItemCode($itemCode)    {
         $this->itemCode = $itemCode;
     }
 
     /**
      * @param mixed $itemDescription
      */
-    public function setItemDescription($itemDescription): void
-    {
+    public function setItemDescription($itemDescription)    {
         $this->itemDescription = $itemDescription;
     }
 
     /**
      * @param mixed $UOM
      */
-    public function setUom($uom): void
-    {
+    public function setUom($uom)    {
         $this->uom = $uom;
     }
 
     /**
      * @param mixed $issuedQty
      */
-    public function setIssuedQty($issuedQty): void
-    {
+    public function setIssuedQty($issuedQty)    {
         $this->issuedQty = $issuedQty;
     }
 
         /**
      * @param mixed $empID
      */
-    public function setEmpID($empID): void
-    {
+    public function setEmpID($empID)    {
         $this->empID = $empID;
     }
 
             /**
      * @param mixed $empName
      */
-    public function setEmpName($empName): void
-    {
+    public function setEmpName($empName)    {
         $this->empName = $empName;
     }
 
     /**
      * @param mixed $qty
      */
-    public function setQty($qty): void
-    {
+    public function setQty($qty)    {
         $this->qty = $qty;
     }
 
     /**
      * @param mixed $cost
      */
-    public function setCost($cost): void
-    {
+    public function setCost($cost)    {
         $this->cost = $cost;
     }
 
     /**
      * @param mixed $amount
      */
-    public function setAmount($amount): void
-    {
+    public function setAmount($amount)    {
         $this->amount = $amount;
     }
 
