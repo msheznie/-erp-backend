@@ -180,7 +180,7 @@ class DebitNoteAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_local'),
                 500
             );
         }
@@ -526,7 +526,7 @@ class DebitNoteAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_to_local'),
                 500
             );
         }
@@ -639,7 +639,7 @@ class DebitNoteAPIController extends AppBaseController
 
 
         if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
-            return $this->sendError("LC Doc Code is required", 500);
+            return $this->sendError(trans('custom.lc_doc_code_is_required'), 500);
         }
 
         // adding supplier grv details
@@ -738,7 +738,7 @@ class DebitNoteAPIController extends AppBaseController
                
                 $validatorResult = \Helper::checkBlockSuppliers($input['debitNoteDate'],$input['supplierID']);
                 if (!$validatorResult['success']) {              
-                     return $this->sendError('The selected supplier has been blocked. Are you sure you want to proceed ?', 500,['type' => 'blockSupplier']);
+                     return $this->sendError(trans('custom.supplier_blocked_proceed'), 500,['type' => 'blockSupplier']);
     
                 }
             }
@@ -766,14 +766,14 @@ class DebitNoteAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.document_date_financial_period_validation'), 500);
             }
 
             $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
                 ->count();
 
             if ($checkItems == 0) {
-                return $this->sendError('Every debit note should have at least one item', 500);
+                return $this->sendError(trans('custom.debit_item_one_item'), 500);
             }
 
             $checkQuantity = DebitNoteDetails::where('debitNoteAutoID', $id)
@@ -787,7 +787,7 @@ class DebitNoteAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                return $this->sendError(trans('custom.amount_should_be_greater_than_0_for_every_items'), 500);
             }
 
             $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->get();
@@ -850,7 +850,7 @@ class DebitNoteAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document_1'), 500, $confirm_error);
             }
 
             $amount = DebitNoteDetails::where('debitNoteAutoID', $id)
@@ -1036,7 +1036,7 @@ class DebitNoteAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_to_local'),
                 500
             );
         }
@@ -1201,14 +1201,14 @@ class DebitNoteAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.document_date_not_within_financial_period'), 500);
             }
 
             $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
                 ->count();
 
             if ($checkItems == 0) {
-                return $this->sendError('Every debit note should have at least one item', 500);
+                return $this->sendError(trans('custom.debit_item_one_item'), 500);
             }
 
             $checkQuantity = DebitNoteDetails::where('debitNoteAutoID', $id)
@@ -1222,7 +1222,7 @@ class DebitNoteAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                return $this->sendError(trans('custom.amount_should_be_greater_than_0_for_every_items'), 500);
             }
 
             $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->get();
@@ -1278,7 +1278,7 @@ class DebitNoteAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document_1'), 500, $confirm_error);
             }
 
             $amount = DebitNoteDetails::where('debitNoteAutoID', $id)

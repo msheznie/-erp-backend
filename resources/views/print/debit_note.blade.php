@@ -289,7 +289,7 @@
 
                         @if($entity->type == 2)
                         <td width="150px">
-                            <span style="font-weight: bold;">Employee Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.employee_code') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>
@@ -318,7 +318,7 @@
 
                         @if($entity->type == 2)
                         <td width="50px">
-                            <span style="font-weight: bold;">Employee Name</span>
+                            <span style="font-weight: bold;">{{ __('custom.employee_name') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>
@@ -332,7 +332,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold;">Invoice Number</span>
+                            <span style="font-weight: bold;">{{ __('custom.invoice_number') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>
@@ -343,7 +343,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold;">Reference Number</span>
+                            <span style="font-weight: bold;">{{ __('custom.reference_number') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>
@@ -354,7 +354,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight: bold;">Narration </span>
+                            <span style="font-weight: bold;">{{ __('custom.narration') }} </span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold;">:</span>
@@ -379,7 +379,7 @@
                 </table>
             </td>
             <td style="width: 20%" valign="bottom" class="text-right">
-                <span style="font-weight: bold;"> Currency:</span>
+                <span style="font-weight: bold;"> {{ __('custom.currency') }}:</span>
                 @if($entity->transactioncurrency)
                     {{$entity->transactioncurrency->CurrencyCode}}
                 @endif

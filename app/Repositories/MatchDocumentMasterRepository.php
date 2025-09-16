@@ -167,11 +167,11 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
 
                 if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
-                    $data[$x][trans('custom.status')] = "Not Confirmed";
+                    $data[$x][trans('custom.status')] = trans('custom.not_confirmed');
                 } else if ($val->matchingConfirmedYN == 1 && $val->cancelledYN == 0) {
-                    $data[$x][trans('custom.status')] = "Confirmed";
+                    $data[$x][trans('custom.status')] = trans('custom.confirmed');
                 } else if ($val->cancelledYN == 1) {
-                    $data[$x][trans('custom.status')] = "Cancelled";
+                    $data[$x][trans('custom.status')] = trans('custom.cancelled');
                 }
                 // $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
