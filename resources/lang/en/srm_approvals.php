@@ -20,5 +20,8 @@ return [
     'tender_boq_items_updated_successfully' => 'Tender Boq items updated successfully',
     'tender_circular_updated_successfully' => 'Tender Circular updated successfully',
     'circular_amendment_updated_successfully' => 'Circular Amendment updated successfully',
-    'evacuation_criteria_updated_successfully' => 'Evacuation Criteria updated successfully'
+    'evacuation_criteria_updated_successfully' => 'Evacuation Criteria updated successfully',
+    'payment_proof_not_found' => 'Payment proof not found.',
+    'failed_to_update_payment_proof_record' => 'Failed to update payment proof record.',
+    'failed_to_delete_document_approval_record' => 'Failed to delete document approval record.'
 ];
