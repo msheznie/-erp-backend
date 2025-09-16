@@ -150,7 +150,7 @@ class InventoryReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -583,7 +583,7 @@ class InventoryReportAPIController extends AppBaseController
                 return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
 
         }
     }
@@ -1176,7 +1176,7 @@ FROM
                 $templateName = "export_report.scrap_inventory_supplier_wise_report";
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=> trans('custom.scrap_inventory_report'), 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
 
                 $file_type = $request->type;  
@@ -1186,7 +1186,7 @@ FROM
         
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1220,7 +1220,7 @@ FROM
 
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=> trans('custom.scrap_inventory_report'), 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 $file_type = $request->type;  
                 $fileName = 'scrap_inventory_report';
@@ -1229,7 +1229,7 @@ FROM
         
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1273,19 +1273,19 @@ FROM
                     $outwardTotal = round($outwardTotal,$decimal_val) + round($val->outwards_value,$decimal_val);
 
                     $data[] = array(
-                        'Category' => $val->categoryDescription,
-                        'Item Code' => $val->itemPrimaryCode,
-                        'Part No / Reference No' => $val->secondaryItemCode,
-                        'Item Description' => $val->itemDescription,
-                        'UOM' => $val->UnitShortCode,
-                        'Opening Balance Qty' => $val->opening_balance_quantity,
-                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
-                        'Inwards Qty' => $val->inwards_quantity,
-                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $decimal_val, '.', ','),
-                        'Outwards Qty' => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
-                        'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
-                        'Closing Balance Qty' => $val->closing_balance_quantity,
-                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
+                        trans('custom.category') => $val->categoryDescription,
+                        trans('custom.item_code') => $val->itemPrimaryCode,
+                        trans('custom.Part No / Reference No') => $val->secondaryItemCode,
+                        trans('custom.item_description') => $val->itemDescription,
+                        trans('custom.uom') => $val->UnitShortCode,
+                        trans('custom.Opening Balance Qty') => $val->opening_balance_quantity,
+                        trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
+                        trans('custom.Inwards Qty') => $val->inwards_quantity,
+                        trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => number_format($val->inwards_value, $decimal_val, '.', ','),
+                        trans('custom.Outwards Qty') => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
+                        trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
+                        trans('custom.Closing Balance Qty') => $val->closing_balance_quantity,
+                        trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
 
                     );
                 }
@@ -1296,26 +1296,26 @@ FROM
                 $dataSorted = collect($data)->sortBy('Category');
 
                 $GrandTotal =  array(
-                    'Category' => '',
-                    'Item Code' => '',
-                    'Part No / Reference No' => '',
-                    'Item Description' => 'Grand Total',
-                    'UOM' => '',
-                    'Opening Balance Qty' => '',
-                    'Opening Balance Val ('.$currencyCode.')' =>  round($openeingBalanceTotal,3),
-                    'Inwards Qty' => '',
-                    'Inwards Val ('.$currencyCode.')' => $InwardsTotal,
-                    'Outwards Qty' => '',
-                    'Outwards Val ('.$currencyCode.')' => $outwardTotal,
-                    'Closing Balance Qty' => '',
-                    'Closing Balance Val ('.$currencyCode.')' => round($closingBalanceTotal,3),
+                    trans('custom.category') => '',
+                    trans('custom.item_code') => '',
+                    trans('custom.Part No / Reference No') => '',
+                    trans('custom.item_description') => trans('custom.grand_total'),
+                    trans('custom.uom') => '',
+                    trans('custom.Opening Balance Qty') => '',
+                    trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  round($openeingBalanceTotal,3),
+                    trans('custom.Inwards Qty') => '',
+                    trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => $InwardsTotal,
+                    trans('custom.Outwards Qty') => '',
+                    trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => $outwardTotal,
+                    trans('custom.Closing Balance Qty') => '',
+                    trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => round($closingBalanceTotal,3),
 
                 );
 
                 $dataSorted->push($GrandTotal);
 
                 $fileName = 'inventory_summary_report';
-                $title = 'Inventory Summary Report';
+                $title = trans('custom.inventory_summary_report');
                 $path = 'inventory/report/inventory_summary_report/excel/';
                 $cur = NULL;
                 $companyID = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1325,7 +1325,7 @@ FROM
         
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1436,26 +1436,26 @@ FROM
                         $x = 0;
                         foreach ($output as $val) {
                             $x++;
-                            $data[$x]['Doc ID'] = $val->documentID;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Trans Date'] = \Helper::dateFormat($val->transactionDate);
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Warehouse'] = $val->wareHouseDescription;
-                            $data[$x]['Ref Number'] = $val->referenceNumber;
-                            $data[$x]['Processed By'] = $val->empName;
-                            $data[$x]['Item Code'] = $val->itemPrimaryCode;
-                            $data[$x]['Item Desc'] = $val->itemDescription;
-                            $data[$x]['UOM'] = $val->UnitShortCode;
-                            $data[$x]['Part No / Ref.Number'] = $val->partNumber;
-                            $data[$x]['Qty'] = $val->inOutQty;
-                            $data[$x]['Cost (USD)'] = round($val->cost, 2);
-                            $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
-                            $data[$x]['Account Code'] = $val->AccountCode;
-                            $data[$x]['Account Desc'] = $val->AccountDescription;
-                            $data[$x]['Customer'] = $val->CustomerName;
-                            $data[$x]['Contract'] = $val->ContractNumber;
-                            $data[$x]['Jobs'] = $val->ticketNo;
-                            $data[$x]['Job/Ref No'] = $val->issueRefNo;
+                            $data[$x][trans('custom.doc_id')] = $val->documentID;
+                            $data[$x][trans('custom.document_code')] = $val->documentCode;
+                            $data[$x][trans('custom.trans_date')] = \Helper::dateFormat($val->transactionDate);
+                            $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                            $data[$x][trans('custom.warehouse')] = $val->wareHouseDescription;
+                            $data[$x][trans('custom.ref_number')] = $val->referenceNumber;
+                            $data[$x][trans('custom.processed_by')] = $val->empName;
+                            $data[$x][trans('custom.item_code')] = $val->itemPrimaryCode;
+                            $data[$x][trans('custom.item_desc')] = $val->itemDescription;
+                            $data[$x][trans('custom.uom')] = $val->UnitShortCode;
+                            $data[$x][trans('custom.part_no_ref_number')] = $val->partNumber;
+                            $data[$x][trans('custom.qty')] = $val->inOutQty;
+                            $data[$x][trans('custom.cost_usd')] = round($val->cost, 2);
+                            $data[$x][trans('custom.total_cost_usd')] = round($val->totalCost, 2);
+                            $data[$x][trans('custom.account_code')] = $val->AccountCode;
+                            $data[$x][trans('custom.account_desc')] = $val->AccountDescription;
+                            $data[$x][trans('custom.customer')] = $val->CustomerName;
+                            $data[$x][trans('custom.contract')] = $val->ContractNumber;
+                            $data[$x][trans('custom.jobs')] = $val->ticketNo;
+                            $data[$x][trans('custom.job_ref_no')] = $val->issueRefNo;
                         }
                     }
 
@@ -1472,7 +1472,7 @@ FROM
 
 
                     $fileName = 'stock_transaction';
-                    $title = 'Stock Transaction';
+                    $title = trans('custom.stock_transaction');
                     $path = 'inventory/report/stock_transaction/excel/';
                     $cur = NULL;
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1482,7 +1482,7 @@ FROM
             
                     if($basePath == '')
                     {
-                         return $this->sendError('Unable to export excel');
+                         return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
@@ -1793,15 +1793,15 @@ FROM
                     $output = $this->minAndMaxAnalysis($request);
                     $x = 0;
                     foreach ($output as $item){
-                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
-                        $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
-                        $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
-                        $data[$x]['Stock Qty'] = $item->stock;
-                        $data[$x]['Qty On Order'] = $item->onOrder;
-                        $data[$x]['Max Qty'] = $item->maximunQty;
-                        $data[$x]['Min Qty'] = $item->minimumQty;
-                        $data[$x]['Rol Qty'] = $item->rolQuantity;
+                        $data[$x][trans('custom.item_code')] = $item->itemPrimaryCode;
+                        $data[$x][trans('custom.item_description')] = $item->itemDescription;
+                        $data[$x][trans('custom.part_no_ref_number')] = $item->secondaryItemCode;
+                        $data[$x][trans('custom.uom')] = $item->unit? $item->unit->UnitShortCode: '-';
+                        $data[$x][trans('custom.stock_qty')] = $item->stock;
+                        $data[$x][trans('custom.qty_on_order')] = $item->onOrder;
+                        $data[$x][trans('custom.max_qty')] = $item->maximunQty;
+                        $data[$x][trans('custom.min_qty')] = $item->minimumQty;
+                        $data[$x][trans('custom.rol_qty')] = $item->rolQuantity;
                         $x ++;
                     }
                 }
@@ -1823,7 +1823,7 @@ FROM
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
 
                 $fileName = 'min_max_analysis';
-                $title = 'Inventory Min & Max Analysis';
+                $title = trans('custom.min_max_analysis');
                 $path = 'inventory/report/min_max_analysis/excel/';
                 $cur = NULL;
                 $from_date = null;
@@ -1833,7 +1833,7 @@ FROM
         
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1854,24 +1854,24 @@ FROM
                     $toDate = $toDate->format('d/m/Y');
                     $x = 0;
                     foreach ($output as $item){
-                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
-                        $data[$x]['Description'] = $item->itemDescription;
-                        $data[$x]['UOM'] = $item->UnitShortCode;
-                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
-                        $data[$x]['Category'] = $item->categoryLabel;
+                        $data[$x][trans('custom.item_code')] = $item->itemPrimaryCode;
+                        $data[$x][trans('custom.description')] = $item->itemDescription;
+                        $data[$x][trans('custom.uom')] = $item->UnitShortCode;
+                        $data[$x][trans('custom.part_no_ref_number')] = $item->secondaryItemCode;
+                        $data[$x][trans('custom.category')] = $item->categoryLabel;
                         if($reportTypeID == 'IMI'){
-                            $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
-                            $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                            $data[$x][trans('custom.total_units_issued') . ' ' . $fromDate . ' - ' . $toDate] = $item->TotalUnitsIssue;
+                            $data[$x][trans('custom.cost_per_unit_period') . ' ' . $fromDate . ' - ' . $toDate] = $item->CostPerUnitIssue_Rpt;
                         }
 
-                        $data[$x]['Total Cost '.$fromDate .' - '. $toDate] = $item->TotalCostIssue_Rpt;
+                        $data[$x][trans('custom.total_cost_period') . ' ' . $fromDate . ' - ' . $toDate] = $item->TotalCostIssue_Rpt;
                         if($reportTypeID == 'IMI') {
-                            $data[$x]['Quantity As Of ' . $toDate] = $item->totalQty;
+                            $data[$x][trans('custom.quantity_as_of') . ' ' . $toDate] = $item->totalQty;
                         }
                         if($reportTypeID == 'IMHV'){
-                            $data[$x]['Cost Per Unit'] = $item->costPerUnitRpt;
+                            $data[$x][trans('custom.cost_per_unit')] = $item->costPerUnitRpt;
                         }
-                        $data[$x]['Total Cost As Of '.$toDate] = $item->wacValueRpt;
+                        $data[$x][trans('custom.total_cost_as_of') . ' ' . $toDate] = $item->wacValueRpt;
                         $x ++;
                     }
                 }
@@ -1886,11 +1886,11 @@ FROM
                     });
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download('csv');
+                })->download('xlsx');
                 return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
 
         }
     }
