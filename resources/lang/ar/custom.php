@@ -7350,5 +7350,11 @@ return [
     'supplier_code_customer_code' => 'كود المورد/كود العميل',
     'document_year' => 'سنة المستند',
     'gl_dump_report' => 'تقرير تفريغ دفتر الأستاذ',
-    'general_ledger_pdf_report' => 'تم إرسال تقرير دفتر الأستاذ العام بصيغة PDF إلى قائمة الانتظار'
+    'general_ledger_pdf_report' => 'تم إرسال تقرير دفتر الأستاذ العام بصيغة PDF إلى قائمة الانتظار',
+
+    //Department master export excel
+    'department_code' => 'رمز القسم',
+    'department_description' => 'وصف القسم',
+    'parent_department' => 'القسم الرئيسي',
+    'hod' => 'رئيس القسم',
 ];

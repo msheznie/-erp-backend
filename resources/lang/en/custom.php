@@ -7432,5 +7432,11 @@ return [
     'supplier_code_customer_code' => 'Supplier Code/Customer Code',
     'document_year' => 'Document Year',
     'gl_dump_report' => 'GL Dump Report',
-    'general_ledger_pdf_report' => 'General Ledger PDF report has been sent to queue'
+    'general_ledger_pdf_report' => 'General Ledger PDF report has been sent to queue',
+
+    //Department master export excel
+    'department_code' => 'Department Code',
+    'department_description' => 'Department Description',
+    'parent_department' => 'Parent Department',
+    'hod' => 'HOD',
 ];
