@@ -1053,6 +1053,3 @@ Route::group(['middleware' => ['mobileServer']], function () {
 /*
  * End external related routes
  */
-
-
-Route::resource('report_custom_column_translations', 'ReportCustomColumnTranslationsAPIController');

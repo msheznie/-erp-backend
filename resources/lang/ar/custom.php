@@ -7100,7 +7100,114 @@ return [
     'oct_closing' => 'إغلاق أكتوبر',
     'nov_closing' => 'إغلاق نوفمبر',
     'dec_closing' => 'إغلاق ديسمبر',
- 
+
+    // Asset Register Export Headers
+    'cost_gl' => 'حساب التكلفة',
+    'acc_dep_gl' => 'حساب الإهلاك المتراكم',
+    'fa_code' => 'رمز الأصول الثابتة',
+    'grouped_yn' => 'مجمعة نعم/لا',
+    'serial_number' => 'الرقم التسلسلي',
+    'asset_description' => 'وصف الأصل',
+    'dep_percentage' => 'نسبة الإهلاك %',
+    'date_acquired' => 'تاريخ الاستحواذ',
+    'dep_start_date' => 'تاريخ بداية الإهلاك',
+    'rpt_amount' => 'مبلغ التقرير',
+    'accdep_amount' => 'مبلغ الإهلاك المتراكم',
+    'net_book_value' => 'القيمة الدفترية الصافية',
+
+    // Asset Management Report Titles
+    'as_at_end_of' => 'اعتباراً من نهاية',
+    'asset_register_detail_report' => 'تقرير تفاصيل تسجيل الأصول',
+    'asset_register_detail2_report' => 'تقرير تفاصيل سجل الأصول 2',
+    'asset_register_summary_report' => 'تقرير ملخص تسجيل الأصول',
+    'asset_register_grouped_detail_report' => 'تقرير تفاصيل تسجيل الأصول المجمعة',
+
+    // Asset Management Report Column Headers
+    'fixed_asset_code' => 'رمز الأصول الثابتة',
+    'asset_class' => 'فئة الأصل',
+    'sub_location' => 'الموقع الفرعي',
+    'acquisition_date' => 'تاريخ الاستحواذ',
+    'acquisition_cost' => 'تكلفة الاستحواذ',
+    'place_in_service_date' => 'تاريخ وضعها في الخدمة',
+    'useful_life' => 'العمر الإنتاجي',
+    'remaining_life' => 'العمر المتبقي',
+    'depr_type' => 'نوع الإهلاك',
+    'depreciation_percentage' => 'نسبة الإهلاك %',
+    'depreciation_for_the_period' => 'الإهلاك للفترة',
+    'accumulated_depreciation' => 'الإهلاك المتراكم',
+    'nbv' => 'القيمة الدفترية الصافية',
+    'additions' => 'الإضافات',
+    'revaluations' => 'إعادة التقييم',
+    'disposals' => 'التخلص',
+    'profit_loss_on_disposal' => 'الربح / (الخسارة) على التخلص',
+    'impairment' => 'انخفاض القيمة',
+    'write_offs' => 'الشطب',
+
+    // Asset Register Detail 2 Column Headers
+    'gl_code' => 'رمز الحساب العام',
+    'grouped_fa_code' => 'رمز الأصول الثابتة المجمعة',
+    'posting_date_of_fa' => 'تاريخ ترحيل الأصول الثابتة',
+    'opening_cost' => 'تكلفة الافتتاح',
+    'addition_cost' => 'تكلفة الإضافة',
+    'disposal_cost' => 'تكلفة التخلص',
+    'closing_cost' => 'تكلفة الإغلاق',
+    'opening_dep' => 'إهلاك الافتتاح',
+    'charge_during_the_year' => 'الرسوم خلال السنة',
+    'charge_on_disposal' => 'الرسوم على التخلص',
+    'closing_dep' => 'إهلاك الإغلاق',
+
+    // Compound Column Headers
+    'local_amount_unitcost' => 'المبلغ المحلي تكلفة الوحدة',
+    'local_amount_accdep' => 'المبلغ المحلي الإهلاك المتراكم',
+    'local_amount_net_value' => 'المبلغ المحلي القيمة الصافية',
+    'rpt_amount_unit_cost' => 'مبلغ التقرير تكلفة الوحدة',
+    'rpt_amount_acc_dep' => 'مبلغ التقرير الإهلاك المتراكم',
+    'rpt_amount_acc_net_value' => 'مبلغ التقرير القيمة الصافية المتراكمة',
+
+    // Asset Management Report Data Headers
+    'asset_category' => 'فئة الأصل',
+    'asset_type' => 'نوع الأصل',
+    'asset_code' => 'رمز الأصل',
+    'po_amount_rpt' => 'مبلغ أمر الشراء التقرير',
+    'cost_gl_desc' => 'وصف حساب التكلفة',
+    'asset_cost_local_curr' => 'عملة تكلفة الأصل المحلية',
+    'asset_cost_local' => 'تكلفة الأصل المحلية',
+    'asset_cost_rpt_curr' => 'عملة تكلفة الأصل التقرير',
+    'asset_cost_rpt' => 'تكلفة الأصل التقرير',
+
+    // Asset Disposal Report Data Headers
+    'disposal_date' => 'تاريخ التخلص',
+    'currency_local' => 'العملة (المحلية)',
+    'currency_reporting' => 'العملة (التقرير)',
+    'asset_cost_reporting' => 'تكلفة الأصل (التقرير)',
+    'accumulated_depreciation_local' => 'الإهلاك المتراكم (المحلي)',
+    'accumulated_depreciation_reporting' => 'الإهلاك المتراكم (التقرير)',
+    'net_book_value_local' => 'القيمة الدفترية الصافية (المحلية)',
+    'net_book_value_reporting' => 'القيمة الدفترية الصافية (التقرير)',
+    'selling_price_local' => 'سعر البيع (المحلي)',
+    'selling_price_reporting' => 'سعر البيع (التقرير)',
+    'profit_loss_local' => 'الربح/الخسارة (المحلي)',
+    'profit_loss_reporting' => 'الربح/الخسارة (التقرير)',
+
+    // Asset Depreciation Report Data Headers
+    'cost_amount' => 'مبلغ التكلفة',
+    'dep_amount' => 'مبلغ الإهلاك',
+    'current_year_dep' => 'إهلاك السنة الحالية',
+    'accumulated_dep' => 'الإهلاك المتراكم',
+
+    // Asset Management Report Additional Headers
+    'grv_posting_date' => 'تاريخ نشر استلام البضائع',
+    'opening' => 'الافتتاح',
+    'addition' => 'الإضافة',
+    'capitalization' => 'الرسملة',
+    'closing' => 'الإغلاق',
+
+    // Asset Account Report Data Headers
+    'chart_of_account_system_id' => 'معرف نظام دليل الحسابات',
+    'asset_id' => 'معرف الأصل',
+    'e_type' => 'النوع',
+    'e_segment' => 'القطاع',
+
     // Quotation Master API Controller
     'customer_sales_quotation_report_sent' => 'تم إرسال تقرير العميل للعرض التقديمي',
 
@@ -7477,7 +7584,7 @@ return [
     'supplier_label' => 'المورد:',
     'transfer_from' => 'نقل من',
     'transfer_to' => 'نقل إلى',
-    
+
     // Inventory Report Array Keys
     'inventory_report_category' => 'الفئة',
     'inventory_report_item_code' => 'كود الصنف',
@@ -7492,7 +7599,7 @@ return [
     'inventory_report_outwards_val' => 'قيمة الصادر',
     'inventory_report_closing_balance_qty' => 'كمية الرصيد الختامي',
     'inventory_report_closing_balance_val' => 'قيمة الرصيد الختامي',
-    
+
     // Direct text values for arrays
     'Part No / Reference No' => 'رقم القطعة / رقم المرجع',
     'Opening Balance Qty' => 'كمية الرصيد الافتتاحي',

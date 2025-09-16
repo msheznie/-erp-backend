@@ -7188,6 +7188,112 @@ return [
     'nov_closing' => 'Nov Closing',
     'dec_closing' => 'Dec Closing',
 
+    // Asset Register Export Headers
+    'cost_gl' => 'Cost GL',
+    'acc_dep_gl' => 'Acc Dep GL',
+    'fa_code' => 'FA Code',
+    'grouped_yn' => 'Grouped YN',
+    'serial_number' => 'Serial Number',
+    'asset_description' => 'Asset Description',
+    'dep_percentage' => 'Dep %',
+    'date_acquired' => 'Date Acquired',
+    'dep_start_date' => 'Dep Start Date',
+    'rpt_amount' => 'Rpt Amount',
+    'accdep_amount' => 'AccDep Amount',
+    'net_book_value' => 'Net Book Value',
+
+    // Asset Management Report Titles
+    'as_at_end_of' => 'As at end of',
+    'asset_register_detail_report' => 'Asset Register Detail Report',
+    'asset_register_detail2_report' => 'Asset Register Detail2 Report',
+    'asset_register_summary_report' => 'Asset Register Summary Report',
+    'asset_register_grouped_detail_report' => 'Asset Register Grouped Detail Report',
+
+    // Asset Management Report Column Headers
+    'fixed_asset_code' => 'Fixed Asset Code',
+    'asset_class' => 'Asset Class',
+    'sub_location' => 'Sub-Location',
+    'acquisition_date' => 'Acquisition Date',
+    'acquisition_cost' => 'Acquisition Cost',
+    'place_in_service_date' => 'Place in Service Date',
+    'useful_life' => 'Useful Life',
+    'remaining_life' => 'Remaining Life',
+    'depr_type' => 'Depr. Type',
+    'depreciation_percentage' => 'Depreciation %',
+    'depreciation_for_the_period' => 'Depreciation for the period',
+    'accumulated_depreciation' => 'Accumulated Depreciation',
+    'nbv' => 'NBV',
+    'additions' => 'Additions',
+    'revaluations' => 'Revaluations',
+    'disposals' => 'Disposals',
+    'profit_loss_on_disposal' => 'Profit / (Loss) on Disposal',
+    'impairment' => 'Impairment',
+    'write_offs' => 'Write-Offs',
+
+    // Asset Register Detail 2 Column Headers
+    'gl_code' => 'GL Code',
+    'grouped_fa_code' => 'Grouped FA Code',
+    'posting_date_of_fa' => 'Posting date of FA',
+    'opening_cost' => 'Opening Cost',
+    'addition_cost' => 'Addition Cost',
+    'disposal_cost' => 'Disposal Cost',
+    'closing_cost' => 'Closing Cost',
+    'opening_dep' => 'Opening Dep',
+    'charge_during_the_year' => 'Charge during the year',
+    'charge_on_disposal' => 'Charge on disposal',
+    'closing_dep' => 'Closing Dep',
+
+    // Compound Column Headers
+    'local_amount_unitcost' => 'Local Amount unitcost',
+    'local_amount_accdep' => 'Local Amount accDep',
+    'local_amount_net_value' => 'Local Amount net Value',
+    'rpt_amount_unit_cost' => 'Rpt Amount unit cost',
+    'rpt_amount_acc_dep' => 'Rpt Amount acc dep',
+    'rpt_amount_acc_net_value' => 'Rpt Amount acc net value',
+
+    // Asset Management Report Data Headers
+    'asset_category' => 'Asset Category',
+    'asset_type' => 'Asset Type',
+    'asset_code' => 'Asset Code',
+    'po_amount_rpt' => 'PO Amount Rpt',
+    'cost_gl_desc' => 'Cost GL Desc',
+    'asset_cost_local_curr' => 'Asset Cost Local Curr',
+    'asset_cost_local' => 'Asset Cost Local',
+    'asset_cost_rpt_curr' => 'Asset Cost Rpt Curr',
+    'asset_cost_rpt' => 'Asset Cost Rpt',
+
+    // Asset Disposal Report Data Headers
+    'disposal_date' => 'Disposal Date',
+    'currency_local' => 'Currency (Local)',
+    'currency_reporting' => 'Currency (Reporting)',
+    'asset_cost_reporting' => 'Asset Cost (Reporting)',
+    'accumulated_depreciation_local' => 'Accumulated Depreciation (Local)',
+    'accumulated_depreciation_reporting' => 'Accumulated Depreciation (Reporting)',
+    'net_book_value_local' => 'Net Book Value (Local)',
+    'net_book_value_reporting' => 'Net Book Value (Reporting)',
+    'selling_price_local' => 'Selling Price (Local)',
+    'selling_price_reporting' => 'Selling Price (Reporting)',
+    'profit_loss_local' => 'Profit/Loss (Local)',
+    'profit_loss_reporting' => 'Profit/Loss (Reporting)',
+
+    // Asset Depreciation Report Data Headers
+    'cost_amount' => 'Cost Amount',
+    'dep_amount' => 'Dep Amount',
+    'current_year_dep' => 'Current Year Dep',
+    'accumulated_dep' => 'Accumulated Dep',
+
+    // Asset Management Report Additional Headers
+    'grv_posting_date' => 'GRV Posting Date',
+    'opening' => 'Opening',
+    'addition' => 'Addition',
+    'capitalization' => 'Capitalization',
+    'closing' => 'Closing',
+
+    // Asset Account Report Data Headers
+    'chart_of_account_system_id' => 'Chart Of Account System ID',
+    'asset_id' => 'Asset ID',
+    'dec_closing' => 'Dec Closing',
+
     // Quotation Master API Controller
     'customer_sales_quotation_report_sent' => 'Customer sales quotation report sent',
 
@@ -7474,7 +7580,7 @@ return [
      'issued_to' => 'Issued To',
      'asset_code' => 'Asset Code',
      'asset_description' => 'Asset Description',
- 
+
      // Inventory Export Report Translations
      'part_no_ref_number' => 'Part No / Ref.Number',
      'total_value_usd' => 'Total Value (USD)',
@@ -7500,18 +7606,18 @@ return [
      'aging_366_to_730_value' => '366 to 730 (Value)',
      'aging_over_730_qty' => 'Over 730 (Qty)',
      'aging_over_730_value' => 'Over 730 (Value)',
- 
+
      // Item Ledger Report Titles
      'stock_ledger_report' => 'Stock Ledger Report',
      'stock_valuation_report' => 'Stock Valuation Report',
      'stock_taking_report' => 'Stock Taking Report',
- 
+
      // Inventory Report Titles
      'inventory_summary_report' => 'Inventory Summary Report',
      'stock_transaction' => 'Stock Transaction',
      'min_max_analysis' => 'Inventory Min & Max Analysis',
      'scrap_inventory_report' => 'Scrap Inventory Report',
- 
+
      // Inventory Report Column Headers
      'doc_id' => 'Doc ID',
      'document_code' => 'Document Code',
@@ -7541,7 +7647,7 @@ return [
      'total_cost_period' => 'Total Cost',
      'quantity_as_of' => 'Quantity As Of',
      'total_cost_as_of' => 'Total Cost As Of',
- 
+
      // Scrap Inventory Report
      'date_from' => 'Date From:',
      'date_to' => 'Date To:',
@@ -7551,7 +7657,7 @@ return [
      'net_qty' => 'Net Qty',
      'remarks' => 'Remarks',
      'item_label' => 'Item:',
- 
+
      // Additional Report Translations
      'asset_expenses_report' => 'Asset Expenses Report',
      'asset_tracking_report' => 'Asset Tracking Report',
@@ -7561,7 +7667,7 @@ return [
      'supplier_label' => 'Supplier:',
     'transfer_from' => 'Transfer From',
     'transfer_to' => 'Transfer To',
-    
+
     // Inventory Report Array Keys
     'inventory_report_category' => 'Category',
     'inventory_report_item_code' => 'Item Code',
@@ -7576,7 +7682,7 @@ return [
     'inventory_report_outwards_val' => 'Outwards Val',
     'inventory_report_closing_balance_qty' => 'Closing Balance Qty',
     'inventory_report_closing_balance_val' => 'Closing Balance Val',
-    
+
     // Direct text values for arrays
     'Part No / Reference No' => 'Part No / Reference No',
     'Opening Balance Qty' => 'Opening Balance Qty',
