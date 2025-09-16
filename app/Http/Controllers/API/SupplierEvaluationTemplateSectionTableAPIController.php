@@ -254,7 +254,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                                                                         ->where('formulaType' ,$sectionformulaInput['formulaType'])
                                                                         ->count();
                     if($duplicateCheckCount > 0){
-                        return $this->sendError('Same formula type can not be multiple times for a single table' , 500);
+                        return $this->sendError(trans('custom.same_formula_type_cannot_be_multiple_times'), 500);
                     }
                     // Create the supplier evaluation template section formula
                     $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->create($sectionformulaInput);
@@ -290,7 +290,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                                                                                     ->count();
     
         if($validateTableColumn > 0){
-            return $this->sendError('Column type or column header can not be empty', 500);                                                
+            return $this->sendError(trans('custom.column_type_or_header_cannot_be_empty'), 500);                                                
         } else {
             $updateData = [
                 'isConfirmed' => 1
@@ -328,15 +328,15 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
 
 
                     if($scoreColumnCount > 0){
-                        return $this->sendError('Only General Master evaluation type can be multiple columns', 500);                                                
+                        return $this->sendError(trans('custom.only_general_master_evaluation_type_multiple_columns'), 500);                                                
                     }
 
                     if ($evaluationMaster->type == 1 ){
-                        $columnHeader = 'Score(Number)';
+                        $columnHeader = trans('custom.score_number');
                         $columnType = 4;
                     }
                     if ($evaluationMaster->type == 2 ){
-                        $columnHeader = 'Score(Rating)';
+                        $columnHeader = trans('custom.score_rating');
                         $columnType = 5;
                     }
 
