@@ -6480,7 +6480,7 @@ class SRMService
         $paymentProofData = SRMTenderPaymentProof::getPaymentProofDataByUuid($paymentProofUuid);
 
         if (!$paymentProofData) {
-            throw new Exception('Payment proof not found.');
+            throw new Exception(trans('srm_approvals.payment_proof_not_found'));
         }
 
 
@@ -6515,7 +6515,7 @@ class SRMService
             ]);
 
         if (!$updated) {
-            throw new Exception('Failed to update payment proof record.');
+            throw new Exception(trans('srm_approvals.failed_to_update_payment_proof_record'));
         }
     }
 
@@ -6540,7 +6540,7 @@ class SRMService
             ->delete();
 
         if (!$deleted) {
-            throw new Exception('Failed to delete document approval record.');
+            throw new Exception(trans('srm_approvals.failed_to_delete_document_approval_record'));
         }
     }
 

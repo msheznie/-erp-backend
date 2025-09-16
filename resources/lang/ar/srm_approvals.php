@@ -20,5 +20,8 @@ return [
     'tender_boq_items_updated_successfully' => 'تم تحديث عناصر جدول الكميات الخاصة بالمناقصة بنجاح',
     'tender_circular_updated_successfully' => 'تم تحديث التعميم الخاص بالمناقصة بنجاح',
     'circular_amendment_updated_successfully' => 'تم تحديث تعديل التعميم بنجاح',
-    'evacuation_criteria_updated_successfully' => 'تم تحديث معايير الإخلاء بنجاح'
+    'evacuation_criteria_updated_successfully' => 'تم تحديث معايير الإخلاء بنجاح',
+    'payment_proof_not_found' => 'إثبات الدفع غير موجود.',
+    'failed_to_update_payment_proof_record' => 'فشل في تحديث سجل إثبات الدفع.',
+    'failed_to_delete_document_approval_record' => 'فشل في حذف سجل الموافقة على المستند.'
 ];
