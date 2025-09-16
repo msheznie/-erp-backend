@@ -1487,7 +1487,7 @@ class TenderMasterRepository extends BaseRepository
             if ($totalWeightage != 100) {
                 return [
                     'success' => false,
-                    'message' => 'Total of the Technical Evaluation Criteria percentage should be equal to 100'
+                    'message' => trans('srm_tender_rfx.technical_eval_percentage_total')
                 ];
             }
         }

@@ -67,9 +67,9 @@ class SrmTenderEditAmendService
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => trans('srm_tender_rfx.commercial_criteria_passing_weightage'),
                     'technical_passing_weightage' => trans('srm_tender_rfx.technical_criteria_passing_weightage'),
-                    'envelop_type_id' => trans('srm_tender_rfx.Envelope'),
-                    'evaluation_type_id' => trans('srm_tender_rfx.Evaluation'),
-                    'stage' => trans('srm_tender_rfx.Stage'),
+                    'envelop_type_id' => trans('srm_tender_rfx.envelope'),
+                    'evaluation_type_id' => trans('srm_tender_rfx.evaluation'),
+                    'stage' => trans('srm_tender_rfx.stage'),
                     'no_of_alternative_solutions' => trans('srm_tender_rfx.number_of_alternative_solutions'),
                     'commercial_weightage' => trans('srm_tender_rfx.commercial_weightage'),
                     'technical_weightage' => trans('srm_tender_rfx.technical_weightage'),
