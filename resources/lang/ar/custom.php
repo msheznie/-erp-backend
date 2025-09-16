@@ -7643,5 +7643,190 @@ return [
     'please_configure' => 'يرجى إعداد حساب الدفع المؤجل لسند الدفع',
     'please_assign_exchange' => 'يرجى تعيين حساب أرباح/خسائر الصرف لهذه الشركة',
     "please_configure_exchange_gain_loss_account_for_this_company" => "يرجى إعداد حساب أرباح/خسائر الصرف لهذه الشركة",
-    "bank_account_not_selected" => "لم يتم تحديد الحساب البنكي"
+    "bank_account_not_selected" => "لم يتم تحديد الحساب البنكي",
+    'serviceline_system_id_required' => 'القسم مطلوب.',
+    'serviceline_code_required' => 'لا يمكن التأكيد. لم يتم تحديث القسم.',
+    'unit_of_measure_required' => 'وحدة القياس مطلوبة.',
+    'invoice_qty_required' => 'الكمية مطلوبة.',
+      // Validation Messages
+    'invalid_sales_type' => 'قيمة غير صحيحة محددة لنوع المبيعات',
+    'sales_type_mandatory' => 'نوع المبيعات إلزامي',
+    'segment_not_approved' => 'القطاع المحدد غير معتمد',
+    'segment_not_assigned' => 'القطاع المحدد غير مخصص للشركة',
+    'segment_code_required' => 'حقل رمز القطاع مطلوب',
+    'warehouse_code_required' => 'حقل رمز المستودع مطلوب',
+    'invoice_type_invalid' => 'تنسيق نوع الفاتورة غير صحيح',
+    'invoice_type_integer' => 'نوع الفاتورة يجب أن يكون رقماً صحيحاً',
+    'invoice_type_required' => 'حقل نوع الفاتورة مطلوب',
+    'invalid_customer_code' => 'رمز العميل غير صحيح',
+    'customer_invoice_used' => 'رقم فاتورة العميل المدخل مستخدم بالفعل (:bookingInvCode). يرجى التحقق مرة أخرى',
+    'customer_invoice_number_required' => 'حقل رقم فاتورة العميل مطلوب',
+    'invalid_currency' => 'العملة غير صحيحة',
+    'account_number_required' => 'حقل رقم الحساب مطلوب',
+    'bank_code_required' => 'حقل رمز البنك مطلوب',
+    'currency_code_required' => 'حقل رمز العملة مطلوب',
+    'finance_period_not_active' => 'الفترة المالية غير نشطة',
+    'document_date_invalid' => 'تنسيق تاريخ المستند غير صحيح',
+    'document_date_required' => 'حقل تاريخ المستند مطلوب',
+    'comment_required' => 'حقل التعليق مطلوب',
+    'details_less_than_one' => 'التفاصيل لا يمكن أن تكون أقل من واحد',
+    'details_format_invalid' => 'تنسيق التفاصيل غير صحيح',
+    'details_required' => 'حقل التفاصيل مطلوب',
+
+    // GL Code Validation
+    'gl_code_required' => 'حقل رمز الحساب العام مطلوب',
+    'segment_not_approved_detail' => 'القطاع غير معتمد.',
+    'segment_not_assigned_detail' => 'القطاع غير مخصص للشركة المحددة.',
+    'segment_code_required_detail' => 'حقل رمز القطاع مطلوب',
+
+    // User Qty Validation
+    'user_qty_positive' => 'قيمة حقل الكمية المدخلة من قبل المستخدم يجب أن تكون رقماً موجباً',
+    'user_qty_required' => 'حقل كمية المستخدم مطلوب',
+
+    // Service Code Validation
+    'service_code_not_found' => 'رمز الخدمة غير موجود',
+    'item_category_inventory' => 'فئة العنصر يجب أن تكون مخزون أو غير مخزون',
+    'item_category_service' => 'فئة العنصر يجب أن تكون خدمة',
+    'service_code_required' => 'حقل رمز الخدمة مطلوب',
+
+    // Margin and Discount Validation
+    'margin_percentage_min' => 'نسبة الهامش يجب أن تكون على الأقل 0',
+    'margin_percentage_numeric' => 'نسبة الهامش يجب أن تكون رقماً',
+    'discount_percentage_min' => 'نسبة الخصم يجب أن تكون على الأقل 0',
+    'discount_percentage_numeric' => 'نسبة الخصم يجب أن تكون رقماً',
+    'discount_amount_min' => 'مبلغ الخصم يجب أن يكون على الأقل 0',
+    'discount_amount_numeric' => 'مبلغ الخصم يجب أن يكون رقماً',
+
+    // VAT Validation
+    'vat_percentage_min' => 'نسبة ضريبة القيمة المضافة يجب أن تكون على الأقل 0',
+    'vat_percentage_numeric' => 'نسبة ضريبة القيمة المضافة يجب أن تكون رقماً',
+    'vat_amount_min' => 'مبلغ ضريبة القيمة المضافة يجب أن يكون على الأقل 0',
+    'vat_amount_numeric' => 'مبلغ ضريبة القيمة المضافة يجب أن يكون رقماً',
+
+    // Unit Validation
+    'uom_required' => 'حقل وحدة القياس مطلوب',
+
+    // Quantity Validation
+    'quantity_min' => 'الكمية يجب أن تكون على الأقل 1',
+    'quantity_integer' => 'الكمية يجب أن تكون رقماً صحيحاً',
+    'quantity_required' => 'حقل الكمية مطلوب',
+
+    // Sales Price Validation
+    'sales_price_min' => 'سعر البيع يجب أن يكون على الأقل 1',
+    'sales_price_numeric' => 'سعر البيع يجب أن يكون رقماً',
+    'sales_price_required' => 'حقل سعر البيع مطلوب',
+
+    // Success Messages
+    'customer_invoice_saved' => 'تم حفظ فاتورة العميل بنجاح',
+    'customer_invoice_confirmed' => 'تم تأكيد فاتورة العميل بنجاح',
+    'customer_invoice_item_saved' => 'تم حفظ تفاصيل عنصر فاتورة العميل بنجاح',
+
+    // Error Messages
+    'invalid_due_date_format' => 'تنسيق تاريخ الاستحقاق غير صحيح',
+    'document_date_greater_than_current' => 'تاريخ المستند لا يمكن أن يكون أكبر من التاريخ الحالي',
+    'document_date_between_period' => 'تاريخ المستند يجب أن يكون بين تاريخ بداية ونهاية الفترة المالية',
+    'please_select_segment' => 'يرجى اختيار قطاع',
+    'invoice_details_exist_currency' => 'تفاصيل الفاتورة موجودة. لا يمكنك تغيير العملة.',
+    'credit_days_not_mentioned' => ' - أيام الائتمان غير مذكورة لهذا العميل',
+    'service_start_date_greater' => 'تاريخ بداية الخدمة لا يمكن أن يكون أكبر من تاريخ نهاية الخدمة.',
+    'date_of_supply_required' => 'تاريخ التوريد مطلوب',
+    'document_date_between_period_detail' => 'تاريخ المستند يجب أن يكون بين تاريخ بداية ونهاية الفترة المالية.',
+    'document_date_between_selected_period' => 'تاريخ المستند يجب أن يكون بين تاريخ بداية ونهاية الفترة المالية المحددة.',
+    'are_you_sure_update_invoice' => 'هل أنت متأكد من أنك تريد تحديث رقم فاتورة العميل كرقم المستند',
+
+    // Validation Messages for Confirmation
+    'currency_required' => 'العملة مطلوبة.',
+    'bank_required' => 'البنك مطلوب.',
+    'bank_account_required' => 'حساب البنك مطلوب.',
+    'customer_invoice_no_required' => 'رقم فاتورة العميل مطلوب.',
+    'customer_invoice_date_required' => 'تاريخ فاتورة العميل مطلوب.',
+    'po_number_required' => 'رقم أمر الشراء مطلوب.',
+    'service_period_required' => 'فترة الخدمة مطلوبة.',
+    'service_start_date_required' => 'تاريخ بداية الخدمة مطلوب.',
+    'service_end_date_required' => 'تاريخ نهاية الخدمة مطلوب.',
+    'booking_date_required' => 'تاريخ المستند مطلوب.',
+
+    // GL Selection Messages
+    'please_select_segment_gl' => 'يرجى اختيار قطاع في اختيار الحساب العام',
+    'amount_required_gl' => 'المبلغ مطلوب في اختيار الحساب العام',
+
+    // Confirmation Messages
+    'cannot_confirm_no_details' => 'لا يمكنك التأكيد. تفاصيل الفاتورة غير موجودة.',
+    'every_item_min_qty' => 'كل عنصر يجب أن يحتوي على كمية طلب واحدة على الأقل',
+    'every_item_min_user_qty' => 'كل عنصر يجب أن يحتوي على كمية مستخدم طلب واحدة على الأقل',
+    'multiple_finance_category' => 'لا يمكن إضافة فئات مالية متعددة. تم العثور على فئة مالية مختلفة في التفاصيل المحفوظة.',
+    'bs_account_cannot_be_null' => 'حساب الميزانية العمومية لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+    'cost_account_cannot_be_null' => 'حساب التكلفة لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+    'revenue_account_cannot_be_null' => 'حساب الإيرادات لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+    'item_must_not_zero_cost' => 'العنصر يجب ألا يحتوي على تكلفة صفر',
+    'item_must_not_negative_cost' => 'العنصر يجب ألا يحتوي على تكلفة سالبة',
+    'warehouse_stock_qty_zero' => 'كمية مخزون المستودع 0 لـ :itemDescription',
+    'stock_qty_zero' => 'كمية المخزون 0 لـ :itemDescription',
+    'insufficient_stock_qty' => 'كمية المخزون غير كافية لـ :itemDescription',
+    'insufficient_warehouse_qty' => 'كمية مخزون المستودع غير كافية لـ :itemDescription',
+    'cannot_confirm_output_vat_gl' => 'لا يمكن التأكيد. حساب ضريبة القيمة المضافة المخرجة غير مُكوَّن.',
+    'cannot_confirm_output_vat_transfer_gl' => 'لا يمكن التأكيد. حساب تحويل ضريبة القيمة المضافة المخرجة غير مُكوَّن.',
+
+    // Segment Validation
+    'cannot_confirm_segment_not_updated' => 'لا يمكن التأكيد. القطاع غير محدث.',
+    'uom_required_confirm' => 'وحدة القياس مطلوبة.',
+    'qty_required' => 'الكمية مطلوبة.',
+    'sales_price_required_confirm' => 'سعر البيع مطلوب.',
+    'unit_cost_required' => 'تكلفة الوحدة مطلوبة.',
+    'contract_no_required' => 'رقم العقد مطلوب.',
+    'cannot_continue_multiple_contract' => 'لا يمكنك المتابعة. عقد متعدد موجود في التفاصيل.',
+    'no_invoice_details_found' => 'لم يتم العثور على تفاصيل الفاتورة.',
+
+    // Direct Details Messages
+    'customer_invoice_direct_not_found_detail' => 'فاتورة العميل المباشرة غير موجودة',
+    'payment_period_not_updated' => 'فترة الدفع غير محدثة في العقد. يرجى التحديث والمحاولة مرة أخرى',
+    'discount_percentage_greater_100' => 'نسبة الخصم لا يمكن أن تكون أكبر من 100%',
+    'discount_amount_greater_sales_price' => 'مبلغ الخصم لا يمكن أن يكون أكبر من سعر البيع',
+    'vat_percentage_greater_100' => 'نسبة ضريبة القيمة المضافة لا يمكن أن تكون أكبر من 100%',
+    'vat_amount_greater_sales_price' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر البيع',
+    'vat_amount_greater_unit_price' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر الوحدة',
+    'vat_amount_greater_sales_price_detail' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر البيع',
+
+    // Item Details Messages
+    'customer_invoice_direct_not_found_item' => 'فاتورة العميل المباشرة غير موجودة',
+    'different_finance_category' => 'تم العثور على فئة مالية مختلفة. لا يمكنك إضافة عناصر فئة مالية مختلفة لنفس الفاتورة',
+    'bs_account_cannot_be_null_item' => 'حساب الميزانية العمومية لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+    'cost_account_cannot_be_null_item' => 'حساب التكلفة لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+    'revenue_account_cannot_be_null_item' => 'حساب الإيرادات لا يمكن أن يكون فارغاً لـ :itemCode - :itemDescription',
+
+    // Item Update Messages
+    'discount_percentage_amount_not_matching_item' => 'نسبة الخصم ومبلغ الخصم غير متطابقين',
+    'vat_percentage_amount_not_matching_item' => 'نسبة ضريبة القيمة المضافة ومبلغ ضريبة القيمة المضافة غير متطابقين',
+    'vat_percentage_exceed_100_item' => 'نسبة ضريبة القيمة المضافة لا يمكن أن تتجاوز 100%',
+    'vat_amount_greater_sales_price_item' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر البيع',
+    'cost_zero_cannot_issue_item' => 'التكلفة 0. لا يمكنك الإصدار.',
+    'cost_negative_cannot_issue_item' => 'التكلفة سالبة. لا يمكنك الإصدار.',
+    'stock_qty_zero_cannot_issue_item' => 'كمية المخزون 0. لا يمكنك الإصدار.',
+    'warehouse_stock_qty_zero_cannot_issue_item' => 'كمية مخزون المستودع 0. لا يمكنك الإصدار.',
+    'current_stock_qty_insufficient' => 'كمية المخزون الحالية: :currentStockQty. لا يمكنك الإصدار أكثر من كمية المخزون الحالية.',
+    'current_warehouse_stock_qty_insufficient' => 'كمية مخزون المستودع الحالية: :currentWareHouseStockQty. لا يمكنك الإصدار أكثر من كمية مخزون المستودع الحالية.',
+    'quantity_falling_below_minimum' => 'الكمية تنخفض دون الحد الأدنى لمستوى المخزون.',
+
+    // VAT Messages
+    'customer_invoice_not_found_vat' => 'فاتورة العميل غير موجودة.',
+    'invoice_details_not_found_vat' => 'تفاصيل الفاتورة غير موجودة.',
+
+    // General Messages
+    'selected_grv_already_assigned' => 'إيصال استلام البضائع المحدد مخصص بالفعل لـ :bookingInvCode',
+    'invoice_details_exist_customer' => 'تفاصيل الفاتورة موجودة. لا يمكنك تغيير العميل.',
+    'you_cannot_continue_multiple_contract' => 'لا يمكنك المتابعة. عقد متعدد موجود في التفاصيل.',
+    'payment_period_not_updated_contract' => 'فترة الدفع غير محدثة في العقد. يرجى التحديث والمحاولة مرة أخرى',
+    'contract_not_exist' => 'العقد غير موجود.',
+    'discount_percentage_cannot_be_greater' => 'نسبة الخصم لا يمكن أن تكون أكبر من 100 في المائة',
+    'discount_amount_cannot_be_greater' => 'مبلغ الخصم لا يمكن أن يكون أكبر من سعر البيع',
+    'vat_percentage_cannot_be_greater' => 'نسبة ضريبة القيمة المضافة لا يمكن أن تكون أكبر من 100 في المائة',
+    'vat_amount_cannot_be_greater_sales_price' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر البيع',
+    'vat_amount_cannot_be_greater_unit_price' => 'مبلغ ضريبة القيمة المضافة لا يمكن أن يكون أكبر من سعر الوحدة',
+    'discount_percentage_amount_not_matching' => 'نسبة الخصم ومبلغ الخصم غير متطابقين',
+    'vat_percentage_amount_not_matching' => 'نسبة ضريبة القيمة المضافة ومبلغ ضريبة القيمة المضافة غير متطابقين',
+    'vat_percentage_exceed_100' => 'نسبة ضريبة القيمة المضافة لا يمكن أن تتجاوز 100%',
+    'different_finance_category_found' => 'تم العثور على فئة مالية مختلفة. لا يمكنك إضافة عناصر فئة مالية مختلفة لنفس الفاتورة',
+    'customer_invoice_details_not_found' => 'تفاصيل فاتورة العميل غير موجودة',
+    'unit_conversion_not_valid_configured' => 'تحويل الوحدة غير صالح أو غير مُكون',
+    'sales_price_margin_not_matching' => 'سعر البيع ونسبة الربح غير متطابقين',
 ];

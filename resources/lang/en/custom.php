@@ -7723,5 +7723,191 @@ return [
     'please_configure' => 'Please configure PDC Payable account for payment voucher',
     'please_assign_exchange' => 'Please assign Exchange Gain/Loss account for this company',
     'please_configure_exchange_gain_loss_account_for_this_company' => 'Please configure Exchange Gain/Loss account for this company',
-    'bank_account_not_selected' => 'Bank Account not selected'
+    'bank_account_not_selected' => 'Bank Account not selected',
+    'serviceline_system_id_required' => 'Segment is required.',
+    'serviceline_code_required' => 'Cannot confirm. Segment is not updated.',
+    'unit_of_measure_required' => 'UOM is required.',
+    'invoice_qty_required' => 'Qty is required.',
+
+    //Validation Messages
+    'invalid_sales_type' => 'Invalid value selected for Sales Type',
+    'sales_type_mandatory' => 'The sales type is mandatory',
+    'segment_not_approved' => 'Selected segment is not approved',
+    'segment_not_assigned' => 'Selected segment is not assigned to the company',
+    'segment_code_required' => 'segment_code field is required',
+    'warehouse_code_required' => 'warehouse_code field is required',
+    'invoice_type_invalid' => 'invoice_type format is invalid',
+    'invoice_type_integer' => 'invoice_type must be an integer',
+    'invoice_type_required' => 'invoice_type field is required',
+    'invalid_customer_code' => 'Invalid Customer Code',
+    'customer_invoice_used' => 'Entered customer invoice number was already used (:bookingInvCode). Please check again',
+    'customer_invoice_number_required' => 'customer_invoice_number field is required',
+    'invalid_currency' => 'Invalid Currency',
+    'account_number_required' => 'account_number field is required',
+    'bank_code_required' => 'bank_code field is required',
+    'currency_code_required' => 'currency_code field is required',
+    'finance_period_not_active' => 'Finance Period Not Active',
+    'document_date_invalid' => 'document_date format is invalid',
+    'document_date_required' => 'document_date field is required',
+    'comment_required' => 'comment field is required',
+    'details_less_than_one' => 'details cannot be less than one',
+    'details_format_invalid' => 'details format invalid',
+    'details_required' => 'details field is required',
+
+    // GL Code Validation
+    'gl_code_required' => 'gl_code field is required',
+    'segment_not_approved_detail' => 'The segment is not approved.',
+    'segment_not_assigned_detail' => 'The segment is not assigned to the selected company.',
+    'segment_code_required_detail' => 'segment_code field is required',
+
+    // User Qty Validation
+    'user_qty_positive' => 'The quantity field value entered by the user should be a positive number',
+    'user_qty_required' => 'User Qty field is required',
+
+    // Service Code Validation
+    'service_code_not_found' => 'Service Code Not Found',
+    'item_category_inventory' => 'Item category should be inventory or non-inventory',
+    'item_category_service' => 'Item category should be service',
+    'service_code_required' => 'service_code field is required',
+
+    // Margin and Discount Validation
+    'margin_percentage_min' => 'margin_percentage must be at least 0',
+    'margin_percentage_numeric' => 'margin_percentage must be a numeric',
+    'discount_percentage_min' => 'discount_percentage must be at least 0',
+    'discount_percentage_numeric' => 'discount_percentage must be a numeric',
+    'discount_amount_min' => 'discount_amount must be at least 0',
+    'discount_amount_numeric' => 'discount_amount must be a numeric',
+
+    // VAT Validation
+    'vat_percentage_min' => 'vat_percentage must be at least 0',
+    'vat_percentage_numeric' => 'vat_percentage must be a numeric',
+    'vat_amount_min' => 'vat_amount must be at least 0',
+    'vat_amount_numeric' => 'vat_amount must be a numeric',
+
+    // Unit Validation
+    'uom_required' => 'uom field is required',
+
+    // Quantity Validation
+    'quantity_min' => 'quantity must be at least 1',
+    'quantity_integer' => 'quantity must be an integer',
+    'quantity_required' => 'quantity field is required',
+
+    // Sales Price Validation
+    'sales_price_min' => 'sales_price must be at least 1',
+    'sales_price_numeric' => 'sales_price must be a numeric',
+    'sales_price_required' => 'sales_price field is required',
+
+    // Success Messages
+    'customer_invoice_saved' => 'Customer Invoice saved successfully',
+    'customer_invoice_confirmed' => 'Customer invoice confirmed successfully',
+    'customer_invoice_item_saved' => 'Customer Invoice Item Details saved successfully',
+
+    // Error Messages
+    'invalid_due_date_format' => 'Invalid Due Date format',
+    'document_date_greater_than_current' => 'Document date cannot be greater than current date',
+    'document_date_between_period' => 'Document date should be between financial period start date and end date',
+    'please_select_segment' => 'Please select a Segment',
+    'invoice_details_exist_currency' => 'Invoice details exist. You cannot change the currency.',
+    'credit_days_not_mentioned' => ' - Credit days not mentioned for this customer',
+    'service_start_date_greater' => 'Service start date cannot be greater than service end date.',
+    'date_of_supply_required' => 'Date of supply is required',
+    'document_date_between_period_detail' => 'Document Date should be between financial period start date and end date.',
+    'document_date_between_selected_period' => 'Document date should be between the selected financial period start date and end date.',
+    'are_you_sure_update_invoice' => 'Are you sure you want to update the customer invoice number as the document number',
+
+    // Validation Messages for Confirmation
+    'currency_required' => 'Currency is required.',
+    'bank_required' => 'Bank is required.',
+    'bank_account_required' => 'Bank account is required.',
+    'customer_invoice_no_required' => 'Customer invoice no is required.',
+    'customer_invoice_date_required' => 'Customer invoice date is required.',
+    'po_number_required' => 'Po number is required.',
+    'service_period_required' => 'Service period is required.',
+    'service_start_date_required' => 'Service start date is required.',
+    'service_end_date_required' => 'Service end date is required.',
+    'booking_date_required' => 'Document date is required.',
+
+    // GL Selection Messages
+    'please_select_segment_gl' => 'Please select a Segment in GL Selection',
+    'amount_required_gl' => 'Amount is required in GL Selection',
+
+    // Confirmation Messages
+    'cannot_confirm_no_details' => 'You cannot confirm. Invoice Details not found.',
+    'every_item_min_qty' => 'Every Item should have at least one minimum Qty Requested',
+    'every_item_min_user_qty' => 'Every Item should have at least one minimum User Qty Requested',
+    'multiple_finance_category' => 'Multiple finance category cannot be added. Different finance category found on saved details.',
+    'bs_account_cannot_be_null' => 'BS account cannot be null for :itemCode - :itemDescription',
+    'cost_account_cannot_be_null' => 'Cost account cannot be null for :itemCode - :itemDescription',
+    'revenue_account_cannot_be_null' => 'Revenue account cannot be null for :itemCode - :itemDescription',
+    'item_must_not_zero_cost' => 'Item must not have zero cost',
+    'item_must_not_negative_cost' => 'Item must not have negative cost',
+    'warehouse_stock_qty_zero' => 'Warehouse stock Qty is 0 for :itemDescription',
+    'stock_qty_zero' => 'Stock Qty is 0 for :itemDescription',
+    'insufficient_stock_qty' => 'Insufficient Stock Qty for :itemDescription',
+    'insufficient_warehouse_qty' => 'Insufficient Warehouse Qty for :itemDescription',
+    'cannot_confirm_output_vat_gl' => 'Cannot confirm. Output VAT GL Account not configured.',
+    'cannot_confirm_output_vat_transfer_gl' => 'Cannot confirm. Output VAT Transfer GL Account not configured.',
+
+    // Segment Validation
+    'cannot_confirm_segment_not_updated' => 'Cannot confirm. Segment is not updated.',
+    'uom_required_confirm' => 'UOM is required.',
+    'qty_required' => 'Qty is required.',
+    'sales_price_required_confirm' => 'Sales price is required.',
+    'unit_cost_required' => 'Unit cost is required.',
+    'contract_no_required' => 'Contract no. is required.',
+    'cannot_continue_multiple_contract' => 'You cannot continue . multiple contract exist in details.',
+    'no_invoice_details_found' => 'No invoice details found.',
+
+    // Direct Details Messages
+    'customer_invoice_direct_not_found_detail' => 'Customer Invoice Direct not found',
+    'payment_period_not_updated' => 'Payment Period is not updated in the contract. Please update and try again',
+    'discount_percentage_greater_100' => 'Discount Percentage cannot be greater than 100 percentage',
+    'discount_amount_greater_sales_price' => 'Discount amount cannot be greater than sales price',
+    'vat_percentage_greater_100' => 'Vat Percentage cannot be greater than 100 percentage',
+    'vat_amount_greater_sales_price' => 'Vat Amount cannot be greater than sales price',
+    'vat_amount_greater_unit_price' => 'Vat Amount cannot be greater than unit price',
+    'vat_amount_greater_sales_price_detail' => 'Vat amount cannot be greater than sales price',
+
+    // Item Details Messages
+    'customer_invoice_direct_not_found_item' => 'Customer Invoice Direct Not Found',
+    'different_finance_category' => 'Different finance category found. You can not add different finance category items for same invoice',
+    'bs_account_cannot_be_null_item' => 'BS account cannot be null for :itemCode - :itemDescription',
+    'cost_account_cannot_be_null_item' => 'Cost account cannot be null for :itemCode - :itemDescription',
+    'revenue_account_cannot_be_null_item' => 'Revenue account cannot be null for :itemCode - :itemDescription',
+
+    // Item Update Messages
+    'discount_percentage_amount_not_matching_item' => 'Discount% and Discount Amount is not matching',
+    'vat_percentage_amount_not_matching_item' => 'VAT% and VAT Amount is not matching',
+    'vat_percentage_exceed_100_item' => 'VAT% cannot exceed 100%',
+    'vat_amount_greater_sales_price_item' => 'Vat amount cannot be greater than sales price',
+    'cost_zero_cannot_issue_item' => 'Cost is 0. You cannot issue.',
+    'cost_negative_cannot_issue_item' => 'Cost is negative. You cannot issue.',
+    'stock_qty_zero_cannot_issue_item' => 'Stock Qty is 0. You cannot issue.',
+    'warehouse_stock_qty_zero_cannot_issue_item' => 'Warehouse stock Qty is 0. You cannot issue.',
+    'current_stock_qty_insufficient' => 'Current stock Qty is: :currentStockQty .You cannot issue more than the current stock qty.',
+    'current_warehouse_stock_qty_insufficient' => 'Current warehouse stock Qty is: :currentWareHouseStockQty .You cannot issue more than the current warehouse stock qty.',
+    'quantity_falling_below_minimum' => 'Quantity is falling below the minimum inventory level.',
+
+    // VAT Messages
+    'customer_invoice_not_found_vat' => 'Customer Invoice not found.',
+    'invoice_details_not_found_vat' => 'Invoice Details not found.',
+
+    // General Messages
+    'selected_grv_already_assigned' => 'Selected GRV is already assigned to :bookingInvCode',
+    'invoice_details_exist_customer' => 'Invoice details exist. You cannot change the customer.',
+    'you_cannot_continue_multiple_contract' => 'You cannot continue . multiple contract exist in details.',
+    'payment_period_not_updated_contract' => 'Payment Period is not updated in the contract. Please update and try again',
+    'contract_not_exist' => 'Contract not exist.',
+    'discount_percentage_cannot_be_greater' => 'Discount Percentage cannot be greater than 100 percentage',
+    'discount_amount_cannot_be_greater' => 'Discount amount cannot be greater than sales price',
+    'vat_percentage_cannot_be_greater' => 'Vat Percentage cannot be greater than 100 percentage',
+    'vat_amount_cannot_be_greater_sales_price' => 'Vat Amount cannot be greater than sales price',
+    'vat_amount_cannot_be_greater_unit_price' => 'Vat Amount cannot be greater than unit price',
+    'discount_percentage_amount_not_matching' => 'Discount% and Discount Amount is not matching',
+    'vat_percentage_amount_not_matching' => 'VAT% and VAT Amount is not matching',
+    'vat_percentage_exceed_100' => 'VAT% cannot exceed 100%',
+    'different_finance_category_found' => 'Different finance category found. You can not add different finance category items for same invoice',
+    'customer_invoice_details_not_found' => 'Customer Invoice Details not found',
+    'unit_conversion_not_valid_configured' => "Unit conversion isn't valid or configured",
+    'sales_price_margin_not_matching' => 'Sales Price and Margin% is not matching',
 ];
