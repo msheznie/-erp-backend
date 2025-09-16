@@ -1644,6 +1644,8 @@ return [
     'e_status' => 'Status',
     'e_supplier_code' => 'Supplier Code',
     'e_supplier_name' => 'Supplier Name',
+    'you_can_only_close_approved_request' => 'You can only close approved request',
+    'budget_check_is_removed_for_the_selected_document' => 'Budget check is removed for the selected document.',
     'e_transaction_amount' => 'Transaction Amount',
     'e_transaction_currency' => 'Transaction Currency',
     'e_type' => 'Type',
