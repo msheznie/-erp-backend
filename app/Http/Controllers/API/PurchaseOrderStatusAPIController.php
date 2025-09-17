@@ -27,6 +27,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierMaster;
 use App\Providers\AuthServiceProvider;
 use App\Repositories\PurchaseOrderStatusRepository;
+use App\helper\CreateExcel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -765,34 +766,37 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
 
             $data[] = array(
-                'Company ID' => $val->companyID,
-                'PO Code' => $val->purchaseOrderCode,
-                'Segment' => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
-                'Created Date' => \Helper::dateFormat($val->createdDateTime),
-                'Approved Date' => \Helper::dateFormat($val->approvedDate),
-                'ETA' => \Helper::dateFormat($val->expectedDeliveryDate),
-                'Narration' => $val->narration,
-                'Supplier Code' => $val->supplierPrimaryCode,
-                'Supplier Name' => $val->supplierName,
-                'Supplier Country' => $countryName,
-                'Currency' => $currencyName,
-                'Amount' => $val->poTotalSupplierTransactionCurrency,
-                'GRV Status' => $grvStatus,
-                'Status' => $status,
-                'Comments' => $comments,
+                trans('custom.company_id') => $val->companyID,
+                trans('custom.po_code') => $val->purchaseOrderCode,
+                trans('custom.segment') => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
+                trans('custom.created_date') => \Helper::dateFormat($val->createdDateTime),
+                trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+                trans('custom.eta') => \Helper::dateFormat($val->expectedDeliveryDate),
+                trans('custom.narration') => $val->narration,
+                trans('custom.supplier_code') => $val->supplierPrimaryCode,
+                trans('custom.supplier_name') => $val->supplierName,
+                trans('custom.supplier_country') => $countryName,
+                trans('custom.currency') => $currencyName,
+                trans('custom.amount') => $val->poTotalSupplierTransactionCurrency,
+                trans('custom.grv_status') => $grvStatus,
+                trans('custom.status') => $status,
+                trans('custom.comments') => $comments,
             );
         }
-         \Excel::create('order_status', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        $fileName = 'order_status';
+        $path = 'procurement/report/order_status/excel/';
+        $companyMaster = Company::find($selectedCompanyId);
+        $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+        $detail_array = array(
+            'company_code' => $companyCode,
+        );
+        $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+        if ($basePath == '') {
+            return $this->sendError(trans('custom.unable_to_export_excel'));
+        } else {
+            return $this->sendResponse(['data' => $basePath], trans('custom.success_export'));
+        }
     }
 
 }

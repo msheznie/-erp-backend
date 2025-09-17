@@ -5432,17 +5432,20 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data = array();
             }
         }
-        \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        $fileName = 'po_employee_performance';
+        $path = 'procurement/report/employee_performance/excel/';
+        $companyMaster = Company::find($request->companySystemID);
+        $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+        $detail_array = array(
+            'company_code' => $companyCode,
+        );
+        $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-        return $this->sendResponse(array(), trans('custom.successfully_export'));
+        if ($basePath == '') {
+            return $this->sendError(trans('custom.unable_to_export_excel'));
+        } else {
+            return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+        }
     }
 
     public function exportProcumentOrderMaster(Request $request)
