@@ -129,7 +129,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplates = $this->cashFlowTemplateRepository->create($input);
 
             $data['cashFlowTemplateID'] = $reportTemplates->id;
-            $data['description'] = 'Operating activities';
+            $data['description'] = trans('custom.operating_activities');
             $data['type'] = 1;
             $data['masterID'] = null;
             $data['sortOrder'] = 1;
@@ -142,7 +142,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails = CashFlowTemplateDetail::create($data);
 
             $data2['cashFlowTemplateID'] = $reportTemplates->id;
-            $data2['description'] = 'Loss before income tax';
+            $data2['description'] = trans('custom.loss_before_income_tax');
             $data2['type'] = 2;
             $data2['masterID'] = $reportTemplateDetails->id;
             $data2['sortOrder'] = 1;
@@ -155,7 +155,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails2 = CashFlowTemplateDetail::create($data2);
 
             $data3['cashFlowTemplateID'] = $reportTemplates->id;
-            $data3['description'] = 'Adjustments for:';
+            $data3['description'] = trans('custom.adjustments_for');
             $data3['type'] = 2;
             $data3['masterID'] = $reportTemplateDetails->id;
             $data3['sortOrder'] = 2;
@@ -168,7 +168,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails3 = CashFlowTemplateDetail::create($data3);
 
             $data4['cashFlowTemplateID'] = $reportTemplates->id;
-            $data4['description'] = 'Operating cash flows before working capital changes:';
+            $data4['description'] = trans('custom.operating_cash_flows_before_working_capital_changes');
             $data4['type'] = 2;
             $data4['masterID'] = $reportTemplateDetails->id;
             $data4['sortOrder'] = 3;
@@ -181,7 +181,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails4 = CashFlowTemplateDetail::create($data4);
 
             $data5['cashFlowTemplateID'] = $reportTemplates->id;
-            $data5['description'] = 'Cash (used in)/generated from operations';
+            $data5['description'] = trans('custom.cash_used_in_generated_from_operations');
             $data5['type'] = 3;
             $data5['isFinalLevel'] = 1;
             $data5['masterID'] = $reportTemplateDetails->id;
@@ -195,7 +195,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails5 = CashFlowTemplateDetail::create($data5);
 
             $data6['cashFlowTemplateID'] = $reportTemplates->id;
-            $data6['description'] = 'Income taxes paid';
+            $data6['description'] = trans('custom.income_tax_paid');
             $data6['type'] = 2;
             $data6['masterID'] = $reportTemplateDetails->id;
             $data6['sortOrder'] = 5;
@@ -209,7 +209,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails6 = CashFlowTemplateDetail::create($data6);
 
             $data7['cashFlowTemplateID'] = $reportTemplates->id;
-            $data7['description'] = 'End-of-service benefits paid';
+            $data7['description'] = trans('custom.end_of_service_benefits_paid');
             $data7['type'] = 2;
             $data7['masterID'] = $reportTemplateDetails->id;
             $data7['sortOrder'] = 6;
@@ -223,7 +223,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails7 = CashFlowTemplateDetail::create($data7);
 
             $data8['cashFlowTemplateID'] = $reportTemplates->id;
-            $data8['description'] = 'Net cash (used in)/generated from operating activities';
+            $data8['description'] = trans('custom.net_cash_used_in_generated_from_operating_activities');
             $data8['type'] = 3;
             $data8['isFinalLevel'] = 1;
             $data8['masterID'] = $reportTemplateDetails->id;
@@ -239,7 +239,7 @@ class CashFlowTemplateAPIController extends AppBaseController
 
 
             $data9['cashFlowTemplateID'] = $reportTemplates->id;
-            $data9['description'] = 'Investing activities';
+            $data9['description'] = trans('custom.investing_activities');
             $data9['type'] = 1;
             $data9['masterID'] = null;
             $data9['sortOrder'] = 2;
@@ -254,7 +254,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails9 = CashFlowTemplateDetail::create($data9);
 
             $data10['cashFlowTemplateID'] = $reportTemplates->id;
-            $data10['description'] = 'Net cash used in investing activities';
+            $data10['description'] = trans('custom.net_cash_used_in_investing_activities');
             $data10['type'] = 3;
             $data10['isFinalLevel'] = 1;
             $data10['masterID'] = $reportTemplateDetails9->id;
@@ -268,7 +268,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails10 = CashFlowTemplateDetail::create($data10);
 
             $data11['cashFlowTemplateID'] = $reportTemplates->id;
-            $data11['description'] = 'Financing activities';
+            $data11['description'] = trans('custom.financing_activities');
             $data11['type'] = 1;
             $data11['masterID'] = null;
             $data11['sortOrder'] = 3;
@@ -283,7 +283,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails11 = CashFlowTemplateDetail::create($data11);
 
             $data12['cashFlowTemplateID'] = $reportTemplates->id;
-            $data12['description'] = 'Net cash generated from/(used in) financing activities';
+            $data12['description'] = trans('custom.net_cash_generated_from_used_in_financing_activities');
             $data12['type'] = 3;
             $data12['isFinalLevel'] = 1;
             $data12['masterID'] = $reportTemplateDetails11->id;
@@ -297,7 +297,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails12 = CashFlowTemplateDetail::create($data12);
 
             $data13['cashFlowTemplateID'] = $reportTemplates->id;
-            $data13['description'] = 'Net change in cash and cash equivalents';
+            $data13['description'] = trans('custom.net_change_in_cash_and_cash_equivalents');
             $data13['type'] = 3;
             $data13['isFinalLevel'] = 1;
             $data13['masterID'] = null;
@@ -311,7 +311,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails13 = CashFlowTemplateDetail::create($data13);
 
             $data14['cashFlowTemplateID'] = $reportTemplates->id;
-            $data14['description'] = 'Cash and cash equivalents at beginning of the year';
+            $data14['description'] = trans('custom.cash_and_cash_equivalents_at_beginning_of_the_year');
             $data14['type'] = 2;
             $data14['masterID'] = $reportTemplateDetails13->id;
             $data14['sortOrder'] = 1;
@@ -324,7 +324,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails14 = CashFlowTemplateDetail::create($data14);
 
             $data15['cashFlowTemplateID'] = $reportTemplates->id;
-            $data15['description'] = 'Provision for expected credit losses on bank balances';
+            $data15['description'] = trans('custom.provision_for_expected_credit_losses_on_bank_balances');
             $data15['type'] = 2;
             $data15['masterID'] = $reportTemplateDetails13->id;
             $data15['sortOrder'] = 2;
@@ -337,7 +337,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $reportTemplateDetails15 = CashFlowTemplateDetail::create($data15);
 
             $data16['cashFlowTemplateID'] = $reportTemplates->id;
-            $data16['description'] = 'Cash and cash equivalents at end of the year';
+            $data16['description'] = trans('custom.cash_and_cash_equivalents_at_end_of_the_year');
             $data16['type'] = 3;
             $data16['isFinalLevel'] = 1;
             $data16['masterID'] = null;

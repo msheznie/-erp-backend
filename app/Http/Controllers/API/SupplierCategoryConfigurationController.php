@@ -46,9 +46,9 @@ class SupplierCategoryConfigurationController extends AppBaseController
         $storeSupplierCategory =  SupplierCategory::create($input);
 
         if($storeSupplierCategory) {
-            return $this->sendResponse($storeSupplierCategory->toArray(), "Supplier Category Created");
+            return $this->sendResponse($storeSupplierCategory->toArray(), trans('custom.supplier_category_created'));
         }else {
-            return $this->sendError("Cannot create supplier category");
+            return $this->sendError(trans('custom.cannot_create_supplier_category'));
         }
     }
 
@@ -87,9 +87,9 @@ class SupplierCategoryConfigurationController extends AppBaseController
         $data = SupplierCategory::find($input['id'])->update($input);
        
         if($data) {
-          return $this->sendResponse($data, "Supplier Category Updated");
+          return $this->sendResponse($data, trans('custom.supplier_category_updated'));
         }else {
-            return $this->sendError("Cannot find supplier category");
+            return $this->sendError(trans('custom.cannot_find_supplier_category'));
         }
     }
 
@@ -153,7 +153,7 @@ class SupplierCategoryConfigurationController extends AppBaseController
 
         if(isset($is_exit))
         {
-            return $this->sendError("Cannot delete,this category already assigned to one of the supplier");
+            return $this->sendError(trans('custom.cannot_delete_category_assigned_to_supplier'));
         }
       
 
@@ -164,9 +164,9 @@ class SupplierCategoryConfigurationController extends AppBaseController
             $data->is_deleted = true;
             $data ->deleted_by = ($user) ? $user->employee_id : 0;
             $data->save();
-            return $this->sendResponse($data->toArray(), "Supplier Category Deleted");
+            return $this->sendResponse($data->toArray(), trans('custom.supplier_category_deleted'));
         }else {
-            return $this->sendError("Cannot find supplier category");
+            return $this->sendError(trans('custom.cannot_find_supplier_category'));
         }
 
     }
