@@ -1796,25 +1796,25 @@ class FixedAssetMasterAPIController extends AppBaseController
         if ($assetInsurance) {
             $x = 0;
             foreach ($assetInsurance as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Asset Type'] = $val->AssetType;
-                $data[$x]['Category'] = $val->Category;
-                $data[$x]['Asset Code'] = $val->AssetCode;
-                $data[$x]['Asset Description'] = $val->AssetDescription;
-                $data[$x]['Serial Number'] = $val->SerialNumber;
-                $data[$x]['Date AQ'] = \Helper::dateFormat($val->dateAQ);
-                $data[$x]['Date DEP'] = \Helper::dateFormat($val->dateDEP);
-                $data[$x]['DEP Percentage'] = $val->DEPpercentage;
-                $data[$x]['Cost Local'] = number_format($val->CostLocal, 3);
-                $data[$x]['Dep Local'] = number_format($val->DepLocal, 3);
-                $data[$x]['Cost Rpt'] = number_format($val->CostRpt, 3);
-                $data[$x]['Dep Rpt'] = number_format($val->DepRpt, 3);
-                $data[$x]['Departmentt'] = $val->department;
-                $data[$x]['Policy Type'] = $val->policyType;
-                $data[$x]['Policy Number'] = $val->policyNumber;
-                $data[$x]['Date From'] = \Helper::dateFormat($val->dateFrom);
-                $data[$x]['Date To'] = \Helper::dateFormat($val->dateTo);
-                $data[$x]['Insurer Name'] = $val->insurerName;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.asset_type')] = $val->AssetType;
+                $data[$x][trans('custom.category')] = $val->Category;
+                $data[$x][trans('custom.asset_code')] = $val->AssetCode;
+                $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
+                $data[$x][trans('custom.serial_number')] = $val->SerialNumber;
+                $data[$x][trans('custom.date_aq')] = \Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.date_dep')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                $data[$x][trans('custom.cost_local')] = number_format($val->CostLocal, 3);
+                $data[$x][trans('custom.dep_local')] = number_format($val->DepLocal, 3);
+                $data[$x][trans('custom.cost_rpt')] = number_format($val->CostRpt, 3);
+                $data[$x][trans('custom.dep_rpt')] = number_format($val->DepRpt, 3);
+                $data[$x][trans('custom.department')] = $val->department;
+                $data[$x][trans('custom.policy_type')] = $val->policyType;
+                $data[$x][trans('custom.policy_number')] = $val->policyNumber;
+                $data[$x][trans('custom.date_from')] = \Helper::dateFormat($val->dateFrom);
+                $data[$x][trans('custom.date_to')] = \Helper::dateFormat($val->dateTo);
+                $data[$x][trans('custom.insurer_name')] = $val->insurerName;
                 $x++;
             }
         } else {
@@ -1833,7 +1833,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
