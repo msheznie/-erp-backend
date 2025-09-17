@@ -1,3 +1,6 @@
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
+<head>
+<title>{{ trans('custom.credit_note') }}</title>
 <style type="text/css">
     <!--
     @page {
@@ -14,6 +17,30 @@
         font-size: 11px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
+
+        /* RTL Support for Arabic */
+    @if(isset($lang) && $lang === 'ar')
+        body {
+        direction: rtl;
+        text-align: right;
+    }
+
+    .text-left {
+        text-align: right !important;
+    }
+
+    .text-right {
+        text-align: left !important;
+    }
+
+    table {
+        direction: rtl;
+    }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
 
     h3 {
         font-size: 1.53125rem;
@@ -160,7 +187,9 @@
         max-height: 60px !important;
     }
 
-</style>
+    </style>
+</head>
+<body>
 
 <div class="footer">
 
@@ -173,17 +202,17 @@
         </tr>
         <tr>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
+                <p><span style="font-weight: 700 !important;"><span>{!! nl2br($request->docRefNo) !!} </span></span>
                 </p>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
                 @if ($request->company)
                     {{$request->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 38%;">Printed Date :  {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: {{ isset($lang) && $lang === 'ar' ? '0%' : '38%' }};">{{ trans('custom.printed_date') }}  {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -200,25 +229,25 @@
     <div class="row">
         <table style="width:100%" class="table_height">
             <tr>
-                <td width="30%">
+                <td style="width: 30%;">
                     <img src="{{$request->company->logo_url}}" class="container"></td>
 
-                <td width="50%" style="text-align: center">
+                <td style="width: 50%; text-align: center">
                     <div class="text-center">
-                        <h3 class="font-weight-bold">
+                        <h3 style="font-weight: bold;">
 
                             @if ($request->company)
                                 {{$request->company->CompanyName}}
                             @endif
                         </h3>
-                        <h3 class="font-weight-bold">
-                            Credit Note
+                        <h3 style="font-weight: bold;">
+                            {{ trans('custom.credit_note') }}
                         </h3>
                     </div>
 
                 </td>
                 <td style="width: 30%" valign="bottom">
-                                         <span class="font-weight-bold">
+                                         <span style="font-weight: 700;">
 {{--                         <h4 class="text-muted" style="opacity: 0.6;">
                              @if($request->confirmedYN == 0 && $request->approved == 0)
                                  Not Confirmed & Not Approved <br> Draft Copy
@@ -236,12 +265,13 @@
         <br>
     </div>
     <div class="row">
-        <table style="width:100%">
-            <td style="width: 40%">
-                <b>To :</b>
+        <table style="width:100%; border-collapse: collapse;">
+            <tr>
+            <td style="width: 40%;">
+                <b>{{ trans('custom.to') }} :</b>
                 <br>
                 <br>
-                <table style="width: 100%">
+                <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td>{{$request->customer->CutomerCode}}</td>
                     </tr>
@@ -255,40 +285,34 @@
                         <td>{{$request->customer->customerCity}}</td>
                     </tr>
                     <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">VAT No</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span style="font-weight: bold;">{{ trans('custom.vat_no') }}</span></td>
+                            <td style="width: 2%"><span style="font-weight: bold;">:</span></td>
                             <td style="width: 78%">{{$request->customer->vatNumber}} </td>
                         </tr>
-
-                </table>
-
-
+                    </table>
             </td>
-            <td style="width: 10%"></td>
-            <td style="width: 40%">
-
+            <td style="width: 10%;"></td>
+            <td style="width: 50%;">
                 <br>
                 <br>
-                <table style="width: 100%">
+                <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td width="120px"><span class="font-weight-bold">Doc Code</span></td>
-                        <td width="10px"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 120px;"><span style="font-weight: bold;">{{ trans('custom.doc_code') }}</span></td>
+                        <td style="width: 10px;"><span style="font-weight: bold;">:</span></td>
                         <td><span>{{$request->creditNoteCode}}</span></td>
                     </tr>
                     <tr>
-                        <td width="120px"><span class="font-weight-bold">Doc Date</span></td>
-                        <td width="10px"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 120px;"><span style="font-weight: bold;">{{ trans('custom.doc_date') }}</span></td>
+                        <td style="width: 10px;"><span style="font-weight: bold;">:</span></td>
                         <td><span>
                                  @if(!empty($request->creditNoteDate))
                                     {{\App\helper\Helper::dateFormat($request->creditNoteDate) }}
                                 @endif
                             </span></td>
-                    </tr>
-
-
-                </table>
-
-            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
         </table>
 
     </div>
@@ -296,7 +320,7 @@
         <br>
     </div>
     <div class="row">
-        <b>Comments : </b> {{$request->comments}}
+        <b>{{ trans('custom.comments') }} : </b> {{$request->comments}}
     </div>
 
    <!--  @if($request->isVATApplicable)
@@ -305,19 +329,19 @@
         </div>
     @endif -->
     <div class="row">
-        <div style="text-align: right"><b>Currency
+        <div style="text-align: {{ isset($lang) && $lang === 'ar' ? 'left' : 'right' }}"><b>{{ trans('custom.currency') }}
                 : {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} </b></div>
     </div>
     <div class="row">
-        <table class="table table-bordered" style="width: 100%;">
+        <table class="table table-bordered" style="width: 100%; border-collapse: collapse;">
             <thead>
-            <tr class="theme-tr-head" style="width: 100%;">
-                <th style="text-align: center">Comments</th>
-                <th style="text-align: center">Segment</th>
-                <th style="text-align: center">Amount</th>
+            <tr class="theme-tr-head">
+                <th style="text-align: center; width: 30%;">{{ trans('custom.comments') }}</th>
+                <th style="text-align: center; width: 25%;">{{ trans('custom.segments') }}</th>
+                <th style="text-align: center; width: 20%;">{{ trans('custom.amount') }}</th>
                 @if($request->isVATApplicable)
-                    <th class="text-center">VAT Amount</th>
-                    <th class="text-center">Net Amount</th>
+                    <th class="text-center" style="width: 15%;">{{ trans('custom.vat_amount') }}</th>
+                    <th class="text-center" style="width: 15%;">{{ trans('custom.net_amount') }}</th>
                 @endif
             </tr>
             </thead>
@@ -331,28 +355,28 @@
                 {{$directVATSubTotal +=$item->VATAmount}}
                 {{$directNetSubTotal +=$item->netAmount}}
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$item->comments}}</td>
-                    <td>
+                    <td style="width: 30%;">{{$item->comments}}</td>
+                    <td style="width: 25%;">
                         @if($item->segment)
                             {{$item->segment->ServiceLineDes}}
                         @endif
                     </td>
-                    <td class="text-right">{{number_format($item->creditAmount,$numberFormatting)}}</td>
+                    <td class="text-right" style="width: 20%;">{{number_format($item->creditAmount,$numberFormatting)}}</td>
                     @if($request->isVATApplicable)
-                        <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format($item->netAmount,$numberFormatting)}}</td>
+                        <td class="text-right" style="width: 15%;">{{number_format($item->VATAmount,$numberFormatting)}}</td>
+                        <td class="text-right" style="width: 15%;">{{number_format($item->netAmount,$numberFormatting)}}</td>
                     @endif
                 </tr>
 
             @endforeach
             <tr>
-                <td colspan="2"  class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                            class="font-weight-bold"
-                            style="font-size: 11px">Total</span>
+                <td colspan="2" class="{{ isset($lang) && $lang === 'ar' ? 'text-left' : 'text-right' }}" style="border: 1px solid rgb(127, 127, 127)!important; width: 55%;"><span
+                            style="font-weight: bold;"
+                            style="font-size: 11px">{{ trans('custom.total') }}</span>
                 </td>
                 <td class="text-right"
-                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
+                    style="border:1px solid #7f7f7f; font-weight:bold;">
+                <span style="font-weight: bold;">
                 @if ($request->details)
                         {{number_format($directTraSubTotal,$numberFormatting)}}
                     @endif
@@ -360,16 +384,16 @@
                 </td>
                 @if($request->isVATApplicable)
                     <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
+                    style="border:1px solid #7f7f7f; font-weight:bold;">
+                <span style="font-weight: bold;">
                 @if ($request->details)
                         {{number_format($directVATSubTotal,$numberFormatting)}}
                     @endif
                 </span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
+                        style="border:1px solid #7f7f7f; font-weight:bold;">
+                <span style="font-weight: bold;">
                 @if ($request->details)
                         {{number_format($directNetSubTotal,$numberFormatting)}}
                     @endif
@@ -381,15 +405,15 @@
         </table>
     </div>
     <div class="row" style="margin-top: 60px;">
-        <table>
-            <tr width="100%">
-                <td width="60%">
-                    <table width="100%">
+        <table class="{{ isset($lang) && $lang === 'ar' ? 'rtl-table' : '' }}" style="width: 100%; border-collapse: collapse;">
+            <tr style="width: 100%;">
+                <td style="width: 60%;">
+                    <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Prepared By :</span>
+                            <td style="width: 80px;">
+                                <span style="font-weight: bold;">{{ trans('custom.prepared_by') }} :</span>
                             </td>
-                            <td width="400px">
+                            <td style="width: 400px;">
                                 @if($request->createduser)
                                     {{$request->createduser->empName}}
                                 @endif
@@ -397,17 +421,16 @@
                         </tr>
                     </table>
                 </td>
-                <td width="10%">
-
+                <td style="width: 10%;">
                 </td>
-                <td width="30%">
-                    <table>
+                <td style="width: 40%;">
+                    <table style="border-collapse: collapse;">
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Checked By :</span>
+                            <td style="width: 60px;">
+                                <span style="font-weight: bold;">{{ trans('custom.checked_by') }} :</span>
                             </td>
-                            <td>
-                                <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
+                            <td style="border-bottom:1px solid #000;width:200px;height:20px;">
+                                &nbsp;
                             </td>
                         </tr>
                     </table>
@@ -418,10 +441,10 @@
 
 
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold;">{{ trans('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
-        <table>
+        <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 @foreach ($request->approved_by as $det)
                     <td style="padding-right: 25px" class="text-center">
@@ -438,11 +461,7 @@
         </table>
     </div>
 
+</div>
 
-
-
-
-
-
-
-
+</body>
+</html>
