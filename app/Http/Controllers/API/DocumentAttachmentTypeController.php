@@ -127,6 +127,11 @@ class DocumentAttachmentTypeController extends AppBaseController
         }
 
         $input = $this->convertArrayToValue($input);
+
+        if (isset($input['attachments'])) {
+            unset($input['attachments']);
+        }
+
         $validator = \Validator::make($input, [
             'srm_action' => 'required|numeric|min:0',
             'document_type' => 'required'
@@ -150,7 +155,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         $input['updated_by'] = Helper::getEmployeeSystemID();
         $input['updated_at'] = Carbon::now();
 
-        $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
+        $attachmentType->update($input);
 
         return $this->sendResponse($attachmentType, trans('srm_masters.document_type_updated_successfully'));
 
