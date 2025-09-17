@@ -7262,6 +7262,16 @@ return [
     'asset_cost_rpt_curr' => 'Asset Cost Rpt Curr',
     'asset_cost_rpt' => 'Asset Cost Rpt',
 
+    // Asset Insurance Report Column Headers
+    'date_aq' => 'Date AQ',
+    'date_dep' => 'Date DEP',
+    'cost_local' => 'Cost Local',
+    'dep_local' => 'Dep Local',
+    'dep_rpt' => 'Dep Rpt',
+    'policy_type' => 'Policy Type',
+    'policy_number' => 'Policy Number',
+    'insurer_name' => 'Insurer Name',
+
     // Asset Disposal Report Data Headers
     'disposal_date' => 'Disposal Date',
     'currency_local' => 'Currency (Local)',

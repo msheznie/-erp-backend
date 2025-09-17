@@ -7175,6 +7175,16 @@ return [
     'asset_cost_rpt_curr' => 'عملة تكلفة الأصل التقرير',
     'asset_cost_rpt' => 'تكلفة الأصل التقرير',
 
+    // Asset Insurance Report Column Headers
+    'date_aq' => 'تاريخ الاستحواذ',
+    'date_dep' => 'تاريخ الإهلاك',
+    'cost_local' => 'التكلفة المحلية',
+    'dep_local' => 'الإهلاك المحلي',
+    'dep_rpt' => 'الإهلاك التقريري',
+    'policy_type' => 'نوع البوليصة',
+    'policy_number' => 'رقم البوليصة',
+    'insurer_name' => 'اسم المؤمن',
+
     // Asset Disposal Report Data Headers
     'disposal_date' => 'تاريخ التخلص',
     'currency_local' => 'العملة (المحلية)',

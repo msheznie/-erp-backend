@@ -2429,7 +2429,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (!$customerInvoice) {
-            return $this->sendError("Customer invoice not found");
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
@@ -2814,8 +2814,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎" . strtoupper($numFormatter->format($floatAmt)) . " فقط." : '';
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
-
-        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $local = $request->get('lang');
+        $numFormatterEn = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
 
         $customerInvoice->floatAmt = (string)$floatAmt;
 
