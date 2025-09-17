@@ -224,11 +224,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
-                        "message" => "This type of file not allow to upload."
+                        "message" => trans('srm_ranking.file_type_not_allowed')
                     ];
                 }
                 else{
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return $this->sendError(trans('srm_ranking.file_type_not_allowed'), 500);
                 }
             }
 
@@ -238,11 +238,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
-                            "message" => "Maximum allowed file size is exceeded"
+                            "message" => trans('srm_ranking.max_file_size_exceeded')
                         ];
                     }
                     else{
-                        return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                        return $this->sendError(trans('srm_ranking.max_file_size_exceeded_upload')." ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                     }
                 }
             }
@@ -333,18 +333,18 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+                return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved'));
             }
         } catch (\Exception $exception) {
             DB::rollBack();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Unable to upload the attachment"
+                    "message" => trans('srm_ranking.unable_to_upload_attachment')
                 ];
             }
             else{
-                return $this->sendError('Unable to upload the attachment' . $exception->getLine(), 500);
+                return $this->sendError(trans('srm_ranking.unable_to_upload_attachment') . $exception->getLine(), 500);
             }
         }
     }

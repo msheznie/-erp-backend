@@ -45,7 +45,7 @@ class SrmTenderEditAmendService
     public function sectionConfig()
     {
         return [
-            'Tender Strategy' => [
+            trans('srm_tender_rfx.tender_strategy') => [
                 'sectionId' => '1',
                 'modelName' => SrmTenderMasterEditLog::class,
                 'skippedFields' => [
@@ -65,12 +65,16 @@ class SrmTenderEditAmendService
                     'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
                     'technical_eval_status'
                 ], 'fieldDescriptions' => [
-                    'commercial_passing_weightage' => 'Commercial Criteria Passing Weightage',
-                    'technical_passing_weightage' => 'Technical Criteria Passing Weightage',
-                    'envelop_type_id' => 'Envelope', 'evaluation_type_id' => 'Evaluation',
-                    'stage' => 'Stage', 'no_of_alternative_solutions' => 'Number of Alternative Solutions',
-                    'commercial_weightage' => 'Commercial Weightage', 'technical_weightage' => 'Technical Weightage',
-                    'is_active_go_no_go' => 'Go/No Go Enable', 'min_approval_bid_opening' => 'Min no of approval for bid opening'
+                    'commercial_passing_weightage' => trans('srm_tender_rfx.commercial_criteria_passing_weightage'),
+                    'technical_passing_weightage' => trans('srm_tender_rfx.technical_criteria_passing_weightage'),
+                    'envelop_type_id' => trans('srm_tender_rfx.envelope'),
+                    'evaluation_type_id' => trans('srm_tender_rfx.evaluation'),
+                    'stage' => trans('srm_tender_rfx.stage'),
+                    'no_of_alternative_solutions' => trans('srm_tender_rfx.number_of_alternative_solutions'),
+                    'commercial_weightage' => trans('srm_tender_rfx.commercial_weightage'),
+                    'technical_weightage' => trans('srm_tender_rfx.technical_weightage'),
+                    'is_active_go_no_go' => trans('srm_tender_rfx.go_no_go_enable'),
+                    'min_approval_bid_opening' => trans('srm_tender_rfx.min_no_of_approval_for_bid_opening')
                 ],
                 'fieldMappings' => [
                     'envelop_type_id' => [
@@ -88,14 +92,14 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Bid Minimum Approval Details' => [
+            trans('srm_tender_rfx.bid_minimum_approval_details') => [
                 'sectionId' => '1.1',
                 'modelName' => SrmTenderBidEmployeeDetailsEditLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'commercial_eval_remarks', 'commercial_eval_status', 'modify_type', 'remarks', 'status',
                     'tender_award_commite_mem_comment', 'tender_award_commite_mem_status', 'tender_edit_version_id', 'tender_id', 'updated_by', 'level_no', 'is_deleted',
                 ],
-                'fieldDescriptions' => ['emp_id' => 'Employee'],
+                'fieldDescriptions' => ['emp_id' => trans('srm_tender_rfx.employee')],
                 'fieldMappings' => [
                     'emp_id' => [
                         'model' => Employee::class,
@@ -104,11 +108,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Bid Opening Members' => [
+            trans('srm_tender_rfx.bid_opening_members') => [
                 'sectionId' => '1.2',
                 'modelName' => SrmTenderUserAccessEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
-                'fieldDescriptions' => ['user_id' => 'Employee'],
+                'fieldDescriptions' => ['user_id' => trans('srm_tender_rfx.employee')],
                 'fieldMappings' => [
                     'user_id' => [
                         'model' => Employee::class,
@@ -117,11 +121,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Commercial Bid Opening Members' => [
+            trans('srm_tender_rfx.commercial_bid_opening_members') => [
                 'sectionId' => '1.3',
                 'modelName' => SrmTenderUserAccessEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
-                'fieldDescriptions' => ['user_id' => 'Employee'],
+                'fieldDescriptions' => ['user_id' => trans('srm_tender_rfx.employee')],
                 'fieldMappings' => [
                     'user_id' => [
                         'model' => Employee::class,
@@ -130,11 +134,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Supplier Ranking Members' => [
+            trans('srm_tender_rfx.supplier_ranking_members') => [
                 'sectionId' => '1.4',
                 'modelName' => SrmTenderUserAccessEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'module_id', 'company_id', 'is_deleted'],
-                'fieldDescriptions' => ['user_id' => 'Employee'],
+                'fieldDescriptions' => ['user_id' => trans('srm_tender_rfx.employee')],
                 'fieldMappings' => [
                     'user_id' => [
                         'model' => Employee::class,
@@ -143,7 +147,7 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'General Information' => [
+            trans('srm_tender_rfx.general_information') => [
                 'sectionId' => '2',
                 'modelName' => SrmTenderMasterEditLog::class,
                 'skippedFields' => [
@@ -162,16 +166,34 @@ class SrmTenderEditAmendService
                     'technical_eval_status'
                 ],
                 'fieldDescriptions' => [
-                    'title' => 'Title', 'title_sec_lang' => 'Title in Secondary', 'description' => 'Description', 'description_sec_lang' => 'Description in Secondary',
-                    'currency_id' => 'Currency', 'procument_cat_id' => 'Procurement Category', 'procument_sub_cat_id' => 'Procurement Sub Category', 'estimated_value' => 'Estimated Value',
-                    'allocated_budget' => 'Allocated Budget', 'pre_bid_clarification_method' => 'Pre-bid Clarification Method', 'show_technical_criteria' => 'Do not Show Technical Criteria to Supplier',
-                    'tender_document_fee' => 'Tender Document Fee', 'bank_id' => 'Bank', 'bank_account_id' => 'Bank Account', 'document_sales_start_date' => 'Document Sale Start Date',
-                    'document_sales_end_date' => 'Document Sale End Date', 'pre_bid_clarification_start_date' => 'Pre Bid Clarification Start Date',
-                    'pre_bid_clarification_end_date' => 'Pre Bid Clarification End Date', 'site_visit_date' => 'Site Visit Start Date',
-                    'site_visit_end_date' => 'Site Visit End Date', 'bid_submission_opening_date' => 'Bid Submission Date (Opening)',
-                    'bid_submission_closing_date' => 'Bid Submission Date (Closing)', 'bid_opening_date' => 'Bid Opening Date (Start)',
-                    'bid_opening_end_date' => 'Bid Opening Date (End)', 'technical_bid_opening_date' => 'Technical Bid Opening Date',
-                    'technical_bid_closing_date' => 'Technical Bid Closing Date', 'commerical_bid_opening_date' => 'Commercial Bid Opening Date', 'commerical_bid_closing_date' => 'Commercial Bid Closing Date',
+                    'title' => trans('srm_tender_rfx.title'),
+                    'title_sec_lang' => trans('srm_tender_rfx.title_in_secondary'),
+                    'description' => trans('srm_tender_rfx.description'),
+                    'description_sec_lang' => trans('srm_tender_rfx.description_in_secondary'),
+                    'currency_id' => trans('srm_tender_rfx.currency'),
+                    'procument_cat_id' => trans('srm_tender_rfx.procurement_category'),
+                    'procument_sub_cat_id' => trans('srm_tender_rfx.procurement_sub_category'),
+                    'estimated_value' => trans('srm_tender_rfx.estimated_value'),
+                    'allocated_budget' => trans('srm_tender_rfx.allocated_budget'),
+                    'pre_bid_clarification_method' => trans('srm_tender_rfx.pre_bid_clarification_method'),
+                    'show_technical_criteria' => trans('srm_tender_rfx.do_not_show_technical_criteria_to_supplier'),
+                    'tender_document_fee' => trans('srm_tender_rfx.tender_document_fee'),
+                    'bank_id' => trans('srm_tender_rfx.bank'),
+                    'bank_account_id' => trans('srm_tender_rfx.bank_account'),
+                    'document_sales_start_date' => trans('srm_tender_rfx.document_sale_start_date'),
+                    'document_sales_end_date' => trans('srm_tender_rfx.document_sale_end_date'),
+                    'pre_bid_clarification_start_date' => trans('srm_tender_rfx.pre_bid_clarification_start_date'),
+                    'pre_bid_clarification_end_date' => trans('srm_tender_rfx.pre_bid_clarification_end_date'),
+                    'site_visit_date' => trans('srm_tender_rfx.site_visit_start_date'),
+                    'site_visit_end_date' => trans('srm_tender_rfx.site_visit_end_date'),
+                    'bid_submission_opening_date' => trans('srm_tender_rfx.bid_submission_date_opening'),
+                    'bid_submission_closing_date' => trans('srm_tender_rfx.bid_submission_date_closing'),
+                    'bid_opening_date' => trans('srm_tender_rfx.bid_opening_date_start'),
+                    'bid_opening_end_date' => trans('srm_tender_rfx.bid_opening_date_end'),
+                    'technical_bid_opening_date' => trans('srm_tender_rfx.technical_bid_opening_date'),
+                    'technical_bid_closing_date' => trans('srm_tender_rfx.technical_bid_closing_date'),
+                    'commerical_bid_opening_date' => trans('srm_tender_rfx.commercial_bid_opening_date'),
+                    'commerical_bid_closing_date' => trans('srm_tender_rfx.commercial_bid_closing_date'),
                 ],
                 'fieldMappings' => [
                     'currency_id' => [
@@ -201,11 +223,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'General Information - Procurement Activity' => [
+            trans('srm_tender_rfx.general_information_procurement_activity') => [
                 'sectionId' => '2.1',
                 'modelName' => ProcumentActivityEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'level_no', 'tender_id', 'company_id', 'version_id', 'modify_type', 'master_id', 'ref_log_id', 'updated_by', 'is_deleted'],
-                'fieldDescriptions' => ['category_id' => 'Procurement Activity'],
+                'fieldDescriptions' => ['category_id' => trans('srm_tender_rfx.procurement_activity')],
                 'fieldMappings' => [
                     'category_id' => [
                         'model' => TenderProcurementCategory::class,
@@ -214,11 +236,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'General Information - Purchase Request' => [
+            trans('srm_tender_rfx.general_information_purchase_request') => [
                 'sectionId' => '2.2',
                 'modelName' => TenderPurchaseRequestEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'company_id', 'is_deleted'],
-                'fieldDescriptions' => ['purchase_request_id' => 'Purchase Request'],
+                'fieldDescriptions' => ['purchase_request_id' => trans('srm_tender_rfx.purchase_request')],
                 'fieldMappings' => [
                     'purchase_request_id' => [
                         'model' => PurchaseRequest::class,
@@ -227,11 +249,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'General Information - Department' => [
+            trans('srm_tender_rfx.general_information_department') => [
                 'sectionId' => '2.3',
                 'modelName' => TenderDepartmentEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'company_id', 'is_deleted'],
-                'fieldDescriptions' => ['department_id' => 'Department'],
+                'fieldDescriptions' => ['department_id' => trans('srm_tender_rfx.department')],
                 'fieldMappings' => [
                     'department_id' => [
                         'model' => SrmDepartmentMaster::class,
@@ -240,11 +262,11 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'General Information - Budget Items' => [
+            trans('srm_tender_rfx.general_information_budget_items') => [
                 'sectionId' => '2.4',
                 'modelName' => TenderBudgetItemEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'company_id', 'budget_amount', 'is_deleted'],
-                'fieldDescriptions' => ['item_id' => 'Budget Item'],
+                'fieldDescriptions' => ['item_id' => trans('srm_tender_rfx.budget_item')],
                 'fieldMappings' => [
                     'item_id' => [
                         'model' => SrmBudgetItem::class,
@@ -253,11 +275,15 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Pricing Schedule' => [
+            trans('srm_tender_rfx.pricing_schedule') => [
                 'sectionId' => '3',
                 'modelName' => PricingScheduleMasterEditLog::class,
                 'skippedFields' => ['amd_id', 'id', 'level_no','tender_id', 'schedule_mandatory', 'boq_status', 'items_mandatory', 'company_id', 'tender_edit_version_id', 'modify_type', 'created_by', 'updated_by', 'master_id', 'red_log_id', 'is_deleted'],
-                'fieldDescriptions' => ['scheduler_name' => 'Scheduler Name', 'price_bid_format_id' => 'Price Bid Format', 'status' => 'Status'],
+                'fieldDescriptions' => [
+                    'scheduler_name' => trans('srm_tender_rfx.scheduler_name'),
+                    'price_bid_format_id' => trans('srm_tender_rfx.price_bid_format'),
+                    'status' => trans('srm_tender_rfx.status')
+                ],
                 'fieldMappings' => [
                     'price_bid_format_id' => [
                         'model' => TenderBidFormatMaster::class,
@@ -266,7 +292,7 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Pricing Schedule Details' => [
+            trans('srm_tender_rfx.pricing_schedule_details') => [
                 'sectionId' => '3.1',
                 'modelName' => PricingScheduleDetailEditLog::class,
                 'skippedFields' => [
@@ -274,27 +300,32 @@ class SrmTenderEditAmendService
                     'tender_ranking_line_item', 'tender_edit_version_id', 'modify_type', 'description', 'created_by', 'updated_by', 'deleted_by', 'deleted_at', 'master_id', 'ref_log_id', 'is_deleted',
                     'is_disabled', 'formula_string'
                 ],
-                'fieldDescriptions' => ['label' => 'Description'],
+                'fieldDescriptions' => ['label' => trans('srm_tender_rfx.description')],
                 'fieldMappings' => []
             ],
-            'Pricing Schedule Details (Value)' => [
+            trans('srm_tender_rfx.pricing_schedule_details_value') => [
                 'sectionId' => '3.2',
                 'modelName' => ScheduleBidFormatDetailsLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'level_no','bid_format_detail_id', 'amd_bid_format_detail_id', 'schedule_id', 'amd_pricing_schedule_master_id', 'company_id', 'bid_master_id', 'tender_edit_version_id', 'modify_type',
                     'master_id', 'red_log_id', 'updated_by', 'is_deleted'
                 ],
-                'fieldDescriptions' => ['value' => 'Value'],
+                'fieldDescriptions' => ['value' => trans('srm_tender_rfx.value')],
                 'fieldMappings' => []
             ],
-            'Main Works' => [
+            trans('srm_tender_rfx.main_works') => [
                 'sectionId' => '3.3',
                 'modelName' => TenderBoqItemsEditLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'level_no','main_work_id', 'amd_main_work_id', 'company_id', 'tender_ranking_line_item', 'modify_type', 'master_id', 'purchase_request_id', 'created_by',
                     'origin', 'ref_log_id', 'updated_by', 'is_deleted', 'item_primary_code', 'tender_edit_version_id', 'tender_id'
                 ],
-                'fieldDescriptions' => ['item_name' => 'Item', 'description' => 'Description', 'uom' => 'UOM', 'qty' => 'Qty'],
+                'fieldDescriptions' => [
+                    'item_name' => trans('srm_tender_rfx.item'),
+                    'description' => trans('srm_tender_rfx.description'),
+                    'uom' => trans('srm_tender_rfx.uom'),
+                    'qty' => trans('srm_tender_rfx.qty')
+                ],
                 'fieldMappings' => [
                     'uom' => [
                         'model' => Unit::class,
@@ -303,17 +334,17 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Go/No Go' => [
+            trans('srm_tender_rfx.go_no_go') => [
                 'sectionId' => '4',
                 'modelName' => EvaluationCriteriaDetailsEditLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'level_no','tender_id', 'parent_id', 'critera_type_id', 'answer_type_id', 'level', 'is_final_level', 'weightage', 'passing_weightage',
                     'min_value', 'max_value', 'sort_order', 'evaluation_criteria_master_id', 'modify_type', 'master_id', 'ref_log_id', 'created_by', 'tender_version_id', 'updated_by', 'is_deleted'
                 ],
-                'fieldDescriptions' => ['description' => 'Description'],
+                'fieldDescriptions' => ['description' => trans('srm_tender_rfx.description')],
                 'fieldMappings' => []
             ],
-            'Technical Evaluation' => [
+            trans('srm_tender_rfx.technical_evaluation') => [
                 'sectionId' => '5',
                 'modelName' => EvaluationCriteriaDetailsEditLog::class,
                 'skippedFields' => [
@@ -322,15 +353,15 @@ class SrmTenderEditAmendService
                     'updated_by', 'is_deleted'
                 ],
                 'fieldDescriptions' => [
-                    'description' => 'Description',
-                    'weightage' => 'Weightage',
-                    'passing_weightage' => 'Passing Weightage',
-                    'min_value' => 'Minimum Value',
-                    'max_value' => 'Maximum Value'
+                    'description' => trans('srm_tender_rfx.description'),
+                    'weightage' => trans('srm_tender_rfx.weightage'),
+                    'passing_weightage' => trans('srm_tender_rfx.passing_weightage'),
+                    'min_value' => trans('srm_tender_rfx.minimum_value'),
+                    'max_value' => trans('srm_tender_rfx.maximum_value')
                 ],
                 'fieldMappings' => []
             ],
-            'Technical Evaluation - Score Configuration' => [
+            trans('srm_tender_rfx.technical_evaluation_score_configuration') => [
                 'sectionId' => '5.1',
                 'modelName' => EvacuationCriteriaScoreConfigLog::class,
                 'skippedFields' => [
@@ -338,19 +369,19 @@ class SrmTenderEditAmendService
                     'created_at', 'created_by', 'updated_at', 'updated_by', 'is_deleted',
                 ],
                 'fieldDescriptions' => [
-                    'label' => 'Label',
-                    'score' => 'Value'
+                    'label' => trans('srm_tender_rfx.label'),
+                    'score' => trans('srm_tender_rfx.value')
                 ],
                 'fieldMappings' => []
             ],
-            'Tender Documents' => [
+            trans('srm_tender_rfx.tender_documents') => [
                 'sectionId' => '6',
                 'modelName' => TenderDocumentTypeAssignLog::class,
                 'skippedFields' => [
                     'amd_id', 'id', 'level_no','tender_id', 'company_id', 'version_id', 'modify_type', 'master_id', 'ref_log_id',
                     'created_by', 'updated_by', 'is_deleted'
                 ],
-                'fieldDescriptions' => ['document_type_id' => 'Document Type'],
+                'fieldDescriptions' => ['document_type_id' => trans('srm_tender_rfx.document_type')],
                 'fieldMappings' => [
                     'document_type_id' => [
                         'model' => TenderDocumentTypes::class,
@@ -359,7 +390,7 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
-            'Attachments' => [
+            trans('srm_tender_rfx.attachments') => [
                 'sectionId' => '6.1',
                 'modelName' => DocumentAttachmentsEditLog::class,
                 'skippedFields' => [
@@ -367,10 +398,10 @@ class SrmTenderEditAmendService
                     'path', 'originalFileName', 'myFileName', 'docExpirtyDate', 'attachmentType', 'sizeInKbs', 'isUploaded', 'pullFromAnotherDocument', 'is_deleted',
                     'parent_id', 'envelopType', 'order_number', 'isAutoCreateDocument', 'modify_type', 'master_id', 'ref_log_id', 'version_id', 'updated_by'
                 ],
-                'fieldDescriptions' => ['attachmentDescription' => 'Description'],
+                'fieldDescriptions' => ['attachmentDescription' => trans('srm_tender_rfx.description')],
                 'fieldMappings' => []
             ],
-            'Assign Suppliers' => [
+            trans('srm_tender_rfx.assign_suppliers') => [
                 'sectionId' => '7',
                 'modelName' => TenderSupplierAssigneeEditLog::class,
                 'skippedFields' => [
@@ -378,8 +409,8 @@ class SrmTenderEditAmendService
                     'mail_sent', 'is_deleted', 'registration_number', 'registration_link_id', 'supplier_email', 'version_id'
                 ],
                 'fieldDescriptions' => [
-                    'supplier_assigned_id' => 'Name',
-                    'supplier_name' => 'Name',
+                    'supplier_assigned_id' => trans('srm_tender_rfx.name'),
+                    'supplier_name' => trans('srm_tender_rfx.name'),
                 ],
                 'fieldMappings' => [
                     'supplier_assigned_id' => [
@@ -608,11 +639,11 @@ class SrmTenderEditAmendService
     public static function getPreBidClarificationMethodtype($type): string{
         switch($type){
             case 0:
-                return 'Offline';
+                return trans('srm_tender_rfx.offline');
             case 1 :
-                return 'Online';
+                return trans('srm_tender_rfx.online');
             case 2 :
-                return 'Both';
+                return trans('srm_tender_rfx.both');
             default:
                 return '';
         }
@@ -622,19 +653,19 @@ class SrmTenderEditAmendService
         return $stage == 1 ? 'Single Stage' : 'Two Stage';
     }
     public static function pricingScheduleMasterStatus($status){
-        return $status == 1 ? 'Completed' : 'Pending';
+        return $status == 1 ? trans('srm_tender_rfx.completed') : trans('srm_tender_rfx.pending');
     }
     public function rejectDocumentRequestChanges($tenderID){
         try {
             $tenderMaster = TenderMaster::getTenderMasterData($tenderID);
             if(empty($tenderMaster)){
-                return ['success' => false, 'message' => 'Tender data not found.'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_data_not_found')];
             }
 
             $tenderMasterID = $tenderMaster->id;
             $tenderHistory = SrmTenderMasterEditLog::tenderMasterHistory($tenderMasterID);
             if(empty($tenderHistory)){
-                return ['success' => false, 'message' => 'Tender history data not found.'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_history_data_not_found')];
             }
             $versionID = $tenderHistory->version_id;
             return DB::transaction(function () use ($tenderMasterID, $versionID) {
@@ -658,10 +689,10 @@ class SrmTenderEditAmendService
                         })->where('is_deleted', 0)->update(['is_deleted' => 1]);
                     }
                 }
-                return ['success' => true, 'message' => 'Deleted successfully.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
             });
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 }

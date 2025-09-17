@@ -83,7 +83,7 @@ class DocumentAttachmentsEditLogRepository extends BaseRepository
                     $this->model->create($recordData);
                 }
             }
-            return ['success' => false, 'message' => 'Success'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.success')];
         } catch (\Exception $ex){
             return ['success' => false, 'message' => $ex->getMessage()];
         }

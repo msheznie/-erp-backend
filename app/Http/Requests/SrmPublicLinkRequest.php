@@ -36,8 +36,8 @@ class SrmPublicLinkRequest extends FormRequest
     public function messages()
     {
         return [
-            'companyId.required' =>  'Company id is required',
-            'expireDate.required' => 'Expire date is required',
+            'companyId.required' =>  trans('srm_supplier_master.company_id_is_required'),
+            'expireDate.required' => trans('srm_supplier_master.expire_date_is_required'),
         ];
     }
 }
