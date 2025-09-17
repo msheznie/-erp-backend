@@ -156,6 +156,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -1231,9 +1232,8 @@ class ProcumentOrderAPIController extends AppBaseController
             $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum, IFNULL(SUM(comPercentage),0) as paymentTotalPercentage'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
-
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
-            if ($paymentTotalSumComp > 0) {
+            if ($paymentTotalSumComp > 0 && ($this->truncateDecimals($poMasterSumDeductedNotRounded,$supplierCurrencyDecimalPlace) != $this->truncateDecimals($paymentTotalSum['paymentTotalSum'],$supplierCurrencyDecimalPlace))) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
                     return $this->sendError('Payment terms total is not matching with the PO total');
@@ -5441,6 +5441,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendResponse('', 'PO Detailed report Export in progress, you will be notified once ready !!');
         }
 
+        $validator = \Validator::make($input, [
+            'documentId' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+        }
+
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
@@ -9430,5 +9438,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         return $this->sendResponse($paymentTermConfig, 'Payment term config updated successfully');
 
+    }
+    function truncateDecimals($value, $decimals = 3) {
+        $factor = pow(10, $decimals);
+        return floor($value * $factor) / $factor;
     }
 }

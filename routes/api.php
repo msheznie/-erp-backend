@@ -938,6 +938,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('hod_actions', 'HodActionAPIController');
                 Route::resource('company_budget_plannings', 'CompanyBudgetPlanningAPIController');
                 Route::resource('department_budget_plannings', 'DepartmentBudgetPlanningAPIController');
+                Route::resource('dep_budget_pl_det_columns', 'DepBudgetPlDetColumnAPIController');
+                Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
             });
         });
 

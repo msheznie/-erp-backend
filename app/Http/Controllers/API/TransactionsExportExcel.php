@@ -360,7 +360,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '21':
-                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN','createdBy'));
+                $input = $this->convertArrayToSelectedValue($request->all(), ['confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType', 'projectID', 'payeeTypeID']);
                 $dataQry = $this->customerReceivePaymentRepository->customerReceiveListQuery($request, $input, $search);
                 $data = $this->customerReceivePaymentRepository->setExportExcelData($dataQry);
                 break;

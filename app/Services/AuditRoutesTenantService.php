@@ -93,7 +93,13 @@ class AuditRoutesTenantService
             'api/v1/postExperience',
             'api/v1/workflow_configurations',
             'api/v1/workflow_configurations/{workflow_configuration}',
-            'api/v1/changeWorkflowConfigurationStatus'
+            'api/v1/changeWorkflowConfigurationStatus',
+            'api/v1/updateBudgetPlanningStatus',
+            'api/v1/createTimeExtensionRequest',
+            'api/v1/cancelDepartmentTimeExtensionRequests',
+            'api/v1/company_budget_plannings',
+            'api/v1/deleteBudgetPlanningTemplateDetailRow',
+            'api/v1/saveBudgetDetailTemplateEntries'
         ];
 
         return $lokiTenantRoutes;

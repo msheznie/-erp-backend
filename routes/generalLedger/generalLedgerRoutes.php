@@ -267,6 +267,15 @@ Route::group([], function(){
     Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport')->name('Download project utilization report');
     Route::post('updateBankBalances', 'CashFlowReportAPIController@updateBankBalances')->name('Update balance amount');
 
+    Route::resource('final_return_income_reports', 'FinalReturnIncomeReportsAPIController');
+    Route::resource('final_return_income_rd', 'FinalReturnIncomeReportDetailsAPIController');
+    Route::resource('final_return_income_rdv', 'FinalReturnIncomeReportDetailValuesAPIController');
+    Route::post('getReportList', 'FinalReturnIncomeReportsAPIController@getReportList');
+    Route::get('getFinalIncomeReportFormData', 'FinalReturnIncomeReportsAPIController@getFormData');
+    Route::post('checkYearExists', 'FinalReturnIncomeReportsAPIController@checkYearExists');
+    Route::get('incomeReportDetails/{id}', 'FinalReturnIncomeReportsAPIController@getIncomeReportDetails');
+    Route::post('confirmReturnIncomeReport', 'FinalReturnIncomeReportsAPIController@confirmReturnIncomeReport');
+    Route::post('syncGLrecords', 'FinalReturnIncomeReportsAPIController@syncGLrecords');
 });
 
 

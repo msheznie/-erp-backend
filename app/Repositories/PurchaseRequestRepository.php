@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\BudgetMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequest;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
@@ -358,5 +360,44 @@ class PurchaseRequestRepository extends BaseRepository
         $this->data[] = $totalRow;
             $this->data[] = [];
          }
+    }
+    public function notifyPRFinancialYear($companySystemID)
+    {
+        try{
+            $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companySystemID);
+            if(empty($currentFinancialYear)){
+                return [
+                    'success' => true,
+                    'message' => trans('custom.no_active_financial_year'),
+                    'data' => ['notifyYN' => false]
+                ];
+            }
+            $budgetMaster = BudgetMaster::getBudgetMasterByFYear($currentFinancialYear->companyFinanceYearID, $companySystemID);
+            if(empty($budgetMaster)){
+                return [
+                    'success' => true,
+                    'message' => trans('custom.no_budget_found'),
+                    'data' => ['notifyYN' => false]
+                ];
+            }
+            $yearStartDate = $currentFinancialYear->startDate;
+            $yearEndDate = $currentFinancialYear->endDate;
+            $year = (int) date('Y', strtotime($yearStartDate));
+            $message = "<span>" . trans('custom.current_active_period', [
+                    'start' => $yearStartDate,
+                    'end' => $yearEndDate
+                ]) . "</span>
+            <br>" . trans('custom.selected_budget_year', ['year' => $year]) . "<br><br>
+            <span>" . trans('custom.proceed_question') . "</span>";
+
+            return [
+                'success' => true,
+                'message' => $message,
+                'data' => ['notifyYN' => true]
+            ];
+
+        } catch (\Exception $exception){
+            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+        }
     }
 }

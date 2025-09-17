@@ -13,6 +13,15 @@ use App\Models\TaxLedgerDetail;
 use App\Repositories\VatReturnFillingMasterRepository;
 use App\Services\API\CustomerInvoiceAPIService;
 use App\Traits\AuditTrial;
+use App\Models\SalesReturnDetail;
+use Carbon\Carbon;
+use App\Models\DeliveryOrder;
+use App\Models\ItemIssueMaster;
+use App\Models\StockTransfer;
+use App\Models\StockAdjustment;
+use App\Models\StockCount;
+use App\Models\ErpItemLedger;
+use App\Models\CustomerInvoiceItemDetails;
 
 class CustomerInvoiceServices
 { 
@@ -25,22 +34,97 @@ class CustomerInvoiceServices
 
     public function amendCustomerInvoice($input,$id,$masterData,$isFromAPI = false)
 	{
-
+             $codes = [];
             // checking document matched in machmaster
-            $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
+             $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
             ->where('companySystemID', $masterData->companySystemID)
             ->where('addedDocumentSystemID', $masterData->documentSystemiD)
             ->first();
+            
+             $reciepts = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
+                                        ->where('companySystemID', $masterData->companySystemID)
+                                        ->with(['master' => function($query) {
+                                                  $query->select('custReceivePaymentAutoID', 'custPaymentReceiveCode');
+                                         }])->select('custRecivePayDetAutoID','custReceivePaymentAutoID')->get();
     
-            if ($checkDetailExistMatch) {
-                if($isFromAPI){
-                    return ['status' => false,'message'=>'the Invoice has been pulled to a Receipt Voucher'];
-                } else {
-                    return ['status' => false,'message'=>'Cannot return back to amend. Customer Invoice is added to receipt'];
+                                        foreach ($reciepts as $reciept) {
+                                            if (isset($reciept->master->custPaymentReceiveCode)) {
+                                                $codes[] = $reciept->master->custPaymentReceiveCode . ' - Customer Invoice Receipt';
+                                            }
+                                        }
+
+             $sales = SalesReturnDetail::where('custInvoiceDirectAutoID', $id)
+                                        ->where('companySystemID', $masterData->companySystemID)
+                                        ->with(['master' => function($query) {
+                                                  $query->select('id', 'salesReturnCode');
+                                         }])->select('salesReturnID')->get();
+
+                                        foreach ($sales as $sale) {
+                                            if (isset($sale->master->salesReturnCode)) {
+                                                $codes[] = $sale->master->salesReturnCode . ' - Sales Return';
+                                            }
+                                        }
+                                        
+            if($isFromAPI && $checkDetailExistMatch){
+                return ['status' => false,'message'=>'the Invoice has been pulled to a Receipt Voucher'];
+            } else {
+                if (!empty($codes)) {
+                        $message = 'Selected sales order–based customer invoice, pulled to ' . implode(', ', $codes) . '.';
+                        return ['status' => false, 'message' => $message];
+                    }
+
+            }
+
+            
+            $masterDataDetails = CustomerInvoiceDirect::where('isPerforma',4)->with('issue_item_details')
+                                            ->whereHas('issue_item_details', function ($query) {
+                                                $query->where('itemFinanceCategoryID', 1);
+                                            })
+                                            ->find($id);
+
+
+            $isExist = false;                                    
+            if ($masterDataDetails)
+            {   
+                $currentDate = Carbon::parse($masterDataDetails->postedDate);
+                foreach ($masterDataDetails->issue_item_details as $detail) {
+                    $item = $detail->itemCodeSystem;
+
+                    $modelsToCheck = [
+                        [CustomerInvoiceDirect::class, 'issue_item_details', ['isPerforma' => 0]],
+                        [ItemIssueMaster::class, 'details'],
+                        [StockTransfer::class, 'details'],
+                        [StockAdjustment::class, 'details'],
+                        [StockCount::class, 'details'],
+                        [DeliveryOrder::class, 'detail'],
+                    ];
+
+                    foreach ($modelsToCheck as $modelInfo) {
+                        [$model, $relation] = $modelInfo;
+                        $additionalWhere = $modelInfo[2] ?? [];
+
+                        $query = $model::with($relation)->where('companySystemID', $masterDataDetails->companySystemID)
+                            ->whereHas($relation, function ($q) use ($item) {
+                                $q->where('itemCodeSystem', $item);
+                            });
+
+                        foreach ($additionalWhere as $column => $value) {
+                              $query->where($column, '!=', $value)->where('custInvoiceDirectAutoID', '!=', $id);
+                        }
+
+                        if ($query->exists()) {
+                            $isExist = true;
+                            break 2;
+                        }
+                    }
                 }
             }
-    
-
+            if($isExist)
+            {
+                return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
+                                            Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
+            }
+          
             if($isFromAPI){
                 $input['returnComment'] = 'Customer invoice cancellation from API';
             }

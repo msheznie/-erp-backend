@@ -1,0 +1,226 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\AppBaseController;
+use App\Models\BudgetTemplateComment;
+use App\Http\Requests\API\CreateBudgetTemplateCommentAPIRequest;
+use App\Http\Requests\API\UpdateBudgetTemplateCommentAPIRequest;
+use App\Models\Employee;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class BudgetTemplateCommentAPIController extends AppBaseController
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $comments = BudgetTemplateComment::with(['user', 'budgetDetail'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $this->sendResponse($comments->toArray(), 'Comments retrieved successfully');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(CreateBudgetTemplateCommentAPIRequest $request)
+    {
+        try {
+            DB::beginTransaction();
+            $comment = BudgetTemplateComment::create([
+                'budget_detail_id' => $request->budget_detail_id,
+                'user_id' => Auth::id(),
+                'comment_text' => $request->comment_text,
+                'parent_comment_id' => $request->parent_comment_id
+            ]);
+
+            // Load relationships for response
+            $comment->load(['user', 'budgetDetail']);
+
+            DB::commit();
+
+            return $this->sendResponse($comment->toArray(), 'Comment saved successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Error saving comment: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $comment = BudgetTemplateComment::with(['user', 'budgetDetail'])
+            ->find($id);
+
+        if (!$comment) {
+            return $this->sendError('Comment not found');
+        }
+
+        return $this->sendResponse($comment->toArray(), 'Comment retrieved successfully');
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(UpdateBudgetTemplateCommentAPIRequest $request, $id)
+    {
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+    }
+
+    public function deleteBudgetTemplateComment(Request $request) {
+        $input = $request->all();
+
+        $comment = BudgetTemplateComment::find($input['id']);
+
+        if (!$comment) {
+            return $this->sendError('Comment not found');
+        }
+
+        // Check if user can delete this comment
+        if ($comment->user_id !== Auth::id()) {
+            return $this->sendError('You can only delete your own comments');
+        }
+
+        try {
+            $comment->delete();
+            BudgetTemplateComment::where('parent_comment_id', $input['id'])->delete();
+            return $this->sendResponse([], 'Comment deleted successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error deleting comment: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get comments for a specific budget detail
+     *
+     * @param  int  $budgetDetailId
+     * @return \Illuminate\Http\Response
+     */
+    public function getByBudgetDetail($budgetDetailId,Request $request)
+    {
+
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $budgetDetailId,
+            'delegateUser' => Auth::user()->employee_id
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+
+        $employees = Employee::where('empActive', true)
+            ->where('empCompanySystemID', 1)
+            ->where('discharegedYN', 0)
+            ->select(['employeeSystemID as id','empFullName','empID',DB::raw("CONCAT(empID, ' - ', empFullName) as name")])
+            ->limit(20)
+            ->get();
+
+        $comments = BudgetTemplateComment::with(['user', 'budgetDetail'])
+            ->where('budget_detail_id', $budgetDetailId)
+            ->whereNull('parent_comment_id') // Only top-level comments
+            ->orderBy('created_at', 'desc');
+
+        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'])
+        {
+            $comments->where('user_id',Auth::id());
+        }
+
+        $comments = $comments->get();
+
+        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'])
+        {
+        }else {
+            // Load replies for each comment
+            foreach ($comments as $comment) {
+                $comment->replies = BudgetTemplateComment::with(['user'])
+                    ->where('parent_comment_id', $comment->commentID)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+            }
+        }
+
+
+
+        $detail['comments'] = $comments;
+        $detail['currentUserId'] = Auth::id();
+        $detail['employees'] = $employees;
+        return $this->sendResponse($detail, 'BudgetTemplateComments retrieved successfully.');
+    }
+
+    /**
+     * Get replies for a specific comment
+     *
+     * @param  int  $commentId
+     * @return \Illuminate\Http\Response
+     */
+    public function getReplies($commentId)
+    {
+        $replies = BudgetTemplateComment::with(['user'])
+            ->where('parent_comment_id', $commentId)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return $this->sendResponse($replies, "Replies get success");
+    }
+
+    public function updateBudgetTemplateComment(Request $request) {
+        $input = $request->all();
+
+        $comment = BudgetTemplateComment::find($input['id']);
+
+        if (!$comment) {
+            return $this->sendError('Comment not found');
+        }
+
+        // Check if user can edit this comment
+        if ($comment->user_id !== Auth::id()) {
+            return $this->sendError("You can only edit your own comments");
+        }
+
+        try {
+            $comment->update([
+                'comment_text' => $input['comment_text']
+            ]);
+
+            $comment->load(['user', 'budgetDetail']);
+
+            return $this->sendResponse($comment, "Comment updated successfully");
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error updating comment: ' . $e->getMessage());
+        }
+    }
+}

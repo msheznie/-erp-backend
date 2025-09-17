@@ -3,6 +3,8 @@
 namespace App\Jobs\AuditLog;
 
 use App\Services\AuditLog\ChartOfAccountConfigAuditService;
+use App\Services\AuditLog\DepartmentBudgetPlanningAuditService;
+use App\Services\AuditLog\DepartmentBudgetPlanningDetailsTemplateDataAuditService;
 use App\Services\AuditLog\ItemFinanceCategorySubAssignedAuditService;
 use App\Services\AuditLog\DepartmentAuditService;
 use App\Services\AuditLog\DepartmentSegmentAuditService;
@@ -152,6 +154,12 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'erp_workflow_configuration_hod_actions':
                 $data = WorkflowConfigurationHodActionAuditService::process($auditData);
+                break;
+            case 'department_budget_plannings':
+                $data = DepartmentBudgetPlanningAuditService::process($auditData);
+                break;
+            case 'department_budget_planning_details_template_data':
+                $data = DepartmentBudgetPlanningDetailsTemplateDataAuditService::process($auditData);
                 break;
             default:
                 // code...

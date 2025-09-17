@@ -181,7 +181,10 @@ class SegmentMaster extends Model
         return $query->whereIN('companySystemID',  $type);
     }
 
-
+    public static function isSegmentUsedInDepartment($id) {
+        return \App\Models\CompanyDepartmentSegment::where('serviceLineSystemID', $id)->exists();
+    }
+    
     protected static function boot()
     {
         parent::boot();

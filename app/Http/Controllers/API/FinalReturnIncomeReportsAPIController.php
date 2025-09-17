@@ -1,0 +1,604 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateFinalReturnIncomeReportsAPIRequest;
+use App\Http\Requests\API\UpdateFinalReturnIncomeReportsAPIRequest;
+use App\Models\FinalReturnIncomeReports;
+use App\Repositories\FinalReturnIncomeReportsRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use App\Models\Company;
+use App\Models\CompanyFinanceYear;
+use App\Models\FinalReturnIncomeReportDetails;
+use App\Models\FinalReturnIncomeTemplate;
+use App\Models\FinalReturnIncomeTemplateColumns;
+use App\Models\FinalReturnIncomeTemplateDetails;
+use App\Models\FinalReturnIncomeReportDetailValues;
+use App\Models\GeneralLedger;
+use App\Models\YesNoSelection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class FinalReturnIncomeReportsController
+ * @package App\Http\Controllers\API
+ */
+
+class FinalReturnIncomeReportsAPIController extends AppBaseController
+{
+    /** @var  FinalReturnIncomeReportsRepository */
+    private $finalReturnIncomeReportsRepository;
+
+    public function __construct(FinalReturnIncomeReportsRepository $finalReturnIncomeReportsRepo)
+    {
+        $this->finalReturnIncomeReportsRepository = $finalReturnIncomeReportsRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/finalReturnIncomeReports",
+     *      summary="getFinalReturnIncomeReportsList",
+     *      tags={"FinalReturnIncomeReports"},
+     *      description="Get all FinalReturnIncomeReports",
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @OA\Items(ref="#/definitions/FinalReturnIncomeReports")
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->finalReturnIncomeReportsRepository->pushCriteria(new RequestCriteria($request));
+        $this->finalReturnIncomeReportsRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->all();
+
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports retrieved successfully');
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Post(
+     *      path="/finalReturnIncomeReports",
+     *      summary="createFinalReturnIncomeReports",
+     *      tags={"FinalReturnIncomeReports"},
+     *      description="Create FinalReturnIncomeReports",
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FinalReturnIncomeReports"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = Validator::make($request->all(), [
+            'report_name' => 'required|string|max:100'
+        ],[],['report_name' => 'description']);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        } 
+
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->create($input);
+
+        $reportID = $finalReturnIncomeReports->id;
+        $templateRows = FinalReturnIncomeTemplateDetails::Where('templateMasterID', $input['template_id'])
+            ->where('companySystemID', $input['companySystemID'])->get();
+
+        foreach($templateRows as $row) {
+            $data['report_id'] = $reportID;
+            $data['template_detail_id'] = $row->id;
+            $data['amount'] = 0;
+
+            FinalReturnIncomeReportDetails::create($data); 
+        }
+
+        $tempRequest = new Request(['id' => $reportID]);
+        $this->syncGLrecords($tempRequest);
+
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/finalReturnIncomeReports/{id}",
+     *      summary="getFinalReturnIncomeReportsItem",
+     *      tags={"FinalReturnIncomeReports"},
+     *      description="Get FinalReturnIncomeReports",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of FinalReturnIncomeReports",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FinalReturnIncomeReports"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var FinalReturnIncomeReports $finalReturnIncomeReports */
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
+
+        if (empty($finalReturnIncomeReports)) {
+            return $this->sendError('Final Return Income Reports not found');
+        }
+
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'Final Return Income Reports retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Put(
+     *      path="/finalReturnIncomeReports/{id}",
+     *      summary="updateFinalReturnIncomeReports",
+     *      tags={"FinalReturnIncomeReports"},
+     *      description="Update FinalReturnIncomeReports",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of FinalReturnIncomeReports",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FinalReturnIncomeReports"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        /** @var FinalReturnIncomeReports $finalReturnIncomeReports */
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
+
+        if (empty($finalReturnIncomeReports)) {
+            return $this->sendError('Final Return Income Reports not found');
+        }
+
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->update($input, $id);
+
+        return $this->sendResponse($finalReturnIncomeReports->toArray(), 'FinalReturnIncomeReports updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Delete(
+     *      path="/finalReturnIncomeReports/{id}",
+     *      summary="deleteFinalReturnIncomeReports",
+     *      tags={"FinalReturnIncomeReports"},
+     *      description="Delete FinalReturnIncomeReports",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of FinalReturnIncomeReports",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var FinalReturnIncomeReports $finalReturnIncomeReports */
+        $finalReturnIncomeReports = $this->finalReturnIncomeReportsRepository->findWithoutFail($id);
+
+        if (empty($finalReturnIncomeReports)) {
+            return $this->sendError('Final Return Income Reports not found');
+        }
+
+        $finalReturnIncomeReports->delete();
+
+        return $this->sendResponse($finalReturnIncomeReports, 'Final Return Income Reports deleted successfully');
+    }
+
+    public function getReportList(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyID = $input['companyID'];
+
+        $finalReturnIncomeReports = FinalReturnIncomeReports::ofCompany($companyID)->with('finance_year_by');
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $finalReturnIncomeReports = $finalReturnIncomeReports->where(function ($query) use ($search) {
+                 $query->where('report_name', 'LIKE', "%{$search}%");
+                 $query->where('report_name', 'LIKE', "%{$search}%")
+                    ->orWhereHas('finance_year_by', function ($q) use ($search) {
+                        $q->where('bigginingDate', 'LIKE', "%{$search}%")
+                            ->orWhere('endingDate', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::eloquent($finalReturnIncomeReports)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->rawColumns(['name','Actions'])
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getFormData(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+
+         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+                                                ->where('companySystemID', $companyID)
+                                                ->get();
+
+        $templates = FinalReturnIncomeTemplate::OfCompanyActive($companyID)
+                                     ->get();
+
+        $data = [
+            'companyFinanceYear' => $companyFinanceYear,
+            'templates' => $templates
+        ];
+
+        return $this->sendResponse($data, "Form data retrived successfully");
+    }
+
+    public function checkYearExists(Request $request) {
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+        $financeYearID = $input['financialyear_id'];
+
+        $exists = FinalReturnIncomeReports::where('companySystemID', $companyID)
+                ->where('financialyear_id', $financeYearID)
+                ->exists();
+
+        return $this->sendResponse($exists, "");
+    }
+
+    public function getIncomeReportDetails($id, Request $request)
+    {
+        $incomeReportMaster = FinalReturnIncomeReports::where('id', $id)
+                                            ->with('finance_year_by', 'template', 'confirmed_by')->first();
+
+        $rowDetails = FinalReturnIncomeReportDetails::where('report_id', $id)
+                        ->withoutMaster()
+                        ->with([
+                            'template_detail' => function ($q) {
+                                $q->with([
+                                    'raws' => function ($r1) {
+                                        $r1->with([
+                                            'raws' => function ($r2) {
+                                                $r2->with([
+                                                    'raws' => function ($r3) {
+                                                        $r3->with([
+                                                            'raws' => function ($r4) {
+                                                                $r4->orderBy('sortOrder', 'asc');
+                                                            }
+                                                        ])->orderBy('sortOrder', 'asc');
+                                                    }
+                                                ])->orderBy('sortOrder', 'asc');
+                                            }
+                                        ])->orderBy('sortOrder', 'asc');
+                                    }
+                                ])->orderBy('sortOrder', 'asc');
+                            },
+                            'template_detail.raws.report_details' => function ($q) use ($id) {
+                                $q->select('id', 'report_id', 'template_detail_id', 'amount', 'is_manual')
+                                    ->where('report_id', $id);
+                            },
+                            'template_detail.raw_defaults',
+                            'template_detail.raws.raw_defaults'
+                        ])
+                        ->orderBy(DB::raw("(
+                                SELECT sortOrder 
+                                FROM final_return_income_template_details 
+                                WHERE final_return_income_template_details.id = final_return_income_report_details.template_detail_id 
+                                LIMIT 1
+                            )"), 'asc')
+                        ->get();
+
+        $columnDetails = FinalReturnIncomeTemplateColumns::where('templateMasterID', $incomeReportMaster->template_id)
+            ->with(['values' => function ($q) use ($id) {
+                $q->where('reportId', $id);
+            }])
+            ->orderBy('sortOrder')
+            ->get();
+
+        $company = Company::with('localcurrency')->find($incomeReportMaster->companySystemID);
+        $yesNoSelection = YesNoSelection::all();
+
+        $data =[
+            'master' => $incomeReportMaster,
+            'details' => $rowDetails,
+            'columns' => $columnDetails,
+            'company' => $company,
+            'yesNoSelection' => $yesNoSelection
+        ];
+
+        return $this->sendResponse($data, "Income report details retrieved successfully");
+    }
+
+    public function confirmReturnIncomeReport(Request $request) {
+        $input = $request->master;
+       
+        $input = array_except($input, ['finance_year_by','template','confirmed_by']);
+
+        if($input['confirmedYN'] == 1) {
+            $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['confirmedDate'] = now();
+        }
+
+        if($input['submittedYN'] == 1) {
+            $input['submittedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['submittedDate'] = now();
+        }
+        
+      
+      
+        $input = $this->convertArrayToValue($input);
+        FinalReturnIncomeReports::where('id', $input['id'])
+            ->update($input);
+
+        return $this->sendResponse([], "Income report confirmed successfully");
+    }
+
+    public function syncGLrecords(Request $request) {
+        $input = $request->all();
+        $reportID = $input['id'];
+
+        $reportMasterData = FinalReturnIncomeReports::with(['finance_year_by'])
+            ->where('id', $reportID)
+            ->first();
+        
+        $companyId = $reportMasterData->companySystemID;
+        $startDate = $reportMasterData->finance_year_by->bigginingDate;
+        $endDate = $reportMasterData->finance_year_by->endingDate;
+
+        $all_gl_records = GeneralLedger::where('companySystemID', $companyId)
+                ->whereBetween('documentDate', [$startDate, $endDate])
+                ->select('chartOfAccountSystemID', DB::raw('SUM(documentLocalAmount) as total'))
+                ->groupBy('chartOfAccountSystemID')
+                ->pluck('total', 'chartOfAccountSystemID');
+
+        $templateDetails = FinalReturnIncomeTemplateDetails::with([
+            'gl_link', 'linkedDetails.gl_link', 'raws.gl_link'
+        ])
+        ->where('templateMasterID', $reportMasterData->template_id)
+        ->where('companySystemID', $reportMasterData->companySystemID)
+        ->get();
+
+        foreach($templateDetails as $templateDetail) {
+            $amount01 = 0;
+            if($templateDetail->itemType == 3 && $templateDetail->isFinalLevel == 1) {
+
+                $amount01 += $all_gl_records->only($templateDetail->gl_link->pluck('glAutoID'))->sum();
+
+                $this->updateOrAccumulate(
+                    $reportMasterData->id,
+                    $templateDetail->id,
+                    $amount01,
+                    $templateDetail->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0
+                );
+
+            }
+
+            if($templateDetail->itemType == 1 && $templateDetail->sectionType != 3) {
+                foreach($templateDetail->raws as $raw) {
+                    $amount = 0;
+                    if($raw->rawIdType == 1) {
+                        $amount += $all_gl_records->only($raw->gl_link->pluck('glAutoID'))->sum();
+                    }
+
+                    $this->updateOrAccumulate(
+                        $reportMasterData->id,
+                        $raw->id,
+                        $amount,
+                        $raw->gl_link->pluck('glAutoID')->isEmpty() ? 1 : 0
+                    );
+                }
+            }
+
+            $amount02 = 0;
+            if($templateDetail->itemType == 2 || $templateDetail->rawIdType == 2) {
+                $rawIds = $templateDetail->gl_link->pluck('rawId');
+                $ids = FinalReturnIncomeTemplateDetails::whereIn('rawId', $rawIds)->pluck('id');
+
+                $amount02 += FinalReturnIncomeReportDetails::whereIn('template_detail_id', $ids)
+                    ->where('report_id', $reportMasterData->id)
+                    ->sum('amount');
+
+                $this->updateOrAccumulate(
+                    $reportMasterData->id,
+                    $templateDetail->id,
+                    $amount02,
+                    $rawIds->isEmpty() ? 1 : 0
+                );
+            }
+                
+        }
+
+        return $this->sendResponse([], "GL data synchronized successfully");
+    }
+
+    private function updateOrAccumulate($reportId, $templateDetailId, $newAmount, $isManual) {
+        $existing = FinalReturnIncomeReportDetails::where([
+            'report_id' => $reportId,
+            'template_detail_id' => $templateDetailId
+        ])->first();
+
+        if ($existing) {
+            if($newAmount != 0) {
+                $oldAmount = $existing->amount;
+
+                if ($oldAmount == 0) {
+                    $existing->amount = $newAmount;
+                } elseif ($oldAmount != $newAmount) {
+                    $diff = $newAmount - $oldAmount;
+                    $existing->amount = $oldAmount + $diff;
+                } else {
+                    $existing->amount = $newAmount;
+                }
+            }
+
+            $existing->is_manual = $isManual;
+            $existing->save();
+        } else {
+            FinalReturnIncomeReportDetails::create([
+                'report_id' => $reportId,
+                'template_detail_id' => $templateDetailId,
+                'amount' => $newAmount,
+                'is_manual' => $isManual
+            ]);
+        }
+    }
+}

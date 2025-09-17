@@ -559,7 +559,11 @@
                         <thead>
                             <tr>
                                 <th colspan="5" style="text-align: center">Item Details</th>
-                                <th colspan="8" style="text-align: center">Price ({{ $currencyCode }})</th>
+                                @if($request->salesType == 3)
+                                    <th colspan="9" style="text-align: center">Price ({{ $currencyCode }})</th>
+                                @else
+                                    <th colspan="8" style="text-align: center">Price ({{ $currencyCode }})</th>
+                                @endif
                             </tr>
                             <tr class="theme-tr-head">
                                 <th style="text-align: center">#</th>
@@ -568,6 +572,9 @@
                                 <th style="text-align: center">Ref No</th>
                                 <th style="text-align: center">UOM</th>
                                 <th style="text-align: center">QTY</th>
+                                @if($request->salesType == 3)
+                                    <th style="text-align: center">User QTY</th>
+                                @endif
                                 <th style="text-align: center">Sales Price</th>
                                 <th style="text-align: center">Dis %</th>
                                 <th style="text-align: center">Discount Amount</th>
@@ -591,6 +598,9 @@
                                 <td class="text-left">{{$item->part_no}}</td>
                                 <td class="text-left">{{$item->uom_issuing->UnitShortCode}}</td>
                                 <td class="text-right">{{$item->qtyIssuedDefaultMeasure}}</td>
+                                @if($request->salesType == 3)
+                                    <td class="text-right">{{$item->userQty}}</td>
+                                @endif
                                 <td class="text-right">{{number_format($item->salesPrice, $decimalPlaces)}}</td>
                                 <td class="text-right">{{$item->discountPercentage}}</td>
                                 <td class="text-right">{{number_format($item->discountAmount, $decimalPlaces)}}</td>

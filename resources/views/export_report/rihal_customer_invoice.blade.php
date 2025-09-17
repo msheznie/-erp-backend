@@ -3,7 +3,7 @@
     <tr>
        <td colspan="6"> </td>
         <td colspan="8">    
-            <span style="font-size:35px;"> Tax Invoice</span>
+            <span style="font-size:35px;"> {{ __('custom.tax_invoice') }}</span>
         </td>
 
     <tr>
@@ -14,23 +14,23 @@
 <br>
     <tr>
     <td colspan="10"> {{$request->CompanyName}}<br>{{$request->CompanyAddress}}</td>
-    <td colspan="8"> Invoice No : {{$request->bookingInvCode}}</td>
+    <td colspan="8"> {{ __('custom.invoice_no') }} : {{$request->bookingInvCode}}</td>
     </tr>
     <tr>
     <td colspan="10"> Tel:  {{$request->CompanyTelephone}}</td>
-    <td colspan="8"> Invoice Date :  @if(!empty($request->bookingDate))
+    <td colspan="8"> {{ __('custom.invoice_date') }} :  @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</td>
     </tr>
     <tr>
     <td colspan="10"> Fax: {{$request->CompanyFax}}</td>
-    <td colspan="8"> Name Of Customer : :@if($request->line_customerShortCode)
+    <td colspan="8"> {{ __('custom.name_of_customer') }} : :@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
                                 {{$request->customer->ReportTitle}}</td>
     </tr>
     <tr>
-    <td colspan="10"> <b>VAT NO: {{$request->vatRegistratonNumber}}</b></td>
+    <td colspan="10"> <b>{{ __('custom.vat_no') }}: {{$request->vatRegistratonNumber}}</b></td>
     </tr>
     
     <br>
@@ -45,10 +45,10 @@
         <thead>
         <tr class="">
 
-            <th colspan="3" style="text-align: center">Well</th>
-            <th colspan="3" style="text-align: center">Network</th>
-            <th colspan="3" style="text-align: center">SE</th>
-            <th colspan="3" style="text-align: right">Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="3" style="text-align: center">{{ __('custom.well') }}</th>
+            <th colspan="3" style="text-align: center">{{ __('custom.network') }}</th>
+            <th colspan="3" style="text-align: center">{{ __('custom.se') }}</th>
+            <th colspan="3" style="text-align: right">{{ __('custom.amount') }}({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
         </tr>
         </thead>
         <tbody>
@@ -78,14 +78,14 @@
         <thead>
         <tr class="">
             <th colspan="1"  style="width:1%"></th>
-            <th colspan="2" style="text-align: center">Client Ref</th>
+            <th colspan="2" style="text-align: center">{{ __('custom.client_ref') }}</th>
             @if($request->is_po_in_line)
-                <th colspan="2" style="text-align: center">PO Line Item</th>
+                <th colspan="2" style="text-align: center">{{ __('custom.po_line_item') }}</th>
             @endif
-            <th colspan="2" style="text-align: center">Details</th>
-            <th colspan="2" style="text-align: center">Qty</th>
-            <th colspan="2" style="text-align: center">Unit Rate</th>
-            <th colspan="2" style="text-align: right">Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="2" style="text-align: center">{{ __('custom.details') }}</th>
+            <th colspan="2" style="text-align: center">{{ __('custom.qty') }}</th>
+            <th colspan="2" style="text-align: center">{{ __('custom.unit_rate') }}</th>
+            <th colspan="2" style="text-align: right">{{ __('custom.amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
         </tr>
         </thead>
         <tbody>
@@ -122,10 +122,10 @@
         <thead>
         <tr class="theme-tr-head">
             <th colspan="1" style="width:1%"></th>
-            <th colspan="12" style=" text-align: center">Details</th>
+            <th colspan="12" style=" text-align: center">{{ __('custom.details') }}</th>
 
 
-            <th style="width:140px;text-align: right">Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th style="width:140px;text-align: right">{{ __('custom.amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
         </tr>
         </thead>
 
@@ -159,12 +159,12 @@
         <thead>
         <tr class="theme-tr-head">
             <th colspan="1"></th>
-            <th colspan="2">GL Code</th>
-            <th colspan="4">GL Code Description</th>
-            <th colspan="2">QTY</th>
-            <th colspan="2">Unit Rate</th>
-            <th colspan="2">VAT Per Unit</th>  
-            <th colspan="2">Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="2">{{ __('custom.gl_code') }}</th>
+            <th colspan="4">{{ __('custom.gl_code_description') }}</th>
+            <th colspan="2">{{ __('custom.qty') }}</th>
+            <th colspan="2">{{ __('custom.unit_rate') }}</th>
+            <th colspan="2">{{ __('custom.vat_per_unit') }}</th>
+            <th colspan="2">{{ __('custom.amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
         </tr>
         </thead>
         <tbody>
@@ -195,14 +195,14 @@
         <thead>
         <tr class="theme-tr-head">
             <th colspan="1" style="width:3%"></th>
-            <th colspan="2" style="width:60%;text-align: center">Description</th>
-            <th colspan="2" style="width:30%;text-align: center">Part No / Ref.Number</th>
-            <th colspan="2" style="width:10%;text-align: center">Quantity</th>
-            <th colspan="2" style="width:10%;text-align: center">Unit Price</th>
-            <th colspan="2" style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-            <th colspan="2" style="width:10%;text-align: right">Taxable Rate</th>
-            <th colspan="2" style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-            <th colspan="2" style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="2" style="width:60%;text-align: center">{{ __('custom.description') }}</th>
+            <th colspan="2" style="width:30%;text-align: center">{{ __('custom.part_number') }}</th>
+            <th colspan="2" style="width:10%;text-align: center">{{ __('custom.quantity') }}</th>
+            <th colspan="2" style="width:10%;text-align: center">{{ __('custom.unit_price') }}</th>
+            <th colspan="2" style="width:10%;text-align: right">{{ __('custom.taxable_amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="2" style="width:10%;text-align: right">{{ __('custom.taxable_rate') }}</th>
+            <th colspan="2" style="width:10%;text-align: right">{{ __('custom.tax') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+            <th colspan="2" style="width:10%;text-align: right">{{ __('custom.total_amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
         </tr>
         </thead>
         <tbody>
@@ -254,7 +254,7 @@
         @endif
         <td colspan="3" class="text-right" style="border:none !important;width: 85%">
                 <span class="font-weight-bold" style="font-size: 11.5px">
-                    Subtotal (Excluding VAT)
+                    {{ __('custom.sub_total') }} ({{ __('custom.excluding_vat') }})
                 </span>
         </td>
 
@@ -278,7 +278,7 @@
         @endif
         <td colspan="3" class="text-right" style="border:none !important;width: 85%">
                 <span class="font-weight-bold" style="font-size: 11.5px">
-                    Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
+                    {{ __('custom.total_vat') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
                 </span>
         </td>
         <td class="text-right"
@@ -298,7 +298,7 @@
         @endif
         <td colspan="3" class="text-right" style="border:none !important;width: 85%">
                 <span class="font-weight-bold" style="font-size: 11.5px">
-                    Total Amount Payable
+                    {{ __('custom.total_amount_payable') }}
                 </span>
         </td>
         <td class="text-right"
@@ -322,10 +322,10 @@
                     @endif
                     <table>
                         <tr>
-                            <td width="100px" colspan="3"><span class="font-weight-bold" style="text-decoration: underline;">Bank Details </span></td>
+                            <td width="100px" colspan="3"><span class="font-weight-bold" style="text-decoration: underline;">{{ __('custom.bank_details') }} </span></td>
                         </tr>
                         <tr>
-                            <td colspan="3" width="100px"><span class="font-weight-bold">Bank : </span>
+                            <td colspan="3" width="100px"><span class="font-weight-bold">{{ __('custom.bank') }} : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
@@ -336,7 +336,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3" width="100px"><span class="font-weight-bold">Branch : </span>
+                            <td colspan="3" width="100px"><span class="font-weight-bold">{{ __('custom.branch') }} : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankBranch}}
@@ -347,7 +347,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3" width="100px"><span class="font-weight-bold">Account No : </span>
+                            <td colspan="3" width="100px"><span class="font-weight-bold">{{ __('custom.account_no') }} : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}}
@@ -359,7 +359,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3" width="100px"><span class="font-weight-bold">SWIFT Code : </span>
+                            <td colspan="3" width="100px"><span class="font-weight-bold">{{ __('custom.swift_code') }} : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
@@ -378,14 +378,14 @@
 
                             <tr>
                                 <td colspan="3" width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Prepared By :</span><br>
+                                    <span class="font-weight-bold">{{ __('custom.prepared_by') }} :</span><br>
                                     @if($request->createduser)
                                         {{$request->createduser->empName}}
                                     @endif <br>
                                     {{ \App\helper\Helper::dateFormat($request->createdDateAndTime)}}
                                 </td>
                                 <td colspan="3" width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Approved By :</span><br>
+                                    <span class="font-weight-bold">{{ __('custom.approved_by') }} :</span><br>
                                     @foreach ($request->approved_by as $det)
                                         @if($det->employee)
                                             {{$det->employee->empFullName }}

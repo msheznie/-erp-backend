@@ -6,6 +6,7 @@ use App\helper\CommonJobService;
 use App\Models\CompanyBudgetPlanning;
 use App\Models\CompanyDepartment;
 use App\Models\DepartmentBudgetPlanning;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -16,17 +17,18 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessDepartmentBudgetPlanning implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, AuditLogsTrait;
 
     public $db;
     public $companyBudgetPlanningID;
-
+    public $uuid;
+    public $empID;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $companyBudgetPlanningID)
+    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -42,6 +44,8 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
         $this->db = $db;
         $this->companyBudgetPlanningID = $companyBudgetPlanningID;
+        $this->uuid = $uuid;
+        $this->empID = $empID;
     }
 
     /**
@@ -62,7 +66,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($this->companyBudgetPlanningID);
             if ($companyBudgetPlanning) {
-                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->whereNotNull('parentDepartmentID')->doesntHave('children')->get();
+                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
                 foreach ($finalDepartments as $department) {
                     $data = [
                         'companyBudgetPlanningID' => $companyBudgetPlanning->id,
@@ -77,7 +81,21 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                         'status' => 0
                     ];
 
-                    DepartmentBudgetPlanning::create($data);
+                    $budgetPlanning = DepartmentBudgetPlanning::create($data);
+
+                    $this->auditLog(
+                        $db,
+                        $budgetPlanning->id,
+                        $this->uuid,
+                        "department_budget_plannings",
+                        "Department budget planning ".$budgetPlanning->planningCode." has been created",
+                        "C",
+                        $budgetPlanning->toArray(),
+                        [],
+                        0,
+                        null,
+                        $this->empID
+                    );
                 }
             }
             DB::commit();

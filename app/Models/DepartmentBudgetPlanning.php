@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Schema(
@@ -95,6 +96,14 @@ use Eloquent as Model;
  *          nullable=$FIELD_NULLABLE$,
  *          type="string",
  *          format="date-time"
+ *      ),
+ *      @OA\Property(
+ *          property="workStatus",
+ *          description="Work status of the budget planning (1 - Not Started, 2 - In Progress, 3 - Submitted)",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="string",
+ *          enum={"1", "2", "3"}
  *      )
  * )
  */
@@ -105,6 +114,11 @@ class DepartmentBudgetPlanning extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+
+    // Work Status Constants
+    const WORK_STATUS_NOT_STARTED = '1';
+    const WORK_STATUS_IN_PROGRESS = '2';
+    const WORK_STATUS_SUBMITTED = '3';
 
 
 
@@ -119,7 +133,8 @@ class DepartmentBudgetPlanning extends Model
         'submissionDate',
         'workflowID',
         'status',
-        'planningCode'
+        'planningCode',
+        'workStatus'
     ];
 
     /**
@@ -138,7 +153,8 @@ class DepartmentBudgetPlanning extends Model
         'submissionDate' => 'date',
         'workflowID' => 'integer',
         'status' => 'integer',
-        'planningCode' => 'string'
+        'planningCode' => 'string',
+        'workStatus' => 'string'
     ];
 
     /**
@@ -169,5 +185,72 @@ class DepartmentBudgetPlanning extends Model
         return $this->belongsTo(CompanyFinanceYear::class, 'yearID', 'companyFinanceYearID');
     }
 
-    
+    public function workflow() {
+        return $this->belongsTo(WorkflowConfiguration::class, 'workflowID', 'id');
+    }
+
+    /**
+     * Get the time extension requests for the department budget planning.
+     */
+    public function timeExtensionRequests()
+    {
+        return $this->hasMany(DeptBudgetPlanningTimeRequest::class, 'department_budget_planning_id');
+    }
+
+    public function budgetPlanningDetails()
+    {
+        return $this->hasMany(DepartmentBudgetPlanningDetail::class, 'department_planning_id');
+    }
+
+    public function delegateAccess()
+    {
+        return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', Auth::user()->employee_id);
+
+    }
+
+    /**
+     * Get the work status label
+     *
+     * @return string
+     */
+    public function getWorkStatusLabelAttribute()
+    {
+        $statuses = [
+            self::WORK_STATUS_NOT_STARTED => 'Not Started',
+            self::WORK_STATUS_IN_PROGRESS => 'In Progress',
+            self::WORK_STATUS_SUBMITTED => 'Submitted'
+        ];
+
+        return $statuses[$this->workStatus] ?? 'Unknown';
+    }
+
+    /**
+     * Check if work status is not started
+     *
+     * @return bool
+     */
+    public function isNotStarted()
+    {
+        return $this->workStatus === self::WORK_STATUS_NOT_STARTED;
+    }
+
+    /**
+     * Check if work status is in progress
+     *
+     * @return bool
+     */
+    public function isInProgress()
+    {
+        return $this->workStatus === self::WORK_STATUS_IN_PROGRESS;
+    }
+
+    /**
+     * Check if work status is submitted
+     *
+     * @return bool
+     */
+    public function isSubmitted()
+    {
+        return $this->workStatus === self::WORK_STATUS_SUBMITTED;
+    }
 }

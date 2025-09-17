@@ -34,17 +34,51 @@ use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
 use App\Models\DebitNoteDetails;
 use Illuminate\Support\Facades\DB;
+use App\helper\BudgetControlService;
+use App\Models\BudgetControlLink;
 
 class BudgetConsumptionService
 {
-	public static function checkBudget($documentSystemID, $documentSystemCode)
+	public static function checkBudget($documentSystemID, $documentSystemCode,$companySystemID = null)
 	{
 		$budgetData = self::getConsumptionData($documentSystemID, $documentSystemCode, true);
+	    $existingIds =  BudgetControlService::checkControl($companySystemID);
+
+		
+		$checkBudgetBasedOnGL = CompanyPolicyMaster::where('companyPolicyCategoryID', 55)
+	                                    ->where('companySystemID', $companySystemID)
+	                                    ->first();
+
+		$checkBudgetBasedOnGLPolicy = false;
+	    if ($checkBudgetBasedOnGL && $checkBudgetBasedOnGL->isYesNO == 1) {
+	    	$checkBudgetBasedOnGLPolicy = true;
+	    }
 
 		if ($budgetData['status']) {
 			if (sizeof($budgetData['data']) > 0) {
 				$userMessageE = "";
+				$isDefinedBehaviour = false;
 				foreach ($budgetData['data'] as $key => $value) {
+
+					$reportingAmount = $value['budgetAmount'];
+					$balanceAmount = $value['availableAmount'];
+
+					if($checkBudgetBasedOnGLPolicy)
+					{
+						if (in_array($value['templateDetailID'], $existingIds)) {
+							continue;
+						}
+
+						$chartOfAcData = ChartOfAccount::find($value['templateDetailID']);
+						$cateGoryType = ($chartOfAcData->catogaryBLorPLID == 2) ? 1 : 2;
+
+						$ignoreBudget =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'ignoreBudget',1);
+
+						if ($reportingAmount == 0  && $ignoreBudget) {
+							continue;
+						}
+					}
+
 					$totalConsumedAmount = $value['consumedAmount'] + $value['currenctDocumentConsumption'] + $value['pendingDocumentAmount'];
 					$totalBudgetRptAmount = $value['budgetAmount'];
 
@@ -89,15 +123,40 @@ class BudgetConsumptionService
                         $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, $currencyDecimal);
 					}
 				}
-
+				$isValidateMsg = false;
+				$validateMessageE = "";
 				if (isset($budgetData['validateArray']) && count($budgetData['validateArray']) > 0) {
-					$userMessageE .= "<br>";
-					$userMessageE .= "<br>";
-					$userMessageE .= "Budget not configured for below GL codes";
-					$userMessageE .= "<br>";
+					$validateMessageE .= "<br>";
+					$validateMessageE .= "<br>";
+					$validateMessageE .= "Budget not configured for below GL codes";
+					$validateMessageE .= "<br>";
+						
 					foreach ($budgetData['validateArray'] as $key => $value) {
-						$userMessageE .= $value;
-						$userMessageE .= "<br>";
+						
+					if($checkBudgetBasedOnGLPolicy)
+					{
+						$code = explode(' - ', $value)[0];  
+						$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+
+						$budgetChartOfAccountSystemId = $chartOfAccuntInfo->chartOfAccountSystemID;
+					
+						if (in_array($budgetChartOfAccountSystemId, $existingIds)) {
+							continue;
+						}
+
+
+						$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
+						$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
+						if($definedBehaviour)
+						{
+							$isDefinedBehaviour = true;
+							continue;
+						}
+					}
+
+						$isValidateMsg = true;
+						$validateMessageE .= $value;
+						$validateMessageE .= "<br>";
 					}
 				}
 
@@ -107,11 +166,46 @@ class BudgetConsumptionService
 
 					return ['status' => true, 'message' => "The budget allocated to account code ".($fixedAsset ? $fixedAsset->COSTGLCODE : '') ." is exceeding. Are you sure you want to proceed ?", 'type' => 'question'];
 				}
-
-				return ['status' => true, 'message' => $userMessageE];
+				if ($isValidateMsg) {
+					$userMessageE .= $validateMessageE;
+					}
+				return ['status' => true, 'message' => $userMessageE,'warning' => $isDefinedBehaviour];
 			} else {
 				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy'] && (isset($budgetData['glCodes']) && count($budgetData['glCodes']) > 0)) {
-					return ['status' => true, 'message' => "Some GL codes are not assigned for budget with relevant segment and finance period"];
+					$isDefinedBehaviour = false;
+					$isNotDefinedBehaviour = false;
+					if($checkBudgetBasedOnGLPolicy)
+					{
+						foreach ($budgetData['validateArray'] as $key => $value) 
+						{
+							$code = explode(' - ', $value)[0];  
+							$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+							$budgetChartOfAccountSystemId = $chartOfAccuntInfo->chartOfAccountSystemID;
+						
+							if (in_array($budgetChartOfAccountSystemId, $existingIds)) {
+								continue;
+							}
+
+							$cateGoryType = ($chartOfAccuntInfo->catogaryBLorPLID == 2) ? 1 : 2;
+							$definedBehaviour =  BudgetControlService::checkIgnoreGL($cateGoryType,$companySystemID,'definedBehavior',2);
+
+							if($definedBehaviour)
+							{
+								$isDefinedBehaviour = true;
+								continue;
+							}
+							$isNotDefinedBehaviour = true;;
+						}
+					}
+					if($isNotDefinedBehaviour)
+					{
+						return ['status' => true, 'message' => "Some GL codes are not assigned for budget with relevant segment and finance period"];
+					}
+					else if($isDefinedBehaviour){
+						return ['status' => true, 'message' =>'','warning' => $isDefinedBehaviour];
+
+					}
+					
 				} else {
 					return ['status' => true, 'message' => ""];
 				}
