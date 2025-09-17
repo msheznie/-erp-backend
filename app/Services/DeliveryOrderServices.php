@@ -121,8 +121,14 @@ class DeliveryOrderServices
                                         Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
         }
 
-        $emailBody = '<p>' . $masterData->deliveryOrderCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->deliveryOrderCode . ' has been return back to amend';
+        $emailBody = __('email.delivery_order_returned_to_amend_body', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.delivery_order_returned_to_amend', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode
+        ]);
 
 
         if ($masterData->confirmedYN == 1) {

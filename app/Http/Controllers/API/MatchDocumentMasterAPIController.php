@@ -4061,8 +4061,14 @@ ORDER BY
         }
 
 
-        $emailBody = '<p>' . $masterData->matchingDocCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->matchingDocCode . ' has been return back to amend';
+        $emailBody = __('email.matching_document_returned_to_amend_body', [
+            'documentCode' => $masterData->matchingDocCode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.matching_document_returned_to_amend', [
+            'documentCode' => $masterData->matchingDocCode
+        ]);
 
         DB::beginTransaction();
         try {

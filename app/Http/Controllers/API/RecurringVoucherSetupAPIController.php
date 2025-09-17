@@ -919,8 +919,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_recurring_vou_1'));
         }
 
-        $emailBody = '<p>' . $rrvMaster->RRVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $rrvMaster->RRVcode . ' has been return back to amend';
+        $emailBody = __('email.recurring_voucher_returned_to_amend_body', [
+            'rrvCode' => $rrvMaster->RRVcode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.recurring_voucher_returned_to_amend', [
+            'rrvCode' => $rrvMaster->RRVcode
+        ]);
 
         DB::beginTransaction();
         try {
