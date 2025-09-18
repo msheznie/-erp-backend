@@ -199,7 +199,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Return date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.return_date_not_within_selected_financial_period'), 500);
         }
 
         $input['documentSystemID'] = 12;
@@ -385,7 +385,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    return $this->sendError('Please select a active department.', 500, $serviceLineError);
+                    return $this->sendError(trans('custom.please_select_active_department'), 500, $serviceLineError);
                 }
 
                 if ($checkDepartmentActive) {
@@ -402,7 +402,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
                 if ($checkWareHouseActive->isActive == 0) {
                     $this->itemReturnMasterRepository->update(['wareHouseLocation' => null], $id);
-                    return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
+                    return $this->sendError(trans('custom.please_select_active_warehouse'), 500, $wareHouseError);
                 }
             }
 
@@ -460,13 +460,13 @@ class ItemReturnMasterAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Return date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.return_date_not_within_selected_financial_period'), 500);
             }
 
             $checkItems = ItemReturnDetails::where('itemReturnAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every return should have at least one item', 500);
+                return $this->sendError(trans('custom.every_return_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = ItemReturnDetails::where('itemReturnAutoID', $id)
@@ -477,7 +477,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_requested'), 500);
             }
 
             $checkCost = ItemReturnDetails::where('itemReturnAutoID', $id)
@@ -488,7 +488,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkCost > 0) {
-                return $this->sendError('Unit Cost should be greater than 0 for every items', 500);
+                return $this->sendError(trans('custom.unit_cost_should_be_greater_than_zero_for_every_items'), 500);
             }
 
             $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID', $input['itemReturnAutoID'])->get();
@@ -499,7 +499,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
             foreach ($itemReturnDetails as $detail) {
                 if ($detail['qtyIssuedDefaultMeasure'] > $detail['qtyFromIssue']) {
-                    return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
+                    return $this->sendError(trans('custom.return_quantity_should_not_be_greater_than_issues_quantity'), 500);
                 }
 
                 $itemIssuesCount = ItemIssueMaster::where('itemIssueAutoID', $detail['issueCodeSystem'])
@@ -521,7 +521,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             $amount = 0;
@@ -551,7 +551,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $itemReturnMaster = $this->itemReturnMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($itemReturnMaster->toArray(), 'Material Return Master Updated Successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($itemReturnMaster->toArray(), trans('custom.material_return_master_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -1041,7 +1041,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

@@ -8077,5 +8077,28 @@ return [
     'pulled_to_vat_return' => 'Pulled to VAT return filing',
     'document_not_confirmed' => 'Document, it is not confirmed',
     'it_is_not_confirmed' => 'it is not confirmed',
-    'the_supplier_invoice_type_has_changed' => 'The Supplier Invoice type has changed, unable to proceed'
+    'the_supplier_invoice_type_has_changed' => 'The Supplier Invoice type has changed, unable to proceed',
+       // Inventory Reclassification translations
+       'reclassification_date_not_within_financial_period' => 'Reclassification date is not within financial period!',
+       'please_select_active_department' => 'Please select an active department',
+       'please_select_active_warehouse' => 'Please select an active warehouse',
+       'every_reclassification_should_have_at_least_one_item' => 'Every reclassification should have at least one item',
+       'every_item_should_have_at_least_one_minimum_qty' => 'Every item should have at least one minimum Qty',
+       'please_configure_bs_account_for_inventory_reclassification' => 'Please configure BS account for inventory reclassification',
+       'you_cannot_confirm_this_document' => 'You cannot confirm this document.',
+       'inventory_reclassification_updated_successfully' => 'Inventory reclassification updated successfully',
+       'policy_not_found_for_this_document' => 'Policy not found for this document',
+       // Item Return Master translations
+       'return_date_not_within_selected_financial_period' => 'Return date is not within the selected financial period !',
+       'every_return_should_have_at_least_one_item' => 'Every return should have at least one item',
+       'unit_cost_should_be_greater_than_zero_for_every_items' => 'Unit Cost should be greater than 0 for every items',
+       'return_quantity_should_not_be_greater_than_issues_quantity' => 'Return quantity should not be greater than issues quantity. Please check again.',
+       'material_return_master_updated_successfully' => 'Material Return Master Updated Successfully',
+       // Purchase Return translations
+       'selected_grv_is_been_added_to_draft_supplier_invoice' => 'Selected GRV is been added to a draft supplier invoice',
+       'delete_grv_from_invoice_and_try_again' => 'Delete the GRV from the invoice and try again.',
+       'please_select_active_segment' => 'Please select a active segment',
+       'please_select_active_location' => 'Please select a active location',
+       'purchase_return_updated_successfully' => 'PurchaseReturn updated successfully',
+       'selected_segment_is_not_active' => 'Selected segment is not active. Please select an active segment'
   ];

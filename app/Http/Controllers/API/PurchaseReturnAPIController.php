@@ -510,13 +510,13 @@ class PurchaseReturnAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Return date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.return_date_not_within_selected_financial_period'), 500);
             }
 
             $checkItems = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every return should have at least one item', 500);
+                return $this->sendError(trans('custom.every_return_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
@@ -526,7 +526,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_requested'), 500);
             }
 
             $itemIssueDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)->get();
@@ -575,7 +575,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             //check Input Vat Transfer GL Account if vat exist
@@ -609,7 +609,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
                 if ($checkGrvAddedToIncoice) {
                     $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
-                    return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+                    return $this->sendError(trans('custom.selected_grv_is_been_added_to_draft_supplier_invoice') . ' ' . $supInvCode . '. ' . trans('custom.delete_grv_from_invoice_and_try_again'), 500);
                 }
             }
 
@@ -643,7 +643,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($purchaseReturn->toArray(), 'PurchaseReturn updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($purchaseReturn->toArray(), trans('custom.purchase_return_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
 
@@ -888,7 +888,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if ($checkDepartmentActive->isActive == 0) {
           //  $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $purchaseReturnAutoID);
-            return $this->sendError('Please select a active segment ', 500, $serviceLineError);
+            return $this->sendError(trans('custom.please_select_active_segment'), 500, $serviceLineError);
         }
 
         $checkWareHouseActive = WarehouseMaster::find($purchaseReturn->purchaseReturnLocation);
@@ -898,7 +898,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if ($checkWareHouseActive->isActive == 0) {
             $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $purchaseReturnAutoID);
-            return $this->sendError('Please select a active location', 500, $wareHouseError);
+            return $this->sendError(trans('custom.please_select_active_location'), 500, $wareHouseError);
         }
 
 
@@ -1258,7 +1258,7 @@ class PurchaseReturnAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1324,7 +1324,7 @@ class PurchaseReturnAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_is_not_active'));
         }
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $companyID)
