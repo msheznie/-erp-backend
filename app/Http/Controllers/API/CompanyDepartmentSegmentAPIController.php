@@ -79,6 +79,44 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             ->make(true);
     }
 
+
+    public function getAllDepartmentSegmentsFormData(Request $request)
+    {
+        $input = $request->all();
+
+        $departmentSystemID = $request->get('departmentSystemID');
+
+        if (!$departmentSystemID) {
+            return $this->sendError(trans('custom.department_id_is_required'));
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+            ->with(['segment', 'department'])
+            ->orderBy('departmentSegmentSystemID', $sort);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->whereHas('segment', function ($query) use ($search) {
+                $query->where('ServiceLineCode', 'LIKE', "%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return $this->sendResponse([
+            'segments' => $query->get()->pluck('segment')
+        ], trans('custom.form_data_retrieved_successfully'));
+
+    }
+
     /**
      * Get form data for segment assignment
      */
