@@ -7997,6 +7997,28 @@ return [
     'pulled_to_vat_return' => 'تم سحبها إلى تقديم إقرار ضريبة القيمة المضافة',
     'document_not_confirmed' => 'المستند غير مُؤكَّد',
     'it_is_not_confirmed' => 'إنه غير مؤكد',
-    'the_supplier_invoice_type_has_changed' => 'تم تغيير نوع فاتورة المورّد، غير قادر على المتابعة'
-
+    'the_supplier_invoice_type_has_changed' => 'تم تغيير نوع فاتورة المورّد، غير قادر على المتابعة',
+     // Inventory Reclassification translations
+     'reclassification_date_not_within_financial_period' => 'تاريخ إعادة التصنيف ليس ضمن الفترة المالية!',
+     'please_select_active_department' => 'يرجى اختيار قسم نشط',
+     'please_select_active_warehouse' => 'يرجى اختيار مستودع نشط',
+     'every_reclassification_should_have_at_least_one_item' => 'يجب أن تحتوي كل إعادة تصنيف على عنصر واحد على الأقل',
+     'every_item_should_have_at_least_one_minimum_qty' => 'يجب أن يحتوي كل عنصر على كمية دنيا واحدة على الأقل',
+     'please_configure_bs_account_for_inventory_reclassification' => 'يرجى تكوين حساب الميزانية العمومية لإعادة تصنيف المخزون',
+     'you_cannot_confirm_this_document' => 'لا يمكنك تأكيد هذا المستند.',
+     'inventory_reclassification_updated_successfully' => 'تم تحديث إعادة تصنيف المخزون بنجاح',
+     'policy_not_found_for_this_document' => 'السياسة غير موجودة لهذا المستند',
+     // Item Return Master translations
+     'return_date_not_within_selected_financial_period' => 'تاريخ الإرجاع ليس ضمن الفترة المالية المحددة !',
+     'every_return_should_have_at_least_one_item' => 'يجب أن يحتوي كل إرجاع على عنصر واحد على الأقل',
+     'unit_cost_should_be_greater_than_zero_for_every_items' => 'يجب أن تكون تكلفة الوحدة أكبر من 0 لكل العناصر',
+     'return_quantity_should_not_be_greater_than_issues_quantity' => 'كمية الإرجاع يجب ألا تكون أكبر من كمية الإصدار. يرجى التحقق مرة أخرى.',
+     'material_return_master_updated_successfully' => 'تم تحديث سيد إرجاع المواد بنجاح',
+     // Purchase Return translations
+     'selected_grv_is_been_added_to_draft_supplier_invoice' => 'تم إضافة GRV المحدد إلى فاتورة مورد مسودة',
+     'delete_grv_from_invoice_and_try_again' => 'احذف GRV من الفاتورة وحاول مرة أخرى.',
+     'please_select_active_segment' => 'يرجى اختيار قطاع نشط',
+     'please_select_active_location' => 'يرجى اختيار موقع نشط',
+     'purchase_return_updated_successfully' => 'تم تحديث إرجاع الشراء بنجاح',
+     'selected_segment_is_not_active' => 'القطاع المحدد غير نشط. يرجى اختيار قطاع نشط'
 ];
