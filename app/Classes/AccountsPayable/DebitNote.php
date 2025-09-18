@@ -33,7 +33,7 @@ class DebitNote
     {
         $company = Company::find($this->companySystemID);
         if(!isset($company))
-            throw  new \Exception("Company details not found");
+            throw  new \Exception(trans('custom.company_details_not_found'));
 
         $this->master->companySystemID = $company->companySystemID;
         $this->master->companyID = $company->CompanyID;
@@ -51,7 +51,7 @@ class DebitNote
     public function setDateDetails($date)
     {
         if (!$this->checkValidDate($date))
-            throw new \InvalidArgumentException("Invalid date format in document date");
+            throw new \InvalidArgumentException(trans('custom.invalid_date_format_document_date'));
 
         $this->master->debitNoteDate = $date;
         $this->master->postedDate = $date;
@@ -68,15 +68,15 @@ class DebitNote
             {
                 if($companyFinanceYear->isActive != -1)
                 {
-                    throw new \Exception("The finance year is not active");
+                    throw new \Exception(trans('custom.finance_year_not_active'));
                 }
 
                 if($companyFinanceYear->isCurrent != -1)
                 {
-                    throw new \Exception("The finance year is not current.");
+                    throw new \Exception(trans('custom.finance_year_not_current'));
                 }
             }else {
-                throw new \Exception("Company Finanical year not found");
+                throw new \Exception(trans('custom.company_financial_year_not_found'));
             }
 
         }else {
@@ -85,37 +85,37 @@ class DebitNote
             {
                 if($companyFinanceYear->isActive != -1)
                 {
-                    throw new \Exception("The finance year is not active");
+                    throw new \Exception(trans('custom.finance_year_not_active'));
                 }
             }else {
-                throw new \Exception("Company Finanical year not found or not active");
+                throw new \Exception(trans('custom.company_financial_year_not_found_or_not_active'));
             }
         }
 
 
         if(!($companyFinanceYear->bigginingDate <= $this->master->debitNoteDate) && ($this->master->debitNoteDate <= $companyFinanceYear->endingDate))
-            throw new \Exception("Document date not within the financial year");
+            throw new \Exception(trans('custom.document_date_not_within_financial_year'));
 
         $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->companySystemID)->where('departmentSystemID', 1)->where('dateFrom', "<=", $this->master->debitNoteDate)->where('dateTo', ">=", $this->master->debitNoteDate)->first();
 
         if(!$companyFinancePeriod)
-            throw  new \Exception("Financial period not found");
+            throw  new \Exception(trans('custom.financial_period_not_found'));
 
         if($this->master->debitNoteDate->month == Carbon::now()->month)
         {
             if($companyFinancePeriod->isActive != -1)
             {
-                throw new \Exception("The finance period is not active");
+                throw new \Exception(trans('custom.finance_period_not_active'));
             }
 
             if($companyFinancePeriod->isCurrent != -1)
             {
-                throw new \Exception("The finance period is not current.");
+                throw new \Exception(trans('custom.finance_period_not_current'));
             }
         }else {
             if($companyFinancePeriod->isActive != -1)
             {
-                throw new \Exception("The finance period is not active");
+                throw new \Exception(trans('custom.finance_period_not_active'));
             }
 
         }
@@ -140,14 +140,14 @@ class DebitNote
 
 
         if (!isset($supplierAssignedDetail))
-            throw new \Exception("Supplier GL accounts details not found");
+            throw new \Exception(trans('custom.supplier_gl_accounts_details_not_found'));
         
         $supplier = SupplierMaster::find($supplierId);
         if(empty($supplier->liabilityAccountSysemID))
-            throw new \Exception("Liabilty Account not selected for tax authority in supplier master");
+            throw new \Exception(trans('custom.liability_account_not_selected_tax_authority'));
 
         if(empty($supplier->supplierCurrency->first()))
-            throw new \Exception("Supplier transaction currency details not found");
+            throw new \Exception(trans('custom.supplier_transaction_currency_details_not_found'));
 
         $supplierTranscationCurrency = $supplier->supplierCurrency->first()->currencyMaster->currencyID;
         $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
@@ -217,7 +217,7 @@ class DebitNote
     {
         if(is_null($comment))
         {
-            $this->master->comments = "DN created BY VAT return filling ".$this->code;
+            $this->master->comments = trans('custom.dn_created_by_vat_return_filling')." ".$this->code;
         }else {
             $this->master->comments = $comment;
         }
