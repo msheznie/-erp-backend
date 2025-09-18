@@ -146,8 +146,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
             'comments' => 'required',
         ],
         [
-            'empID.required_if' => 'please select the employee',
-            'supplierID.required_if' => 'please select the supplier',
+            'empID.required_if' =>  trans('custom.please_select_the_employee'),
+            'supplierID.required_if' =>  trans('custom.please_select_the_supplier'),
         ]);
 
         if ($validator->fails()) {

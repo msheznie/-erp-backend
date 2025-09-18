@@ -105,6 +105,14 @@ return [
         ],
         'select' => [
             'select' => 'حقل :attribute مطلوب.'
+        ],
+        'reportType' => [
+            'required' => 'حقل نوع التقرير مطلوب.',
+            'not_in' => 'حقل نوع التقرير مطلوب.'
+        ],
+        'reportType.*' => [
+            'required' => 'حقل نوع التقرير مطلوب.',
+            'not_in' => 'حقل نوع التقرير مطلوب.'
         ]
     ],
 
@@ -216,6 +224,9 @@ return [
         'currencyID' => 'معرف العملة',
         'warehouse' => 'المستودع',
         'fromDate' => 'من تاريخ',
+        'toDate' => 'إلى تاريخ',
+        'Items' => 'المواد',
+        'reportType' => 'نوع التقرير',
         'segment' => 'القطاع'
     ],
 

@@ -213,7 +213,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companyID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -221,24 +221,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
             $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
             if (!$wareHouse) {
-                return $this->sendError('Please select a warehouse', 500);
+                return $this->sendError(trans('custom.please_select_warehouse'), 500);
             }
             
             if (!isset($input['salesType']) || empty($input['salesType'])) {
-                return $this->sendError('Please select a sales type', 500);
+                return $this->sendError(trans('custom.please_select_sales_type'), 500);
             }
         }
 
         if (!isset($input['custTransactionCurrencyID']) || (isset($input['custTransactionCurrencyID']) && ($input['custTransactionCurrencyID'] == 0 || $input['custTransactionCurrencyID'] == null))) {
-            return $this->sendError('Please select a currency', 500);
+            return $this->sendError(trans('custom.please_select_currency'), 500);
         }
 
         if (!isset($input['companyFinanceYearID']) || is_null($input['companyFinanceYearID'])) {
-            return $this->sendError('Financial year is not selected', 500);
+            return $this->sendError(trans('custom.financial_year_not_selected'), 500);
         }
 
         if (!isset($input['companyFinancePeriodID']) || is_null($input['companyFinancePeriodID'])) {
-            return $this->sendError('Financial period is not selected', 500);
+            return $this->sendError(trans('custom.financial_period_not_selected'), 500);
         }
 
         $data = CustomerInvoiceAPIService::customerInvoiceStore($input);
@@ -378,7 +378,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -419,7 +419,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -450,14 +450,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
 
                 if (!$wareHouse) {
-                    return $this->sendError('Please select a warehouse', 500);
+                    return $this->sendError(trans('custom.please_select_warehouse'), 500);
                 }
                 $_post['wareHouseSystemCode'] = $input['wareHouseSystemCode'];
 
 
                 $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
                 if (!$serviceLine) {
-                    return $this->sendError('Please select a Segment', 500);
+                    return $this->sendError(trans('custom.please_select_segment'), 500);
                 }
                 $segment = SegmentMaster::find($input['serviceLineSystemID']);
                 $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
@@ -705,7 +705,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
                 } else {
-                    return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+                    return $this->sendError(trans('custom.document_date_should_be_between_financial_period'), 500);
                 }
 
                 /**/
@@ -714,17 +714,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                     $messages = [
 
-                        'custTransactionCurrencyID.required' => 'Currency is required.',
-                        'bankID.required' => 'Bank is required.',
-                        'bankAccountID.required' => 'Bank account is required.',
+                        'custTransactionCurrencyID.required' => trans('custom.currency_required'),
+                        'bankID.required' => trans('custom.bank_required'),
+                        'bankAccountID.required' => trans('custom.bank_account_required'),
 
-                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
-                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
-                        'PONumber.required' => 'Po number is required.',
-                        'servicePeriod.required' => 'Service period is required.',
-                        'serviceStartDate.required' => 'Service start date is required.',
-                        'serviceEndDate.required' => 'Service end date is required.',
-                        'bookingDate.required' => 'Document date is required.'
+                        'customerInvoiceNo.required' => trans('custom.customer_invoice_no_required'),
+                        'customerInvoiceDate.required' => trans('custom.customer_invoice_date_required'),
+                        'PONumber.required' => trans('custom.po_number_required'),
+                        'servicePeriod.required' => trans('custom.service_period_required'),
+                        'serviceStartDate.required' => trans('custom.service_start_date_required'),
+                        'serviceEndDate.required' => trans('custom.service_end_date_required'),
+                        'bookingDate.required' => trans('custom.booking_date_required')
 
                     ];
                     $validator = \Validator::make($_post, [
@@ -745,17 +745,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 } else {
 
                     $messages = [
-                        'custTransactionCurrencyID.required' => 'Currency is required.',
-                        'bankID.required' => 'Bank is required.',
-                        'bankAccountID.required' => 'Bank account is required.',
+                        'custTransactionCurrencyID.required' => trans('custom.currency_required'),
+                        'bankID.required' => trans('custom.bank_required'),
+                        'bankAccountID.required' => trans('custom.bank_account_required'),
 
-                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
-                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
-                        'PONumber.required' => 'Po number is required.',
-                        'servicePeriod.required' => 'Service period is required.',
-                        'serviceStartDate.required' => 'Service start date is required.',
-                        'serviceEndDate.required' => 'Service end date is required.',
-                        'bookingDate.required' => 'Document date is required.'
+                        'customerInvoiceNo.required' => trans('custom.customer_invoice_no_required'),
+                        'customerInvoiceDate.required' => trans('custom.customer_invoice_date_required'),
+                        'PONumber.required' => trans('custom.po_number_required'),
+                        'servicePeriod.required' => trans('custom.service_period_required'),
+                        'serviceStartDate.required' => trans('custom.service_start_date_required'),
+                        'serviceEndDate.required' => trans('custom.service_end_date_required'),
+                        'bookingDate.required' => trans('custom.booking_date_required')
 
                     ];
                     $validator = \Validator::make($_post, [
@@ -815,7 +815,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             })
                             ->count();
                         if ($checkQuantity > 0) {
-                            return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                            return $this->sendError(trans('custom.every_item_should_have_minimum_qty'), 500);
                         }
 
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
@@ -901,23 +901,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                                 if($updateItem->itemFinanceCategoryID == 1){
                                     if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                                        return $this->sendError('Item must not have zero cost', 500);
+                                        return $this->sendError(trans('custom.item_must_not_have_zero_cost'), 500);
                                     }
                                     if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                                        return $this->sendError('Item must not have negative cost', 500);
+                                        return $this->sendError(trans('custom.item_must_not_have_negative_cost'), 500);
                                     }
                                     if ($updateItem->currentWareHouseStockQty <= 0) {
-                                        return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                        return $this->sendError(trans('custom.warehouse_stock_qty_is_zero_for') . ' ' . $updateItem->itemDescription, 500);
                                     }
                                     if ($updateItem->currentStockQty <= 0) {
-                                        return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                        return $this->sendError(trans('custom.stock_qty_is_zero_for') . ' ' . $updateItem->itemDescription, 500);
                                     }
                                     if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                        return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+                                        return $this->sendError(trans('custom.insufficient_stock_qty_for') . ' ' . $updateItem->itemDescription, 500);
                                     }
 
                                     if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                        return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
+                                        return $this->sendError(trans('custom.insufficient_warehouse_qty_for') . ' ' . $updateItem->itemDescription, 500);
                                     }
                                 }else{
                                     if ($updateItem->sellingCostAfterMargin == 0) {
@@ -1201,10 +1201,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse([$id,$value], 'Update Local ER');
+        return $this->sendResponse([$id,$value], trans('custom.update_local_er'));
         }
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
     }
 
@@ -1235,10 +1235,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse([$id,$value], 'Update Reporting ER');
+        return $this->sendResponse([$id,$value], trans('custom.update_reporting_er'));
         }
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
     }
 
@@ -1588,11 +1588,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->where('companySystemID',$uploadCustomerInvoiceObj->companySystemID)->orderBy('id', 'DESC')->first();
         $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->where('companySystemID', $uploadCustomerInvoiceObj->companySystemID)->select('custInvoiceDirectAutoID')->first();
         if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds))
-            return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
+            return ['status' => false , 'message' => trans('custom.additional_invoices_created_cannot_delete')];
 
 
         if($isFailedProcessExists && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
-             return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+            return ['status' => false , 'message' => trans('custom.failed_customer_invoice_to_delete')];
 
 
         return ['status' => true, 'message' => ''];
@@ -2429,7 +2429,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (!$customerInvoice) {
-            return $this->sendError("Customer invoice not found");
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
@@ -2814,8 +2814,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎" . strtoupper($numFormatter->format($floatAmt)) . " فقط." : '';
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
-
-        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $local = $request->get('lang');
+        $numFormatterEn = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
 
         $customerInvoice->floatAmt = (string)$floatAmt;
 
@@ -4365,7 +4365,7 @@ WHERE
         }
 
         $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
-      
+
         if (empty($invoiceDetail)) {
             return ['status' => false, 'message' => trans('custom.invoice_details_not_found_1')];
         }
@@ -4387,7 +4387,7 @@ WHERE
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);

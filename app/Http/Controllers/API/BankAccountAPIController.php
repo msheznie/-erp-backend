@@ -560,16 +560,12 @@ class BankAccountAPIController extends AppBaseController
             $data[$x][trans('custom.status')] = $status;
         }
 
-         \Excel::create('bank_accounts', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+        \Excel::create('bank_accounts', function ($excel) use ($data) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
+        })->download('xls');
 
         return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }

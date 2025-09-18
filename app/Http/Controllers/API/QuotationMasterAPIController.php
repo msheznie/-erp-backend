@@ -1687,8 +1687,14 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', It is added to advance receipt voucher');
         }
 
-        $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->quotationCode . ' has been return back to amend';
+        $emailBody = __('email.quotation_returned_to_amend_body', [
+            'quotationCode' => $masterData->quotationCode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.quotation_returned_to_amend', [
+            'quotationCode' => $masterData->quotationCode
+        ]);
 
         DB::beginTransaction();
         try {

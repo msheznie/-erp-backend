@@ -5,26 +5,26 @@
     <tr></tr>
     <tr>
         <td colspan="2"></td>
-        <td><h1>Asset Tracking Report</h1></td>
+        <td><h1>{{ trans('custom.asset_tracking_report') }}</h1></td>
     </tr>
     <tr>
         <td colspan="2"></td>
-        <th style="font-size:15px;">From {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - To {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
+        <th style="font-size:15px;">{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
     </tr>
     <tr></tr>
     <tr>
-        <th class="text-center">Asset Code</th>
-        <th class="text-center">Type</th>
-        <th class="text-center">Asset Description</th>
-        <th class="text-center">Category</th>
-        <th class="text-center">Document Code</th>
-        <th class="text-center">Document Date</th>
-        <th class="text-center">Document Type</th>
-        <th class="text-center">Transfer From</th>
-        <th class="text-center">Transfer To</th>
-        <th class="text-center">Location</th>
-        <th class="text-center">Department</th>
-        <th class="text-center">Employee</th>
+        <th class="text-center">{{ trans('custom.asset_code') }}</th>
+        <th class="text-center">{{ trans('custom.type') }}</th>
+        <th class="text-center">{{ trans('custom.asset_description') }}</th>
+        <th class="text-center">{{ trans('custom.category') }}</th>
+        <th class="text-center">{{ trans('custom.document_code') }}</th>
+        <th class="text-center">{{ trans('custom.document_date') }}</th>
+        <th class="text-center">{{ trans('custom.document_type') }}</th>
+        <th class="text-center">{{ trans('custom.transfer_from') }}</th>
+        <th class="text-center">{{ trans('custom.transfer_to') }}</th>
+        <th class="text-center">{{ trans('custom.location') }}</th>
+        <th class="text-center">{{ trans('custom.department') }}</th>
+        <th class="text-center">{{ trans('custom.employee') }}</th>
     </tr>
     </thead>
     <tbody>

@@ -39,7 +39,11 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
+
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -58,7 +62,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -126,7 +133,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -176,7 +186,7 @@ class ValidateDocumentAmend
 
     public static function validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID = null)
 	{
-        $message = 'You cannot amend this document now. The General Ledger posting is In-Progress';
+        $message = trans('custom.cannot_amend_document');
         $isjobErrorLogExist = JobErrorLog::where('documentSystemCode',$documentAutoId)
                                             ->where('documentSystemID',$documentSystemID)                                               
                                             ->count();
@@ -445,7 +455,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -461,7 +474,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -494,8 +510,13 @@ class ValidateDocumentAmend
                             if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
-
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
+                                return ['status' => false,'message'=>$message];
+                                
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -556,7 +577,7 @@ class ValidateDocumentAmend
             if(isset($vatReturnFillingState) && $vatReturnFillingState->confirmedYN == 1) {
                 return [
                     'status' => false,
-                    'message' => 'pulled to VAT return filling ' . $vatReturnFillingState->returnFillingCode
+                    'message' => trans('custom.pulled_to_vat_return'). $vatReturnFillingState->returnFillingCode
                 ];
             }
         }

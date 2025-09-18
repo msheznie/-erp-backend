@@ -326,13 +326,16 @@ class DashboardWidgetMasterAPIController extends AppBaseController
 //        $companyID = $input['companySystemID'];
         $departmentIDs = [1,3,4];
 
-        $departmentMasters = DepartmentMaster::selectRaw('DepartmentDescription as label,
-                                                departmentSystemID as value')
-            ->whereIn('departmentSystemID', $departmentIDs)
+        $departmentMasters = DepartmentMaster::whereIn('departmentSystemID', $departmentIDs)
             ->orderBy('departmentSystemID', 'asc')
-            ->get();
-
-        $departmentMasters = $departmentMasters->toArray();
+            ->get()
+            ->map(function ($dept) {
+                return [
+                    'label' => $dept->department_description, // accessor will handle translation
+                    'value' => $dept->departmentSystemID,
+                ];
+        })
+        ->toArray();
 
         $array = array('departments' => $departmentMasters);
         return $this->sendResponse($array, trans('custom.data_retrieved_successfully'));

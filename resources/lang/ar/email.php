@@ -101,5 +101,21 @@ return [
     'previous_total_amount' => 'المبلغ الإجمالي السابق كان',
     'is_closed' => 'تم إغلاقه',
     'is_manually_closed_due_to_below_reason' => 'تم إغلاقه يدوياً بسبب السبب التالي',
+    
+    // Matching Document Messages
+    'matching_document_returned_to_amend' => ':documentCode تم إرجاعه للتعديل',
+    'matching_document_returned_to_amend_body' => '<p>:documentCode تم إرجاعه للتعديل بواسطة :empName بسبب السبب التالي.</p><p>التعليق : :returnComment</p>',
+    
+    // Quotation Messages
+    'quotation_returned_to_amend' => ':quotationCode تم إرجاعه للتعديل',
+    'quotation_returned_to_amend_body' => '<p>:quotationCode تم إرجاعه للتعديل بواسطة :empName بسبب السبب التالي.</p><p>التعليق : :returnComment</p>',
+    
+    // Recurring Voucher Messages
+    'recurring_voucher_returned_to_amend' => ':rrvCode تم إرجاعه للتعديل',
+    'recurring_voucher_returned_to_amend_body' => '<p>:rrvCode تم إرجاعه للتعديل بواسطة :empName بسبب السبب التالي.</p><p>التعليق : :returnComment</p>',
+    
+    // Delivery Order Messages
+    'delivery_order_returned_to_amend' => ':deliveryOrderCode تم إرجاعه للتعديل',
+    'delivery_order_returned_to_amend_body' => '<p>:deliveryOrderCode تم إرجاعه للتعديل بواسطة :empName بسبب السبب التالي.</p><p>التعليق : :returnComment</p>',
 ];
 

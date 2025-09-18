@@ -7,6 +7,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\BudgetDelegateAccessRecord;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Services\BudgetDelegateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -393,10 +394,18 @@ class BudgetDelegateAPIController extends AppBaseController
             return $this->sendError("Data not found!",500);
         }
 
-        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::find($input['id']);
+        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::with(['budgetPlanningDetail','delegatee'])->find($input['id']);
+
+        $access = DepartmentBudgetPlanningsDelegateAccess::where('budgetPlanningID',$budgetDelegateAccessRecord->budgetPlanningDetail->department_planning_id)
+                    ->where('empID',$budgetDelegateAccessRecord->delegatee->employeeSystemID)
+                    ->first();
 
         if($budgetDelegateAccessRecord)
         {
+            if($access)
+            {
+                $access->delete();
+            }
             $budgetDelegateAccessRecord->delete();
             return $this->sendResponse([], 'Delegate deleted successfully');
         }else {

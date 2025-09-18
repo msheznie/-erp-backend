@@ -631,7 +631,7 @@ class ExpenseClaimAPIController extends AppBaseController
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this') . $documentName . ', it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this') . $documentName . ','.trans('custom.it_is_not_confirmed'));
         }
 
         $emailBody = '<p>' . $masterData->expenseClaimCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';

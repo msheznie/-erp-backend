@@ -9,11 +9,11 @@ class AssetRegisterSummary
 
     public function getHeader($assetCategory):Array {
         $headerArray = array();
-        array_push($headerArray,"Description");
+        array_push($headerArray,trans('custom.description'));
         foreach ($assetCategory as $val) {
             array_push($headerArray,$val['financeCatDescription']);
         }
-        array_push($headerArray,"Total");
+        array_push($headerArray,trans('custom.total'));
         return $headerArray;
     }
 

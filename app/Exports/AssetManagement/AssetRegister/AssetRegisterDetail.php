@@ -28,23 +28,23 @@ class AssetRegisterDetail
 
     public function getHeader() :Array {
         return [
-            'Cost GL',
-            'Acc Dep GL',
-            'Type',
-            'Segment',
-            'FA Code',
-            'Grouped YN',
-            'Serial Number',
-            'Asset Description',
-            'Category',
-            'Dep %',
-            'Date Aquired',
-            'Dep Start Date',
+            trans('custom.cost_gl'),
+            trans('custom.acc_dep_gl'),
+            trans('custom.e_type'),
+            trans('custom.e_segment'),
+            trans('custom.fa_code'),
+            trans('custom.grouped_yn'),
+            trans('custom.serial_number'),
+            trans('custom.asset_description'),
+            trans('custom.category'),
+            trans('custom.dep_percentage'),
+            trans('custom.date_acquired'),
+            trans('custom.dep_start_date'),
             '',
-            'Local Amount',
+            trans('custom.local_amount'),
             '',
             '',
-            'Rpt Amount',
+            trans('custom.rpt_amount'),
             ''
         ];
     }
@@ -63,12 +63,12 @@ class AssetRegisterDetail
             '',
             '',
             '',
-            'Unit Cost',
-            'AccDep Amount',
-            'Net Book Value',
-            'Unit Cost',
-            'AccDep Amount',
-            'Net Book Value',
+            trans('custom.unit_cost'),
+            trans('custom.accdep_amount'),
+            trans('custom.net_book_value'),
+            trans('custom.unit_cost'),
+            trans('custom.accdep_amount'),
+            trans('custom.net_book_value'),
         ];
     }
 

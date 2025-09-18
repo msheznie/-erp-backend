@@ -97,5 +97,21 @@ return [
     'previous_total_amount' => 'Previous total amount was',
     'is_closed' => 'is closed',
     'is_manually_closed_due_to_below_reason' => 'is manually closed due to below reason',
+    
+    // Matching Document Messages
+    'matching_document_returned_to_amend' => ':documentCode has been return back to amend',
+    'matching_document_returned_to_amend_body' => '<p>:documentCode has been return back to amend by :empName due to below reason.</p><p>Comment : :returnComment</p>',
+    
+    // Quotation Messages
+    'quotation_returned_to_amend' => ':quotationCode has been return back to amend',
+    'quotation_returned_to_amend_body' => '<p>:quotationCode has been return back to amend by :empName due to below reason.</p><p>Comment : :returnComment</p>',
+    
+    // Recurring Voucher Messages
+    'recurring_voucher_returned_to_amend' => ':rrvCode has been return back to amend',
+    'recurring_voucher_returned_to_amend_body' => '<p>:rrvCode has been return back to amend by :empName due to below reason.</p><p>Comment : :returnComment</p>',
+    
+    // Delivery Order Messages
+    'delivery_order_returned_to_amend' => ':deliveryOrderCode has been return back to amend',
+    'delivery_order_returned_to_amend_body' => '<p>:deliveryOrderCode has been return back to amend by :empName due to below reason.</p><p>Comment : :returnComment</p>',
 ];
 

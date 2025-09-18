@@ -20,25 +20,25 @@ class StockValuationReport
 
     public function getHeader() {
         return [
-            'Category',
-            'Item Code',
-            'Item Description',
-            'UOM',
-            'Part No / Ref.Number',
-            'Min Qty',
-            'Max Qty',
-            'Qty',
-            'WAC Local',
-            'Local Amount',
-            'WAC Rep',
-            'Rep Amount'
+            trans('custom.category'),
+            trans('custom.item_code'),
+            trans('custom.item_description'),
+            trans('custom.uom'),
+            trans('custom.part_no_ref_number'),
+            trans('custom.min_qty'),
+            trans('custom.max_qty'),
+            trans('custom.qty'),
+            trans('custom.wac_local'),
+            trans('custom.local_amount'),
+            trans('custom.wac_rep'),
+            trans('custom.rep_amount')
         ];
     }
 
     /**
      * @param mixed $category
      */
-    public function setCategory($category): void
+    public function setCategory($category)
     {
         $this->category = $category;
     }
@@ -46,7 +46,7 @@ class StockValuationReport
     /**
      * @param mixed $itemCode
      */
-    public function setItemCode($itemCode): void
+    public function setItemCode($itemCode)
     {
         $this->itemCode = $itemCode;
     }
@@ -54,7 +54,7 @@ class StockValuationReport
     /**
      * @param mixed $itemDescription
      */
-    public function setItemDescription($itemDescription): void
+    public function setItemDescription($itemDescription)
     {
         $this->itemDescription = $itemDescription;
     }
@@ -62,7 +62,7 @@ class StockValuationReport
     /**
      * @param mixed $uom
      */
-    public function setUom($uom): void
+    public function setUom($uom)
     {
         $this->uom = $uom;
     }
@@ -70,7 +70,7 @@ class StockValuationReport
     /**
      * @param mixed $partNumber
      */
-    public function setPartNumber($partNumber): void
+    public function setPartNumber($partNumber)
     {
         $this->partNumber = $partNumber;
     }
@@ -78,7 +78,7 @@ class StockValuationReport
     /**
      * @param mixed $minQty
      */
-    public function setMinQty($minQty): void
+    public function setMinQty($minQty)
     {
         $this->minQty = $minQty;
     }
@@ -86,7 +86,7 @@ class StockValuationReport
     /**
      * @param mixed $maxQty
      */
-    public function setMaxQty($maxQty): void
+    public function setMaxQty($maxQty)
     {
         $this->maxQty = $maxQty;
     }
@@ -94,7 +94,7 @@ class StockValuationReport
     /**
      * @param mixed $qty
      */
-    public function setQty($qty): void
+    public function setQty($qty)
     {
         $this->qty = $qty;
     }
@@ -102,7 +102,7 @@ class StockValuationReport
     /**
      * @param mixed $wacLocal
      */
-    public function setWacLocal($wacLocal): void
+    public function setWacLocal($wacLocal)
     {
         $this->wacLocal = $wacLocal;
     }
@@ -110,7 +110,7 @@ class StockValuationReport
     /**
      * @param mixed $localAmount
      */
-    public function setLocalAmount($localAmount): void
+    public function setLocalAmount($localAmount)
     {
         $this->localAmount = $localAmount;
     }
@@ -118,7 +118,7 @@ class StockValuationReport
     /**
      * @param mixed $wacRep
      */
-    public function setWacRep($wacRep): void
+    public function setWacRep($wacRep)
     {
         $this->wacRep = $wacRep;
     }
@@ -126,7 +126,7 @@ class StockValuationReport
     /**
      * @param mixed $repAmount
      */
-    public function setRepAmount($repAmount): void
+    public function setRepAmount($repAmount)
     {
         $this->repAmount = $repAmount;
     }

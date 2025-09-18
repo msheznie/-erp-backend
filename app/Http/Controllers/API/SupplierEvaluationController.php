@@ -222,7 +222,7 @@ class SupplierEvaluationController extends AppBaseController
             'evaluationTemplates' => $supplierEvaluation
         ];
 
-        return $this->sendResponse($output, '');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     function printSupplierEvaluation(Request $request)
@@ -302,7 +302,7 @@ class SupplierEvaluationController extends AppBaseController
         ];
 
         $time = strtotime("now");
-        $fileName = 'supplier_evaluation_' . $id . '_' . $time . '.pdf';
+        $fileName = trans('custom.supplier_evaluation_filename_prefix') . $id . '_' . $time . '.pdf';
         $html = view('print.supplier_evaluation', $array);
         $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
         $mpdf->AddPage('P');

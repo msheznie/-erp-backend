@@ -2152,10 +2152,6 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'Items' => 'required',
                     'reportType' => 'required',
                     'reportType.*' => 'required|not_in:0',
-                ], [
-                    'reportType.*.required' => 'The report type field is required.',
-                    'reportType.required' => 'The report type field is required.',
-                    'reportType.*.not_in' => 'The report type field is required.',
                 ]);
 
                 if ($validator->fails()) {

@@ -211,7 +211,6 @@ class FinancialReportAPIController extends AppBaseController
             ->select('id', 'column_name')
             ->get();
 
-        dd($columns);
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,

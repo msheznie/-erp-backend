@@ -530,13 +530,13 @@ class CompanyDepartmentAPIController extends AppBaseController
         $x = 0;
         foreach ($departments as $val) {
             $x++;
-            $data[$x]['Department Code'] = $val->departmentCode;
-            $data[$x]['Department Description'] = $val->departmentDescription;
+            $data[$x][trans('custom.department_code')] = $val->departmentCode;
+            $data[$x][trans('custom.department_description')] = $val->departmentDescription;
             // $data[$x]['Type'] = ($val->type == 1) ? 'Parent' : 'Final';
-            $data[$x]['Parent Department'] = !is_null($val->parentDepartmentID) ? ($val->parent ? $val->parent->departmentDescription : '-') : $val->company->CompanyName;
+            $data[$x][trans('custom.parent_department')] = !is_null($val->parentDepartmentID) ? ($val->parent ? $val->parent->departmentDescription : '-') : $val->company->CompanyName;
             // $data[$x]['Is Finance'] = ($val->isFinance == 1) ? 'Yes' : 'No';
-            $data[$x]['HOD'] = $val->hod ? $val->hod->employee->empName : '-';
-            $data[$x]['Active Status'] = ($val->isActive == 1) ? trans('custom.yes') : trans('custom.no');  
+            $data[$x][trans('custom.hod')] = $val->hod ? $val->hod->employee->empName : '-';
+            $data[$x][trans('custom.active_status')] = ($val->isActive == 1) ? trans('custom.yes') : trans('custom.no');
             // $data[$x]['Company'] = $val->company ? $val->company->companyName : '';
             // $data[$x]['Created Date'] = $val->created_at ? $val->created_at->format('d/m/Y') : '';
         }

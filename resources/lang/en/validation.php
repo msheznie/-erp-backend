@@ -105,6 +105,14 @@ return [
         ],
         'select' => [
             'select' => 'The :attribute field is required.'
+        ],
+        'reportType' => [
+            'required' => 'The report type field is required.',
+            'not_in' => 'The report type field is required.'
+        ],
+        'reportType.*' => [
+            'required' => 'The report type field is required.',
+            'not_in' => 'The report type field is required.'
         ]
     ],
 
@@ -211,7 +219,11 @@ return [
         'supplierTransCurrencyID' => 'Currency',
         'BPVsupplierID' => 'Supplier',
         'directPaymentPayeeEmpID' => 'Payee',
-        'directPaymentPayee' => 'Other'
+        'directPaymentPayee' => 'Other',
+        'fromDate' => 'From Date',
+        'toDate' => 'To Date',
+        'Items' => 'Items',
+        'reportType' => 'Report Type'
     ],
 
 ];
