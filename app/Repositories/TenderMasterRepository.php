@@ -1450,11 +1450,12 @@ class TenderMasterRepository extends BaseRepository
             }
         } else {
             $type = $rfq ? trans('srm_tender_rfx.rfx') : trans('srm_tender_rfx.tender');
-
-            return [
-                'success' => false,
-                'message' => trans('srm_tender_rfx.single_sourcing_allows_only_one_supplier', ['type' => $type]),
-            ];
+            if ($assignSupplier != 1) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.single_sourcing_allows_only_one_supplier', ['type' => $type]),
+                ];
+            }
         }
         return ['success' => true];
     }

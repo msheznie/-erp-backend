@@ -485,7 +485,8 @@ class TenderCircularsAPIController extends AppBaseController
     public function getCircularMaster(Request $request)
     {
         $input = $request->all();
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
         return $editOrAmend ? TenderCircularsEditLog::find($input['id']) : TenderCirculars::find($input['id']);
     }
