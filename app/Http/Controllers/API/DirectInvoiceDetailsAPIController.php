@@ -154,7 +154,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         if(isset($input['type']) &&  $input['type'] != $BookInvSuppMaster->documentType)
         {
-            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+            return $this->sendError(trans('custom.the_supplier_invoice_type_has_changed'));
         }
 
         if ($BookInvSuppMaster->documentType == 4 && empty($BookInvSuppMaster->employeeID)) {

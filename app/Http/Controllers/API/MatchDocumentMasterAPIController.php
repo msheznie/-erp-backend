@@ -3909,7 +3909,7 @@ ORDER BY
         }
 
         if ($masterData->matchingConfirmedYN == 0) {
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$documentName.' Document, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$documentName.trans('custom.document_not_confirmed'));
         }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',70)->exists();

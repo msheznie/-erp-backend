@@ -7991,4 +7991,12 @@ return [
     'conversion_rates_changed' => 'تم تغيير أسعار التحويل',
     'conversion_rates_not_change' => 'لم تتغير أسعار التحويل',
     'exchange_rates_updated_message' => 'تم تحديث أسعار الصرف كما يلي،<br><br>الأسعار السابقة سعر صرف البنك :bank_er | سعر الصرف المحلي :local_er | سعر صرف التقارير :reporting_er<br><br>الأسعار الحالية سعر صرف البنك :current_bank_er | سعر الصرف المحلي :current_local_er | سعر صرف التقارير :current_reporting_er<br><br>هل أنت متأكد من أنك تريد المتابعة؟',
+    'financial_year_inactive' => 'السنة المالية :dateFrom | :dateTo التي تم نشر هذا المستند فيها يجب أن تكون نشطة وحالية حتى يمكن عكس هذا المستند.',
+    'financial_period_inactive' => 'الفترة المالية :dateFrom | :dateTo التي تم نشر هذا المستند فيها يجب أن تكون نشطة وحالية حتى يمكن عكس هذا المستند.',
+    'cannot_amend_document' => 'لا يمكنك تعديل هذا المستند الآن. ترحيل دفتر الأستاذ العام قيد التنفيذ.',
+    'pulled_to_vat_return' => 'تم سحبها إلى تقديم إقرار ضريبة القيمة المضافة',
+    'document_not_confirmed' => 'المستند غير مُؤكَّد',
+    'it_is_not_confirmed' => 'إنه غير مؤكد',
+    'the_supplier_invoice_type_has_changed' => 'تم تغيير نوع فاتورة المورّد، غير قادر على المتابعة'
+
 ];

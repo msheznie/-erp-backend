@@ -2086,7 +2086,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         SupplierInvoice::updateMaster($id);
 
-        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
 

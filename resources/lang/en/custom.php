@@ -8071,4 +8071,11 @@ return [
     'conversion_rates_changed' => 'Conversion rates changed',
     'conversion_rates_not_change' => 'Conversion rates not change',
     'exchange_rates_updated_message' => 'The exchange rates are updated as follows,<br><br>Previous rates Bank ER :bank_er | Local ER :local_er | Reporting ER :reporting_er<br><br>Current rates Bank ER :current_bank_er | Local ER :current_local_er | Reporting ER :current_reporting_er<br><br>Are you sure you want to proceed?',
-];
+    'financial_year_inactive' => 'The Financial Year :dateFrom | :dateTo on which this document was posted needs to be active & current for this document to be reversed.',
+    'financial_period_inactive' => 'The Financial Period :dateFrom | :dateTo on which this document was posted needs to be active & current for this document to be reversed.',
+    'cannot_amend_document' => 'You cannot amend this document now. The General Ledger posting is in progress',
+    'pulled_to_vat_return' => 'Pulled to VAT return filing',
+    'document_not_confirmed' => 'Document, it is not confirmed',
+    'it_is_not_confirmed' => 'it is not confirmed',
+    'the_supplier_invoice_type_has_changed' => 'The Supplier Invoice type has changed, unable to proceed'
+  ];
