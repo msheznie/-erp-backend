@@ -8678,4 +8678,9 @@ return [
     'please_select_customer' => 'الرجاء اختيار العميل',
     'please_select_match_type' => 'الرجاء تحديد نوع المباراة',
     'financial_period_closed' => 'الفترة المالية :dateFrom | :dateTo التي تم فيها نشر هذا المستند مغلقة، ولا يمكن الرجوع إلى المطابقة.',
+    'financial_period_inactive' => 'الفترة المالية :dateFrom | :dateTo التي تم فيها نشر هذا المستند، تحتاج إلى أن تكون نشطة وحالية لعكس هذا المستند',
+    'financial_year_inactive' => 'السنة المالية :dateFrom | :dateTo التي تم فيها نشر هذا المستند، تحتاج إلى أن تكون نشطة وحالية لعكس هذا المستند',
+    'pulled_to_vat_return' => 'تم سحب هذا المستند إلى إقرار ضريبة القيمة المضافة: ',
+    'cannot_amend_document' => 'لا يمكن تعديل المستند',
+    'document_id_not_found' => 'معرف المستند غير موجود'
 ];

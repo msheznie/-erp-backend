@@ -8758,4 +8758,9 @@ return [
     'please_select_customer' => 'Please select a customer',
     'please_select_match_type' => 'Please select a match type',
     'financial_period_closed' => 'The Financial Period :dateFrom | :dateTo on which this document was posted is closed, can’t refer back the matching.',
+    'financial_period_inactive' => 'The Financial Period :dateFrom | :dateTo on which this document was posted, needs to be active & current for this document to be reversed',
+    'financial_year_inactive' => 'The Financial Year :dateFrom | :dateTo on which this document was posted, needs to be active & current for this document to be reversed',
+    'pulled_to_vat_return' => 'This document has been pulled to VAT Return Filing: ',
+    'cannot_amend_document' => 'Cannot amend document',
+    'document_id_not_found' => 'Document ID not found'
 ];
