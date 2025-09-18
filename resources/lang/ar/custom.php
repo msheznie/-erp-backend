@@ -7936,7 +7936,32 @@ return [
     'cannot_be_greater_than_current_date' => 'لا يمكن أن يكون أكبر من التاريخ الحالي.',
     'financial_period_inactive' => 'الفترة المالية لتاريخ المستند :document_date غير نشطة.',
 
-    // Credit Note Validation Messages
+    'cannot_delete_group_assigned_to_supplier' => 'لا يمكن الحذف، هذه المجموعة مخصصة بالفعل لأحد الموردين',
+    'file_type_not_allowed_upload' => 'هذا النوع من الملفات غير مسموح برفعه.',
+    'maximum_file_size_2mb' => 'الحد الأقصى المسموح به لحجم الملف هو 2 ميجابايت. يرجى رفع ملف أصغر من 2 ميجابايت.',
+    'company_logo_upload_error' => 'لا يمكن رفع شعار الشركة في الوقت الحالي. يرجى الاتصال بمدير النظام',
+    'digital_stamp_upload_error' => 'لا يمكن رفع الختم الرقمي في الوقت الحالي. يرجى الاتصال بمدير النظام',
+
+    // Cash flow
+    'operating_activities' => 'الأنشطة التشغيلية',
+    'loss_before_income_tax' => 'الخسارة قبل ضريبة الدخل',
+    'adjustments_for' => 'التعديلات لـ:',
+    'operating_cash_flows_before_working_capital_changes' => 'التدفقات النقدية التشغيلية قبل تغييرات رأس المال العامل:',
+    'cash_used_in_generated_from_operations' => 'النقد (المستخدم في)/المولد من العمليات',
+    'income_tax_paid' => 'ضرائب الدخل المدفوعة',
+    'end_of_service_benefits_paid' => 'مزايا نهاية الخدمة المدفوعة',
+    'net_cash_used_in_generated_from_operating_activities' => 'صافي النقد (المستخدم في)/المولد من الأنشطة التشغيلية',
+    'investing_activities' => 'الأنشطة الاستثمارية',
+    'net_cash_used_in_investing_activities' => 'صافي النقد المستخدم في الأنشطة الاستثمارية',
+    'financing_activities' => 'الأنشطة التمويلية',
+    'net_cash_generated_from_used_in_financing_activities' => 'صافي النقد المولد من/(المستخدم في) الأنشطة التمويلية',
+    'net_change_in_cash_and_cash_equivalents' => 'صافي التغيير في النقد وما في حكمه',
+    'cash_and_cash_equivalents_at_beginning_of_the_year' => 'النقد وما في حكمه في بداية السنة',
+    'provision_for_expected_credit_losses_on_bank_balances' => 'مخصص الخسائر الائتمانية المتوقعة على أرصدة البنوك',
+    'cash_and_cash_equivalents_at_end_of_the_year' => 'النقد وما في حكمه في نهاية السنة',
+    'cannot_delete_category_assigned_to_supplier' => 'لا يمكن الحذف، هذه الفئة تم تعيينها بالفعل إلى أحد الموردين',
+
+  // Credit Note Validation Messages
     'debit_note_already_used' => 'ملاحظة الخصم المدخلة مستخدمة بالفعل في (:creditNoteCode). يرجى التحقق مرة أخرى',
     'document_date_not_within_selected_financial_period' => 'تاريخ المستند ليس ضمن الفترة المالية المحددة!',
     'credit_note_updated_successfully' => 'تم تحديث ملاحظة الائتمان بنجاح',

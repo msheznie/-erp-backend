@@ -126,7 +126,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                                                     ->first();
 
             if ($checkForActiveApprovalLevel) {
-             return $this->sendError("There is an approval level created for this document, Please delete or inactive and continue", 500);
+             return $this->sendError(trans('custom.there_is_an_approval_level_created_for_this_docume'), 500);
             }
         }
 

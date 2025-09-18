@@ -57,8 +57,7 @@ class DocumentCodeModule extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $appends = ['module_name'];
 
     public $fillable = [
         'module_name',
@@ -86,5 +85,26 @@ class DocumentCodeModule extends Model
         'is_active' => 'required'
     ];
 
-    
+    public function translations()
+    {
+        return $this->hasMany(DocumentCodeModuleTranslations::class, 'documentId', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getModuleNameAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['module_name'] ?? '';
+    }
 }

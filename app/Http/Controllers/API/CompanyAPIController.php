@@ -415,12 +415,12 @@ class CompanyAPIController extends AppBaseController
                 $allowExtensions = ['png', 'jpg', 'jpeg'];
 
                 if (!in_array($extension, $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return $this->sendError(trans('custom.file_type_not_allowed_upload'), 500);
                 }
 
                 if (isset($attachment['size'])) {
                     if ($attachment['size'] > 2097152) {
-                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                        return $this->sendError(trans('custom.maximum_file_size_2mb'), 500);
                     }
                 }
 
@@ -438,7 +438,7 @@ class CompanyAPIController extends AppBaseController
                 $input['logoPath'] = $path;
                 Storage::disk($disk)->put($path, $decodeFile);
             } catch(Exception $ex){
-                return $this->sendError('It is not possible to upload the company logo at the moment. Please contact the System Administrator', 500);
+                return $this->sendError(trans('custom.company_logo_upload_error'), 500);
             }
         }
 
@@ -562,12 +562,12 @@ class CompanyAPIController extends AppBaseController
                 $allowExtensions = ['png', 'jpg', 'jpeg'];
 
                 if (!in_array($extension, $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return $this->sendError(trans('custom.file_type_not_allowed_upload'), 500);
                 }
 
                 if (isset($attachment['size'])) {
                     if ($attachment['size'] > 2097152) {
-                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                        return $this->sendError(trans('custom.maximum_file_size_2mb'), 500);
                     }
                 }
 
@@ -590,7 +590,7 @@ class CompanyAPIController extends AppBaseController
 
                 Storage::disk($disk)->put($path, $decodeFile);
             } catch(Exception $ex){
-                return $this->sendError('It is not possible to upload the company logo at the moment. Please contact the System Administrator', 500);
+                return $this->sendError(trans('custom.company_logo_upload_error'), 500);
             }
         }
 
@@ -754,13 +754,13 @@ class CompanyAPIController extends AppBaseController
 
         if (!in_array($extension, $allowExtensions))
         {
-            return $this->sendError('This type of file not allow to upload.',500);
+            return $this->sendError(trans('custom.file_type_not_allowed_upload'),500);
         }
 
 
         if(isset($input['size'])){
             if ($input['size'] > 2097152) {
-                return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                return $this->sendError(trans('custom.maximum_file_size_2mb'),500);
             }
         }
 
@@ -838,7 +838,7 @@ class CompanyAPIController extends AppBaseController
             }
             return $this->sendResponse($digitalStampUpload, trans('custom.digital_stamp_uploaded_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('It is not possible to upload the digital stamp at the moment. Please contact the System Administrator', 500);
+            return $this->sendError(trans('custom.digital_stamp_upload_error'), 500);
         }
     }
 

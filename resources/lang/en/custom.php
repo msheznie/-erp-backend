@@ -8016,6 +8016,31 @@ return [
     'cannot_be_greater_than_current_date' => 'Cannot be greater than the current date.',
     'financial_period_inactive' => 'The financial period for the document date :document_date is not active.',
 
+  'cannot_delete_category_assigned_to_supplier' => 'Cannot delete, this category already assigned to one of the supplier',
+    'cannot_delete_group_assigned_to_supplier' => 'Cannot delete, this group already assigned to one of the supplier',
+    'file_type_not_allowed_upload' => 'This type of file not allow to upload.',
+    'maximum_file_size_2mb' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
+    'company_logo_upload_error' => 'It is not possible to upload the company logo at the moment. Please contact the System Administrator',
+    'digital_stamp_upload_error' => 'It is not possible to upload the digital stamp at the moment. Please contact the System Administrator',
+
+    // Cash flow
+    'operating_activities' => 'Operating activities',
+    'loss_before_income_tax' => 'Loss before income tax',
+    'adjustments_for' => 'Adjustments for:',
+    'operating_cash_flows_before_working_capital_changes' => 'Operating cash flows before working capital changes:',
+    'cash_used_in_generated_from_operations' => 'Cash (used in)/generated from operations',
+    'income_tax_paid' => 'Income taxes paid',
+    'end_of_service_benefits_paid' => 'End-of-service benefits paid',
+    'net_cash_used_in_generated_from_operating_activities' => 'Net cash (used in)/generated from operating activities',
+    'investing_activities' => 'Investing activities',
+    'net_cash_used_in_investing_activities' => 'Net cash used in investing activities',
+    'financing_activities' => 'Financing activities',
+    'net_cash_generated_from_used_in_financing_activities' => 'Net cash generated from/(used in) financing activities',
+    'net_change_in_cash_and_cash_equivalents' => 'Net change in cash and cash equivalents',
+    'cash_and_cash_equivalents_at_beginning_of_the_year' => 'Cash and cash equivalents at beginning of the year',
+    'provision_for_expected_credit_losses_on_bank_balances' => 'Provision for expected credit losses on bank balances',
+    'cash_and_cash_equivalents_at_end_of_the_year' => 'Cash and cash equivalents at end of the year',
+
     // Credit Note Validation Messages
     'debit_note_already_used' => 'Entered debit note was already used in (:creditNoteCode). Please check again',
     'document_date_not_within_selected_financial_period' => 'Document date is not within the selected financial period !',
