@@ -542,7 +542,14 @@ return [
     'narration' => 'الرواية',
     'submitted_by' => 'تم الإرسال بواسطة',
     'status' => 'الحالة',
+    'you_cannot_confirm_this_document' => 'لا يمكنك تأكيد هذا المستند.',
+    'please_choose_budget_create_type' => 'يرجى اختيار نوع إنشاء الميزانية',
+    'different_budget_year_cannot_be_selected' => 'لا يمكن اختيار سنوات ميزانية مختلفة',
     'budget_not_found_for_this_document' => 'الميزانية غير موجودة لهذا المستند',
+    'budget_transfers_created_for_selected_documents' => 'تم إنشاء تحويل/تحويلات الميزانية :codes للمستندات المحددة',
+    'budget_additions_created_for_selected_documents' => 'تم إنشاء إضافة/إضافات الميزانية :codes للمستندات المحددة',
+    'budget_created_for' => 'تم إنشاء :type الميزانية لـ :comment',
+    'budget_transfer_print_data' => 'بيانات طباعة تحويل الميزانية',
     'budget_planning_detail_temp_attachment_not_found' => 'مرفق قالب تفاصيل تخطيط الميزانية المؤقت غير موجود',
     'budget_planning_detail_temp_attachment_retrieved_s' => 'تم استرداد مرفق قالب تفاصيل تخطيط الميزانية المؤقت بنجاح',
     'budget_planning_detail_temp_attachments_retrieved_' => 'تم استرداد مرفقات قالب تفاصيل تخطيط الميزانية المؤقتة بنجاح',
@@ -7217,7 +7224,7 @@ return [
     'asset_id' => 'معرف الأصل',
     'e_type' => 'النوع',
     'e_segment' => 'القطاع',
-
+ 
     // Quotation Master API Controller
     'customer_sales_quotation_report_sent' => 'تم إرسال تقرير العميل للعرض التقديمي',
 

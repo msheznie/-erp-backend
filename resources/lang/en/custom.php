@@ -548,7 +548,14 @@ return [
     'narration' => 'Narration',
     'submitted_by' => 'Submitted By',
     'status' => 'Status',
+    'you_cannot_confirm_this_document' => 'You cannot confirm this document.',
+    'please_choose_budget_create_type' => 'Please choose budget create type',
+    'different_budget_year_cannot_be_selected' => 'Different Budget year cannot be selected',
     'budget_not_found_for_this_document' => 'Budget not found for this document',
+    'budget_transfers_created_for_selected_documents' => 'Budget transfer(s) :codes is/are created for selected documents',
+    'budget_additions_created_for_selected_documents' => 'Budget addition(s) :codes is/are created for selected documents',
+    'budget_created_for' => 'Budget :type created for :comment',
+    'budget_transfer_print_data' => 'Budget Transfer print data',
     'budget_planning_detail_temp_attachment_not_found' => 'Budget Planning Detail Temp Attachment not found',
     'budget_planning_detail_temp_attachment_retrieved_s' => 'Budget Planning Detail Temp Attachment retrieved successfully',
     'budget_planning_detail_temp_attachments_retrieved_' => 'Budget Planning Detail Temp Attachments retrieved successfully',
@@ -8763,4 +8770,5 @@ return [
     'pulled_to_vat_return' => 'This document has been pulled to VAT Return Filing: ',
     'cannot_amend_document' => 'Cannot amend document',
     'document_id_not_found' => 'Document ID not found'
+       'selected_segment_is_not_active' => 'Selected segment is not active. Please select an active segment'
 ];
