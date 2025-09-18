@@ -137,7 +137,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
         $messages = [
-            'currencyID' => 'Currency is required',
+            'currencyID' => trans('custom.currency_is_required'),
         ];
         $validator = \Validator::make($rrvMaster->toArray(), [
             'currencyID' => 'required|numeric|min:1'
@@ -313,7 +313,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->$rrvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                    return $this->sendError(trans('custom.please_select_active_department'), 500, $serviceLineError);
                 }
 
                 $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -446,7 +446,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $detailExistAll = $this->recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $rrvMasterAutoId)->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
 
         if (!empty($detailExistAll)) {

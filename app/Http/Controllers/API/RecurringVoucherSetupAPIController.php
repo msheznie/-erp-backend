@@ -398,20 +398,20 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                     }
                 }
 
-                return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
+                return $this->sendError(trans('custom.chart_of_accounts_inactive_update_active', ['accounts' => $msg]),500,['type' => 'ca_inactive']);
 
             }
 
             $rrvDetails = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->get();
             if (count($rrvDetails) == 0) {
-                return $this->sendError('Recurring Voucher should have at least one item', 500);
+                return $this->sendError(trans('custom.recurring_voucher_should_have_at_least_one_item'), 500);
             }
 
             foreach ($rrvDetails as $item) {
                 $updateItem = RecurringVoucherSetupDetail::find($item['rrvDetailAutoId']);
 
                 if (($updateItem->serviceLineSystemID == 0) && is_null($updateItem->serviceLineCode)) {
-                    return $this->sendError("Cannot confirm. Segment is not updated", 500);
+                    return $this->sendError(trans('custom.cannot_confirm_segment_not_updated'), 500);
                 }
             }
 
@@ -420,7 +420,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                 ->where('creditAmount', '<=', 0)
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+                return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
             }
 
             $rrvDetailDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('debitAmount');
@@ -428,7 +428,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $rrvDetailCreditSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('creditAmount');
 
             if (round($rrvDetailDebitSum, $currencyDecimalPlace) != round($rrvDetailCreditSum, $currencyDecimalPlace)) {
-                return $this->sendError('Debit amount total and credit amount total is not matching', 500);
+                return $this->sendError(trans('custom.debit_amount_total_credit_amount_total_not_matching'), 500);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -521,7 +521,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $recurringVoucherSetup->delete();
 
-        return $this->sendSuccess('Recurring Voucher Setup deleted successfully');
+        return $this->sendSuccess(trans('custom.recurring_voucher_setup_deleted_successfully'));
     }
 
     public function getRecurringVoucherMasterFormData(Request $request)
@@ -878,7 +878,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             }
         }
         else{
-            return $this->sendError("The financial period for the year ({$endDate->year}) has not been created.");
+            return $this->sendError(trans('custom.financial_period_year_not_created', ['year' => $endDate->year]));
         }
     }
 
@@ -908,7 +908,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         }
 
         if(count($rrvMaster->schedules()->where('isInProccess',1)->get()) > 0)
-            return $this->sendError('There is a schedule on proccess for this recurring voucher');
+            return $this->sendError(trans('custom.schedule_on_process_recurring_voucher'));
 
         if ($rrvMaster->confirmedYN == 0) {
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_recurring_vou'));
@@ -998,7 +998,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $rrvMaster->refferedBackYN = 0;
             $rrvMaster->save();
 
-            AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],trans('custom.returned_back_to_amend'));
 
             DB::commit();
             return $this->sendResponse($rrvMaster->toArray(), trans('custom.recurring_voucher_amend_saved_successfully'));
@@ -1070,7 +1070,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

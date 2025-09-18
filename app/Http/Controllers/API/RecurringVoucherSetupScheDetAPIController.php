@@ -333,7 +333,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
-                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                    return $this->sendError(trans('custom.please_select_active_department'), 500, $serviceLineError);
                 }
 
                 $data['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -395,7 +395,7 @@ class RecurringVoucherSetupScheDetAPIController extends AppBaseController
 
         $recurringVoucherSetupScheDet->delete();
 
-        return $this->sendSuccess('Recurring Voucher Setup deleted successfully');
+        return $this->sendSuccess(trans('custom.recurring_voucher_setup_sche_det_deleted_successfully'));
     }
 
     public function getSheduleDetails(Request $request)
