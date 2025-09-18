@@ -1680,29 +1680,33 @@ class AccountsPayableReportAPIController extends AppBaseController
                             foreach ($output as $val) {
 
                                 if ($reportTypeID == 'TSCW') {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
                                 }
-                                $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
-                                $data[$x]['Supplier Name'] = $val->supplierName;
-                                $data[$x]['Supplier Country'] = $val->supplierCountry;
-                                $data[$x]['Amount'] = round($val->Amount, 2);
+                                $data[$x][trans('custom.supplier_code')] = $val->supplierPrimaryCode;
+                                $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                                $data[$x][trans('custom.supplier_country')] = $val->supplierCountry;
+                                $data[$x][trans('custom.amount')] = round($val->Amount, 2);
                                 $x++;
                             }
                         } else {
                             $data = array();
                         }
                     }
-                    \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-                    return $this->sendResponse(array(), trans('custom.success_export'));
+                    $fileName = 'top_suppliers_' . $name;
+                    $path = 'accounts_payable/report/top_suppliers/excel/';
+                    $companyMaster = Company::find($request->companySystemID);
+                    $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                    $detail_array = array(
+                        'company_code' => $companyCode,
+                    );
+                    $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+                    if ($basePath == '') {
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
+                    } else {
+                        return $this->sendResponse(['data' => $basePath], trans('custom.success_export'));
+                    }
                     break;
                 case 'APUGRV':// Unbilled GRV
                     $reportTypeID = $request->reportTypeID;
