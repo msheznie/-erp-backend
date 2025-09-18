@@ -133,7 +133,7 @@ class ReceiptAPIService
             }
         }
 
-        return ['status'=> 'success','message' => 'Receipt voucher createad successfully!','data' => $savedReceipts];
+        return ['status'=> 'success','message' => trans('custom.receipt_voucher_created_successfully'),'data' => $savedReceipts];
 
     }
 
@@ -315,7 +315,7 @@ class ReceiptAPIService
         if(!$systemGlCodeScenarioDetails)
         {
             $this->isError = true;
-            $headerError = new Error('pdcChequeData','PDC receivable  account is not assigned in the COA configuration');
+            $headerError = new Error('pdcChequeData', trans('custom.pdc_receivable_account_not_assigned'));
             array_push($this->arrayObj,$headerError);
         }
         return $receipt;
@@ -351,12 +351,12 @@ class ReceiptAPIService
            if(number_format($receipt->netAmount,$customerTranscationCurency->DecimalPlaces) != number_format($pdcChequeTotalAmount,$customerTranscationCurency->DecimalPlaces))
            {
                $this->isError = true;
-               $headerError = new Error('pdcChequeData','PDC cheque total amount is not matching with receipt total amount');
+               $headerError = new Error('pdcChequeData', trans('custom.pdc_cheque_total_amount_not_matching'));
                array_push($this->arrayObj,$headerError);
            }
         }else {
             $this->isError = true;
-            $headerError = new Error($receipt->narration,'Net amount not found');
+            $headerError = new Error($receipt->narration, trans('custom.net_amount_not_found'));
             array_push($this->arrayObj,$headerError);
         }
 
@@ -368,7 +368,7 @@ class ReceiptAPIService
         if($receipt->isVATApplicable && $receipt->vatRegisteredYN) {
             if($details['vatAmount'] >= $details['amount']) {
                 $this->isError = true;
-                $detailsError = new Error('vatAmount','VAT amount cannot be greater or equal than the amount');
+                $detailsError = new Error('vatAmount', trans('custom.vat_amount_cannot_be_greater_or_equal'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
@@ -379,7 +379,7 @@ class ReceiptAPIService
 
             if($currencyDetails && ($countDecimals > $currencyDetails->DecimalPlaces)){
                 $this->isError = true;
-                $detailsError = new Error('vatAmount',$currencyDetails->CurrencyName. ' vatAmount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places');
+                $detailsError = new Error('vatAmount', trans('custom.vat_amount_cannot_exceed_decimal_places', ['currency' => $currencyDetails->CurrencyName, 'decimal_places' => $currencyDetails->DecimalPlaces]));
                 array_push($this->detailsArrayObj,$detailsError);
             }
         }
@@ -395,13 +395,13 @@ class ReceiptAPIService
 
             if(empty(TaxService::getOutputVATGLAccount($receipt->companySystemID))) {
                 $this->isError = true;
-                $headerError = new Error('narration','Cannot confirm. Output VAT GL Account not configured.');
+                $headerError = new Error('narration', trans('custom.cannot_confirm_output_vat_gl_account_not_configured'));
                 array_push($this->arrayObj,$headerError);
             }
 
             if($receipt->documentType == 15 && empty(TaxService::getOutputVATTransferGLAccount($receipt->companySystemID))){
                 $this->isError = true;
-                $headerError = new Error('narration','Cannot confirm. Output VAT Transfer Account not configured.');
+                $headerError = new Error('narration', trans('custom.cannot_confirm_output_vat_transfer_account_not_configured'));
                 array_push($this->arrayObj,$headerError);
             }
 
@@ -423,7 +423,7 @@ class ReceiptAPIService
                     $taxDetail['payeeCode'] = $customer->CutomerCode;
                     $taxDetail['payeeName'] = $customer->CustomerName;
                 }else{
-                    return $this->sendError('Customer not found', 500);
+                    return $this->sendError(trans('custom.customer_not_found'), 500);
                 }
             }else {
                 $taxDetail['payeeSystemCode'] = 0;
@@ -468,14 +468,14 @@ class ReceiptAPIService
             switch ($receipt->documentType) {
                 case 13 :
                     $this->isError = true;
-                    $detailsError = new Error('vatAmount',$currencyDetails->CurrencyName. ' receiptAmount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places');
+                    $detailsError = new Error('vatAmount', trans('custom.receipt_amount_cannot_exceed_decimal_places', ['currency' => $currencyDetails->CurrencyName, 'decimal_places' => $currencyDetails->DecimalPlaces]));
                     array_push($this->detailsArrayObj,$detailsError);
 
                     break;
                 case 14:
                 case 15:
                     $this->isError = true;
-                    $detailsError = new Error('vatAmount',$currencyDetails->CurrencyName. ' amount cannot exceed '. $currencyDetails->DecimalPlaces .' decimal places');
+                    $detailsError = new Error('vatAmount', trans('custom.amount_cannot_exceed_decimal_places', ['currency' => $currencyDetails->CurrencyName, 'decimal_places' => $currencyDetails->DecimalPlaces]));
                     array_push($this->detailsArrayObj,$detailsError);
                     break;
             }
@@ -489,18 +489,18 @@ class ReceiptAPIService
 
         if(!$chartOfAccountDetails) {
             $this->isError = true;
-            $detailsError = new Error('glCode','GL Account not found');
+            $detailsError = new Error('glCode', trans('custom.gl_account_not_found'));
             array_push($this->detailsArrayObj,$detailsError);
         }else {
             if(!$chartOfAccountDetails->isApproved) {
                 $this->isError = true;
-                $detailsError = new Error('glCode','GL Account not approved');
+                $detailsError = new Error('glCode', trans('custom.gl_account_not_approved'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
             if(!$chartOfAccountDetails->isActive) {
                 $this->isError = true;
-                $detailsError = new Error('glCode','GL Account not active');
+                $detailsError = new Error('glCode', trans('custom.gl_account_not_active'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
@@ -509,7 +509,7 @@ class ReceiptAPIService
             if(count($chartOfAccountAssigned) == 0) {
                 $this->isError = true;
 
-                $detailsError = new Error('glCode','GL Account is not assigned to the company');
+                $detailsError = new Error('glCode', trans('custom.gl_account_not_assigned_to_company'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
@@ -530,7 +530,7 @@ class ReceiptAPIService
                 $invoicePostedDate = Carbon::parse($invoice->postedDate);
                 if($postedData->lessThan($invoicePostedDate)) {
                     $this->isError = true;
-                    $detailsError = new Error('invoiceCode','Document date of a customer invoice receipt voucher should not be lesser than the invoice dates of customer invoices pulled');
+                    $detailsError = new Error('invoiceCode', trans('custom.document_date_should_not_be_lesser'));
                     array_push($this->detailsArrayObj,$detailsError);
 
                 }
@@ -544,7 +544,7 @@ class ReceiptAPIService
             $invoice = CustomerInvoice::where('bookingInvCode',$invCode)->first();
             if(!$invoice) {
                 $this->isError = true;
-                $detailsError = new Error('invoiceCode','Invoice data not found');
+                $detailsError = new Error('invoiceCode', trans('custom.invoice_data_not_found'));
                 array_push($this->detailsArrayObj,$detailsError);
             }else {
                 $accountReceivableLedgerDetails = AccountsReceivableLedger::where('documentCodeSystem',$invoice->custInvoiceDirectAutoID)->where('documentSystemID',20)->first();
@@ -553,13 +553,13 @@ class ReceiptAPIService
                     $bookingAmountTrans = $invoice->bookingAmountTrans + $invoice->VATAmount;
                     if(($totalAmountReceived+$details['receiptAmount']) > $bookingAmountTrans) {
                         $this->isError = true;
-                        $detailsError = new Error('receiptAmount','Total received amount cannot be greater the invoice amount');
+                        $detailsError = new Error('receiptAmount', trans('custom.total_received_amount_cannot_be_greater'));
                         array_push($this->detailsArrayObj,$detailsError);
 
                     }
                 }else {
                     $this->isError = true;
-                    $detailsError = new Error('invoiceCode','Receivable ledger posting is in progress. Please try again in a while');
+                    $detailsError = new Error('invoiceCode', trans('custom.receivable_ledger_posting_in_progress'));
                     array_push($this->detailsArrayObj,$detailsError);
                 }
             }
@@ -574,7 +574,7 @@ class ReceiptAPIService
         foreach ($groupByInvoiceCode as $gp) {
             if(count($gp) > 1) {
                 $this->isError = true;
-                $headerError = new Error('invoiceCode','Receipt voucher cannot have same invoice more than one time');
+                $headerError = new Error('invoiceCode', trans('custom.receipt_voucher_cannot_have_same_invoice'));
                 array_push($this->arrayObj,$headerError);
 
             }
@@ -608,20 +608,20 @@ class ReceiptAPIService
     private function setCommonValidation($input,$receipt) {
         if($input['receiptType'] <= 0 || $input['receiptType'] > 3) {
             $this->isError = true;
-            $headerError = new Error('receiptType','Receipt type not found');
+            $headerError = new Error('receiptType', trans('custom.receipt_type_not_found'));
             array_push($this->arrayObj,$headerError);
         }
 
         if($input['paymentMode'] <= 0 || $input['paymentMode'] > 4) {
             $this->isError = true;
-            $headerError = new Error('paymentMode','The invalid the payment mode selected');
+            $headerError = new Error('paymentMode', trans('custom.invalid_payment_mode_selected'));
             array_push($this->arrayObj,$headerError);
 
         }
 
         if($input['payeeType'] <= 0 || $input['payeeType'] > 3) {
             $this->isError = true;
-            $headerError = new Error('payeeType','Payee type not found');
+            $headerError = new Error('payeeType', trans('custom.payee_type_not_found'));
             array_push($this->arrayObj,$headerError);
         }
 
@@ -635,14 +635,14 @@ class ReceiptAPIService
         if(!isset($segmentMaster))
         {
             $this->isError = true;
-            $headerError = new Error('segmentCode','Segment Code not found');
+            $headerError = new Error('segmentCode', trans('custom.segment_code_not_found'));
             array_push($this->detailsArrayObj,$headerError);
 
         }else {
             if($segmentMaster->approved_yn != 1)
             {
                 $this->isError = true;
-                $headerError = new Error('segmentCode','The segment is not approved');
+                $headerError = new Error('segmentCode', trans('custom.segment_not_approved'));
                 array_push($this->detailsArrayObj,$headerError);
             }
 
@@ -654,14 +654,14 @@ class ReceiptAPIService
             if(!$segmentAssigned)
             {
                 $this->isError = true;
-                $detailsError = new Error('segmentCode','The segment not assigned to selected company');
+                $detailsError = new Error('segmentCode', trans('custom.segment_not_assigned_to_company'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
             if(!$segmentMaster->isActive)
             {
                 $this->isError = true;
-                $headerError = new Error('segmentCode','Segment Code is not active');
+                $headerError = new Error('segmentCode', trans('custom.segment_code_not_active'));
                 array_push($this->detailsArrayObj,$headerError);
             }
         }
@@ -677,14 +677,14 @@ class ReceiptAPIService
             }else {
                 if($invoice->customerID != $receipt->customerID) {
                     $this->isError = true;
-                    $headerError = new Error('invoiceCode','Invoice is not related to the customer you provided');
+                    $headerError = new Error('invoiceCode', trans('custom.invoice_not_related_to_customer'));
                     array_push($this->detailsArrayObj,$headerError);
                 }
 
                 if($invoice->custTransactionCurrencyID != $receipt->custTransactionCurrencyID)
                 {
                     $this->isError = true;
-                    $headerError = new Error('invoiceCode','Receipt voucher currency and invoice currency not matching');
+                    $headerError = new Error('invoiceCode', trans('custom.receipt_voucher_currency_not_matching'));
                     array_push($this->detailsArrayObj,$headerError);
                 }
             }
@@ -699,13 +699,13 @@ class ReceiptAPIService
 
         if(!isset($segmentMaster)) {
             $this->isError = true;
-            $detailsError = new Error('segmentCode','Segment Code not found');
+            $detailsError = new Error('segmentCode', trans('custom.segment_code_not_found'));
             array_push($this->detailsArrayObj,$detailsError);
         } else {
             if($segmentMaster->approved_yn != 1)
             {
                 $this->isError = true;
-                $headerError = new Error('segmentCode','The segment is not approved');
+                $headerError = new Error('segmentCode', trans('custom.segment_not_approved'));
                 array_push($this->detailsArrayObj,$headerError);
             }
 
@@ -717,14 +717,14 @@ class ReceiptAPIService
             if(!$segmentAssigned)
             {
                 $this->isError = true;
-                $detailsError = new Error('segmentCode','The segment not assigned to selected company');
+                $detailsError = new Error('segmentCode', trans('custom.segment_not_assigned_to_company'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
 
             if(!$segmentMaster->isActive)
             {
                 $this->isError = true;
-                $detailsError = new Error('segmentCode','Segment Code is not active');
+                $detailsError = new Error('segmentCode',trans('custom.segment_code_not_active'));
                 array_push($this->detailsArrayObj,$detailsError);
             }
         }
@@ -967,14 +967,14 @@ class ReceiptAPIService
         $financialPeriods = CompanyFinancePeriod::where('departmentSystemID',4)->where('companySystemID',$receipt->companySystemID)->where('companyFinanceYearID',$receipt->companyFinanceYearID)->get();
         if(count($financialPeriods) == 0) {
             $this->isError = true;
-            $headerError = new Error('documentDate',"Financial Period not found");
+            $headerError = new Error('documentDate', trans('custom.financial_period_not_found'));
             array_push($this->arrayObj,$headerError);
         }else {
             foreach ($financialPeriods as $financialPeriod) {
                 if(Carbon::parse($financialPeriod->dateFrom)->format('d/m/Y') == Carbon::parse($documentDate)->firstOfMonth()->format('d/m/Y')) {
                     if($financialPeriod->isActive == 0) {
                         $this->isError = true;
-                        $headerError = new Error('documentDate','Financial Period should be active');
+                        $headerError = new Error('documentDate', trans('custom.financial_period_should_be_active'));
                         array_push($this->arrayObj,$headerError);
                     }else {
                         $receipt->FYPeriodDateFrom = $financialPeriod->dateFrom;
@@ -993,19 +993,19 @@ class ReceiptAPIService
         $accountDetails = BankAccount::where('AccountNo',$bankAccount)->where('bankmasterAutoID',$receipt->bankID)->first();
         if(!$accountDetails) {
             $this->isError = true;
-            $headerError = new Error('AccountNo','Bank Account is not related to the bank you provided');
+            $headerError = new Error('AccountNo', trans('custom.bank_account_not_related_to_bank'));
             array_push($this->arrayObj,$headerError);
             $receipt->bankAccount = null;
         }else {
             if(!$accountDetails->approvedYN) {
                 $this->isError = true;
-                $headerError = new Error('AccountNo','Bank account is not fully approved');
+                $headerError = new Error('AccountNo', trans('custom.bank_account_not_fully_approved'));
                 array_push($this->arrayObj,$headerError);
             }
 
             if(!$accountDetails->isAccountActive) {
                 $this->isError = true;
-                $headerError = new Error('AccountNo','Bank Account is not active');
+                $headerError = new Error('AccountNo', trans('custom.bank_account_not_active'));
                 array_push($this->arrayObj,$headerError);
             }
 
@@ -1020,7 +1020,7 @@ class ReceiptAPIService
 
         if(!$currencyDetails) {
             $this->isError = true;
-            $headerError = new Error('CurrencyCode','Currency data not found');
+            $headerError = new Error('CurrencyCode', trans('custom.currency_data_not_found'));
             array_push($this->arrayObj,$headerError);
         }else {
             $receipt->custTransactionCurrencyID = $currencyDetails->currencyID;
@@ -1036,7 +1036,7 @@ class ReceiptAPIService
             $customerCurrencyDetails = CustomerCurrency::where('currencyID',$receipt->custTransactionCurrencyID)->where('customerCodeSystem',$receipt->customerID)->where('isAssigned',-1)->first();
             if(!$customerCurrencyDetails) {
                 $this->isError = true;
-                $headerError = new Error('CurrencyCode','Currency is not assigned to the customer');
+                $headerError = new Error('CurrencyCode', trans('custom.currency_not_assigned_to_customer'));
                 array_push($this->arrayObj,$headerError);
             }
         }
@@ -1048,7 +1048,7 @@ class ReceiptAPIService
 
         if(!$currencyDetails) {
             $this->isError = true;
-            $headerError = new Error('CurrencyCode','Currency data not found');
+            $headerError = new Error('CurrencyCode', trans('custom.currency_data_not_found'));
             array_push($this->arrayObj,$headerError);
         }else {
             $receipt->bankCurrency = $currencyDetails->currencyID;
@@ -1075,7 +1075,7 @@ class ReceiptAPIService
 
         if(!$bankDetails) {
             $this->isError = true;
-            $headerError = new Error('bank','Bank data not found');
+            $headerError = new Error('bank', trans('custom.bank_data_not_found'));
             array_push($this->arrayObj,$headerError);
 
         }else {
@@ -1083,7 +1083,7 @@ class ReceiptAPIService
 
             if(!$bankAssigned) {
                 $this->isError = true;
-                $headerError = new Error('bank','Bank is not assigned/active to the company');
+                $headerError = new Error('bank', trans('custom.bank_not_assigned_or_active'));
                 array_push($this->arrayObj,$headerError);
             }else {
                 $receipt->bankID = $bankDetails->bankmasterAutoID;
@@ -1101,7 +1101,7 @@ class ReceiptAPIService
         $companyDetails = Company::select(['companySystemID','CompanyID','vatRegisteredYN'])->where('companySystemID',$company_id)->first();
         if(!$companyDetails) {
             $this->isError = true;
-            $headerError = new Error('company_id','Company details not found');
+            $headerError = new Error('company_id', trans('custom.company_details_not_found'));
             array_push($this->arrayObj,$headerError);
 
         }
@@ -1113,7 +1113,7 @@ class ReceiptAPIService
         if($receipt->isVATApplicable && !$receipt->vatRegisteredYN)
         {
             $this->isError = true;
-            $headerError = new Error('vatRegisteredYN','Company is not vat registred');
+            $headerError = new Error('vatRegisteredYN', trans('custom.company_not_vat_registered'));
             array_push($this->arrayObj,$headerError);
         }
 
@@ -1139,7 +1139,7 @@ class ReceiptAPIService
                 $receipt->FYBiggin = null;
                 $receipt->FYEnd = null;
                 $this->isError = true;
-                $headerError = new Error('documentDate','Financial Year not found');
+                $headerError = new Error('documentDate', trans('custom.financial_year_not_found'));
                 array_push($this->arrayObj,$headerError);
             }
         }
@@ -1203,7 +1203,7 @@ class ReceiptAPIService
 
         if($countDecimals > $currency->DecimalPlaces) {
             $this->isError = true;
-            $detailsError = new Error('amount','Decimal places cannot be greater than '.$currency->DecimalPlaces);
+            $detailsError = new Error('amount', trans('custom.decimal_places_cannot_be_greater', ['decimal_places' => $currency->DecimalPlaces]));
             array_push($this->pdcArrayObj,$detailsError);
         }
     }
@@ -1214,7 +1214,7 @@ class ReceiptAPIService
         if(Carbon::parse($detail['chequeDate']) <= $receipt->postedDate)
         {
             $this->isError = true;
-            $detailsError = new Error('chequeDate','Cheque date cannot less than or equal to document date');
+            $detailsError = new Error('chequeDate', trans('custom.cheque_date_cannot_less_than_document_date'));
             array_push($this->pdcArrayObj,$detailsError);
         }
     }
@@ -1248,7 +1248,7 @@ class ReceiptAPIService
                 if(!empty($duplicateChequeNos))
                 {
                     $this->isError = true;
-                    $headerError = new Error('pdcChequeData','Cheque Number cannot be duplicate ('.implode(',',$duplicateChequeNos).')');
+                    $headerError = new Error('pdcChequeData', trans('custom.cheque_number_cannot_be_duplicate', ['duplicate_numbers' => implode(',',$duplicateChequeNos)]));
                     array_push($this->arrayObj,$headerError);
                 }
             }

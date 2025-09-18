@@ -209,7 +209,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $monthEnd = Carbon::parse($input['FYPeriodDateTo'])->format('Y-m-d');
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('submitted date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.submitted_date_not_within_financial_period'), 500);
         }
 
         // get last serial number by company financial year
@@ -402,7 +402,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $monthEnd = Carbon::parse($input['FYPeriodDateTo'])->format('Y-m-d');
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('submitted date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.submitted_date_not_within_financial_period'), 500);
         }
 
         /** @var CustomerInvoiceTracking $customerInvoiceTracking */
@@ -947,12 +947,12 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $master = CustomerInvoiceTracking::find($input['customerInvoiceTrackingID']);
 
         if(empty($master)){
-            return $this->sendError('Customer Invoice Tracking Data Found',500);
+            return $this->sendError(trans('custom.customer_invoice_tracking_data_found'),500);
         }
 
         $details = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$input['customerInvoiceTrackingID'])->get();
         if(empty($details)){
-            return $this->sendError('Customer Invoice Tracking Detail Found',500);
+            return $this->sendError(trans('custom.customer_invoice_tracking_detail_found'),500);
         }
 
         $isUpdate = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$input['customerInvoiceTrackingID'])->update($update);
@@ -974,12 +974,12 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $master = CustomerInvoiceTracking::find($masterID);
 
         if(empty($master)){
-            return $this->sendError('Customer Invoice Tracking Data Found',500);
+            return $this->sendError(trans('custom.customer_invoice_tracking_data_found'),500);
         }
 
         $details = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->get();
         if(empty($details)){
-            return $this->sendError('Customer Invoice Tracking Data Found',500);
+            return $this->sendError(trans('custom.customer_invoice_tracking_data_found'),500);
         }
 
         foreach ($details as $detail){

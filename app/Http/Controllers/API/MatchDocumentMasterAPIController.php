@@ -185,11 +185,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if($input['matchType'] == 1 || $input['matchType'] == 3)
                 {
-                    return $this->sendError('Please select a payment voucher !', 500);
+                    return $this->sendError(trans('custom.please_select_payment_voucher'), 500);
                 }
                 else if($input['matchType'] == 2)
                 {
-                    return $this->sendError('Please select a debit note !', 500);
+                    return $this->sendError(trans('custom.please_select_debit_note'), 500);
                 }
                
             }
@@ -544,7 +544,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         elseif ($input['tempType'] == 'RVM') {
 
             if (!isset($input['custReceivePaymentAutoID'])) {
-                return $this->sendError('Please select a receipt voucher !', 500);
+                return $this->sendError(trans('custom.please_select_receipt_voucher'), 500);
             }
 
             $validator = \Validator::make($request->all(), [
@@ -729,7 +729,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             if(!$isInFinancePeriod){
-                return $this->sendError('Document date should be between financial period start date and end date',500);
+                return $this->sendError(trans('custom.document_date_should_be_between_financial_period_start_end'),500);
             }
 
 
@@ -778,7 +778,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
                 if ($formattedMatchingDate < $postedDate) {
-                    return $this->sendError('Advance payment is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                    return $this->sendError(trans('custom.advance_payment_posted_date_error', ['date' => $postedDate]), 500);
                 }
 
             } elseif ($input['documentSystemID'] == 15) {
@@ -790,7 +790,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
                 if ($formattedMatchingDate < $postedDate) {
-                    return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                    return $this->sendError(trans('custom.debit_note_posted_date_error', ['date' => $postedDate]), 500);
                 }
             }
 
@@ -1147,9 +1147,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                 $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
 
                                 if ($checkExchangeGainLossAccountCode) {
-                                    return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                                    return $this->sendError(trans('custom.please_assign_exchange'), 500);
                                 }
-                                return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                                return $this->sendError(trans('custom.please_configure_exchange_gain_loss_account_for_this_company'), 500);
                             }
 
                             $data = [];
@@ -1281,9 +1281,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             if (is_null($checkExchangeGainLossAccount)) {
                                 $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
                                 if ($checkExchangeGainLossAccountCode) {
-                                    return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                                    return $this->sendError(trans('custom.please_assign_exchange'), 500);
                                 }
-                                return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                                return $this->sendError(trans('custom.please_configure_exchange_gain_loss_account_for_this_company'), 500);
                             }
 
                             $data = [];
@@ -1395,9 +1395,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         if (is_null($checkExchangeGainLossAccount)) {
                             $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, "exchange-gainloss-gl");
                             if ($checkExchangeGainLossAccountCode) {
-                                return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                                return $this->sendError(trans('custom.please_assign_exchange'), 500);
                             }
-                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                            return $this->sendError(trans('custom.please_configure_exchange_gain_loss_account_for_this_company'), 500);
                         }
 
 
@@ -1876,7 +1876,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
                     if ($formattedMatchingDate < $postedDate) {
-                        return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                        return $this->sendError(trans('custom.receipt_voucher_posted_date_error', ['date' => $postedDate]), 500);
                     }
 
                 } elseif ($input['documentSystemID'] == 19) {
@@ -1891,7 +1891,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
                     if ($formattedMatchingDate < $postedDate) {
-                        return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+                        return $this->sendError(trans('custom.credit_note_posted_date_error', ['date' => $postedDate]), 500);
                     }
                 }
 
@@ -2632,7 +2632,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendReponseWithDetails($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($matchDocumentMaster->toArray(), trans('custom.receipt_voucher_matching_updated_successfully'),1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3242,11 +3242,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['matchType'])) {
-            return $this->sendError('Please select a match type');
+            return $this->sendError(trans('custom.please_select_match_type'));
         }
 
         if (!isset($input['BPVsupplierID'])) {
-            return $this->sendError('Please select a customer');
+            return $this->sendError(trans('custom.please_select_customer'));
         }
 
         $invoiceMaster = [];
