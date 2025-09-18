@@ -8582,5 +8582,6 @@ return [
        'please_select_active_segment' => 'Please select a active segment',
        'please_select_active_location' => 'Please select a active location',
        'purchase_return_updated_successfully' => 'PurchaseReturn updated successfully',
-       'selected_segment_is_not_active' => 'Selected segment is not active. Please select an active segment'
+       'selected_segment_is_not_active' => 'Selected segment is not active. Please select an active segment',
+    'debit_and_credit_amount_not_matching' => 'Debit and credit amount not matching'
   ];

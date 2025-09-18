@@ -8502,5 +8502,6 @@ return [
      'please_select_active_segment' => 'يرجى اختيار قطاع نشط',
      'please_select_active_location' => 'يرجى اختيار موقع نشط',
      'purchase_return_updated_successfully' => 'تم تحديث إرجاع الشراء بنجاح',
-     'selected_segment_is_not_active' => 'القطاع المحدد غير نشط. يرجى اختيار قطاع نشط'
+     'selected_segment_is_not_active' => 'القطاع المحدد غير نشط. يرجى اختيار قطاع نشط',
+    'debit_and_credit_amount_not_matching' => 'مبلغ الديون والائتمان غير متطابق'
 ];

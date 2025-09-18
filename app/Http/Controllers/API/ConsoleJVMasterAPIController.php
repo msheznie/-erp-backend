@@ -400,7 +400,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $jvDetail = ConsoleJVDetail::selectRAW('SUM(debitAmount) as debitAmount,SUM(creditAmount) as creditAmount,SUM(debitAmount) - SUM(creditAmount) as balance')->ofMaster($id)->first();
             if($jvDetail){
                 if($jvDetail->balance != 0){
-                    return $this->sendError('Debit and Credit amount not matching',500,['type' => 'confirm']);
+                    return $this->sendError(trans('custom.debit_and_credit_amount_not_matching'),500,['type' => 'confirm']);
                 }
 
                 if($jvDetail->debitAmount == 0 && $jvDetail->creditAmount == 0){
