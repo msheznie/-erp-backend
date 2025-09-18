@@ -8015,7 +8015,8 @@ return [
     'bank_account_no_not_found' => 'The Bank Account No :account_no not found for the bank code :bank_code.',
     'cannot_be_greater_than_current_date' => 'Cannot be greater than the current date.',
     'financial_period_inactive' => 'The financial period for the document date :document_date is not active.',
-    'cannot_delete_category_assigned_to_supplier' => 'Cannot delete, this category already assigned to one of the supplier',
+
+  'cannot_delete_category_assigned_to_supplier' => 'Cannot delete, this category already assigned to one of the supplier',
     'cannot_delete_group_assigned_to_supplier' => 'Cannot delete, this group already assigned to one of the supplier',
     'file_type_not_allowed_upload' => 'This type of file not allow to upload.',
     'maximum_file_size_2mb' => 'Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.',
@@ -8038,5 +8039,36 @@ return [
     'net_change_in_cash_and_cash_equivalents' => 'Net change in cash and cash equivalents',
     'cash_and_cash_equivalents_at_beginning_of_the_year' => 'Cash and cash equivalents at beginning of the year',
     'provision_for_expected_credit_losses_on_bank_balances' => 'Provision for expected credit losses on bank balances',
-    'cash_and_cash_equivalents_at_end_of_the_year' => 'Cash and cash equivalents at end of the year'
+    'cash_and_cash_equivalents_at_end_of_the_year' => 'Cash and cash equivalents at end of the year',
+
+    // Credit Note Validation Messages
+    'debit_note_already_used' => 'Entered debit note was already used in (:creditNoteCode). Please check again',
+    'document_date_not_within_selected_financial_period' => 'Document date is not within the selected financial period !',
+    'credit_note_updated_successfully' => 'Credit note updated successfully',
+    'credit_note_request_queued_successfully' => 'Credit note request has been successfully queued for processing!',
+    'currency_is_required' => 'Currency is required.',
+    'customer_is_required' => 'Customer is required.',
+    'financial_year_is_required' => 'Financial Year is required.',
+    'financial_period_is_required' => 'Financial Period is required.',
+    'department_is_required' => 'Department is required.',
+    'segment_code_not_updated' => 'Cannot confirm. Segment code is not updated.',
+    'contract_no_is_required' => 'Contract no is required.',
+
+    // Receipt voucher validation messages
+    'currency_exchange_rate_required' => 'Currency exchange rate to local and reporting currency must be greater than zero.',
+    'currency_field_required' => 'Currency field is required.',
+    'invoice_details_exist_cannot_change_customer' => 'Invoice details exist. You can not change the customer.',
+    'invoice_details_exist_cannot_change_currency' => 'Invoice details exist. You can not change the currency.',
+    'selected_invoice_booked_more_than_amount' => 'Selected invoice :invoice booked more than the invoice amount.',
+    'every_receipt_voucher_should_have_at_least_one_item' => 'Every receipt voucher should have at least one item',
+    'amount_should_be_greater_than_zero_for_every_items' => 'Amount should be greater than 0 for every items',
+    'receipt_voucher_updated_successfully' => 'Receipt Voucher updated successfully',
+    'pdc_cheques_not_created_please_create_atleast_one' => 'PDC Cheques not created please create atleast one',
+    'pdc_cheque_amount_should_equal_to_pv_total_amount' => 'PDC Cheque amount should equal to PV total amount',
+    'please_configure_pdc_payable_account_for_payment_voucher' => 'Please configure PDC Payable account for payment voucher',
+    'selected_bank_is_not_active' => 'Selected Bank is not active',
+    'selected_bank_account_is_not_active' => 'Selected Bank Account is not active',
+    'conversion_rates_changed' => 'Conversion rates changed',
+    'conversion_rates_not_change' => 'Conversion rates not change',
+    'exchange_rates_updated_message' => 'The exchange rates are updated as follows,<br><br>Previous rates Bank ER :bank_er | Local ER :local_er | Reporting ER :reporting_er<br><br>Current rates Bank ER :current_bank_er | Local ER :current_local_er | Reporting ER :current_reporting_er<br><br>Are you sure you want to proceed?',
 ];

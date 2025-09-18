@@ -7959,5 +7959,36 @@ return [
     'cash_and_cash_equivalents_at_beginning_of_the_year' => 'النقد وما في حكمه في بداية السنة',
     'provision_for_expected_credit_losses_on_bank_balances' => 'مخصص الخسائر الائتمانية المتوقعة على أرصدة البنوك',
     'cash_and_cash_equivalents_at_end_of_the_year' => 'النقد وما في حكمه في نهاية السنة',
-    'cannot_delete_category_assigned_to_supplier' => 'لا يمكن الحذف، هذه الفئة تم تعيينها بالفعل إلى أحد الموردين'
+    'cannot_delete_category_assigned_to_supplier' => 'لا يمكن الحذف، هذه الفئة تم تعيينها بالفعل إلى أحد الموردين',
+
+  // Credit Note Validation Messages
+    'debit_note_already_used' => 'ملاحظة الخصم المدخلة مستخدمة بالفعل في (:creditNoteCode). يرجى التحقق مرة أخرى',
+    'document_date_not_within_selected_financial_period' => 'تاريخ المستند ليس ضمن الفترة المالية المحددة!',
+    'credit_note_updated_successfully' => 'تم تحديث ملاحظة الائتمان بنجاح',
+    'credit_note_request_queued_successfully' => 'تم إدراج طلب ملاحظة الائتمان في قائمة الانتظار للمعالجة بنجاح!',
+    'currency_is_required' => 'العملة مطلوبة.',
+    'customer_is_required' => 'العميل مطلوب.',
+    'financial_year_is_required' => 'السنة المالية مطلوبة.',
+    'financial_period_is_required' => 'الفترة المالية مطلوبة.',
+    'department_is_required' => 'القسم مطلوب.',
+    'segment_code_not_updated' => 'لا يمكن التأكيد. رمز القطاع غير محدث.',
+    'contract_no_is_required' => 'رقم العقد مطلوب.',
+
+    // Receipt voucher validation messages
+    'currency_exchange_rate_required' => 'يجب أن يكون سعر صرف العملة إلى العملة المحلية والإبلاغ أكبر من الصفر.',
+    'currency_field_required' => 'حقل العملة مطلوب.',
+    'invoice_details_exist_cannot_change_customer' => 'تفاصيل الفاتورة موجودة. لا يمكنك تغيير العميل.',
+    'invoice_details_exist_cannot_change_currency' => 'تفاصيل الفاتورة موجودة. لا يمكنك تغيير العملة.',
+    'selected_invoice_booked_more_than_amount' => 'الفاتورة المحددة :invoice محجوزة أكثر من مبلغ الفاتورة.',
+    'every_receipt_voucher_should_have_at_least_one_item' => 'كل قسيمة استلام يجب أن تحتوي على عنصر واحد على الأقل',
+    'amount_should_be_greater_than_zero_for_every_items' => 'يجب أن يكون المبلغ أكبر من 0 لكل العناصر',
+    'receipt_voucher_updated_successfully' => 'تم تحديث قسيمة الاستلام بنجاح',
+    'pdc_cheques_not_created_please_create_atleast_one' => 'شيكات PDC لم يتم إنشاؤها، يرجى إنشاء واحد على الأقل',
+    'pdc_cheque_amount_should_equal_to_pv_total_amount' => 'يجب أن يساوي مبلغ شيك PDC إجمالي مبلغ PV',
+    'please_configure_pdc_payable_account_for_payment_voucher' => 'يرجى تكوين حساب PDC المستحق الدفع لقسيمة الدفع',
+    'selected_bank_is_not_active' => 'البنك المحدد غير نشط',
+    'selected_bank_account_is_not_active' => 'حساب البنك المحدد غير نشط',
+    'conversion_rates_changed' => 'تم تغيير أسعار التحويل',
+    'conversion_rates_not_change' => 'لم تتغير أسعار التحويل',
+    'exchange_rates_updated_message' => 'تم تحديث أسعار الصرف كما يلي،<br><br>الأسعار السابقة سعر صرف البنك :bank_er | سعر الصرف المحلي :local_er | سعر صرف التقارير :reporting_er<br><br>الأسعار الحالية سعر صرف البنك :current_bank_er | سعر الصرف المحلي :current_local_er | سعر صرف التقارير :current_reporting_er<br><br>هل أنت متأكد من أنك تريد المتابعة؟',
 ];
