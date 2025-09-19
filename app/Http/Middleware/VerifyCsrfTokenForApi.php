@@ -86,7 +86,7 @@ class VerifyCsrfTokenForApi
                        $request->hasFile('upload') || ($routePrefix == 'api/v1/document_attachments') || ($payloadSize > 100000);
             
             $baseExpiry = env('CSRF_TOKEN_EXPIRY_TIME', 5);
-            $timeExpiry = $hasFiles ? $baseExpiry * 2 : $baseExpiry; // 2x longer for file uploads
+            $timeExpiry = $hasFiles ? env('CSRF_TOKEN_EXPIRY_TIME_FOR_FILE_UPLOAD', 10) : $baseExpiry;
             
             if (!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) {
                 return $this->sendError();
