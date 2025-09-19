@@ -186,7 +186,7 @@ class WarehouseRightsAPIController extends AppBaseController
             $segmentRights = WarehouseRights::insert($finalArr);
             return $this->sendResponse('', trans('custom.warehouse_rights_created_successfully'));
         }else{
-            return $this->sendError( 'Employee already exist',500);
+            return $this->sendError( trans('custom.employee_already_exist'),500);
         }
     }
 

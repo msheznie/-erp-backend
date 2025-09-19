@@ -262,7 +262,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
 
         if ($input['noQty'] > ($grvDetails->noQty - $grvDetails->returnQty)) {
-             return $this->sendError("GRV balance Qty is ".($grvDetails->noQty - $grvDetails->returnQty).". You cannot return more than balance Qty.", 500,$qtyError);
+             return $this->sendError(trans('custom.grv_balance_qty_cannot_return_more', ['qty' => ($grvDetails->noQty - $grvDetails->returnQty)]), 500,$qtyError);
         }
 
 
@@ -496,7 +496,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                ->first();
 
         if ($checkOtherPrns) {
-            return $this->sendError("There is a Purchase Return (" . $checkOtherPrns->master->purchaseReturnCode . ") pending for approval for the GRV you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.purchase_return_pending_approval_grv', ['code' => $checkOtherPrns->master->purchaseReturnCode]), 500);
         }
 
         $grv = GRVMaster::find($input['grvAutoID']);
@@ -515,7 +515,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         if ($checkGrvAddedToIncoice) {
             $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
-            return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+            return $this->sendError(trans('custom.grv_added_to_draft_supplier_invoice', ['code' => $supInvCode]), 500);
         }
 
         $finalError = array('cost_zero' => array(),
@@ -601,7 +601,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhether)) {
-                    return $this->sendError("There is a Purchase Return (" . $checkWhether->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.purchase_return_pending_approval_item', ['code' => $checkWhether->purchaseReturnCode]), 500);
                 }
                 /*check item Stock Transfer*/
                 $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $purchaseReturn->companySystemID)
@@ -628,7 +628,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherStockTransfer)) {
-                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.stock_transfer_pending_approval_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
                 }
 
                 /*check item sales invoice*/
@@ -655,7 +655,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherInvoice)) {
-                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.customer_invoice_pending_approval_item', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
                 }
 
                 // check in delivery order
@@ -675,7 +675,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($checkWhetherDeliveryOrder)) {
-                    return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.delivery_order_pending_approval_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]), 500);
                 }
 
                 // check in Material Issue
@@ -702,7 +702,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherItemIssueMaster)) {
-                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.material_issue_pending_approval_item', ['code' => $checkWhetherItemIssueMaster->itemIssueCode]), 500);
                 }
 
 
@@ -791,7 +791,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
 
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.cannot_confirm_document'), 500, $confirm_error);
             } else {
                 foreach ($createArray as $item) {
                     $resPrDetail = $this->purchaseReturnDetailsRepository->create($item);
@@ -850,7 +850,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $detailExistAll = PurchaseReturnDetails::where('purhaseReturnAutoID', $purchaseReturnAutoID)->get();
 
         if (count($detailExistAll) == 0) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.no_details_to_delete'));
         }
 
         $purchaseReturn = PurchaseReturn::find($input['purhaseReturnAutoID']);

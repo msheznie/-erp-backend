@@ -1071,11 +1071,11 @@ class CustomerMasterAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.this_type_of_file_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
             }
 
            
@@ -1678,13 +1678,13 @@ class CustomerMasterAPIController extends AppBaseController
                             if($total_count == 0 )
                             {
                                 Storage::disk($disk)->delete($originalFileName);
-                                return $this->sendError('No Records found!', 500);
+                                return $this->sendError(trans('custom.no_records_found'), 500);
                             }
                             else
                             {
                                 
                                 if ($succesfully_created == $totalItemCount) {
-                                    $message = "All record Upload successfully";
+                                    $message = trans('custom.all_record_upload_successfully');
                                     $msg_detail = [];
                                     $is_success = true;
                                    
@@ -2494,19 +2494,19 @@ class CustomerMasterAPIController extends AppBaseController
                     if($total_count == 0 )
                     {
                         Storage::disk($disk)->delete($originalFileName);
-                        return $this->sendError('No Records found!', 500);
+                        return $this->sendError(trans('custom.no_records_found'), 500);
                     }
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All record Upload successfully";
+                            $message = trans('custom.all_record_upload_successfully');
                             $msg_detail = [];
                             $is_success = true;
                            
                         } 
                         else if($succesfully_created == 0)
                         {
-                            $message = "Nothing uploaded !try agian";
+                            $message = trans('custom.nothing_uploaded_try_agian');
                             $msg_detail = $supplier_error;
                             $is_success = false;
                         }
@@ -2892,19 +2892,19 @@ class CustomerMasterAPIController extends AppBaseController
                     if($total_count == 0 )
                     {
                         Storage::disk($disk)->delete($originalFileName);
-                        return $this->sendError('No Records found!', 500);
+                        return $this->sendError(trans('custom.no_records_found'), 500);
                     }
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All records uploaded Successfully";
+                            $message = trans('custom.all_record_upload_successfully');
                             $msg_detail = [];
                             $is_success = true;
                            
                         } 
                         else if($succesfully_created == 0)
                         {
-                            $message = "Nothing uploaded !try agian";
+                            $message = trans('custom.nothing_uploaded_try_agian');
                             $msg_detail = $item_error;
                             $is_success = false;
                         }

@@ -129,7 +129,7 @@ class SegmentMasterAPIController extends AppBaseController
                                                     ->first();
 
                 if ($companyPublicCheck) {
-                    return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+                    return $this->sendError(['ServiceLineCode' => [trans('custom.public_segment_configured_already', ['code' => $companyPublicCheck->ServiceLineCode, 'desc' => $companyPublicCheck->ServiceLineDes])]], 422);
                 }
 
             }
@@ -140,7 +140,7 @@ class SegmentMasterAPIController extends AppBaseController
                                             ->first();
 
             if ($segmentCodeCheck) {
-            return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
+            return $this->sendError(['ServiceLineCode' => [trans('custom.segment_code_already_exists')]], 422);
             }
 
             $id = Auth::id();
@@ -297,7 +297,7 @@ class SegmentMasterAPIController extends AppBaseController
         $isSubSegments = ServiceLine::where('masterID', $id)->where('isDeleted', 0)->first();
 
         if (!empty($isSubSegments)) {
-            return $this->sendError("This segment ". $segmentMaster->ServiceLineDes . " cannot be deleted. There are child segments associated with this", 500);
+            return $this->sendError(trans('custom.segment_cannot_delete_child_segments', ['description' => $segmentMaster->ServiceLineDes]), 500);
         }
 
          $isDocs = $this->affectedDocumentsBySegment($id);
@@ -308,16 +308,16 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         if ($segmentUsedByDocs) {
-            return $this->sendError("Cannot delete this segment", 500,[1, $segmentMaster->ServiceLineDes]);
+            return $this->sendError(trans('custom.cannot_delete_segment_used_documents'), 500,[1, $segmentMaster->ServiceLineDes]);
         }
 
 
         if ($segmentUsedByEmp) {
-            return $this->sendError("Cannot delete this segment", 500,[2, $segmentMaster->ServiceLineDes]);
+            return $this->sendError(trans('custom.cannot_delete_segment_used_employees'), 500,[2, $segmentMaster->ServiceLineDes]);
         }
 
         if ($segmentUsed) {
-            return $this->sendError("This segment is used in some documents. Therefore, cannot delete", 500);
+            return $this->sendError(trans('custom.segment_used_in_documents_cannot_delete'), 500);
         }
 
 
@@ -605,7 +605,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -640,7 +640,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -806,7 +806,7 @@ class SegmentMasterAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     'status' => false,
-                    'message' => 'Segment not found'
+                    'message' => trans('custom.segment_not_found_api')
                 ];
             }
             else {
@@ -1037,7 +1037,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             $companyData->subCompanies = $segmenntData;
 
-            return $this->sendResponse(['orgData' => $companyData, 'isGroup' => true], 'Organization Levels retrieved successfully');
+            return $this->sendResponse(['orgData' => $companyData, 'isGroup' => true], trans('custom.organization_levels_retrieved_successfully'));
         }else{
             if($isDeletedShow){
                 return $this->getNonGroupCompanyOrganizationStructurewithDeleted($selectedCompanyId);
@@ -1075,7 +1075,7 @@ class SegmentMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
-        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully');
+        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], trans('custom.organization_levels_retrieved_successfully'));
     }
 
     public function getNonGroupCompanyOrganizationStructurewithDeleted($companySystemID, $dataReturn = false)
@@ -1105,7 +1105,7 @@ class SegmentMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
-        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully with deleted segments');
+        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], trans('custom.organization_levels_with_deleted_retrieved_successfully'));
     }
 
     public function getAllSegmentForApproval(Request $request) {

@@ -141,7 +141,7 @@ class SegmentRightsAPIController extends AppBaseController
             $segmentRights = SegmentRights::insert($finalArr);
             return $this->sendResponse('', trans('custom.segment_rights_created_successfully'));
         }else{
-            return $this->sendError( 'Employee already exist',500);
+            return $this->sendError( trans('custom.employee_already_exist'),500);
         }
 
 

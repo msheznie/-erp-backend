@@ -287,7 +287,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Related Party YN</span>
+                            <span style="font-weight:bold;">{{ trans('custom.related_party_yn') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>

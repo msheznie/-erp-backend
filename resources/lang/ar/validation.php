@@ -227,7 +227,10 @@ return [
         'toDate' => 'إلى تاريخ',
         'Items' => 'المواد',
         'reportType' => 'نوع التقرير',
-        'segment' => 'القطاع'
+        'segment' => 'القطاع',
+        'suppliers' => 'المورّدون',
+        'supplierGroup' => 'مجموعة المورّدين',
+        'supEmpId' => 'معرّف موظف المورّد'
     ],
 
 ];

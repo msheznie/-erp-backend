@@ -484,7 +484,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
 
         if ($error_count > 0) {
-            return $this->sendError("You cannot add this items.", 500, $confirm_error);
+            return $this->sendError(trans('custom.you_cannot_add_this_items'), 500, $confirm_error);
         } else {
 
             if (count($createArray) > 0) {
@@ -513,7 +513,7 @@ class LogisticDetailsAPIController extends AppBaseController
 
                 }
             } else {
-                return $this->sendError("Please select the items.", 500);
+                return $this->sendError(trans('custom.please_select_the_items'), 500);
             }
         }
 

@@ -2433,10 +2433,10 @@ class SupplierMasterAPIController extends AppBaseController
         $grvMaster = GRVMaster::where('supplierID', $input['supplierID'])->where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)->first();
 
         if ($grvMaster) {
-            $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in good receipt voucher";
+            $errorMessages[] = trans('custom.unbilled_account_cannot_be_amended_grv');
             $amendable['unbilledAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Unbilled Account checking is done in good receipt voucher";
+            $successMessages[] = trans('custom.use_of_unbilled_account_checking_grv');
             $amendable['unbilledAmendable'] = true;
         }
 
@@ -2446,7 +2446,7 @@ class SupplierMasterAPIController extends AppBaseController
                                       ->first();
 
         if ($suppInvUn) {
-            $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in supplier invoice";
+            $errorMessages[] = trans('custom.unbilled_account_cannot_be_amended_invoice');
             $amendable['unbilledAmendable'] = false;
         } else {
             $successMessages[] = "Use of Unbilled Account checking is done in supplier invoice";
@@ -2456,20 +2456,20 @@ class SupplierMasterAPIController extends AppBaseController
         $suppInv = BookInvSuppMaster::where('supplierID', $input['supplierID'])->where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
 
         if ($suppInv) {
-            $errorMessages[] = "Liability Account cannot be amended. Since, it has been used in supplier invoice";
+            $errorMessages[] = trans('custom.liability_account_cannot_be_amended_invoice');
             $amendable['liablityAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Liability Account checking is done in supplier invoice";
+            $successMessages[] = trans('custom.use_of_liability_account_checking_invoice');
             $amendable['liablityAmendable'] = true;
         }
 
         $paySupp = PaySupplierInvoiceMaster::where('BPVsupplierID', $input['supplierID'])->where('advanceAccountSystemID', $supplierMaster->advanceAccountSystemID)->first();
 
         if ($paySupp) {
-            $errorMessages[] = "Advance Account cannot be amended. Since, it has been used in payment voucher";
+            $errorMessages[] =  trans('custom.advance_account_cannot_be_amended_payment');
             $amendable['advanceAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Advance Account checking is done in payment voucher";
+            $successMessages[] = trans('custom.use_of_advance_account_checking_payment');
             $amendable['advanceAmendable'] = true;
         }
 

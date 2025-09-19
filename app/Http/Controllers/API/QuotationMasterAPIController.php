@@ -585,7 +585,7 @@ class QuotationMasterAPIController extends AppBaseController
                 ->count();
 
             if ($qoDetailExist == 0) {
-                return $this->sendError('Sales ' . $tempName . ' cannot be confirmed without any details');
+                return $this->sendError(trans('custom.sales') . ' ' . trans('custom.'.$tempName) . ' ' . trans('custom.cannot_be_confirmed_without_any_details'));
             }
 
             $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
@@ -593,7 +593,7 @@ class QuotationMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum qty requested', 500);
+                return $this->sendError(trans('custom.item_should_have_minimum_qty'), 500);
             }
 
             if ($qoDetailExist > 0) {
@@ -694,7 +694,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMaster = $this->quotationMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($quotationMaster->toArray(), 'Sales ' . $tempName . ' updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($quotationMaster->toArray(), ' ' . trans('custom.sales') . ' ' . trans('custom.'.$tempName) . ' ' . trans('custom.updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
