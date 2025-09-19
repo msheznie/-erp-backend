@@ -8880,6 +8880,13 @@ return [
     'logistic_updated_successfully' => 'Logistic updated successfully',
     'unable_to_export_excel' => 'Unable to export excel',
     'company_not_found' => 'Company Not Found',
+
+    // QuotationMasterAPIController
+    'sales' => 'Sales',
+    'updated_successfully' => 'updated successfully',
+    'quotation' => 'Quotation',
+    'order' => 'Order',
+    'cannot_be_confirmed_without_any_details' => 'cannot be confirmed without any details',
     'logistic_code' => 'Logistic Code',
     'invoice_no' => 'Invoice No',
     'invoice_amount' => 'Invoice Amount',

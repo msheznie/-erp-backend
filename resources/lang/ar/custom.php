@@ -8771,6 +8771,13 @@ return [
     'logistic_updated_successfully' => 'تم تحديث اللوجستيات بنجاح',
     'unable_to_export_excel' => 'غير قادر على تصدير Excel',
     'company_not_found' => 'الشركة غير موجودة',
+
+    // QuotationMasterAPIController
+    'sales' => 'المبيعات',
+    'updated_successfully' => 'تم تحديث بنجاح',
+    'quotation' => 'عرض أسعار المبيعات',
+    'order' => 'طلب المبيعات',
+    'cannot_be_confirmed_without_any_details' => 'لا يمكن التأكيد بدون أي تفاصيل',
     'logistic_code' => 'رمز اللوجستيات',
     'invoice_no' => 'رقم الفاتورة',
     'invoice_amount' => 'مبلغ الفاتورة',
