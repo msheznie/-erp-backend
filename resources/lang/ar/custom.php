@@ -8762,6 +8762,13 @@ return [
     // Additional translations for PurchaseReturnDetailsAPIController
     'grv_balance_qty_cannot_return_more' => 'كمية رصيد GRV هي :qty. لا يمكنك إرجاع أكثر من كمية الرصيد.',
     'purchase_return_pending_approval_grv' => 'يوجد إرجاع مشتريات (:code) في انتظار الموافقة للـ GRV الذي تحاول إضافته. يرجى التحقق مرة أخرى.',
-    'grv_added_to_draft_supplier_invoice' => 'تم إضافة GRV المحدد إلى فاتورة مورد مسودة :code. احذف GRV من الفاتورة وحاول مرة أخرى.'
+    'grv_added_to_draft_supplier_invoice' => 'تم إضافة GRV المحدد إلى فاتورة مورد مسودة :code. احذف GRV من الفاتورة وحاول مرة أخرى.',
 
+    'you_cannot_add_this_items' => 'لا يمكنك إضافة هذه العناصر.',
+    'please_select_the_items' => 'الرجاء اختيار العناصر.',
+    'logistic_saved_successfully' => 'تم حفظ اللوجستيات بنجاح',
+    'invoice_number_already_exists' => 'رقم الفاتورة هذا موجود بالفعل في :docCode.',
+    'logistic_updated_successfully' => 'تم تحديث اللوجستيات بنجاح',
+    'unable_to_export_excel' => 'غير قادر على تصدير Excel',
+    'company_not_found' => 'الشركة غير موجودة'
 ];

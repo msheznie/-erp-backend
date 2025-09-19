@@ -1053,3 +1053,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
 /*
  * End external related routes
  */
+
+
+Route::resource('logistic_mode_of_import_translations', 'LogisticModeOfImportTranslationsAPIController');
+
+Route::resource('logistic_shipping_mode_translations', 'LogisticShippingModeTranslationsAPIController');
+
+Route::resource('logistic_status_translations', 'LogisticStatusTranslationsAPIController');

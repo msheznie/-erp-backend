@@ -160,10 +160,10 @@ class LogisticAPIController extends AppBaseController
         $checkInvoiceNo = Logistic::where('companySystemID',$input['companySystemID'])
                                     ->where('customInvoiceNo',$input['customInvoiceNo'])
                                     ->first();
-        $message = 'Logistic saved successfully';
+        $message = trans('custom.logistic_saved_successfully');
         if(!empty($checkInvoiceNo)){
             $warning = 1;
-            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+            $message = trans('custom.invoice_number_already_exists', ['docCode' => $checkInvoiceNo->logisticDocCode]);
         }
 
         if (isset($input['nextCustomDocRenewalDate']) && $input['nextCustomDocRenewalDate']) {
@@ -485,10 +485,10 @@ class LogisticAPIController extends AppBaseController
                                     ->where('logisticMasterID','!=',$logistic->logisticMasterID)
                                     ->where('customInvoiceNo',$input['customInvoiceNo'])
                                     ->first();
-        $message = 'Logistic updated successfully';
+        $message = trans('custom.logistic_updated_successfully');
         if(!empty($checkInvoiceNo)){
             $warning = 1;
-            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+            $message = trans('custom.invoice_number_already_exists', ['docCode' => $checkInvoiceNo->logisticDocCode]);
         }
 
         $logistic = $this->logisticRepository->update($input, $id);
@@ -690,7 +690,7 @@ class LogisticAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -748,7 +748,7 @@ class LogisticAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
 
         if(!$company) {
-            return $this->sendError("Company Not Found", 500);
+            return $this->sendError(trans('custom.company_not_found'), 500);
         }
         
 

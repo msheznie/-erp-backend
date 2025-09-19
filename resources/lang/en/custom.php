@@ -8872,5 +8872,12 @@ return [
     'selected_material_issue_allocated_following_jobs' => 'The selected Material Issue has allocated to following jobs',
     'unable_get_response_allocated_job_material_issue' => 'Unable to get the response from allocated job for this Material Issue',
     'cost_is_zero_you_cannot_issue' => 'Cost is 0. You cannot issue',
-    'you_cannot_return_more_than_issued_qty' => 'You cannot return more than the issued Qty'
+    'you_cannot_return_more_than_issued_qty' => 'You cannot return more than the issued Qty',
+      'you_cannot_add_this_items' => 'You cannot add this items.',
+    'please_select_the_items' => 'Please select the items.',
+    'logistic_saved_successfully' => 'Logistic saved successfully',
+    'invoice_number_already_exists' => 'This invoice number is already exists in :docCode.',
+    'logistic_updated_successfully' => 'Logistic updated successfully',
+    'unable_to_export_excel' => 'Unable to export excel',
+    'company_not_found' => 'Company Not Found'
 ];
