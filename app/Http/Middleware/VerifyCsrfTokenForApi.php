@@ -77,13 +77,16 @@ class VerifyCsrfTokenForApi
             [$csrfToken, $timestamp] = $parts;
             
             // Check if request contains files and adjust expiry time accordingly
+
+            $payloadSize = strlen($request->getContent());
+
             $hasFiles = $request->hasFile('file') || 
                        (is_array($request->allFiles()) && count($request->allFiles()) > 0) ||
                        $request->hasFile('files') ||
-                       $request->hasFile('upload');
+                       $request->hasFile('upload') || ($routePrefix == 'api/v1/document_attachments') || ($payloadSize > 100000);
             
             $baseExpiry = env('CSRF_TOKEN_EXPIRY_TIME', 5);
-            $timeExpiry = $hasFiles ? $baseExpiry * 3 : $baseExpiry; // 3x longer for file uploads
+            $timeExpiry = $hasFiles ? $baseExpiry * 2 : $baseExpiry; // 2x longer for file uploads
             
             if (!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) {
                 return $this->sendError();
@@ -101,7 +104,7 @@ class VerifyCsrfTokenForApi
             
             $requestString = "{$bodyString}|{$apiPath}|{$operation}";
 
-            // \Log::info($requestString);
+            // \Log::info($timeExpiry);
 
             $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
