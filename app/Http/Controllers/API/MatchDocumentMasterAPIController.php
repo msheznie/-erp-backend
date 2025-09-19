@@ -185,11 +185,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if($input['matchType'] == 1 || $input['matchType'] == 3)
                 {
-                    return $this->sendError(trans('custom.please_select_payment_voucher'), 500);
+                    return $this->sendError(trans('custom.please_select_a_payment_voucher'), 500);
                 }
                 else if($input['matchType'] == 2)
                 {
-                    return $this->sendError(trans('custom.please_select_debit_note'), 500);
+                    return $this->sendError(trans('custom.please_select_a_debit_note'), 500);
                 }
                
             }
@@ -197,7 +197,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], 4, "employee-advance-account");
 
                 if (is_null($isEmpAdvConfigured)) {
-                    return $this->sendError('Please configure employee advance account for this company', 500);
+                    return $this->sendError(trans('custom.please_configure_employee_advance_account'), 500);
                 }
             }
             
@@ -262,7 +262,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 if ($paySupplierInvoiceMaster->payAmountSuppTrans == $machAmount || $machAmount > $paySupplierInvoiceMaster->payAmountSuppTrans) {
-                    return $this->sendError('Advance payment amount is more than document value, please check again', 500);
+                    return $this->sendError(trans('custom.advance_payment_amount_is_more_than'), 500);
                 }
 
                 $input['matchingType'] = 'AP';

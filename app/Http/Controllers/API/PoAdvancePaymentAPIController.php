@@ -775,7 +775,7 @@ ORDER BY
         $company_name = $company->CompanyName;
         $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
 
-        $fileName = 'Advance Payment Request';
+        $fileName = trans('custom.advance_payment_request');
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
@@ -820,54 +820,54 @@ ORDER BY
 
 
                     if (\Helper::checkIsCompanyGroup($input['companyId'])) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
                     }
 
-                    $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                    $data[$x]['Supplier Name'] = $val->supplierName;
-                    $data[$x]['Purchase Order Code'] = $val->poCode;
-                    $data[$x]['Req Date'] =  \Helper::dateFormat($val->reqDate);
-                    $data[$x]['Narration'] = $val->narration;
+                    $data[$x][trans('custom.supplier_code')] = $val->primarySupplierCode;
+                    $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                    $data[$x][trans('custom.purchase_order_code')] = $val->poCode;
+                    $data[$x][trans('custom.req_date')] =  \Helper::dateFormat($val->reqDate);
+                    $data[$x][trans('custom.narration')] = $val->narration;
 
                     if ($input['currencyID'] == 1) {
-                        $data[$x]['PO Currency'] = $val->potrnsCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalSupplierTransactionCurrency,$poTransCurDecimal);
-                        $data[$x]['Req Currency'] = $val->trnsCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmount,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->potrnsCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalSupplierTransactionCurrency,$poTransCurDecimal);
+                        $data[$x][trans('custom.req_currency')] = $val->trnsCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmount,$decimal);
                     } else if ($input['currencyID'] == 2) {
-                        $data[$x]['PO Currency'] = $val->localCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalLocalCurrency,$decimal);
-                        $data[$x]['Req Currency'] = $val->localCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmountInPOLocalCur,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->localCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalLocalCurrency,$decimal);
+                        $data[$x][trans('custom.req_currency')] = $val->localCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmountInPOLocalCur,$decimal);
                     } else if ($input['currencyID'] == 3) {
-                        $data[$x]['PO Currency'] = $val->rptCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency,$decimal);
-                        $data[$x]['Req Currency'] = $val->rptCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmountInPORptCur,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->rptCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalComRptCurrency,$decimal);
+                        $data[$x][trans('custom.req_currency')] = $val->rptCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmountInPORptCur,$decimal);
                     }else{
-                        $data[$x]['PO Currency'] = '';
-                        $data[$x]['PO Amount'] = round(0,$decimal);
-                        $data[$x]['Req Currency'] = '';
-                        $data[$x]['Req Amount'] = round(0,$decimal);
+                        $data[$x][trans('custom.po_currency')] = '';
+                        $data[$x][trans('custom.po_amount')] = round(0,$decimal);
+                        $data[$x][trans('custom.req_currency')] = '';
+                        $data[$x][trans('custom.req_amount')] = round(0,$decimal);
                     }
 
-                    $data[$x]['Paid Amount'] = round($val->SumOfpaymentAmount,$decimal);
+                    $data[$x][trans('custom.paid_amount')] = round($val->SumOfpaymentAmount,$decimal);
 
                     $status = "";
                     if($val->status == 0){
-                        $status= "Payment Not Created";
+                        $status= trans('custom.payment_not_created');
                     } else if($val->status == 1){
-                        $status = "Payment Partially Released";
+                        $status = trans('custom.payment_partially_released');
                     }
                     else if($val->status == 2){
-                        $status= "Payment Released";
+                        $status= trans('custom.payment_released');
                     }
                     else if($val->status == 3){
-                        $status= "Payment Created but Not Released";
+                        $status= trans('custom.payment_created_but_not_released');
                     }
 
-                    $data[$x]['Status'] = $status;
+                    $data[$x][trans('custom.status')] = $status;
 
                     if($input['reportTypeID'] == 'APRA') {
                         $data[$x]['<=30'] = number_format($val->case1, $decimal);
@@ -890,11 +890,11 @@ ORDER BY
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
         $path = 'accounts-payable/report/advance_payment_request/excel/';
             if($input['reportTypeID'] == 'APRA') {
-                $title = 'Advance Payment Request Aging';
+                $title = trans('custom.advance_payment_request_aging');
             }
             else
             {
-                $title = 'Advance Payment Request Detail';
+                $title = trans('custom.advance_payment_request_detail');
             }
             
             $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);

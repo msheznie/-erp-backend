@@ -2,7 +2,9 @@
     @page {
         margin: 110px 30px 40px;
     }
-
+    font-family: 'dejavusans', DejaVu Sans, sans-serif;
+    direction: rtl;
+    unicode-bidi: bidi-override;
     #header {
         position: fixed;
         left: 0px;

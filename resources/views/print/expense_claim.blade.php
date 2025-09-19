@@ -338,10 +338,13 @@
                     </td>
                 </tr>
             @endforeach
-            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                <td colspan="3" class="text-right border-bottom-remov"></td>
-                <td colspan="2" class="text-right" style="background-color: #DEDEDE !important;"><b>{{ __('custom.total_payment') }}:</b></td>
-                <td class="text-right" style="background-color: #DEDEDE !important;">
+            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important; background-color: #DEDEDE !important;">
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;"><b>{{ __('custom.total_payment') }}:</b></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;">
                     {{number_format($entity->total,$entity->localDecimal)}}
                 </td>
             </tr>

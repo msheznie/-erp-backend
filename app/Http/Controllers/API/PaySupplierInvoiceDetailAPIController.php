@@ -983,7 +983,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                 $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
                                                 $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
                                                 $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
-                                                array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
+                                                array_push($finalError_ap['advance_payment_paid'], trans('custom.please_note_that_an_advance_payment_of'). $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . trans('custom.is_paid_for_this_supplier_for_the_selected_purchase_order') . $poCode);
                                                 $error_count_ap++;
                                             }
     

@@ -71,6 +71,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Models\SupplierGroup;
+use App\Exports\AccountsPayable\InvoiceToPayment\InvoiceToPaymentDetails;
+use App\Services\AccountPayableLedger\Report\InvoiceToPaymentReportService;
+
 class AccountsPayableReportAPIController extends AppBaseController
 {
     public function getAPFilterData(Request $request)
@@ -382,7 +385,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'through' => 'required',
                         'supplierGroup' => ['required_if:supEmpId,1']
                 ], [
-                    'suppliers.required' => 'The supplier/employee field is required.'
+                    'suppliers.required' => trans('custom.the_supplier_employee_field_is_required')
                 ]);
 
 
@@ -986,7 +989,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         return [$outputArr, $decimalPlace, $selectedCurrecny];
     }
-    public function exportReport(Request $request, SupplierAgingReportService $supplierAgingReportService, ExportReportToExcelService $exportReportToExcelService, UnbilledGrvReportService $unbilledGrvReportService)
+    public function exportReport(Request $request, SupplierAgingReportService $supplierAgingReportService, ExportReportToExcelService $exportReportToExcelService, UnbilledGrvReportService $unbilledGrvReportService, InvoiceToPaymentReportService $invoiceToPaymentReportService)
     {
         try {
             $reportID = $request->reportID;
@@ -1380,8 +1383,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
 
-                        $fileName = 'Supplier Balance Statement';
-                        $title = 'Supplier Balance Statement - Reconcile';
+                        $fileName = trans('custom.supplier_balance_statement');
+                        $title = trans('custom.supplier_balance_statement_reconcile');
                         $excelColumnFormat = [];
 
 
@@ -1807,40 +1810,45 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($companyCurrency) {
                         $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                     }
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Document No'] = $val->documentCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Supplier Invoice No'] = $val->supplierInvoiceNo;
-                            $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvoiceDate);
-                            $data[$x]['Currency'] = $val->CurrencyCode;
-                            $data[$x]['Total Amount'] = number_format($val->rptAmount, $decimalPlaces);
-                            $data[$x]['Confirmed Date'] = Helper::dateFormat($val->confirmedDate);
-                            $data[$x]['Final Approved Date'] = Helper::dateFormat($val->approvedDate);
-                            $data[$x]['Posted Date'] = Helper::dateFormat($val->postedDate);
+                    
+                    $fileName = trans('custom.invoice_to_payment');
+                    $title = trans('custom.invoice_to_payment_report');
+                    $data = $invoiceToPaymentReportService->getInvoiceToPaymentExportToExcelData($output, $decimalPlaces);
+                    $objInvoiceToPaymentDetails = new InvoiceToPaymentDetails();
+                    $excelColumnFormat = $objInvoiceToPaymentDetails->getCloumnFormat();
 
-                            $data[$x]['Payment Voucher No'] = $val->BPVcode;
-                            $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount, $decimalPlaces);
-                            $data[$x]['Cheque No'] = $val->BPVchequeNo;
-                            $data[$x]['Cheque Date'] = Helper::dateFormat($val->BPVchequeDate);
-                            $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
-                            $data[$x]['Cheque Printed Date'] = Helper::dateFormat($val->chequePrintedDateTime);
-                            $data[$x]['Payment Cleared Date'] = Helper::dateFormat($val->trsClearedDate);
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-                    \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    $from_date = $request->fromDate;
+                    $to_date = $request->toDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $dataType = 2;
+
+                    $requestCurrency = NULL;
+                    $path = 'invoice_to_payment/';
+                    $path = 'accounts-payable/report/invoice_to_payment/' . $path . 'excel/';
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($requestCurrency)
+                        ->setDateType($dataType)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError('Unable to export excel');
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
                     break;
                 default:
@@ -6336,7 +6344,7 @@ ORDER BY
         $employeeID = \Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         AccountsPayableReportJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
-        return $this->sendResponse([], "Supplier statement PDF report has been sent to queue");
+        return $this->sendResponse([], trans('custom.supplier_statement_PDF_report'));
     }
 
     public function supplierStatementDetailsPdf($request, $sentEmail = false)
@@ -6422,7 +6430,7 @@ ORDER BY
         $input = $request->all();
 
         if (!isset($input['suppliers'])) {
-            return $this->sendError("suppliers not found");
+            return $this->sendError(trans('custom.suppliers_not_found'));
         }
 
         $suplliers = $input['suppliers'];
@@ -6460,7 +6468,7 @@ ORDER BY
                 }
 
                 if ($emailSentTo == 0) {
-                    $errorMessage[] = "Supplier email is not updated for ".$supplierMaster->supplierName.". report is not sent";
+                    $errorMessage[] = trans('custom.supplier_email_is_not_updated_for').$supplierMaster->supplierName.trans('custom.report_is_not_sent');
                 } 
 
                 SupplierStatementJob::dispatch($request->db, $resHtml['dataArr'], $input);
@@ -6470,7 +6478,7 @@ ORDER BY
         if (count($errorMessage) > 0) {
             return $this->sendError($errorMessage,500);
         } else {
-            return $this->sendResponse([], 'Supplier statement report sent');
+            return $this->sendResponse([], trans('custom.suppliers_not_found'));
         }
     }
 
