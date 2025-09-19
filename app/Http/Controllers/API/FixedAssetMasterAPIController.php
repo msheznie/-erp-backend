@@ -199,25 +199,25 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
             if(isset($input['faCatID']) && empty($input['faCatID'])){
-                return $this->sendError("Main Category is required", 500);
+                return $this->sendError(trans('custom.main_category_is_required'), 500);
             }
 
             if(isset($input['faSubCatID']) && empty($input['faSubCatID'])){
-                return $this->sendError("Sub Category is required",500);
+                return $this->sendError(trans('custom.sub_category_is_required'),500);
             }
 
                 foreach ($input['assetSerialNo'] as $assetSN) {
                     if (empty($assetSN['faUnitSerialNo'])) {
-                        return $this->sendError("Asset Serial No is required", 500);
+                        return $this->sendError(trans('custom.asset_serial_no_is_required'), 500);
                     }
                 }
 
 
             $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
                 'assetSerialNo.*.required' => trans('custom.asset_serial_no_is_required'),
-                'assetSerialNo.*.unique' => 'The FA Serial-No has already been taken',
-                'AUDITCATOGARY.required' => 'Audit Category is required',
+                'assetSerialNo.*.unique' => trans('custom.fa_serial_no_has_been_taken'),
+                'AUDITCATOGARY.required' => trans('custom.audit_category_is_required'),
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
@@ -693,7 +693,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             {
                 if(isset($attribute['is_mendatory']) && $attribute['is_mendatory'] == 1) {
                     if(isset($attribute['attribute_values'][0]) && $attribute['attribute_values'][0]['value'] == null) {
-                        return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+                        return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
                     }
                 }
             }
@@ -703,11 +703,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             if(isset($input['salvage_value_rpt']))
         {
             if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
-                return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+                return $this->sendError(trans('custom.salvage_value_cannot_be_greater'), 500);
             }
     
             if(doubleval($input['salvage_value_rpt']) < 0) {
-                return $this->sendError("Salvage value cannot be less than Zero", 500);
+                return $this->sendError(trans('custom.salvage_value_cannot_be_less'), 500);
             }
         }
 
@@ -741,7 +741,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             if($depAssetNotApproved){
                 // check finance grouping input is changed
                 if((isset($input['AUDITCATOGARY']) && $input['AUDITCATOGARY'] != $fixedAssetMaster->AUDITCATOGARY) || (isset($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != $fixedAssetMaster->serviceLineSystemID)){
-                    return $this->sendError('Asset has been pulled to open depreciation document. Approve/Delete the document & try again',500);
+                    return $this->sendError(trans('custom.asset_pulled_to_open_depreciation'),500);
                 }
 
             }
@@ -752,10 +752,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
 
             $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
-                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
-                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
-                'faBarcode.unique' => 'The Barcode has already been taken',
+                'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
+                'documentDate.before_or_equal' => trans('custom.document_date_cannot_be_greater'),
+                'faUnitSerialNo.unique' => trans('custom.fa_serial_no_has_been_taken'),
+                'faBarcode.unique' => trans('custom.barcode_has_been_taken'),
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
@@ -886,7 +886,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
                 if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
-                    return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
+                    return $this->sendError(trans('custom.unit_price_local_cant_be_zero'),500);
                 }
             }
 
@@ -1017,7 +1017,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), trans('custom.fixed_asset_master_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -1437,7 +1437,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $attributeValueCount = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('is_active', 1)->count();
 
         if($attributeValueCount > 3 && $input['action'] == 1){
-            return $this->sendError('Maximum number of selections exceeded');
+            return $this->sendError(trans('custom.maximum_selections_exceeded'));
         }
 
         if($input['value'] == null && $input['action'] == 1){
@@ -1534,7 +1534,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_document')];
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1570,7 +1570,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 ->delete();
 
             /*Audit entry*/
-            AuditTrial::createAuditTrial($fixedAssetMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
+            AuditTrial::createAuditTrial($fixedAssetMaster->documentSystemID,$id,$input['reopenComments'],trans('custom.reopened'));
 
             DB::commit();
             return $this->sendResponse($fixedAssetMaster->toArray(), trans('custom.asset_costing_reopened_successfully'));
@@ -2269,55 +2269,55 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (count($output) > 0) {
             $x = 0;
             foreach ($output as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Department Code'] = $val->departmentID;
-                $data[$x]['Department'] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
-                $data[$x]['ServiceLine Code'] = $val->serviceLineCode;
-                $data[$x]['ServiceLine'] = $val->department?$val->department->ServiceLineDes:'';
-                $data[$x]['FA Code'] = $val->faCode;
-                $data[$x]['Asset Description'] = $val->assetDescription;
-                $data[$x]['Serial No'] = $val->faUnitSerialNo;
-                $data[$x]['Comments'] = $val->COMMENTS;
-                $data[$x]['Manufacture'] = $val->MANUFACTURE;
-                $data[$x]['Date Acquired'] = \Helper::dateFormat($val->dateAQ);
-                $data[$x]['Dep Date Start'] = \Helper::dateFormat($val->dateDEP);
-                $data[$x]['Life time in years'] = $val->depMonth;
-                $data[$x]['Dep %'] = $val->DEPpercentage;
-                $data[$x]['GRV No'] = $val->docOrigin;
-                $data[$x]['Main Cat'] = $val->category_by?$val->category_by->catDescription:'';
-                $data[$x]['Sub Cat'] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
-                $data[$x]['Sub Cat2'] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
-                $data[$x]['Sub Cat3'] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
-                $data[$x]['Audit Category'] = $val->finance_category?$val->finance_category->financeCatDescription:'';
-                $data[$x]['Cost Account'] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
-                $data[$x]['Acc Dep GL Code'] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
-                $data[$x]['Dep GL Code'] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
-                $data[$x]['Dis Po GL Code'] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
-                $data[$x]['Post to GL Account'] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
-                $data[$x]['Asset Type'] = $val->asset_type?$val->asset_type->typeDes:'';
-                $data[$x]['Supplier Code'] = $val->supplier?$val->supplier->primarySupplierCode:'';
-                $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName:'';
-                $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
-                $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
-                $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
-                $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.department_code')] = $val->departmentID;
+                $data[$x][trans('custom.department')] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
+                $data[$x][trans('custom.serviceline_code')] = $val->serviceLineCode;
+                $data[$x][trans('custom.serviceline')] = $val->department?$val->department->ServiceLineDes:'';
+                $data[$x][trans('custom.fa_code')] = $val->faCode;
+                $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                $data[$x][trans('custom.serial_no')] = $val->faUnitSerialNo;
+                $data[$x][trans('custom.comments')] = $val->COMMENTS;
+                $data[$x][trans('custom.manufacture')] = $val->MANUFACTURE;
+                $data[$x][trans('custom.date_acquired')] = \Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.dep_date_start')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.life_time_in_years')] = $val->depMonth;
+                $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                $data[$x][trans('custom.grv_no')] = $val->docOrigin;
+                $data[$x][trans('custom.main_cat')] = $val->category_by?$val->category_by->catDescription:'';
+                $data[$x][trans('custom.sub_cat')] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
+                $data[$x][trans('custom.sub_cat2')] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
+                $data[$x][trans('custom.sub_cat3')] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
+                $data[$x][trans('custom.audit_category')] = $val->finance_category?$val->finance_category->financeCatDescription:'';
+                $data[$x][trans('custom.cost_account')] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
+                $data[$x][trans('custom.acc_dep_gl_code')] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
+                $data[$x][trans('custom.dep_gl_code')] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
+                $data[$x][trans('custom.dis_po_gl_code')] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
+                $data[$x][trans('custom.post_to_gl_account')] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
+                $data[$x][trans('custom.asset_type')] = $val->asset_type?$val->asset_type->typeDes:'';
+                $data[$x][trans('custom.supplier_code')] = $val->supplier?$val->supplier->primarySupplierCode:'';
+                $data[$x][trans('custom.supplier_name')] = $val->supplier? $val->supplier->supplierName:'';
+                $data[$x][trans('custom.disposed_date')] = \Helper::dateFormat($val->disposedDate);
+                $data[$x][trans('custom.last_physical_verified_date')] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x][trans('custom.unit_price_local')] = $val->COSTUNIT;
+                $data[$x][trans('custom.unit_price_rpt')] = $val->costUnitRpt;
 
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
-                    $data[$x]['Confirmed Status'] = 'Yes';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Confirmed Status'] = 'No';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.no');
                 }
-                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Confirmed By'] = $val->confirmed_by?$val->confirmed_by->empName:'';
+                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.confirmed_by')] = $val->confirmed_by?$val->confirmed_by->empName:'';
                 if ($val->approved == -1) {
-                    $data[$x]['Approved Status'] = 'Yes';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Approved Status'] = 'No';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.no');
                 }
-                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
                 $x++;
             }
         } else {

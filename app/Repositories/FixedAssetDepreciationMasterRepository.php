@@ -103,11 +103,11 @@ class FixedAssetDepreciationMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Dep Code'] = $val->depCode;
-                $data[$x]['Month'] = $val->depMonthYear;
-                $data[$x]['Local Amount (OMR)'] = number_format($val->depAmountLocal, $val->depRptCur? $val->depRptCur : '', ".", "");
-                $data[$x]['Reporting Amount (USD)'] = number_format($val->depAmountRpt, $val->depRptCur? $val->depRptCur : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.dep_code')] = $val->depCode;
+                $data[$x][trans('custom.month')] = $val->depMonthYear;
+                $data[$x][trans('custom.local_amount_omr')] = number_format($val->depAmountLocal, $val->depRptCur? $val->depRptCur : '', ".", "");
+                $data[$x][trans('custom.reporting_amount_usd')] = number_format($val->depAmountRpt, $val->depRptCur? $val->depRptCur : '', ".", "");
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

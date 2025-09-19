@@ -142,10 +142,10 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
                 return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         } else {
-            return $this->sendError('Please select a department.', 500);
+            return $this->sendError(trans('custom.please_select_department'), 500);
         }
 
         if ($reclassification->wareHouseSystemCode) {
@@ -154,11 +154,11 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
                 return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
-                return $this->sendError('Please select an active warehouse', 500);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
             }
         }
         else {
-            return $this->sendError('Please select a warehouse.', 500);
+            return $this->sendError(trans('custom.please_select_warehouse'), 500);
         }
 
         $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
@@ -190,11 +190,11 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $input['reportingCurrencyID'] = $item->wacValueReportingCurrencyID;
 
         if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot add.", 500);
+            return $this->sendError(trans('custom.cost_is_zero_cannot_add'), 500);
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot add.", 500);
+            return $this->sendError(trans('custom.cost_is_negative_cannot_add'), 500);
         }
 
         $checkWhether = ItemIssueMaster::where('companySystemID', $companySystemID)->where('wareHouseFrom', $reclassification->wareHouseSystemCode)
@@ -220,7 +220,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.material_issue_pending_approval_item', ['code' => $checkWhether->itemIssueCode]), 500);
         }
 
         $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)->where('locationFrom', $reclassification->wareHouseSystemCode)
@@ -246,7 +246,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.stock_transfer_pending_approval_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
         }
 
         $data = array('companySystemID' => $reclassification->companySystemID,
@@ -258,7 +258,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
 
 
         if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot reclassify.", 500);
+            return $this->sendError(trans('custom.stock_qty_zero_cannot_reclassify'), 500);
         }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
@@ -273,18 +273,18 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         } else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if ($input['itemFinanceCategoryID'] == 1) {
             $alreadyAdded = InventoryReclassificationDetail::where('inventoryreclassificationID', $input['inventoryreclassificationID'])->where('itemSystemCode', $input['itemSystemCode'])->exists();
 
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                return $this->sendError(trans('custom.selected_item_already_added'), 500);
             }
         }
 

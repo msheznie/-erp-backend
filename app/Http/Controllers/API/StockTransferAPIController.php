@@ -477,7 +477,7 @@ class StockTransferAPIController extends AppBaseController
 
             if (empty($segments)) {
                 $this->stockTransferRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Selected department is not active. Please select an active department', 500, $serviceLineError);
+                return $this->sendError(trans('custom.selected_department_not_active_please_select_active_department'), 500, $serviceLineError);
             }
 
             if ($segments) {
@@ -494,7 +494,7 @@ class StockTransferAPIController extends AppBaseController
 
                 if ($checkWareHouseActiveFrom->isActive == 0) {
                     $this->stockTransferRepository->update(['locationFrom' => null], $id);
-                    return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+                    return $this->sendError(trans('custom.selected_location_from_not_active_please_select_active_location_from'), 500, $wareHouseFromError);
                 }
             }
         }
@@ -509,7 +509,7 @@ class StockTransferAPIController extends AppBaseController
 
                 if ($checkWareHouseActiveTo->isActive == 0) {
                     $this->stockTransferRepository->update(['locationTo' => null], $id);
-                    return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+                    return $this->sendError(trans('custom.selected_location_to_not_active_please_select_active_location_to'), 500, $wareHouseToError);
                 }
 
                 if ($checkWareHouseActiveTo->manufacturingYN == 1) {
@@ -531,13 +531,13 @@ class StockTransferAPIController extends AppBaseController
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
             if ($checkCustomer == 0) {
                 $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
-                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500,$companyToError);
+                return $this->sendError(trans('custom.customer_not_linked_selected_company_please_create_customer_link_company'), 500,$companyToError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
                 $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
-                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500,$companyToError);
+                return $this->sendError(trans('custom.supplier_not_linked_selected_company_please_create_supplier_link_company'), 500,$companyToError);
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
@@ -552,7 +552,7 @@ class StockTransferAPIController extends AppBaseController
 
             if ($toCompanyFinancePeriod == 0) {
                 $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
-                return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500,$companyToError);
+                return $this->sendError(trans('custom.financial_year_period_not_activated_in_company', ['company' => $companyTo->CompanyName]), 500,$companyToError);
             }
         }
 
@@ -638,7 +638,7 @@ class StockTransferAPIController extends AppBaseController
                                                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum Qty', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty'), 500);
             }
 
             unset($input['confirmedYN']);
@@ -701,20 +701,20 @@ class StockTransferAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer") : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "stock-transfer-pl-account");
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Transit account for stock transfer is not configured. Please update it in Chart of Account → Chart of Account Configuration', 500);
+                return $this->sendError(trans('custom.transit_account_stock_transfer_not_configured_please_update_chart_account'), 500);
             }
 
             if ($stockTransfer->interCompanyTransferYN == -1) {
                 $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, "inter-company-transfer-revenue");
                 
                 if (is_null($checkRevenueAc)) {
-                    return $this->sendError('Please configure Inter Company stock transfer revenue account', 500);
+                    return $this->sendError(trans('custom.please_configure_inter_company_stock_transfer_revenue_account'), 500);
                 }
             }
 
@@ -733,7 +733,7 @@ class StockTransferAPIController extends AppBaseController
 
         $stockTransfer = $this->stockTransferRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockTransfer->toArray(), 'StockTransfer updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendResponseWithDetails($stockTransfer->toArray(), trans('custom.stock_transfer_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -1220,7 +1220,7 @@ class StockTransferAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

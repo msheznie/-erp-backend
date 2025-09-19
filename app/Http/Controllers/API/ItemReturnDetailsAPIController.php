@@ -161,10 +161,10 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.warehouse_not_found'), 500);
             }
             if ($wareHouse->isActive == 0) {
-                return $this->sendError('Please select an active warehouse.', 500);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
             }
         } else {
-            return $this->sendError('Please select a warehouse.', 500);
+            return $this->sendError(trans('custom.please_select_warehouse'), 500);
         }
 
         if ($itemReturn->serviceLineSystemID) {
@@ -174,10 +174,10 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }
 
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select an active department.', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         }else {
-            return $this->sendError('Please select a department.', 500);
+            return $this->sendError(trans('custom.please_select_department'), 500);
         }
 
 
@@ -208,7 +208,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->count();
 
         if ($itemIssuesCount == 0) {
-            return $this->sendError('Selected item is not issued. Please check again', 500);
+            return $this->sendError(trans('custom.selected_item_not_issued_please_check_again'), 500);
         }
 
         $input['itemUnitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
@@ -228,7 +228,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_is_negative_you_cannot_issue'), 500);
         }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
@@ -259,12 +259,12 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
         } else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if ($input['itemFinanceCategoryID'] == 1) {
@@ -275,7 +275,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                return $this->sendError(trans('custom.selected_item_already_added_please_check_again'), 500);
             }
         }
 
@@ -311,7 +311,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Materiel return (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.material_return_pending_approval_for_item', ['code' => $checkWhether->itemReturnCode]), 500);
         }
 
         //}
@@ -482,12 +482,12 @@ class ItemReturnDetailsAPIController extends AppBaseController
                         $update_item['issueCodeSystem'] = null;
                         $this->itemReturnDetailsRepository->update($update_item, $id);
 
-                        return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type' => 'allocated_job', 'data' => $job]);
+                        return $this->sendError(trans('custom.selected_material_issue_allocated_following_jobs'), 500, ['type' => 'allocated_job', 'data' => $job]);
                     }
                 } else {
                     $update_item['issueCodeSystem'] = null;
                     $this->itemReturnDetailsRepository->update($update_item, $id);
-                    return $this->sendError('Unable to get the response from allocated job for this Material Issue');
+                    return $this->sendError(trans('custom.unable_get_response_allocated_job_material_issue'));
                 }
             }
         }
@@ -537,21 +537,21 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
-            return $this->sendError("Cost is 0. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_is_zero_you_cannot_issue'), 500);
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
-            return $this->sendError("Cost is negative. You cannot issue", 500);
+            return $this->sendError(trans('custom.cost_is_negative_you_cannot_issue'), 500);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
-            return $this->sendError("You cannot return more than the issued Qty", 500, $qtyError);
+            return $this->sendError(trans('custom.you_cannot_return_more_than_issued_qty'), 500, $qtyError);
         }
 
         if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {

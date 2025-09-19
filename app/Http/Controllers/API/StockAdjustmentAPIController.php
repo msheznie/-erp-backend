@@ -536,7 +536,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $stockAdjustment = $this->stockAdjustmentRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockAdjustment->toArray(), trans('custom.stock_adjustment_updated_successfully'),1,$confirm['data'] ?? null);
+        return $this->sendResponseWithDetails($stockAdjustment->toArray(), trans('custom.stock_adjustment_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -764,7 +764,8 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
+                'erp_stockadjustment.*',
+                DB::raw('COALESCE(erp_stockadjustment_reasons_languages.reasonDescription, stockadjustment_reasons.reason) as reason'),
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -781,7 +782,11 @@ class StockAdjustmentAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
-            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
+            ->leftJoin('stockadjustment_reasons', 'stockadjustment_reasons.id', 'erp_stockadjustment.reason')
+            ->leftJoin('erp_stockadjustment_reasons_languages', function($join) {
+                $join->on('erp_stockadjustment_reasons_languages.reasonID', '=', 'stockadjustment_reasons.id')
+                     ->where('erp_stockadjustment_reasons_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [7])
             ->where('erp_documentapproved.companySystemID', $companyId)
@@ -854,7 +859,8 @@ class StockAdjustmentAPIController extends AppBaseController
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
                 'employeesdepartments.approvalDeligated',
-                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
+                'erp_stockadjustment.*',
+                DB::raw('COALESCE(erp_stockadjustment_reasons_languages.reasonDescription, stockadjustment_reasons.reason) as reason'),
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -890,7 +896,11 @@ class StockAdjustmentAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
+            ->leftJoin('stockadjustment_reasons', 'stockadjustment_reasons.id', 'erp_stockadjustment.reason')
+            ->leftJoin('erp_stockadjustment_reasons_languages', function($join) {
+                $join->on('erp_stockadjustment_reasons_languages.reasonID', '=', 'stockadjustment_reasons.id')
+                     ->where('erp_stockadjustment_reasons_languages.languageCode', '=', app()->getLocale() ?: 'en');
+            })
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
