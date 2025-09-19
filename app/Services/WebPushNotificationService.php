@@ -104,8 +104,9 @@ class WebPushNotificationService
                 foreach ($notificationData as $key => $value) {
                     $value['data']['time'] = Carbon::parse($value['data']['time'])->diffForHumans();
 
-                    if(trans('custom.'.$value['data']['title'])){
-                        $value['data']['title'] = trans('custom.'.$value['data']['title']);
+                    $translatedTitle = trans('custom.'.$value['data']['title']);
+                    if($translatedTitle !== 'custom.'.$value['data']['title']){
+                        $value['data']['title'] = $translatedTitle;
                     }
 
                     $notificationDataRes[] = $value;
@@ -135,8 +136,9 @@ class WebPushNotificationService
                 $notificationData = json_decode($response->getBody(), true);
 
                 foreach ($notificationData as $key => $value) {
-                    if(trans('custom.'.$value['data']['title'])){
-                        $notificationData[$key]['data']['title'] = trans('custom.'.$value['data']['title']);
+                    $translatedTitle = trans('custom.'.$value['data']['title']);
+                    if($translatedTitle !== 'custom.'.$value['data']['title']){
+                        $notificationData[$key]['data']['title'] = $translatedTitle;
                     }
                 }
 
