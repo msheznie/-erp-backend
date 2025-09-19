@@ -8770,5 +8770,4 @@ return [
     'pulled_to_vat_return' => 'This document has been pulled to VAT Return Filing: ',
     'cannot_amend_document' => 'Cannot amend document',
     'document_id_not_found' => 'Document ID not found'
-       'selected_segment_is_not_active' => 'Selected segment is not active. Please select an active segment'
 ];
