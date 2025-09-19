@@ -161,7 +161,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
                 }
             }
 
-            $reportTitle = "Bank Ledger Report PDF has been generated";
+            $reportTitle = "bank_ledger_report_pdf_generated";
 
             $webPushData = [
                 'title' => $reportTitle,

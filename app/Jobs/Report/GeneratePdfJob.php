@@ -128,7 +128,7 @@ class GeneratePdfJob implements ShouldQueue
                     }
                 }
 
-                $reportTitle = "Supplier Statement Report PDF has been generated";
+                $reportTitle = "supplier_statement_report_pdf_generated";
 
                 $webPushData = [
                     'title' => $reportTitle,

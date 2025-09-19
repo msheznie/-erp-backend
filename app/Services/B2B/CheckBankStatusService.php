@@ -76,7 +76,7 @@ class CheckBankStatusService
 
                             if (isset($this->db)) {
                                 $webPushData = [
-                                    'title' => "Bank Transfer portal status updated",
+                                    'title' => "bank_transfer_portal_status_updated",
                                     'body' => "",
                                     'url' => "treasury/bank-transfer-list",
                                     'path' => "",

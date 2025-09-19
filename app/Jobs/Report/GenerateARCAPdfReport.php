@@ -185,7 +185,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                     }
                 }
 
-                $reportTitle = "Account receivable Report PDF has been generated";
+                $reportTitle = "account_receivable_report_pdf_generated";
 
                 $webPushData = [
                     'title' => $reportTitle,

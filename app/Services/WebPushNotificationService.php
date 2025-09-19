@@ -104,9 +104,12 @@ class WebPushNotificationService
                 foreach ($notificationData as $key => $value) {
                     $value['data']['time'] = Carbon::parse($value['data']['time'])->diffForHumans();
 
+                    if(trans('custom.'.$value['data']['title'])){
+                        $value['data']['title'] = trans('custom.'.$value['data']['title']);
+                    }
+
                     $notificationDataRes[] = $value;
                 }
-
 
                 return ['notifications' => $notificationDataRes, 'newNotificationCount' => collect(json_decode($response->getBody(), true))->where('read', 0)->count()];
             } else {
@@ -128,9 +131,16 @@ class WebPushNotificationService
             $params['uuid'] = $currentUserID;
             $response = $client->request('POST', $url, ['json' => $params]);
 
-
             if ($response) {
-                return $notificationData = json_decode($response->getBody(), true);
+                $notificationData = json_decode($response->getBody(), true);
+
+                foreach ($notificationData as $key => $value) {
+                    if(trans('custom.'.$value['data']['title'])){
+                        $notificationData[$key]['data']['title'] = trans('custom.'.$value['data']['title']);
+                    }
+                }
+
+                return $notificationData;
             } else {
                 return [];
             }

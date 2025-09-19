@@ -36,7 +36,7 @@ class ExportORDetailExcel {
 
     private function sendNotification($basePath) {
         $webPushData = [
-            'title' => "Open Request Detailed Excel has been generated",
+            'title' => "open_request_detailed_excel_generated",
             'body' => '',
             'url' => "",
             'path' => $basePath,
