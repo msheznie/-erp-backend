@@ -8833,5 +8833,15 @@ return [
     'payment_not_created' => 'لم يتم إنشاء الدفع',
     'payment_partially_released' => 'تم إصدار الدفع جزئياً',
     'payment_released' => 'تم إصدار الدفع',
-    'payment_created_but_not_released' => 'تم إنشاء الدفع ولكن لم يتم إصداره'
+    'payment_created_but_not_released' => 'تم إنشاء الدفع ولكن لم يتم إصداره',
+    'public_segment_configured_already' => 'تم تكوين القطاع العام بالفعل! (:code - :desc)',
+    'segment_code_already_exists' => 'رمز القطاع موجود بالفعل',
+    'segment_cannot_delete_child_segments' => 'لا يمكن حذف هذا القطاع :description. هناك قطاعات فرعية مرتبطة به',
+    'cannot_delete_segment_used_documents' => 'لا يمكن حذف هذا القطاع',
+    'cannot_delete_segment_used_employees' => 'لا يمكن حذف هذا القطاع',
+    'segment_used_in_documents_cannot_delete' => 'يتم استخدام هذا القطاع في بعض المستندات. لذلك، لا يمكن الحذف',
+    'organization_levels_retrieved_successfully' => 'تم استرداد مستويات المؤسسة بنجاح',
+    'organization_levels_with_deleted_retrieved_successfully' => 'تم استرداد مستويات المؤسسة بنجاح مع القطاعات المحذوفة',
+    'segment_not_found_api' => 'القطاع غير موجود',
+    'employee_already_exist' => 'الموظف موجود بالفعل'
 ];

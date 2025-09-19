@@ -8942,5 +8942,15 @@ return [
     'payment_not_created' => 'Payment Not Created',
     'payment_partially_released' => 'Payment Partially Released',
     'payment_released' => 'Payment Released',
-    'payment_created_but_not_released' => 'Payment Created but Not Released'
-  ];
+    'payment_created_but_not_released' => 'Payment Created but Not Released',
+    'public_segment_configured_already' => 'Public segment is configured already! (:code - :desc)',
+    'segment_code_already_exists' => 'Segment code already exists',
+    'segment_cannot_delete_child_segments' => 'This segment :description cannot be deleted. There are child segments associated with this',
+    'cannot_delete_segment_used_documents' => 'Cannot delete this segment',
+    'cannot_delete_segment_used_employees' => 'Cannot delete this segment',
+    'segment_used_in_documents_cannot_delete' => 'This segment is used in some documents. Therefore, cannot delete',
+    'organization_levels_retrieved_successfully' => 'Organization Levels retrieved successfully',
+    'organization_levels_with_deleted_retrieved_successfully' => 'Organization Levels retrieved successfully with deleted segments',
+    'segment_not_found_api' => 'Segment not found',
+    'employee_already_exist' => 'Employee already exist'
+];
