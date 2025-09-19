@@ -644,35 +644,35 @@ class LogisticAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Logistic Code'] = $value->logisticDocCode;
-                $data[$x]['Invoice No'] = $value->customInvoiceNo;
-                $data[$x]['Invoice Amount'] = $value->customInvoiceAmount;
-                $data[$x]['Invoice Date'] = \Helper::dateFormat($value->customInvoiceDate);
+                $data[$x][trans('custom.logistic_code')] = $value->logisticDocCode;
+                $data[$x][trans('custom.invoice_no')] = $value->customInvoiceNo;
+                $data[$x][trans('custom.invoice_amount')] = $value->customInvoiceAmount;
+                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($value->customInvoiceDate);
                 if ($value->shipping_mode) {
-                    $data[$x]['Mode'] = $value->shipping_mode->modeShippingDescription;
+                    $data[$x][trans('custom.mode')] = $value->shipping_mode->modeShippingDescription;
                 } else {
-                    $data[$x]['Mode'] = '';
+                    $data[$x][trans('custom.mode')] = '';
                 }
                 if ($value->supplier_by) {
-                    $data[$x]['Supplier'] = $value->supplier_by->supplierName;
+                    $data[$x][trans('custom.supplier')] = $value->supplier_by->supplierName;
                 } else {
-                    $data[$x]['Supplier'] = '';
+                    $data[$x][trans('custom.supplier')] = '';
                 }
-                $data[$x]['Comments '] = $value->comments;
+                $data[$x][trans('custom.comments')] = $value->comments;
 
-                $data[$x]['Renewal Date'] = \Helper::dateFormat($value->nextCustomDocRenewalDate);
-                $data[$x]['Arrival Date'] = \Helper::dateFormat($value->customeArrivalDate);
+                $data[$x][trans('custom.renewal_date')] = \Helper::dateFormat($value->nextCustomDocRenewalDate);
+                $data[$x][trans('custom.arrival_date')] = \Helper::dateFormat($value->customeArrivalDate);
                 if ($value->ftaOrDF) {
-                    $data[$x]['FTA/DF'] = $value->ftaOrDF;
+                    $data[$x][trans('custom.fta_df')] = $value->ftaOrDF;
                 } else {
-                    $data[$x]['FTA/DF'] = 'NA';
+                    $data[$x][trans('custom.fta_df')] = 'NA';
                 }
                 if ($value->created_by) {
-                    $data[$x]['Created By'] = $value->created_by->empName;
+                    $data[$x][trans('custom.created_by')] = $value->created_by->empName;
                 } else {
-                    $data[$x]['Created By'] = '';
+                    $data[$x][trans('custom.created_by')] = '';
                 }
-                $data[$x]['Created at'] = \Helper::dateFormat($value->createdDateTime);
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($value->createdDateTime);
                 $x++;
             }
         }

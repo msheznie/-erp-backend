@@ -8879,5 +8879,17 @@ return [
     'invoice_number_already_exists' => 'This invoice number is already exists in :docCode.',
     'logistic_updated_successfully' => 'Logistic updated successfully',
     'unable_to_export_excel' => 'Unable to export excel',
-    'company_not_found' => 'Company Not Found'
+    'company_not_found' => 'Company Not Found',
+    'logistic_code' => 'Logistic Code',
+    'invoice_no' => 'Invoice No',
+    'invoice_amount' => 'Invoice Amount',
+    'invoice_date' => 'Invoice Date',
+    'mode' => 'Mode',
+    'supplier' => 'Supplier',
+    'comments' => 'Comments',
+    'renewal_date' => 'Renewal Date',
+    'arrival_date' => 'Arrival Date',
+    'fta_df' => 'FTA/DF',
+    'created_by' => 'Created By',
+    'created_at' => 'Created at'
 ];

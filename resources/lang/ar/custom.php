@@ -8770,5 +8770,17 @@ return [
     'invoice_number_already_exists' => 'رقم الفاتورة هذا موجود بالفعل في :docCode.',
     'logistic_updated_successfully' => 'تم تحديث اللوجستيات بنجاح',
     'unable_to_export_excel' => 'غير قادر على تصدير Excel',
-    'company_not_found' => 'الشركة غير موجودة'
+    'company_not_found' => 'الشركة غير موجودة',
+    'logistic_code' => 'رمز اللوجستيات',
+    'invoice_no' => 'رقم الفاتورة',
+    'invoice_amount' => 'مبلغ الفاتورة',
+    'invoice_date' => 'تاريخ الفاتورة',
+    'mode' => 'الوضع',
+    'supplier' => 'المورد',
+    'comments' => 'التعليقات',
+    'renewal_date' => 'تاريخ التجديد',
+    'arrival_date' => 'تاريخ الوصول',
+    'fta_df' => 'اتفاقية التجارة الحرة/الرسوم',
+    'created_by' => 'أنشئ بواسطة',
+    'created_at' => 'أنشئ في'
 ];
