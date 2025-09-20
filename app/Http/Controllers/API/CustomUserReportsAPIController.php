@@ -1196,8 +1196,11 @@ class CustomUserReportsAPIController extends AppBaseController
             }
             
             if ($this->checkMasterColumn($report['columns'], 6, 'column_type')) {
-                foreach ($templateData['statusColumns'] as $column) {
-                    array_push($columns, $masterTable . '.' . $column);
+                if(isset($templateData['statusColumns']) && !empty($templateData['statusColumns']))
+                {
+                    foreach ($templateData['statusColumns'] as $column) {
+                        array_push($columns, $masterTable . '.' . $column);
+                    }
                 }
             }
           
