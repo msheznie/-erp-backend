@@ -240,7 +240,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;">Currency</span>
+                            <span style="font-weight: bold;">{{ __('custom.currency') }}</span>
                         </td>
                         <td>
                             <span style="font-weight: bold;">:</span>
@@ -257,7 +257,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;"> As of</span>
+                            <span style="font-weight: bold;">{{ __('custom.as_of') }}</span>
                         </td>
                         <td>
                             <span style="font-weight: bold;">:</span>
@@ -268,7 +268,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;">Month</span>
+                            <span style="font-weight: bold;">{{ __('custom.month') }}</span>
                         </td>
                         <td>
                             <span style="font-weight: bold;">:</span>
@@ -281,7 +281,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;"> Year </span>
+                            <span style="font-weight: bold;">{{ __('custom.year') }}</span>
                         </td>
                         <td>
                             <span style="font-weight: bold;">:</span>
@@ -292,7 +292,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;"> Bank </span>
+                            <span style="font-weight: bold;">{{ __('custom.bank') }}</span>
                         <td>
                             <span style="font-weight: bold;">:</span>
                         </td>
@@ -306,7 +306,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <span style="font-weight: bold;"> Account No. </span>
+                            <span style="font-weight: bold;">{{ __('custom.account_no') }}</span>
                         <td>
                             <span style="font-weight: bold;">:</span>
                         </td>
@@ -393,7 +393,7 @@
                 </tr>
             @endforeach
             <tr>
-                <td colspan="5" class="text-right"><b>Total {{ __('custom.uncleared_payments') }}</b></td>
+                <td colspan="5" class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                 <td></td>
                 <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
@@ -412,7 +412,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold;">Confirmed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -429,7 +429,7 @@
                     <table>
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold;">Reviewed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.reviewed_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -441,7 +441,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span style="font-weight: bold;">Electronically Approved By :</span>
+        <span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

@@ -3530,7 +3530,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$paymentVoucherData->companySystemID);
             if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
-                $errorMessage = "Payment Voucher " . $validateVatReturnFilling['message'];
+                $errorMessage = trans('custom.payment_voucher'). $validateVatReturnFilling['message'];
                 return $this->sendError($errorMessage);
             }
         }

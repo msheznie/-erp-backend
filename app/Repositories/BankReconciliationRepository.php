@@ -136,15 +136,15 @@ class BankReconciliationRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['BRC Code'] = $val->bankRecPrimaryCode;
-                $data[$x]['Month'] = $val->month? date('M', strtotime($val->bankRecAsOf)) : '';
-                $data[$x]['Year'] = $val->year;
-                $data[$x]['Bank Name'] = $val->bank_account? $val->bank_account->bankName : '';
-                $data[$x]['Account No'] = $val->bank_account? $val->bank_account->AccountNo : '';
-                $data[$x]['As of'] = \Helper::dateFormat($val->bankRecAsOf);
-                $data[$x]['Description'] = $val->description;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
+                $data[$x][trans('custom.brc_code')] = $val->bankRecPrimaryCode;
+                $data[$x][trans('custom.month')] = $val->month? date('M', strtotime($val->bankRecAsOf)) : '';
+                $data[$x][trans('custom.year')] = $val->year;
+                $data[$x][trans('custom.bank_name')] = $val->bank_account? $val->bank_account->bankName : '';
+                $data[$x][trans('custom.account_no')] = $val->bank_account? $val->bank_account->AccountNo : '';
+                $data[$x][trans('custom.as_of')] = \Helper::dateFormat($val->bankRecAsOf);
+                $data[$x][trans('custom.description')] = $val->description;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
 
                 $x++;
             }

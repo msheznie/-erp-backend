@@ -127,13 +127,13 @@ class PaymentBankTransferRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Document Code'] = $val->bankTransferDocumentCode;
-                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                $data[$x]['Bank Name'] = $val->bank_account? $val->bank_account->bankName : '';
-                $data[$x]['Account No'] = $val->bank_account? $val->bank_account->AccountNo : '';
-                $data[$x]['Narration'] = $val->narration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
+                $data[$x][trans('custom.document_code')] = $val->bankTransferDocumentCode;
+                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.bank_name')] = $val->bank_account? $val->bank_account->bankName : '';
+                $data[$x][trans('custom.account_no')] = $val->bank_account? $val->bank_account->AccountNo : '';
+                $data[$x][trans('custom.narration')] = $val->narration;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
 
                 $x++;
             }

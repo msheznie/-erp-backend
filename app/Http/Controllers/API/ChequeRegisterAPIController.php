@@ -440,18 +440,18 @@ class ChequeRegisterAPIController extends AppBaseController
         $output['cheque_statuses'] = array(
             [
                 'cheque_status_id' => '',
-                'cheque_status' => 'All'
+                'cheque_status' => trans('custom.all')
             ], [
                 'cheque_status_id' => 0,
-                'cheque_status' => 'Un used'
+                'cheque_status' => trans('custom.unused')
             ],
             [
                 'cheque_status_id' => 1,
-                'cheque_status' => 'Used'
+                'cheque_status' => trans('custom.used')
             ],
             [
                 'cheque_status_id' => 2,
-                'cheque_status' => 'Cancelled'
+                'cheque_status' => trans('custom.cancelled')
             ],
         );
 
@@ -658,13 +658,13 @@ class ChequeRegisterAPIController extends AppBaseController
         if(!empty($output)){
             $x = 0;
             foreach ($output as $value) {
-                    $data[$x]['Description'] = $value->description;
-                    $data[$x]['Bank Name'] = $value->bank->bankName;
-                    $data[$x]['Account'] = $value->bank_account->AccountNo;
-                    $data[$x]['Start Cheque No'] = $value->started_cheque_no;
-                    $data[$x]['End Cheque No'] = $value->ended_cheque_no;
-                    $data[$x]['No Of Cheques'] = $value->no_of_cheques;
-                    $data[$x]['Un Used Cheques'] = $value->unused_count;
+                    $data[$x][trans('custom.description')] = $value->description;
+                    $data[$x][trans('custom.bank_name')] = $value->bank->bankName;
+                    $data[$x][trans('custom.account')] = $value->bank_account->AccountNo;
+                    $data[$x][trans('custom.start_cheque_no')] = $value->started_cheque_no;
+                    $data[$x][trans('custom.end_cheque_no')] = $value->ended_cheque_no;
+                    $data[$x][trans('custom.no_of_cheques')] = $value->no_of_cheques;
+                    $data[$x][trans('custom.unused_cheques')] = $value->unused_count;
 
                 $x++;
             }

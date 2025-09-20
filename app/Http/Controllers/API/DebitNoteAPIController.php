@@ -2320,7 +2320,7 @@ UNION ALL
 
             $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$debitNoteMasterData->companySystemID);
             if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
-                $errorMessage = "Debit note " . $validateVatReturnFilling['message'];
+                $errorMessage = trans('custom.debit_note'). $validateVatReturnFilling['message'];
                 return $this->sendError($errorMessage);
             }
         }
