@@ -220,7 +220,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -231,7 +231,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if(isset($input['custInvoiceDirectAutoID'])){
             $alreadyUsed = BookInvSuppMaster::where('custInvoiceDirectAutoID', $input['custInvoiceDirectAutoID'])->first();
             if ($alreadyUsed) {
-                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+                return $this->sendError(trans('custom.customer_invoice_number_already_used') . " ($alreadyUsed->bookingInvCode). " . trans('custom.please_check_again'), 500);
             }
         }
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -502,7 +502,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                         ->first();
 
         if ($alreadyAdded) {
-            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
+            return $this->sendError(trans('custom.supplier_invoice_number_already_used') . " ($alreadyAdded->bookingInvCode). " . trans('custom.please_check_again'), 500);
         }
 
         if(isset($input['custInvoiceDirectAutoID'])){
@@ -511,7 +511,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyUsed) {
-                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+                return $this->sendError(trans('custom.customer_invoice_number_already_used') . " ($alreadyUsed->bookingInvCode). " . trans('custom.please_check_again'), 500);
             }
         }
 
@@ -1496,7 +1496,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -1527,7 +1527,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if ($alreadyAdded) {
-            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
+            return $this->sendError(trans('custom.supplier_invoice_number_already_used') . " ($alreadyAdded->bookingInvCode). " . trans('custom.please_check_again'), 500);
         }
 
         if(isset($input['custInvoiceDirectAutoID'])){
@@ -1536,7 +1536,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyUsed) {
-                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+                return $this->sendError(trans('custom.customer_invoice_number_already_used') . " ($alreadyUsed->bookingInvCode). " . trans('custom.please_check_again'), 500);
             }
         }
 

@@ -212,7 +212,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500,
                     ['type' => 'create']
                 );
@@ -422,7 +422,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500
                 );
             }
@@ -745,7 +745,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
 
@@ -907,7 +907,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
                     $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
@@ -1088,7 +1088,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
                 }
@@ -1372,7 +1372,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500
                 );
             }

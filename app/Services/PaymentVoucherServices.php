@@ -707,7 +707,14 @@ class PaymentVoucherServices
                                         "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
 
                 }else {
-                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                    $erMessage = trans('custom.exchange_rates_updated_message', [
+                        'bank_er' => $paySupplierInvoiceMaster->BPVbankCurrencyER,
+                        'local_er' => $paySupplierInvoiceMaster->localCurrencyER,
+                        'reporting_er' => $paySupplierInvoiceMaster->companyRptCurrencyER,
+                        'current_bank_er' => $input['BPVbankCurrencyER'],
+                        'current_local_er' => $input['localCurrencyER'],
+                        'current_reporting_er' => $input['companyRptCurrencyER']
+                    ]);
                 }
 
                 return [
@@ -1707,7 +1714,7 @@ class PaymentVoucherServices
                 if ($checkAmount > 0) {
                     return [
                         'status' => false,
-                        'message' => 'Every item should have a payment amount',
+                        'message' => trans('custom.every_item_should_have_a_payment_amount'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];

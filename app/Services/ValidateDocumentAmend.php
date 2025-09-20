@@ -189,7 +189,7 @@ class ValidateDocumentAmend
 
     public static function validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID = null)
 	{
-        $message = trans('custom.cannot_amend_document');
+        $message = trans('custom.cannot_amend_document_progress');
         $isjobErrorLogExist = JobErrorLog::where('documentSystemCode',$documentAutoId)
                                             ->where('documentSystemID',$documentSystemID)                                               
                                             ->count();

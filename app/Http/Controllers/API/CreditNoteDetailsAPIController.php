@@ -409,7 +409,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if ($companyId && $currencyId) {
             if (!\Helper::validateCurrencyRate($companyId, $currencyId)) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500
                 );
             }

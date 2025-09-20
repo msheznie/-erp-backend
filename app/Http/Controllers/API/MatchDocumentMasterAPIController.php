@@ -3903,9 +3903,9 @@ ORDER BY
         }
 
         if($masterData->documentSystemID == 19  || $masterData->documentSystemID == 21){
-            $documentName = 'Receipt Matching';
+            $documentName = trans('custom.receipt_matching');
         }else if($masterData->documentSystemID == 4  || $masterData->documentSystemID == 15){
-            $documentName = 'Payment Voucher Matching';
+            $documentName = trans('custom.payment_voucher_matching');
         }
 
         if ($masterData->matchingConfirmedYN == 0) {

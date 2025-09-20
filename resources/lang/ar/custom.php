@@ -8497,7 +8497,7 @@ return [
     'exchange_rates_updated_message' => 'تم تحديث أسعار الصرف كما يلي،<br><br>الأسعار السابقة سعر صرف البنك :bank_er | سعر الصرف المحلي :local_er | سعر صرف التقارير :reporting_er<br><br>الأسعار الحالية سعر صرف البنك :current_bank_er | سعر الصرف المحلي :current_local_er | سعر صرف التقارير :current_reporting_er<br><br>هل أنت متأكد من أنك تريد المتابعة؟',
     'financial_year_inactive' => 'السنة المالية :dateFrom | :dateTo التي تم نشر هذا المستند فيها يجب أن تكون نشطة وحالية حتى يمكن عكس هذا المستند.',
     'financial_period_inactive' => 'الفترة المالية :dateFrom | :dateTo التي تم نشر هذا المستند فيها يجب أن تكون نشطة وحالية حتى يمكن عكس هذا المستند.',
-    'cannot_amend_document' => 'لا يمكنك تعديل هذا المستند الآن. ترحيل دفتر الأستاذ العام قيد التنفيذ.',
+    'cannot_amend_document_progress' => 'لا يمكنك تعديل هذا المستند الآن. ترحيل دفتر الأستاذ العام قيد التنفيذ.',
     'pulled_to_vat_return' => 'تم سحبها إلى تقديم إقرار ضريبة القيمة المضافة',
     'document_not_confirmed' => 'المستند غير مُؤكَّد',
     'it_is_not_confirmed' => 'إنه غير مؤكد',
@@ -8853,5 +8853,10 @@ return [
     'organization_levels_retrieved_successfully' => 'تم استرداد مستويات المؤسسة بنجاح',
     'organization_levels_with_deleted_retrieved_successfully' => 'تم استرداد مستويات المؤسسة بنجاح مع القطاعات المحذوفة',
     'segment_not_found_api' => 'القطاع غير موجود',
-    'employee_already_exist' => 'الموظف موجود بالفعل'
+    'employee_already_exist' => 'الموظف موجود بالفعل',
+    'currency_exchange_rate_must_be_greater_than_zero' => 'يجب أن يكون سعر صرف العملة إلى العملة المحلية وعملة التقارير أكبر من الصفر',
+    'supplier_invoice_number_already_used' => 'رقم فاتورة المورد المدخل مستخدم بالفعل',
+    'customer_invoice_number_already_used' => 'رقم فاتورة العميل المدخل مستخدم بالفعل في',
+    'please_check_again' => 'يرجى التحقق مرة أخرى',
+    'use_of_unbilled_account_checking_done' => 'يتم فحص استخدام الحساب غير المفوتر في فاتورة المورد'
 ];

@@ -8577,7 +8577,7 @@ return [
     'exchange_rates_updated_message' => 'The exchange rates are updated as follows,<br><br>Previous rates Bank ER :bank_er | Local ER :local_er | Reporting ER :reporting_er<br><br>Current rates Bank ER :current_bank_er | Local ER :current_local_er | Reporting ER :current_reporting_er<br><br>Are you sure you want to proceed?',
     'financial_year_inactive' => 'The Financial Year :dateFrom | :dateTo on which this document was posted needs to be active & current for this document to be reversed.',
     'financial_period_inactive' => 'The Financial Period :dateFrom | :dateTo on which this document was posted needs to be active & current for this document to be reversed.',
-    'cannot_amend_document' => 'You cannot amend this document now. The General Ledger posting is in progress',
+    'cannot_amend_document_progress' => 'You cannot amend this document now. The General Ledger posting is in progress',
     'pulled_to_vat_return' => 'Pulled to VAT return filing',
     'document_not_confirmed' => 'Document, it is not confirmed',
     'it_is_not_confirmed' => 'it is not confirmed',
@@ -8962,5 +8962,10 @@ return [
     'organization_levels_retrieved_successfully' => 'Organization Levels retrieved successfully',
     'organization_levels_with_deleted_retrieved_successfully' => 'Organization Levels retrieved successfully with deleted segments',
     'segment_not_found_api' => 'Segment not found',
-    'employee_already_exist' => 'Employee already exist'
+    'employee_already_exist' => 'Employee already exist',
+    'currency_exchange_rate_must_be_greater_than_zero' => 'Currency exchange rate to local and reporting currency must be greater than zero',
+    'supplier_invoice_number_already_used' => 'Entered supplier invoice number was already used',
+    'customer_invoice_number_already_used' => 'Entered customer invoice number was already used in',
+    'please_check_again' => 'Please check again',
+    'use_of_unbilled_account_checking_done' => 'Use of Unbilled Account checking is done in supplier invoice'
 ];

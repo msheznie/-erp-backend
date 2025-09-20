@@ -627,7 +627,7 @@ class ExpenseClaimAPIController extends AppBaseController
         $documentName = trans('email.expense_claim');
 
         if (empty($masterData)) {
-            return $this->sendError($documentName . ' not found');
+            return $this->sendError($documentName . trans('custom.error_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {

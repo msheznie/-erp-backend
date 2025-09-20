@@ -2449,7 +2449,7 @@ class SupplierMasterAPIController extends AppBaseController
             $errorMessages[] = trans('custom.unbilled_account_cannot_be_amended_invoice');
             $amendable['unbilledAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Unbilled Account checking is done in supplier invoice";
+            $successMessages[] = trans('custom.use_of_unbilled_account_checking_done');
             $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? false : true;
         }
 
