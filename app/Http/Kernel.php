@@ -75,6 +75,7 @@ class Kernel extends HttpKernel
         'thirdPartyApis' => \App\Http\Middleware\PosApi::class,
         'thirdPartyApiLogger' => \App\Http\Middleware\ThirdPartyApiLogger::class,
         'print_lang' => \App\Http\Middleware\DetectPrintLang::class,
+        'signed_pdf_url' => \App\Http\Middleware\ValidateSignedPdfUrl::class,
         'hrms_employee' => \App\Http\Middleware\DetectHRMSEmployee::class,
         'mobileAccess' => \App\Http\Middleware\MobileAccessVerify::class,
         'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,

@@ -941,6 +941,13 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('dep_budget_pl_det_columns', 'DepBudgetPlDetColumnAPIController');
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
                 require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
+                Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
+            });
+        });
+
+        Route::group(['middleware' => 'max_memory_limit'], function () {
+            Route::group(['middleware' => 'max_execution_limit'], function () {
+                Route::get('pdf/stream', 'SignedPdfController@streamPdf')->middleware(['signed_pdf_url', 'print_lang']);
             });
         });
         
