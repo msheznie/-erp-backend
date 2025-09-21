@@ -10,3 +10,8 @@ Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIControll
 Route::post('customReportView', 'CustomUserReportsAPIController@customReportView')->name('Custom report view');
 
 Route::get('authenticateCustomReport', 'CustomReportEmployeesAPIController@authenticateCustomReport');
+Route::post('getBoldReportsDatatable', 'CustomReportEmployeesAPIController@getBoldReportsDatatable')->name('Get Bold Reports with datatable');
+Route::get('getBoldReportsTenants', 'CustomReportEmployeesAPIController@getBoldReportsTenants')->name('Get Bold Reports tenants');
+Route::get('getBoldReportsCategories', 'CustomReportEmployeesAPIController@getBoldReportsCategories')->name('Get Bold Reports categories');
+Route::get('getBoldReportById/{reportId}', 'CustomReportEmployeesAPIController@getBoldReportById')->name('Get Bold Report by ID');
+Route::post('getReportDetailsById', 'CustomReportEmployeesAPIController@getReportDetailsById')->name('Get Report Details by ID for Viewer');

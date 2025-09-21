@@ -37,6 +37,152 @@ class CustomReportEmployeesAPIController extends AppBaseController
     }
 
     /**
+     * Get all Bold Reports with datatable support
+     * @param Request $request
+     * @return Response
+     */
+    public function getBoldReportsDatatable(Request $request)
+    {
+        $input = $request->all();
+        $tenant = $request->get('tenant', 'osos-qa');
+        
+        // Get reports from Bold Reports server
+        $reportsData = $this->boldReports->getAllReports($tenant);
+        
+        if (!$reportsData) {
+            return $this->sendError('Failed to fetch reports from Bold Reports server');
+        }
+
+        // Extract reports array from the response
+        $reports = $reportsData ?? [];
+        
+        // Apply search if provided
+        $searchValue = $input['search']['value'] ?? '';
+        if ($searchValue) {
+            $reports = array_filter($reports, function($report) use ($searchValue) {
+                return (stripos($report['Name'] ?? '', $searchValue) !== false) ||
+                       (stripos($report['Description'] ?? '', $searchValue) !== false) ||
+                       (stripos($report['Category'] ?? '', $searchValue) !== false);
+            });
+        }
+
+        // Calculate totals
+        $totalRecords = count($reports);
+        
+        // Apply ordering
+        if (isset($input['order'][0])) {
+            $orderColumn = $input['order'][0]['column'];
+            $orderDir = $input['order'][0]['dir'];
+            $orderFields = ['Id', 'Name', 'Description', 'Category', 'CreatedDate', 'ModifiedDate'];
+            
+            if (isset($orderFields[$orderColumn])) {
+                $orderField = $orderFields[$orderColumn];
+                usort($reports, function($a, $b) use ($orderField, $orderDir) {
+                    $aValue = $a[$orderField] ?? '';
+                    $bValue = $b[$orderField] ?? '';
+                    
+                    if ($orderDir === 'asc') {
+                        return strcmp($aValue, $bValue);
+                    } else {
+                        return strcmp($bValue, $aValue);
+                    }
+                });
+            }
+        }
+
+        // Apply pagination
+        $start = $input['start'] ?? 0;
+        $length = $input['length'] ?? 15;
+        $paginatedReports = array_slice($reports, $start, $length);
+
+        // Add index to each report for display
+        foreach ($paginatedReports as $index => &$report) {
+            $report['DT_Row_Index'] = $start + $index + 1;
+        }
+
+        return response()->json([
+            'draw' => $input['draw'] ?? 1,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords,
+            'data' => $paginatedReports
+        ]);
+    }
+
+    /**
+     * Get available tenants from Bold Reports
+     * @return Response
+     */
+    public function getBoldReportsTenants()
+    {
+        $tenants = $this->boldReports->getTenants();
+        
+        if (!$tenants) {
+            return $this->sendError('Failed to fetch tenants from Bold Reports server');
+        }
+
+        return $this->sendResponse($tenants, 'Tenants retrieved successfully');
+    }
+
+    /**
+     * Get report categories from Bold Reports
+     * @param Request $request
+     * @return Response
+     */
+    public function getBoldReportsCategories(Request $request)
+    {
+        $tenant = $request->get('tenant', 'site1');
+        $categories = $this->boldReports->getReportCategories($tenant);
+        
+        if (!$categories) {
+            return $this->sendError('Failed to fetch categories from Bold Reports server');
+        }
+
+        return $this->sendResponse($categories, 'Categories retrieved successfully');
+    }
+
+    /**
+     * Get specific report by ID from Bold Reports
+     * @param Request $request
+     * @param string $reportId
+     * @return Response
+     */
+    public function getBoldReportById(Request $request, $reportId)
+    {
+        $tenant = $request->get('tenant', 'site1');
+        $report = $this->boldReports->getReportById($reportId, $tenant);
+        
+        if (!$report) {
+            return $this->sendError('Report not found or failed to fetch from Bold Reports server');
+        }
+
+        return $this->sendResponse($report, 'Report retrieved successfully');
+    }
+
+    /**
+     * Get report details by ID for viewer
+     * @param Request $request
+     * @return Response
+     */
+    public function getReportDetailsById(Request $request)
+    {
+        $reportId = $request->get('reportId');
+        // $tenant = $request->get('tenant', 'site1');
+        $tenant = 'osos-qa';
+
+        if (!$reportId) {
+            return $this->sendError('Report ID is required');
+        }
+
+        $report = $this->boldReports->getReportById($reportId, $tenant);
+        
+        if (!$report) {
+            return $this->sendError('Report not found or failed to fetch from Bold Reports server');
+        }
+
+        return $this->sendResponse($report, 'Report details retrieved successfully');
+    }
+
+    /**
      * @param Request $request
      * @return Response
      *
