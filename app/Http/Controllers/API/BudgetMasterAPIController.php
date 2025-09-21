@@ -838,9 +838,7 @@ class BudgetMasterAPIController extends AppBaseController
             $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
             });
-        })->download('csv');
-
-        return $this->sendResponse($data, trans('custom.details_retrieved_successfully_1'));
+        })->download('xlsx');
     }
 
     public function budgetGLCodeWiseDetails(Request $request)
@@ -2612,9 +2610,7 @@ class BudgetMasterAPIController extends AppBaseController
             $excel->sheet('New sheet', function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
             });
-        })->download('csv');
-
-        return $this->sendResponse($result, trans('custom.details_retrieved_successfully_1'));
+        })->download('xlsx');
     }
 
 
@@ -2806,9 +2802,7 @@ class BudgetMasterAPIController extends AppBaseController
             $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
             });
-        })->download('csv');
-
-        return $this->sendResponse($data, trans('custom.details_retrieved_successfully_1'));
+        })->download('xlsx');
     }
 
     public function getGlCodeWiseCommitedBudgetAmount($data, $glIds, $DLBCPolicy)

@@ -2,7 +2,7 @@
 <center>
     <tr>
         <td colspan="3"> </td>
-        <td><h1>Report Template Category Wise</h1>  </td>
+        <td><h1>{{ trans('custom.report_template_category_wise') }}</h1>  </td>
         <td colspan="3"> </td>
 
     <tr>
@@ -20,33 +20,33 @@
 
 
         @endphp
-        <td>Finance Year : {{ $bigginingDate }} - {{ $endingDate }}</td>
+        <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Year : {{ $entity['Year'] }}</td>
+        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
 
     </tr>
     <tr>
 
-        <td>Segment : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Template : {{ $entity['template_master']['description'] }}</td>
+        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
 
     </tr>
     <tr></tr>
     <tr></tr>
 
     <tr>
-        <th>Template Description</th>
+        <th>{{ trans('custom.template_description') }}</th>
 
-        <th>Budget Amount (USD)	</th>
-        <th>Commited Budget</th>
-        <th>Actual Consumption</th>
-        <th>Pending Document Amount</th>
-        <th>Balance</th>
+        <th>{{ trans('custom.budget_amount') }} ({{ $rptCurrency->CurrencyCode ?? 'USD' }})</th>
+        <th>{{ trans('custom.commited_budget') }}</th>
+        <th>{{ trans('custom.actual_consumption') }}</th>
+        <th>{{ trans('custom.pending_document_amount') }}</th>
+        <th>{{ trans('custom.balance') }}</th>
 
     </tr>
     </thead>
@@ -67,7 +67,7 @@
     <tfoot>
     <tr>
 
-        <td>Total Amount</td>
+        <td>{{ trans('custom.total_amount') }}</td>
 
         <td>{{ number_format($total['totalRpt'],3) }}</td>
         <td>{{ number_format($total['committedAmount'],2) }}</td>

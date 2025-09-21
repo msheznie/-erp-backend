@@ -8730,6 +8730,17 @@ return [
     'sub_cat' => 'الفئة الفرعية',
     'sub_cat2' => 'الفئة الفرعية 2',
     'sub_cat3' => 'الفئة الفرعية 3',
+    
+    
+    // Budget GL Code Wise Report translations
+    'report_gl_code_wise' => 'تقرير كود GL حسب الحكمة',
+    'commited_budget' => 'الميزانية الملتزمة',
+    'actual_consumption' => 'الاستهلاك الفعلي',
+    'pending_document_amount' => 'مبلغ المستند المعلق',
+    'adjusted_amount' => 'المبلغ المعدل',
+    'finance_year' => 'السنة المالية',
+    'pending_amount' => 'المبلغ المعلق',
+    'report_template_category_wise' => 'تقرير فئة القالب حسب الحكمة',
     'audit_category' => 'فئة التدقيق',
     'cost_account' => 'حساب التكلفة',
     'acc_dep_gl_code' => 'رمز دفتر الأستاذ للإهلاك المتراكم',
