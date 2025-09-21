@@ -51,11 +51,11 @@ class StockAdjustmentReason extends Model
     ];
 
     /**
-     * Relationship to StockAdjustmentReasonLanguage
+     * Relationship to StockAdjustmentReasonTranslation
      */
     public function translations()
     {
-        return $this->hasMany(StockAdjustmentReasonLanguage::class, 'reasonID', 'id');
+        return $this->hasMany(StockAdjustmentReasonTranslation::class, 'reasonID', 'id');
     }
 
     /**
@@ -79,10 +79,9 @@ class StockAdjustmentReason extends Model
         
         $translation = $this->translation($currentLanguage);
         
-        if ($translation && $translation->reasonDescription) {
-            return $translation->reasonDescription;
+        if ($translation && $translation->reason) {
+            return $translation->reason;
         }
-        
         
         return $this->attributes['reason'] ?? '';
     }
