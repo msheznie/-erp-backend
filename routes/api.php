@@ -940,10 +940,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('department_budget_plannings', 'DepartmentBudgetPlanningAPIController');
                 Route::resource('dep_budget_pl_det_columns', 'DepBudgetPlDetColumnAPIController');
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
+                require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
             });
         });
-
-        require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
+        
         Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
         Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
         Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
@@ -1038,15 +1038,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
-        Route::get('updateNotPostedPVGLEntries', 'GeneralLedgerAPIController@updateNotPostedPVGLEntries');
-        Route::get('updateNotPostedRVGLEntries', 'GeneralLedgerAPIController@updateNotPostedRVGLEntries');
-        Route::get('updateNotPostedFAGLEntries', 'GeneralLedgerAPIController@updateNotPostedFAGLEntries');
-        Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
-        Route::get('updateNotPostedBSIGLEntries', 'GeneralLedgerAPIController@updateNotPostedBSIGLEntries');
-        Route::get('updateNotApprovedSegments', 'GeneralLedgerAPIController@updateNotApprovedSegments');
     }
-
-
 });
 
 
