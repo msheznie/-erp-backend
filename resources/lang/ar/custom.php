@@ -330,6 +330,16 @@ return [
     'bank_details_not_found' => 'تفاصيل البنك غير موجودة.',
     'bank_ledger_form_data_retrived_successfully' => 'تم استرداد بيانات نموذج دفتر الأستاذ البنكي بنجاح',
     'bank_ledger_report_filter_validated_successfully' => 'تم التحقق من صحة مرشح تقرير دفتر الأستاذ البنكي بنجاح',
+    'company_id' => 'معرف الشركة',
+    'document_number' => 'رقم المستند',
+    'supplier_customer' => 'المورد/العميل',
+    'debit_bank_currency' => 'مدين (عملة البنك)',
+    'credit_bank_currency' => 'دائن (عملة البنك)',
+    'debit_local_currency' => 'مدين (العملة المحلية)',
+    'credit_local_currency' => 'دائن (العملة المحلية)',
+    'debit_reporting_currency' => 'مدين (عملة التقرير)',
+    'credit_reporting_currency' => 'دائن (عملة التقرير)',
+    'bank_ledger_details' => 'تفاصيل دفتر الأستاذ البنكي',
     'bank_ledgers' => 'دفاتر الأستاذ البنكية',
     'bank_masters' => 'السجلات الرئيسية للبنوك',
     'bank_memo_payees' => 'المستفيدون من المذكرات البنكية',
@@ -8931,5 +8941,7 @@ return [
     'req_currency' => 'عملة الطلب',
     'req_amount' => 'مبلغ الطلب',
     'advance_payment_request_aging' => 'تقرير تقادم طلبات الدفع المقدم',
-    'advance_payment_request_detail' => 'تقرير تفاصيل طلبات الدفع المقدم'
- ];
+    'advance_payment_request_detail' => 'تقرير تفاصيل طلبات الدفع المقدم',
+    'you_cannot_return_back_to_amend_this_bank_transfer_upcoming_months_bank_transfer_is_already_created' => 'لا يمكنك العودة لتعديل هذا التحويل البنكي. تم بالفعل إنشاء التحويل البنكي للشهر القادم.',
+    'bank_ledger_PDF_report_has_been_sent_to_queue' => 'تم إرسال تقرير كشف حساب البنك (PDF) إلى قائمة الانتظار',
+];
