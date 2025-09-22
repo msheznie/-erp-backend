@@ -6210,7 +6210,7 @@ return [
     'your_account_is_blocked' => 'حسابك محظور',
     'tax_id' => 'الرقم الضريبي',
     'registration_number' => 'رقم التسجيل',
-    //GRV Excel
+      //GRV Excel
     "estimated_unit_cost" => "التكلفة المقدرة للوحدة",
     // Purchase Order specific translations
     'not_received' => 'لم يتم الاستلام',
@@ -6219,7 +6219,7 @@ return [
     'fully_received' => 'استلام مكتمل',
     'no_items_were_added' => 'لم يتم إضافة أي عناصر',
     'actions' => 'الإجراءات',
-    //PR
+     //PR
     'unable_to_create_material_items' => 'غير قادر على إنشاء عناصر المواد',
     'company_id' => 'معرف الشركة',
     'segment' => 'القطاع',
@@ -6694,7 +6694,7 @@ return [
      'inter_company_stock_transfer_deleted_successfully' => 'تم حذف نقل المخزون بين الشركات بنجاح',
      'stock_transfer_pl_account_inter_company_not_configured' => 'حساب قائمة الدخل لنقل المخزون بين الشركات غير مُكوَّن',
      'stock_transfer_pl_account_not_configured' => 'حساب قائمة الدخل لنقل المخزون غير مُكوَّن',
-     
+
      // Purchase Return Translation Keys
      'purchase_return_date_not_between_financial_period' => 'تاريخ إرجاع الشراء ليس ضمن الفترة المالية !',
      'please_select_active_segment_return' => 'يرجى تحديد قطاع نشط ',
@@ -8711,7 +8711,7 @@ return [
     'unit_price_local_cant_be_zero' => 'سعر الوحدة (المحلي) لا يمكن أن يكون صفراً عندما يكون سعر الوحدة (التقارير) له قيمة',
     'fixed_asset_master_updated_successfully' => 'تم تحديث سيد الأصول الثابتة بنجاح',
     'maximum_selections_exceeded' => 'تم تجاوز الحد الأقصى لعدد الاختيارات',
-    
+
     // Missing translations for hardcoded text in $data[$x] patterns
     'company_id' => 'معرف الشركة',
     'department_code' => 'رمز القسم',
@@ -8730,8 +8730,8 @@ return [
     'sub_cat' => 'الفئة الفرعية',
     'sub_cat2' => 'الفئة الفرعية 2',
     'sub_cat3' => 'الفئة الفرعية 3',
-    
-    
+
+
     // Budget GL Code Wise Report translations
     'report_gl_code_wise' => 'تقرير كود GL حسب الحكمة',
     'commited_budget' => 'الميزانية الملتزمة',
@@ -8763,7 +8763,7 @@ return [
     'approved_date' => 'تاريخ الموافقة',
     'yes' => 'نعم',
     'no' => 'لا',
-    
+
     // Missing translations for cases 22 and 23 in TransactionsExportExcel
     'doc_no' => 'رقم المستند',
     'doc_description' => 'وصف المستند',
@@ -8772,12 +8772,12 @@ return [
     'dep_code' => 'رمز الإهلاك',
     'local_amount_omr' => 'المبلغ المحلي (ريال عماني)',
     'reporting_amount_usd' => 'مبلغ التقارير (دولار أمريكي)',
-    
+
     // Additional translations for InventoryReclassificationDetailAPIController
     'cost_is_zero_cannot_add' => 'التكلفة صفر. لا يمكنك الإضافة.',
     'cost_is_negative_cannot_add' => 'التكلفة سالبة. لا يمكنك الإضافة.',
     'stock_qty_zero_cannot_reclassify' => 'كمية المخزون صفر. لا يمكنك إعادة التصنيف.',
-    
+
     // Additional translations for PurchaseReturnDetailsAPIController
     'grv_balance_qty_cannot_return_more' => 'كمية رصيد GRV هي :qty. لا يمكنك إرجاع أكثر من كمية الرصيد.',
     'purchase_return_pending_approval_grv' => 'يوجد إرجاع مشتريات (:code) في انتظار الموافقة للـ GRV الذي تحاول إضافته. يرجى التحقق مرة أخرى.',
@@ -8835,7 +8835,7 @@ return [
     'advance_payment_request' => 'طلب دفعة مقدّمة',
     'advance_payment_request_aging' => 'تَقادُم طلبات الدفعات المقدّمة',
     'advance_payment_request_detail' => 'تفاصيل طلب الدفعة المقدّمة',
-    
+
     // Advance Payment Request Report Fields
     'purchase_order_code' => 'رمز أمر الشراء',
     'req_date' => 'تاريخ الطلب',
@@ -8863,7 +8863,7 @@ return [
     'customer_invoice_number_already_used' => 'رقم فاتورة العميل المدخل مستخدم بالفعل في',
     'please_check_again' => 'يرجى التحقق مرة أخرى',
     'use_of_unbilled_account_checking_done' => 'يتم فحص استخدام الحساب غير المفوتر في فاتورة المورد',
-    
+
     // Delivery Order Detail API Controller translations
     'segment_is_different_from_order' => 'القطاع مختلف عن الطلب',
     'stock_qty_is_0_for_item' => 'كمية المخزون 0 للعنصر :itemCode. لا يمكن الإصدار.',
@@ -8923,5 +8923,13 @@ return [
     'confirmed_by' => 'تم التأكيد بواسطة',
     'reviewed_by' => 'تم المراجعة بواسطة',
     'electronically_approved_by' => 'تم الموافقة إلكترونياً بواسطة',
-    'total' => 'المجموع'
-];
+    'total' => 'المجموع',
+    'document_id_not_found' => 'معرف المستند غير موجود',
+    'purchase_order_code' => 'كود أمر الشراء',
+    'req_date' => 'تاريخ الطلب',
+    'po_currency' => 'عملة أمر الشراء',
+    'req_currency' => 'عملة الطلب',
+    'req_amount' => 'مبلغ الطلب',
+    'advance_payment_request_aging' => 'تقرير تقادم طلبات الدفع المقدم',
+    'advance_payment_request_detail' => 'تقرير تفاصيل طلبات الدفع المقدم'
+ ];

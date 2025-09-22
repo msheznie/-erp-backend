@@ -1414,7 +1414,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         ->generateExcel();
 
                     if(!$exportToExcel['success'])
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
                     return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                     break;
@@ -1810,7 +1810,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($companyCurrency) {
                         $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                     }
-                    
+
                     $fileName = trans('custom.invoice_to_payment');
                     $title = trans('custom.invoice_to_payment_report');
                     $data = $invoiceToPaymentReportService->getInvoiceToPaymentExportToExcelData($output, $decimalPlaces);

@@ -6765,7 +6765,7 @@ return [
     'inter_company_stock_transfer_deleted_successfully' => 'Inter Company Stock Transfer deleted successfully',
     'stock_transfer_pl_account_inter_company_not_configured' => 'Stock Transfer Pl Account for inter company transfer is not configured',
     'stock_transfer_pl_account_not_configured' => 'Stock Transfer Pl Account is not configured',
-    
+
     // Purchase Return Translation Keys
     'purchase_return_date_not_between_financial_period' => 'Purchase Return Date not between Financial period !',
     'please_select_active_segment_return' => 'Please select a active segment ',
@@ -6793,7 +6793,7 @@ return [
     'stock_count_not_found' => 'Stock Count not found',
     'stock_count_reffered_back_deleted_successfully' => 'Stock Count Reffered Back deleted successfully',
     'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',
-    
+
     // Additional GRV Master Translation Keys
     'grv_date_not_within_financial_period' => 'GRV date is not within the financial period!',
     'pl_account_not_assigned_company' => 'PL account is not assigned to the company',
@@ -8776,7 +8776,7 @@ return [
     'pulled_to_vat_return' => 'This document has been pulled to VAT Return Filing: ',
     'cannot_amend_document' => 'Cannot amend document',
     'document_id_not_found' => 'Document ID not found',
-    
+
     // Missing translations for FixedAssetMasterAPIController
     'fa_serial_no_has_been_taken' => 'The FA Serial-No has already been taken',
     'audit_category_is_required' => 'Audit Category is required',
@@ -8790,7 +8790,7 @@ return [
     'unit_price_local_cant_be_zero' => 'Unit Price(Local) can\'t be Zero when Unit Price(Rpt) has a value',
     'fixed_asset_master_updated_successfully' => 'FixedAssetMaster updated successfully',
     'maximum_selections_exceeded' => 'Maximum number of selections exceeded',
-    
+
     // Missing translations for hardcoded text in $data[$x] patterns
     'company_id' => 'Company ID',
     'department_code' => 'Department Code',
@@ -8840,7 +8840,7 @@ return [
     'approved_date' => 'Approved Date',
     'yes' => 'Yes',
     'no' => 'No',
-    
+
     // Missing translations for cases 22 and 23 in TransactionsExportExcel
     'doc_no' => 'Doc No',
     'doc_description' => 'Doc Description',
@@ -8849,17 +8849,17 @@ return [
     'dep_code' => 'Dep Code',
     'local_amount_omr' => 'Local Amount (OMR)',
     'reporting_amount_usd' => 'Reporting Amount (USD)',
-    
+
     // Additional translations for InventoryReclassificationDetailAPIController
     'cost_is_zero_cannot_add' => 'Cost is 0. You cannot add.',
     'cost_is_negative_cannot_add' => 'Cost is negative. You cannot add.',
     'stock_qty_zero_cannot_reclassify' => 'Stock Qty is 0. You cannot reclassify.',
-    
+
     // Additional translations for PurchaseReturnDetailsAPIController
     'grv_balance_qty_cannot_return_more' => 'GRV balance Qty is :qty. You cannot return more than balance Qty.',
     'purchase_return_pending_approval_grv' => 'There is a Purchase Return (:code) pending for approval for the GRV you are trying to add. Please check again.',
     'grv_added_to_draft_supplier_invoice' => 'Selected GRV is been added to a draft supplier invoice :code. Delete the GRV from the invoice and try again.',
-    
+
     // Additional translations for StockTransferAPIController
     'selected_department_not_active_please_select_active_department' => 'Selected department is not active. Please select an active department',
     'selected_location_from_not_active_please_select_active_location_from' => 'Selected location from is not active. Please select an active location from',
@@ -8873,7 +8873,7 @@ return [
     'please_configure_inter_company_stock_transfer_revenue_account' => 'Please configure Inter Company stock transfer revenue account',
     'stock_transfer_updated_successfully' => 'StockTransfer updated successfully',
     'policy_not_found_for_this_document' => 'Policy not found for this document',
-    
+
     // Additional translations for ItemReturnDetailsAPIController
     'please_select_active_warehouse' => 'Please select an active warehouse.',
     'please_select_warehouse' => 'Please select a warehouse.',
@@ -8940,7 +8940,7 @@ return [
     'advance_payment_request' => 'Advance Payment Request',
     'advance_payment_request_aging' => 'Advance Payment Request Aging',
     'advance_payment_request_detail' => 'Advance Payment Request Detail',
-    
+
     // Advance Payment Request Report Fields
     'purchase_order_code' => 'Purchase Order Code',
     'req_date' => 'Req Date',
@@ -8968,7 +8968,7 @@ return [
     'customer_invoice_number_already_used' => 'Entered customer invoice number was already used in',
     'please_check_again' => 'Please check again',
     'use_of_unbilled_account_checking_done' => 'Use of Unbilled Account checking is done in supplier invoice',
-    
+
     // Delivery Order Detail API Controller translations
     'segment_is_different_from_order' => 'Segment is different from order',
     'stock_qty_is_0_for_item' => 'Stock Qty is 0 for :itemCode. You cannot issue.',
@@ -9026,4 +9026,12 @@ return [
     'reviewed_by' => 'Reviewed By',
     'electronically_approved_by' => 'Electronically Approved By',
     'total' => 'Total',
+    'document_id_not_found' => 'Document ID not found',
+    'purchase_order_code' => 'Purchase Order Code',
+    'req_date' => 'Req Date',
+    'po_currency' => 'PO Currency',
+    'req_currency' => 'Req Currency',
+    'req_amount' => 'Req Amount',
+    'advance_payment_request_aging' => 'Advance Payment Request Aging',
+    'advance_payment_request_detail' => 'Advance Payment Request Detail'
 ];
