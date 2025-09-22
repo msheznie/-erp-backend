@@ -230,7 +230,8 @@ return [
         'segment' => 'القطاع',
         'suppliers' => 'المورّدون',
         'supplierGroup' => 'مجموعة المورّدين',
-        'supEmpId' => 'معرّف موظف المورّد'
+        'supEmpId' => 'معرّف موظف المورّد',
+        'accounts' => 'الحسابات'
     ],
 
 ];
