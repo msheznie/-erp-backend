@@ -947,7 +947,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
         Route::group(['middleware' => 'max_memory_limit'], function () {
             Route::group(['middleware' => 'max_execution_limit'], function () {
-                Route::get('pdf/stream', 'SignedPdfController@streamPdf')->middleware(['signed_pdf_url', 'print_lang']);
+                Route::get('pdf/stream/{signature}', 'SignedPdfController@streamPdf')->where('signature', '[A-Za-z0-9_-]+');
             });
         });
         

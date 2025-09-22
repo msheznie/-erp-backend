@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
-use App\Jobs\CleanExpiredSignedPdfUrls;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class SignedPdfController extends AppBaseController
 {
@@ -35,39 +32,26 @@ class SignedPdfController extends AppBaseController
                 return $this->sendError('Invalid or unauthorized route');
             }
 
-            // Generate unique token
-            $token = Str::random(32);
             $expires = time() + ($expiresInMinutes * 60);
 
             // Get current user information for context
             $user = Auth::user();
             $userId = $user ? $user->id : null;
 
-            // Store URL data in cache
-            $urlData = [
+            // Create payload with all necessary data (no caching needed)
+            $payload = [
                 'route' => $routeName,
                 'params' => $params,
                 'user_id' => $userId,
+                'expires' => $expires,
                 'created_at' => time()
             ];
 
-            // Cache the URL data with expiration
-            Cache::put("signed_pdf_url:{$token}", $urlData, $expiresInMinutes);
-            
-            // Track active token for cleanup job
-            $this->trackActiveToken($token);
-            
-            // Schedule cleanup of expired tokens
-            $this->scheduleCleanup();
+            // Generate encrypted signature containing all data
+            $signature = $this->generateEncryptedSignature($payload);
 
-            // Generate signature
-            $signature = $this->generateSignature($token, $expires, $urlData);
-
-            $signedUrl = "api/v1/pdf/stream" . "?" . http_build_query([
-                'token' => $token,
-                'signature' => $signature,
-                'expires' => $expires
-            ]);
+            // Build signed URL with signature as route parameter
+            $signedUrl = "api/v1/pdf/stream/{$signature}";
 
             return $this->sendResponse([
                 'signed_url' => $signedUrl,
@@ -137,14 +121,36 @@ class SignedPdfController extends AppBaseController
      * @param Request $request
      * @return mixed
      */
-    public function streamPdf(Request $request)
+    public function streamPdf(Request $request, $signature)
     {
         try {
-            // Get the PDF route from middleware
-            $routeName = $request->attributes->get('pdf_route');
+            // Decrypt and validate the signature
+            $payload = $this->decryptAndValidateSignature($signature);
             
-            if (!$routeName) {
-                return response()->json(['error' => 'Invalid PDF route'], 403);
+            if (!$payload) {
+                return response()->json(['error' => 'Invalid or expired signature'], 403);
+            }
+
+            $routeName = $payload['route'];
+            $params = $payload['params'] ?? [];
+
+            // Validate route is allowed
+            $allowedRoutes = $this->getAllowedPdfRoutes();
+            if (!in_array($routeName, $allowedRoutes)) {
+                return response()->json(['error' => 'Unauthorized route'], 403);
+            }
+
+            // Add original parameters to request
+            $request->merge($params);
+
+            // Set language locale if available (replaces print_lang middleware)
+            if (isset($params['lang']) && !empty($params['lang'])) {
+                app()->setLocale($params['lang']);
+            }
+
+            // Set user context if available
+            if (isset($payload['user_id']) && $payload['user_id']) {
+                $request->attributes->add(['authenticated_user_id' => $payload['user_id']]);
             }
 
             // Map route names to controller methods
@@ -165,22 +171,65 @@ class SignedPdfController extends AppBaseController
             return $controller->$method($request);
 
         } catch (\Exception $e) {
+            Log::error('Error streaming PDF with signature: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to generate PDF'], 500);
         }
     }
 
     /**
-     * Generate signature for URL validation
+     * Generate encrypted signature containing all payload data
      *
-     * @param string $token
-     * @param int $expires
-     * @param array $urlData
+     * @param array $payload
      * @return string
      */
-    private function generateSignature($token, $expires, $urlData)
+    private function generateEncryptedSignature($payload)
     {
-        $payload = $token . $expires . serialize($urlData);
-        return hash_hmac('sha256', $payload, config('app.key'));
+        // Encrypt the entire payload using Laravel's encryption
+        $encrypted = encrypt(json_encode($payload));
+        
+        // URL-safe base64 encode for use in route
+        return rtrim(strtr(base64_encode($encrypted), '+/', '-_'), '=');
+    }
+
+    /**
+     * Decrypt and validate signature
+     *
+     * @param string $signature
+     * @return array|null
+     */
+    private function decryptAndValidateSignature($signature)
+    {
+        try {
+            // Decode the URL-safe base64
+            $padding = 4 - strlen($signature) % 4;
+            if ($padding < 4) {
+                $signature .= str_repeat('=', $padding);
+            }
+            $encrypted = base64_decode(strtr($signature, '-_', '+/'));
+            
+            if (!$encrypted) {
+                return null;
+            }
+
+            // Decrypt the payload
+            $decrypted = decrypt($encrypted);
+            $payload = json_decode($decrypted, true);
+
+            if (!is_array($payload) || !isset($payload['expires'], $payload['route'])) {
+                return null;
+            }
+
+            // Check expiration
+            if (time() > $payload['expires']) {
+                return null;
+            }
+
+            return $payload;
+
+        } catch (\Exception $e) {
+            Log::warning('Failed to decrypt signature: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -240,45 +289,6 @@ class SignedPdfController extends AppBaseController
         ];
     }
 
-    /**
-     * Track active token for cleanup job
-     */
-    private function trackActiveToken($token)
-    {
-        try {
-            $activeTokens = Cache::get('signed_pdf_active_tokens', []);
-            
-            // Add new token
-            $activeTokens[] = $token;
-            
-            // Remove duplicates and limit size
-            $activeTokens = array_unique($activeTokens);
-            if (count($activeTokens) > 1000) {
-                $activeTokens = array_slice($activeTokens, -1000);
-                Log::info('Active tokens list trimmed to 1000 entries');
-            }
-            
-            // Store with 24 hour TTL
-            Cache::put('signed_pdf_active_tokens', array_values($activeTokens), 60 * 24);
-            
-        } catch (\Exception $e) {
-            Log::warning('Failed to track active token: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Schedule cleanup of expired signed URL tokens using background job
-     */
-    private function scheduleCleanup()
-    {
-        if (rand(1, 100) <= 10) {
-            try {
-                CleanExpiredSignedPdfUrls::dispatch()->delay(now()->addMinutes(1));
-            } catch (\Exception $e) {
-                Log::error('Failed to schedule signed PDF URL cleanup job: ' . $e->getMessage());
-            }
-        }
-    }
 
     /**
      * Get mapping of PDF routes to their controllers

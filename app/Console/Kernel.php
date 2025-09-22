@@ -90,11 +90,6 @@ class Kernel extends ConsoleKernel
             ->hourly()
             ->between('00:00', '12:00')
             ->withoutOverlapping();
-
-        // Clean expired signed PDF URL cache entries every 6 hours
-        $schedule->command('pdf:clean-cache')
-            ->cron('0 */6 * * *')
-            ->withoutOverlapping();
     }
 
     /**
