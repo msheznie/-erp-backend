@@ -86,7 +86,7 @@
             @if (!empty($revenueTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: right">
-                        <b style="text-align: right;"> Total:</b>
+                        <b style="text-align: right;"> {{ trans('custom.total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($revenueTotal['Jan']) ? number_format($revenueTotal['Jan'], $decimalPlace) : 0}}
@@ -185,7 +185,7 @@
             @if (!empty($collectionTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: right">
-                        <b style="text-align: right;">Total:</b>
+                        <b style="text-align: right;">{{ trans('custom.total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($collectionTotal['Jan']) ? number_format($collectionTotal['Jan'], $decimalPlace) : 0}}

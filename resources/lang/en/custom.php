@@ -9003,20 +9003,9 @@ return [
     'secondary_refno' => 'Secondary Ref No',
 
     'short_code' => 'Short Code',
-    'bank_name' => 'Bank Name',
-    'currency' => 'Currency',
-    'account_no' => 'Account No',
-    'gl_code' => 'GL Code',
     'bank_branch' => 'Bank Branch',
-    'swift_code' => 'Swift Code',
-    'bank_balance' => 'Bank Balance',
     'with_treasury_amount' => 'With Treasury Amount',
     'net_bank_balance' => 'Net Bank Balance',
-    'status' => 'Status',
-    'active' => 'Active',
-    'not_active' => 'Not Active',
-    'description' => 'Description',
-    'account' => 'Account',
     'start_cheque_no' => 'Start Cheque No',
     'end_cheque_no' => 'End Cheque No',
     'no_of_cheques' => 'No Of Cheques',
@@ -9024,8 +9013,11 @@ return [
     'all' => 'All',
     'unused' => 'Un used',
     'used' => 'Used',
-    'cancelled' => 'Cancelled',
     'brc_code' => 'BRC Code',
+    'contract_id' => 'Contract ID',
+    'aged_days' => 'Aged Days',
+    'outstanding' => 'Outstanding',
+    'receipt_matching_brvno' => 'Receipt Matching/BRVNo',
     'currency' => 'Currency',
     'as_of' => 'As of',
     'month' => 'Month',
@@ -9063,15 +9055,15 @@ return [
     'maximum_size_allow_upload_20mb' => 'The maximum size allow to upload is 20 MB',
     'please_cancel_asset_costing_upload' => 'Please cancel the asset costing upload',
     'unable_to_export_excel_general' => 'Unable to export excel',
-    
+
     // Fixed Asset Category API Controller translations
     'asset_code_already_exists' => 'Asset code :code already exists',
     'asset_category_description_already_exists' => 'Asset category description :description already exists',
-    
+
     // Fixed Asset Category Sub API Controller translations
     'asset_sub_code_already_exists' => 'Asset sub code :code already exists',
     'asset_sub_category_description_already_exists' => 'Asset sub category description :description already exists',
-    
+
     // Fixed Asset Depreciation Master API Controller translations
     'depreciation_processed_only_for_assets_no_depreciation_recorded' => 'Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month',
     'assets_not_added_depreciation_linked_disposal' => 'The following assets will not be added to depreciation as they are linked to Disposal',
@@ -9081,10 +9073,10 @@ return [
     'unapproved_depreciation_running_confirm_proceed' => 'There is a unapproved depreciation running. please confirm and proceed',
     'depreciation_still_running' => 'Depreciation is still running',
     'fixed_asset_depreciation_master_updated_successfully' => 'FixedAssetDepreciationMaster updated successfully',
-    
+
     // Fixed Asset Insurance Detail API Controller translations
     'date_of_expiry_cannot_be_less_than_date_of_insurance' => 'Date of expiry cannot be less than Date of insurance',
-    
+
     // Asset Disposal Master API Controller translations
     'chart_of_account_disposal_type_not_assigned_company' => 'Chart of account for selected disposal type is not assigned to company',
     'inter_company_sales_chart_not_assigned_from_company' => 'Inter company sales chart of account is not assigned to - From company',
@@ -9092,26 +9084,26 @@ return [
     'to_company_finance_year_not_found' => 'To company finance year is not found',
     'to_company_finance_period_not_found' => 'To company finance period is not found',
     'reporting_currency_from_company_not_assign_supplier_to_company' => 'Reporting currency of from company is not assign to the supplier of To company',
-    
+
     // Asset Finance Category API Controller translations
     'please_select_serialization' => 'Please select a serialization',
     'cannot_assign_serialization_method_other_category_assigned' => 'You can assign this serialization method. because Other category serialization are assigned as Company level/ Department Level',
-    
+
     // Asset Verification API Controller translations
     'cannot_remove_asset' => 'You can\'t remove this asset',
-    
+
     // Asset Type Translation API Controller translations
     'asset_type_translation_not_found' => 'Asset Type Translation not found',
-    
+
     // Document Approved API Controller translations
     'no_documents_to_approve' => 'There are no documents to approve',
     'job_still_processing' => 'Job is still processing !',
     'no_document_to_reject' => 'There is no document to reject',
-    
+
     // ERP Asset Transfer Detail API Controller translations
     'please_add_atleast_one_item_to_proceed' => 'please add atleast one item to proceed',
     'line_no_from_location_and_to_location_cannot_be_same' => 'Line No :lineNo From Location And To Location Cannot be same',
-    
+
     // ERP Asset Transfer API Controller translations
     'transfer_should_have_at_least_one_record' => 'Transfer should have at least one record',
     'document_date_field_is_required' => 'Document date field is required.',

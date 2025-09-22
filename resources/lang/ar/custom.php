@@ -8897,20 +8897,9 @@ return [
     'net_amountRpt' => 'المبلغ الصافي',
     'secondary_refno' => 'الرقم المرجعي الثانوي',
     'short_code' => 'الرمز المختصر',
-    'bank_name' => 'اسم البنك',
-    'currency' => 'العملة',
-    'account_no' => 'رقم الحساب',
-    'gl_code' => 'رمز دفتر الأستاذ',
     'bank_branch' => 'فرع البنك',
-    'swift_code' => 'رمز السويفت',
-    'bank_balance' => 'رصيد البنك',
     'with_treasury_amount' => 'المبلغ مع الخزينة',
     'net_bank_balance' => 'صافي رصيد البنك',
-    'status' => 'الحالة',
-    'active' => 'نشط',
-    'not_active' => 'غير نشط',
-    'description' => 'الوصف',
-    'account' => 'الحساب',
     'start_cheque_no' => 'رقم الشيك الأول',
     'end_cheque_no' => 'رقم الشيك الأخير',
     'no_of_cheques' => 'عدد الشيكات',
@@ -8918,8 +8907,11 @@ return [
     'all' => 'الكل',
     'unused' => 'غير مستخدم',
     'used' => 'مستخدم',
-    'cancelled' => 'ملغي',
     'brc_code' => 'رمز تسوية البنك',
+    'contract_id' => 'معرف العقد',
+    'aged_days' => 'أيام التقادم',
+    'outstanding' => 'المستحق',
+    'receipt_matching_brvno' => 'مطابقة الإيصال/رقم BRV',
     'month' => 'الشهر',
     'year' => 'السنة',
     'as_of' => 'اعتباراً من',
@@ -8961,15 +8953,15 @@ return [
      'maximum_size_allow_upload_20mb' => 'الحد الأقصى المسموح برفعه هو 20 ميجابايت',
      'please_cancel_asset_costing_upload' => 'يرجى إلغاء رفع تكلفة الأصل',
      'unable_to_export_excel_general' => 'غير قادر على تصدير ملف Excel',
-     
+
      // Fixed Asset Category API Controller translations
      'asset_code_already_exists' => 'رمز الأصل :code موجود بالفعل',
      'asset_category_description_already_exists' => 'وصف فئة الأصل :description موجود بالفعل',
-     
+
      // Fixed Asset Category Sub API Controller translations
      'asset_sub_code_already_exists' => 'رمز الأصل الفرعي :code موجود بالفعل',
      'asset_sub_category_description_already_exists' => 'وصف فئة الأصل الفرعية :description موجود بالفعل',
-     
+
      // Fixed Asset Depreciation Master API Controller translations
      'depreciation_processed_only_for_assets_no_depreciation_recorded' => 'سيتم معالجة الاستهلاك فقط للأصول التي لم يتم تسجيل استهلاك لها للسنة والشهر المحددين',
      'assets_not_added_depreciation_linked_disposal' => 'الأصول التالية لن يتم إضافتها للاستهلاك لأنها مرتبطة بالتخلص',
@@ -8979,10 +8971,10 @@ return [
      'unapproved_depreciation_running_confirm_proceed' => 'هناك استهلاك غير موافق عليه قيد التشغيل. يرجى التأكيد والمتابعة',
      'depreciation_still_running' => 'الاستهلاك لا يزال قيد التشغيل',
      'fixed_asset_depreciation_master_updated_successfully' => 'تم تحديث سيد استهلاك الأصول الثابتة بنجاح',
-     
+
      // Fixed Asset Insurance Detail API Controller translations
      'date_of_expiry_cannot_be_less_than_date_of_insurance' => 'تاريخ الانتهاء لا يمكن أن يكون أقل من تاريخ التأمين',
-     
+
      // Asset Disposal Master API Controller translations
      'chart_of_account_disposal_type_not_assigned_company' => 'دليل الحسابات لنوع التخلص المحدد غير مخصص للشركة',
      'inter_company_sales_chart_not_assigned_from_company' => 'دليل حسابات المبيعات بين الشركات غير مخصص - من الشركة',
@@ -8990,26 +8982,26 @@ return [
      'to_company_finance_year_not_found' => 'السنة المالية للشركة المستهدفة غير موجودة',
      'to_company_finance_period_not_found' => 'الفترة المالية للشركة المستهدفة غير موجودة',
      'reporting_currency_from_company_not_assign_supplier_to_company' => 'عملة التقارير للشركة المصدرة غير مخصصة لمورد الشركة المستهدفة',
-     
+
      // Asset Finance Category API Controller translations
      'please_select_serialization' => 'يرجى تحديد التسلسل',
      'cannot_assign_serialization_method_other_category_assigned' => 'لا يمكنك تعيين طريقة التسلسل هذه. لأن تسلسل فئة أخرى معين على مستوى الشركة/ مستوى القسم',
-     
+
      // Asset Verification API Controller translations
      'cannot_remove_asset' => 'لا يمكنك إزالة هذا الأصل',
-     
+
      // Asset Type Translation API Controller translations
      'asset_type_translation_not_found' => 'ترجمة نوع الأصل غير موجودة',
-     
+
      // Document Approved API Controller translations
      'no_documents_to_approve' => 'لا توجد مستندات للموافقة عليها',
      'job_still_processing' => 'المهمة لا تزال قيد المعالجة !',
      'no_document_to_reject' => 'لا يوجد مستند للرفض',
-     
+
      // ERP Asset Transfer Detail API Controller translations
      'please_add_atleast_one_item_to_proceed' => 'يرجى إضافة عنصر واحد على الأقل للمتابعة',
      'line_no_from_location_and_to_location_cannot_be_same' => 'رقم السطر :lineNo الموقع المصدر والموقع المستهدف لا يمكن أن يكونا نفس الشيء',
-     
+
      // ERP Asset Transfer API Controller translations
      'transfer_should_have_at_least_one_record' => 'يجب أن يحتوي النقل على سجل واحد على الأقل',
      'document_date_field_is_required' => 'حقل تاريخ المستند مطلوب.',
