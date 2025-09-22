@@ -9046,4 +9046,95 @@ return [
     'advance_payment_request_detail' => 'Advance Payment Request Detail',
     'you_cannot_return_back_to_amend_this_bank_transfer_upcoming_months_bank_transfer_is_already_created' => 'You cannot return back to amend this bank transfer. Upcoming months bank transfer is already created',
     'bank_ledger_PDF_report_has_been_sent_to_queue' => 'Bank Ledger PDF report has been sent to queue',
+    // Fixed Asset Master API Controller translations
+    'life_time_years_cannot_be_blank_or_zero' => 'Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed',
+    'asset_code_already_found' => 'Asset code is already found.',
+    'asset_code_not_configured' => 'Asset code is not configured.',
+    'unit_price_rpt_cant_be_zero_when_local_has_value' => 'Unit Price(Rpt) can\'t be Zero when Unit Price(Local) has a value',
+    'acc_depreciation_rpt_cant_be_zero_when_local_has_value' => 'Acc. Depreciation(Rpt) can\'t be Zero when Acc. Depreciation (Local) has a value',
+    'residual_value_rpt_cant_be_zero_when_local_has_value' => 'Residual Value(Rpt) can\'t be Zero when Residual Value(Local) has a value',
+    'acc_depreciation_local_cant_be_zero_when_rpt_has_value' => 'Acc. Depreciation(Local) can\'t be Zero when Acc. Depreciation (Rpt) has a value',
+    'residual_value_local_cant_be_zero_when_rpt_has_value' => 'Residual Value(Local) can\'t be Zero when Residual Value(Rpt) has a value',
+    'document_date_not_within_active_financial_period' => 'Document Date is not within the active Financial Period.',
+    'accumulated_depreciation_date_not_within_active_financial_period' => 'Accumulated Depreciation Date is not within the active Financial Period.',
+    'please_select_insert_value_to_field' => 'Please select/insert a value to field',
+    'please_select_a_file' => 'Please Select a File',
+    'this_type_file_not_allow_upload' => 'This type of file not allow to upload.you can only upload .xlsx (or) .xls',
+    'maximum_size_allow_upload_20mb' => 'The maximum size allow to upload is 20 MB',
+    'please_cancel_asset_costing_upload' => 'Please cancel the asset costing upload',
+    'unable_to_export_excel_general' => 'Unable to export excel',
+    
+    // Fixed Asset Category API Controller translations
+    'asset_code_already_exists' => 'Asset code :code already exists',
+    'asset_category_description_already_exists' => 'Asset category description :description already exists',
+    
+    // Fixed Asset Category Sub API Controller translations
+    'asset_sub_code_already_exists' => 'Asset sub code :code already exists',
+    'asset_sub_category_description_already_exists' => 'Asset sub category description :description already exists',
+    
+    // Fixed Asset Depreciation Master API Controller translations
+    'depreciation_processed_only_for_assets_no_depreciation_recorded' => 'Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month',
+    'assets_not_added_depreciation_linked_disposal' => 'The following assets will not be added to depreciation as they are linked to Disposal',
+    'assets_to_be_approved_sure_proceed' => 'There are assets to be approved. Are you sure you want to proceed ?',
+    'last_month_depreciation_not_approved' => 'Last month depreciation is not approved. Please approve it before you run for this month',
+    'no_asset_for_date_period_choose_different' => 'There is a no assest for this date period. please choose different date period',
+    'unapproved_depreciation_running_confirm_proceed' => 'There is a unapproved depreciation running. please confirm and proceed',
+    'depreciation_still_running' => 'Depreciation is still running',
+    'fixed_asset_depreciation_master_updated_successfully' => 'FixedAssetDepreciationMaster updated successfully',
+    
+    // Fixed Asset Insurance Detail API Controller translations
+    'date_of_expiry_cannot_be_less_than_date_of_insurance' => 'Date of expiry cannot be less than Date of insurance',
+    
+    // Asset Disposal Master API Controller translations
+    'chart_of_account_disposal_type_not_assigned_company' => 'Chart of account for selected disposal type is not assigned to company',
+    'inter_company_sales_chart_not_assigned_from_company' => 'Inter company sales chart of account is not assigned to - From company',
+    'please_configure_income_from_sales' => 'Please configure income from sales',
+    'to_company_finance_year_not_found' => 'To company finance year is not found',
+    'to_company_finance_period_not_found' => 'To company finance period is not found',
+    'reporting_currency_from_company_not_assign_supplier_to_company' => 'Reporting currency of from company is not assign to the supplier of To company',
+    
+    // Asset Finance Category API Controller translations
+    'please_select_serialization' => 'Please select a serialization',
+    'cannot_assign_serialization_method_other_category_assigned' => 'You can assign this serialization method. because Other category serialization are assigned as Company level/ Department Level',
+    
+    // Asset Verification API Controller translations
+    'cannot_remove_asset' => 'You can\'t remove this asset',
+    
+    // Asset Type Translation API Controller translations
+    'asset_type_translation_not_found' => 'Asset Type Translation not found',
+    
+    // Document Approved API Controller translations
+    'no_documents_to_approve' => 'There are no documents to approve',
+    'job_still_processing' => 'Job is still processing !',
+    'no_document_to_reject' => 'There is no document to reject',
+    
+    // ERP Asset Transfer Detail API Controller translations
+    'please_add_atleast_one_item_to_proceed' => 'please add atleast one item to proceed',
+    'line_no_from_location_and_to_location_cannot_be_same' => 'Line No :lineNo From Location And To Location Cannot be same',
+    
+    // ERP Asset Transfer API Controller translations
+    'transfer_should_have_at_least_one_record' => 'Transfer should have at least one record',
+    'document_date_field_is_required' => 'Document date field is required.',
+    'narration_field_is_required' => 'Narration field is required.',
+    'type_field_is_required' => 'Type field is required.',
+    'reference_no_is_required' => 'Reference No is required.',
+    'location_no_is_required' => 'Location No is required.',
+    'segment_is_required' => 'Segment is required.',
+    'location_is_required' => 'Location is required.',
+    'asset_transfer_updated_successfully' => 'Asset Transfer updated successfully',
+    'asset_request_transfer_data' => 'Asset Request Transfer data',
+    'policy_not_found_for_this_document' => 'Policy not found for this document',
+    'reopened' => 'Reopened',
+    'transfer_type' => 'Transfer Type',
+    'document_date_formatted' => 'Document Date Formatted',
+    'asset_request_type_not_found' => 'Asset Request type not found',
+    'asset_transferred_to_department_and_still_not_acknowledged' => 'Asset transferred to department and still not acknowledged',
+    'asset_transferred_and_acknowledged_already_for_this_employee' => 'Asset transferred and acknowdged already for this employee',
+    'asset_transferred_and_still_not_acknowledged_for_this_employee' => 'Asset transferred and still not acknowledged for this employee',
+    'asset_transferred_and_still_not_acknowledged' => 'Asset transferred and still not acknowledged',
+    'asset_transferred_successfully' => 'Asset transferred successfully',
+    'asset_transferred_to_employee_and_still_not_acknowledged' => 'Asset transferred to employee and still not acknowledged',
+    'asset_already_transferred_to_this_department' => 'Asset already transferred to this department',
+    'asset_transferred_and_still_not_acknowledged_to_this_department' => 'Asset transferred and still not acknowledged to this department',
+    'asset_transferred_successfully_caps' => 'Asset Transferred successfully'
 ];

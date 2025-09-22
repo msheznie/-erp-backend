@@ -166,7 +166,7 @@ class AssetTypeTranslationAPIController extends AppBaseController
         $assetTypeTranslation = $this->assetTypeTranslationRepository->findWithoutFail($id);
 
         if (empty($assetTypeTranslation)) {
-            return $this->sendError('Asset Type Translation not found');
+            return $this->sendError(trans('custom.asset_type_translation_not_found'));
         }
 
         return $this->sendResponse($assetTypeTranslation->toArray(), 'Asset Type Translation retrieved successfully');
@@ -235,7 +235,7 @@ class AssetTypeTranslationAPIController extends AppBaseController
         $assetTypeTranslation = $this->assetTypeTranslationRepository->findWithoutFail($id);
 
         if (empty($assetTypeTranslation)) {
-            return $this->sendError('Asset Type Translation not found');
+            return $this->sendError(trans('custom.asset_type_translation_not_found'));
         }
 
         $assetTypeTranslation = $this->assetTypeTranslationRepository->update($input, $id);
@@ -288,7 +288,7 @@ class AssetTypeTranslationAPIController extends AppBaseController
         $assetTypeTranslation = $this->assetTypeTranslationRepository->findWithoutFail($id);
 
         if (empty($assetTypeTranslation)) {
-            return $this->sendError('Asset Type Translation not found');
+            return $this->sendError(trans('custom.asset_type_translation_not_found'));
         }
 
         $assetTypeTranslation->delete();

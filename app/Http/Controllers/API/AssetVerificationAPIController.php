@@ -393,7 +393,7 @@ class AssetVerificationAPIController extends AppBaseController
         $assetVerification = $this->assetVerificationRepository->findWithoutFail($id);
 
         if ($assetVerification['approved']) {
-            return $this->sendError('You can\'t remove this asset');
+            return $this->sendError(trans('custom.cannot_remove_asset'));
         }
 
         if (empty($assetVerification)) {

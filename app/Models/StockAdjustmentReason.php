@@ -55,7 +55,7 @@ class StockAdjustmentReason extends Model
      */
     public function translations()
     {
-        return $this->hasMany(StockAdjustmentReasonTranslation::class, 'reasonID', 'id');
+        return $this->hasMany(StockAdjustmentReasonLanguage::class, 'reasonID', 'id');
     }
 
     /**

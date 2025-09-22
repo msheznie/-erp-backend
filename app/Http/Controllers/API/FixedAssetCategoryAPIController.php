@@ -131,14 +131,14 @@ class FixedAssetCategoryAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catCode', '=', $input['catCode'])->first();
         if (!empty($assetCatCodeExist)) {
-            return $this->sendError('Asset code ' . $input['catCode'] . ' already exists');
+            return $this->sendError(trans('custom.asset_code_already_exists', ['code' => $input['catCode']]));
         }
 
         $assetCatDesExist = FixedAssetCategory::select('faCatID')
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catDescription', '=', $input['catDescription'])->first();
         if (!empty($assetCatDesExist)) {
-            return $this->sendError('Asset category description ' . $input['catDescription'] . ' already exists');
+            return $this->sendError(trans('custom.asset_category_description_already_exists', ['description' => $input['catDescription']]));
         }
 
 
@@ -282,7 +282,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catCode', '=', $input['catCode'])->first();
         if (!empty($assetCatCodeExist)) {
-            return $this->sendError('Asset code ' . $input['catCode'] . ' already exists');
+            return $this->sendError(trans('custom.asset_code_already_exists', ['code' => $input['catCode']]));
         }
 
         $assetCatDesExist = FixedAssetCategory::select('faCatID')
@@ -290,7 +290,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catDescription', '=', $input['catDescription'])->first();
         if (!empty($assetCatDesExist)) {
-            return $this->sendError('Asset category description ' . $input['catDescription'] . ' already exists');
+            return $this->sendError(trans('custom.asset_category_description_already_exists', ['description' => $input['catDescription']]));
         }
 
 

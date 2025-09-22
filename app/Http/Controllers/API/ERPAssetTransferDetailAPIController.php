@@ -186,7 +186,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $this->eRPAssetTransferDetailRepository->insert($data);
             return $this->sendResponse(['id' => $id], trans('custom.asset_transfer_detail_saved_successfully'));
         } else {
-            return $this->sendError('please add atleast one item to proceed');
+            return $this->sendError(trans('custom.please_add_atleast_one_item_to_proceed'));
         }
     }
 
@@ -429,7 +429,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             foreach ($input as $item => $value) {
                 if($input[0]['isDirectToEmployee']) {
                     if ($value['from_emp'][0] == $value['to_emp']) {
-                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                        return $this->sendError(trans('custom.line_no_from_location_and_to_location_cannot_be_same', ['lineNo' => $x]));
                     } else {
     
                         $data[] = [
@@ -451,7 +451,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     }
                 }else {
                     if ($value['from_location'][0] == $value['to_location']) {
-                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                        return $this->sendError(trans('custom.line_no_from_location_and_to_location_cannot_be_same', ['lineNo' => $x]));
                     } else {
     
                         $data[] = [

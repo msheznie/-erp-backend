@@ -114,7 +114,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+            'dateOfExpiry.after_or_equal' => trans('custom.date_of_expiry_cannot_be_less_than_date_of_insurance'),
         ];
         $validator = \Validator::make($request->all(), [
             'dateOfInsurance' => 'required|date',
@@ -253,7 +253,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+            'dateOfExpiry.after_or_equal' => trans('custom.date_of_expiry_cannot_be_less_than_date_of_insurance'),
         ];
         $validator = \Validator::make($request->all(), [
             'dateOfInsurance' => 'required|date',

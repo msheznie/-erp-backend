@@ -233,14 +233,14 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
 
             
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+                return $this->sendError(trans('custom.life_time_years_cannot_be_blank_or_zero'), 500);
             }
 
 
@@ -315,11 +315,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                                                                      ->first();
 
                             if ($checkForDuplicateCode) {
-                                return $this->sendError("Asset code is already found.", 500);
+                                return $this->sendError(trans('custom.asset_code_already_found'), 500);
                             }
 
                         } else {
-                            return $this->sendError("Asset code is not configured.", 500);
+                            return $this->sendError(trans('custom.asset_code_not_configured'), 500);
                         }
 
                         if ($input['assetSerialNo'][0]['faUnitSerialNo']) {
@@ -415,11 +415,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                                                     ->first();
 
                                                 if ($checkForDuplicateCode) {
-                                                    return $this->sendError("Asset code is already found.", 500);
+                                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
                                                 }
 
                                             } else {
-                                                return $this->sendError("Asset code is not configured.", 500);
+                                                return $this->sendError(trans('custom.asset_code_not_configured'), 500);
                                             }
                                         }
                                     }
@@ -657,7 +657,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $accDepreciationDate = new DateTime($input['accumulated_depreciation_date']);
             
             if($accDepreciationDate > $endOfDepreciationDate) {
-                return $this->sendError("Accumulated depreciation date cannot be later than the asset end date.", 500);
+                return $this->sendError(trans('custom.accumulated_depreciation_date_cannot_be_later_than'), 500);
             }
         }
      
@@ -680,7 +680,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if(isset($input['assetType']) && $input['assetType'] == 1){
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+                return $this->sendError(trans('custom.life_time_years_cannot_be_blank_or_zero'), 500);
             }
         } else {
             if(isset($input['depMonth']) && $input['depMonth'] == ''){
@@ -775,7 +775,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
                 if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -867,19 +867,19 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
                 if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
-                    return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+                    return $this->sendError(trans('custom.unit_price_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
             if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
                 if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
-                    return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
+                    return $this->sendError(trans('custom.acc_depreciation_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
             if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
                 if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
-                    return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
+                    return $this->sendError(trans('custom.residual_value_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
@@ -892,13 +892,13 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
                 if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
-                    return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
+                    return $this->sendError(trans('custom.acc_depreciation_local_cant_be_zero_when_rpt_has_value'),500);
                 }
             }
 
             if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
                 if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
-                    return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
+                    return $this->sendError(trans('custom.residual_value_local_cant_be_zero_when_rpt_has_value'),500);
                 }
             }
 
@@ -924,10 +924,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                         if($documentDateYearActive) {
                             $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['documentDate']->format('Y-m-d'));
                             if(!$documentDateMonthActive) {
-                                return $this->sendError('Document Date is not within the active Financial Period.',500);
+                                return $this->sendError(trans('custom.document_date_not_within_active_financial_period'),500);
                             }
                         } else {
-                            return $this->sendError('Document Date is not within the active Financial Period.',500);
+                            return $this->sendError(trans('custom.document_date_not_within_active_financial_period'),500);
                         }
                     }
                 }
@@ -938,10 +938,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                         if($accumulatedDateYearActive) {
                             $accumulatedMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['accumulated_depreciation_date']->format('Y-m-d'));
                             if(!$accumulatedMonthActive) {
-                                return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                                return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'),500);
                             }
                         } else {
-                            return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                            return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'),500);
                         }
                     }
                 }
@@ -1441,7 +1441,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         if($input['value'] == null && $input['action'] == 1){
-            return $this->sendError('Please select/insert a value to field');
+            return $this->sendError(trans('custom.please_select_insert_value_to_field'));
         }
 
         if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
@@ -2039,7 +2039,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 if($input['assetExcelUpload']== null){
-                    return $this->sendError('Please Select a File',500);
+                    return $this->sendError(trans('custom.please_select_a_file'),500);
                 }
 
 
@@ -2056,11 +2056,11 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 if (!in_array($extension, $allowedExtensions))
                 {
-                    return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                    return $this->sendError(trans('custom.this_type_file_not_allow_upload'),500);
                 }
 
                 if ($size > 20000000) {
-                    return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                    return $this->sendError(trans('custom.maximum_size_allow_upload_20mb'),500);
                 }
 
                 $employee = \Helper::getEmployeeInfo();
@@ -2140,7 +2140,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $deleteCondition = UploadAssetCosting::where('id', $request->assetCostingUploadID)->first();
         if($deleteCondition->uploadStatus == -1){
-            return $this->sendError('Please cancel the asset costing upload');
+            return $this->sendError(trans('custom.please_cancel_asset_costing_upload'));
         }
 
         if($deleteCondition->uploadStatus == 1){
@@ -2330,7 +2330,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel_general'));
         }
         else
         {

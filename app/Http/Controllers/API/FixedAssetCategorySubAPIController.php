@@ -138,14 +138,14 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('suCatCode', '=', $input['suCatCode'])->first();
         if (!empty($assetCatCodeSubExist)) {
-            return $this->sendError('Asset sub code ' . $input['suCatCode'] . ' already exists');
+            return $this->sendError(trans('custom.asset_sub_code_already_exists', ['code' => $input['suCatCode']]));
         }
 
         $assetCatDesSubExist = FixedAssetCategorySub::select('faCatSubID')
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catDescription', '=', $input['catDescription'])->first();
         if (!empty($assetCatDesSubExist)) {
-            return $this->sendError('Asset sub category description ' . $input['catDescription'] . ' already exists');
+            return $this->sendError(trans('custom.asset_sub_category_description_already_exists', ['description' => $input['catDescription']]));
         }
 
         $input['mainCatDescription'] = $fixedAssetCategory->catDescription;
@@ -289,7 +289,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('suCatCode', '=', $input['suCatCode'])->first();
         if (!empty($assetCatCodeSubExist)) {
-            return $this->sendError('Asset sub code ' . $input['suCatCode'] . ' already exists');
+            return $this->sendError(trans('custom.asset_sub_code_already_exists', ['code' => $input['suCatCode']]));
         }
 
         $assetCatDesSubExist = FixedAssetCategorySub::select('faCatSubID')
@@ -297,7 +297,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             ->where('companySystemID', '=', $input['companySystemID'])
             ->where('catDescription', '=', $input['catDescription'])->first();
         if (!empty($assetCatDesSubExist)) {
-            return $this->sendError('Asset sub category description ' . $input['catDescription'] . ' already exists');
+            return $this->sendError(trans('custom.asset_sub_category_description_already_exists', ['description' => $input['catDescription']]));
         }
 
         $input['mainCatDescription'] = $fixedAssetCategory->catDescription;

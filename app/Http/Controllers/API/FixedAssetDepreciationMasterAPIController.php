@@ -185,7 +185,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                 if(($depeciatedAssets) > 0 && $input['depAssets'])
                 {
-                    return $this->sendError('Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month', 300,['type' => 'depreciatedAssets']);
+                    return $this->sendError(trans('custom.depreciation_processed_only_for_assets_no_depreciation_recorded'), 300,['type' => 'depreciatedAssets']);
                 }   
                 
                 $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
@@ -239,7 +239,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     </table>';
 
 
-                    return $this->sendError("The following assets will not be added to depreciation as they are linked to Disposal </br></br>  $body  </br> Are you sure you want to proceed ?", 300,['type' => 'dispoasalAsset']);
+                    return $this->sendError(trans('custom.assets_not_added_depreciation_linked_disposal') . ' </br></br>  $body  </br> Are you sure you want to proceed ?', 300,['type' => 'dispoasalAsset']);
 
                 }
 
@@ -247,7 +247,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                 if(count($unconfirmedAssest) > 0 && $input['unConfirm'])
                 {
-                    return $this->sendError('There  are assets to be approved. Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
+                    return $this->sendError(trans('custom.assets_to_be_approved_sure_proceed'), 300,['type' => 'UnconfirmAsset']);
                 }    
                 
                 $assest_fixds =  $this->getAssests($doc_date->dateTo,-1,$input['companySystemID']);
@@ -331,7 +331,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     
                 if (!empty($lastMonthRun)) {
                     if ($lastMonthRun->approved == 0) {
-                        return $this->sendError('Last month depreciation is not approved. Please approve it before you run for this month', 500);
+                        return $this->sendError(trans('custom.last_month_depreciation_not_approved'), 500);
                     }
                 }
     
@@ -388,14 +388,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                }
                else{
 
-                return $this->sendError('There is a no assest for this date period. please choose different date period', 500);
+                return $this->sendError(trans('custom.no_asset_for_date_period_choose_different'), 500);
                }
                 
 
             }
             else
             {
-                return $this->sendError('There is a unapproved depreciation running. please confirm and proceed', 500);
+                return $this->sendError(trans('custom.unapproved_depreciation_running_confirm_proceed'), 500);
             }
 
         } catch (\Exception $exception) {
@@ -544,7 +544,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), trans('custom.fixed_asset_depreciation_master_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -602,7 +602,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         }
 
         if($fixedAssetDepreciationMaster->isDepProcessingYN == 0){
-            return $this->sendError('Depreciation is still running', 500);
+            return $this->sendError(trans('custom.depreciation_still_running'), 500);
         }
 
         $fixedAssetDepreciationMaster->delete();

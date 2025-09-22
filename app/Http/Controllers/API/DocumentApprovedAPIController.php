@@ -3975,11 +3975,11 @@ WHERE
         $grvMaster = GRVMaster::find($grv_id);
         if(count($results) == 0)
         {
-            return $this->sendError('There are no documents to approve');
+            return $this->sendError(trans('custom.no_documents_to_approve'));
         }
 
         if(!empty($grvMaster) && $grvMaster->isProcessing == -1) {
-            return $this->sendError('Job is still processing !', 500,['type' => 'processing']);
+            return $this->sendError(trans('custom.job_still_processing'), 500,['type' => 'processing']);
         }
 
         GRVMaster::where('grvAutoID', $grv_id)->update(['isProcessing' => -1]);
@@ -4011,7 +4011,7 @@ WHERE
 		$results = $this->getPendingData($companyId,$grv_id); 
 		if(count($results) == 0)
 		{
-			return $this->sendError('There is no document to reject');
+			return $this->sendError(trans('custom.no_document_to_reject'));
 		}
 
 		foreach($results as $result)

@@ -382,7 +382,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             if(!isset($masterData))
             {
-                return $this->sendError('Chart of account for selected disposal type is not assigned to company', 500);
+                return $this->sendError(trans('custom.chart_of_account_disposal_type_not_assigned_company'), 500);
             }
            
 
@@ -460,7 +460,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                     $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkDisposalType->chartOfAccountID, $assetDisposalMaster->companySystemID);
                     if (!$checkGLIsAssigned) {
-                        return $this->sendError('Inter company sales chart of account is not assigned to - From company', 500);
+                        return $this->sendError(trans('custom.inter_company_sales_chart_not_assigned_from_company'), 500);
                     }
 
                     //For customer check
@@ -507,7 +507,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($assetDisposalMaster->companySystemID, $assetDisposalMaster->documentSystemID, "asset-disposal-inter-company-sales");
 
                     if (is_null($checkRevenueAc)) {
-                        return $this->sendError('Please configure income from sales', 500);
+                        return $this->sendError(trans('custom.please_configure_income_from_sales'), 500);
                     }
 
 
@@ -519,7 +519,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         ->first();
 
                     if (!$fromCompanyFinanceYear) {
-                        return $this->sendError("To company finance year is not found", 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.to_company_finance_year_not_found'), 500, ['type' => 'confirm']);
                     }
 
                     $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $assetDisposalMaster->toCompanySystemID)
@@ -530,7 +530,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                                                                     ->first();
 
                     if (!$fromCompanyFinancePeriod) {
-                        return $this->sendError("To company finance period is not found", 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.to_company_finance_period_not_found'), 500, ['type' => 'confirm']);
                     }
 
                     $fromCompanyData = Company::find($company_id);
@@ -542,7 +542,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                                                                  ->first();
 
                         if (!$checkSupplierCurrency) {
-                            return $this->sendError("Reporting currency of from company is not assign to the supplier of To company", 500, ['type' => 'confirm']);
+                            return $this->sendError(trans('custom.reporting_currency_from_company_not_assign_supplier_to_company'), 500, ['type' => 'confirm']);
                         }
                     }
                 }

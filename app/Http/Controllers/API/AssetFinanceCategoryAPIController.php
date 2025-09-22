@@ -419,11 +419,11 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
             
             if ($serializationBasedOn == 0) {
-                return $this->sendError('Please select a serialization');
+                return $this->sendError(trans('custom.please_select_serialization'));
             }
 
             if (!empty($serializationCatExist) && (($serializationCatExist->serializationBasedOn != $serializationBasedOn))) {
-                return $this->sendError('You can assign this serialization method. because Other category serialization are assigned as Company level/ Department Level');
+                return $this->sendError(trans('custom.cannot_assign_serialization_method_other_category_assigned'));
             }
 
 

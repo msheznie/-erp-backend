@@ -8944,4 +8944,95 @@ return [
     'advance_payment_request_detail' => 'تقرير تفاصيل طلبات الدفع المقدم',
     'you_cannot_return_back_to_amend_this_bank_transfer_upcoming_months_bank_transfer_is_already_created' => 'لا يمكنك العودة لتعديل هذا التحويل البنكي. تم بالفعل إنشاء التحويل البنكي للشهر القادم.',
     'bank_ledger_PDF_report_has_been_sent_to_queue' => 'تم إرسال تقرير كشف حساب البنك (PDF) إلى قائمة الانتظار',
+     // Fixed Asset Master API Controller translations
+     'life_time_years_cannot_be_blank_or_zero' => 'لا يمكن أن تكون مدة الحياة بالسنوات فارغة أو صفر، يرجى تحديث مدة حياة الأصل للمتابعة',
+     'asset_code_already_found' => 'رمز الأصل موجود بالفعل.',
+     'asset_code_not_configured' => 'رمز الأصل غير مكون.',
+     'unit_price_rpt_cant_be_zero_when_local_has_value' => 'لا يمكن أن يكون سعر الوحدة (التقرير) صفراً عندما يكون سعر الوحدة (المحلي) له قيمة',
+     'acc_depreciation_rpt_cant_be_zero_when_local_has_value' => 'لا يمكن أن يكون الاستهلاك المتراكم (التقرير) صفراً عندما يكون الاستهلاك المتراكم (المحلي) له قيمة',
+     'residual_value_rpt_cant_be_zero_when_local_has_value' => 'لا يمكن أن تكون القيمة المتبقية (التقرير) صفراً عندما تكون القيمة المتبقية (المحلي) لها قيمة',
+     'acc_depreciation_local_cant_be_zero_when_rpt_has_value' => 'لا يمكن أن يكون الاستهلاك المتراكم (المحلي) صفراً عندما يكون الاستهلاك المتراكم (التقرير) له قيمة',
+     'residual_value_local_cant_be_zero_when_rpt_has_value' => 'لا يمكن أن تكون القيمة المتبقية (المحلي) صفراً عندما تكون القيمة المتبقية (التقرير) لها قيمة',
+     'document_date_not_within_active_financial_period' => 'تاريخ المستند ليس ضمن الفترة المالية النشطة.',
+     'accumulated_depreciation_date_not_within_active_financial_period' => 'تاريخ الاستهلاك المتراكم ليس ضمن الفترة المالية النشطة.',
+     'please_select_insert_value_to_field' => 'يرجى تحديد/إدخال قيمة للحقل',
+     'please_select_a_file' => 'يرجى تحديد ملف',
+     'this_type_file_not_allow_upload' => 'هذا النوع من الملفات غير مسموح برفعه. يمكنك رفع ملفات .xlsx أو .xls فقط',
+     'maximum_size_allow_upload_20mb' => 'الحد الأقصى المسموح برفعه هو 20 ميجابايت',
+     'please_cancel_asset_costing_upload' => 'يرجى إلغاء رفع تكلفة الأصل',
+     'unable_to_export_excel_general' => 'غير قادر على تصدير ملف Excel',
+     
+     // Fixed Asset Category API Controller translations
+     'asset_code_already_exists' => 'رمز الأصل :code موجود بالفعل',
+     'asset_category_description_already_exists' => 'وصف فئة الأصل :description موجود بالفعل',
+     
+     // Fixed Asset Category Sub API Controller translations
+     'asset_sub_code_already_exists' => 'رمز الأصل الفرعي :code موجود بالفعل',
+     'asset_sub_category_description_already_exists' => 'وصف فئة الأصل الفرعية :description موجود بالفعل',
+     
+     // Fixed Asset Depreciation Master API Controller translations
+     'depreciation_processed_only_for_assets_no_depreciation_recorded' => 'سيتم معالجة الاستهلاك فقط للأصول التي لم يتم تسجيل استهلاك لها للسنة والشهر المحددين',
+     'assets_not_added_depreciation_linked_disposal' => 'الأصول التالية لن يتم إضافتها للاستهلاك لأنها مرتبطة بالتخلص',
+     'assets_to_be_approved_sure_proceed' => 'هناك أصول تحتاج للموافقة. هل أنت متأكد من أنك تريد المتابعة؟',
+     'last_month_depreciation_not_approved' => 'استهلاك الشهر الماضي غير موافق عليه. يرجى الموافقة عليه قبل تشغيل هذا الشهر',
+     'no_asset_for_date_period_choose_different' => 'لا توجد أصول لهذه الفترة الزمنية. يرجى اختيار فترة زمنية مختلفة',
+     'unapproved_depreciation_running_confirm_proceed' => 'هناك استهلاك غير موافق عليه قيد التشغيل. يرجى التأكيد والمتابعة',
+     'depreciation_still_running' => 'الاستهلاك لا يزال قيد التشغيل',
+     'fixed_asset_depreciation_master_updated_successfully' => 'تم تحديث سيد استهلاك الأصول الثابتة بنجاح',
+     
+     // Fixed Asset Insurance Detail API Controller translations
+     'date_of_expiry_cannot_be_less_than_date_of_insurance' => 'تاريخ الانتهاء لا يمكن أن يكون أقل من تاريخ التأمين',
+     
+     // Asset Disposal Master API Controller translations
+     'chart_of_account_disposal_type_not_assigned_company' => 'دليل الحسابات لنوع التخلص المحدد غير مخصص للشركة',
+     'inter_company_sales_chart_not_assigned_from_company' => 'دليل حسابات المبيعات بين الشركات غير مخصص - من الشركة',
+     'please_configure_income_from_sales' => 'يرجى تكوين الدخل من المبيعات',
+     'to_company_finance_year_not_found' => 'السنة المالية للشركة المستهدفة غير موجودة',
+     'to_company_finance_period_not_found' => 'الفترة المالية للشركة المستهدفة غير موجودة',
+     'reporting_currency_from_company_not_assign_supplier_to_company' => 'عملة التقارير للشركة المصدرة غير مخصصة لمورد الشركة المستهدفة',
+     
+     // Asset Finance Category API Controller translations
+     'please_select_serialization' => 'يرجى تحديد التسلسل',
+     'cannot_assign_serialization_method_other_category_assigned' => 'لا يمكنك تعيين طريقة التسلسل هذه. لأن تسلسل فئة أخرى معين على مستوى الشركة/ مستوى القسم',
+     
+     // Asset Verification API Controller translations
+     'cannot_remove_asset' => 'لا يمكنك إزالة هذا الأصل',
+     
+     // Asset Type Translation API Controller translations
+     'asset_type_translation_not_found' => 'ترجمة نوع الأصل غير موجودة',
+     
+     // Document Approved API Controller translations
+     'no_documents_to_approve' => 'لا توجد مستندات للموافقة عليها',
+     'job_still_processing' => 'المهمة لا تزال قيد المعالجة !',
+     'no_document_to_reject' => 'لا يوجد مستند للرفض',
+     
+     // ERP Asset Transfer Detail API Controller translations
+     'please_add_atleast_one_item_to_proceed' => 'يرجى إضافة عنصر واحد على الأقل للمتابعة',
+     'line_no_from_location_and_to_location_cannot_be_same' => 'رقم السطر :lineNo الموقع المصدر والموقع المستهدف لا يمكن أن يكونا نفس الشيء',
+     
+     // ERP Asset Transfer API Controller translations
+     'transfer_should_have_at_least_one_record' => 'يجب أن يحتوي النقل على سجل واحد على الأقل',
+     'document_date_field_is_required' => 'حقل تاريخ المستند مطلوب.',
+     'narration_field_is_required' => 'حقل السرد مطلوب.',
+     'type_field_is_required' => 'حقل النوع مطلوب.',
+     'reference_no_is_required' => 'رقم المرجع مطلوب.',
+     'location_no_is_required' => 'رقم الموقع مطلوب.',
+     'segment_is_required' => 'القطاع مطلوب.',
+     'location_is_required' => 'الموقع مطلوب.',
+     'asset_transfer_updated_successfully' => 'تم تحديث نقل الأصل بنجاح',
+     'asset_request_transfer_data' => 'بيانات طلب نقل الأصل',
+     'policy_not_found_for_this_document' => 'السياسة غير موجودة لهذا المستند',
+     'reopened' => 'تم إعادة الفتح',
+     'transfer_type' => 'نوع النقل',
+     'document_date_formatted' => 'تاريخ المستند المنسق',
+     'asset_request_type_not_found' => 'نوع طلب الأصل غير موجود',
+     'asset_transferred_to_department_and_still_not_acknowledged' => 'تم نقل الأصل إلى القسم ولم يتم الاعتراف به بعد',
+     'asset_transferred_and_acknowledged_already_for_this_employee' => 'تم نقل الأصل والاعتراف به بالفعل لهذا الموظف',
+     'asset_transferred_and_still_not_acknowledged_for_this_employee' => 'تم نقل الأصل ولم يتم الاعتراف به بعد لهذا الموظف',
+     'asset_transferred_and_still_not_acknowledged' => 'تم نقل الأصل ولم يتم الاعتراف به بعد',
+     'asset_transferred_successfully' => 'تم نقل الأصل بنجاح',
+     'asset_transferred_to_employee_and_still_not_acknowledged' => 'تم نقل الأصل إلى الموظف ولم يتم الاعتراف به بعد',
+     'asset_already_transferred_to_this_department' => 'تم نقل الأصل بالفعل إلى هذا القسم',
+     'asset_transferred_and_still_not_acknowledged_to_this_department' => 'تم نقل الأصل ولم يتم الاعتراف به بعد إلى هذا القسم',
+     'asset_transferred_successfully_caps' => 'تم نقل الأصل بنجاح'
 ];
