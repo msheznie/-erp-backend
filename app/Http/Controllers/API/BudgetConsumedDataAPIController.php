@@ -436,7 +436,13 @@ class BudgetConsumedDataAPIController extends AppBaseController
                                       ->where('purchaseOrderMastertID', $input['documentSystemCode'])
                                       ->first();
 
-        $months = Months::selectRaw('monthID as value, monthDes as label')->get();
+        $months = Months::get();
+        $months = $months->map(function($month) {
+            return [
+                'value' => $month->monthID,
+                'label' => $month->monthDes
+            ];
+        });
 
         $data = [];
         foreach ($consumedData as $key => $value) {
