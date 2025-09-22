@@ -20,7 +20,7 @@ class SignedPdfController extends AppBaseController
         try {
             $routeName = $request->input('route');
             $params = $request->input('params', []);
-            $expiresInMinutes = env('SIGNED_PDF_EXPIRES_IN_MINUTES', 3);
+            $expiresInMinutes = env('SIGNED_PDF_EXPIRES_IN_MINUTES', 15);
 
             if (!$routeName) {
                 return $this->sendError('Route name is required');
@@ -32,7 +32,7 @@ class SignedPdfController extends AppBaseController
                 return $this->sendError('Invalid or unauthorized route');
             }
 
-            $expires = time() + ($expiresInMinutes * 60);
+            $expires = time() + $expiresInMinutes;
 
             // Get current user information for context
             $user = Auth::user();
@@ -128,7 +128,7 @@ class SignedPdfController extends AppBaseController
             $payload = $this->decryptAndValidateSignature($signature);
             
             if (!$payload) {
-                return response()->json(['error' => 'Invalid or expired signature'], 403);
+                return response()->json(['error' => 'Unauthorized'], 403);
             }
 
             $routeName = $payload['route'];
