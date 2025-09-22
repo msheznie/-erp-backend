@@ -827,8 +827,10 @@
                         <tr>
                             <td colspan="5" class="no-border spacer-row"></td>
                         </tr>
-                        <tr class="no-border">
-                            <td colspan="3" class="text-right"><strong>{{ __('custom.total') }}</strong></td>
+                            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important; background-color: #DEDEDE !important;">
+                            <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                            <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                            <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;"><b>{{ __('custom.total') }}:</b></td>
                             <td class="text-right">{{number_format($grvTotLoc + $directTotLoc, $localDecimal )}}</td>
                             <td class="text-right">{{number_format($grvTotRpt + $directAmountReport, $rptDecimal)}}</td>
                         </tr>

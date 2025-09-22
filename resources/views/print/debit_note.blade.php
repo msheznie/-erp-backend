@@ -431,7 +431,10 @@
                 </tr>
             @endforeach
             <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                <td colspan="4" class="text-right">{{ __('custom.total_payment') }}</td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;"><b>{{ __('custom.total_payment') }}:</b></td>
                 <td class="text-right">{{round($entity->totalAmount,$entity->transDecimal)}}</td>
                 @if($entity->isVATApplicable)
                     <td class="text-right">{{round($entity->totalVATAmount,$entity->transDecimal)}}</td>
