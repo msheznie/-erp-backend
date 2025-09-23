@@ -9134,5 +9134,6 @@ return [
     'excel_insufficient_qty' => 'Insufficient Qty',
     'validation_outlet_field_required' => 'The outlet field is required.',
     'validation_payment_type_field_required' => 'The Payment type field is required.',
-    'validation_account_name_field_required' => 'The Account name field is required.'
+    'validation_account_name_field_required' => 'The Account name field is required.',
+    'validation_allocation_master_id_required' => 'Allocation Master ID is required.'
 ];

@@ -112,7 +112,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $messages = [
-            'allocationmaid.required' => 'Allocation Master ID is required.'
+            'allocationmaid.required' => trans('custom.validation_allocation_master_id_required')
         ];
         $validator = \Validator::make($input, [
             'chartOfAccountAllocationMasterID' => 'required|numeric|min:1',

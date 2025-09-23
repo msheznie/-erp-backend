@@ -9032,5 +9032,6 @@ return [
     'excel_insufficient_qty' => 'الكمية غير الكافية',
     'validation_outlet_field_required' => 'حقل المنفذ مطلوب.',
     'validation_payment_type_field_required' => 'حقل نوع الدفع مطلوب.',
-    'validation_account_name_field_required' => 'حقل اسم الحساب مطلوب.'
+    'validation_account_name_field_required' => 'حقل اسم الحساب مطلوب.',
+    'validation_allocation_master_id_required' => 'معرف السيد الرئيسي للتخصيص مطلوب.'
 ];

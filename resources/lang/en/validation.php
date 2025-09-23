@@ -223,7 +223,11 @@ return [
         'fromDate' => 'From Date',
         'toDate' => 'To Date',
         'Items' => 'Items',
-        'reportType' => 'Report Type'
+        'reportType' => 'Report Type',
+        'chartOfAccountAllocationMasterID' => 'chart of account allocation id',
+        'allocationmaid' => 'allocation maid',
+        'productLineID' => 'product line id',
+        'percentage' => 'percentage'
     ],
 
 ];

@@ -231,7 +231,11 @@ return [
         'suppliers' => 'المورّدون',
         'supplierGroup' => 'مجموعة المورّدين',
         'supEmpId' => 'معرّف موظف المورّد',
-        'accounts' => 'الحسابات'
+        'accounts' => 'الحسابات',
+        'chartOfAccountAllocationMasterID' => 'معرف تخصيص دليل الحسابات الرئيسي',
+        'allocationmaid' => 'معرف السيد الرئيسي للتخصيص',
+        'productLineID' => 'معرف خط الإنتاج',
+        'percentage' => 'النسبة المئوية'
     ],
 
 ];
