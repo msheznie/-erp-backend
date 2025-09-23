@@ -113,6 +113,15 @@ return [
         'reportType.*' => [
             'required' => 'The report type field is required.',
             'not_in' => 'The report type field is required.'
+        ],
+        'companySystemId' => [
+            'required' => 'Company id not found.'
+        ],
+        'details' => [
+            'required' => 'Materiel Issue details not found.'
+        ],
+        'itemIssueAutoId' => [
+            'required' => 'Material issue auto id not found.'
         ]
     ],
 

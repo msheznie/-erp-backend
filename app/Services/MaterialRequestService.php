@@ -376,7 +376,7 @@ class MaterialRequestService
             /* approved=0*/
     
             if (!empty($checkWhether)) {
-                return ['status' => false, 'message' => "There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again."];
+                return ['status' => false, 'message' => trans('custom.materiel_issue_pending_approval_for_item', ['code' => $checkWhether->itemIssueCode])];
             }
     
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -403,7 +403,7 @@ class MaterialRequestService
             /* approved=0*/
     
             if (!empty($checkWhetherStockTransfer)) {
-                return ['status' => false, 'message' => "There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again."];
+                return ['status' => false, 'message' => trans('custom.stock_transfer_pending_approval_for_item', ['code' => $checkWhetherStockTransfer->stockTransferCode])];
             }
     
             /*check item sales invoice*/
@@ -430,7 +430,7 @@ class MaterialRequestService
             /* approved=0*/
     
             if (!empty($checkWhetherInvoice)) {
-                return ['status' => false, 'message' => "There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again."];
+                return ['status' => false, 'message' => trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhetherInvoice->bookingInvCode])];
             }
     
             // check in delivery order
@@ -450,7 +450,7 @@ class MaterialRequestService
                 ->first();
     
             if (!empty($checkWhetherDeliveryOrder)) {
-                return ['status' => false, 'message' => "There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again."];
+                return ['status' => false, 'message' => trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode])];
             }
     
             /*Check in purchase return*/
@@ -474,7 +474,7 @@ class MaterialRequestService
             /* approved=0*/
     
             if (!empty($checkWhetherPR)) {
-                return ['status' => false, 'message' => "There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again."];
+                return ['status' => false, 'message' => trans('custom.purchase_return_pending_approval_for_item', ['code' => $checkWhetherPR->purchaseReturnCode])];
             }
     
     

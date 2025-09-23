@@ -113,6 +113,15 @@ return [
         'reportType.*' => [
             'required' => 'حقل نوع التقرير مطلوب.',
             'not_in' => 'حقل نوع التقرير مطلوب.'
+        ],
+        'companySystemId' => [
+            'required' => 'معرف الشركة غير موجود.'
+        ],
+        'details' => [
+            'required' => 'تفاصيل إصدار المواد غير موجودة.'
+        ],
+        'itemIssueAutoId' => [
+            'required' => 'معرف إصدار المواد التلقائي غير موجود.'
         ]
     ],
 

@@ -1806,17 +1806,11 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $input = $request->input();
 
-        $messages = array(
-            'companySystemId.required' => 'Company id not found.',
-            'details.required' => 'Materiel Issue details not found.',
-            'itemIssueAutoId.required' => 'Material issue auto id not found.',
-        );
-
         $validator = \Validator::make($input, [
             'companySystemId' => 'required',
             'details' => 'required',
             'itemIssueAutoId' => 'required'
-        ],$messages);
+        ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);

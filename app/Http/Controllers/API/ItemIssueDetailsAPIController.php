@@ -385,18 +385,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if($input['qtyRequested'] > $input['currentStockQty']){
                 ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
-                return $this->sendError("Requested stock qty is greater than the current stock qty.", 500);
+                return $this->sendError(trans('custom.requested_stock_qty_greater_than_current'), 500);
             }
 
             if ($input['currentStockQty'] <= 0) {
                 ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
-                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.stock_qty_zero_cannot_issue'), 500);
 
             }
 
             if ($input['currentWareHouseStockQty'] <= 0) {
                 ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
-                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_issue'), 500);
 
             }
 
@@ -406,7 +406,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
                 ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
-                return $this->sendError("Cost is negative. You cannot issue.", 500);
+                return $this->sendError(trans('custom.cost_negative_cannot_issue'), 500);
             }
         }else {
             $data = array('companySystemID' => $companySystemID,
@@ -426,11 +426,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
             if ($input['currentStockQty'] <= 0) {
-                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.stock_qty_zero_cannot_issue'), 500);
             }
 
             if ($input['currentWareHouseStockQty'] <= 0) {
-                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_issue'), 500);
             }
 
             if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
@@ -438,7 +438,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
 
             if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
-                return $this->sendError("Cost is negative. You cannot issue.", 500);
+                return $this->sendError(trans('custom.cost_negative_cannot_issue'), 500);
             }
         }
         
@@ -473,11 +473,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
         } else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 //
 //        if ($input['itemFinanceCategoryID'] == 1) {
@@ -523,7 +523,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.materiel_issue_pending_approval_for_item', ['code' => $checkWhether->itemIssueCode]), 500);
         }
 
         $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -550,7 +550,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.stock_transfer_pending_approval_for_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
         }
 
         /*check item sales invoice*/
@@ -577,7 +577,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherInvoice)) {
-            return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
         }
 
         // check in delivery order
@@ -597,7 +597,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkWhetherDeliveryOrder)) {
-            return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]), 500);
         }
 
         /*Check in purchase return*/
@@ -621,7 +621,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherPR)) {
-            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.purchase_return_pending_approval_for_item', ['code' => $checkWhetherPR->purchaseReturnCode]), 500);
         }
 
 
@@ -913,7 +913,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateItemIssueDetailsAPIRequest $request)
     {
-        $message = "Item updated successfully";
+        $message = trans('custom.item_updated_successfully');
         $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty','status' => "stock");
@@ -954,7 +954,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
                 ->first();
             if (empty($unitConvention)) {
-                return $this->sendError("Unit conversion isn't valid or configured", 500);
+                return $this->sendError(trans('custom.unit_conversion_not_valid_configured'), 500);
             }
 
             if ($unitConvention) {
@@ -972,34 +972,34 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if ($itemIssueDetails->issueCostLocal == 0 || $itemIssueDetails->issueCostRpt == 0) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Cost is 0. You cannot issue.", 500);
+            return $this->sendError(trans('custom.cost_zero_cannot_issue_item'), 500);
         }
 
         if ($itemIssueDetails->issueCostLocal < 0 || $itemIssueDetails->issueCostRpt < 0) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Cost is negative. You cannot issue.", 500);
+            return $this->sendError(trans('custom.cost_negative_cannot_issue_item'), 500);
         }
 
         if ($itemIssueDetails->currentStockQty <= 0) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            return $this->sendError(trans('custom.stock_qty_zero_cannot_issue_item'), 500);
         }
 
         if ($itemIssueDetails->currentWareHouseStockQty <= 0) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_issue_item'), 500);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Current stock Qty is: " . $itemIssueDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_stock_qty_insufficient_for_issue', ['qty' => $itemIssueDetails->currentStockQty]), 500, $qtyError);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             $qtyError = array('type' => 'qty','status' => 'warehouse');
             $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->currentWareHouseStockQty)];
-            return $this->sendError("Current warehouse stock Qty is: " . $itemIssueDetails->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_warehouse_stock_qty_insufficient_for_issue', ['qty' => $itemIssueDetails->currentWareHouseStockQty]), 500, $qtyError);
         }
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
@@ -1017,18 +1017,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0, 'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
                     // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
                     if ($itemIssueDetails->qtyAvailableToIssue == 0) {
-                        return $this->sendError("Qty fully issued for this item", 500, $qtyError);
+                        return $this->sendError(trans('custom.qty_fully_issued_for_item'), 500, $qtyError);
                     } else {
-                        return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+                        return $this->sendError(trans('custom.issuing_qty_cannot_be_more_than_requested_remaining'), 500, $qtyError);
                     }
                 }
             } else {
                 if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyAvailableToIssue) {
                     $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0, 'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
                     if ($itemIssueDetails->qtyAvailableToIssue == 0) {
-                        return $this->sendError("Qty fully issued for this item", 500, $qtyError);
+                        return $this->sendError(trans('custom.qty_fully_issued_for_item'), 500, $qtyError);
                     } else {
-                        return $this->sendError("Issuing qty cannot be more than requested qty/remaining qty", 500, $qtyError);
+                        return $this->sendError(trans('custom.issuing_qty_cannot_be_more_than_requested_remaining'), 500, $qtyError);
                     }
                 }
             }
@@ -1043,7 +1043,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 ->sum('allocation_qty');
 
                 if ($allocatedSum > $input['qtyIssued']) {
-                    return $this->sendError("Allocated quantity cannot be greater than the detail quantity.");
+                    return $this->sendError(trans('custom.allocated_quantity_cannot_be_greater_than_the_deta'));
                 }
 
                 $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['itemIssueDetailID'])
@@ -1054,7 +1054,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 
                
                 if ($allocatedQtySum > $input['qtyIssued']) {
-                    return $this->sendError("Allocated quantity cannot be greater than the detail quantity.");
+                    return $this->sendError(trans('custom.allocated_quantity_cannot_be_greater_than_the_deta'));
                 }
             }
 
@@ -1541,7 +1541,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update($data);
             ItemIssueBulkItemsJob::dispatch($db, $input);
 
-            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            return $this->sendResponse('', trans('custom.items_added_to_queue'));
         } else {
             DB::beginTransaction();
             try {
