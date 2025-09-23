@@ -5536,7 +5536,7 @@ class SRMService
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
                 if ($result) {
-                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
                 Log::info("NO ATTACHMENT");
@@ -5583,23 +5583,13 @@ class SRMService
         $query = DocumentAttachments::select(
             [
                 'attachmentID',
-                'companySystemID',
-                'documentSystemID',
-                'documentID',
-                'documentSystemCode',
                 'attachmentDescription',
                 'originalFileName',
-                'myFileName',
-                'docExpirtyDate',
                 'attachmentType',
-                'sizeInKbs',
                 'timeStamp',
-                'isUploaded',
                 'path',
-                'pullFromAnotherDocument',
                 'parent_id',
-                'envelopType',
-                'order_number'
+                'envelopType'
             ]
         )
             ->where('documentSystemID', $documentSystemID)
@@ -5784,8 +5774,6 @@ class SRMService
             'createdUserSystemID',
             'supplierTransCurrencyID',
             'BPVbankCurrency',
-            'expenseClaimOrPettyCash',
-            'payment_mode',
             'projectID',
             'BPVdate',
             'approvedDate',
@@ -5843,22 +5831,6 @@ class SRMService
                             "CurrencyName",
                             "CurrencyCode",
                             "DecimalPlaces"
-                        ]
-                    );
-                }
-                , 'expense_claim_type' => function ($q) {
-                    $q->select(
-                        [
-                            "expenseClaimTypeID",
-                            "expenseClaimTypeDescription"
-                        ]
-                    );
-                }
-                , 'paymentmode' => function ($q) {
-                    $q->select(
-                        [
-                            "id",
-                            "description"
                         ]
                     );
                 }
