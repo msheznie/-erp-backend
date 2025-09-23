@@ -679,11 +679,11 @@ class ShiftDetailsAPIController extends AppBaseController
         foreach ($items  as $val) {
             if($val->insufficientQty > 0) {
                 $x++;
-                $data[$x]['Item Code'] = $val->primaryCode;
-                $data[$x]['Qty Needed'] = $val->qty;
-                $data[$x]['Available Qty'] = $val->availableQty;
-                $data[$x]['Insufficient Qty'] = $val->insufficientQty;
-                $data[$x]['Warehouse'] = isset($val->warehouse->wareHouseDescription) ? $val->warehouse->wareHouseDescription : null;
+                $data[$x][trans('custom.excel_item_code')] = $val->primaryCode;
+                $data[$x][trans('custom.excel_qty_needed')] = $val->qty;
+                $data[$x][trans('custom.excel_available_qty')] = $val->availableQty;
+                $data[$x][trans('custom.excel_insufficient_qty')] = $val->insufficientQty;
+                $data[$x][trans('custom.warehouse')] = isset($val->warehouse->wareHouseDescription) ? $val->warehouse->wareHouseDescription : null;
             }
         }
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();

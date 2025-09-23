@@ -9128,5 +9128,11 @@ return [
     'asset_transferred_to_employee_and_still_not_acknowledged' => 'Asset transferred to employee and still not acknowledged',
     'asset_already_transferred_to_this_department' => 'Asset already transferred to this department',
     'asset_transferred_and_still_not_acknowledged_to_this_department' => 'Asset transferred and still not acknowledged to this department',
-    'asset_transferred_successfully_caps' => 'Asset Transferred successfully'
+    'asset_transferred_successfully_caps' => 'Asset Transferred successfully',
+    'excel_qty_needed' => 'Qty Needed',
+    'excel_available_qty' => 'Available Qty',
+    'excel_insufficient_qty' => 'Insufficient Qty',
+    'validation_outlet_field_required' => 'The outlet field is required.',
+    'validation_payment_type_field_required' => 'The Payment type field is required.',
+    'validation_account_name_field_required' => 'The Account name field is required.'
 ];

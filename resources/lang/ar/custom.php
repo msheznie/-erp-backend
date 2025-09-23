@@ -9026,5 +9026,11 @@ return [
      'asset_transferred_to_employee_and_still_not_acknowledged' => 'تم نقل الأصل إلى الموظف ولم يتم الاعتراف به بعد',
      'asset_already_transferred_to_this_department' => 'تم نقل الأصل بالفعل إلى هذا القسم',
      'asset_transferred_and_still_not_acknowledged_to_this_department' => 'تم نقل الأصل ولم يتم الاعتراف به بعد إلى هذا القسم',
-     'asset_transferred_successfully_caps' => 'تم نقل الأصل بنجاح'
+     'asset_transferred_successfully_caps' => 'تم نقل الأصل بنجاح',
+    'excel_qty_needed' => 'الكمية المطلوبة',
+    'excel_available_qty' => 'الكمية المتاحة',
+    'excel_insufficient_qty' => 'الكمية غير الكافية',
+    'validation_outlet_field_required' => 'حقل المنفذ مطلوب.',
+    'validation_payment_type_field_required' => 'حقل نوع الدفع مطلوب.',
+    'validation_account_name_field_required' => 'حقل اسم الحساب مطلوب.'
 ];

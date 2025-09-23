@@ -123,10 +123,10 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = array(
-            'warehouseID.required' => 'The outlet field is required.',
-            'paymentConfigMasterID.required' => 'The Payment type field is required.',
-            'GLCode.required' => 'The Account name field is required.',
-            'GLCode.min' => 'The Account name field is required.'
+            'warehouseID.required' => trans('custom.validation_outlet_field_required'),
+            'paymentConfigMasterID.required' => trans('custom.validation_payment_type_field_required'),
+            'GLCode.required' => trans('custom.validation_account_name_field_required'),
+            'GLCode.min' => trans('custom.validation_account_name_field_required')
         );
 
         $validator = \Validator::make($input, [
@@ -270,10 +270,10 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         }
 
         $messages = array(
-            'warehouseID.required' => 'The outlet field is required.',
-            'paymentConfigMasterID.required' => 'The Payment type field is required.',
-            'GLCode.required' => 'The Account name field is required.',
-            'GLCode.min' => 'The Account name field is required.'
+            'warehouseID.required' => trans('custom.validation_outlet_field_required'),
+            'paymentConfigMasterID.required' => trans('custom.validation_payment_type_field_required'),
+            'GLCode.required' => trans('custom.validation_account_name_field_required'),
+            'GLCode.min' => trans('custom.validation_account_name_field_required')
         );
 
         $validator = \Validator::make($input, [
