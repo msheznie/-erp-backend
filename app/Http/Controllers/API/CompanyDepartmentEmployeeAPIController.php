@@ -244,35 +244,6 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             DepBudgetPlDetEmpColumn::insert($insertData);
         }
     }
-
-    public function autoAssignDepartmentBudgetPlanningColumnData($data, $companyID) {
-        $companyDepartment = CompanyDepartment::find($data['departmentSystemID']);
-        if ($companyDepartment->isFinance == 1) {
-            $this->storeTableColumns($data['employeeSystemID'], $companyID);
-        }
-        else {
-            if ($data['isHOD'] == 1) {
-                $this->storeTableColumns($data['employeeSystemID'], $companyID);
-            }
-        }
-    }
-
-    public function storeTableColumns($data, $companyID) {
-        $insertData = [];
-        $defaultColumns = DepBudgetPlDetColumn::where('isDefault', 1)->get();
-        foreach ($defaultColumns as $defaultColumn) {
-            $insertData[] = [
-                'companySystemID' => $companyID,
-                'empID' => $data,
-                'columnID' => $defaultColumn->id
-            ];
-        }
-
-        if (count($insertData) > 0) {
-            DepBudgetPlDetEmpColumn::insert($insertData);
-        }
-    }
-
     /**
      * Update the specified department employee
      *
