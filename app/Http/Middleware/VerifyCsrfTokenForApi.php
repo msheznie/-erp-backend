@@ -233,7 +233,9 @@ class VerifyCsrfTokenForApi
             'api/v1/downloadTimeExtensionAttachment',
             'api/v1/getOptionsForSelectedUnit',
             'api/v1/saveDepBudgetPlEmpColumns',
-            'api/v1/updateBudgetPlanningDelegateWorkStatus'
+            'api/v1/updateBudgetPlanningDelegateWorkStatus',
+            'api/v1/deleteTimeExtensionRequest',
+            'api/v1/acceptTimeExtensionRequest'
         ];
     }
 }
