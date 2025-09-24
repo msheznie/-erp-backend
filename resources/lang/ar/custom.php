@@ -3333,7 +3333,7 @@ return [
     'description_string' => 'The description must be a string AR',
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
     'no_bank' => 'لا يوجد بنك محدد',
     'no_budget_found' => 'لم يتم العثور على ميزانية للسنة المالية الحالية.',
     'no_grv_selected_to_add' => 'لم يتم تحديد إشعار استلام بضاعة للإضافة',
