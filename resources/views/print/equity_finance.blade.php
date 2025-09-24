@@ -129,11 +129,11 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
-                <span>Printed By : {{$employeeData->empName}}</span>
+                <span>{{trans('custom.printed_date_time')}} : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>{{trans('custom.printed_by')}} : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -151,8 +151,8 @@
         @if ($from_date != null && $to_date != null)
             <tr>
                 <td colspan="2" style="width:100%;text-align: center;">
-                    <span class="font-weight-bold">Period From :{{ $from_date }} |
-                        Period To : {{ $to_date }}</span>
+                    <span class="font-weight-bold">{{trans('custom.period_from')}} :{{ $from_date }} |
+                        {{trans('custom.period_to')}} : {{ $to_date }}</span>
                 </td>
             </tr>
         @endif
@@ -160,7 +160,7 @@
         @if ($month != null)
             <tr>
                 <td colspan="2" style="width:100%;text-align: center;">
-                    <span class="font-weight-bold">As of - {{$month}}</span>
+                    <span class="font-weight-bold">{{trans('custom.as_of')}} - {{$month}}</span>
                 </td>
             </tr>
         @endif
@@ -172,7 +172,7 @@
         </tr>
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Currency: {{$currencyCode}}</span>
+                <span class="font-weight-bold">{{trans('custom.currency_label')}}: {{$currencyCode}}</span>
             </td>
         </tr>
         <br>
@@ -183,7 +183,7 @@
 <table style="width:100%;border:1px solid #9fcdff" class="table">
     <thead>
         <tr>
-        <th>Description</th>
+        <th>{{trans('custom.description')}}</th>
             @foreach ($columnHeader as $column)
             <th style="text-align:right">{{$column['description']}}</th>
             @endforeach
@@ -204,7 +204,7 @@
         @endforeach
         @if(sizeof($reportData) == 0)
         <tr>
-            <td colspan="{{sizeof($columnHeader)}}">No Records Found</td>
+            <td colspan="{{sizeof($columnHeader)}}">{{trans('custom.no_records_found')}}</td>
         </tr>
         @endif
     </tbody>
