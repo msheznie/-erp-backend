@@ -9205,5 +9205,6 @@ return [
     'column_configuration_not_completed_assign_columns' => 'Column configuration not completed, assign :columns Column/s.',
     'column_configuration_not_completed_assign_combined' => 'Column configuration not completed, assign Combined, Elimination and Consolidation Columns or a Template.',
     'retained_earnings_gl_not_assigned' => 'Retained Earnings GL not assigned to template.',
-    'unmatched_data_retrieved_successfully' => 'Unmatched data retrieved successfully.'
+    'unmatched_data_retrieved_successfully' => 'Unmatched data retrieved successfully.',
+    'document_currency' => 'Document Currency'
 ];

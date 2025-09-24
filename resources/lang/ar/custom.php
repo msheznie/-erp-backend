@@ -9119,5 +9119,6 @@ return [
     'column_configuration_not_completed_assign_columns' => 'تكوين الأعمدة غير مكتمل، يرجى تعيين :columns عمود/أعمدة.',
     'column_configuration_not_completed_assign_combined' => 'تكوين الأعمدة غير مكتمل، يرجى تعيين أعمدة الدمج والحذف والدمج أو قالب.',
     'retained_earnings_gl_not_assigned' => 'حساب الأرباح المحتجزة غير معين للقالب.',
-    'unmatched_data_retrieved_successfully' => 'تم استرداد البيانات غير المطابقة بنجاح.'
+    'unmatched_data_retrieved_successfully' => 'تم استرداد البيانات غير المطابقة بنجاح.',
+    'document_currency' => 'عملة المستند'
 ];

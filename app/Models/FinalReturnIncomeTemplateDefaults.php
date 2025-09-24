@@ -120,7 +120,7 @@ class FinalReturnIncomeTemplateDefaults extends Model
 
     public function translations()
     {
-        return $this->hasMany(FinalReturnIncomeTemplateDefaultTranslation::class, 'defaultId', 'id');
+        return $this->hasMany(FinalIncomeTemplateDefaultTranslation::class, 'defaultId', 'id');
     }
 
     public function translation($languageCode = null)
