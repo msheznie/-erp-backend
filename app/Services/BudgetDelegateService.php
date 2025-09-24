@@ -77,7 +77,7 @@ class BudgetDelegateService
             // Validate budget planning detail exists
             $budgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($data['budget_planning_detail_id']);
 
-            if(Carbon::parse($data['submission_time'])->isSameDay(Carbon::now()) || Carbon::parse($data['submission_time'])->isSameDay(Carbon::parse($budgetPlanningDetail->time_for_submission)))
+            if(Carbon::parse($data['submission_time'])->isSameDay(Carbon::now()))
             {
                 throw new Exception('Submission date must be less than current submission date and greater than current date');
             }

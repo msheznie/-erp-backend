@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDepartmentBudgetTemplateAPIRequest;
 use App\Http\Requests\API\UpdateDepartmentBudgetTemplateAPIRequest;
+use App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob;
+use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetTemplate;
 use App\Repositories\DepartmentBudgetTemplateRepository;
 use Illuminate\Http\Request;
@@ -266,19 +268,28 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $input = $request->all();
 
         $items = \App\Models\ChartOfAccount::where('isActive', 1)->where('isApproved', 1)
-                               ->whereHas('chartofaccount_assigned', function($query) use ($input) {
-                                    $query->where('companySystemID', $input['companySystemID'])
-                                          ->where('isAssigned', -1)
-                                          ->where('isActive', 1);
-                               })->when($input['templateType'] == 1, function ($query) {
-                                    $query->where('catogaryBLorPL', 'PL');
-                               })->when($input['templateType'] == 2, function ($query) {
-                                    $query->where('catogaryBLorPL', 'BS');
-                               })
-                               ->whereNotNull('reportTemplateCategory')
-                               ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL', 'controlAccounts');
+            ->whereHas('chartofaccount_assigned', function ($query) use ($input) {
+                $query->where('companySystemID', $input['companySystemID'])
+                    ->where('isAssigned', -1)
+                    ->where('isActive', 1);
+            })->when($input['templateType'] == 1, function ($query) {
+                $query->where('catogaryBLorPL', 'PL');
+            })->when($input['templateType'] == 2, function ($query) {
+                $query->where('catogaryBLorPL', 'BS');
+            })
+            ->whereNotNull('reportTemplateCategory')
+            ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL', 'controlAccounts');
 
-        $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
+
+        if (isset($input['departmentBudgetTemplateID']))
+        {
+            $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
+        }else {
+            $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
+            $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
+            $input['departmentBudgetTemplateID'] = $departmentBudgeTemplateID->departmentBudgetTemplateID;
+            $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
+        }
         $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail))->get();
 
         return $this->sendResponse($items, 'Chart of accounts retrieved successfully');
@@ -340,6 +351,15 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             $departmentBudgetTemplateID = $input['departmentBudgetTemplateID'];
             $chartOfAccountSystemIDs = $input['chartOfAccountSystemIDs'];
 
+            if(is_null($departmentBudgetTemplateID))
+            {
+                if($input['budgetPlanningID']){
+                    $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
+                    $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
+                    $departmentBudgetTemplateID = $departmentBudgeTemplateID->departmentBudgetTemplateID;
+                }
+            }
+
             // Validate that the department budget template exists
             $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($departmentBudgetTemplateID);
             if (!$departmentBudgetTemplate) {
@@ -359,6 +379,18 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                     'modifiedUserSystemID' => auth()->id()
                 ]);
                 $assignedCount++;
+            }
+
+            if(isset($input['budgetPlanningID'])){
+                $db = $request->input('db', '');
+
+                // Dispatch job to process department budget planning details
+                \App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob::dispatch(
+                    $db,
+                    $input['budgetPlanningID'],
+                    auth()->id(),
+                    $chartOfAccountSystemIDs
+                );
             }
 
             return $this->sendResponse(

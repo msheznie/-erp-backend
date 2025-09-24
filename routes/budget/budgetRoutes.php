@@ -45,6 +45,8 @@ Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
+Route::post('deleteTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@deleteTimeExtensionRequest')->name('Delete time extension request');
+Route::post('acceptTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@acceptTimeExtensionRequest')->name('Accept time extension request');
 Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPIController@generateTimeExtensionRequestCode')->name('Generate time extension request code');
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');

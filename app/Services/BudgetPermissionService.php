@@ -6,7 +6,9 @@ use App\Models\BudgetControl;
 use App\Models\BudgetDelegateAccess;
 use App\Models\BudgetDelegateAccessRecord;
 use App\Models\CompanyDepartmentEmployee;
+use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentUserBudgetControl;
+use App\Models\WorkflowConfigurationHodAction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -69,13 +71,19 @@ class BudgetPermissionService
 
                 // only get permission if budgetPlanningID is set
                 if (isset($input['budgetPlanningID'])) {
-                    // TODO: get hod parent & child permission from workflow configuration & return
-                    /**
-                     * HOD permission required in budget planning company & budget planning department view.
-                     * Inside that view call this function with budgetPlanningID
-                     * use $userPermissions['hodUser']['access']
-                     */
+                    $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+                    if($budgetPlanning->submissionDate <= Carbon::today()->format('Y-m-d'))
+                    {
+                        $userPermissions['hodUser']['isActive'] = false;
+                    }
+
+                    $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID)->pluck('hodActionID')->toArray();
+
+                    $userPermissions['hodUser']['access'] = $actions;
+
                 }
+
+
             }
 
             // Check if user is Finance User
