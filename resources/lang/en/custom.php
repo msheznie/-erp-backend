@@ -9208,5 +9208,14 @@ return [
     'unmatched_data_retrieved_successfully' => 'Unmatched data retrieved successfully.',
     'document_currency' => 'Document Currency',
     'value' => 'Value',
-    'net_value' => 'Net Value'
+    'net_value' => 'Net Value',
+    'standard_jv' => 'Standard JV',
+    'revenue_accrual_jv' => 'Revenue Accrual JV',
+    'recurring_jv' => 'Recurring JV',
+    'salary_jv' => 'Salary JV',
+    'allocation_jv' => 'Allocation JV',
+    'po_accrual_jv' => 'PO Accrual JV',
+    'gratuity_accrual_jv' => 'Gratuity Accrual JV',
+    'final_settlement_accrual_jv' => 'Final Settlement Accrual JV',
+    'thirteenth_month_accrual_jv' => '13th Month Accrual JV'
 ];

@@ -117,23 +117,23 @@ class StatusService
 		$type = "";
 
 		if($jvType == 0){
-			$type = "Standard JV";
+			$type = trans('custom.standard_jv');
 		} else if ($jvType == 1) {
-			$type = "Revenue Accrual JV";
+			$type = trans('custom.revenue_accrual_jv');
 		} else if ($jvType == 2) {
-			$type = "Recurring JV";
+			$type = trans('custom.recurring_jv');
 		} else if ($jvType == 3) {
-			$type = "Salary JV";
+			$type = trans('custom.salary_jv');
 		} else if ($jvType == 4) {
-			$type = "Allocation JV";
+			$type = trans('custom.allocation_jv');
 		} else if ($jvType == 5) {
-			$type = "PO Accrual JV";
+			$type = trans('custom.po_accrual_jv');
 		} else if ($jvType == 6) {
-			$type = "Gratuity Accrual JV";
+			$type = trans('custom.gratuity_accrual_jv');
 		} else if ($jvType == 7) {
-			$type = "Final Settlement Accrual JV";
+			$type = trans('custom.final_settlement_accrual_jv');
 		} else if ($jvType == 8) {
-			$type = "13th Month Accrual JV";
+			$type = trans('custom.thirteenth_month_accrual_jv');
 		}
 
 		return $type;

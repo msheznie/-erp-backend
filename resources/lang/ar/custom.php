@@ -9122,5 +9122,20 @@ return [
     'unmatched_data_retrieved_successfully' => 'تم استرداد البيانات غير المطابقة بنجاح.',
     'document_currency' => 'عملة المستند',
     'value' => 'القيمة',
-    'net_value' => 'القيمة الصافية'
+    'net_value' => 'القيمة الصافية',
+    'transaction_debit_amount' => 'مبلغ الخصم في المعاملة',
+    'transaction_credit_amount' => 'مبلغ الائتمان في المعاملة',
+    'local_debit_amount' => 'مبلغ الخصم المحلي',
+    'local_credit_amount' => 'مبلغ الائتمان المحلي',
+    'reporting_debit_amount' => 'مبلغ الخصم في التقارير',
+    'reporting_credit_amount' => 'مبلغ الائتمان في التقارير',
+    'standard_jv' => 'قيد يومية قياسي',
+    'revenue_accrual_jv' => 'قيد يومية استحقاق الإيرادات',
+    'recurring_jv' => 'قيد يومية متكرر',
+    'salary_jv' => 'قيد يومية الراتب',
+    'allocation_jv' => 'قيد يومية التخصيص',
+    'po_accrual_jv' => 'قيد يومية استحقاق أمر الشراء',
+    'gratuity_accrual_jv' => 'قيد يومية استحقاق المكافأة',
+    'final_settlement_accrual_jv' => 'قيد يومية استحقاق التسوية النهائية',
+    'thirteenth_month_accrual_jv' => 'قيد يومية استحقاق الشهر الثالث عشر'
 ];
