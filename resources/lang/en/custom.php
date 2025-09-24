@@ -3362,7 +3362,7 @@ return [
     'attachment_not_found' => 'Attachment not found',
     'file_not_found_on_storage' => 'File not found on storage',
     'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
     'no_bank' => 'There is no bank selected',
     'no_budget_found' => 'No budget found for the current financial year.',
     'no_grv_selected_to_add' => 'No GRV selected to add',
