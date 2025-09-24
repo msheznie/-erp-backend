@@ -4675,17 +4675,20 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                \Excel::create(trans('custom.jv_detail'), function ($excel) use ($data) {
-                    $excel->sheet(trans('custom.sheet_name'), function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'jv_detail';
+                $path = 'general_ledger/report/jv_detail/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
 
                 break;
             case 'RTD':
@@ -9423,7 +9426,7 @@ GROUP BY id
                 if($month){
                     $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
                 }
-                $reportData['report_tittle'] = 'Finance Report';
+                $reportData['report_tittle'] = trans('custom.finance_report');
                 $reportData['from_date'] = $input['fromDate'];
                 $reportData['to_date'] = $input['toDate'];
 
@@ -12126,6 +12129,7 @@ GROUP BY
         $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
         $type = $request->type;
+        $data = array();
 
         switch ($reportTypeID) {
 
@@ -12148,15 +12152,15 @@ GROUP BY
                         foreach ($output as $val) {
                             $x++;
 
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['PO Code'] = $val->companyID;
-                            $data[$x]['PO Date'] = Helper::dateFormat($val->PODate);
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.po_code')] = $val->companyID;
+                            $data[$x][trans('custom.po_date')] = Helper::dateFormat($val->PODate);
                             $data[$x][trans('custom.supplier_name')] = $val->supplierName;
-                            $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency, $decimalPlaceRpt);
-                            $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
-                            $data[$x]['AP Invoice Amount'] = round($val->APAmount, $decimalPlaceRpt);
-                            $data[$x]['AR Invoice Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                            $data[$x]['Receipts/Adjustments'] = round($val->receiveAmountRpt, $decimalPlaceRpt);
+                            $data[$x][trans('custom.po_amount')] = round($val->poTotalComRptCurrency, $decimalPlaceRpt);
+                            $data[$x][trans('custom.grv_amount')] = round($val->GRVAmount, $decimalPlaceRpt);
+                            $data[$x][trans('custom.ap_invoice_amount')] = round($val->APAmount, $decimalPlaceRpt);
+                            $data[$x][trans('custom.ar_invoice_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                            $data[$x][trans('custom.receipts_adjustments')] = round($val->receiveAmountRpt, $decimalPlaceRpt);
 
                             $subTotalPOAmount += $val->poTotalComRptCurrency;
                             $subTotalGRVAmount += $val->GRVAmount;
@@ -12166,15 +12170,15 @@ GROUP BY
                         }
 
                         $x++;
-                        $data[$x]['Company ID'] = '';
-                        $data[$x]['PO Code'] = '';
-                        $data[$x]['PO Date'] = '';
-                        $data[$x][trans('custom.supplier_name')] = 'Total';
-                        $data[$x]['PO Amount'] = round($subTotalPOAmount, $decimalPlaceRpt);
-                        $data[$x]['GRV Amount'] = round($subTotalGRVAmount, $decimalPlaceRpt);
-                        $data[$x]['AP Invoice Amount'] = round($subTotalAPInvoiceAmount, $decimalPlaceRpt);
-                        $data[$x]['AR Invoice Amount'] = round($subTotalARInvoiceAmount, $decimalPlaceRpt);
-                        $data[$x]['Receipts/Adjustments'] = round($subTotalAdjAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_id')] = '';
+                        $data[$x][trans('custom.po_code')] = '';
+                        $data[$x][trans('custom.po_date')] = '';
+                        $data[$x][trans('custom.supplier_name')] = trans('custom.total');
+                        $data[$x][trans('custom.po_amount')] = round($subTotalPOAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.grv_amount')] = round($subTotalGRVAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.ap_invoice_amount')] = round($subTotalAPInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.ar_invoice_amount')] = round($subTotalARInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.receipts_adjustments')] = round($subTotalAdjAmount, $decimalPlaceRpt);
                     }
                 } else { // DUMP
 
@@ -12191,21 +12195,21 @@ GROUP BY
                             foreach ($output as $val) {
                                 $x++;
 
-                                $data[$x]['GRV Company'] = $val->grvCompany;
-                                $data[$x]['GRV Code'] = $val->grvCode;
-                                $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
-                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
+                                $data[$x][trans('custom.grv_company')] = $val->grvCompany;
+                                $data[$x][trans('custom.grv_code')] = $val->grvCode;
+                                $data[$x][trans('custom.grv_amount')] = round($val->GRVAmount, $decimalPlaceRpt);
+                                $data[$x][trans('custom.grv_date')] = Helper::dateFormat($val->grvDate);
                                 $data[$x][trans('custom.gl_code')] = $val->grvGLCode;
-                                $data[$x]['GL Description'] = $val->grvGLCodeDes;
-                                $data[$x]['Department'] = $val->grvDepartment;
+                                $data[$x][trans('custom.gl_description')] = $val->grvGLCodeDes;
+                                $data[$x][trans('custom.department')] = $val->grvDepartment;
 
-                                $data[$x]['Customer'] = $val->customer;
-                                $data[$x]['Booking Invoice Code'] = $val->bookingInvCode;
-                                $data[$x]['Booking Date'] = Helper::dateFormat($val->BookingDate);
-                                $data[$x]['Booking Amount Rpt'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                                $data[$x]['INV GL Code'] = $val->invGLCode;
-                                $data[$x]['INV GL Description'] = $val->invGLCodeDes;
-                                $data[$x]['INV Department'] = $val->invDepartment;
+                                $data[$x][trans('custom.customer')] = $val->customer;
+                                $data[$x][trans('custom.booking_invoice_code')] = $val->bookingInvCode;
+                                $data[$x][trans('custom.booking_date')] = Helper::dateFormat($val->BookingDate);
+                                $data[$x][trans('custom.booking_amount_rpt')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                                $data[$x][trans('custom.inv_gl_code')] = $val->invGLCode;
+                                $data[$x][trans('custom.inv_gl_description')] = $val->invGLCodeDes;
+                                $data[$x][trans('custom.inv_department')] = $val->invDepartment;
 
                                 $subTotalGRVAmount += $val->GRVAmount;
                                 $subTotalBookingAmount += $val->bookingAmountRpt;
@@ -12231,17 +12235,20 @@ GROUP BY
                     }
                 }
 
-                \Excel::create('inter_company', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'inter_company';
+                $path = 'financial_report/inter_company/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICST':
@@ -12255,64 +12262,67 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->companyFrom;
-                        $data[$x]['Stock Transfer Code'] = $val->stockTransferCode;
-                        $data[$x]['Stock Transfer Date'] = Helper::dateFormat($val->tranferDate);
-                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
-                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->companyFrom;
+                        $data[$x][trans('custom.stock_transfer_code')] = $val->stockTransferCode;
+                        $data[$x][trans('custom.stock_transfer_date')] = Helper::dateFormat($val->tranferDate);
+                        $data[$x][trans('custom.customer_inv_code')] = $val->bookingInvCode;
+                        $data[$x][trans('custom.customer_inv_date')] = Helper::dateFormat($val->bookingDate);
+                        $data[$x][trans('custom.customer_inv_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
 
-                        $data[$x]['INV GL Code'] = $val->invGLCode;
-                        $data[$x]['INV GL Description'] = $val->invGLCodeDes;
-                        $data[$x]['INV Department'] = $val->invDepartment;
+                        $data[$x][trans('custom.inv_gl_code')] = $val->invGLCode;
+                        $data[$x][trans('custom.inv_gl_description')] = $val->invGLCodeDes;
+                        $data[$x][trans('custom.inv_department')] = $val->invDepartment;
 
-                        $data[$x]['Company To'] = $val->companyTo;
-                        $data[$x]['Stock Receive Code'] = $val->stockReceiveCode;
-                        $data[$x]['Approved'] = $val->Approved;
-                        $data[$x]['Supplier Invoice Code'] = $val->supplierInvCode;
-                        $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvDate);
-                        $data[$x]['Supplier Invoice Amount'] = round($val->supplierAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->companyTo;
+                        $data[$x][trans('custom.stock_receive_code')] = $val->stockReceiveCode;
+                        $data[$x][trans('custom.approved')] = $val->Approved;
+                        $data[$x][trans('custom.supplier_invoice_code')] = $val->supplierInvCode;
+                        $data[$x][trans('custom.supplier_invoice_date')] = Helper::dateFormat($val->supplierInvDate);
+                        $data[$x][trans('custom.supplier_invoice_amount')] = round($val->supplierAmountRpt, $decimalPlaceRpt);
 
                         $data[$x][trans('custom.gl_code')] = $val->strGLCode;
-                        $data[$x]['GL Description'] = $val->strGLCodeDes;
-                        $data[$x]['Department'] = $val->strDepartment;
+                        $data[$x][trans('custom.gl_description')] = $val->strGLCodeDes;
+                        $data[$x][trans('custom.department')] = $val->strDepartment;
 
                         $subTotalBookingAmountRpt += $val->bookingAmountRpt;
                         $subTotalSupplierAmountRpt += $val->supplierAmountRpt;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Stock Transfer Code'] = '';
-                    $data[$x]['Stock Transfer Date'] = '';
-                    $data[$x]['Customer INV Code'] = '';
-                    $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
-                    $data[$x]['INV GL Code'] = '';
-                    $data[$x]['INV GL Description'] = '';
-                    $data[$x]['INV Department'] = '';
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Stock Receive Code'] = '';
-                    $data[$x]['Approved'] = '';
-                    $data[$x]['Supplier Invoice Code'] = '';
-                    $data[$x]['Supplier Invoice Date'] = '';
-                    $data[$x]['Supplier Invoice Amount'] = round($subTotalSupplierAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.stock_transfer_code')] = '';
+                    $data[$x][trans('custom.stock_transfer_date')] = '';
+                    $data[$x][trans('custom.customer_inv_code')] = '';
+                    $data[$x][trans('custom.customer_inv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.customer_inv_amount')] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.inv_gl_code')] = '';
+                    $data[$x][trans('custom.inv_gl_description')] = '';
+                    $data[$x][trans('custom.inv_department')] = '';
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.stock_receive_code')] = '';
+                    $data[$x][trans('custom.approved')] = '';
+                    $data[$x][trans('custom.supplier_invoice_code')] = '';
+                    $data[$x][trans('custom.supplier_invoice_date')] = '';
+                    $data[$x][trans('custom.supplier_invoice_amount')] = round($subTotalSupplierAmountRpt, $decimalPlaceRpt);
                     $data[$x][trans('custom.gl_code')] = '';
-                    $data[$x]['GL Description'] = '';
-                    $data[$x]['Department'] = '';
+                    $data[$x][trans('custom.gl_description')] = '';
+                    $data[$x][trans('custom.department')] = '';
                 }
 
-                \Excel::create('inter_company_stock_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'inter_company_stock_transfer';
+                $path = 'financial_report/inter_company_stock_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICAT':
@@ -12326,47 +12336,50 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->Company;
-                        $data[$x]['Disposal Document'] = $val->disposalDocumentCode;
-                        $data[$x]['Disposal Date'] = Helper::dateFormat($val->disposalDocumentDate);
-                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
-                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                        $data[$x]['Company To'] = $val->toCompanyID;
-                        $data[$x]['Direct GRV Code'] = $val->grvPrimaryCode;
-                        $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                        $data[$x]['Direct GRV Approved'] = $val->Approved;
-                        $data[$x]['GRV Amount'] = round($val->GrvAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->Company;
+                        $data[$x][trans('custom.disposal_document')] = $val->disposalDocumentCode;
+                        $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->disposalDocumentDate);
+                        $data[$x][trans('custom.customer_inv_code')] = $val->bookingInvCode;
+                        $data[$x][trans('custom.customer_inv_date')] = Helper::dateFormat($val->bookingDate);
+                        $data[$x][trans('custom.customer_inv_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->toCompanyID;
+                        $data[$x][trans('custom.direct_grv_code')] = $val->grvPrimaryCode;
+                        $data[$x][trans('custom.grv_date')] = Helper::dateFormat($val->grvDate);
+                        $data[$x][trans('custom.direct_grv_approved')] = $val->Approved;
+                        $data[$x][trans('custom.grv_amount')] = round($val->GrvAmount, $decimalPlaceRpt);
 
                         $subTotalBookingAmountRpt += $val->bookingAmountRpt;
                         $subTotalGrvAmount += $val->GrvAmount;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Disposal Document'] = '';
-                    $data[$x]['Disposal Date'] = '';
-                    $data[$x]['Customer INV Code'] = '';
-                    $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Direct GRV Code'] = '';
-                    $data[$x]['GRV Date'] = '';
-                    $data[$x]['Direct GRV Approved'] = '';
-                    $data[$x]['GRV Amount'] = round($subTotalGrvAmount, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.disposal_document')] = '';
+                    $data[$x][trans('custom.disposal_date')] = '';
+                    $data[$x][trans('custom.customer_inv_code')] = '';
+                    $data[$x][trans('custom.customer_inv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.customer_inv_amount')] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.direct_grv_code')] = '';
+                    $data[$x][trans('custom.grv_date')] = '';
+                    $data[$x][trans('custom.direct_grv_approved')] = '';
+                    $data[$x][trans('custom.grv_amount')] = round($subTotalGrvAmount, $decimalPlaceRpt);
                 }
 
-                \Excel::create('inter_company_Asset_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'inter_company_Asset_transfer';
+                $path = 'financial_report/inter_company_asset_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICFT':
@@ -12380,48 +12393,51 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->companyID;
-                        $data[$x]['Transfer Type'] = $val->expenseClaimTypeDescription;
-                        $data[$x]['PV Code'] = $val->BPVcode;
-                        $data[$x]['PV Date'] = Helper::dateFormat($val->BPVdate);
-                        $data[$x]['PV Amount'] = round($val->payAmountCompRpt, $decimalPlaceRpt);
-                        $data[$x]['Company To'] = $val->companyIdTo;
-                        $data[$x]['Receipt Code'] = $val->custPaymentReceiveCode;
-                        $data[$x]['Receipt Date'] = Helper::dateFormat($val->custPaymentReceiveDate);
-                        $data[$x]['Receipt Approved'] = $val->Approved;
-                        $data[$x]['Receipt Amount'] = round($val->companyRptAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->companyID;
+                        $data[$x][trans('custom.transfer_type')] = $val->expenseClaimTypeDescription;
+                        $data[$x][trans('custom.pv_code')] = $val->BPVcode;
+                        $data[$x][trans('custom.pv_date')] = Helper::dateFormat($val->BPVdate);
+                        $data[$x][trans('custom.pv_amount')] = round($val->payAmountCompRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->companyIdTo;
+                        $data[$x][trans('custom.receipt_code')] = $val->custPaymentReceiveCode;
+                        $data[$x][trans('custom.receipt_date')] = Helper::dateFormat($val->custPaymentReceiveDate);
+                        $data[$x][trans('custom.receipt_approved')] = $val->Approved;
+                        $data[$x][trans('custom.receipt_amount')] = round($val->companyRptAmount, $decimalPlaceRpt);
 
                         $subTotalPayAmountCompRpt += $val->payAmountCompRpt;
                         $subTotalCompanyRptAmount += $val->companyRptAmount;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Transfer Type'] = '';
-                    $data[$x]['PV Code'] = '';
-                    $data[$x]['PV Date'] = 'Total';
-                    $data[$x]['PV Amount'] = round($subTotalPayAmountCompRpt, $decimalPlaceRpt);
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Receipt Code'] = '';
-                    $data[$x]['Receipt Date'] = '';
-                    $data[$x]['Receipt Approved'] = '';
-                    $data[$x]['Receipt Amount'] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.transfer_type')] = '';
+                    $data[$x][trans('custom.pv_code')] = '';
+                    $data[$x][trans('custom.pv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.pv_amount')] = round($subTotalPayAmountCompRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.receipt_code')] = '';
+                    $data[$x][trans('custom.receipt_date')] = '';
+                    $data[$x][trans('custom.receipt_approved')] = '';
+                    $data[$x][trans('custom.receipt_amount')] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
                 }
 
-                \Excel::create('inter_company_Fund_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'inter_company_Fund_transfer';
+                $path = 'financial_report/inter_company_fund_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -12599,7 +12615,7 @@ GROUP BY
         $reportID = $request->get('reportID');
         if(!isset($reportID) && $reportID == null)
         {
-            return $this->sendError('No report ID found');
+            return $this->sendError(trans('custom.no_report_id_found'));
         }
         $reportData = $this->generateFRReport($request);
 
@@ -12643,7 +12659,7 @@ GROUP BY
         if($month){
             $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
         }
-        $reportData['report_tittle'] = 'Finance Report';
+        $reportData['report_tittle'] = trans('custom.finance_report');
         $reportData['from_date'] = $input['fromDate'];
         $reportData['to_date'] = $input['toDate'];
 

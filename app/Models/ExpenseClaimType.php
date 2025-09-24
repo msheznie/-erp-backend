@@ -38,6 +38,7 @@ class ExpenseClaimType extends Model
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'expenseClaimTypeID';
+    protected $appends = ['expenseClaimTypeDescription'];
 
 
     public $fillable = [
@@ -63,6 +64,39 @@ class ExpenseClaimType extends Model
     public static $rules = [
         
     ];
+
+    public function translations()
+    {
+        return $this->hasMany(ExpensesClaimTypeLanguage::class, 'typeId', 'expenseClaimTypeID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated month description
+     */
+    public function getExpenseClaimTypeDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+
+        return $this->attributes['expenseClaimTypeDescription'] ?? '';
+    }
 
     
 }
