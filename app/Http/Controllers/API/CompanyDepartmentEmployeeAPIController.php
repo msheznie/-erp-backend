@@ -245,6 +245,34 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         }
     }
 
+    public function autoAssignDepartmentBudgetPlanningColumnData($data, $companyID) {
+        $companyDepartment = CompanyDepartment::find($data['departmentSystemID']);
+        if ($companyDepartment->isFinance == 1) {
+            $this->storeTableColumns($data['employeeSystemID'], $companyID);
+        }
+        else {
+            if ($data['isHOD'] == 1) {
+                $this->storeTableColumns($data['employeeSystemID'], $companyID);
+            }
+        }
+    }
+
+    public function storeTableColumns($data, $companyID) {
+        $insertData = [];
+        $defaultColumns = DepBudgetPlDetColumn::where('isDefault', 1)->get();
+        foreach ($defaultColumns as $defaultColumn) {
+            $insertData[] = [
+                'companySystemID' => $companyID,
+                'empID' => $data,
+                'columnID' => $defaultColumn->id
+            ];
+        }
+
+        if (count($insertData) > 0) {
+            DepBudgetPlDetEmpColumn::insert($insertData);
+        }
+    }
+
     /**
      * Update the specified department employee
      *
@@ -287,6 +315,15 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
                 }
 
+                $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->pluck('employeeSystemID')->toArray();
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+
                 // Remove HOD status from any existing HOD in this department
                 CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
                     ->where('isHOD', 1)
@@ -314,7 +351,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError(trans('custom.error_updating_department_employee'), 404,['error' => $e->getMessage()]);
+            return $this->sendError('Error updating department employee', 404,['error' => $e->getMessage()]);
         }
     }
 

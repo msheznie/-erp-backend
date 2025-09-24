@@ -20,6 +20,7 @@ use App\Models\DepartmentBudgetTemplate;
 use App\Models\DepartmentUserBudgetControl;
 use App\Models\WorkflowConfiguration;
 use App\Repositories\CompanyBudgetPlanningRepository;
+use App\Services\BudgetPermissionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -41,10 +42,14 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 {
     /** @var  CompanyBudgetPlanningRepository */
     private $companyBudgetPlanningRepository;
+    
+    /** @var  BudgetPermissionService */
+    private $budgetPermissionService;
 
-    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo)
+    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo, BudgetPermissionService $budgetPermissionService)
     {
         $this->companyBudgetPlanningRepository = $companyBudgetPlanningRepo;
+        $this->budgetPermissionService = $budgetPermissionService;
     }
 
     /**
@@ -375,113 +380,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
     public function getBudgetPlanningUserPermissions(Request $request) {
         $input = $request->all();
-
-        $companyId = $input['companyId'];
-
-        if (!isset($companyId)) {
-            return $this->sendError('Company ID not found');
+        $result = $this->budgetPermissionService->getBudgetPlanningUserPermissions($input);
+        
+        if (!$result['success']) {
+            return $this->sendError($result['message']);
         }
-
-
-        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] :  \Helper::getEmployeeSystemID();
-
-//        $employeeID = 110;
-        $userPermissions = [
-            'financeUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ],
-            'hodUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ],
-            'delegateUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ]
-        ];
-
-        $assignDepartments = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
-            ->where('isActive', 1)
-            ->whereHas('department', function($query) use ($companyId) {
-                $query->where('companySystemID', $companyId);
-            });
-
-        if ($assignDepartments) {
-            $isHODUser = (clone $assignDepartments)->whereHas('department', function($query) {
-                $query->where('isFinance', 0);
-            })
-            ->where('isHOD',1)->exists();
-
-            if ($isHODUser) {
-                $userPermissions['hodUser']['status'] = true;
-
-                // only get permission if budgetPlanningID is set
-                if (isset($input['budgetPlanningID'])) {
-                    // TODO: get hod parent & child permission from workflow configuration & return
-                    /**
-                     * HOD permission required in budget planning company & budget planning department view.
-                     * Inside that view call this function with budgetPlanningID
-                     * use $userPermissions['hodUser']['access']
-                     */
-                }
-            }
-
-            $isFinanceUser = (clone $assignDepartments)->whereHas('department', function($query) {
-                $query->where('isFinance', 1);
-            })->exists();
-
-            if ($isFinanceUser) {
-                $userPermissions['financeUser']['status'] = true;
-
-                $allBudgetControls = BudgetControl::where('isActive', 1)->get();
-
-                $departmentEmployeeID = (clone $assignDepartments)->whereHas('department', function($query) {
-                    $query->where('isFinance', 1);
-                })->pluck('departmentEmployeeSystemID');
-                $financeUserPermissions = DepartmentUserBudgetControl::where('departmentEmployeeSystemID', $departmentEmployeeID->first())->pluck('budgetControlID')->toArray();
-
-                $userPermissions['financeUser']['access'] = $allBudgetControls->mapWithKeys( function($budgetControl) use ($financeUserPermissions) {
-                    return [Str::slug($budgetControl->controlName, "_") => in_array($budgetControl->budgetControlID, $financeUserPermissions)];
-                });
-            }
-
-
-            // check if user is delegate & assign permissions
-            if (isset($input['departmentSystemID'])) {
-                $delegateeID = (clone $assignDepartments)->where('departmentSystemID', $input['departmentSystemID'])->pluck('departmentEmployeeSystemID')->first();
-                $delegateUserAccess = BudgetDelegateAccessRecord::where('delegatee_id', $delegateeID);
-            }
-            else {
-                $delegateeID = (clone $assignDepartments)->pluck('departmentEmployeeSystemID')->toArray();
-                $delegateUserAccess = BudgetDelegateAccessRecord::whereIn('delegatee_id', $delegateeID);
-            }
-
-            if ((count((clone $delegateUserAccess)->get()) > 0)) {
-                $userPermissions['delegateUser']['status'] = true;
-
-                // only get permission if departmentBudgetPlanningDetailID is set
-                if (isset($input['departmentBudgetPlanningDetailID'])) {
-                    $delegateUserAccessData = $delegateUserAccess->where('budget_planning_detail_id', $input['departmentBudgetPlanningDetailID'])->first();
-                    if(!empty($delegateUserAccessData) && ($delegateUserAccessData->status != 1 || $delegateUserAccessData->submission_time <= Carbon::today()->format('Y-m-d')))
-                    {
-                        $userPermissions['delegateUser']['isActive'] = false;
-                    }
-                    if (!empty($delegateUserAccessData)) {
-                        $preDelegateUserAccessData = BudgetDelegateAccess::where('is_active', 1)->get();
-                        $userExistingPermissions = is_array($delegateUserAccessData->access_permissions) ? $delegateUserAccessData->access_permissions : json_decode($delegateUserAccessData->access_permissions);
-                        $userPermissions['delegateUser']['access'] = $preDelegateUserAccessData->mapWithKeys(function($preDelegateUserAccess) use ($userExistingPermissions) {
-                            return [$preDelegateUserAccess->slug => in_array($preDelegateUserAccess->slug, $userExistingPermissions)];
-                        });
-                    }
-                }
-            }
-        }
-
-        return $this->sendResponse($userPermissions, 'User access retrieved successfully');
+        
+        return $this->sendResponse($result['data'], $result['message']);
     }
 
     public function getBudgetPlanningFormData(Request $request) {
@@ -524,13 +429,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
 
 
-                $newRequest = new Request();
-                $newRequest->replace([
+                $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
                     'companyId' => $companyId,
                     'delegateUser' =>  $employeeID
                 ]);
-                $controller = app(CompanyBudgetPlanningAPIController::class);
-                $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
                 if ($userPermission['success'] && $userPermission['data']['financeUser']['status']) {
                     $departmentPlanningCodes = $companyPlanningCodes;

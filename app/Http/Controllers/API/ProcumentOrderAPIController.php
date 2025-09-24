@@ -5472,6 +5472,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
+        $validator = \Validator::make($input, [
+            'documentId' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+        }
+
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
@@ -9472,7 +9480,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $this->sendResponse($paymentTermConfig, trans('custom.payment_term_config_updated_successfully'));
 
     }
-
     function truncateDecimals($value, $decimals = 3) {
         $factor = pow(10, $decimals);
         return floor($value * $factor) / $factor;

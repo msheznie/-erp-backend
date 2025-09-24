@@ -768,4 +768,29 @@ class TenderMaster extends Model
     public static function getTenderMasterData($tenderID){
         return self::where('id', $tenderID)->first();
     }
+    public static function getTenderList($companyID, $scenarioID){
+        $endDates = $scenarioID == 45 ?  'technical_bid_closing_date' : 'commerical_bid_closing_date';
+
+        return TenderMaster::select(
+            'id', 'title', 'description', 'stage', 'bid_opening_date', 'bid_opening_end_date',
+            'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date',
+            'commerical_bid_closing_date', 'tender_code', 'company_id'
+        )
+            ->where('company_id', $companyID)
+            ->where(function ($query) use ($endDates) {
+                $query->whereDate($endDates, '>=', Carbon::now())
+                    ->orWhere('bid_opening_date', '>=', Carbon::now());
+            })
+            ->with([
+                'tenderBidMinimumApproval' => function ($q) {
+                    $q->select('id', 'emp_id', 'tender_id')
+                        ->with([
+                            'employee' => function ($q) {
+                                $q->select('employeeSystemID', 'empName', 'empEmail');
+                            }
+                        ]);
+                }
+            ])
+            ->get();
+    }
 }

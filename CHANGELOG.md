@@ -1,6 +1,42 @@
 # Changelog
 
 
+## [10.84.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.83.0...v10.84.0) (2025-09-16)
+
+
+### Features
+
+* **Employee Designation:** EA | Setup for Designation Update Notification in Employee Master [GHR-6977] ([#8719](https://github.com/pbsgears/Gears_BackEnd/issues/8719)) ([5968897](https://github.com/pbsgears/Gears_BackEnd/commit/596889712e413822c1d3cc7b57ca682fcfbf6c7e))
+
+## [10.83.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.82.0...v10.83.0) (2025-09-11)
+
+
+### Features
+
+* **configuration:** Tender calendar date reminder setup [GSUP-2213] ([#8604](https://github.com/pbsgears/Gears_BackEnd/issues/8604)) ([9727874](https://github.com/pbsgears/Gears_BackEnd/commit/972787414d6f777d235a28334598f261186d914b))
+* **srm:** Allow Multiple Document Attachment During the Bid Submission [GSUP-3642] ([#8634](https://github.com/pbsgears/Gears_BackEnd/issues/8634)) ([966e00b](https://github.com/pbsgears/Gears_BackEnd/commit/966e00b3be7b31e20948638d62ca584f2c32b9f4))
+* **srm:** Supplier PO Documents attachment option in Supplier portal [GSUP-2218] ([#8501](https://github.com/pbsgears/Gears_BackEnd/issues/8501)) ([dc8c0f1](https://github.com/pbsgears/Gears_BackEnd/commit/dc8c0f19cdaae0e68c4e1bab921e263336d423f7))
+* **srm:** View Multiple Documents During the Document Verification [Common Documents] [GSUP-3851] ([#8644](https://github.com/pbsgears/Gears_BackEnd/issues/8644)) ([dcda4e7](https://github.com/pbsgears/Gears_BackEnd/commit/dcda4e7c1210e39e3160171247a18a4f704d64df))
+
+
+### Bug Fixes
+
+* **Commercial Bid Opening:** Commercial bid records are visible before approval of bid opening [GSUP-4064] ([#8651](https://github.com/pbsgears/Gears_BackEnd/issues/8651)) ([5b26359](https://github.com/pbsgears/Gears_BackEnd/commit/5b263593ecfced44f76e120d170af022509e88b6))
+
+## [10.82.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.1...v10.82.0) (2025-09-07)
+
+
+### Features
+
+* **treasury management:** b2B file format double quotation mark replaced with empty [GCP-11669] ([#8685](https://github.com/pbsgears/Gears_BackEnd/issues/8685)) ([b3ae859](https://github.com/pbsgears/Gears_BackEnd/commit/b3ae8597d274273bf73bc19e74af35a023db43e1))
+
+## [10.81.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.0...v10.81.1) (2025-09-01)
+
+
+### Miscellaneous Chores
+
+* release 10.81.1 ([#8659](https://github.com/pbsgears/Gears_BackEnd/issues/8659)) ([e1f4c00](https://github.com/pbsgears/Gears_BackEnd/commit/e1f4c00975dcc78ae2d77b4efd73469c607e5f8c))
+
 ## [10.81.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.80.0...v10.81.0) (2025-08-25)
 
 

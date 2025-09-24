@@ -345,11 +345,19 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateMasterID);
 
         if (empty($finalReturnIncomeTemplateDetails)) {
+<<<<<<< HEAD
+            return $this->sendError('Final Return Income Template Details not found');
+        }
+
+        if($isTemplateUsed) {
+            return $this->sendError('Template already used in a report and cannot be deleted', 500);
+=======
             return $this->sendError(trans('custom.final_return_income_template_details_not_found'));
         }
 
         if($isTemplateUsed) {
             return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_de'), 500);
+>>>>>>> erp-sprint-058
         }
        
 
@@ -365,7 +373,11 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
             $record->update(['sortOrder' => $index + 1]);
         }
 
+<<<<<<< HEAD
+        return $this->sendResponse($finalReturnIncomeTemplateDetails, 'Final Return Income Template Details deleted successfully');
+=======
         return $this->sendResponse($finalReturnIncomeTemplateDetails, trans('custom.final_return_income_template_details_deleted_succe'));
+>>>>>>> erp-sprint-058
     }
 
     public function getReportTemplateDetail($templateId, Request $request) {
@@ -440,7 +452,11 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 'isTemplateUsed' => $isTemplateUsed
             ];
 
+<<<<<<< HEAD
+        return $this->sendResponse($output, 'Final Return Income Template Details retrieved successfully');
+=======
         return $this->sendResponse($output, trans('custom.final_return_income_template_details_retrieved_suc'));
+>>>>>>> erp-sprint-058
     }
 
     public function templateDetailRaw(Request $request) {
@@ -449,7 +465,11 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($input['templateMasterID']);
 
         if($isTemplateUsed) {
+<<<<<<< HEAD
+            return $this->sendError('Template already used in a report and cannot be modified', 500);
+=======
             return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_mo'), 500);
+>>>>>>> erp-sprint-058
         }
        
 
@@ -507,7 +527,11 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
              DB::commit();
             return $this->sendResponse(
                 $record->toArray(),
+<<<<<<< HEAD
+                'Final Return Income Template record(s) saved successfully'
+=======
                 trans('custom.final_return_income_template_records_saved_success')
+>>>>>>> erp-sprint-058
             );
         } catch (\Exception $exception) {
             DB::rollBack();

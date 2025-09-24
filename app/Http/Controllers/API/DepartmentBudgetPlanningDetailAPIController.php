@@ -252,6 +252,18 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
+            // Handle segment filtering
+            $segments = $request->input('segments');
+            if (!empty($segments) && is_array($segments)) {
+                // Extract segment IDs from the segments array
+                $segmentIds = array_column($segments, 'id');
+                if (!empty($segmentIds)) {
+                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                        $q->whereIn('serviceLineSystemID', $segmentIds);
+                    });
+                }
+            }
+
             $total = $query->count();
 
             $data = $query->skip($offset)->take($pageSize)->get();

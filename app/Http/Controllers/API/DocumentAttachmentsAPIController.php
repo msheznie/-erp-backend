@@ -26,6 +26,7 @@ use App\Models\DocumentAttachmentType;
 use App\Models\DocumentMaster;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderNegotiationArea;
 use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
@@ -1210,11 +1211,13 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         $tenderId = $request['tenderId'];
+        $bidListView = $request['bidListView'] ?? null;
+        $parentId = $request['parentId'] ?? null;
         $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentSystemId = $documentType->document_type == 0 ? 108:113;
 
-        $query = DocumentAttachments::with(['bid_verify', 'document_parent'])->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType', $envelopType);
+        $query = DocumentAttachmentsRepository::getAttachmentLists($id, $documentSystemId, $envelopType, $parentId, $tenderId, $bidListView);
 
        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
 

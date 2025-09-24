@@ -2904,6 +2904,11 @@ class TenderMasterAPIController extends AppBaseController
                             ->whereColumn('tn.srm_tender_master_id', 'tender_negotiations.srm_tender_master_id');
                     }, 'version');
             }])
+            ->withCount([
+                'tenderBidMinimumApproval as approved_count' => function ($q) {
+                    $q->where('status', 1);
+                }
+            ])
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('company_id', $companyId)
             ->where(function ($query) use ($userId) {
@@ -2913,7 +2918,8 @@ class TenderMasterAPIController extends AppBaseController
                 })->orWhereHas('tenderBidMinimumApproval', function ($q1) use ($userId) {
                     $q1->where('emp_id', $userId);
                 });
-            });
+            })
+            ->having('approved_count', '>=', \DB::raw('min_approval_bid_opening'));
 
         if($isNegotiation == 1){
             $query->where('is_negotiation_started',1)
@@ -2988,6 +2994,8 @@ class TenderMasterAPIController extends AppBaseController
                 $query->orWhere('negotiation_code', 'LIKE', "%{$search}%");
             }
         }
+
+
 
 
         return \DataTables::eloquent($query)

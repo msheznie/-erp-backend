@@ -227,6 +227,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if (!isset($input['salesType']) || empty($input['salesType'])) {
                 return $this->sendError(trans('custom.please_select_sales_type'), 500);
             }
+            
+            if (!isset($input['salesType']) || empty($input['salesType'])) {
+                return $this->sendError('Please select a sales type', 500);
+            }
         }
 
         if (!isset($input['custTransactionCurrencyID']) || (isset($input['custTransactionCurrencyID']) && ($input['custTransactionCurrencyID'] == 0 || $input['custTransactionCurrencyID'] == null))) {
