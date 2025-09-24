@@ -9102,5 +9102,22 @@ return [
     'pv_code' => 'كود سند الدفع',
     'pv_date' => 'تاريخ سند الدفع',
     'pv_amount' => 'مبلغ سند الدفع',
-    'receipt_approved' => 'الإيصال معتمد'
+    'receipt_approved' => 'الإيصال معتمد',
+    'appendix' => 'الملحق',
+    'row_no' => 'رقم السطر',
+    'taxable_income_deduction_tax_due' => 'الدخل المعفي/ الإستقطاع/ الضريبة المستحقة',
+    'from_date_not_between_financial_year' => 'تاريخ البداية ليس ضمن السنة المالية !',
+    'to_date_not_between_financial_year' => 'تاريخ النهاية ليس ضمن السنة المالية !',
+    'to_date_must_be_greater_than_from_date' => 'تاريخ النهاية يجب أن يكون أكبر من تاريخ البداية !',
+    'please_select_report_type' => 'يرجى اختيار نوع التقرير',
+    'please_select_document_type' => 'يرجى اختيار نوع المستند',
+    'no_report_id_found' => 'لم يتم العثور على معرف التقرير',
+    'unable_to_export_excel' => 'غير قادر على تصدير إكسل',
+    'companies_retrieved_successfully' => 'تم استرداد الشركات بنجاح',
+    'report_rows_not_configured' => 'صفوف التقرير غير مكونة',
+    'report_columns_not_configured' => 'أعمدة التقرير غير مكونة',
+    'column_configuration_not_completed_assign_columns' => 'تكوين الأعمدة غير مكتمل، يرجى تعيين :columns عمود/أعمدة.',
+    'column_configuration_not_completed_assign_combined' => 'تكوين الأعمدة غير مكتمل، يرجى تعيين أعمدة الدمج والحذف والدمج أو قالب.',
+    'retained_earnings_gl_not_assigned' => 'حساب الأرباح المحتجزة غير معين للقالب.',
+    'unmatched_data_retrieved_successfully' => 'تم استرداد البيانات غير المطابقة بنجاح.'
 ];

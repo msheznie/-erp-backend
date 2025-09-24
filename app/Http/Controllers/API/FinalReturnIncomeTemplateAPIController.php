@@ -457,10 +457,10 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             $details = FinalReturnIncomeTemplateDetails::create($detailData);
             
             $columns = [
-                ['description' => 'Appendix'],
-                ['description' => 'Row No.'],
-                ['description' => 'Taxable Income/ Deduction/ Tax Due'],
-                ['description' => 'Amount'],
+                ['description' => trans('custom.appendix')],
+                ['description' => trans('custom.row_no')],
+                ['description' => trans('custom.taxable_income_deduction_tax_due')],
+                ['description' => trans('custom.amount')],
             ];
 
             $columnRows = [];

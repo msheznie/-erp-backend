@@ -78,8 +78,7 @@ class FinalReturnIncomeTemplateDefaults extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    protected $appends = ['description'];
 
     public $fillable = [
         'line_no',
@@ -117,5 +116,28 @@ class FinalReturnIncomeTemplateDefaults extends Model
     public function links()
     {
         return $this->hasMany(FinalReturnIncomeTemplateLinks::class, 'rawId', 'id');
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(FinalReturnIncomeTemplateDefaultTranslation::class, 'defaultId', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['description'] ?? '';
     }
 }

@@ -282,7 +282,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
-        return $this->sendResponse($companiesData, "companies retrived successfully");        
+        return $this->sendResponse($companiesData, trans('custom.companies_retrieved_successfully'));        
     }
 
     public function getSubSubsidiaryCompanies($subsidiary_companies)
@@ -417,11 +417,11 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
-                    return $this->sendError('From Date not between Financial year !', 500);
+                    return $this->sendError(trans('custom.from_date_not_between_financial_year'), 500);
                 } else if (!($toDate >= $bigginingDate) || !($toDate <= $endingDate)) {
-                    return $this->sendError('To Date not between Financial year !', 500);
+                    return $this->sendError(trans('custom.to_date_not_between_financial_year'), 500);
                 } else if ($fromDate > $toDate) {
-                    return $this->sendError('The To date must be greater than the From date !', 500);
+                    return $this->sendError(trans('custom.to_date_must_be_greater_than_from_date'), 500);
                 }
 
                 if ($validator->fails()) {
@@ -468,11 +468,11 @@ class FinancialReportAPIController extends AppBaseController
 
                 if(!isset($request->reportViewID) || $request->reportViewID == 0)
                 {
-                    return $this->sendError('Please select a report type');
+                    return $this->sendError(trans('custom.please_select_report_type'));
                 }
 
                 if (!isset($request->tempType) || $request->tempType == 0) {
-                    return $this->sendError('Please select a document type');
+                    return $this->sendError(trans('custom.please_select_document_type'));
                 }
 
 
@@ -501,7 +501,7 @@ class FinancialReportAPIController extends AppBaseController
                 $checkDetails = ReportTemplateDetails::where('companyReportTemplateID', $input['templateType'])->exists();
 
                 if (!$checkDetails && $input['accountType'] != 4) {
-                    return $this->sendError("Report rows are not configured");
+                    return $this->sendError(trans('custom.report_rows_not_configured'));
                 }
 
                 $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->get();
@@ -514,25 +514,25 @@ class FinancialReportAPIController extends AppBaseController
                             if(count($missingColumns) > 0) {
                                 $columnData = ReportTemplateColumns::whereIn('shortCode', $missingColumns)->pluck('description')->toArray();
                                 if(count($columnData) > 0) {
-                                    return $this->sendError("Column configuration not completed, assign " . join(",",$columnData) . " Column/s.");
+                                    return $this->sendError(trans('custom.column_configuration_not_completed_assign_columns', ['columns' => join(",",$columnData)]));
                                 }
                             }
                         }
                         else {
-                            return $this->sendError("Column configuration not completed, assign Combined, Elimination and Consolidation Columns or a Template.");
+                            return $this->sendError(trans('custom.column_configuration_not_completed_assign_combined'));
                         }
                     }
                 }
                 else {
                     if ((count($checkColoumns) == 0) && $input['accountType'] != 4) {
-                        return $this->sendError("Report columns are not configured");
+                        return $this->sendError(trans('custom.report_columns_not_configured'));
                     }
                 }
 
                 $checkRows = ReportTemplateEquity::where('companySystemID', $input['selectedCompanyID'])->where('templateMasterID', $input['templateType'])->first();
 
                 if (!$checkRows && $input['accountType'] == 4) {
-                    return $this->sendError("Report columns are not configured");
+                    return $this->sendError(trans('custom.report_columns_not_configured'));
                 }
 
                 $isRetaineGlExists =  ReportTemplateLinks::where('companySystemID', $input['selectedCompanyID'])->where('templateMasterID', $input['templateType'])->whereHas('chartofaccount',function($q){
@@ -541,7 +541,7 @@ class FinancialReportAPIController extends AppBaseController
 
                   if(!$isRetaineGlExists && $input['accountType'] == 4)
                   {
-                    return $this->sendError("Retained Earnings GL not assigned to template.");
+                    return $this->sendError(trans('custom.retained_earnings_gl_not_assigned'));
                   }
 
                 break;
@@ -586,7 +586,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                     break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -596,7 +596,7 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
 
         if ($fromDate > $toDate) {
-            return $this->sendError('The To date must be greater than the From date !', 500);
+            return $this->sendError(trans('custom.to_date_must_be_greater_than_from_date'), 500);
         }
 
         $projectID = $request->projectID;
@@ -2065,7 +2065,7 @@ class FinancialReportAPIController extends AppBaseController
                 );
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -3417,7 +3417,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -4599,7 +4599,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -4756,7 +4756,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -4765,7 +4765,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 break;
             default:
-            return $this->sendError('No report ID found');
+            return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -9460,7 +9460,7 @@ GROUP BY id
                 break;
 
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -11524,7 +11524,7 @@ GROUP BY
             'unMatchedData' => collect($meregedResultTwo)->unique('documentCode')->values()->all()
         ];
 
-        return $this->sendResponse($respondData, "Unmatched data retrived successfully.");
+        return $this->sendResponse($respondData, trans('custom.unmatched_data_retrieved_successfully'));
     }
 
     public function getICFilterFormData(Request $request)
@@ -11592,7 +11592,7 @@ GROUP BY
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -11638,7 +11638,7 @@ GROUP BY
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
 
         return \DataTables::of($output)

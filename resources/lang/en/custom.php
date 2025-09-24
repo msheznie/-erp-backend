@@ -9188,5 +9188,22 @@ return [
     'pv_code' => 'PV Code',
     'pv_date' => 'PV Date',
     'pv_amount' => 'PV Amount',
-    'receipt_approved' => 'Receipt Approved'
+    'receipt_approved' => 'Receipt Approved',
+    'appendix' => 'Appendix',
+    'row_no' => 'Row No.',
+    'taxable_income_deduction_tax_due' => 'Taxable Income/ Deduction/ Tax Due',
+    'from_date_not_between_financial_year' => 'From Date not between Financial year !',
+    'to_date_not_between_financial_year' => 'To Date not between Financial year !',
+    'to_date_must_be_greater_than_from_date' => 'The To date must be greater than the From date !',
+    'please_select_report_type' => 'Please select a report type',
+    'please_select_document_type' => 'Please select a document type',
+    'no_report_id_found' => 'No report ID found',
+    'unable_to_export_excel' => 'Unable to export excel',
+    'companies_retrieved_successfully' => 'Companies retrieved successfully',
+    'report_rows_not_configured' => 'Report rows are not configured',
+    'report_columns_not_configured' => 'Report columns are not configured',
+    'column_configuration_not_completed_assign_columns' => 'Column configuration not completed, assign :columns Column/s.',
+    'column_configuration_not_completed_assign_combined' => 'Column configuration not completed, assign Combined, Elimination and Consolidation Columns or a Template.',
+    'retained_earnings_gl_not_assigned' => 'Retained Earnings GL not assigned to template.',
+    'unmatched_data_retrieved_successfully' => 'Unmatched data retrieved successfully.'
 ];
