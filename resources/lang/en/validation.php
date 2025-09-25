@@ -236,7 +236,9 @@ return [
         'chartOfAccountAllocationMasterID' => 'chart of account allocation id',
         'allocationmaid' => 'allocation maid',
         'productLineID' => 'product line id',
-        'percentage' => 'percentage'
+        'percentage' => 'percentage',
+        'glCodes' => 'GL Codes',
+        'departments' => 'Departments'
     ],
 
 ];
