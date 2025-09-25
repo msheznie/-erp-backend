@@ -6489,7 +6489,7 @@ ORDER BY
         $input = $request->all();
 
         if (!isset($input['suppliers'])) {
-            return $this->sendError("suppliers not found");
+            return $this->sendError(trans('custom.suppliers_not_found'));
         }
 
         $suplliers = $input['suppliers'];
@@ -6523,9 +6523,8 @@ ORDER BY
                 $company = Company::where('companySystemID', $input['companySystemID'])->first();
                 $emailSentTo = 0;
 
-                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                    "monitoring this inbox.</font>";
+                $footer = "<font size='1.5'><i><p><br><br><br>" . trans('custom.save_paper_think_before_print') .
+                    "<br>" . trans('custom.auto_generated_email_no_reply') . "</font>";
                 
                 if ($fetchSupEmail) {
                     foreach ($fetchSupEmail as $row) {
@@ -6535,13 +6534,16 @@ ORDER BY
 
                             $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                            $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier ledger report has been sent from ' . $company->CompanyName . $footer;
+                            $temp = trans('custom.dear_supplier_ledger_sent', [
+                                'supplierName' => $supplierMaster->supplierName,
+                                'companyName' => $company->CompanyName
+                            ]) . $footer;
 
                             $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Supplier ledger report from " . $company->CompanyName;
+                            $dataEmail['alertMessage'] = trans('custom.supplier_ledger_report_from', ['companyName' => $company->CompanyName]);
                             $dataEmail['emailAlertMessage'] = $temp;
                             $sendEmail = \Email::sendEmailErp($dataEmail);
                             if (!$sendEmail["success"]) {
@@ -6559,13 +6561,16 @@ ORDER BY
 
                             $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                            $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier ledger report has been sent from ' . $company->CompanyName . $footer;
+                            $temp = trans('custom.dear_supplier_ledger_sent', [
+                                'supplierName' => $supplierMaster->supplierName,
+                                'companyName' => $company->CompanyName
+                            ]) . $footer;
 
                             $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Supplier ledger report " . $company->CompanyName;
+                            $dataEmail['alertMessage'] = trans('custom.supplier_ledger_report', ['companyName' => $company->CompanyName]);
                             $dataEmail['emailAlertMessage'] = $temp;
                             $sendEmail = \Email::sendEmailErp($dataEmail);
                             if (!$sendEmail["success"]) {
@@ -6577,7 +6582,7 @@ ORDER BY
                 }
 
                 if ($emailSentTo == 0) {
-                    $errorMessage[] = "Supplier email is not updated for ".$supplierMaster->supplierName.". report is not sent";
+                    $errorMessage[] = trans('custom.supplier_email_not_updated', ['supplierName' => $supplierMaster->supplierName]);
                 } 
             }
         }
@@ -6585,7 +6590,7 @@ ORDER BY
         if (count($errorMessage) > 0) {
             return $this->sendError($errorMessage,500);
         } else {
-            return $this->sendResponse([], 'Supplier ledger report sent');
+            return $this->sendResponse([], trans('custom.supplier_ledger_report_sent'));
         }
     }
 

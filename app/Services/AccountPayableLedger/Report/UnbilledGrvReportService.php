@@ -89,16 +89,16 @@ class UnbilledGrvReportService
                     $data[$x][trans('custom.balance_reporting_currency')] = CurrencyService::convertNumberFormatToNumber(number_format($val->balanceRptAmount, CurrencyService::getCurrencyDecimalPlace($request->currencyID)));
                 }
 
-                $data[$x]['<=30'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case1, $decimal));
-                $data[$x]['31 to 60'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case2, $decimal));
-                $data[$x]['61 to 90'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case3, $decimal));
-                $data[$x]['91 to 120'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case4, $decimal));
-                $data[$x]['121 to 150'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case5, $decimal));
-                $data[$x]['151 to 180'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case6, $decimal));
-                $data[$x]['181 to 210'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case7, $decimal));
-                $data[$x]['211 to 240'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case8, $decimal));
-                $data[$x]['241 to 365'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case9, $decimal));
-                $data[$x]['Over 365'] = CurrencyService::convertNumberFormatToNumber(number_format($val->case10, $decimal));
+                $data[$x][trans('custom.aging_30_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case1, $decimal));
+                $data[$x][trans('custom.aging_31_to_60_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case2, $decimal));
+                $data[$x][trans('custom.aging_61_to_90_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case3, $decimal));
+                $data[$x][trans('custom.aging_91_to_120_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case4, $decimal));
+                $data[$x][trans('custom.aging_121_to_150_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case5, $decimal));
+                $data[$x][trans('custom.aging_151_to_180_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case6, $decimal));
+                $data[$x][trans('custom.aging_181_to_210_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case7, $decimal));
+                $data[$x][trans('custom.aging_211_to_240_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case8, $decimal));
+                $data[$x][trans('custom.aging_241_to_365_days_php')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case9, $decimal));
+                $data[$x][trans('custom.over_365')] = CurrencyService::convertNumberFormatToNumber(number_format($val->case10, $decimal));
 
                 $x++;
             }

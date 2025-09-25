@@ -129,10 +129,10 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{trans('custom.printed_date')}} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -224,11 +224,11 @@
                     <tr width="100%">
                         @if(!$sentEmail)
                             <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
-                                class="text-right"><b>Total:</b></td>
+                                class="text-right"><b>{{trans('custom.total')}}:</b></td>
                         @endif
                         @if($sentEmail)
                             <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
-                                class="text-right"><b>Total:</b></td>
+                                class="text-right"><b>{{trans('custom.total')}}:</b></td>
                         @endif
                         <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
                     </tr>
@@ -240,11 +240,11 @@
         <tr width="100%">
             @if(!$sentEmail)
                 <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b>Grand Total:</b></td>
+                    class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             @endif
             @if($sentEmail)
                 <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b>Grand Total:</b></td>
+                    class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             @endif
             <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>
         </tr>
