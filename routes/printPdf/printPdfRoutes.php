@@ -1,67 +1,67 @@
 <?php
  Route::group(['middleware' => 'print_lang'], function () {
-    Route::get('getProcumentOrderPrintPDF', 'SignedPdfController@handleDirectPdf')->name('Get procurement order print pdf');
-    Route::get('goodReceiptVoucherPrintPDF', 'SignedPdfController@handleDirectPdf');
-    Route::get('printItemIssue', 'SignedPdfController@handleDirectPdf');
-    Route::get('deliveryPrintItemIssue', 'SignedPdfController@handleDirectPdf');
-    Route::get('printCustomerInvoice', 'SignedPdfController@handleDirectPdf');
-    Route::get('printReceiptVoucher', 'SignedPdfController@handleDirectPdf');
-    Route::get('printPaymentVoucher', 'SignedPdfController@handleDirectPdf');
-    Route::get('printPurchaseRequest', 'SignedPdfController@handleDirectPdf');
-    Route::get('printMaterielRequest', 'SignedPdfController@handleDirectPdf');
-    Route::get('printBudgetTransfer', 'SignedPdfController@handleDirectPdf');
-    Route::get('printStockTransfer', 'SignedPdfController@handleDirectPdf');
-    Route::get('printItemReturn', 'SignedPdfController@handleDirectPdf');
-    Route::get('printStockReceive', 'SignedPdfController@handleDirectPdf');
-    Route::get('printPurchaseReturn', 'SignedPdfController@handleDirectPdf');
-    Route::get('printExpenseClaim', 'SignedPdfController@handleDirectPdf');
-    Route::get('printDebitNote', 'SignedPdfController@handleDirectPdf');
-    Route::get('printExpenseClaimMaster', 'SignedPdfController@handleDirectPdf');
-    Route::get('printBankReconciliation', 'SignedPdfController@handleDirectPdf');
-    Route::get('printPaymentMatching', 'SignedPdfController@handleDirectPdf');
-    Route::get('getSalesQuotationPrintPDF', 'SignedPdfController@handleDirectPdf');
-    Route::get('printDeliveryOrder', 'SignedPdfController@handleDirectPdf');
-    Route::get('printSalesReturn', 'SignedPdfController@handleDirectPdf');
-    Route::get('printRecurringVoucher', 'SignedPdfController@handleDirectPdf');
-    Route::get('printChartOfAccount', 'SignedPdfController@handleDirectPdf');
-    Route::get('pvSupplierPrint', 'SignedPdfController@handleDirectPdf');
-    Route::get('printCreditNote', 'SignedPdfController@handleDirectPdf');
+    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf');
+    Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
+    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+    Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
+    Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+    Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
+    Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+    Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+    Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
+    Route::get('printBudgetTransfer', 'BudgetTransferFormAPIController@printBudgetTransfer');
+    Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
+    Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
+    Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
+    Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
+    Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
+    Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+    Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
+    Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
+    Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+    Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
+    Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
+    Route::get('printRecurringVoucher', 'RecurringVoucherSetupAPIController@printRecurringVoucher');
+    Route::get('printChartOfAccount', 'ChartOfAccountAPIController@printChartOfAccount');
+    Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
+    Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
-            Route::get('printEvaluationTemplate', 'SignedPdfController@handleDirectPdf');
-            Route::get('supplierEvaluationPrintPDF', 'SignedPdfController@handleDirectPdf');
-            Route::get('printSupplierInvoice', 'SignedPdfController@handleDirectPdf');
-            Route::get('printJournalVoucher', 'SignedPdfController@handleDirectPdf');
+            Route::get('printEvaluationTemplate', 'SupplierEvaluationTemplateAPIController@printEvaluationTemplate');
+            Route::get('supplierEvaluationPrintPDF', 'SupplierEvaluationController@printSupplierEvaluation');
+            Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
+            Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
         });
     });
 });
 
 
-Route::get('getPoLogisticPrintPDF', 'SignedPdfController@handleDirectPdf')->name('Get procurement order logistic print pdf');
-Route::post('getReportPDF', 'SignedPdfController@handleDirectPdf');
+Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
+Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
-        Route::post('generateARReportPDF', 'SignedPdfController@handleDirectPdf');
-        Route::post('generateAPReportPDF', 'SignedPdfController@handleDirectPdf');
+        Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+        Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     });
 });
 
 
 
-Route::get('printChequeItems', 'SignedPdfController@handleDirectPdf');
-Route::get('printSuppliers', 'SignedPdfController@handleDirectPdf');
+Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
+Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 
 
-Route::get('getBatchSubmissionDetailsPrintPDF', 'SignedPdfController@handleDirectPdf');
+Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
 
-Route::get('exportPaymentBankTransfer', 'SignedPdfController@handleDirectPdf');
-Route::get('BidSummaryReport', 'SignedPdfController@handleDirectPdf');
-Route::get('SupplierRankingSummaryReport', 'SignedPdfController@handleDirectPdf');
-Route::get('MinutesofTenderAwardingReport', 'SignedPdfController@handleDirectPdf');
-Route::get('MinutesofBidOpeningReport', 'SignedPdfController@handleDirectPdf');
-Route::get('supplier-item-wise-report', 'SignedPdfController@handleDirectPdf');
-Route::post('schedule-wise-report', 'SignedPdfController@handleDirectPdf');
-Route::post('SupplierScheduleWiseExportReport', 'SignedPdfController@handleDirectPdf');
+Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
+Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
+Route::get('SupplierRankingSummaryReport', 'TenderFinalBidsAPIController@getFinalBidsReport');
+Route::get('MinutesofTenderAwardingReport', 'TenderFinalBidsAPIController@getTenderAwardingReport');
+Route::get('MinutesofBidOpeningReport', 'TenderMasterAPIController@getTenderBidOpeningReport');
+Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
+Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
+Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
 
-Route::post('genearetBarcode', 'SignedPdfController@handleDirectPdf');
+Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
