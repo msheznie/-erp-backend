@@ -9268,4 +9268,6 @@ return [
     'dear_supplier_statement_sent' => 'Dear :supplierName,<p> Supplier statement report has been sent from :companyName',
     'supplier_statement_report_from' => 'Supplier statement report from :companyName',
     'supplier_statement_report' => 'Supplier statement report :companyName',
+    'sales_return_confirmed_successfully' => 'Sales Return confirmed successfully',
+    'every_item_should_have_at_least_one_minimum_qty_returned' => 'Every Item should have at least one minimum Qty Returned',
 ];

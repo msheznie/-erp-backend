@@ -496,7 +496,7 @@ class SalesReturnAPIController extends AppBaseController
                     })
                     ->exists();
                 if ($checkQuantity) {
-                    return $this->sendError('Every Item should have at least one minimum Qty Returned', 500);
+                    return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_returned'), 500);
                 }
 
                 foreach ($detail as $item) {
@@ -645,7 +645,7 @@ class SalesReturnAPIController extends AppBaseController
                     return $this->sendError($confirm["message"], 500);
                 } else {
                     DB::commit();
-                    return $this->sendReponseWithDetails($salesReturn->toArray(), 'Sales Return confirmed successfully',1,$confirm['data'] ?? null);
+                    return $this->sendReponseWithDetails($salesReturn->toArray(), trans('custom.sales_return_confirmed_successfully'),1,$confirm['data'] ?? null);
                 }
 
             }else{

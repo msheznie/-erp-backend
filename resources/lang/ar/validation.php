@@ -247,7 +247,8 @@ return [
         'percentage' => 'النسبة المئوية',
         'glCodes' => 'رموز الحسابات',
         'departments' => 'الأقسام',
-        'jvType' => 'نوع القيد'
+        'jvType' => 'نوع القيد',
+        'documentTypes' => 'أنواع المستندات'
     ],
 
 ];

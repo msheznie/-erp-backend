@@ -239,7 +239,8 @@ return [
         'percentage' => 'percentage',
         'glCodes' => 'GL Codes',
         'departments' => 'Departments',
-        'jvType' => 'JV Type'
+        'jvType' => 'JV Type',
+        'documentTypes' => 'Document Types'
     ],
 
 ];
