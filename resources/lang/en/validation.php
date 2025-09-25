@@ -238,7 +238,8 @@ return [
         'productLineID' => 'product line id',
         'percentage' => 'percentage',
         'glCodes' => 'GL Codes',
-        'departments' => 'Departments'
+        'departments' => 'Departments',
+        'documentTypes' => 'Document Types'
     ],
 
 ];
