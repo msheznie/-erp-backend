@@ -231,7 +231,7 @@ class CustomerInvoiceService
             
 
                 if (!$CompanyFinancePeriod) {
-                    $errorMsg = trans('custom.financial_period_inactive', ['document_date' => $documentDateBeforeFormat]);
+                    $errorMsg = trans('custom.financial_period_inactive_with_code', ['document_date' => $documentDateBeforeFormat]);
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
                 $curentDate = Carbon::now();

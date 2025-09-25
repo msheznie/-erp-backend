@@ -123,10 +123,10 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{trans('custom.printed_date')}} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -141,8 +141,8 @@
                     </td>
                     <td valign="top" style="width: 55%">
                         <br><br>
-                        <span class="font-weight-bold">Customer Invoice Aging Report</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                        <span class="font-weight-bold">{{trans('custom.customer_invoice_aging_report')}}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{trans('custom.as_of')}} {{ $fromDate }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -166,19 +166,19 @@
                 <td colspan="14"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <td><b>Credit Days</b></td>
+                <td><b>{{trans('custom.credit_days')}}</b></td>
                 <td colspan="13"><b>{{$customerCreditDays[$key]}}</b></td>
             </tr>
             <tr>
-                <th width="10%">Document Code</th>
-                <th width="10%">Posted Date</th>
-                <th width="5%">Invoice Number</th>
-                <th width="5%">PO Number</th>
-                <th width="5%">Invoice Date</th>
-                <th width="5%">Aged Days</th>
-                <th width="5%">Currency</th>
-                <th width="10%">Invoice Amount</th>
-                <th width="10%">Balance Amount</th>
+                <th width="10%">{{trans('custom.document_code')}}</th>
+                <th width="10%">{{trans('custom.posted_date')}}</th>
+                <th width="5%">{{trans('custom.invoice_number')}}</th>
+                <th width="5%">{{trans('custom.po_number')}}</th>
+                <th width="5%">{{trans('custom.invoice_date')}}</th>
+                <th width="5%">{{trans('custom.aged_days')}}</th>
+                <th width="5%">{{trans('custom.currency')}}</th>
+                <th width="10%">{{trans('custom.invoice_amount')}}</th>
+                <th width="10%">{{trans('custom.balance_amount')}}</th>
                 @foreach ($agingRange as $age)
                     <th>{{$age}}</th>
                 @endforeach
@@ -215,7 +215,7 @@
                 @endforeach
                 <tr>
                     <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Sub Total:</b></td>
+                        class="text-right"><b>{{trans('custom.sub_total')}}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($invoiceTotal) }}</b></td>
                     <td style="text-align: right">
                         <b>{{ number_format($ageSubTotal) }}</b></td>
@@ -233,7 +233,7 @@
         <tfoot>
         <tr>
             <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+                class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             <td style="text-align: right"><b>{{ number_format($invoiceAmountTotal) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>
             @foreach ($agingRange as $age)

@@ -1437,14 +1437,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
-                'Company Name' => $order->CompanyName,
-                'Request Code' => $order->purchaseRequestCode,
-                'Requested Date' => date("Y-m-d", strtotime($order->PRRequestedDate)),
-                'Part No / Ref.Number' => $order->partNumber,
-                'UOM' => $order->UnitShortCode,
-                'Currency' => $order->CurrencyCode,
-                'Requested Qty' => $qua_req,
-                'Total Cost' => $qua_tot,
+                trans('custom.company_name') => $order->CompanyName,
+                trans('custom.request_code') => $order->purchaseRequestCode,
+                trans('custom.requested_date') => date("Y-m-d", strtotime($order->PRRequestedDate)),
+                trans('custom.part_no_ref_number') => $order->partNumber,
+                trans('custom.uom') => $order->UnitShortCode,
+                trans('custom.currency') => $order->CurrencyCode,
+                trans('custom.requested_qty') => $qua_req,
+                trans('custom.total_cost') => $qua_tot,
             );
         }
 

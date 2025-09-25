@@ -248,7 +248,9 @@ return [
         'glCodes' => 'رموز الحسابات',
         'departments' => 'الأقسام',
         'jvType' => 'نوع القيد',
-        'documentTypes' => 'أنواع المستندات'
+        'documentTypes' => 'أنواع المستندات',
+        'customers' => 'العملاء',
+        'controlAccountsSystemID' => 'معرف حسابات التحكم'
     ],
 
 ];

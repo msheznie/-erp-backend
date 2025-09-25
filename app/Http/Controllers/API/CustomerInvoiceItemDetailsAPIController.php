@@ -331,7 +331,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 ->where('documentSystemID', $customerInvoice->documentSystemiD)
                 ->exists();
             if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5 && $customerInvoice->isPerforma != 3 &&  $customerInvoice->isPerforma != 2){
-                return $this->sendError('VAT is added. Please delete the tax and try again.',500);
+                return $this->sendError(trans('custom.vat_added_delete_tax'),500);
             }
 
         }
@@ -560,7 +560,7 @@ WHERE
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $inputDetails = $input['detailTable'];
@@ -574,7 +574,7 @@ WHERE
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'Invoice quantity field is required.',
+                    'required' => trans('custom.invoice_quantity_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -587,7 +587,7 @@ WHERE
                 }
 
                 if($newValidation['noQty'] == 0){
-                    return $this->sendError('Invoice Quantity should be greater than zero', 500);
+                    return $this->sendError(trans('custom.invoice_quantity_greater_than_zero'), 500);
                 }
 
             }
@@ -747,7 +747,7 @@ WHERE
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Finance Item category sub assigned not found", 500);
+                                return $this->sendError(trans('custom.finance_item_category_sub_assigned_not_found'), 500);
 //                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
                             }
 
@@ -916,7 +916,7 @@ WHERE
         $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $inputDetails = $input['detailTable'];
@@ -930,7 +930,7 @@ WHERE
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'Invoice quantity field is required.',
+                    'required' => trans('custom.invoice_quantity_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -943,7 +943,7 @@ WHERE
                 }
 
                 if($newValidation['noQty'] == 0){
-                    return $this->sendError('Invoice Quantity should be greater than zero', 500);
+                    return $this->sendError(trans('custom.invoice_quantity_greater_than_zero'), 500);
                 }
             }
         }
@@ -1008,27 +1008,27 @@ WHERE
                     $wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
 
                     if ($currentStockQty <= 0) {
-                        return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.stock_qty_is_0_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($currentWareHouseStockQty <= 0) {
-                        return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.warehouse_stock_qty_is_0_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($wacValueLocal == 0 || $wacValueReporting == 0) {
-                        return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.wac_cost_zero_cannot_issue', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($wacValueLocal < 0 || $wacValueReporting < 0) {
-                        return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.wac_cost_negative_cannot_issue', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($row['noQty'] > $currentStockQty) {
-                        return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
+                        return $this->sendError(trans('custom.insufficient_stock_qty_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($row['noQty'] > $currentWareHouseStockQty) {
-                        return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
+                        return $this->sendError(trans('custom.insufficient_warehouse_qty_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     /*pending approval checking*/
@@ -1050,7 +1050,7 @@ WHERE
                         ->first();
 
                     if (!empty($checkWhether)) {
-                        return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.delivery_order_pending_approval_for_item_with_code', ['orderCode' => $checkWhether->deliveryOrderCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
 
@@ -1078,7 +1078,7 @@ WHERE
                     /* approved=0*/
 
                     if (!empty($checkWhetherItemIssueMaster)) {
-                        return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.material_issue_pending_approval_for_item_with_code', ['issueCode' => $checkWhetherItemIssueMaster->itemIssueCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
@@ -1105,7 +1105,7 @@ WHERE
                     /* approved=0*/
 
                     if (!empty($checkWhetherStockTransfer)) {
-                        return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.stock_transfer_pending_approval_for_item_with_code', ['transferCode' => $checkWhetherStockTransfer->stockTransferCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     /*Check in purchase return*/
@@ -1129,7 +1129,7 @@ WHERE
                     /* approved=0*/
 
                     if (!empty($checkWhetherPR)) {
-                        return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                        return $this->sendError(trans('custom.purchase_return_pending_approval_for_item_with_code', ['returnCode' => $checkWhetherPR->purchaseReturnCode]), 500);
                     }
 
                     $checkWhetherInvoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $customerInvoioce->custInvoiceDirectAutoID)
@@ -1156,7 +1156,7 @@ WHERE
                     /* approved=0*/
 
                     if (!empty($checkWhetherInvoice)) {
-                        return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item_with_code', ['invoiceCode' => $checkWhetherInvoice->bookingInvCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                 }
@@ -1272,7 +1272,7 @@ WHERE
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Finance Item category sub assigned not found", 500);
+                                return $this->sendError(trans('custom.finance_item_category_sub_assigned_not_found'), 500);
                             }
 
                             if((!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
@@ -1538,7 +1538,7 @@ WHERE
                         /* approved=0*/
 
                         if (!empty($checkWhetherItemIssueMaster)) {
-                            return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                            return $this->sendError(trans('custom.material_issue_pending_approval_for_item_with_code', ['issueCode' => $checkWhetherItemIssueMaster->itemIssueCode, 'itemCode' => $row['itemSystemCode']]), 500);
                         }
 
                         $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
@@ -1565,7 +1565,7 @@ WHERE
                         /* approved=0*/
 
                         if (!empty($checkWhetherStockTransfer)) {
-                            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                            return $this->sendError(trans('custom.stock_transfer_pending_approval_for_item_with_code', ['transferCode' => $checkWhetherStockTransfer->stockTransferCode, 'itemCode' => $row['itemSystemCode']]), 500);
                         }
 
                         /*Check in purchase return*/
@@ -1589,7 +1589,7 @@ WHERE
                         /* approved=0*/
 
                         if (!empty($checkWhetherPR)) {
-                            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                            return $this->sendError(trans('custom.purchase_return_pending_approval_for_item_with_code', ['returnCode' => $checkWhetherPR->purchaseReturnCode]), 500);
                         }
 
                         // check policy 18
