@@ -244,7 +244,9 @@ return [
         'chartOfAccountAllocationMasterID' => 'معرف تخصيص دليل الحسابات الرئيسي',
         'allocationmaid' => 'معرف السيد الرئيسي للتخصيص',
         'productLineID' => 'معرف خط الإنتاج',
-        'percentage' => 'النسبة المئوية'
+        'percentage' => 'النسبة المئوية',
+        'glCodes' => 'رموز الحسابات',
+        'departments' => 'الأقسام'
     ],
 
 ];
