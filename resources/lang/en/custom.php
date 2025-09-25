@@ -6819,6 +6819,8 @@ return [
     'please_select_active_segment_stock_count' => 'Please select a active Segment',
     'please_select_active_location_stock_count' => 'Please select a active location.',
     'stock_count_saved_successfully' => 'Stock Count saved successfully',
+    'stock_count_updated_successfully' => 'Stock Count updated successfully',
+    'stock_count_deleted_successfully' => 'Stock Count deleted successfully',
     'stock_count_not_found' => 'Stock Count not found',
     'stock_count_reffered_back_deleted_successfully' => 'Stock Count Reffered Back deleted successfully',
     'stock_count_details_reffered_back_deleted_successfully' => 'Stock Count Details Reffered Back deleted successfully',

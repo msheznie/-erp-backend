@@ -6751,6 +6751,8 @@ return [
      'please_select_active_segment_stock_count' => 'يرجى تحديد قطاع نشط',
      'please_select_active_location_stock_count' => 'يرجى تحديد موقع نشط.',
      'stock_count_saved_successfully' => 'تم حفظ عد المخزون بنجاح',
+     'stock_count_updated_successfully' => 'تم تحديث عد المخزون بنجاح',
+     'stock_count_deleted_successfully' => 'تم حذف عد المخزون بنجاح',
      'stock_count_not_found' => 'لم يتم العثور على عد المخزون',
      'stock_count_reffered_back_deleted_successfully' => 'تم حذف عد المخزون المُعاد بنجاح',
      'stock_count_details_reffered_back_deleted_successfully' => 'تم حذف تفاصيل عد المخزون المُعاد بنجاح',
