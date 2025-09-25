@@ -578,8 +578,6 @@ class FinancialReportAPIController extends AppBaseController
                         'toDate' => 'required|date|after_or_equal:fromDate',
                         'currencyID' => 'required',
                         'suppliers' => 'required',
-                    ],[
-                        'currencyID.required' => 'The currency field is required.',
                     ]);
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
