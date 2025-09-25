@@ -77,7 +77,7 @@ class BudgetPermissionService
                         $userPermissions['hodUser']['isActive'] = false;
                     }
 
-                    $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID)->pluck('hodActionID')->toArray();
+                    $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID)->where('parent',1)->pluck('hodActionID')->toArray();
 
                     $userPermissions['hodUser']['access'] = $actions;
 
