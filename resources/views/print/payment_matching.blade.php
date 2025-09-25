@@ -363,6 +363,7 @@
         </tr>
     </table>
     <div style="margin-top: 30px">
+    @foreach($masterdata->detail->chunk(12) as $chunkIndex => $chunk)
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
@@ -377,9 +378,9 @@
             </thead>
             <tbody>
             {{ $tot = 0 }}
-            @foreach ($masterdata->detail as $item)
+            @foreach ($chunk as $item)
                 <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                    <td>{{$loop->iteration}}</td>
+                    <td>{{ $loop->iteration + ($chunkIndex * 12) }}</td>
                     <td>{{$item->bookingInvDocCode}}</td>
                     @if($item->pomaster == null)
                         <td>-</td>
@@ -399,5 +400,11 @@
             </tr>
             </tbody>
         </table>
-    </div>
+          @if(!$loop->last)
+            <div style="page-break-after: always;"></div>
+          @endif
+    @endforeach
+   
+   
+        </div>
 </div>

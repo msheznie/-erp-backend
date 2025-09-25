@@ -48,7 +48,7 @@ class SupplierStatementJob implements ShouldQueue
      * @return void
      */
     public function handle()
-    {
+    {    app()->setLocale('en');
         $htmlData = $this->dataArr;
         $db = $this->dispatch_db;
         $input = $this->inputData;
@@ -78,9 +78,8 @@ class SupplierStatementJob implements ShouldQueue
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         $emailSentTo = 0;
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
+        $footer = "<font size='1.5'><i><p><br><br><br>" . trans('custom.save_paper_think_before_print') .
+            "<br>" . trans('custom.auto_generated_email_no_reply') . "</font>";
         
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
@@ -90,13 +89,16 @@ class SupplierStatementJob implements ShouldQueue
 
                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                    $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = trans('custom.dear_supplier_statement_sent', [
+                        'supplierName' => $supplierMaster->supplierName,
+                        'companyName' => $company->CompanyName
+                    ]) . $footer;
 
                     $pdfName = realpath($path."/supplier_statement_" . $nowTime.$supplierID. ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Supplier statement report from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = trans('custom.supplier_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
@@ -115,13 +117,16 @@ class SupplierStatementJob implements ShouldQueue
 
                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                    $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = trans('custom.dear_supplier_statement_sent', [
+                        'supplierName' => $supplierMaster->supplierName,
+                        'companyName' => $company->CompanyName
+                    ]) . $footer;
 
                     $pdfName = realpath($path."/supplier_statement_" . $nowTime.$supplierID . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Supplier statement report " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = trans('custom.supplier_statement_report', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
