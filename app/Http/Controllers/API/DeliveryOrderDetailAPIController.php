@@ -903,8 +903,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 ];
 
                 $validator = \Validator::make($newValidation, [
-                    'noQty' => trans('custom.required'),
-                    'isChecked' => trans('custom.required'),
+                    'noQty' => 'required',
+                    'isChecked' => 'required',
                 ], $messages);
 
                 if ($validator->fails()) {
