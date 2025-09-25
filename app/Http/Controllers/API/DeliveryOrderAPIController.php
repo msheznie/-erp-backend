@@ -498,7 +498,7 @@ class DeliveryOrderAPIController extends AppBaseController
             // check document date between financial period
             if (($input['deliveryOrderDate'] >= $input['FYPeriodDateFrom']) && ($input['deliveryOrderDate'] <= $input['FYPeriodDateTo'])) {
             } else {
-                return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+                return $this->sendError(trans('custom.document_date_should_be_between_financial_period'), 500);
             }
 
             $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($deliveryOrder->documentSystemID, $id);

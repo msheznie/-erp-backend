@@ -9188,4 +9188,6 @@ return [
     'dear_supplier_statement_sent' => 'عزيزي :supplierName،<p> تم إرسال تقرير كشف حساب المورد من :companyName',
     'supplier_statement_report_from' => 'تقرير كشف حساب المورد من :companyName',
     'supplier_statement_report' => 'تقرير كشف حساب المورد :companyName',
+    'sales_return_confirmed_successfully' => 'تم تأكيد إرجاع المبيعات بنجاح',
+    'every_item_should_have_at_least_one_minimum_qty_returned' => 'يجب أن يحتوي كل عنصر على كمية إرجاع أدنى واحدة على الأقل',
 ];
