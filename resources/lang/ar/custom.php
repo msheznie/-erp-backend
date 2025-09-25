@@ -9192,4 +9192,6 @@ return [
     'supplier_statement_report' => 'تقرير كشف حساب المورد :companyName',
     'sales_return_confirmed_successfully' => 'تم تأكيد إرجاع المبيعات بنجاح',
     'every_item_should_have_at_least_one_minimum_qty_returned' => 'يجب أن يحتوي كل عنصر على كمية إرجاع أدنى واحدة على الأقل',
+    'employee_system_id_required' => 'معرف الموظف النظامي مطلوب',
+    'user_report_id_required' => 'معرف التقرير المستخدم مطلوب',
 ];
