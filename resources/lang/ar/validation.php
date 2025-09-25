@@ -246,7 +246,8 @@ return [
         'productLineID' => 'معرف خط الإنتاج',
         'percentage' => 'النسبة المئوية',
         'glCodes' => 'رموز الحسابات',
-        'departments' => 'الأقسام'
+        'departments' => 'الأقسام',
+        'jvType' => 'نوع القيد'
     ],
 
 ];
