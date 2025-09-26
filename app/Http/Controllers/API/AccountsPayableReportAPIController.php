@@ -1794,7 +1794,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         ->generateExcel();
 
                     if(!$exportToExcel['success'])
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
                     return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 

@@ -870,16 +870,16 @@ ORDER BY
                     $data[$x][trans('custom.status')] = $status;
 
                     if($input['reportTypeID'] == 'APRA') {
-                        $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                        $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                        $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                        $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                        $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                        $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                        $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                        $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                        $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                        $data[$x]['Over 365'] = number_format($val->case10, $decimal);
+                        $data[$x][trans('custom.aging_0_30')] = number_format($val->case1, $decimal);
+                        $data[$x][trans('custom.aging_31_60')] = number_format($val->case2, $decimal);
+                        $data[$x][trans('custom.aging_61_90')] = number_format($val->case3, $decimal);
+                        $data[$x][trans('custom.aging_91_120')] = number_format($val->case4, $decimal);
+                        $data[$x][trans('custom.aging_121_150')] = number_format($val->case5, $decimal);
+                        $data[$x][trans('custom.aging_151_180')] = number_format($val->case6, $decimal);
+                        $data[$x][trans('custom.aging_181_210')] = number_format($val->case7, $decimal);
+                        $data[$x][trans('custom.aging_211_240')] = number_format($val->case8, $decimal);
+                        $data[$x][trans('custom.aging_241_365')] = number_format($val->case9, $decimal);
+                        $data[$x][trans('custom.aging_over_365')] = number_format($val->case10, $decimal);
                     }
                     $x++;
                 }
