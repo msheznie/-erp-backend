@@ -395,9 +395,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         DB::commit();
                     }
                 }
-                return $this->sendResponse([], 'Invitation sent successfully');
+                return $this->sendResponse([], trans('srm_tender_rfx.invitation_sent_successfully'));
             } else {
-                return $this->sendError('No records found', 500);
+                return $this->sendError(trans('srm_tender_rfx.no_records_found'), 500);
             }
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -480,7 +480,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         DB::commit();
                 }  
             }
-            return $this->sendResponse([], 'Invitation re-sent successfully');
+            return $this->sendResponse([], trans('srm_tender_rfx.invitation_resent_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getLine() . $exception->getMessage());
@@ -569,10 +569,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->deleteAllAssignedSuppliers($input);
 
         if (empty($tenderSupplierAssignee)) {
-            return $this->sendError('Not Found');
+            return $this->sendError(trans('srm_tender_rfx.supplier_assignee_not_found'));
         }
 
-        return $this->sendResponse(0, 'File Deleted');
+        return $this->sendResponse(0, trans('srm_tender_rfx.successfully_deleted'));
     }
 
     public function deleteSelectedSuppliers(Request $request)

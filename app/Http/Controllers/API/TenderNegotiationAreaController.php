@@ -53,10 +53,10 @@ class TenderNegotiationAreaController extends AppBaseController
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($input);
 
         if(!$tenderNegotiationArea) {
-            return $this->sendError('Tender negotiation area data not found', 404);
+            return $this->sendError(trans('srm_ranking.tender_negotiation_area_not_found'), 404);
         }
 
-        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender Negotiation Area added successfully');
+        return $this->sendResponse($tenderNegotiationArea->toArray(), trans('srm_ranking.tender_negotiation_area_added'));
 
     }
 

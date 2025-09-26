@@ -521,14 +521,20 @@ class AppointmentAPIController extends AppBaseController
         ->get();
 
         $is_valid = true;
-        $msg = 'Approval failed,please check the below details.'. "<br>";;
+        $text = trans('srm_supplier_management.approval_failed_please_check_the_below_details');
+        $msg = $text. "<br>";;
         foreach($appointments as $detail)
         {
           
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
+                $info = trans('srm_masters.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
+                    'code1' => $detail->itemPrimaryCode,
+                    'code2' => $detail->purchaseOrderCode,
+                    'code3' => $detail->planned_qty,
+                    'code4' => $detail->balance_qty,
+                ]);
                 $msg .= $info . "<br>";
                 $is_valid = false;
             }
@@ -551,11 +557,11 @@ class AppointmentAPIController extends AppBaseController
         try
         {
             $serviceLineSystemID = $this->appointmentRepository->getServiceLineSystemIDs($request);
-            return $this->sendResponse($serviceLineSystemID , 'Data Retrieved successfully');
+            return $this->sendResponse($serviceLineSystemID , trans('srm_supplier_management.data_retrieved_successfully'));
         }
         catch (\Exception $e)
         {
-            return $this->sendError('Something went wrong '.$e->getMessage());
+            return $this->sendError(trans('srm_supplier_management.something_went_wrong').$e->getMessage());
         }
     }
 
@@ -565,6 +571,6 @@ class AppointmentAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, 'succesfully created');
+        return $this->sendResponse($acc_d, trans('srm_supplier_management.successfully_created'));
     }
 }

@@ -25,18 +25,18 @@ class SupplierRegistrationService
         $selectedSupplierID = $input['selectedSupplierID'];
         $supplierKyc = $input['supplierKyc'];
         $uuid = $input['uuid'];
-        $message = 'Matching data';
+        $message = trans('srm_supplier_management.matching_data');
 
         $supplierMaster = SupplierMaster::where('supplierCodeSystem', $selectedSupplierID)->first();
         if(empty($supplierMaster)){
-            return self::sendError('Supplier not found');
+            return self::sendError(trans('srm_supplier_management.supplier_not_found'));
         }
         $section = [1, 3, 5];
         $mappingData = self::getMappingData($supplierKyc, $section);
         $isNotMapping = self::checkSupplierDataMatching($mappingData, $supplierMaster);
 
         if($isNotMapping){
-            $message = 'Supplier details are not same, Do you wish to replace the supplier master details with the supplier KYC details';
+            $message = trans('srm_supplier_management.supplier_details_are_not_same_do_you_wish_to_replace_the_supplier_master_details_with_the_supplier_KYC_details');
         }
 
         return self::sendSuccessResponse($message, $isNotMapping);
@@ -104,33 +104,33 @@ class SupplierRegistrationService
             return DB::transaction(function () use ($selectedSupplier, $supplierKyc, $selectedKYC, $companyID) {
                 $supplierDetails = self::updateSupplierDetails($selectedSupplier, $supplierKyc);
                 if (!$supplierDetails['success']) {
-                    return self::sendError($supplierDetails['message'] ?? 'Failed to update supplier details');
+                    return self::sendError($supplierDetails['message'] ?? trans('srm_supplier_management.failed_to_update_supplier_details'));
                 }
 
                 $attachment = self::updateAttachments($selectedSupplier, $supplierKyc, $companyID);
                 if (!$attachment['success']) {
-                    return self::sendError($attachment['message'] ?? 'Failed to update attachments');
+                    return self::sendError($attachment['message'] ?? trans('srm_supplier_management.failed_to_update_attachments'));
                 }
 
                 $businessCat = self::updateBusinessCategory($selectedSupplier, $supplierKyc);
                 if (!$businessCat['success']) {
-                    return self::sendError($businessCat['message'] ?? 'Failed to update business category');
+                    return self::sendError($businessCat['message'] ?? trans('srm_supplier_management.failed_to_update_business_category'));
                 }
 
                 $businessSubCat = self::updateBusinessSubCategory($selectedSupplier, $supplierKyc);
                 if (!$businessSubCat['success']) {
-                    return self::sendError($businessSubCat['message'] ?? 'Failed to update business subcategory');
+                    return self::sendError($businessSubCat['message'] ?? trans('srm_supplier_management.failed_to_update_business_subcategory'));
                 }
 
                 $contactDetails = self::updateContactDetails($selectedSupplier, $supplierKyc);
                 if (!$contactDetails['success']) {
-                    return self::sendError($contactDetails['message'] ?? 'Failed to update contact details');
+                    return self::sendError($contactDetails['message'] ?? trans('srm_supplier_management.failed_to_update_contact_details'));
                 }
 
                 $assignCurrency = self::updateAssignCurrency($selectedSupplier, $supplierKyc);
 
                 if (!$assignCurrency['success']) {
-                    return self::sendError($assignCurrency['message'] ?? 'Failed to update currency details');
+                    return self::sendError($assignCurrency['message'] ?? trans('srm_supplier_management.failed_to_update_currency_details'));
                 }
 
                 SupplierRegistrationLink::where('id', $selectedKYC)
@@ -138,10 +138,10 @@ class SupplierRegistrationService
                         'supplier_master_id' => $selectedSupplier
                     ]);
 
-                return self::sendSuccessResponse('Supplier linked successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_linked_successfully'));
             });
         } catch (\Exception $exception){
-            return self::sendError('Unexpected Error: ' . $exception->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error') . $exception->getMessage());
         }
     }
 
@@ -224,10 +224,10 @@ class SupplierRegistrationService
                 $supplierUpdate = array_merge($updateData, $commonColumnNo);
                 SupplierMaster::where('supplierCodeSystem', $selectedSupplier)->update($supplierUpdate);
                 SupplierAssigned::where('supplierCodeSytem', $selectedSupplier)->update($updateData);
-                return self::sendSuccessResponse('Supplier details updated successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_details_updated_successfully'));
             });
         } catch (\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
     protected static function updateAttachments($selectedSupplier, $supplierKyc, $companyID){
@@ -293,10 +293,10 @@ class SupplierRegistrationService
                 if (!empty($insertData)) {
                     DocumentAttachments::insert($insertData);
                 }
-                return self::sendSuccessResponse('Attachment updated successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.attachment_updated_successfully'));
             });
         } catch(\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
     protected static function updateBusinessCategory($selectedSupplier, $supplierKyc){
@@ -321,10 +321,10 @@ class SupplierRegistrationService
                     }
                     SupplierBusinessCategoryAssign::insert($finalInsertData);
                 }
-                return self::sendSuccessResponse('Supplier business category updated successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_business_category_updated_successfully'));
             });
         } catch(\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
     protected static function updateBusinessSubCategory($selectedSupplier, $supplierKyc){
@@ -349,10 +349,10 @@ class SupplierRegistrationService
                     }
                     SupplierSubCategoryAssign::insert($finalInsertData);
                 }
-                return self::sendSuccessResponse('Supplier business category updated successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_business_category_updated_successfully'));
             });
         } catch(\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
     protected static function updateContactDetails($selectedSupplier, $supplierKyc){
@@ -407,10 +407,10 @@ class SupplierRegistrationService
                     }
                     SupplierContactDetails::insert($finalInsertData);
                 }
-                return self::sendSuccessResponse('Supplier contact details updated successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_contact_details_updated_successfully'));
             });
         } catch(\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
 
@@ -452,10 +452,10 @@ class SupplierRegistrationService
                         BankMemoSupplier::create($temBankMemo);
                     }
                 }
-                return self::sendSuccessResponse('Supplier currency assigned successfully');
+                return self::sendSuccessResponse(trans('srm_supplier_management.supplier_currency_assigned_successfully'));
             });
         } catch(\Exception $ex){
-            return self::sendError('Unexpected Error: '. $ex->getMessage());
+            return self::sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
     protected static function sendError($message = ''): array{

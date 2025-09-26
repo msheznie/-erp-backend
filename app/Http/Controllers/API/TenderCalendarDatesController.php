@@ -63,14 +63,16 @@ class TenderCalendarDatesController extends AppBaseController
             ->where('calendar_date', '=', $input['calendar_date'])->first();
 
         if (!empty($calendarDatesExist)) {
-            return $this->sendError('Calendar date description \'' . $input['calendar_date'] . '\' is already exists.');
+            return $this->sendError(trans('srm_masters.calendar_date_description_already_exists', [
+                'code' => $input['calendar_date'],
+            ]));
         }
 
         $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $calendarDate = $this->calendarDatesRepository->create($input);
-        return $this->sendResponse($calendarDate->toArray(), 'Calendar date description saved successfully');
+        return $this->sendResponse($calendarDate->toArray(), trans('srm_masters.calendar_date_description_saved_successfully'));
     }
 
     /**
@@ -114,7 +116,7 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date description not found');
+            return $this->sendError(trans('srm_masters.calendar_date_description_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -132,7 +134,9 @@ class TenderCalendarDatesController extends AppBaseController
             ->first();
 
         if (!empty($calendarDateExist)) {
-            return $this->sendError('Calendar date description \'' . $input['calendar_date'] . '\' is already exists.');
+            return $this->sendError(trans('srm_masters.calendar_date_description_already_exists', [
+                'code' => $input['calendar_date'],
+            ]));
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -140,7 +144,7 @@ class TenderCalendarDatesController extends AppBaseController
 
         $calendarDates = CalendarDates::where('id', $id)->update($input);
 
-        return $this->sendResponse($calendarDates, 'Calendar date description updated successfully');
+        return $this->sendResponse($calendarDates, trans('srm_masters.calendar_date_description_updated_successfully'));
     }
 
     /**
@@ -154,12 +158,12 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date not found');
+            return $this->sendError(trans('srm_masters.calendar_date_description_not_found'));
         }
 
         $calendarDate->delete();
 
-        return $this->sendResponse($id, 'Calendar date description deleted successfully');
+        return $this->sendResponse($id, trans('srm_masters.calendar_date_description_deleted_successfully'));
     }
 
     public function getAllCalendarDates(Request $request)

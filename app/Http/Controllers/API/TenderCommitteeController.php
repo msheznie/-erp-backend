@@ -81,11 +81,11 @@ class TenderCommitteeController extends AppBaseController
             $srm_employees = SrmEmployees::insert($data);
 
             if($srm_employees) {
-                return $this->sendResponse($data,'Employee saved successfully');
+                return $this->sendResponse($data,trans('srm_masters.employee_saved_successfully'));
             }
 
         }else {
-            return $this->sendError('Employee not selected');
+            return $this->sendError(trans('srm_masters.employee_not_selected'));
         }
     }
 
@@ -94,9 +94,9 @@ class TenderCommitteeController extends AppBaseController
         $delteRecord = SrmEmployees::where('company_id',$request['companyID'])->where('id',$request['id'])->delete();
         
         if($delteRecord) {
-            return $this->sendResponse($delteRecord,'Data deleted successfully');
+            return $this->sendResponse($delteRecord,trans('srm_masters.data_deleted_successfully'));
         }else {
-            return $this->sendError('Record not found');
+            return $this->sendError(trans('srm_masters.record_not_found'));
         }
     }
 
@@ -107,7 +107,7 @@ class TenderCommitteeController extends AppBaseController
         unset($input['employee']);
         $srm->update($input);
 
-        return $this->sendResponse($srm,'Data updated successfully');
+        return $this->sendResponse($srm,trans('srm_masters.data_updated_successfully'));
 
     }
 
