@@ -26,6 +26,8 @@
     Route::get('printChartOfAccount', 'ChartOfAccountAPIController@printChartOfAccount');
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
+    Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+    Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
             Route::get('printEvaluationTemplate', 'SupplierEvaluationTemplateAPIController@printEvaluationTemplate');
@@ -42,8 +44,7 @@ Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
-        Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
-        Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
+     
     });
 });
 

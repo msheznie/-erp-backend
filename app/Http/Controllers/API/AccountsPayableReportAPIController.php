@@ -6308,27 +6308,54 @@ ORDER BY
     {
         $reportID = $request->reportID;
 
+        // Configure mPDF for landscape A4 format
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 32,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ];
 
         switch ($reportID) {
             case 'APSS':
-
 
                 if ($request->reportTypeID == 'SS') {
 
                     $html = $this->supplierStatementPdf($request->all())['html'];
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
+                    try {
+                        $html = $this->cleanHtmlForMpdf($html);
+                        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $mpdf->AddPage('L');
+                        $mpdf->setAutoBottomMargin = 'stretch';
+                        $mpdf->WriteHTML($html);
+                        return $mpdf->Output('supplier_statement.pdf', 'I');
+                    } catch (\Exception $e) {
+                        \Log::error('mPDF Error in pdfExportReport (SS): ' . $e->getMessage());
+                        return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+                    }
 
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
                 } else if ($request->reportTypeID == 'SSD') {
 
                     $html = $this->supplierStatementDetailsPdf($request->all())['html'];
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
-
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    try {
+                        $html = $this->cleanHtmlForMpdf($html);
+                        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $mpdf->AddPage('L');
+                        $mpdf->setAutoBottomMargin = 'stretch';
+                        $mpdf->WriteHTML($html);
+                        return $mpdf->Output('supplier_statement_details.pdf', 'I');
+                    } catch (\Exception $e) {
+                        \Log::error('mPDF Error in pdfExportReport (SSD): ' . $e->getMessage());
+                        return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+                    }
                 }
                 break;
             default:
@@ -6339,11 +6366,12 @@ ORDER BY
 
     public function generateAPReportBulkPDF(Request $request)
     {
+        $languageCode = app()->getLocale() ?: 'en';
         $reportID = $request->reportID;
         $db = isset($request->db) ? $request->db : "";
         $employeeID = \Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-        AccountsPayableReportJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
+        AccountsPayableReportJob::dispatch($db, $request, [$employeeID],$languageCode)->onQueue('reporting');
         return $this->sendResponse([], trans('custom.supplier_statement_PDF_report'));
     }
 
@@ -6432,7 +6460,7 @@ ORDER BY
         if (!isset($input['suppliers'])) {
             return $this->sendError(trans('custom.suppliers_not_found'));
         }
-
+        $languageCode = app()->getLocale() ?: 'en';
         $suplliers = $input['suppliers'];
         $errorMessage = [];
         foreach ($suplliers as $key => $value) {
@@ -6471,7 +6499,7 @@ ORDER BY
                     $errorMessage[] = trans('custom.supplier_email_is_not_updated_for').$supplierMaster->supplierName.trans('custom.report_is_not_sent');
                 } 
 
-                SupplierStatementJob::dispatch($request->db, $resHtml['dataArr'], $input);
+                SupplierStatementJob::dispatch($request->db, $resHtml['dataArr'], $input, $languageCode);
             }
         }
 
@@ -6503,7 +6531,6 @@ ORDER BY
             if (count($resHtml['output']) > 0) {
                 $html = $resHtml['html'];
 
-                $pdf = \App::make('dompdf.wrapper');
                 $path = public_path().'/uploads/emailAttachment';
 
                 if (!file_exists($path)) {
@@ -6512,7 +6539,34 @@ ORDER BY
                 $nowTime = time();
 
                 $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_ledger_' . $nowTime.$supplierID . '.pdf');
+                $fileName = 'supplier_ledger_' . $nowTime.$supplierID . '.pdf';
+                $filePath = $path . '/' . $fileName;
+
+                $mpdfConfig = [
+                    'tempDir' => public_path('tmp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4-L',
+                    'setAutoTopMargin' => 'stretch',
+                    'autoMarginPadding' => -10,
+                    'margin_left' => 15,
+                    'margin_right' => 15,
+                    'margin_top' => 16,
+                    'margin_bottom' => 16,
+                    'margin_header' => 9,
+                    'margin_footer' => 9
+                ];
+
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->AddPage('L');
+                $mpdf->setAutoBottomMargin = 'stretch';
+
+                try {
+                    $html = $this->cleanHtmlForMpdf($html);
+                    $mpdf->WriteHTML($html);
+                    $mpdf->Output($filePath, 'F'); 
+                } catch (\Exception $e) {
+                    \Log::error('mPDF Error in sentSupplierLedger (first attempt): ' . $e->getMessage());
+                }
 
 
                 $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
@@ -6539,7 +6593,7 @@ ORDER BY
                                 'companyName' => $company->CompanyName
                             ]) . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
+                            $pdfName = realpath($filePath);
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
@@ -6566,7 +6620,7 @@ ORDER BY
                                 'companyName' => $company->CompanyName
                             ]) . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
+                            $pdfName = realpath($filePath);
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
@@ -6627,6 +6681,38 @@ ORDER BY
 
         return ['html' => $html, 'output' => $output];
     }
+
+    /**
+     * Clean HTML to make it compatible with mPDF
+     * Fixes CSS issues that cause "Undefined index: style" errors
+     */
+    private function cleanHtmlForMpdf($html)
+    {
+        // Convert rgba() to hex colors (handle common cases)
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*0\.1\)/', '#000000', $html);
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/', '#$1$2$3', $html);
+        
+        // Convert rgb() to hex colors
+        $html = preg_replace('/rgb\((\d+),\s*(\d+),\s*(\d+)\)/', '#$1$2$3', $html);
+        
+        // Remove !important declarations that can cause issues
+        $html = preg_replace('/\s*!important\s*/', '', $html);
+        
+        // Fix problematic CSS properties
+        $html = str_replace('border-top: 1px solid #0000001', 'border-top: 1px solid #000000', $html);
+        
+        // Remove problematic CSS properties that mPDF doesn't handle well
+        $html = preg_replace('/opacity\s*:\s*[\d.]+\s*;?/', '', $html);
+        $html = preg_replace('/transform[^;]*;?/', '', $html);
+        $html = preg_replace('/transform-origin[^;]*;?/', '', $html);
+        
+        // Fix font-family issues
+        $html = preg_replace('/font-family:\s*[^;]*apple-system[^;]*;?/', 'font-family: Arial, sans-serif;', $html);
+        
+        return $html;
+    }
+
+
 
     private function getInvoiceToPaymentQry($request)
     {
