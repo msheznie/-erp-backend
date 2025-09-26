@@ -1,29 +1,26 @@
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    .text-left {
+        text-align: right !important;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    .text-right {
+        text-align: left !important;
     }
 
-    #footer .page:after {
-        content: counter(page, upper-roman);
+    table {
+        direction: rtl;
     }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
 
     body {
         font-size: 10px;
@@ -114,49 +111,7 @@
         margin-top: 0 !important;
     }
 
-    .pagenum:after {
-        content: counter(page);
-    }
-
 </style>
-<div id="footer">
-    <table style="width:100%;">
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>{{trans('custom.printed_date')}} : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">{{trans('custom.customer_invoice_aging_report')}}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{trans('custom.as_of')}} {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         <?php $ageRangeGrandTotal = [] ?>
@@ -214,7 +169,7 @@
                     {{$invoiceTotal += $det2->invoiceAmount}}
                 @endforeach
                 <tr>
-                    <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
+                    <td colspan="7" style="border-bottom: none; border-left: none;"
                         class="text-right"><b>{{trans('custom.sub_total')}}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($invoiceTotal) }}</b></td>
                     <td style="text-align: right">
@@ -232,7 +187,7 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
+            <td colspan="7" style="border-bottom: none; border-left: none;"
                 class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             <td style="text-align: right"><b>{{ number_format($invoiceAmountTotal) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>
