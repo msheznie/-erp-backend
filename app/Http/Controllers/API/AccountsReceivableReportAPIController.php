@@ -345,7 +345,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => trans('custom.currency').': ' . $currencyCode);
                 }
                 break;
             case 'CA': //Customer Aging
@@ -2238,6 +2238,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
     {
         if ($request->reportTypeID == 'CSA') {
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $lang = app()->getLocale();
+            $isRTL = ($lang === 'ar');
             $checkIsGroup = Company::find($request->companySystemID);
 
             $companyLogo = $checkIsGroup->logo_url;
@@ -2274,7 +2276,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
             }
 
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => trans('custom.currency').': ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID, 'lang' => $lang);
 
 
             if ($sentTo) {
@@ -2282,14 +2284,54 @@ class AccountsReceivableReportAPIController extends AppBaseController
             }
 
             $html = view('print.customer_statement_of_account_pdf', $dataArr);
+            $htmlHeader = view('print.customer_statement_of_account_header', $dataArr);
+            $htmlFooter = view('print.customer_statement_of_account_footer', $dataArr);
 
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_top' => 40,
+                'margin_bottom' => 16,
+                'margin_header' => 9,
+                'margin_footer' => 9
+            ];
 
-            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf->SetHTMLHeader($htmlHeader);
+            $mpdf->SetHTMLFooter($htmlFooter);
+            $mpdf->AddPage('L');
+            $mpdf->setAutoBottomMargin = 'stretch';
+
+            try {
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('customer_statement_of_account.pdf', 'I');
+            } catch (\Exception $e) {
+                // Fallback: try with simpler configuration
+                $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                if ($isRTL) {
+                    $fallbackConfig['direction'] = 'rtl';
+                }
+                $mpdf = new \Mpdf\Mpdf($fallbackConfig);
+                $mpdf->SetHTMLHeader($htmlHeader);
+                $mpdf->SetHTMLFooter($htmlFooter);
+                $mpdf->AddPage('L');
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('customer_statement_of_account.pdf', 'I');
+            }
         } elseif ($request->reportTypeID == 'CBS') {
 
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $lang = app()->getLocale();
+            $isRTL = ($lang === 'ar');
             $checkIsGroup = Company::find($request->companySystemID);
             $output = $this->getCustomerBalanceStatementQRY($request);
 
@@ -2308,7 +2350,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
             }
 
-            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
 
 
             if ($sentTo) {
@@ -2316,10 +2358,49 @@ class AccountsReceivableReportAPIController extends AppBaseController
             }
 
             $html = view('print.customer_balance_statement', $dataArr);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+            $htmlHeader = view('print.customer_balance_statement_header', $dataArr);
+            $htmlFooter = view('print.customer_balance_statement_footer', $dataArr);
 
-            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_top' => 40,
+                'margin_bottom' => 16,
+                'margin_header' => 9,
+                'margin_footer' => 9
+            ];
+
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+            }
+
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf->SetHTMLHeader($htmlHeader);
+            $mpdf->SetHTMLFooter($htmlFooter);
+            $mpdf->AddPage('L');
+            $mpdf->setAutoBottomMargin = 'stretch';
+
+            try {
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('customer_balance_statement.pdf', 'I');
+            } catch (\Exception $e) {
+                // Fallback: try with simpler configuration
+                $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                if ($isRTL) {
+                    $fallbackConfig['direction'] = 'rtl';
+                }
+                $mpdf = new \Mpdf\Mpdf($fallbackConfig);
+                $mpdf->SetHTMLHeader($htmlHeader);
+                $mpdf->SetHTMLFooter($htmlFooter);
+                $mpdf->AddPage('L');
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output('customer_balance_statement.pdf', 'I');
+            }
         }
     }
 
