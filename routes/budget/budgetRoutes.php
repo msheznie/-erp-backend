@@ -19,6 +19,7 @@ Route::post('getAllBudgetTemplates', 'BudgetTemplateAPIController@getAllBudgetTe
 Route::get('getBudgetTemplateFormData', 'BudgetTemplateAPIController@getBudgetTemplateFormData')->name('Get budget template form data');
 Route::get('getBudgetTemplatesByType/{type}', 'BudgetTemplateAPIController@getBudgetTemplatesByType')->name('Get budget templates by type');
 Route::post('exportBudgetTemplates', 'BudgetTemplateAPIController@exportBudgetTemplates')->name('Export budget templates');
+Route::post('getSegmentOptionsByBudgetTemplate', 'BudgetTemplateAPIController@getSegmentOptionsByBudgetTemplate')->name('Get segments by budget template');
 
 // Budget Template Pre Columns routes
 Route::get('budget_template_pre_columns/grouped', 'BudgetTemplatePreColumnAPIController@getAvailableColumnsGrouped')->name('Get available columns grouped');

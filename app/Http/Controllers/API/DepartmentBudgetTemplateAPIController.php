@@ -350,7 +350,13 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             
             $departmentBudgetTemplateID = $input['departmentBudgetTemplateID'];
             $chartOfAccountSystemIDs = $input['chartOfAccountSystemIDs'];
+            $selectedSegments = $input['selectedSegments'] ?? null;
 
+
+            if(!empty($selectedSegments))
+            {
+                $selectedSegments = collect($selectedSegments)->pluck('id')->toArray();
+            }
             if(is_null($departmentBudgetTemplateID))
             {
                 if($input['budgetPlanningID']){
@@ -389,7 +395,8 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                     $db,
                     $input['budgetPlanningID'],
                     auth()->id(),
-                    $chartOfAccountSystemIDs
+                    $chartOfAccountSystemIDs,
+                    $selectedSegments
                 );
             }
 

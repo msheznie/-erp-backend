@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBudgetTemplateAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTemplateAPIRequest;
 use App\Models\BudgetTemplate;
+use App\Models\CompanyDepartmentSegment;
+use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\CompanyDepartment;
 use App\Models\DepBudgetTemplateGl;
@@ -322,5 +324,20 @@ class BudgetTemplateAPIController extends AppBaseController
         });
 
         return $this->sendResponse($exportData->toArray(), 'Budget Templates exported successfully');
+    }
+
+
+    public function getSegmentOptionsByBudgetTemplate(Request $request)
+    {
+        $input = $request->input();
+
+        $departmentBudgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+
+        $segments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID)
+                      ->with(['segment', 'department'])->get()
+                        ->map(function ($item) {
+                            return ['ServiceLineCode' => $item->segment->ServiceLineCode, 'serviceLineSystemID' => $item->segment->serviceLineSystemID];
+                        });
+        return $this->sendResponse($segments,'Segments retevied successfully');
     }
 } 

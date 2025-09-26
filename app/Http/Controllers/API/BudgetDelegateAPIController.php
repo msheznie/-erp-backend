@@ -103,7 +103,7 @@ class BudgetDelegateAPIController extends AppBaseController
                     throw new Exception('Submission time cannot be in the past');
                 }
 
-                if(Carbon::parse($input['submission_time'])->isSameDay(Carbon::now()))
+                if(Carbon::parse($input['submission_time'])->lessThan(Carbon::now()))
                 {
                     return $this->sendError('Submission date must be less than current submission date and greater than current date');
                 }
@@ -121,7 +121,7 @@ class BudgetDelegateAPIController extends AppBaseController
                 }
 
                 // validate submission time is not graeter than budget planning detail submission time
-                if (\Carbon\Carbon::parse($input['submission_time'])->gt($departmentBudgetPlanning->submissionDate)) {
+                if (\Carbon\Carbon::parse($input['submission_time'])->greaterThan($departmentBudgetPlanning->submissionDate)) {
                     return $this->sendError('Submission date must be less than the current submission date and greater than current date');
                 }
 

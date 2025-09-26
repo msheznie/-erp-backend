@@ -28,7 +28,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
     public $departmentBudgetPlanningId;
     public $userId;
     public $chartOfAccountSystemIDs;
-
+    public $selectedSegments;
     /**
      * Create a new job instance.
      *
@@ -36,7 +36,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * @param int $departmentBudgetPlanningId
      * @param int $userId
      */
-    public function __construct($db, $departmentBudgetPlanningId, $userId = null,$chartOfAccountSystemIDs =null)
+    public function __construct($db, $departmentBudgetPlanningId, $userId = null,$chartOfAccountSystemIDs =null,$selectedSegments = null)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -54,6 +54,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $this->departmentBudgetPlanningId = $departmentBudgetPlanningId;
         $this->userId = $userId ?? auth()->id() ?? 1;
         $this->chartOfAccountSystemIDs = $chartOfAccountSystemIDs;
+        $this->selectedSegments = $selectedSegments;
     }
 
     /**
@@ -159,7 +160,14 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
 
         if ($departmentBudgetPlanning->workflow->method == 1) {
-            $companyDepartmentSegments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID)->get();
+            $companyDepartmentSegments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID);
+
+            if(!empty($this->selectedSegments))
+            {
+                $companyDepartmentSegments = $companyDepartmentSegments->whereIn('serviceLineSystemID',$this->selectedSegments);
+            }
+
+            $companyDepartmentSegments = $companyDepartmentSegments->get();
             foreach ($companyDepartmentSegments as $companyDepartmentSegment) {
                 $this->createNewDetail($departmentBudgetPlanning, $templateGl, $companyDepartmentSegment);
             }

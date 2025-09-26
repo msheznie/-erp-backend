@@ -1021,6 +1021,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 })
                 ->where('isActive', 1)
                 ->first();
+
             if (!$departmentBudgetTemplate) {
                 return [
                     'valid' => false,
