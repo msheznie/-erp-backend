@@ -2,6 +2,21 @@
 
 
 
+## [10.86.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.85.0...v10.86.0) (2025-09-26)
+
+
+### Features
+
+* **sourcing management:** tender create translation [GSUP-4092] ([#8706](https://github.com/pbsgears/Gears_BackEnd/issues/8706)) ([512f8b8](https://github.com/pbsgears/Gears_BackEnd/commit/512f8b85415c403263c182565a9012d0badcd5cb))
+* **sourcing management:** Tender/Rfx list and creation arabization [GSUP-4114] ([#8711](https://github.com/pbsgears/Gears_BackEnd/issues/8711)) ([62a21ba](https://github.com/pbsgears/Gears_BackEnd/commit/62a21ba647d808a8c03e37c16e684f51d062e435))
+* **srm:** SRM | Sourcing Management Arabic Translation [GSUP-4115] ([#8718](https://github.com/pbsgears/Gears_BackEnd/issues/8718)) ([95b732e](https://github.com/pbsgears/Gears_BackEnd/commit/95b732e5b2fdad501910ff5a639c08ed9a3e63d0))
+
+
+### Bug Fixes
+
+* **srm:** Error message incorrectly displayed when only one supplier is selected in Single Sourcing Tender / RFX [GSUP-4198] ([#8879](https://github.com/pbsgears/Gears_BackEnd/issues/8879)) ([128ec89](https://github.com/pbsgears/Gears_BackEnd/commit/128ec89a4199ac275d9eb9905f52c6e2912f1247))
+* **srm:** SQL Error When Updating Document Type [GSUP-4088] ([#8862](https://github.com/pbsgears/Gears_BackEnd/issues/8862)) ([3101c9c](https://github.com/pbsgears/Gears_BackEnd/commit/3101c9cc9e383bb22214a32e4e4ca3b7a1e73587))
+
 ## [10.84.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.83.0...v10.84.0) (2025-09-16)
 
 
