@@ -9327,4 +9327,12 @@ return [
     'aging_241_365' => '241 to 365',
     'aging_over_365' => 'Over 365',
     'period' => "Period",
+    'bank_short_code_taken' => 'The Bank Short Code has already been taken.',
+    'bank_code_exists'  => 'Bank code already exists.',
+    'sub_category_code' => 'Sub Category Code',
+    'sub_category_name'  => 'Sub Category Name',
+    'cannot_be_amended' => 'Cannot be amended. Since it has been used in supplier master.',
+    'supplier_checking_note' => 'Use of Supplier business category checking is done in supplier master.',
+    'category_name_exists' => 'Category name already exists.',
+    'category_code_exists' => 'Category code already exists.',
 ];

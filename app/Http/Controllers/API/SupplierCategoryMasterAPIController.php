@@ -79,8 +79,8 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             'categoryName' => 'required|unique:suppliercategorymaster',
             'categoryDescription' => 'required'
         ],[
-            'categoryCode.unique'   => 'Category code already exists',
-            'categoryName.unique'   => 'Category name already exists'
+            'categoryCode.unique'   => trans('custom.category_code_exists'),
+            'categoryName.unique'   => trans('custom.category_name_exists')
         ]);
 
         if ($validator->fails()) {
@@ -145,7 +145,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             $validator = Validator::make($input, [
                 'categoryCode' => 'unique:suppliercategorymaster'
             ],[
-                'categoryCode.unique'   => 'Category code already exists'
+                'categoryCode.unique'   => trans('custom.category_code_exists')
             ]);
 
             if ($validator->fails()) {
@@ -157,7 +157,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             $validator = Validator::make($input, [
                 'categoryName' => 'unique:suppliercategorymaster'
             ],[
-                'categoryName.unique'   => 'Category name already exists'
+                'categoryName.unique'   => trans('custom.category_name_exists')
             ]);
 
             if ($validator->fails()) {
@@ -276,10 +276,10 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierMaster = SupplierBusinessCategoryAssign::where('supCategoryMasterID', $input['id'])->first();
 
         if ($supplierMaster) {
-            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
+            $errorMessages = trans('custom.cannot_be_amended');
             $amendable = false;
         } else {
-            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $successMessages = trans('custom.supplier_checking_note');
             $amendable = true;
         }
 

@@ -92,12 +92,12 @@ class SupplierCategorySubAPIController extends AppBaseController
 
         $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
         if($subCategoriesByMaster){
-            return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
+            return $this->sendError(trans('custom.sub_category_code') . ' ' . trans('custom.already_exists'),422);
         }
 
         $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
         if($subCategoriesByMaster){
-            return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
+            return $this->sendError(trans('custom.sub_category_name') . ' ' . trans('custom.already_exists'),422);
         }
 
         $id = Auth::id();
@@ -158,14 +158,14 @@ class SupplierCategorySubAPIController extends AppBaseController
         if($supplierCategorySub->subCategoryCode != $request->subCategoryCode){
             $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
             if($subCategoriesByMaster){
-                return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
+                return $this->sendError(trans('custom.sub_category_code') . ' ' . trans('custom.already_exists'),422);
             }
         }
 
         if($supplierCategorySub->categoryName != $request->categoryName){
             $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
             if($subCategoriesByMaster){
-                return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
+                return $this->sendError(trans('custom.sub_category_name') . ' ' . trans('custom.already_exists'),422);
             }
         }
 
@@ -279,10 +279,10 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign = SupplierSubCategoryAssign::where('supSubCategoryID', $input['id'])->first();
 
         if ($subCategoryAssign) {
-            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
+            $errorMessages = trans('custom.cannot_be_amended');
             $amendable = false;
         } else {
-            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $successMessages = trans('custom.supplier_checking_note');
             $amendable = true;
         }
 
@@ -301,7 +301,7 @@ class SupplierCategorySubAPIController extends AppBaseController
         $categories = $request->input('categories');
 
         if(empty($categories)) {
-            $this->sendError("Categories not found");
+            $this->sendError(trans('custom.categories_not_found'));
         }
 
         $categories = collect($categories)->pluck('id')->toArray();
