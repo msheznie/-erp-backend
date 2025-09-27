@@ -527,7 +527,13 @@ class TransactionsExportExcel extends AppBaseController
             return $this->sendResponse('', trans('custom.pr_detailed_report_export_in_progress'));
         }
 
-        $basePath = CreateExcel::process($data,$type,$input['docName'],$path, $detail_array);
+        $fileName = $input['docName'];
+        $translatedFileName = trans('exportExcelFile.'.$input['docName']);
+        if($translatedFileName !== 'exportExcelFile'.$input['docName']) {
+            $fileName = $translatedFileName;
+        } 
+        
+        $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {
