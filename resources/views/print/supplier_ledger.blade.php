@@ -146,8 +146,8 @@
                     <td valign="top" style="width: 55%">
                         <br><br>
                         <span class="font-weight-bold">{{$companyName}}</span><br>
-                        <span class="font-weight-bold">{{trans('custom.supplier_ledger')}}</span><br>
-                        <span class="font-weight-bold">{{trans('custom.period')}} : {{ $fromDate }} - {{ $toDate }}</span>
+                        <span class="font-weight-bold">{{ __('custom.supplier_ledger') }}</span><br>
+                        <span class="font-weight-bold">{{ __('custom.period') }} : {{ $fromDate }} - {{ $toDate }}</span>
                     </td>
                 </tr>
             </table>

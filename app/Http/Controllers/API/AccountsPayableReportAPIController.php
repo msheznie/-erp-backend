@@ -1046,7 +1046,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $typ_re = 1;
 
 
-                            $fileName = 'Payment Suppliers By Year -' . $year;
+                            $fileName = trans('custom.payment_suppliers_by_year') . ' -' . $year;
                             if ($reportSD == 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
@@ -1094,7 +1094,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         } else if ($reportTypeID == 'APDPY') {
                             $typ_re = 1;
-                            $fileName = 'Direct Payments By Year -' . $year;
+                            $fileName = trans('custom.direct_payments_by_year') . ' -' . $year;
                             if ($reportSD == 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
@@ -1139,7 +1139,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         } else if ($reportTypeID == 'APAPY') {
                             $typ_re = 1;
-                            $fileName = 'All Payments By Year -' . $year;
+                            $fileName = trans('custom.all_payments_by_year') . ' -' . $year;
                             if ($reportSD != 'detail') {
                                 $x = 0;
                                 foreach ($output as $val) {
@@ -1169,7 +1169,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $to_date = ((new Carbon($to_date))->format('d/m/Y'));
 
 
-                            $fileName = 'Payments Lists Status By Year';
+                            $fileName = trans('custom.payments_lists_status_by_year');
                             $x = 0;
                             foreach ($output as $val) {
 
@@ -1453,7 +1453,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $reportData = ['reportData' => $outputArr, 'Title' => trans('custom.supplier_ledger'), 'companyName' => $checkIsGroup->CompanyName, 'companyCode' => $companyCode, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
-                    $fileName = 'Supplier Ledger';
+                    $fileName = trans('custom.supplier_ledger');
                     $path = 'accounts-payable/report/supplier_ledger/excel/';
 
                     $excelColumnFormat = [
@@ -1696,7 +1696,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data = array();
                         }
                     }
-                    $fileName = 'top_suppliers_' . $name;
+                    $fileName = trans('custom.top_suppliers') . '_' . $name;
                     $path = 'accounts_payable/report/top_suppliers/excel/';
                     $companyMaster = Company::find($request->companySystemID);
                     $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -6539,7 +6539,7 @@ ORDER BY
                 $nowTime = time();
 
                 $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-                $fileName = 'supplier_ledger_' . $nowTime.$supplierID . '.pdf';
+                $fileName = trans('custom.supplier_ledger_') . $nowTime.$supplierID . '.pdf';
                 $filePath = $path . '/' . $fileName;
 
                 $mpdfConfig = [
@@ -6550,7 +6550,7 @@ ORDER BY
                     'autoMarginPadding' => -10,
                     'margin_left' => 15,
                     'margin_right' => 15,
-                    'margin_top' => 16,
+                    'margin_top' => 36,
                     'margin_bottom' => 16,
                     'margin_header' => 9,
                     'margin_footer' => 9

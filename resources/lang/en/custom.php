@@ -6909,6 +6909,13 @@ return [
     'period_from' => "Period From",
     'period_to' => "Period To",
     'supplier_ledger' => "Supplier Ledger",
+    'supplier_ledger_' => "supplier_ledger_",
+    'payment_suppliers_by_year' => "Payment Suppliers By Year",
+    'direct_payments_by_year' => "Direct Payments By Year", 
+    'all_payments_by_year' => "All Payments By Year",
+    'payments_lists_status_by_year' => "Payments Lists Status By Year",
+    'supplier_ledger' => "Supplier Ledger",
+    'top_suppliers' => "top_suppliers",
     "doc_amount" => "Doc Amount",
     "age_days" => "Age Days",
     "balance_amount" => "Balance Amount",
@@ -9318,5 +9325,6 @@ return [
     'aging_181_210' => '181 to 210',
     'aging_211_240' => '211 to 240',
     'aging_241_365' => '241 to 365',
-    'aging_over_365' => 'Over 365'
+    'aging_over_365' => 'Over 365',
+    'period' => "Period",
 ];
