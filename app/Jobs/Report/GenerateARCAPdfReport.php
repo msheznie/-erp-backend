@@ -100,8 +100,8 @@ class GenerateARCAPdfReport implements ShouldQueue
                     }
                 }
 
-                $lang = $request->lang ?? 'en'; // Get language from request
-                $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+                $lang = app()->getLocale();
+                $isRTL = ($lang === 'ar');
 
                 $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
 

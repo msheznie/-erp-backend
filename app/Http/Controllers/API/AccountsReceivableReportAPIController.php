@@ -2219,14 +2219,48 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+                    $lang = app()->getLocale();
+                    $isRTL = ($lang === 'ar');
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal, 'lang' => $lang);
 
                     $html = view('print.customer_collection', $dataArr);
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
+                    $mpdfConfig = [
+                        'tempDir' => public_path('tmp'),
+                        'mode' => 'utf-8',
+                        'format' => 'A4-L',
+                        'setAutoTopMargin' => 'stretch',
+                        'autoMarginPadding' => -10,
+                        'margin_left' => 15,
+                        'margin_right' => 15,
+                        'margin_top' => 16,
+                        'margin_bottom' => 16,
+                        'margin_header' => 9,
+                        'margin_footer' => 9
+                    ];
 
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    if ($isRTL) {
+                        $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                    }
+
+                    try {
+                        $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $pdf->AddPage('L');
+                        $pdf->setAutoBottomMargin = 'stretch';
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_collection_report.pdf', 'I');
+                    } catch (\Exception $e) {
+                        // Fallback: try with simpler configuration
+                        $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                        if ($isRTL) {
+                            $fallbackConfig['direction'] = 'rtl';
+                        }
+                        $pdf = new \Mpdf\Mpdf($fallbackConfig);
+                        $pdf->AddPage('L');
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_collection_report.pdf', 'I');
+                    }
                 }
                 break;
             default:
