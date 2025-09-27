@@ -2,10 +2,10 @@
 <head>
     <title>
         @if($masterdata->documentType == 13)
-            Customer Invoice Receipt
+            {{ __('custom.customer_invoice_receipt') }}
         @endif
         @if($masterdata->documentType == 14)
-            Direct Receipt
+            {{ __('custom.direct_receipt') }}
         @endif
     </title>
     <style>

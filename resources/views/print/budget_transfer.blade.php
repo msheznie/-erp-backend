@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Budget Transfer</title>
+    <title>{{ __('custom.budget_transfer') }}</title>
     <style>
         @page {
             margin-left: 30px;

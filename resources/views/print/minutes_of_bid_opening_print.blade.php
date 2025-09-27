@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Minutes of Bid Opening Report</title>
+    <title>{{ __('custom.minutes_of_bid_opening') }}</title>
     <style>
         @page {
             margin-left: 30px;

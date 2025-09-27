@@ -1,6 +1,6 @@
 <html dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" lang="{{ app()->getLocale() }}">
 <head>
-    <title>Direct Invoice Voucher</title>
+    <title>{{ __('custom.direct_invoice_voucher') }}</title>
     <style>
         @page {
             margin-left: 30px;

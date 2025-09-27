@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Item Issue Delivery</title>
+    <title>{{ __('custom.item_issue_delivery') }}</title>
     <style>
         @page {
             margin-left: 2%;

@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Suppliers</title>
+    <title>{{ __('custom.suppliers') }}</title>
     <style>
         @page {
             margin-left: 30px;

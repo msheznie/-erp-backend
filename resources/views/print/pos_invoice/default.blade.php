@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Invoice</title>
+    <title>{{ __('custom.invoice') }}</title>
     <style>
         @page {
             margin-left: 30px;

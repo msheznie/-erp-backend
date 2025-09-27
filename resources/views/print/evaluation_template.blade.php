@@ -1,7 +1,7 @@
 
 <html>
 <head>
-    <title>Supplier Evaluation Template</title>
+    <title>{{ __('custom.supplier_evaluation_template') }}</title>
     <style>
         @page {
             margin-left: 30px;
