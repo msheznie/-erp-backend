@@ -1,40 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
     <style>
-        @page {
-            margin: 100px 30px 40px;
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
         }
 
-        #header {
-            position: fixed;
-            left: 0px;
-            top: -100px;
-            right: 0px;
-            height: 50px;
-            text-align: center;
+        table {
+            direction: rtl;
         }
 
-        #footer {
-            position: fixed;
-            left: 0px;
-            bottom: 0px;
-            right: 0px;
-            height: 0px;
-            font-size: 10px;
+        .table th, .table td {
+            text-align: right;
         }
 
-        #footer .page:after {
-            content: counter(page, upper-roman);
+        .table .text-left {
+            text-align: left !important;
         }
-
+        @endif
         body {
             font-size: 10px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
         }
 
-        .pagenum:after {
-            content: counter(page);
-        }
 
         table {
             border-collapse: collapse;
@@ -71,47 +60,13 @@
             text-align: right !important;
         }
 
+        .text-left {
+            text-align: left !important;
+        }
+
     </style>
 
 <body>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">{{ trans('custom.customer_balance_statement') }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.as_of') }} {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<div id="footer">
-    <table style="width:100%;">
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">{{ trans('custom.page') }} <span class="pagenum"></span></span><br>
-            </td>
-        </tr>
-    </table>
-</div>
 <div id="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
@@ -147,8 +102,8 @@
                     {{$lineTotal += $det2->balanceAmount}}
                 @endforeach
                 <tr>
-                    <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>{{ trans('custom.total') }}:</b></td>
+                    <td colspan="8" style="border-bottom: none; border-left: none;"
+                        class="@if(isset($lang) && $lang === 'ar') text-left @else text-right @endif"><b>{{ trans('custom.total') }}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
                 </tr>
             @endforeach
@@ -156,8 +111,8 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>{{ trans('custom.grand_total') }}:</b></td>
+            <td colspan="8" style="border-bottom: none; border-left: none;"
+                class="@if(isset($lang) && $lang === 'ar') text-left @else text-right @endif"><b>{{ trans('custom.grand_total') }}:</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>
         </tr>
         </tfoot>

@@ -134,7 +134,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     if ($processedData['isHOD'] == 1) {
                         // Check if employee is already HOD in another department
                         if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'])) {
-                            $errorMessages[] = 'Employee ' . Employee::getEmployeeCode($processedData['employeeSystemID']) . ' is already HOD in another department';
+                            $errorMessages[] = trans('custom.employee_already_hod_in_another_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
                             continue;
                         }
 
@@ -150,7 +150,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                                                       ->where('employeeSystemID', $processedData['employeeSystemID'])
                                                       ->exists();
                     if ($exists) {
-                        $errorMessages[] = 'Employee ' . Employee::getEmployeeCode($processedData['employeeSystemID']) . ' is already assigned to this department';
+                        $errorMessages[] = trans('custom.employee_already_assigned_to_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
                         continue;
                     }
 
@@ -171,11 +171,11 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 
                 if (!empty($errorMessages)) {
                     DB::rollback();
-                    return $this->sendError('Some employees could not be assigned: ' . implode(', ', $errorMessages));
+                    return $this->sendError(trans('custom.some_employees_could_not_be_assigned') . implode(', ', $errorMessages));
                 }
                 DB::commit();
 
-                return $this->sendResponse($results, count($results) . ' employee(s) assigned to department successfully');
+                return $this->sendResponse($results, count($results) . ' ' . trans('custom.employees_assigned_to_department_successfully'));
             }
             else {
                 // Handle single employee assignment (backward compatibility)
@@ -322,7 +322,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error updating department employee', 404,['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_updating_department_employee'), 404,['error' => $e->getMessage()]);
         }
     }
 

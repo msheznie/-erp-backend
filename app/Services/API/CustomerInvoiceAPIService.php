@@ -1151,7 +1151,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Invoice details exist. You cannot change the customer.'
+                    'message' => trans('custom.invoice_details_exist_cannot_change_customer')
                 ];
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
@@ -1160,7 +1160,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     'status' => false,
                     'code' => 500,
                     'type' => array('type' => 'customer_credit_days'),
-                    'message' => $customer->CustomerName . ' - Credit days not mentioned for this customer'
+                    'message' => trans('custom.credit_days_not_mentioned_customer', ['customerName' => $customer->CustomerName])
                 ];
             }
 
@@ -2304,7 +2304,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if($input['VATAmount'] > $input['salesPrice']){
                 return [
                     'status' => false,
-                    'message' => 'Vat amount cannot be greater than sales price'
+                    'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                 ];
             }
         }
@@ -3149,7 +3149,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if($input['VATAmount'] > $unitCostForCalculation){
                 return [
                     'status' => false,
-                    'message' => 'Vat amount cannot be greater than sales price'
+                    'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                 ];
             }
         }
@@ -3352,13 +3352,13 @@ class CustomerInvoiceAPIService extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
 
         $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.no_invoice_details_found')];
         }
 
         $totalAmount = 0;
@@ -3378,7 +3378,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
@@ -3527,13 +3527,13 @@ class CustomerInvoiceAPIService extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
 
         $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.no_invoice_details_found')];
         }
 
         $totalAmount = 0;
@@ -3553,7 +3553,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);

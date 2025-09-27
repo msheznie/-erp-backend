@@ -608,11 +608,11 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
             $data_obj[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
        
-                'Document Code' => $detail->documentCode,
-                'Transaction Date' => $dt,
-                'Location' => $detail->wareHouseDescription,
-                'Quantity' => $qua_req,
-                'Amount' => $tran_amount,
+                trans('custom.document_code') => $detail->documentCode,
+                trans('custom.transaction_date') => $dt,
+                trans('custom.location') => $detail->wareHouseDescription,
+                trans('custom.quantity') => $qua_req,
+                trans('custom.amount') => $tran_amount,
             );
 
          

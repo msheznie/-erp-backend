@@ -584,7 +584,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /*checking customer invoice no already exist*/
             $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $_post['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID', '<>', $id)->first();
             if ($verifyCompanyInvoiceNo) {
-                return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
+                return $this->sendError(trans('custom.customer_invoice_number_already_used', ['bookingInvCode' => $verifyCompanyInvoiceNo->bookingInvCode]), 500);
             }
         }
 
@@ -595,7 +595,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500, array('type' => 'customer_credit_days'));
+                return $this->sendError(trans('custom.credit_days_not_mentioned_customer', ['customerName' => $customer->CustomerName]), 500, array('type' => 'customer_credit_days'));
             }
 
             /*if customer change*/
@@ -1007,12 +1007,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'unitCost' => 'required|numeric|min:1',
                                 ], [
 
-                                    'serviceLineSystemID.required' => 'Segment is required.',
-                                    'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
-                                    'unitOfMeasure.required' => 'UOM is required.',
-                                    'invoiceQty.required' => 'Qty is required.',
-                                    'invoiceAmount.required' => 'Amount is required.',
-                                    'unitCost.required' => 'Unit cost is required.'
+                                    'serviceLineSystemID.required' => trans('custom.segment_required_confirm'),
+                                    'serviceLineCode.required' => trans('custom.segment_code_not_updated_confirm'),
+                                    'unitOfMeasure.required' => trans('custom.uom_required_confirm'),
+                                    'invoiceQty.required' => trans('custom.qty_required_confirm'),
+                                    'invoiceAmount.required' => trans('custom.amount_required_confirm'),
+                                    'unitCost.required' => trans('custom.unit_cost_required_confirm')
 
                                 ]);
 
@@ -1032,7 +1032,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                         $contractValidator = \Validator::make($item, [
                                             'contractID' => 'required|numeric|min:1'
                                         ], [
-                                            'contractID.required' => 'Contract no. is required.'
+                                            'contractID.required' => trans('custom.contract_required_confirm')
                                         ]);
                                         if ($contractValidator->fails()) {
                                             return $this->sendError($contractValidator->messages(), 422);
@@ -1080,7 +1080,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 }
                             }
                         } else {
-                            return $this->sendError('No invoice details found.', 500);
+                            return $this->sendError(trans('custom.no_invoice_details_found'), 500);
                         }
 
                     }
@@ -1102,11 +1102,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice found');
+            return $this->sendError(trans('custom.customer_invoice_found'));
         }
 
         if ($customerInvoiceDirect->interCompanyTransferYN == -1) {
-            return $this->sendError('This is an intercompany transfer, You can not assign GRV.', 500, array('type' => 'grvAssigned'));
+            return $this->sendError(trans('custom.intercompany_transfer_cannot_assign_grv'), 500, array('type' => 'grvAssigned'));
         }
 
         if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
@@ -1411,7 +1411,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_export_excel'));
         }
         else
         {
@@ -1426,7 +1426,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if($input['excelUploadCustomerInvoice']== null){
-            return $this->sendError('Please Select a File',500);
+            return $this->sendError(trans('custom.please_select_file'),500);
         }
 
         $excelUpload = $input['excelUploadCustomerInvoice'];
@@ -1442,11 +1442,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (!in_array($extension, $allowedExtensions))
         {
-            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            return $this->sendError(trans('custom.file_type_not_allowed_upload_xlsx_xls'),500);
         }
 
         if ($size > 20000000) {
-            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            return $this->sendError(trans('custom.max_size_upload_20mb'),500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -1512,7 +1512,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($checkStatus) {
             return $this->sendResponse([], trans('custom.customer_invoice_can_be_edit_successfully'));
         } else {
-            return $this->sendError("Unable to edit customer invoice. Upload is currently in progress.");
+            return $this->sendError(trans('custom.upload_in_progress_cannot_edit'));
         }
 
     }
@@ -2407,7 +2407,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         if (!$master) {
-            return $this->sendError("Customer invoice not found");
+            return $this->sendError(trans('custom.customer_invoice_not_found'));
         }
         $companySystemID = $master->companySystemID;
         $localCurrencyER = $master->localCurrencyER;
@@ -3997,7 +3997,7 @@ WHERE
 
 
         if (empty($masterData)) {
-            return $this->sendError('Customer Invoice ' . $customerInvoiceNo . ' / ' . $bookingInvCode . ' not found for the company ' .$company->CompanyName);
+            return $this->sendError(trans('custom.customer_invoice_not_found_for_company', ['customerInvoiceNo' => $customerInvoiceNo, 'bookingInvCode' => $bookingInvCode, 'companyName' => $company->CompanyName]));
         }
 
 
