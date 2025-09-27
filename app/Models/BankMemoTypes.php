@@ -67,5 +67,33 @@ class BankMemoTypes extends Model
         return self::orderBy('sortOrder', 'asc')->get();
     }
 
+    public function getBankMemoHeaderAttribute($value) 
+    { 
+        $languageCode = app()->getLocale() ?: 'en';
+        if (strpos($value, 'custom.') === 0) 
+        { 
+            return trans($value, [], $languageCode); 
+        } 
+
+        $snakeCase = strtolower(str_replace(' ', '_', $value)); 
+        $translationKey = 'custom.' . $snakeCase; 
+        $translationResult = trans($translationKey, [], $languageCode); 
+
+        if ($translationResult !== $translationKey) 
+        { 
+            return $translationResult; 
+        } 
+    
+    
+            return $value; 
+        
+    } 
+        
+    public function toArray() {
+
+        $array = parent::toArray();
+        $array['bankMemoHeader'] = $this->bankMemoHeader; return $array;
+    }
+
     
 }

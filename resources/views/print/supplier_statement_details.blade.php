@@ -191,7 +191,7 @@
         @endforeach
         <tr width="100%">
                 <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b>Total:</b></td>
+                    class="text-right"><b>{{trans('custom.total')}}:</b></td>
 
                 <td style="text-align: right"><b>{{ number_format($totalArray['totalInvoices'], $currencyDecimalPlace) }}</b></td>
                 <td style="text-align: right"><b>{{ number_format($totalArray['totalAdvances'], $currencyDecimalPlace) }}</b></td>
