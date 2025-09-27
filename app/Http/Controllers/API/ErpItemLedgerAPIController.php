@@ -621,20 +621,11 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
  
         \Excel::create('itemTransactionHistory', function ($excel) use ($data_obj) {
 
-            $excel->sheet('sheet name', function ($sheet) use ($data_obj) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data_obj) {
                 $sheet->fromArray($data_obj);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                $sheet->setColumnFormat(array(
-                    'B' => 'yyyy-mm-dd',
-                ));
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:E' . $lastrow)->getAlignment()->setWrapText(true);
-           // $excel->getActiveSheet()->getStyle('V'.$i)->getNumberFormat()->setFormatCode('dd-mmm-yyyy');
-        })->download($type_def);
-
+        })->download('xls');
         
 
         return $this->sendResponse($csv, trans('custom.success_export'));

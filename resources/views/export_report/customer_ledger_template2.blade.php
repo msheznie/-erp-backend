@@ -9,7 +9,7 @@
                 <h2  colspan="9" style="text-align: center;">{{trans('custom.customer_ledger')}}</h2>
             </tr>
             <tr>
-                <h4  colspan="9" style="text-align: center;">From {{\App\helper\Helper::dateFormat($fromDate)}} To {{\App\helper\Helper::dateFormat($toDate)}}</h4>
+                <h4  colspan="9" style="text-align: center;">{{trans('custom.from')}} {{\App\helper\Helper::dateFormat($fromDate)}} {{trans('custom.to')}} {{\App\helper\Helper::dateFormat($toDate)}}</h4>
             </tr>
         </thead>
         @foreach($reportData as $name => $value)
