@@ -9245,4 +9245,12 @@ return [
     'employee_already_assigned_to_department' => 'الموظف :employeeCode مُعيّن بالفعل في هذا القسم',
     'requested_qty' => 'الكمية المطلوبة',
     'period' => "الفترة",
+    'bank_short_code_taken' => 'تم استخدام رمز البنك المختصر بالفعل.',
+    'bank_code_exists' => 'رمز البنك موجود بالفعل.',
+    'sub_category_code' => 'رمز الفئة الفرعية',
+    'sub_category_name' => 'اسم الفئة الفرعية',
+    'cannot_be_amended' => 'لا يمكن التعديل، لأنه مستخدم في سجل المورّدين.',
+    'supplier_checking_note' => 'يتم التحقق من استخدام فئة أعمال المورّد في سجل المورّدين.',
+    'category_name_exists' => 'اسم الفئة موجود بالفعل.',
+    'category_code_exists' => 'رمز الفئة موجود بالفعل.',
 ];

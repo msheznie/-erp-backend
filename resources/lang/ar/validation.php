@@ -250,7 +250,10 @@ return [
         'jvType' => 'نوع القيد',
         'documentTypes' => 'أنواع المستندات',
         'customers' => 'العملاء',
-        'controlAccountsSystemID' => 'معرف حسابات التحكم'
+        'controlAccountsSystemID' => 'معرف حسابات التحكم',
+        'subCategoryCode' => 'رمز الفئة الفرعية',
+        'categoryName' => 'اسم الفئة',
+        'categoryDescription' => 'وصف الفئة',
     ],
 
 ];
