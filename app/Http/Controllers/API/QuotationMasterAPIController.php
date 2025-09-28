@@ -27,6 +27,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Models\ItemCategoryTypeMaster;
 use App\Models\ItemMaster;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -1106,7 +1107,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if ($soPaymentTerms) {
             foreach ($soPaymentTerms as $val) {
-                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
+                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val->paymentTemDes.' '.$val['inDays'] . trans('custom.in_days') . ', ';
             }
         }
 
