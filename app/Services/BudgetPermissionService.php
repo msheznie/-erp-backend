@@ -87,7 +87,9 @@ class BudgetPermissionService
 
                     $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID);
 
-                    if($assignedDepartmentByBudget->department->departmentSystemID === CompanyDepartment::getRootParentDepartmentID($budgetPlanning->departmentID))
+                    $allParentIDs = CompanyDepartment::getAllParentIDs($budgetPlanning->departmentID);
+                    
+                    if(in_array($assignedDepartmentByBudget->department->departmentSystemID, $allParentIDs))
                     {
                         $actions = $actions->where('parent',1);
                     }else {

@@ -203,4 +203,29 @@ class CompanyDepartment extends Model
         
         return $currentDepartment ? $currentDepartment->departmentSystemID : null;
     }
+
+    /**
+     * Get all parent department IDs in an array format
+     * 
+     * @param int $departmentSystemID The department ID to find all parents for
+     * @return array Returns an array of all parent department IDs, e.g., [2, 3, 6]
+     */
+    public static function getAllParentIDs($departmentSystemID)
+    {
+        $parentIDs = [];
+        $currentDepartment = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$currentDepartment) {
+            return $parentIDs;
+        }
+
+        // Traverse up the hierarchy and collect all parent IDs
+        while ($currentDepartment && $currentDepartment->parentDepartmentID) {
+            $parentIDs[] = $currentDepartment->parentDepartmentID;
+            $currentDepartment = $currentDepartment->parent;
+        }
+        
+        return $parentIDs;
+    }
+
 } 
