@@ -153,4 +153,79 @@ class CompanyDepartment extends Model
         $department = CompanyDepartment::find($departmentSystemID);
         return ($department) ? $department->departmentCode : null;
     }
+
+    /**
+     * Get the grandparent department ID for a given department ID
+     * 
+     * @param int $departmentSystemID The department ID to find grandparent for
+     * @return int|null Returns the grandparent department ID or null if not found
+     */
+    public static function getGrandParentDepartmentID($departmentSystemID)
+    {
+        // Find the department
+        $department = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$department) {
+            return null;
+        }
+
+        // Get the parent department
+        $parentDepartment = $department->parent;
+        
+        if (!$parentDepartment) {
+            return null; // No parent, so no grandparent
+        }
+
+        // Get the grandparent department (parent of parent)
+        $grandParentDepartment = $parentDepartment->parent;
+        
+        return $grandParentDepartment ? $grandParentDepartment->departmentSystemID : null;
+    }
+
+    /**
+     * Get the root parent department ID (topmost parent in hierarchy)
+     * 
+     * @param int $departmentSystemID The department ID to find root parent for
+     * @return int|null Returns the root parent department ID or null if not found
+     */
+    public static function getRootParentDepartmentID($departmentSystemID)
+    {
+        $currentDepartment = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$currentDepartment) {
+            return null;
+        }
+
+        // Traverse up the hierarchy until we find a department with no parent
+        while ($currentDepartment && $currentDepartment->parentDepartmentID) {
+            $currentDepartment = $currentDepartment->parent;
+        }
+        
+        return $currentDepartment ? $currentDepartment->departmentSystemID : null;
+    }
+
+    /**
+     * Get all parent department IDs in an array format
+     * 
+     * @param int $departmentSystemID The department ID to find all parents for
+     * @return array Returns an array of all parent department IDs, e.g., [2, 3, 6]
+     */
+    public static function getAllParentIDs($departmentSystemID)
+    {
+        $parentIDs = [];
+        $currentDepartment = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$currentDepartment) {
+            return $parentIDs;
+        }
+
+        // Traverse up the hierarchy and collect all parent IDs
+        while ($currentDepartment && $currentDepartment->parentDepartmentID) {
+            $parentIDs[] = $currentDepartment->parentDepartmentID;
+            $currentDepartment = $currentDepartment->parent;
+        }
+        
+        return $parentIDs;
+    }
+
 } 

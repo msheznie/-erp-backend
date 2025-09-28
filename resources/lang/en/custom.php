@@ -9335,4 +9335,5 @@ return [
     'supplier_checking_note' => 'Use of Supplier business category checking is done in supplier master.',
     'category_name_exists' => 'Category name already exists.',
     'category_code_exists' => 'Category code already exists.',
+    'in_days' => 'in days'
 ];

@@ -3064,6 +3064,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 }
             }
 
+
             \Excel::create('custom_report', function ($excel) use ($data) {
                 $excel->sheet('sheet name', function ($sheet) use ($data) {
                     $sheet->fromArray($data, null, 'A1', true);
@@ -3072,7 +3073,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 });
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download($type);
+            })->download('xls');
         }
         return $this->sendError(trans('custom.no_records_found'), 500);
     }

@@ -9253,4 +9253,6 @@ return [
     'supplier_checking_note' => 'يتم التحقق من استخدام فئة أعمال المورّد في سجل المورّدين.',
     'category_name_exists' => 'اسم الفئة موجود بالفعل.',
     'category_code_exists' => 'رمز الفئة موجود بالفعل.',
+    'in_days' => 'في أيام'
+
 ];
