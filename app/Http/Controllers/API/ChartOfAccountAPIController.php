@@ -105,7 +105,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
 
         if (!isset($input['reportTemplateCategory'])) {
-            return $this->sendError("Report template category cannot be empty", 500);
+            return $this->sendError(trans('custom.report_template_category_cannot_be_empty'), 500);
         }
 
         if($input['AccountDescription'] == null){
@@ -113,7 +113,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         $messages = array(
-            'AccountCode.unique' => 'Account code ' . $accountCode . ' already exists'
+            'AccountCode.unique' => trans('custom.account_code_exists', ['accountCode' => $accountCode])
         );
 
 
@@ -303,7 +303,12 @@ class ChartOfAccountAPIController extends AppBaseController
                             // update in to user log table
                             foreach ($old_array as $key => $old) {
                                 if ($old != $modified_array[$key]) {
-                                    $description = $employee->empName . " Updated chart of account (" . $chartOfAccount->chartOfAccountSystemID . ") from " . $old . " To " . $modified_array[$key] . "";
+                                    $description = trans('custom.coa_updated', [
+                                        'empName'  => $employee->empName,
+                                        'chartId'  => $chartOfAccount->chartOfAccountSystemID,
+                                        'old'      => $old,
+                                        'new'      => $modified_array[$key],
+                                    ]);
                                     UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID, $chartOfAccount->documentSystemID, $chartOfAccount->primaryCompanySystemID, $chartOfAccount->chartOfAccountSystemID, $description, $modified_array[$key], $old, $key);
                                 }
                             }
@@ -344,7 +349,12 @@ class ChartOfAccountAPIController extends AppBaseController
                             // update in to user log table
                             foreach ($old_array as $key => $old) {
                                 if ($old != $modified_array[$key]) {
-                                    $description = $employee->empName . " Updated chart of account (" . $chartOfAccount->chartOfAccountSystemID . ") from " . $old . " To " . (($modified_array[$key]) ? 1 : 0) . "";
+                                    $description = trans('custom.coa_updated_bool', [
+                                        'empName'  => $employee->empName,
+                                        'chartId'  => $chartOfAccount->chartOfAccountSystemID,
+                                        'old'      => $old,
+                                        'newBool'  => ($modified_array[$key]) ? 1 : 0,
+                                    ]);
                                     UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID, $chartOfAccount->documentSystemID, $chartOfAccount->primaryCompanySystemID, $chartOfAccount->chartOfAccountSystemID, $description, $modified_array[$key], $old, $key);
                                 }
                             }
@@ -392,7 +402,7 @@ class ChartOfAccountAPIController extends AppBaseController
                                                                          ->first();
 
                         if ($checkAlreadyInterCompanyCreated) {
-                            return $this->sendError("Related party account is already created for this company.");
+                            return $this->sendError(trans('custom.related_party_account_is_already_created_for_this_'));
                         }                        
                     }
 
@@ -461,7 +471,7 @@ class ChartOfAccountAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendReponseWithDetails($chartOfAccount->toArray(), 'Chart Of Account saved successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($chartOfAccount->toArray(), trans('custom.coa_saved'),1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);
@@ -482,7 +492,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($generalLedger, 'General Ledger Have No Balance');
+        return $this->sendResponse($generalLedger, trans('custom.gl_no_balance'));
 
     }
 
@@ -1128,7 +1138,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

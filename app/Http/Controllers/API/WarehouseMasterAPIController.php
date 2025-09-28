@@ -86,16 +86,16 @@ class WarehouseMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists',
-            'wareHouseCode.required'   => 'The '.$entityName.' code field is required.',
-            'wareHouseLocation.unique'   => 'The location field is required.',
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName]),
+            'wareHouseCode.required'   => trans('custom.warehouse_code_required_with_entity', ['entityName' => $entityName]),
+            'wareHouseLocation.unique'   => trans('custom.warehouse_location_unique'),
         );
 
         $validator = \Validator::make($input, [
@@ -117,7 +117,7 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $warehouseMasters = $this->warehouseMasterRepository->create($input);
 
-        return $this->sendResponse($warehouseMasters->toArray(), $entityName.' saved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), $entityName.' '.trans('custom.saved_successfully'));
     }
 
     /**
@@ -165,16 +165,16 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $input = array_except($input, ['wareHouseImage']);
         $input = $this->convertArrayToValue($input);
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists',
-            'wareHouseCode.required'   => 'The '.$entityName.' code field is required.',
-            'wareHouseLocation.unique'   => 'The location field is required.',
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName]),
+            'wareHouseCode.required'   => trans('custom.warehouse_code_required_with_entity', ['entityName' => $entityName]),
+            'wareHouseLocation.unique'   => trans('custom.warehouse_location_unique'),
         );
 
         $validator = \Validator::make($input, [
@@ -192,7 +192,7 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMaster = $this->warehouseMasterRepository->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError($entityName.' not found');
+            return $this->sendError($entityName.' '.trans('custom.error_not_found'));
         }
         $input['companyID'] = $this->getCompanyById($input['companySystemID']);
         $employee = \Helper::getEmployeeInfo();
@@ -244,7 +244,7 @@ class WarehouseMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($warehouseMaster->toArray(), $entityName.' updated successfully');
+        return $this->sendResponse($warehouseMaster->toArray(), $entityName.' '.trans('custom.updated_successfully'));
     }
 
     /**
@@ -390,10 +390,10 @@ class WarehouseMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         if(isset($input['companySystemID']))
@@ -411,7 +411,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $input['wareHouseLocation'] = $input['wareHouseLocation'][0];
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists'
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName])
         );
 
         $validator = \Validator::make($input, [

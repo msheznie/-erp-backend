@@ -556,85 +556,85 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         if ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
 
         } elseif ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
 
         } elseif ($itemCategory == 1 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
 
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         } elseif ($itemCategory == 3 && ($categoryTypeID->contains(2) || $categoryTypeID->contains(1) || $categoryTypeID->contains(1) && $categoryTypeID->contains(2))) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
         } elseif ($itemCategory == 4  && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
         } elseif ($itemCategory == 4 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
         } elseif ($itemCategory == 4 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         }
-        
+
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
         $financeGLcodePL = ChartOfAccount::find(isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] : null);
         $financeGLcodeRevenue = ChartOfAccount::find(isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] : null);
@@ -642,7 +642,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         if( ($input['isBSGlSelected']) && (($financeGLcodePL && ($financeGLcodePL->controlAccountsSystemID == 3 || $financeGLcodePL->controlAccountsSystemID == 4)) || ($financeCogsGLcodePL && ($financeCogsGLcodePL->controlAccountsSystemID == 3 || $financeCogsGLcodePL->controlAccountsSystemID == 4))) )
         {
-            return $this->sendError('Balance sheet GL code/s has been selected for Consumption/COGS GL code selection. Generally these two fields correspond to expense GL codes. Are you sure you want to proceed ?', 500,['type' => 'BSGlSelected']);
+            return $this->sendError(trans('custom.balance_sheet_gl_code_selected_for_consumption_cogs'), 500,['type' => 'BSGlSelected']);
         }
 
 
@@ -673,7 +673,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                         $newItemArr = $categoryTypeNew->pluck('id')->toArray();
                         foreach ($itemArr as $item) {
                             if (!in_array($item, $newItemArr)) {
-                                return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                                return $this->sendError(trans('custom.cannot_change_the_category_type_this_item_finance_'), 500);
                             }
                         }
                     }

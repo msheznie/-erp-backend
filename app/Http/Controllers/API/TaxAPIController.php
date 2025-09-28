@@ -80,12 +80,12 @@ class TaxAPIController extends AppBaseController
         }
         if($taxCategory == 2) {
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
-                'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
-                'outputVatTransferGLAccountAutoID.required' => 'Output Vat Transfer GL Account is required.',
-                'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
-                'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
+                'inputVatGLAccountAutoID.required' => trans('custom.input_vat_transfer_gl_account_is_required'),
+                'outputVatTransferGLAccountAutoID.required' => trans('custom.output_vat_transfer_gl_account_is_required'),
+                'outputVatGLAccountAutoID.required' => trans('custom.output_vat_gl_account_is_required'),
+                'inputVatTransferGLAccountAutoID.required' => trans('custom.input_vat_transfer_gl_account_field_is_required'),
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -101,11 +101,11 @@ class TaxAPIController extends AppBaseController
             ], $messages);
         }elseif ($taxCategory == 3){
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
-                'inputVatGLAccountAutoID.required' => 'WHT Expense GL Account field is required.',
-                'whtPercentage.required' => 'WHT Percentage field is required.',
-                'whtType.required' => 'WHT Type field is required.',
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
+                'inputVatGLAccountAutoID.required' => trans('custom.wht_expense_gl_account_field_is_required'),
+                'whtPercentage.required' => trans('custom.wht_percentage_field_is_required'),
+                'whtType.required' => trans('custom.wht_type_field_is_required'),
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -120,8 +120,8 @@ class TaxAPIController extends AppBaseController
             ], $messages);
         }else{
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -163,8 +163,8 @@ class TaxAPIController extends AppBaseController
 
             if($isWhtTypeExists)
             {
-                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Amount";
-                return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
+                $whtType = $input['whtType'] == 0 ? trans('custom.wht_on_gross_amount') : trans('custom.wht_on_net_amount');
+                return $this->sendError(trans('custom.wht_type_already_defined_cannot_create_more', ['type' => $whtType]), 500);
             }
 
             if(($input['isDefault'] == 1) && ($input['isActive'] == 0)){
@@ -266,12 +266,12 @@ class TaxAPIController extends AppBaseController
         }
         if($taxCategory == 2) {
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
-                'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
-                'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
-                'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
-                'outputVatTransferGLAccountAutoID.required' => 'Output Vat Transfer GL Account field is required.',
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
+                'inputVatGLAccountAutoID.required' => trans('custom.input_vat_transfer_gl_account_is_required'),
+                'outputVatGLAccountAutoID.required' => trans('custom.output_vat_gl_account_is_required'),
+                'inputVatTransferGLAccountAutoID.required' => trans('custom.input_vat_transfer_gl_account_field_is_required'),
+                'outputVatTransferGLAccountAutoID.required' => trans('custom.output_vat_transfer_gl_account_is_required'),
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -286,11 +286,11 @@ class TaxAPIController extends AppBaseController
             ], $messages);
         }elseif ($taxCategory == 3){
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
-                'inputVatGLAccountAutoID.required' => 'WHT Expense GL Account field is required.',
-                'whtPercentage.required' => 'WHT Percentage field is required.',
-                'whtType.required' => 'WHT Type field is required.'
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
+                'inputVatGLAccountAutoID.required' => trans('custom.wht_expense_gl_account_field_is_required'),
+                'whtPercentage.required' => trans('custom.wht_percentage_field_is_required'),
+                'whtType.required' => trans('custom.wht_type_field_is_required')
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -305,9 +305,9 @@ class TaxAPIController extends AppBaseController
             ], $messages);
         }else{
             $messages = [
-                'companySystemID.required' => 'Company field is required.',
-                'authorityAutoID.required' => 'Authority field is required.',
-                'currencyID.required' => 'Currency field is required.',
+                'companySystemID.required' => trans('custom.company_field_is_required'),
+                'authorityAutoID.required' => trans('custom.authority_field_is_required'),
+                'currencyID.required' => trans('custom.currency_field_is_required'),
             ];
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
@@ -355,10 +355,10 @@ class TaxAPIController extends AppBaseController
 
             if($isWhtTypeExists)
             {
-                $whtType = $input['whtType'] == 0 ? "WHT on Gross Amount" : "WHT on Net Amount";
+                $whtType = $input['whtType'] == 0 ? trans('custom.wht_on_gross_amount') : trans('custom.wht_on_net_amount');
                 if(($tax->isActive != true) && ($input['isActive'] != false))
                 {
-                    return $this->sendError("WHT type ".$whtType." is already defined. You cannot create more than one active WHT Type ", 500);
+                    return $this->sendError(trans('custom.wht_type_already_defined_cannot_create_more', ['type' => $whtType]), 500);
                 }
             }
 

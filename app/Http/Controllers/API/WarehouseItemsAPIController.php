@@ -453,14 +453,11 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
          \Excel::create('items_by_warehouse', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet('Items by warehouse', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+         })->download('xls');
 
         return $this->sendResponse(array(), trans('custom.success_export'));
     }

@@ -277,7 +277,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
                 }
                 else {
                     if(!isset($input['isFromGLConfig'])) {
-                        return $this->sendError('GL Code is not assigned to the company');
+                        return $this->sendError(trans('custom.gl_code_not_assigned_to_company'));
                     }
                 }
 
@@ -388,7 +388,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
         $systemGlCodeScenarioDetail->delete();
 
-        return $this->sendSuccess('System Gl Code Scenario Detail deleted successfully');
+        return $this->sendSuccess(trans('custom.system_gl_code_scenario_detail_deleted_successfully'));
     }
 
     public function list_config_scenarios(Request $request){
