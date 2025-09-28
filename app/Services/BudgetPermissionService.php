@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BudgetControl;
 use App\Models\BudgetDelegateAccess;
 use App\Models\BudgetDelegateAccessRecord;
+use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentUserBudgetControl;
@@ -72,12 +73,28 @@ class BudgetPermissionService
                 // only get permission if budgetPlanningID is set
                 if (isset($input['budgetPlanningID'])) {
                     $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+
+                    $assignedDepartmentByBudget = CompanyDepartmentEmployee::with(['department'])->where('employeeSystemID',Auth::user()->employee_id)
+                                                    ->where('isHOD',true)
+                                                    ->where('isActive', 1)
+                                                    ->first();
+
                     if($budgetPlanning->submissionDate <= Carbon::today()->format('Y-m-d'))
                     {
                         $userPermissions['hodUser']['isActive'] = false;
                     }
 
-                    $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID)->where('parent',1)->pluck('hodActionID')->toArray();
+
+                    $actions = WorkflowConfigurationHodAction::with('hodAction')->where('workflowConfigurationID',$budgetPlanning->workflowID);
+
+                    if($assignedDepartmentByBudget->department->departmentSystemID === CompanyDepartment::getRootParentDepartmentID($budgetPlanning->departmentID))
+                    {
+                        $actions = $actions->where('parent',1);
+                    }else {
+                        $actions = $actions->where('child',1);
+                    }
+
+                    $actions = $actions->pluck('hodActionID')->toArray();
 
                     $userPermissions['hodUser']['access'] = $actions;
 

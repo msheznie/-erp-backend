@@ -153,4 +153,54 @@ class CompanyDepartment extends Model
         $department = CompanyDepartment::find($departmentSystemID);
         return ($department) ? $department->departmentCode : null;
     }
+
+    /**
+     * Get the grandparent department ID for a given department ID
+     * 
+     * @param int $departmentSystemID The department ID to find grandparent for
+     * @return int|null Returns the grandparent department ID or null if not found
+     */
+    public static function getGrandParentDepartmentID($departmentSystemID)
+    {
+        // Find the department
+        $department = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$department) {
+            return null;
+        }
+
+        // Get the parent department
+        $parentDepartment = $department->parent;
+        
+        if (!$parentDepartment) {
+            return null; // No parent, so no grandparent
+        }
+
+        // Get the grandparent department (parent of parent)
+        $grandParentDepartment = $parentDepartment->parent;
+        
+        return $grandParentDepartment ? $grandParentDepartment->departmentSystemID : null;
+    }
+
+    /**
+     * Get the root parent department ID (topmost parent in hierarchy)
+     * 
+     * @param int $departmentSystemID The department ID to find root parent for
+     * @return int|null Returns the root parent department ID or null if not found
+     */
+    public static function getRootParentDepartmentID($departmentSystemID)
+    {
+        $currentDepartment = CompanyDepartment::find($departmentSystemID);
+        
+        if (!$currentDepartment) {
+            return null;
+        }
+
+        // Traverse up the hierarchy until we find a department with no parent
+        while ($currentDepartment && $currentDepartment->parentDepartmentID) {
+            $currentDepartment = $currentDepartment->parent;
+        }
+        
+        return $currentDepartment ? $currentDepartment->departmentSystemID : null;
+    }
 } 
