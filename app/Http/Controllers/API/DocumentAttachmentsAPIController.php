@@ -232,6 +232,41 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 }
             }
 
+            // Comprehensive file security validation for all file types
+            $file = $request->get('file');
+            if ($file && env('FILE_SECURITY_VALIDATION_ENABLED', false)) {
+                $decodeFile = base64_decode($file);
+                $mimeType = $request->get('mimeType', null);
+                
+                // Check if file extension is allowed (this should block dangerous extensions)
+                if (!\App\helper\FileSecurityValidator::isExtensionAllowed($extension)) {
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            "success" => false,
+                            "message" => "File type '$extension' is not allowed for security reasons"
+                        ];
+                    }
+                    else{
+                        return $this->sendError("File type '$extension' is not allowed for security reasons", 400);
+                    }
+                }
+                
+                // Validate file content for security threats (only for allowed extensions)
+                $securityValidation = \App\helper\FileSecurityValidator::validateFileContent($decodeFile, $extension, $mimeType);
+                
+                if (!$securityValidation['isValid']) {
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            "success" => false,
+                            "message" => $securityValidation['message']
+                        ];
+                    }
+                    else{
+                        return $this->sendError($securityValidation['message'], 400);
+                    }
+                }
+            }
+
 
             if (isset($input['size'])) {
                 if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
