@@ -254,6 +254,7 @@ return [
         'subCategoryCode' => 'رمز الفئة الفرعية',
         'categoryName' => 'اسم الفئة',
         'categoryDescription' => 'وصف الفئة',
+        'assetCategory' => 'فئة الأصل'
     ],
 
 ];
