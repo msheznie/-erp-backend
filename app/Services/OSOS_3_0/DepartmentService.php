@@ -62,7 +62,7 @@ namespace App\Services\OSOS_3_0;
              $headers = [
                  'content-type' => 'application/json',
                  'auth-key' =>  $this->apiExternalKey,
-                 'menu-id' =>  'defualt'
+                 'menu-id' =>  'default'
              ];
 
              $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
