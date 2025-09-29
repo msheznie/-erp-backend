@@ -103,9 +103,9 @@ class BudgetDelegateAPIController extends AppBaseController
                     throw new Exception('Submission time cannot be in the past');
                 }
 
-                if(Carbon::parse($input['submission_time'])->lessThan(Carbon::now()))
+                if(Carbon::parse($input['submission_time'])->lessThan(Carbon::today()))
                 {
-                    return $this->sendError('Submission date must be less than or equal current submission date and greater than current date');
+                    return $this->sendError('Submission date must be equal or greater than current date and less than or equal to budget planning detail submission date');
                 }
 
                 $delegateeIds = collect($input['delegatee_id'])->pluck('id')->toArray();
@@ -122,7 +122,7 @@ class BudgetDelegateAPIController extends AppBaseController
 
                 // validate submission time is not graeter than budget planning detail submission time
                 if (\Carbon\Carbon::parse($input['submission_time'])->greaterThan($departmentBudgetPlanning->submissionDate)) {
-                    return $this->sendError('Submission date must be less than the current submission date and greater than current date');
+                    return $this->sendError('Submission date must be equal or greater than current date and less than or equal to budget planning detail submission date');
                 }
 
                 // Check if this is segment-based or GL-based

@@ -363,11 +363,18 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                     $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
                     $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
                     $departmentBudgetTemplateID = $departmentBudgeTemplateID->departmentBudgetTemplateID;
+
+                    if($budgetPlanning->workStatus == 2 && empty($selectedSegments))
+                    {
+                        return $this->sendError("Please select at least one segment");
+                    }
                 }
             }
 
             // Validate that the department budget template exists
             $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($departmentBudgetTemplateID);
+
+
             if (!$departmentBudgetTemplate) {
                 return $this->sendError(trans('custom.department_budget_template_not_found'));
             }
