@@ -183,7 +183,7 @@ class EducationService{
         $grade =  ((int)$data->grade == 0) ? null : $data->grade;
         $this->getEmployeeReferenceId($data->empId);
 
-        $mappedDegree = ((int) $data->degree > 0) ? ((int) $data->degree - 1) : 0;
+        $mappedDegree = ((int) $data->degree > 0) ? ((int) $data->degree - 1) : null;
 
         $this->educationData = array_merge([
             "institution" => $data->institution,
