@@ -3774,7 +3774,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             DB::rollBack();
                             $returnData['status'] = false;
                             $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
-                            $returnData['message'] = "Invoice Type Error";
+                            $returnData['message'] = trans('custom.invoice_type_error');
                             break 2;
                         }
 

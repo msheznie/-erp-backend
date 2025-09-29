@@ -116,7 +116,7 @@ class UnbilledGRVService
 
                 return ['status' => true];
             }else{
-                return ['status' => false, 'error' => ['message' => 'No records found in unbilled grv table']];
+                return ['status' => false, 'error' => ['message' => trans('custom.no_records_found_unbilled_grv_table')]];
             }
         } else if ($masterModel['documentSystemID'] == 24) {
             if ($valEligible) {
@@ -210,7 +210,7 @@ class UnbilledGRVService
 
                 return ['status' => true];
             }else{
-                return ['status' => false, 'error' => ['message' => 'No records found in unbilled grv table']];
+                return ['status' => false, 'error' => ['message' => trans('custom.no_records_found_unbilled_grv_table')]];
             }
         }
 	}

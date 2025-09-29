@@ -24,11 +24,11 @@ class QuotationService
             ->first();
 
         if(empty($quotationMaster)){
-            return ['status' =>  false, 'message' => 'Quotation not found'];
+            return ['status' =>  false, 'message' => trans('custom.quotation_not_found')];
         }
 
         if(empty($item)){
-            return ['status' =>  false, 'message' => 'Item not found or not assigned to company'];
+            return ['status' =>  false, 'message' => trans('custom.item_not_found_or_not_assigned')];
         }
 
         // Check if item is already added to quotation
@@ -39,19 +39,19 @@ class QuotationService
             ->exists();
 
         if ($alreadyAdded) {
-            return ['status' =>  false, 'message' => "Selected item is already added. Please check again"];
+            return ['status' =>  false, 'message' => trans('custom.selected_item_already_added')];
         }
 
         // Check for fixed assets (category 3) - not allowed in quotations
         if($item->financeCategoryMaster == 3){
-            return ['status' =>  false, 'message' => 'Fixed assets cannot be added to quotations'];
+            return ['status' =>  false, 'message' => trans('custom.fixed_assets_cannot_add_to_quotations')];
         }
 
         // Ensure only sales items are added
         $itemMaster = ItemMaster::find($itemCode);
         
         if (!$itemMaster || !$itemMaster->item_category_type) {
-            return ['status' => false, 'message' => 'Item not found or has no category type'];
+            return ['status' => false, 'message' => trans('custom.item_not_found_or_no_category_type')];
         }
 
         $salesItems = \App\Models\ItemCategoryTypeMaster::salesItems();
@@ -65,7 +65,7 @@ class QuotationService
         }
 
         if (!$hasSalesCategory) {
-            return ['status' => false, 'message' => 'Only sales items can be added to quotations'];
+            return ['status' => false, 'message' => trans('custom.only_sales_items_can_add_to_quotations')];
         }
 
         // Validate finance category assignment
@@ -76,10 +76,10 @@ class QuotationService
 
         if(empty($financeItemCategorySubAssigned))
         {
-            return ['status'=> false , 'message' => "Finance Item category sub assigned not found"];
+            return ['status'=> false , 'message' => trans('custom.finance_item_category_sub_not_found')];
         }
 
-        return ['status' => true, 'message' => 'success'];
+        return ['status' => true, 'message' => trans('custom.quotation_success')];
     }
 
     public static function saveQuotationItem($itemCodeSystem, $companySystemID, $quotationId, $empID, $employeeSystemID)

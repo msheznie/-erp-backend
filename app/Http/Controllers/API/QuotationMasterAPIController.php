@@ -467,11 +467,11 @@ class QuotationMasterAPIController extends AppBaseController
         } 
 
         if (empty($quotationMaster)) {
-            return $this->sendError('Sales ' . $tempName . ' not found');
+            return $this->sendError(trans('custom.sales_document_not_found', ['type' => $tempName]));
         }
 
         if($input['serviceLineSystemID']  == null || $input['serviceLineSystemID'] == 0){
-            return $this->sendError('Please select a segment');
+            return $this->sendError(trans('custom.please_select_segment'));
         }
 
         if (isset($input['documentDate'])) {
@@ -609,7 +609,7 @@ class QuotationMasterAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkAmount > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
                 }
             }
 
@@ -621,7 +621,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
 
                 if ($soPaymentTerms == 0) {
-                    return $this->sendError('Sales Order should have at least one payment term');
+                    return $this->sendError(trans('custom.sales_order_should_have_payment_term'));
                 }
 
                 // checking payment term amount value 0
@@ -641,7 +641,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($PoPaymentTerms)) {
-                    return $this->sendError('Advance payment request is pending');
+                    return $this->sendError(trans('custom.advance_payment_request_pending'));
                 }
 
                 //getting total sum of So Payment Terms
@@ -661,7 +661,7 @@ class QuotationMasterAPIController extends AppBaseController
 
                     $epsilon = 0.00001;
                     if(abs($soMasterSumDeductedCheckAmount - $paymentTotalSumCheckAmount) > $epsilon) {
-                        return $this->sendError('Payment terms total is not matching with the SO total');
+                        return $this->sendError(trans('custom.payment_terms_total_not_matching'));
                     }
                 } 
             }
@@ -1323,15 +1323,15 @@ class QuotationMasterAPIController extends AppBaseController
         $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
 
         if($existsinCI || $quotationMasterData->isInDOorCI == 2){
-            return $this->sendError($quotOrSales.' is added to a customer invoice',500);
+            return $this->sendError(trans('custom.document_added_to_customer_invoice', ['type' => $quotOrSales]),500);
         }
 
         if($existsinDO || $quotationMasterData->isInDOorCI == 1){
-            return $this->sendError($quotOrSales.' is added to a delivery order',500);
+            return $this->sendError(trans('custom.document_added_to_delivery_order', ['type' => $quotOrSales]),500);
         }
 
         if($existsinSO || $quotationMasterData->isInSO == 1){
-            return $this->sendError($quotOrSales.' is added to a sales order',500);
+            return $this->sendError(trans('custom.document_added_to_sales_order', ['type' => $quotOrSales]),500);
         }
 
         $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
@@ -1794,11 +1794,11 @@ class QuotationMasterAPIController extends AppBaseController
 
         
         if ($quotationMaster->manuallyClosed == 1) {
-            return $this->sendError('This '.$order_type.' already manually closed');
+            return $this->sendError(trans('custom.document_already_manually_closed', ['type' => $order_type]));
         }
 
         if ($quotationMaster->cancelledYN == -1) {
-            return $this->sendError('This '.$order_type.' already cancelled');
+            return $this->sendError(trans('custom.document_already_cancelled', ['type' => $order_type]));
         }
       
         if($doc_id == 67)
@@ -1806,7 +1806,7 @@ class QuotationMasterAPIController extends AppBaseController
            
             $sales_order = QuotationDetails::where('soQuotationMasterID','=',$id)->count();
             if ($sales_order > 0) {
-                return $this->sendError('Quotation  added to sales order');
+                return $this->sendError(trans('custom.quotation_added_to_sales_order'));
             }
         }   
 
@@ -1815,12 +1815,12 @@ class QuotationMasterAPIController extends AppBaseController
         {
             $delivery_order = DeliveryOrderDetail::where('quotationMasterID','=',$id)->count();
             if ($delivery_order > 0) {
-                return $this->sendError($order_type.' added to delivery order');
+                return $this->sendError(trans('custom.document_added_to_delivery_order', ['type' => $order_type]));
             }
     
             $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
             if ($invoice > 0) {
-                return $this->sendError($order_type.' added to invoice ');
+                return $this->sendError(trans('custom.document_added_to_customer_invoice', ['type' => $order_type]));
             }
         }
 
@@ -1870,11 +1870,11 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
         if ($quotationMaster->cancelledYN == -1) {
-            return $this->sendError('This '.$order_type.' already cancelled');
+            return $this->sendError(trans('custom.document_already_cancelled', ['type' => $order_type]));
         }
 
         if ($quotationMaster->manuallyClosed == 1) {
-            return $this->sendError('This '.$order_type.' already manually closed');
+            return $this->sendError(trans('custom.document_already_manually_closed', ['type' => $order_type]));
         }
 
 
@@ -1901,7 +1901,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if(!$is_partially_added)
         {
-            return $this->sendError($order_type.' cannot be closed, not partially added to any orders');
+            return $this->sendError(trans('custom.document_cannot_be_closed_not_partially_added', ['type' => $order_type]));
         }   
         
   
@@ -1916,7 +1916,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster->manuallyClosedDate =  now();
         $quotationMaster->save();
 
-        return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
+        return $this->sendResponse($quotationMaster, trans('custom.document_successfully_closed', ['type' => $order_type]));
 
     }
 
@@ -1990,11 +1990,11 @@ class QuotationMasterAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.file_type_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.file_size_exceeded'),500);
             }
 
             $disk = 'local';
@@ -2070,7 +2070,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
             if ($masterData->approvedYN == 1) {
-                return $this->sendError('This Quotation fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.quotation_fully_approved_cannot_add'), 500);
             }
 
             $finalArray = [];
@@ -2110,11 +2110,11 @@ class QuotationMasterAPIController extends AppBaseController
                 $masterData->save();
                 AddMultipleItemsToQuotation::dispatch(array_filter($finalArray),($masterData->toArray()),$db,Auth::id());
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('custom.no_records_found'), 500);
             }
 
             DB::commit();
-            return $this->sendResponse($errorLineNumbers, 'Out of '.$totalRecords.', '.$count.' Items uploaded Successfully!!');
+            return $this->sendResponse($errorLineNumbers, trans('custom.items_uploaded_successfully', ['total' => $totalRecords, 'count' => $count]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

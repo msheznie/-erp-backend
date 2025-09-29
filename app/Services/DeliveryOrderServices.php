@@ -117,8 +117,7 @@ class DeliveryOrderServices
         }
         if($isExist)
         {
-            return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
-                                        Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
+            return ['status' => false,'message' => trans('custom.cannot_amend_delivery_order_stock_out')];
         }
 
         $emailBody = __('email.delivery_order_returned_to_amend_body', [
