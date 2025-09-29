@@ -9411,5 +9411,13 @@ return [
     'warehouse_location_unique' => 'The location field is required.',
     'outlet' => 'Outlet',
     'every_bank_transfer_should_have_at_least_one_cleared_item' => 'Every bank transfer should have at least one cleared item',
-    'cheque_registry' => 'Cheque Registry', 
-  ];
+    'cheque_registry' => 'Cheque Registry',
+    'finance' => 'finance',
+    'trial_balance_details' => 'trial_balance_details',
+    'inter_company_stock_transfer' => 'inter_company_stock_transfer',
+    'asset_register_detail' => 'asset_register_detail',
+    'asset_register_detail_3' => 'asset_register_detail_3',
+    'asset_addition' => 'asset_addition',
+    'asset_depreciation_register' => 'asset_depreciation_register',
+    'asset_cwip' => 'asset_cwip'
+];

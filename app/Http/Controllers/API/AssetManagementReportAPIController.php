@@ -859,7 +859,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     ];
                     $title = trans('custom.asset_register_detail_report');
-                    $fileName = 'asset_register_detail';
+                    $fileName = trans('custom.asset_register_detail');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -998,7 +998,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         'excelFormat' => $excelColumnFormat
                     );
 
-                    $fileName = 'asset_register_detail_3';
+                    $fileName = trans('custom.asset_register_detail_3');
                     $path = 'asset_register/report/excel/';
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -1131,7 +1131,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     $title = trans('custom.asset_register_detail2_report');
-                    $fileName = 'asset_register_detail_2';
+                    $fileName = trans('custom.asset_register_detail2_report');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -1311,7 +1311,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                     
                     $title = trans('custom.asset_register_summary_report');
-                    $fileName = 'asset_register_summary';
+                    $fileName = trans('custom.asset_register_summary_report');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -1547,7 +1547,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                     $title = trans('custom.asset_register_grouped_detail_report');
-                    $fileName = 'asset_register_group';
+                    $fileName = trans('custom.asset_register_grouped_detail_report');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -1639,7 +1639,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'company_code'=>$companyCode,
                     'excelFormat' => $excelColumnFormat
                 );
-                $fileName = 'asset-addition';
+                $fileName = trans('custom.asset_addition');
                 $path = 'asset/report/asset-addition/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -1715,7 +1715,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'company_code'=>$companyCode,
                     'excelFormat' => $excelColumnFormat
                 );
-                $fileName = 'asset_disposal';
+                $fileName = trans('custom.asset_disposal');
                 $path = 'asset/report/asset_disposal/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
@@ -1904,7 +1904,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'excelFormat'=>$excelColumnFormat
                 );
 
-                $fileName = 'asset_depreciation_register';
+                $fileName = trans('custom.asset_depreciation_register');
                 $path = 'asset/report/asset_depreciation_register/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -1941,7 +1941,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $detail_array = array(
                     'company_code'=>$companyCode,
                 );
-                $fileName = 'asset_cwip';
+                $fileName = trans('custom.asset_cwip');
                 $path = 'asset/report/asset_cwip/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -2051,7 +2051,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     $templateName = "export_report.asset_expenses";
                 }
 
-                return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                $name = trans('custom.finance');
+
+                return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                     });
@@ -2066,7 +2068,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     $reportData = array('reportData' => $output,  'fromDate' => $fromDate, 'toDate' => $toDate);
                     $templateName = "export_report.asset_tracking";
 
-                    return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $name = trans('custom.finance');
+
+                    return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
                         $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                             $sheet->loadView($templateName, $reportData);
                         });

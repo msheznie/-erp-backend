@@ -4336,7 +4336,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-                $fileName = 'financial_trial_balance';
+                $fileName = trans('custom.financial_trial_balance');
                 $path = 'general-ledger/report/trial_balance/excel/';
 
                 $exportToExcel = $exportGlToExcelService
@@ -4402,17 +4402,17 @@ class FinancialReportAPIController extends AppBaseController
                 $data = array();
                 if ($output) {
                     if($request->glAccountTypeID == 1) {
-                        $data[0]['Document Code'] = '';
-                        $data[0]['Document Date'] = '';
+                        $data[0][trans('custom.document_code')] = '';
+                        $data[0][trans('custom.document_date')] = '';
                         $data[0][trans('custom.document_narration')] = trans('custom.opening_balance');
 
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[0]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
-                            $data[0]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
+                            $data[0][trans('custom.debit').' ('.trans('custom.local_currency').' - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
+                            $data[0][trans('custom.credit').' ('.trans('custom.local_currency').' - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
                         }
 
-                        $data[0]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
-                        $data[0]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
+                        $data[0][trans('custom.debit').' ('.trans('custom.reporting_currency').' - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
+                        $data[0][trans('custom.credit').' ('.trans('custom.reporting_currency').' - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
 
                         $x = 1;    
                     } else {
@@ -4424,32 +4424,33 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.company_id')] = $val->companyID;
                             $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                            $data[$x][trans('custom.debit').' ('.trans('custom.local_currency'). $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                            $data[$x][trans('custom.credit').' ('.trans('custom.local_currency'). $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
                         }
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                        $data[$x][trans('custom.debit').' ('.trans('custom.reporting_currency'). $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
+                        $data[$x][trans('custom.credit').' ('.trans('custom.reporting_currency'). $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
                         $x++;
                     }
                 }
 
-                \Excel::create('trial_balance_details', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = trans('custom.trial_balance_details');
+                $path = 'general-ledger/report/trial_balance_details/excel/';
+
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
+
+                $exportToExcel = CreateExcel::process($data,'xls',$fileName,$path,$detail_array);
+
+                return $this->sendResponse($exportToExcel, trans('custom.success_export'));
                 break;
             case 'FGL':
                 $type = $request->type;
@@ -4492,7 +4493,7 @@ class FinancialReportAPIController extends AppBaseController
                 $cur = null;
                 $title = trans('custom.financial_general_ledger');
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
-                $fileName = 'financial_general_ledger';
+                $fileName = trans('custom.financial_general_ledger');
                 $path = 'general-ledger/report/general_ledger/excel/';
 
                 if ($reportSD == "glCode_wise") {
@@ -4673,7 +4674,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'jv_detail';
+                $fileName = trans('custom.jv_detail');
                 $path = 'general_ledger/report/jv_detail/excel/';
                 $companyMaster = Company::find($request->companySystemID);
                 $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -9373,7 +9374,7 @@ GROUP BY id
                 $mpdf->setAutoBottomMargin = 'stretch';
 
                 $mpdf->WriteHTML($html);
-                return $mpdf->Output('financial_trial_balance.pdf', 'I');   
+                return $mpdf->Output(trans('custom.financial_trial_balance').'.pdf', 'I');
                 break;
 
             case 'FCT':
@@ -12307,7 +12308,7 @@ GROUP BY
                     $data[$x][trans('custom.department')] = '';
                 }
 
-                $fileName = 'inter_company_stock_transfer';
+                $fileName = trans('custom.inter_company_stock_transfer');
                 $path = 'financial_report/inter_company_stock_transfer/excel/';
                 $companyMaster = Company::find($request->companySystemID);
                 $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -12674,7 +12675,9 @@ GROUP BY
 
         $excelColumnFormat = ExcelColumnFormat::getExcelColumnFormat($reportData['reportData'],$request['reportID']);
 
-        return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
+        $fileName = trans('custom.finance');
+
+        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);

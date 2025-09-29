@@ -7226,7 +7226,8 @@ return [
     'asset_register_detail_report' => 'تقرير تفاصيل تسجيل الأصول',
     'asset_register_detail2_report' => 'تقرير تفاصيل سجل الأصول 2',
     'asset_register_summary_report' => 'تقرير ملخص تسجيل الأصول',
-    'asset_register_grouped_detail_report' => 'تقرير تفاصيل تسجيل الأصول المجمعة',
+    'asset_register_grouped_detail_report' => 'سجل الأصول المجمع',
+    "supplier_statment_details" => "تفاصيل كشف المورد",
 
     // Asset Management Report Column Headers
     'fixed_asset_code' => 'رمز الأصول الثابتة',
@@ -7599,7 +7600,6 @@ return [
     'created_by' => 'أنشأ بواسطة',
     'status' => 'الحالة',
     'description' => 'الوصف',
-    'gl_code' => 'رمز GL',
     'amount' => 'المبلغ',
     'doc_ref' => 'رقم المستند',
     'local_amount' => 'المبلغ المحلي',
@@ -7609,7 +7609,6 @@ return [
     'reporting_currency' => 'العملة المحلية',
     'department' => 'القسم',
     'claim_category' => 'فئة المطالبة',
-    'gl_description' => 'وصف GL',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'order_code' => 'كود الطلب',
     'narration' => 'الرواية',
@@ -9330,4 +9329,12 @@ return [
     'additional_entry_created_successfully' => 'تم إنشاء المدخل الإضافي بنجاح.',
     'every_bank_transfer_should_have_at_least_one_cleared_item' => 'يجب أن يحتوي كل تحويل بنك على عنصر واحد على الأقل',
     'cheque_registry' => 'سجل الشيكات',
-  ];
+    'finance' => 'المالية',
+    'trial_balance_details' => 'تفاصيل ميزان المراجعة',
+    'inter_company_stock_transfer' => 'تحويل المخزون بين الشركات',
+    'asset_register_detail' => 'تفاصيل سجل الأصول',
+    'asset_register_detail_3' => '3_'.'تفاصيل سجل الأصول',
+    'asset_addition' => 'إضافة أصل',
+    'asset_depreciation_register' => 'سجل إهلاك الأصول',
+    'asset_cwip' => 'أصل تحت التنفيذ'
+];
