@@ -331,13 +331,19 @@ class BudgetTemplateAPIController extends AppBaseController
     {
         $input = $request->input();
 
-        $departmentBudgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+        if(isset($input['budgetPlanningID']))
+        {
+            $departmentBudgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
 
-        $segments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID)
-                      ->with(['segment', 'department'])->get()
-                        ->map(function ($item) {
-                            return ['ServiceLineCode' => $item->segment->ServiceLineCode, 'serviceLineSystemID' => $item->segment->serviceLineSystemID];
-                        });
+            $segments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID)
+                ->with(['segment', 'department'])->get()
+                ->map(function ($item) {
+                    return ['ServiceLineCode' => $item->segment->ServiceLineCode, 'serviceLineSystemID' => $item->segment->serviceLineSystemID];
+                });
+        }else {
+            $segments = [];
+        }
+
         return $this->sendResponse($segments,'Segments retevied successfully');
     }
 } 
