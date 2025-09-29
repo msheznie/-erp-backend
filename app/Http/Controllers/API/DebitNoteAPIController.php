@@ -2563,7 +2563,7 @@ UNION ALL
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'debit_note_by_company';
+        $fileName =  trans('custom.debit_note_by_company');
         $path = 'accounts-payable/debit_note_by_company/excel/';
         $basePath = CreateExcel::process($data,$request->docType,$fileName,$path,$detail_array);
 

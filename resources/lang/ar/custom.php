@@ -6879,7 +6879,7 @@ return [
      'period_to' => "الفترة إلى",
      'supplier_ledger' => "دفتر الأستاذ للموردين",
      'supplier_ledger_' => "دفتر_الأستاذ_للموردين_",
-     'payment_suppliers_by_year' => "مدفوعات الموردين حسب السنة",
+     'payment_suppliers_by_year' => "مدفوعات الموردين",
      'direct_payments_by_year' => "المدفوعات المباشرة حسب السنة",
      'all_payments_by_year' => "جميع المدفوعات حسب السنة", 
      'payments_lists_status_by_year' => "قوائم المدفوعات مع الحالة حسب السنة",
@@ -6925,7 +6925,7 @@ return [
      'employee_aging_summary_advance' => 'ملخص شيخوخة الموظفين المتقدم',
      'employee_aging_summary_advance_report' => 'تقرير ملخص شيخوخة الموظفين المتقدم',
      'supplier_balance_summary' => 'ملخص رصيد الموردين',
-     'payment_suppliers_by_year' => 'مدفوعات الموردين حسب السنة',
+     'payment_suppliers_by_year' => 'مدفوعات الموردين',
      'direct_payments_by_year' => 'المدفوعات المباشرة حسب السنة',
      'all_payments_by_year' => 'جميع المدفوعات حسب السنة',
      'payments_lists_status_by_year' => 'حالة قوائم المدفوعات حسب السنة',
@@ -9336,5 +9336,6 @@ return [
     'asset_register_detail_3' => '3_'.'تفاصيل سجل الأصول',
     'asset_addition' => 'إضافة أصل',
     'asset_depreciation_register' => 'سجل إهلاك الأصول',
-    'asset_cwip' => 'أصل تحت التنفيذ'
-];
+    'asset_cwip' => 'أصل تحت التنفيذ',
+    'debit_note_by_company' => 'فاتورة الخصم بالنسبة للشركة',
+  ];

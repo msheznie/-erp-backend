@@ -9419,5 +9419,7 @@ return [
     'asset_register_detail_3' => 'asset_register_detail_3',
     'asset_addition' => 'asset_addition',
     'asset_depreciation_register' => 'asset_depreciation_register',
-    'asset_cwip' => 'asset_cwip'
-];
+    'asset_cwip' => 'asset_cwip',
+    'cheque_registry' => 'Cheque Registry', 
+    'debit_note_by_company' => 'Debit Note by Company',
+  ];
