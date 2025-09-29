@@ -122,6 +122,50 @@ return [
         ],
         'itemIssueAutoId' => [
             'required' => 'Material issue auto id not found.'
+        ],
+        'reportTypeID' => [
+            'required' => 'The report type field is required.'
+        ],
+        'fromDate' => [
+            'required' => 'The from date field is required.'
+        ],
+        'toDate' => [
+            'required' => 'The to date field is required.',
+            'date' => 'The to date must be a valid date.',
+            'after_or_equal' => 'The to date must be after or equal to from date.'
+        ],
+        'assetCategory' => [
+            'required' => 'The asset category field is required.'
+        ],
+        'typeID' => [
+            'required' => 'The type field is required.'
+        ],
+        'financePeriod' => [
+            'required' => 'The finance period field is required.'
+        ],
+        'financeYear' => [
+            'required' => 'The finance year field is required.'
+        ],
+        'currencyID' => [
+            'required' => 'The currency field is required.'
+        ],
+        'fromMonth' => [
+            'required' => 'The from month field is required.'
+        ],
+        'toMonth' => [
+            'required' => 'The to month field is required.'
+        ],
+        'year' => [
+            'required' => 'The year field is required.'
+        ],
+        'month' => [
+            'required' => 'The month field is required.'
+        ],
+        'glAccounts' => [
+            'required' => 'The GL accounts field is required.'
+        ],
+        'assets' => [
+            'required' => 'The assets field is required.'
         ]
     ],
 
@@ -240,7 +284,21 @@ return [
         'glCodes' => 'GL Codes',
         'departments' => 'Departments',
         'jvType' => 'JV Type',
-        'documentTypes' => 'Document Types'
+        'documentTypes' => 'Document Types',
+        'reportTypeID' => 'Report Type',
+        'fromDate' => 'From Date',
+        'toDate' => 'To Date',
+        'assetCategory' => 'Asset Category',
+        'typeID' => 'Type',
+        'financePeriod' => 'Finance Period',
+        'financeYear' => 'Finance Year',
+        'currencyID' => 'Currency',
+        'fromMonth' => 'From Month',
+        'toMonth' => 'To Month',
+        'year' => 'Year',
+        'month' => 'Month',
+        'glAccounts' => 'GL Accounts',
+        'assets' => 'Assets'
     ],
 
 ];

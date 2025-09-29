@@ -122,6 +122,50 @@ return [
         ],
         'itemIssueAutoId' => [
             'required' => 'معرف إصدار المواد التلقائي غير موجود.'
+        ],
+        'reportTypeID' => [
+            'required' => 'حقل نوع التقرير مطلوب.'
+        ],
+        'fromDate' => [
+            'required' => 'حقل تاريخ البداية مطلوب.'
+        ],
+        'toDate' => [
+            'required' => 'حقل تاريخ النهاية مطلوب.',
+            'date' => 'تاريخ النهاية يجب أن يكون تاريخًا صالحًا.',
+            'after_or_equal' => 'تاريخ النهاية يجب أن يكون بعد أو مساوي لتاريخ البداية.'
+        ],
+        'assetCategory' => [
+            'required' => 'حقل فئة الأصول مطلوب.'
+        ],
+        'typeID' => [
+            'required' => 'حقل النوع مطلوب.'
+        ],
+        'financePeriod' => [
+            'required' => 'حقل الفترة المالية مطلوب.'
+        ],
+        'financeYear' => [
+            'required' => 'حقل السنة المالية مطلوب.'
+        ],
+        'currencyID' => [
+            'required' => 'حقل العملة مطلوب.'
+        ],
+        'fromMonth' => [
+            'required' => 'حقل شهر البداية مطلوب.'
+        ],
+        'toMonth' => [
+            'required' => 'حقل شهر النهاية مطلوب.'
+        ],
+        'year' => [
+            'required' => 'حقل السنة مطلوب.'
+        ],
+        'month' => [
+            'required' => 'حقل الشهر مطلوب.'
+        ],
+        'glAccounts' => [
+            'required' => 'حقل حسابات دفتر الأستاذ مطلوب.'
+        ],
+        'assets' => [
+            'required' => 'حقل الأصول مطلوب.'
         ]
     ],
 
@@ -258,7 +302,20 @@ return [
         'conversion' => 'تحويل',
         'contractID' => 'معرف العقد',
         'servicelines' => 'خطوط الخدمة',
-        'mainCategoryDescription' => 'وصف الفئة الرئيسية'
-    ],
+        'mainCategoryDescription' => 'وصف الفئة الرئيسية',
+        'reportTypeID' => 'نوع التقرير',
+        'fromDate' => 'من تاريخ',
+        'toDate' => 'إلى تاريخ',
+        'assetCategory' => 'فئة الأصول',
+        'typeID' => 'النوع',
+        'financePeriod' => 'الفترة المالية',
+        'financeYear' => 'السنة المالية',
+        'currencyID' => 'العملة',
+        'fromMonth' => 'من شهر',
+        'toMonth' => 'إلى شهر',
+        'year' => 'السنة',
+        'month' => 'الشهر',
+        'glAccounts' => 'حسابات دفتر الأستاذ',
+        'assets' => 'الأصول'
 
 ];
