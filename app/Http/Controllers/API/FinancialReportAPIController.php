@@ -12234,7 +12234,7 @@ GROUP BY
                     }
                 }
 
-                $fileName = 'inter_company';
+                $fileName = trans('custom.inter_company');
                 $path = 'financial_report/inter_company/excel/';
                 $companyMaster = Company::find($request->companySystemID);
                 $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -12365,7 +12365,7 @@ GROUP BY
                     $data[$x][trans('custom.grv_amount')] = round($subTotalGrvAmount, $decimalPlaceRpt);
                 }
 
-                $fileName = 'inter_company_Asset_transfer';
+                $fileName = trans('custom.inter_company_asset_transfer');
                 $path = 'financial_report/inter_company_asset_transfer/excel/';
                 $companyMaster = Company::find($request->companySystemID);
                 $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -12420,7 +12420,7 @@ GROUP BY
                     $data[$x][trans('custom.receipt_amount')] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
                 }
 
-                $fileName = 'inter_company_Fund_transfer';
+                $fileName = trans('custom.inter_company_fund_transfer');
                 $path = 'financial_report/inter_company_fund_transfer/excel/';
                 $companyMaster = Company::find($request->companySystemID);
                 $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';

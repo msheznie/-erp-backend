@@ -9475,5 +9475,9 @@ return [
     'unable_to_amend_isactive_delivery_order' => 'Unable to amend isActive, customer used in Unapproved delivery order Order',
     'use_of_receivable_account_checking' => 'Use of Receivable Account checking is done in customer Invoice',
     'use_of_advance_account_checking' => 'Use of Advance Account checking is done in Advance Receipt Voucher',
-    'use_of_unbilled_account_checking' => 'Use of Unbilled Account checking is done in delivery order'
+    'use_of_unbilled_account_checking' => 'Use of Unbilled Account checking is done in delivery order',
+    'inter_company' => 'inter_company',
+    'inter_company_asset_transfer' => 'inter_company_asset_transfer',
+    'inter_company_fund_transfer' => 'inter_company_fund_transfer',
+    'revenue_monthly_summary' => 'revenue_monthly_summary'
   ];
