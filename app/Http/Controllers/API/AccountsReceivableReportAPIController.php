@@ -2083,14 +2083,52 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $outputArr[$val->CompanyName][] = $val;
                     }
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
+
+                    $lang = app()->getLocale(); // Get language from request
+                    $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
+                    $mpdfConfig = [
+                        'tempDir' => public_path('tmp'),
+                        'mode' => 'utf-8',
+                        'format' => 'A4-L',
+                        'setAutoTopMargin' => 'stretch',
+                        'autoMarginPadding' => -10,
+                        'margin_left' => 15,
+                        'margin_right' => 15,
+                        'margin_top' => 16,
+                        'margin_bottom' => 16,
+                        'margin_header' => 9,
+                        'margin_footer' => 9
+                    ];
 
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    if ($isRTL) {
+                        $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                    }
+
+                    try {
+                        $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $pdf->AddPage('L');
+                        $pdf->setAutoBottomMargin = 'stretch';
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('', 'S');
+                    } catch (\Exception $e) {
+                        // Fallback to simpler configuration if there are issues
+                        $fallbackConfig = [
+                            'tempDir' => public_path('tmp'),
+                            'mode' => 'utf-8',
+                            'format' => 'A4-L'
+                        ];
+                        if ($isRTL) {
+                            $fallbackConfig['direction'] = 'rtl';
+                        }
+                        $pdf = new \Mpdf\Mpdf($fallbackConfig);
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('', 'S');
+                    }
                 }
                 break;
             case 'CA':
@@ -2127,14 +2165,59 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $lang = app()->getLocale();
+                    $isRTL = ($lang === 'ar');
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
 
                     $html = view('print.customer_aging_summary', $dataArr);
+                    $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
+                    $htmlFooter = view('print.customer_aging_summary_footer', $dataArr);
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
+                    $mpdfConfig = [
+                        'tempDir' => public_path('tmp'),
+                        'mode' => 'utf-8',
+                        'format' => 'A4-L',
+                        'setAutoTopMargin' => 'stretch',
+                        'autoMarginPadding' => -10,
+                        'margin_left' => 15,
+                        'margin_right' => 15,
+                        'margin_top' => 30,
+                        'margin_bottom' => 16,
+                        'margin_header' => 9,
+                        'margin_footer' => 9
+                    ];
 
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    if ($isRTL) {
+                        $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                    }
+
+                    $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                    $pdf->SetHTMLHeader($htmlHeader);
+                    $pdf->SetHTMLFooter($htmlFooter);
+                    $pdf->AddPage('L');
+                    $pdf->setAutoBottomMargin = 'stretch';
+                    $pdf->WriteHTML($html);
+
+                    try {
+                        $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $pdf->SetHTMLHeader($htmlHeader);
+                        $pdf->SetHTMLFooter($htmlFooter);
+                        $pdf->AddPage('L');
+                        $pdf->setAutoBottomMargin = 'stretch';
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_aging_summary.pdf', 'I');
+                    } catch (\Exception $e) {
+                        // Fallback: try with simpler configuration
+                        $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                        if ($isRTL) {
+                            $fallbackConfig['direction'] = 'rtl';
+                        }
+                        $pdf = new \Mpdf\Mpdf($fallbackConfig);
+                        $pdf->AddPage('L');
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_aging_summary.pdf', 'I');
+                    }
 
                 } elseif ($request->reportTypeID == 'CAD') {
 
@@ -2174,14 +2257,52 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+                    $lang = app()->getLocale();
+                    $isRTL = ($lang === 'ar');
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
 
                     $html = view('print.customer_aging_detail', $dataArr);
+                    $htmlHeader = view('print.customer_aging_detail_header', $dataArr);
+                    $htmlFooter = view('print.customer_aging_detail_footer', $dataArr);
 
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
+                    $mpdfConfig = [
+                        'tempDir' => public_path('tmp'),
+                        'mode' => 'utf-8',
+                        'format' => 'A4-L',
+                        'setAutoTopMargin' => 'stretch',
+                        'autoMarginPadding' => -10,
+                        'margin_left' => 15,
+                        'margin_right' => 15,
+                        'margin_top' => 30,
+                        'margin_bottom' => 16,
+                        'margin_header' => 9,
+                        'margin_footer' => 9
+                    ];
 
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                    if ($isRTL) {
+                        $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                    }
+
+                    try {
+                        $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                        $pdf->SetHTMLHeader($htmlHeader);
+                        $pdf->SetHTMLFooter($htmlFooter);
+                        $pdf->AddPage('L');
+                        $pdf->setAutoBottomMargin = 'stretch';
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_aging_detail.pdf', 'I');
+                    } catch (\Exception $e) {
+                        // Fallback: try with simpler configuration
+                        $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                        if ($isRTL) {
+                            $fallbackConfig['direction'] = 'rtl';
+                        }
+                        $pdf = new \Mpdf\Mpdf($fallbackConfig);
+                        $pdf->AddPage('L');
+                        $pdf->WriteHTML($html);
+                        return $pdf->Output('customer_aging_detail.pdf', 'I');
+                    }
                 }
                 break;
             case 'CC':

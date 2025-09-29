@@ -135,13 +135,13 @@ class TaxVatCategoriesAPIController extends AppBaseController
             return $this->sendError(trans('custom.tax_master_auto_id_is_not_found'),500);
         }
         $messages = [
-            'mainCategory.required' => 'Main Category is required.',
-            'subCategoryDescription.required' => 'Sub Category is required.',
-            'subCatgeoryType.required' => 'Sub Category type is required.',
-            'percentage.required' => 'Percentage is required.',
-            'percentage.min' => 'You cannot enter negative values for percentage',
-            'percentage.numeric' => 'You can only enter numbers',
-            'applicableOn.required' => 'Applicable On is required.',
+            'mainCategory.required' => trans('custom.main_category_is_required'),
+            'subCategoryDescription.required' => trans('custom.sub_category_is_required'),
+            'subCatgeoryType.required' => trans('custom.sub_category_type_is_required'),
+            'percentage.required' => trans('custom.percentage_is_required'),
+            'percentage.min' => trans('custom.you_cannot_enter_negative_values_for_percentage'),
+            'percentage.numeric' => trans('custom.you_can_only_enter_numbers'),
+            'applicableOn.required' => trans('custom.applicable_on_is_required'),
 
         ];
         $validator = \Validator::make($input, [
@@ -196,7 +196,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                 if($vatCategory->isNotEmpty()){
                     return [
                         'success' => false,
-                        "message" => "VAT subcategory ".$subCategoryType->type." is already defined. You cannot create more than one active VAT subcategory"
+                        'message' => trans('custom.vat_subcategory_already_defined', ['type' => $subCategoryType->type])
                     ];
                 }
             }else {
@@ -217,7 +217,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                         {
                             return [
                                 'success' => false,
-                                "message" =>  "The transaction has already been posted to the selected GL"
+                                'message' => trans('custom.transaction_already_posted_to_selected_gl')
                             ];
                         }
                     }
@@ -228,12 +228,12 @@ class TaxVatCategoriesAPIController extends AppBaseController
                     {
                         return [
                             'success' => false,
-                            'message' => "You cannot have multiple VAT categories in a single type."
+                            'message' => trans('custom.cannot_have_multiple_vat_categories_single_type')
                         ];
                     }else {
                         return [
                             'success' => false,
-                            'message' => "Only one catgeory can be default."
+                            'message' => trans('custom.only_one_category_can_be_default')
                         ];
                     }
                 }
@@ -362,13 +362,13 @@ class TaxVatCategoriesAPIController extends AppBaseController
             return $this->sendError(trans('custom.tax_master_auto_id_is_not_found'),500);
         }
         $messages = [
-            'mainCategory.required' => 'Main Category is required.',
-            'subCategoryDescription.required' => 'Sub Category is required.',
-            'subCatgeoryType.required' => 'Sub Category type is required.',
-            'percentage.required' => 'Percentage is required.',
-            'percentage.min' => 'You cannot enter negative values for percentage',
-            'percentage.numeric' => 'You can only enter numbers',
-            'applicableOn.required' => 'Applicable On is required.',
+            'mainCategory.required' => trans('custom.main_category_is_required'),
+            'subCategoryDescription.required' => trans('custom.sub_category_is_required'),
+            'subCatgeoryType.required' => trans('custom.sub_category_type_is_required'),
+            'percentage.required' => trans('custom.percentage_is_required'),
+            'percentage.min' => trans('custom.you_cannot_enter_negative_values_for_percentage'),
+            'percentage.numeric' => trans('custom.you_can_only_enter_numbers'),
+            'applicableOn.required' => trans('custom.applicable_on_is_required'),
 
         ];
         $validator = \Validator::make($input, [
@@ -410,7 +410,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                                                    ->first();
 
             if ($checkAnyOtherActive) {
-                return $this->sendError('Only one catgeory can be default',500);
+                return $this->sendError(trans('custom.only_one_category_can_be_default'),500);
             }
         }
 
@@ -534,7 +534,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input = $request->all();
         $companyID = isset($input['companyId']) ? $input['companyId'] : null;
         $main = TaxVatMainCategories::where('taxMasterAutoID',$input['taxMasterAutoID'])->where('isActive',1)->get();
-        $applicable = array(array('value' => 1, 'label' => 'Gross Amount'), array('value' => 2, 'label' => 'Net Amount'));
+        $applicable = array(array('value' => 1, 'label' => trans('custom.gross_amount')), array('value' => 2, 'label' => trans('custom.net_amount')));
 
         $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controlAccountsSystemID', 2)
             ->whereHas('chartofaccount_assigned', function($query) use ($companyID){
@@ -642,7 +642,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                         ->with(['vat_sub_category'])
                         ->first();
                     if($item && isset($item->vat_sub_category->taxMasterAutoID)){
-                        $error[] = $item->primaryCode.' has already assigned to '.$item->vat_sub_category->subCategoryDescription;
+                        $error[] = $item->primaryCode.' '.trans('custom.item_has_already_assigned_to').' '.$item->vat_sub_category->subCategoryDescription;
                     }else{
                         ItemMaster::where('itemCodeSystem',$row['itemCodeSystem'])->update(['vatSubCategory'=>$id]);
                     }

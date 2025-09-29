@@ -117,7 +117,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                     'autoMarginPadding' => -10,
                     'margin_left' => 15,
                     'margin_right' => 15,
-                    'margin_top' => 16,
+                    'margin_top' => 30,
                     'margin_bottom' => 16,
                     'margin_header' => 9,
                     'margin_footer' => 9
@@ -167,8 +167,8 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $invoiceAmountTotal = collect($output)->pluck('invoiceAmount')->toArray();
                 $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                $lang = $request->lang ?? 'en'; // Get language from request
-                $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+                $lang = app()->getLocale();
+                $isRTL = ($lang === 'ar');
 
                 $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
 
@@ -184,7 +184,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                     'autoMarginPadding' => -10,
                     'margin_left' => 15,
                     'margin_right' => 15,
-                    'margin_top' => 16,
+                    'margin_top' => 30,
                     'margin_bottom' => 16,
                     'margin_header' => 9,
                     'margin_footer' => 9

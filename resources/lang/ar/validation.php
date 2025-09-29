@@ -257,7 +257,8 @@ return [
         'assetCategory' => 'فئة الأصل',
         'conversion' => 'تحويل',
         'contractID' => 'معرف العقد',
-        'servicelines' => 'خطوط الخدمة'
+        'servicelines' => 'خطوط الخدمة',
+        'mainCategoryDescription' => 'وصف الفئة الرئيسية'
     ],
 
 ];
