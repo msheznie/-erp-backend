@@ -166,7 +166,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
+            return $this->sendError(trans('custom.purchase_request_fully_approved_cannot_add'), 500);
         }
 
         $input['budgetYear'] = $purchaseRequest->budgetYear;
@@ -192,7 +192,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 ->first();
 
             if (empty($financeItemCategorySubAssigned)) {
-                return $this->sendError('Finance category not assigned for the selected item.');
+                return $this->sendError(trans('custom.finance_category_not_assigned_for_selected_item'));
             }
 
             if ($item->financeCategoryMaster == 1) {
@@ -203,7 +203,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     })
                     ->first();
                 if ($alreadyAdded) {
-                    return $this->sendError("Selected item is already added. Please check again", 500);
+                    return $this->sendError(trans('custom.selected_item_already_added'), 500);
                 }
             }
 
@@ -213,7 +213,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             if ($item->financeCategoryMaster == 3) {
                 $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
                 if (!$assetCategory) {
-                    return $this->sendError('Asset category not assigned for the selected item.');
+                    return $this->sendError(trans('custom.asset_category_not_assigned_for_selected_item'));
                 }
                 $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
                 $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
@@ -305,7 +305,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     /* approved=0 And cancelledYN=0*/
 
                     if (!empty($anyPendingApproval)) {
-                        return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                        return $this->sendError(trans('custom.purchase_request_pending_approval', ['code' => $anyPendingApproval->purchaseRequestCode]), 500);
                     }
                       
                     $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
@@ -356,7 +356,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
                 
                     if (!empty($anyApprovedPRButPONotProcessed)) {
-                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check againn", 500);
+                        return $this->sendError(trans('custom.purchase_request_approved_po_not_processed', ['code' => $anyApprovedPRButPONotProcessed->purchaseRequestCode]), 500);
                     }
                     
                     $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
@@ -405,7 +405,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=1*/
 
                     if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
-                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
+                        return $this->sendError(trans('custom.purchase_request_approved_po_partially_processed', ['code' => $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode]), 500);
                     }
                     
                     /* PO check*/
@@ -421,7 +421,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         ->first();
 
                     if (!empty($checkPOPending)) {
-                        return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                        return $this->sendError(trans('custom.purchase_order_pending_approval', ['code' => $checkPOPending->purchaseOrderCode]), 500);
                     }
                     /* PO --> approved=-1 And cancelledYN=0 */
 
@@ -927,7 +927,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_e'), 500);
         }
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
+            return $this->sendError(trans('custom.purchase_request_fully_approved_cannot_edit'), 500);
         }
 
         if (!empty($input['purchase_issue_qnty'])) {
@@ -985,7 +985,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                                  ->sum('allocatedQty');
 
                     if ($allocatedQty > $input['quantityRequested']) {
-                        return $this->sendError("You cannot update the requested quantity. since quantity has been allocated to segments", 500);
+                        return $this->sendError(trans('custom.cannot_update_quantity_allocated_to_segments'), 500);
                     }
                 }
             }
@@ -1025,7 +1025,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.this_purchase_request_already_closed_you_can_not_d'), 500);
         }
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You can not delete.', 500);
+            return $this->sendError(trans('custom.purchase_request_fully_approved_cannot_delete'), 500);
         }
 
         $datas = PulledItemFromMR::where('purcahseRequestID',$purchaseRequestDetails->purchaseRequestID)->where('itemCodeSystem',$purchaseRequestDetails->itemCode)->get();
@@ -1193,11 +1193,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.invalid_file_type_upload'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.max_file_size_exceeded'),500);
             }
 
             $disk = 'local';
@@ -1273,17 +1273,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
 
             if ($purchaseRequest->approved == 1) {
-                return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.purchase_request_fully_approved_cannot_add'), 500);
             }
 
             foreach ($record as $key => $data) {
                 if (isset($data['estimated_unit_cost'])) {
                     if (!is_numeric($data['estimated_unit_cost'])) {
-                        return $this->sendError('Records with alpha numeric values for the estimated unit cost can not be uploaded.', 500);
+                        return $this->sendError(trans('custom.invalid_estimated_unit_cost_format'), 500);
                     }
 
                     if ($data['estimated_unit_cost'] < 0) {
-                        return $this->sendError('Estimated unit cost value can not be less than zero.', 500);
+                        return $this->sendError(trans('custom.estimated_unit_cost_negative'), 500);
                     }
                 }
             }
@@ -1291,7 +1291,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             if (count($record) > 0) {
                 $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount,$this->segmentAllocatedItemRepository);            
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('custom.no_records_found'), 500);
             }
 
             if ($res['status'] === false) {
@@ -1323,7 +1323,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
         else
         {
-            return $this->sendError('Unable to upload items', 422);
+            return $this->sendError(trans('custom.unable_to_upload_items'), 422);
         }
         
 
@@ -1969,7 +1969,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 if($succes_item == 0)
                 {   
                     $new_purchaseRequests->delete();
-                    return $this->sendError("Cannot copy this purchase request. Because all the items included in this document are pulled from pending PR/PO documents", 501);
+                    return $this->sendError(trans('custom.cannot_copy_purchase_request_all_items_pending'), 501);
                 }
                 else
                 {   
@@ -2064,7 +2064,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         } catch (\Exception $exception) {
             //DB::rollBack();
-            return $this->sendError("Unable to copy purchase request", 501);
+            return $this->sendError(trans('custom.unable_to_copy_purchase_request'), 501);
         }
 
     }
