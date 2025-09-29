@@ -64,7 +64,7 @@ class EducationService{
             $headers = [
                 'content-type' => 'application/json',
                 'auth-key' =>  $this->apiExternalKey,
-                'menu-id' =>  'defualt'
+                'menu-id' =>  'default'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -182,14 +182,17 @@ class EducationService{
         $this->fieldOfStudyId = $this->getOtherReferenceId($data->fieldOfStudyId, 10);
         $grade =  ((int)$data->grade == 0) ? null : $data->grade;
         $this->getEmployeeReferenceId($data->empId);
+
+        $mappedDegree = ((int) $data->degree > 0) ? ((int) $data->degree - 1) : 0;
+
         $this->educationData = array_merge([
             "institution" => $data->institution,
-            "degree" => $data->degree,
+            "degree" => $mappedDegree,
             "gpa" => $grade,
             "completionDate" => $data->completionDate,
             "employeeId" => $this->empRefId,
             "fieldOfStudyId" => $this->fieldOfStudyId,
-            "status" => 1
+            "status" => 0
         ], $this->educationData);
     }
 
