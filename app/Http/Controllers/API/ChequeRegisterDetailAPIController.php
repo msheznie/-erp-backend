@@ -258,7 +258,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             ->where('bank_id', $chequeRegister->bank_id)
             ->where('bank_account_id', $chequeRegister->bank_account_id)->first();
         if (!empty($isExist)) {
-            return $this->sendError('Cheque No should be unique for bank and accounts. Cheque no ' . $checkNoWithZero . ' Already exist', 500);
+            return $this->sendError(trans('custom.cheque_no_should_be_unique_for_bank_and_accounts') . '. Cheque no ' . $checkNoWithZero . ' ' . trans('custom.cheque_no_already_exist'), 500);
         }
 
 
@@ -378,7 +378,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $isChange = 0;
         if (isset($input['isChange']) && $input['isChange']==0){
             $messages = [
-                'cancel_narration.required' => 'Cancel comment is required.'
+                'cancel_narration.required' => trans('custom.cancel_comment_is_required')
             ];
 
             $validator = \Validator::make($input, [
@@ -422,7 +422,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         }
 
         if($paySupplierInvoiceMaster->approved == -1){
-            return $this->sendError('Fully approved payment voucher\'s cheque can not be '.$msg, 500);
+            return $this->sendError(trans('custom.fully_approved_payment_voucher_cheque_cannot_be') . ' ' . $msg, 500);
         }
 
         $update_array = [
@@ -575,8 +575,8 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = [
-            'from_cheque_id.required' => 'From document field is required.',
-            'to_cheque_id.required' => 'To document field is required.'
+            'from_cheque_id.required' => trans('custom.from_document_field_is_required'),
+            'to_cheque_id.required' => trans('custom.to_document_field_is_required')
         ];
 
         $validator = \Validator::make($input, [
@@ -588,7 +588,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
         if($input['from_cheque_id'] == $input['to_cheque_id']){
-            return $this->sendError('You can not select same documents for switch',500);
+            return $this->sendError(trans('custom.you_can_not_select_same_documents_for_switch'),500);
         }
         $from_cheque_details = ChequeRegisterDetail::where('id',$input['from_cheque_id'])->with(['document'])->first();
 
@@ -602,10 +602,10 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         }
 
         if($from_cheque_details->document->approved == -1){
-            return $this->sendError('From Document Detail in Approved status. Approved status documents can not be switch',500);
+            return $this->sendError(trans('custom.from_document_detail_in_approved_status'),500);
         }
         if($to_cheque_details->document->approved == -1){
-            return $this->sendError('To Document Detail in Approved status. Approved status documents can not be switch',500);
+            return $this->sendError(trans('custom.to_document_detail_in_approved_status'),500);
         }
 
         DB::beginTransaction();
@@ -731,7 +731,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         $input = $request->all();
         $messages = [
-            'id.required' => 'Cheque register details id is required.'
+            'id.required' => trans('custom.cheque_register_details_id_is_required')
         ];
 
         $validator = \Validator::make($input, [

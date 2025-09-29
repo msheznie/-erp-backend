@@ -194,7 +194,7 @@ class ChequeRegisterAPIController extends AppBaseController
                             ->where('bank_account_id', $input['bank_account_id'])->count();
 
                         if ($isExist) {
-                            return $this->sendError('Cheque No should be unique for bank and accounts.' . $cheque_no . ' Already exist', 500);
+                            return $this->sendError(trans('custom.cheque_no_should_be_unique_for_bank_and_accounts') . '. ' . $cheque_no . ' ' . trans('custom.cheque_no_already_exist'), 500);
                         }
 
                         ChequeRegisterDetail::create($insert_array);
@@ -223,7 +223,7 @@ class ChequeRegisterAPIController extends AppBaseController
                             ->where('bank_id', $input['bank_id'])
                             ->where('bank_account_id', $input['bank_account_id'])->first();
                         if (!empty($isExist)) {
-                            return $this->sendError('Cheque No should be unique for bank and accounts. Cheque no ' . $checkNoWithZero . ' Already exist', 500);
+                            return $this->sendError(trans('custom.cheque_no_should_be_unique_for_bank_and_accounts') . '. Cheque no ' . $checkNoWithZero . ' ' . trans('custom.cheque_no_already_exist'), 500);
                         }
 
                         ChequeRegisterDetail::create($insert_array);
@@ -582,7 +582,7 @@ class ChequeRegisterAPIController extends AppBaseController
         if (empty($chequeRegister)) {
             return $this->sendError(trans('custom.cheque_register_data_not_found'), 404);
         }
-        return $this->sendResponse($chequeRegister->toArray(), 'Cheque Register data received');
+        return $this->sendResponse($chequeRegister->toArray(), trans('custom.cheque_register_data_received'));
     }
 
     public function exportChequeRegistry(Request $request)
@@ -676,13 +676,13 @@ class ChequeRegisterAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'cheque_registry';
+        $fileName = trans('custom.cheque_registry');
         $path = 'treasury/transaction/cheque_registry/excel/';
         $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -713,7 +713,7 @@ class ChequeRegisterAPIController extends AppBaseController
             $sameAccounts = null;
         }
 
-        return $this->sendResponse($sameAccounts, "Status updated successfully");
+        return $this->sendResponse($sameAccounts, trans('custom.status_updated_successfully'));
 
     }
 
@@ -738,6 +738,6 @@ class ChequeRegisterAPIController extends AppBaseController
 
 
 
-         return $this->sendResponse([], "Status updated successfully");
+         return $this->sendResponse([], trans('custom.status_updated_successfully'));
     }
 }

@@ -363,7 +363,7 @@
         </tr>
     </table>
     <div style="margin-top: 30px">
-    @foreach($masterdata->detail->chunk(12) as $chunkIndex => $chunk)
+    @foreach($masterdata->detail->chunk(18) as $chunkIndex => $chunk)
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">

@@ -187,7 +187,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-            return $this->sendError("There is a bank transfer (" . $checkPending->bankTransferDocumentCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.bank_transfer_pending_approval_message', ['code' => $checkPending->bankTransferDocumentCode]), 500);
         }
 
         $maxAsOfDate = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
@@ -389,11 +389,11 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         if ($paymentBankTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-
+            
             $checkItems = BankLedger::where('paymentBankTransferID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every bank transfer should have at least one cleared item', 500);
+                return $this->sendError(trans('custom.every_bank_transfer_should_have_at_least_one_cleared_item'), 500);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -413,7 +413,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         //  $paymentBankTransfer = $this->paymentBankTransferRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($paymentBankTransfer->toArray(), 'PaymentBankTransfer updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($paymentBankTransfer->toArray(), trans('custom.payment_bank_transfer_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -494,7 +494,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkPending)) {
-            return $this->sendError("There is a bank transfer (" . $checkPending->bankTransferDocumentCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.bank_transfer_pending_approval_message', ['code' => $checkPending->bankTransferDocumentCode]), 500);
         }
 
         return $this->sendResponse($bankAccount->toArray(), trans('custom.successfully_1'));
@@ -739,7 +739,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         if ($paymentBankTransfer->approvedYN != -1) {
-            return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
+            return $this->sendError(trans('custom.document_not_approved_export_message'), 500);
         }
 
         $updateArray = ['exportedYN' => -1, 'exportedUserSystemID' => Auth::id(), 'exportedDate' => now()];
@@ -798,7 +798,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         if ($paymentBankTransfer->approvedYN != -1) {
-            return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
+            return $this->sendError(trans('custom.document_not_approved_export_message'), 500);
         }
 
         $confirmed = $paymentBankTransfer->confirmedYN;

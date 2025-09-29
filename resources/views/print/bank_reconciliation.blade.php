@@ -359,8 +359,11 @@
                 </tr>
             @endforeach
             <tr>
-                <td colspan="5" class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                 <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
@@ -393,13 +396,19 @@
                 </tr>
             @endforeach
             <tr>
-                <td colspan="5" class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                 <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
             <tr>
-                <td colspan="5" class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td  class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
                 <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>

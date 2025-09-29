@@ -298,7 +298,7 @@ class BankStatementMasterAPIController extends AppBaseController
 
         $bankStatementMaster->delete();
 
-        return $this->sendSuccess('Bank Statement Master deleted successfully');
+        return $this->sendSuccess(trans('custom.bank_statement_master_deleted_successfully'));
     }
 
     public function getBankStatementImportHistory(Request $request)
@@ -382,7 +382,7 @@ class BankStatementMasterAPIController extends AppBaseController
 
         $exists = BankReconciliation::where('approvedYN', 0)->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
         if (!empty($exists)) {
-            return $this->sendError('There is a bank reconciliation '. $exists->bankRecPrimaryCode .' pending for approval for this account. Please check.');
+            return $this->sendError(trans('custom.bank_reconciliation_pending_approval_for_account', ['code' => $exists->bankRecPrimaryCode]));
         }
 
         $validateAsOfDate = BankReconciliation::where('bankRecAsOf', '>=', Carbon::parse($bankStatementMaster->statementEndDate))->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
@@ -400,7 +400,7 @@ class BankStatementMasterAPIController extends AppBaseController
                                     ->toArray();
                                     
         if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
-            return $this->sendError('The matching rules are not active to proceed.', 500, ['type' => 'rulesNotFound', 'bankAccountAutoID' => $bankStatementMaster->bankAccountAutoID]);
+            return $this->sendError(trans('custom.matching_rules_not_active_to_proceed'), 500, ['type' => 'rulesNotFound', 'bankAccountAutoID' => $bankStatementMaster->bankAccountAutoID]);
 
         }
 
@@ -412,7 +412,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : "";
         BankStatementMatch::dispatch($db, $statementId);
 
-        return $this->sendResponse([], 'Workbook validation success.');
+        return $this->sendResponse([], trans('custom.workbook_validation_success'));
     }
 
     public function getWorkBookHeaderData(Request $request)
@@ -508,7 +508,7 @@ class BankStatementMasterAPIController extends AppBaseController
                                                 ->toArray();
         
         if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
-            return $this->sendError('The matching rules are not active to proceed');
+            return $this->sendError(trans('custom.matching_rules_not_active_to_proceed'));
         }
 
         /** updating matchingInprogress to 1 to start rematching */
@@ -519,7 +519,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : "";
         BankStatementMatch::dispatch($db, $statementId);
 
-        return $this->sendResponse([], 'Workbook validation success.');
+        return $this->sendResponse([], trans('custom.workbook_validation_success'));
     }
 
     function getWorkbookAdditionalEntries(Request $request)
