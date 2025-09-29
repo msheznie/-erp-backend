@@ -360,11 +360,11 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             if(is_null($departmentBudgetTemplateID))
             {
                 if($input['budgetPlanningID']){
-                    $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
+                    $budgetPlanning = DepartmentBudgetPlanning::with(['budgetPlanningDetails','workflow'])->find($input['budgetPlanningID']);
                     $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
                     $departmentBudgetTemplateID = $departmentBudgeTemplateID->departmentBudgetTemplateID;
 
-                    if($budgetPlanning->workStatus == 2 && empty($selectedSegments))
+                    if($budgetPlanning->workflow->method == 1 && empty($selectedSegments))
                     {
                         return $this->sendError("Please select at least one segment");
                     }
