@@ -55,13 +55,7 @@ class ProccessMissedAccumalatedDepreciation implements ShouldQueue
             $db = $this->tenantDb;
             CommonJobService::db_switch($db);
 
-            $fixedAssets = FixedAssetDepreciationPeriod::with('asset_by')
-                ->whereHas('asset_by', function ($query) {
-                    $query->whereNotNull('departmentSystemID')
-                        ->where('departmentSystemID', '!=', 0);
-                })
-                ->whereNull('depForFYperiodEndDate')
-                ->tosql();
+            $fixedAssets = FixedAssetDepreciationPeriod::whereNull('depForFYperiodEndDate')->get();
 
 
            foreach ($fixedAssets->chunk(100) as $chunk)
@@ -91,7 +85,7 @@ class ProccessMissedAccumalatedDepreciation implements ShouldQueue
 
                     $output = CompanyFinancePeriod::where('dateFrom', '<=', $accumulated_date)
                         ->where('dateTo', '>=', $accumulated_date)
-                        ->where('departmentSystemID', '=', $faMaster->departmentSystemID)
+                        ->where('departmentSystemID', '=', 9)
                         ->where('companySystemID', '=', $faMaster->companySystemID)
                         ->first();
 
