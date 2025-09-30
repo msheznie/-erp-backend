@@ -7,6 +7,7 @@ use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
 use App\Jobs\ApprovePendingSegments;
 use App\Jobs\GeneralLedgerInsert;
+use App\Jobs\ProccessMissedAccumalatedDepreciation;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
@@ -1702,5 +1703,30 @@ class GeneralLedgerAPIController extends AppBaseController
         }
 
         return $this->sendResponse([], 'Segments fully approved successfully');
+    }
+
+    public function updateNotPostedAssetEntries(Request $request)
+    {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
+
+        $input = $request->all();
+
+//        $tenants = CommonJobService::tenant_list();
+        $tenants = ["database" => "gears_erp_gutech"];
+        if(count($tenants) == 0) {
+            return  "tenant list is empty";
+        }
+
+        foreach ($tenants as $tenant){
+//            $tenantDb = $tenant->database;
+
+            $tenantDb = "gears_erp_gutech";
+            CommonJobService::db_switch($tenantDb);
+
+            ProccessMissedAccumalatedDepreciation::dispatch($tenantDb);
+        }
+
+        return $this->sendResponse([], 'Asset Accumulated Depreciation running!');
     }
 }
