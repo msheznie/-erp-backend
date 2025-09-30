@@ -76,7 +76,7 @@ class SupplierCategoryICVMasterAPIController extends AppBaseController
         $this->supplierCategoryICVMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategoryICVMasters = $this->supplierCategoryICVMasterRepository->all();
 
-        return $this->sendResponse($supplierCategoryICVMasters->toArray(), 'Supplier Category I C V Masters retrieved successfully');
+        return $this->sendResponse($supplierCategoryICVMasters->toArray(), trans('custom.supplier_category_i_c_v_masters_retrieved_successf'));
     }
 
     /**
@@ -123,7 +123,7 @@ class SupplierCategoryICVMasterAPIController extends AppBaseController
 
         $supplierCategoryICVMasters = $this->supplierCategoryICVMasterRepository->create($input);
 
-        return $this->sendResponse($supplierCategoryICVMasters->toArray(), 'Supplier Category I C V Master saved successfully');
+        return $this->sendResponse($supplierCategoryICVMasters->toArray(), trans('custom.supplier_category_i_c_v_master_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class SupplierCategoryICVMasterAPIController extends AppBaseController
         $supplierCategoryICVMaster = $this->supplierCategoryICVMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVMaster)) {
-            return $this->sendError('Supplier Category I C V Master not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_master_not_found'));
         }
 
-        return $this->sendResponse($supplierCategoryICVMaster->toArray(), 'Supplier Category I C V Master retrieved successfully');
+        return $this->sendResponse($supplierCategoryICVMaster->toArray(), trans('custom.supplier_category_i_c_v_master_retrieved_successfu'));
     }
 
     /**
@@ -230,12 +230,12 @@ class SupplierCategoryICVMasterAPIController extends AppBaseController
         $supplierCategoryICVMaster = $this->supplierCategoryICVMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVMaster)) {
-            return $this->sendError('Supplier Category I C V Master not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_master_not_found'));
         }
 
         $supplierCategoryICVMaster = $this->supplierCategoryICVMasterRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCategoryICVMaster->toArray(), 'SupplierCategoryICVMaster updated successfully');
+        return $this->sendResponse($supplierCategoryICVMaster->toArray(), trans('custom.suppliercategoryicvmaster_updated_successfully'));
     }
 
     /**
@@ -282,19 +282,19 @@ class SupplierCategoryICVMasterAPIController extends AppBaseController
         $supplierCategoryICVMaster = $this->supplierCategoryICVMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryICVMaster)) {
-            return $this->sendError('Supplier Category I C V Master not found');
+            return $this->sendError(trans('custom.supplier_category_i_c_v_master_not_found'));
         }
 
         $supplierCategoryICVMaster->delete();
 
-        return $this->sendResponse($id, 'Supplier Category I C V Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_category_i_c_v_master_deleted_successfull'));
     }
 
     public function subICVCategoriesByMasterCategory(Request $request)
     {
         $id = $request->get('supCategoryICVMasterID');
         $subCategories = SupplierCategoryICVSub::where('supCategoryICVMasterID',$id)->get();
-        return $this->sendResponse($subCategories->toArray(), 'ICV Sub categories retrieved successfully');
+        return $this->sendResponse($subCategories->toArray(), trans('custom.icv_sub_categories_retrieved_successfully'));
     }
 
 

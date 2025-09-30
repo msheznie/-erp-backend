@@ -67,7 +67,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $this->srmDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srmDepartmentMasters = $this->srmDepartmentMasterRepository->all();
 
-        return $this->sendResponse($srmDepartmentMasters->toArray(), 'Department retrieved successfully');
+        return $this->sendResponse($srmDepartmentMasters->toArray(), trans('custom.department_retrieved_successfully'));
     }
 
     /**
@@ -190,10 +190,10 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Department not found');
+            return $this->sendError(trans('custom.department_not_found'));
         }
 
-        return $this->sendResponse($srmDepartmentMaster->toArray(), 'Department retrieved successfully');
+        return $this->sendResponse($srmDepartmentMaster->toArray(), trans('custom.department_retrieved_successfully'));
     }
 
     /**
@@ -343,7 +343,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = $this->srmDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Department not found');
+            return $this->sendError(trans('custom.department_not_found'));
         }
 
         $srmDepartmentMaster->delete();

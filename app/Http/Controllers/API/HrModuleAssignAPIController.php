@@ -64,7 +64,7 @@ class HrModuleAssignAPIController extends AppBaseController
         $this->hrModuleAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrModuleAssigns = $this->hrModuleAssignRepository->all();
 
-        return $this->sendResponse($hrModuleAssigns->toArray(), 'Hr Module Assigns retrieved successfully');
+        return $this->sendResponse($hrModuleAssigns->toArray(), trans('custom.hr_module_assigns_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HrModuleAssignAPIController extends AppBaseController
 
         $hrModuleAssign = $this->hrModuleAssignRepository->create($input);
 
-        return $this->sendResponse($hrModuleAssign->toArray(), 'Hr Module Assign saved successfully');
+        return $this->sendResponse($hrModuleAssign->toArray(), trans('custom.hr_module_assign_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HrModuleAssignAPIController extends AppBaseController
         $hrModuleAssign = $this->hrModuleAssignRepository->findWithoutFail($id);
 
         if (empty($hrModuleAssign)) {
-            return $this->sendError('Hr Module Assign not found');
+            return $this->sendError(trans('custom.hr_module_assign_not_found'));
         }
 
-        return $this->sendResponse($hrModuleAssign->toArray(), 'Hr Module Assign retrieved successfully');
+        return $this->sendResponse($hrModuleAssign->toArray(), trans('custom.hr_module_assign_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HrModuleAssignAPIController extends AppBaseController
         $hrModuleAssign = $this->hrModuleAssignRepository->findWithoutFail($id);
 
         if (empty($hrModuleAssign)) {
-            return $this->sendError('Hr Module Assign not found');
+            return $this->sendError(trans('custom.hr_module_assign_not_found'));
         }
 
         $hrModuleAssign = $this->hrModuleAssignRepository->update($input, $id);
 
-        return $this->sendResponse($hrModuleAssign->toArray(), 'HrModuleAssign updated successfully');
+        return $this->sendResponse($hrModuleAssign->toArray(), trans('custom.hrmoduleassign_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HrModuleAssignAPIController extends AppBaseController
         $hrModuleAssign = $this->hrModuleAssignRepository->findWithoutFail($id);
 
         if (empty($hrModuleAssign)) {
-            return $this->sendError('Hr Module Assign not found');
+            return $this->sendError(trans('custom.hr_module_assign_not_found'));
         }
 
         $hrModuleAssign->delete();

@@ -65,7 +65,7 @@ class POSStagMenuSalesPaymentAPIController extends AppBaseController
         $this->pOSStagMenuSalesPaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagMenuSalesPayments = $this->pOSStagMenuSalesPaymentRepository->all();
 
-        return $this->sendResponse($pOSStagMenuSalesPayments->toArray(), 'P O S Stag Menu Sales Payments retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesPayments->toArray(), trans('custom.p_o_s_stag_menu_sales_payments_retrieved_successfu'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagMenuSalesPaymentAPIController extends AppBaseController
 
         $pOSStagMenuSalesPayment = $this->pOSStagMenuSalesPaymentRepository->create($input);
 
-        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), 'P O S Stag Menu Sales Payment saved successfully');
+        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), trans('custom.p_o_s_stag_menu_sales_payment_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagMenuSalesPaymentAPIController extends AppBaseController
         $pOSStagMenuSalesPayment = $this->pOSStagMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesPayment)) {
-            return $this->sendError('P O S Stag Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_payment_not_found'));
         }
 
-        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), 'P O S Stag Menu Sales Payment retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), trans('custom.p_o_s_stag_menu_sales_payment_retrieved_successful'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagMenuSalesPaymentAPIController extends AppBaseController
         $pOSStagMenuSalesPayment = $this->pOSStagMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesPayment)) {
-            return $this->sendError('P O S Stag Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_payment_not_found'));
         }
 
         $pOSStagMenuSalesPayment = $this->pOSStagMenuSalesPaymentRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), 'POSStagMenuSalesPayment updated successfully');
+        return $this->sendResponse($pOSStagMenuSalesPayment->toArray(), trans('custom.posstagmenusalespayment_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagMenuSalesPaymentAPIController extends AppBaseController
         $pOSStagMenuSalesPayment = $this->pOSStagMenuSalesPaymentRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesPayment)) {
-            return $this->sendError('P O S Stag Menu Sales Payment not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_payment_not_found'));
         }
 
         $pOSStagMenuSalesPayment->delete();

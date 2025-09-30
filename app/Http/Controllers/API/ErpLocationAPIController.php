@@ -50,7 +50,7 @@ class ErpLocationAPIController extends AppBaseController
         $this->erpLocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpLocations = $this->erpLocationRepository->all();
 
-        return $this->sendResponse($erpLocations->toArray(), 'Erp Locations retrieved successfully');
+        return $this->sendResponse($erpLocations->toArray(), trans('custom.erp_locations_retrieved_successfully'));
     }
 
     /**
@@ -67,7 +67,7 @@ class ErpLocationAPIController extends AppBaseController
 
         $erpLocations = $this->erpLocationRepository->create($input);
 
-        return $this->sendResponse($erpLocations->toArray(), 'Erp Location saved successfully');
+        return $this->sendResponse($erpLocations->toArray(), trans('custom.erp_location_saved_successfully'));
     }
 
     /**
@@ -84,10 +84,10 @@ class ErpLocationAPIController extends AppBaseController
         $erpLocation = $this->erpLocationRepository->findWithoutFail($id);
 
         if (empty($erpLocation)) {
-            return $this->sendError('Erp Location not found');
+            return $this->sendError(trans('custom.erp_location_not_found'));
         }
 
-        return $this->sendResponse($erpLocation->toArray(), 'Erp Location retrieved successfully');
+        return $this->sendResponse($erpLocation->toArray(), trans('custom.erp_location_retrieved_successfully'));
     }
 
     /**
@@ -107,12 +107,12 @@ class ErpLocationAPIController extends AppBaseController
         $erpLocation = $this->erpLocationRepository->findWithoutFail($id);
 
         if (empty($erpLocation)) {
-            return $this->sendError('Erp Location not found');
+            return $this->sendError(trans('custom.erp_location_not_found'));
         }
 
         $erpLocation = $this->erpLocationRepository->update($input, $id);
 
-        return $this->sendResponse($erpLocation->toArray(), 'ErpLocation updated successfully');
+        return $this->sendResponse($erpLocation->toArray(), trans('custom.erplocation_updated_successfully'));
     }
 
     /**
@@ -129,12 +129,12 @@ class ErpLocationAPIController extends AppBaseController
         $erpLocation = $this->erpLocationRepository->findWithoutFail($id);
 
         if (empty($erpLocation)) {
-            return $this->sendError('Erp Location not found');
+            return $this->sendError(trans('custom.erp_location_not_found'));
         }
 
         $erpLocation->delete();
 
-        return $this->sendResponse($id, 'Erp Location deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_location_deleted_successfully'));
     }
 
     public function getAllLocation(Request $request){
@@ -169,11 +169,11 @@ class ErpLocationAPIController extends AppBaseController
 
         if(isset($input['locationID'])){
             $location = ErpLocation::where('locationID', $input['locationID'])->update($masterData);
-            return $this->sendResponse($location, 'Erp Location updated successfully');
+            return $this->sendResponse($location, trans('custom.erp_location_updated_successfully'));
         }
 
         $location = ErpLocation::create($masterData);
-        return $this->sendResponse($location, 'Erp Location Created successfully');
+        return $this->sendResponse($location, trans('custom.erp_location_created_successfully'));
     }
 
     public function deleteLocation(Request $request){
@@ -181,10 +181,10 @@ class ErpLocationAPIController extends AppBaseController
         $isLocationUsed = WarehouseMaster::where('wareHouseLocation', $input['locationID'])->first();
         
         if($isLocationUsed){
-            return $this->sendError('Location cannot be deleted - Location is already selected for a warehouse');
+            return $this->sendError(trans('custom.location_cannot_be_deleted_location_is_already_sel'));
         }
             $deleteData = ['is_deleted'=>1];
             $location = ErpLocation::where('locationID', $input['locationID'])->update($deleteData);
-            return $this->sendResponse($location, 'Erp Location deleted successfully');
+            return $this->sendResponse($location, trans('custom.erp_location_deleted_successfully'));
     }
 }

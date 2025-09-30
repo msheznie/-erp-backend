@@ -64,7 +64,7 @@ class DocumentCodeModuleAPIController extends AppBaseController
         $this->documentCodeModuleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodeModules = $this->documentCodeModuleRepository->all();
 
-        return $this->sendResponse($documentCodeModules->toArray(), 'Document Code Modules retrieved successfully');
+        return $this->sendResponse($documentCodeModules->toArray(), trans('custom.document_code_modules_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentCodeModuleAPIController extends AppBaseController
 
         $documentCodeModule = $this->documentCodeModuleRepository->create($input);
 
-        return $this->sendResponse($documentCodeModule->toArray(), 'Document Code Module saved successfully');
+        return $this->sendResponse($documentCodeModule->toArray(), trans('custom.document_code_module_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentCodeModuleAPIController extends AppBaseController
         $documentCodeModule = $this->documentCodeModuleRepository->findWithoutFail($id);
 
         if (empty($documentCodeModule)) {
-            return $this->sendError('Document Code Module not found');
+            return $this->sendError(trans('custom.document_code_module_not_found'));
         }
 
-        return $this->sendResponse($documentCodeModule->toArray(), 'Document Code Module retrieved successfully');
+        return $this->sendResponse($documentCodeModule->toArray(), trans('custom.document_code_module_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentCodeModuleAPIController extends AppBaseController
         $documentCodeModule = $this->documentCodeModuleRepository->findWithoutFail($id);
 
         if (empty($documentCodeModule)) {
-            return $this->sendError('Document Code Module not found');
+            return $this->sendError(trans('custom.document_code_module_not_found'));
         }
 
         $documentCodeModule = $this->documentCodeModuleRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeModule->toArray(), 'DocumentCodeModule updated successfully');
+        return $this->sendResponse($documentCodeModule->toArray(), trans('custom.documentcodemodule_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentCodeModuleAPIController extends AppBaseController
         $documentCodeModule = $this->documentCodeModuleRepository->findWithoutFail($id);
 
         if (empty($documentCodeModule)) {
-            return $this->sendError('Document Code Module not found');
+            return $this->sendError(trans('custom.document_code_module_not_found'));
         }
 
         $documentCodeModule->delete();

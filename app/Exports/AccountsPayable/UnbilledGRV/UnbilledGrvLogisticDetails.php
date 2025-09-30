@@ -38,20 +38,20 @@ class UnbilledGrvLogisticDetails
 
     public function getHeader() :Array {
             return [
-                'Company ID',
-                'PO Number',
-                'GRV',
-                'GRV Date',
-                'Supplier Code',
-                'Supplier Name',
-                'Trans.Cur',
-                'Logistic Amount Transcation',
-                'Rpt.Cur',
-                'Logistic Amount Rpt',
-                'Paid Amount Trans',
-                'Paid Amount Rpt',
-                'Balance Trans',
-                'Balance Rpt'
+                trans('custom.company_id'),
+                trans('custom.po_number'),
+                trans('custom.grv'),
+                trans('custom.grv_date'),
+                trans('custom.supplier_code'),
+                trans('custom.supplier_name'),
+                trans('custom.trans_cur'),
+                trans('custom.logistic_amount_transaction'),
+                trans('custom.rpt_cur'),
+                trans('custom.logistic_amount_rpt'),
+                trans('custom.paid_amount_trans'),
+                trans('custom.paid_amount_rpt'),
+                trans('custom.balance_trans'),
+                trans('custom.balance_rpt')
 
             ];
     }

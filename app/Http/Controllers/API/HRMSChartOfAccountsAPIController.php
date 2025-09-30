@@ -65,7 +65,7 @@ class HRMSChartOfAccountsAPIController extends AppBaseController
         $this->hRMSChartOfAccountsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->all();
 
-        return $this->sendResponse($hRMSChartOfAccounts->toArray(), 'H R M S Chart Of Accounts retrieved successfully');
+        return $this->sendResponse($hRMSChartOfAccounts->toArray(), trans('custom.h_r_m_s_chart_of_accounts_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRMSChartOfAccountsAPIController extends AppBaseController
 
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->create($input);
 
-        return $this->sendResponse($hRMSChartOfAccounts->toArray(), 'H R M S Chart Of Accounts saved successfully');
+        return $this->sendResponse($hRMSChartOfAccounts->toArray(), trans('custom.h_r_m_s_chart_of_accounts_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRMSChartOfAccountsAPIController extends AppBaseController
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->findWithoutFail($id);
 
         if (empty($hRMSChartOfAccounts)) {
-            return $this->sendError('H R M S Chart Of Accounts not found');
+            return $this->sendError(trans('custom.h_r_m_s_chart_of_accounts_not_found'));
         }
 
-        return $this->sendResponse($hRMSChartOfAccounts->toArray(), 'H R M S Chart Of Accounts retrieved successfully');
+        return $this->sendResponse($hRMSChartOfAccounts->toArray(), trans('custom.h_r_m_s_chart_of_accounts_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRMSChartOfAccountsAPIController extends AppBaseController
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->findWithoutFail($id);
 
         if (empty($hRMSChartOfAccounts)) {
-            return $this->sendError('H R M S Chart Of Accounts not found');
+            return $this->sendError(trans('custom.h_r_m_s_chart_of_accounts_not_found'));
         }
 
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSChartOfAccounts->toArray(), 'HRMSChartOfAccounts updated successfully');
+        return $this->sendResponse($hRMSChartOfAccounts->toArray(), trans('custom.hrmschartofaccounts_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class HRMSChartOfAccountsAPIController extends AppBaseController
         $hRMSChartOfAccounts = $this->hRMSChartOfAccountsRepository->findWithoutFail($id);
 
         if (empty($hRMSChartOfAccounts)) {
-            return $this->sendError('H R M S Chart Of Accounts not found');
+            return $this->sendError(trans('custom.h_r_m_s_chart_of_accounts_not_found'));
         }
 
         $hRMSChartOfAccounts->delete();
 
-        return $this->sendResponse($id, 'H R M S Chart Of Accounts deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_chart_of_accounts_deleted_successfully'));
     }
 }

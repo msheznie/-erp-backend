@@ -64,7 +64,7 @@ class DocumentModifyRequestDetailAPIController extends AppBaseController
         $this->documentModifyRequestDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentModifyRequestDetails = $this->documentModifyRequestDetailRepository->all();
 
-        return $this->sendResponse($documentModifyRequestDetails->toArray(), 'Document Modify Request Details retrieved successfully');
+        return $this->sendResponse($documentModifyRequestDetails->toArray(), trans('custom.document_modify_request_details_retrieved_successf'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentModifyRequestDetailAPIController extends AppBaseController
 
         $documentModifyRequestDetail = $this->documentModifyRequestDetailRepository->create($input);
 
-        return $this->sendResponse($documentModifyRequestDetail->toArray(), 'Document Modify Request Detail saved successfully');
+        return $this->sendResponse($documentModifyRequestDetail->toArray(), trans('custom.document_modify_request_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentModifyRequestDetailAPIController extends AppBaseController
         $documentModifyRequestDetail = $this->documentModifyRequestDetailRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequestDetail)) {
-            return $this->sendError('Document Modify Request Detail not found');
+            return $this->sendError(trans('custom.document_modify_request_detail_not_found'));
         }
 
-        return $this->sendResponse($documentModifyRequestDetail->toArray(), 'Document Modify Request Detail retrieved successfully');
+        return $this->sendResponse($documentModifyRequestDetail->toArray(), trans('custom.document_modify_request_detail_retrieved_successfu'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentModifyRequestDetailAPIController extends AppBaseController
         $documentModifyRequestDetail = $this->documentModifyRequestDetailRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequestDetail)) {
-            return $this->sendError('Document Modify Request Detail not found');
+            return $this->sendError(trans('custom.document_modify_request_detail_not_found'));
         }
 
         $documentModifyRequestDetail = $this->documentModifyRequestDetailRepository->update($input, $id);
 
-        return $this->sendResponse($documentModifyRequestDetail->toArray(), 'DocumentModifyRequestDetail updated successfully');
+        return $this->sendResponse($documentModifyRequestDetail->toArray(), trans('custom.documentmodifyrequestdetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentModifyRequestDetailAPIController extends AppBaseController
         $documentModifyRequestDetail = $this->documentModifyRequestDetailRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequestDetail)) {
-            return $this->sendError('Document Modify Request Detail not found');
+            return $this->sendError(trans('custom.document_modify_request_detail_not_found'));
         }
 
         $documentModifyRequestDetail->delete();

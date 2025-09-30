@@ -75,7 +75,7 @@ class LogisticShippingModeAPIController extends AppBaseController
         $this->logisticShippingModeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logisticShippingModes = $this->logisticShippingModeRepository->all();
 
-        return $this->sendResponse($logisticShippingModes->toArray(), 'Logistic Shipping Modes retrieved successfully');
+        return $this->sendResponse($logisticShippingModes->toArray(), trans('custom.logistic_shipping_modes_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class LogisticShippingModeAPIController extends AppBaseController
 
         $logisticShippingModes = $this->logisticShippingModeRepository->create($input);
 
-        return $this->sendResponse($logisticShippingModes->toArray(), 'Logistic Shipping Mode saved successfully');
+        return $this->sendResponse($logisticShippingModes->toArray(), trans('custom.logistic_shipping_mode_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class LogisticShippingModeAPIController extends AppBaseController
         $logisticShippingMode = $this->logisticShippingModeRepository->findWithoutFail($id);
 
         if (empty($logisticShippingMode)) {
-            return $this->sendError('Logistic Shipping Mode not found');
+            return $this->sendError(trans('custom.logistic_shipping_mode_not_found'));
         }
 
-        return $this->sendResponse($logisticShippingMode->toArray(), 'Logistic Shipping Mode retrieved successfully');
+        return $this->sendResponse($logisticShippingMode->toArray(), trans('custom.logistic_shipping_mode_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class LogisticShippingModeAPIController extends AppBaseController
         $logisticShippingMode = $this->logisticShippingModeRepository->findWithoutFail($id);
 
         if (empty($logisticShippingMode)) {
-            return $this->sendError('Logistic Shipping Mode not found');
+            return $this->sendError(trans('custom.logistic_shipping_mode_not_found'));
         }
 
         $logisticShippingMode = $this->logisticShippingModeRepository->update($input, $id);
 
-        return $this->sendResponse($logisticShippingMode->toArray(), 'LogisticShippingMode updated successfully');
+        return $this->sendResponse($logisticShippingMode->toArray(), trans('custom.logisticshippingmode_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class LogisticShippingModeAPIController extends AppBaseController
         $logisticShippingMode = $this->logisticShippingModeRepository->findWithoutFail($id);
 
         if (empty($logisticShippingMode)) {
-            return $this->sendError('Logistic Shipping Mode not found');
+            return $this->sendError(trans('custom.logistic_shipping_mode_not_found'));
         }
 
         $logisticShippingMode->delete();
 
-        return $this->sendResponse($id, 'Logistic Shipping Mode deleted successfully');
+        return $this->sendResponse($id, trans('custom.logistic_shipping_mode_deleted_successfully'));
     }
 }

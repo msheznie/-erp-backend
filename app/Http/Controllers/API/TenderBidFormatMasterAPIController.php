@@ -70,7 +70,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $this->tenderBidFormatMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBidFormatMasters = $this->tenderBidFormatMasterRepository->all();
 
-        return $this->sendResponse($tenderBidFormatMasters->toArray(), 'Tender Bid Format Masters retrieved successfully');
+        return $this->sendResponse($tenderBidFormatMasters->toArray(), trans('custom.tender_bid_format_masters_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         $tenderBidFormatMaster = $this->tenderBidFormatMasterRepository->create($input);
 
-        return $this->sendResponse($tenderBidFormatMaster->toArray(), 'Tender Bid Format Master saved successfully');
+        return $this->sendResponse($tenderBidFormatMaster->toArray(), trans('custom.tender_bid_format_master_saved_successfully'));
     }
 
     /**
@@ -164,10 +164,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $tenderBidFormatMaster = $this->tenderBidFormatMasterRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatMaster)) {
-            return $this->sendError('Tender Bid Format Master not found');
+            return $this->sendError(trans('custom.tender_bid_format_master_not_found'));
         }
 
-        return $this->sendResponse($tenderBidFormatMaster->toArray(), 'Tender Bid Format Master retrieved successfully');
+        return $this->sendResponse($tenderBidFormatMaster->toArray(), trans('custom.tender_bid_format_master_retrieved_successfully'));
     }
 
     /**
@@ -224,12 +224,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $tenderBidFormatMaster = $this->tenderBidFormatMasterRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatMaster)) {
-            return $this->sendError('Tender Bid Format Master not found');
+            return $this->sendError(trans('custom.tender_bid_format_master_not_found'));
         }
 
         $tenderBidFormatMaster = $this->tenderBidFormatMasterRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBidFormatMaster->toArray(), 'TenderBidFormatMaster updated successfully');
+        return $this->sendResponse($tenderBidFormatMaster->toArray(), trans('custom.tenderbidformatmaster_updated_successfully'));
     }
 
     /**
@@ -276,7 +276,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $tenderBidFormatMaster = $this->tenderBidFormatMasterRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatMaster)) {
-            return $this->sendError('Tender Bid Format Master not found');
+            return $this->sendError(trans('custom.tender_bid_format_master_not_found'));
         }
 
         $tenderBidFormatMaster->delete();

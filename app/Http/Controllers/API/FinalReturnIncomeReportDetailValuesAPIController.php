@@ -64,7 +64,7 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
         $this->finalReturnIncomeReportDetailValuesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), 'Final Return Income Report Detail Values retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), trans('custom.final_return_income_report_detail_values_retrieved'));
     }
 
     /**
@@ -128,7 +128,7 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
                 ]
             );
 
-        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), 'Final Return Income Report Detail Values saved successfully');
+        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), trans('custom.final_return_income_report_detail_values_saved_suc'));
     }
 
     /**
@@ -176,10 +176,10 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
         $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReportDetailValues)) {
-            return $this->sendError('Final Return Income Report Detail Values not found');
+            return $this->sendError(trans('custom.final_return_income_report_detail_values_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), 'Final Return Income Report Detail Values retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), trans('custom.final_return_income_report_detail_values_retrieved'));
     }
 
     /**
@@ -245,12 +245,12 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
         $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReportDetailValues)) {
-            return $this->sendError('Final Return Income Report Detail Values not found');
+            return $this->sendError(trans('custom.final_return_income_report_detail_values_not_found'));
         }
 
         $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), 'FinalReturnIncomeReportDetailValues updated successfully');
+        return $this->sendResponse($finalReturnIncomeReportDetailValues->toArray(), trans('custom.finalreturnincomereportdetailvalues_updated_succes'));
     }
 
     /**
@@ -298,7 +298,7 @@ class FinalReturnIncomeReportDetailValuesAPIController extends AppBaseController
         $finalReturnIncomeReportDetailValues = $this->finalReturnIncomeReportDetailValuesRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeReportDetailValues)) {
-            return $this->sendError('Final Return Income Report Detail Values not found');
+            return $this->sendError(trans('custom.final_return_income_report_detail_values_not_found'));
         }
 
         $finalReturnIncomeReportDetailValues->delete();

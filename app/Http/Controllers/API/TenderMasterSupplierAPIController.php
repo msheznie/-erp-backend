@@ -65,7 +65,7 @@ class TenderMasterSupplierAPIController extends AppBaseController
         $this->tenderMasterSupplierRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMasterSuppliers = $this->tenderMasterSupplierRepository->all();
 
-        return $this->sendResponse($tenderMasterSuppliers->toArray(), 'Tender Master Suppliers retrieved successfully');
+        return $this->sendResponse($tenderMasterSuppliers->toArray(), trans('custom.tender_master_suppliers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderMasterSupplierAPIController extends AppBaseController
 
         $tenderMasterSupplier = $this->tenderMasterSupplierRepository->create($input);
 
-        return $this->sendResponse($tenderMasterSupplier->toArray(), 'Tender Master Supplier saved successfully');
+        return $this->sendResponse($tenderMasterSupplier->toArray(), trans('custom.tender_master_supplier_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderMasterSupplierAPIController extends AppBaseController
         $tenderMasterSupplier = $this->tenderMasterSupplierRepository->findWithoutFail($id);
 
         if (empty($tenderMasterSupplier)) {
-            return $this->sendError('Tender Master Supplier not found');
+            return $this->sendError(trans('custom.tender_master_supplier_not_found'));
         }
 
-        return $this->sendResponse($tenderMasterSupplier->toArray(), 'Tender Master Supplier retrieved successfully');
+        return $this->sendResponse($tenderMasterSupplier->toArray(), trans('custom.tender_master_supplier_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderMasterSupplierAPIController extends AppBaseController
         $tenderMasterSupplier = $this->tenderMasterSupplierRepository->findWithoutFail($id);
 
         if (empty($tenderMasterSupplier)) {
-            return $this->sendError('Tender Master Supplier not found');
+            return $this->sendError(trans('custom.tender_master_supplier_not_found'));
         }
 
         $tenderMasterSupplier = $this->tenderMasterSupplierRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMasterSupplier->toArray(), 'TenderMasterSupplier updated successfully');
+        return $this->sendResponse($tenderMasterSupplier->toArray(), trans('custom.tendermastersupplier_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderMasterSupplierAPIController extends AppBaseController
         $tenderMasterSupplier = $this->tenderMasterSupplierRepository->findWithoutFail($id);
 
         if (empty($tenderMasterSupplier)) {
-            return $this->sendError('Tender Master Supplier not found');
+            return $this->sendError(trans('custom.tender_master_supplier_not_found'));
         }
 
         $tenderMasterSupplier->delete();

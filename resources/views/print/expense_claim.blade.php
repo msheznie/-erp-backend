@@ -1,6 +1,6 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Expense Claim</title>
+    <title>{{ __('custom.expense_claim') }}</title>
     <style>
         @page {
             margin-left: 30px;
@@ -8,6 +8,66 @@
             margin-top: 30px;
             margin-bottom: 0px;
         }
+
+        /* RTL Support for Arabic */
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .rtl-text-left {
+            text-align: right !important;
+        }
+        
+        .rtl-text-right {
+            text-align: left !important;
+        }
+        
+        .rtl-float-left {
+            float: right !important;
+        }
+        
+        .rtl-float-right {
+            float: left !important;
+        }
+        
+        .rtl-margin-left {
+            margin-right: 0 !important;
+            margin-left: auto !important;
+        }
+        
+        .rtl-margin-right {
+            margin-left: 0 !important;
+            margin-right: auto !important;
+        }
+        
+        .rtl-padding-left {
+            padding-right: 0 !important;
+            padding-left: auto !important;
+        }
+        
+        .rtl-padding-right {
+            padding-left: 0 !important;
+            padding-right: auto !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        @endif
 
         body {
             font-size: 12px;
@@ -197,10 +257,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Document Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->expenseClaimCode}}</span>
@@ -208,10 +268,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Document Date </span>
+                            <span style="font-weight: bold;">{{ __('custom.document_date') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -221,10 +281,10 @@
                     </tr>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Comments</span>
+                            <span style="font-weight: bold;">{{ __('custom.comments') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->comments}}</span>
@@ -238,7 +298,7 @@
     <hr style="color: #d3d9df">
     <div>
         <span style="font-size: 18px">
-            Expense Claim
+            {{ __('custom.expense_claim') }}
         </span>
     </div>
     <br>
@@ -248,12 +308,11 @@
             <thead>
             <tr class="theme-tr-head">
                 <th style="width:3%">#</th>
-                <th style="width:27%">GL Description</th>
-                <th style="width:27%">Description</th>
-                <th style="width:7%">Currency</th>
-                <th style="width:8%" class="text-center">Amount</th>
-                <th style="width:8%" class="text-center">Local
-                    Amount({{$entity->localCurrencyCode}})
+                <th style="width:27%">{{ __('custom.gl_description') }}</th>
+                <th style="width:27%">{{ __('custom.description') }}</th>
+                <th style="width:7%">{{ __('custom.currency') }}</th>
+                <th style="width:8%" class="text-center">{{ __('custom.amount') }}</th>
+                <th style="width:8%" class="text-center">{{ __('custom.local_amount') }}({{$entity->localCurrencyCode}})
                 </th>
             </tr>
             </thead>
@@ -279,10 +338,13 @@
                     </td>
                 </tr>
             @endforeach
-            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                <td colspan="3" class="text-right border-bottom-remov"></td>
-                <td colspan="2" class="text-right" style="background-color: #DEDEDE !important;"><b>Total Payment:</b></td>
-                <td class="text-right" style="background-color: #DEDEDE !important;">
+            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important; background-color: #DEDEDE !important;">
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important; background-color: #DEDEDE !important;"></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;"><b>{{ __('custom.total_payment') }}:</b></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;">
                     {{number_format($entity->total,$entity->localDecimal)}}
                 </td>
             </tr>
@@ -297,7 +359,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="70px">
-                                <span class="font-weight-bold">Claimed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.claimed_by') }} :</span>
                             </td>
                             <td>
                                 @if($entity->confirmed_by)
@@ -314,7 +376,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="75px">
-                                <span class="font-weight-bold">Checked By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.checked_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width:200px;margin-top: 7px;"></div>
@@ -329,7 +391,7 @@
                     <table width="100%">
                         <tr width="100%">
                             <td width="80px">
-                                <span class="font-weight-bold" style="">Approved By :</span>
+                                <span style="font-weight: bold;" style="">{{ __('custom.approved_by') }} :</span>
                             </td>
                             <td style="padding-left: 2px" valign="top">
                                 <br><br>

@@ -39,7 +39,13 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $departmentSystemID = $request->get('departmentSystemID');
         
         if (!$departmentSystemID) {
-            return $this->sendError('Department ID is required');
+            return $this->sendError(trans('custom.department_id_is_required'));
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
         }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -79,6 +85,44 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             ->make(true);
     }
 
+
+    public function getAllDepartmentSegmentsFormData(Request $request)
+    {
+        $input = $request->all();
+
+        $departmentSystemID = $request->get('departmentSystemID');
+
+        if (!$departmentSystemID) {
+            return $this->sendError(trans('custom.department_id_is_required'));
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+            ->with(['segment', 'department'])
+            ->orderBy('departmentSegmentSystemID', $sort);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->whereHas('segment', function ($query) use ($search) {
+                $query->where('ServiceLineCode', 'LIKE', "%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return $this->sendResponse([
+            'segments' => $query->get()->pluck('segment')
+        ], trans('custom.form_data_retrieved_successfully'));
+
+    }
+
     /**
      * Get form data for segment assignment
      */
@@ -87,7 +131,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $companySystemID = $request->get('companySystemID');
         
         if (!$companySystemID) {
-            return $this->sendError('Company ID is required');
+            return $this->sendError(trans('custom.company_id_is_required'));
         }
 
         // Get final segments that are approved and assigned to the company
@@ -107,7 +151,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
         return $this->sendResponse([
             'segments' => $segments
-        ], 'Form data retrieved successfully');
+        ], trans('custom.form_data_retrieved_successfully'));
     }
 
     /**
@@ -164,12 +208,12 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                 $this->auditLog($db, $companyDepartmentSegment->departmentSegmentSystemID, $uuid, "company_departments_segments", "Segment assigned to department", "C", $companyDepartmentSegment->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
                 
                 DB::commit();
-                return $this->sendResponse($companyDepartmentSegment->toArray(), 'Segment assigned to department successfully');
+                return $this->sendResponse($companyDepartmentSegment->toArray(), trans('custom.segment_assigned_to_department_successfully'));
             }
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error assigning segment to department - '.$e->getMessage());
+            return $this->sendError(trans('custom.error_assigning_segment_to_department').$e->getMessage());
         }
     }
 
@@ -181,7 +225,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $companyDepartmentSegment = $this->companyDepartmentSegmentRepository->find($id);
 
         if (empty($companyDepartmentSegment)) {
-            return $this->sendError('Department Segment not found');
+            return $this->sendError(trans('custom.department_segment_not_found'));
         }
 
         $input = $request->all();
@@ -199,11 +243,11 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($companyDepartmentSegment->toArray(), 'Department Segment updated successfully');
+            return $this->sendResponse($companyDepartmentSegment->toArray(), trans('custom.department_segment_updated_successfully'));
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error updating department segment', ['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_updating_department_segment'), ['error' => $e->getMessage()]);
         }
     }
 
@@ -215,7 +259,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $companyDepartmentSegment = $this->companyDepartmentSegmentRepository->find($id);
 
         if (empty($companyDepartmentSegment)) {
-            return $this->sendError('Department Segment not found');
+            return $this->sendError(trans('custom.department_segment_not_found'));
         }
 
         try {
@@ -230,11 +274,11 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($id, 'Department Segment deleted successfully');
+            return $this->sendResponse($id, trans('custom.department_segment_deleted_successfully'));
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error deleting department segment', ['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_deleting_department_segment'), ['error' => $e->getMessage()]);
         }
     }
 

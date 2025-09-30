@@ -145,10 +145,10 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementCategory = TenderProcurementCategory::find($id);
 
         if (empty($procurementCategory)) {
-            return $this->sendError('Procurement Category not found');
+            return $this->sendError(trans('custom.procurement_category_not_found'));
         }
 
-        return $this->sendResponse($procurementCategory->toArray(), 'Procurement Category retrieved successfully');
+        return $this->sendResponse($procurementCategory->toArray(), trans('custom.procurement_category_retrieved_successfully'));
     }
 
     /**

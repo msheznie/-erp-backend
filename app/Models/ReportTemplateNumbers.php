@@ -63,5 +63,12 @@ class ReportTemplateNumbers extends Model
         
     ];
 
-    
+    public function getValueAttribute($value)
+    {
+        if ($value == "Default") {
+            return trans('custom.default');
+        } else {
+            return $this->attributes['value'];
+        }
+    }
 }

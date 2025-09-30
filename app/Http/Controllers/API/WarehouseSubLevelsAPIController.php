@@ -70,7 +70,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $this->warehouseSubLevelsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->all();
 
-        return $this->sendResponse($warehouseSubLevels->toArray(), 'Warehouse Sub Levels retrieved successfully');
+        return $this->sendResponse($warehouseSubLevels->toArray(), trans('custom.warehouse_sub_levels_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $warehouse = WarehouseMaster::find($input['warehouse_id']);
 
         if (empty($warehouse)) {
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
         $parentId = isset($input['parent_id']) ? $input['parent_id'] : 0;
@@ -137,7 +137,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
             $warehouseParentSubLevel = $this->warehouseSubLevelsRepository->find($parentId);
 
             if (empty($warehouseParentSubLevel)) {
-                return $this->sendError('Warehouse sub level not found');
+                return $this->sendError(trans('custom.warehouse_sub_level_not_found'));
             }
 
             $input['level'] = $warehouseParentSubLevel->level + 1;
@@ -152,7 +152,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
 
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->create($input);
 
-        return $this->sendResponse($warehouseSubLevels->toArray(), 'Warehouse Sub Levels saved successfully');
+        return $this->sendResponse($warehouseSubLevels->toArray(), trans('custom.warehouse_sub_levels_saved_successfully'));
     }
 
     /**
@@ -203,10 +203,10 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($warehouseSubLevels)) {
-            return $this->sendError('Warehouse Sub Levels not found');
+            return $this->sendError(trans('custom.warehouse_sub_levels_not_found'));
         }
 
-        return $this->sendResponse($warehouseSubLevels->toArray(), 'Warehouse Sub Levels retrieved successfully');
+        return $this->sendResponse($warehouseSubLevels->toArray(), trans('custom.warehouse_sub_levels_retrieved_successfully'));
     }
 
     /**
@@ -263,7 +263,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->findWithoutFail($id);
 
         if (empty($warehouseSubLevels)) {
-            return $this->sendError('Warehouse Sub Levels not found');
+            return $this->sendError(trans('custom.warehouse_sub_levels_not_found'));
         }
         $validator = \Validator::make($request->all(), [
             'name' => 'required',
@@ -325,7 +325,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($warehouseSubLevels->toArray(), 'WarehouseSubLevels updated successfully');
+        return $this->sendResponse($warehouseSubLevels->toArray(), trans('custom.warehousesublevels_updated_successfully'));
     }
 
     public function activateBinLocation($array,$value){
@@ -388,15 +388,15 @@ class WarehouseSubLevelsAPIController extends AppBaseController
             }])->findWithoutFail($id);
 
         if (empty($warehouseSubLevels)) {
-            return $this->sendError('Warehouse Sub Levels not found');
+            return $this->sendError(trans('custom.warehouse_sub_levels_not_found'));
         }
 
         if ($warehouseSubLevels->children_count > 0) {
-            return $this->sendError('Cannot delete, Selected Level Level has sub levels.');
+            return $this->sendError(trans('custom.cannot_delete_selected_level_level_has_sub_levels'));
         }
 
         if ($warehouseSubLevels->bin_locations_count > 0) {
-            return $this->sendError('Cannot delete, Selected Level has bin locations created.');
+            return $this->sendError(trans('custom.cannot_delete_selected_level_has_bin_locations_cre'));
         }
 
         $data['is_deleted'] = 1;
@@ -406,7 +406,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $this->warehouseSubLevelsRepository->update($data,$id);
         //$warehouseSubLevels->delete();
 
-        return $this->sendResponse($id, 'Warehouse Sub Levels deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_sub_levels_deleted_successfully'));
     }
 
     public function getAllWarehouseSubLevels(Request $request)
@@ -455,11 +455,11 @@ class WarehouseSubLevelsAPIController extends AppBaseController
             ->find($id);
 
         if (empty($warehouse)) {
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
 
-        return $this->sendResponse($warehouse, 'Warehouse Sub Levels retrieved successfully');
+        return $this->sendResponse($warehouse, trans('custom.warehouse_sub_levels_retrieved_successfully'));
     }
 
     public function getSubLevelsByWarehouse(Request $request)
@@ -472,7 +472,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $warehouse = WarehouseMaster::find($id);
 
         if (empty($warehouse)) {
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
 
         $subLevels = WarehouseSubLevels::where('warehouse_id',$id)
@@ -482,6 +482,6 @@ class WarehouseSubLevelsAPIController extends AppBaseController
                                         ->get(['id','name']);
 
 
-        return $this->sendResponse($subLevels, 'Warehouse Sub Levels retrieved successfully');
+        return $this->sendResponse($subLevels, trans('custom.warehouse_sub_levels_retrieved_successfully'));
     }
 }

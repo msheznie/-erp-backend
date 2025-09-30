@@ -75,7 +75,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $this->recurringVoucherSetupDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $recurringVoucherSetupDetails = $this->recurringVoucherSetupDetailRepository->all();
 
-        return $this->sendResponse($recurringVoucherSetupDetails->toArray(), 'Recurring Voucher Setup Details retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupDetails->toArray(), trans('custom.recurring_voucher_setup_details_retrieved_successf'));
     }
 
     /**
@@ -134,10 +134,10 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $rrvMaster = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
         $messages = [
-            'currencyID' => 'Currency is required',
+            'currencyID' => trans('custom.currency_is_required'),
         ];
         $validator = \Validator::make($rrvMaster->toArray(), [
             'currencyID' => 'required|numeric|min:1'
@@ -153,7 +153,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_1'));
         }
 
         $input['glAccount'] = $chartOfAccount->AccountCode;
@@ -168,7 +168,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
 
         $jvDetails = $this->recurringVoucherSetupDetailRepository->create($input);
 
-        return $this->sendResponse($jvDetails->toArray(), 'RRV Detail saved successfully');
+        return $this->sendResponse($jvDetails->toArray(), trans('custom.rrv_detail_saved_successfully'));
     }
 
     /**
@@ -216,10 +216,10 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $recurringVoucherSetupDetail = $this->recurringVoucherSetupDetailRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupDetail)) {
-            return $this->sendError('Recurring Voucher Setup Detail not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_detail_not_found'));
         }
 
-        return $this->sendResponse($recurringVoucherSetupDetail->toArray(), 'Recurring Voucher Setup Detail retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupDetail->toArray(), trans('custom.recurring_voucher_setup_detail_retrieved_successfu'));
     }
 
     /**
@@ -287,13 +287,13 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $rrvDetail = $this->recurringVoucherSetupDetailRepository->findWithoutFail($id);
 
         if (empty($rrvDetail)) {
-            return $this->sendError('RRV Detail not found');
+            return $this->sendError(trans('custom.rrv_detail_not_found'));
         }
 
         $rrvMaster = RecurringVoucherSetup::find($input['recurringVoucherAutoId']);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
 
         if ($input['creditAmount'] == '') {
@@ -308,12 +308,12 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    return $this->sendError(trans('custom.department_not_found'));
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->$rrvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                    return $this->sendError(trans('custom.please_select_active_department'), 500, $serviceLineError);
                 }
 
                 $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -336,7 +336,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
 
         $rrvDetail = $this->recurringVoucherSetupDetailRepository->update($input, $id);
 
-        return $this->sendResponse($rrvDetail->toArray(), 'RRVDetail updated successfully');
+        return $this->sendResponse($rrvDetail->toArray(), trans('custom.rrvdetail_updated_successfully'));
     }
 
     /**
@@ -384,12 +384,12 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $recurringVoucherSetupDetail = $this->recurringVoucherSetupDetailRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupDetail)) {
-            return $this->sendError('Recurring Voucher Setup Detail not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_detail_not_found'));
         }
 
         $recurringVoucherSetupDetail->delete();
 
-        return $this->sendResponse($id,'Recurring Voucher Setup Detail deleted successfully');
+        return $this->sendResponse($id,trans('custom.recurring_voucher_setup_detail_deleted_successfull'));
     }
 
     public function getRecurringVoucherDetails(Request $request)
@@ -402,7 +402,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
             ->orderBy('rrvDetailAutoId', 'ASC')
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'RRV Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.rrv_detail_retrieved_successfully'));
     }
 
     public function getRecurringVoucherContracts(Request $request)
@@ -428,7 +428,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($contract, 'Record retrived successfully');
+        return $this->sendResponse($contract, trans('custom.record_retrived_successfully'));
     }
 
     public function recurringVoucherDeleteAllDetails(Request $request)
@@ -440,19 +440,19 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
         $rrvMaster = RecurringVoucherSetup::find($rrvMasterAutoId);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
 
         $detailExistAll = $this->recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $rrvMasterAutoId)->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
 
         if (!empty($detailExistAll)) {
             $this->recurringVoucherSetupDetailRepository->where('recurringVoucherAutoId', $rrvMasterAutoId)->delete();
         }
 
-        return $this->sendResponse($rrvMasterAutoId, 'Details deleted successfully');
+        return $this->sendResponse($rrvMasterAutoId, trans('custom.details_deleted_successfully'));
     }
 }

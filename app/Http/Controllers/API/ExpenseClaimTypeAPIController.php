@@ -75,7 +75,7 @@ class ExpenseClaimTypeAPIController extends AppBaseController
         $this->expenseClaimTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseClaimTypes = $this->expenseClaimTypeRepository->all();
 
-        return $this->sendResponse($expenseClaimTypes->toArray(), 'Expense Claim Types retrieved successfully');
+        return $this->sendResponse($expenseClaimTypes->toArray(), trans('custom.expense_claim_types_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class ExpenseClaimTypeAPIController extends AppBaseController
 
         $expenseClaimTypes = $this->expenseClaimTypeRepository->create($input);
 
-        return $this->sendResponse($expenseClaimTypes->toArray(), 'Expense Claim Type saved successfully');
+        return $this->sendResponse($expenseClaimTypes->toArray(), trans('custom.expense_claim_type_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class ExpenseClaimTypeAPIController extends AppBaseController
         $expenseClaimType = $this->expenseClaimTypeRepository->findWithoutFail($id);
 
         if (empty($expenseClaimType)) {
-            return $this->sendError('Expense Claim Type not found');
+            return $this->sendError(trans('custom.expense_claim_type_not_found'));
         }
 
-        return $this->sendResponse($expenseClaimType->toArray(), 'Expense Claim Type retrieved successfully');
+        return $this->sendResponse($expenseClaimType->toArray(), trans('custom.expense_claim_type_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class ExpenseClaimTypeAPIController extends AppBaseController
         $expenseClaimType = $this->expenseClaimTypeRepository->findWithoutFail($id);
 
         if (empty($expenseClaimType)) {
-            return $this->sendError('Expense Claim Type not found');
+            return $this->sendError(trans('custom.expense_claim_type_not_found'));
         }
 
         $expenseClaimType = $this->expenseClaimTypeRepository->update($input, $id);
 
-        return $this->sendResponse($expenseClaimType->toArray(), 'ExpenseClaimType updated successfully');
+        return $this->sendResponse($expenseClaimType->toArray(), trans('custom.expenseclaimtype_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class ExpenseClaimTypeAPIController extends AppBaseController
         $expenseClaimType = $this->expenseClaimTypeRepository->findWithoutFail($id);
 
         if (empty($expenseClaimType)) {
-            return $this->sendError('Expense Claim Type not found');
+            return $this->sendError(trans('custom.expense_claim_type_not_found'));
         }
 
         $expenseClaimType->delete();
 
-        return $this->sendResponse($id, 'Expense Claim Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.expense_claim_type_deleted_successfully'));
     }
 }

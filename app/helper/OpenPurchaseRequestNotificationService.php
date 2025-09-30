@@ -166,7 +166,7 @@ class OpenPurchaseRequestNotificationService
     {
         $currentMonth = Carbon::now()->format('F Y');
         
-        $emailContent = "<p>Hi {$recipientName},</p>";
+        $emailContent = "<p>" . trans('email.hi') . " {$recipientName},</p>";
         $emailContent .= "<p>Please be informed and find below the list of open Purchase Requests (PRs) as of this month-end.</p>";
         $emailContent .= "<p><strong>Purchase Requests:</strong></p>";
         

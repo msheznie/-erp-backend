@@ -65,7 +65,7 @@ class SalesReturnDetailRefferedBackAPIController extends AppBaseController
         $this->salesReturnDetailRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesReturnDetailRefferedBacks = $this->salesReturnDetailRefferedBackRepository->all();
 
-        return $this->sendResponse($salesReturnDetailRefferedBacks->toArray(), 'Sales Return Detail Reffered Backs retrieved successfully');
+        return $this->sendResponse($salesReturnDetailRefferedBacks->toArray(), trans('custom.sales_return_detail_reffered_backs_retrieved_succe'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SalesReturnDetailRefferedBackAPIController extends AppBaseController
 
         $salesReturnDetailRefferedBack = $this->salesReturnDetailRefferedBackRepository->create($input);
 
-        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), 'Sales Return Detail Reffered Back saved successfully');
+        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), trans('custom.sales_return_detail_reffered_back_saved_successful'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SalesReturnDetailRefferedBackAPIController extends AppBaseController
         $salesReturnDetailRefferedBack = $this->salesReturnDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetailRefferedBack)) {
-            return $this->sendError('Sales Return Detail Reffered Back not found');
+            return $this->sendError(trans('custom.sales_return_detail_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), 'Sales Return Detail Reffered Back retrieved successfully');
+        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), trans('custom.sales_return_detail_reffered_back_retrieved_succes'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SalesReturnDetailRefferedBackAPIController extends AppBaseController
         $salesReturnDetailRefferedBack = $this->salesReturnDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetailRefferedBack)) {
-            return $this->sendError('Sales Return Detail Reffered Back not found');
+            return $this->sendError(trans('custom.sales_return_detail_reffered_back_not_found'));
         }
 
         $salesReturnDetailRefferedBack = $this->salesReturnDetailRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), 'SalesReturnDetailRefferedBack updated successfully');
+        return $this->sendResponse($salesReturnDetailRefferedBack->toArray(), trans('custom.salesreturndetailrefferedback_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SalesReturnDetailRefferedBackAPIController extends AppBaseController
         $salesReturnDetailRefferedBack = $this->salesReturnDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetailRefferedBack)) {
-            return $this->sendError('Sales Return Detail Reffered Back not found');
+            return $this->sendError(trans('custom.sales_return_detail_reffered_back_not_found'));
         }
 
         $salesReturnDetailRefferedBack->delete();

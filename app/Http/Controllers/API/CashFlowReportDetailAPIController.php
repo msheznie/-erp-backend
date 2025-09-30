@@ -65,7 +65,7 @@ class CashFlowReportDetailAPIController extends AppBaseController
         $this->cashFlowReportDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $cashFlowReportDetails = $this->cashFlowReportDetailRepository->all();
 
-        return $this->sendResponse($cashFlowReportDetails->toArray(), 'Cash Flow Report Details retrieved successfully');
+        return $this->sendResponse($cashFlowReportDetails->toArray(), trans('custom.cash_flow_report_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class CashFlowReportDetailAPIController extends AppBaseController
 
         $cashFlowReportDetail = $this->cashFlowReportDetailRepository->create($input);
 
-        return $this->sendResponse($cashFlowReportDetail->toArray(), 'Cash Flow Report Detail saved successfully');
+        return $this->sendResponse($cashFlowReportDetail->toArray(), trans('custom.cash_flow_report_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class CashFlowReportDetailAPIController extends AppBaseController
         $cashFlowReportDetail = $this->cashFlowReportDetailRepository->findWithoutFail($id);
 
         if (empty($cashFlowReportDetail)) {
-            return $this->sendError('Cash Flow Report Detail not found');
+            return $this->sendError(trans('custom.cash_flow_report_detail_not_found'));
         }
 
-        return $this->sendResponse($cashFlowReportDetail->toArray(), 'Cash Flow Report Detail retrieved successfully');
+        return $this->sendResponse($cashFlowReportDetail->toArray(), trans('custom.cash_flow_report_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class CashFlowReportDetailAPIController extends AppBaseController
         $cashFlowReportDetail = $this->cashFlowReportDetailRepository->findWithoutFail($id);
 
         if (empty($cashFlowReportDetail)) {
-            return $this->sendError('Cash Flow Report Detail not found');
+            return $this->sendError(trans('custom.cash_flow_report_detail_not_found'));
         }
 
         $cashFlowReportDetail = $this->cashFlowReportDetailRepository->update($input, $id);
 
-        return $this->sendResponse($cashFlowReportDetail->toArray(), 'CashFlowReportDetail updated successfully');
+        return $this->sendResponse($cashFlowReportDetail->toArray(), trans('custom.cashflowreportdetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class CashFlowReportDetailAPIController extends AppBaseController
         $cashFlowReportDetail = $this->cashFlowReportDetailRepository->findWithoutFail($id);
 
         if (empty($cashFlowReportDetail)) {
-            return $this->sendError('Cash Flow Report Detail not found');
+            return $this->sendError(trans('custom.cash_flow_report_detail_not_found'));
         }
 
         $cashFlowReportDetail->delete();

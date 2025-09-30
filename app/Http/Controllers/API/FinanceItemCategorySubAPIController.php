@@ -84,7 +84,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $this->financeItemCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeItemCategorySubs = $this->financeItemCategorySubRepository->all();
 
-        return $this->sendResponse($financeItemCategorySubs->toArray(), 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($financeItemCategorySubs->toArray(), trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
 
@@ -270,13 +270,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $itemCategorySubArray = [];
         }
 
-        return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($itemCategorySubArray, trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
     public function getSubcategoryExpiryStatus(Request $request){
         $input = $request->all();
         $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN', 'trackingType')->first();
-        return $this->sendResponse($expiryStatus, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($expiryStatus, trans('custom.finance_item_category_subs_retrieved_successfully'));
 
     }
 
@@ -305,7 +305,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                                             ->groupBy('itemCategorySubID')
                                             ->get();
 
-        return $this->sendResponse($subCategories, 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($subCategories, trans('custom.finance_item_category_subs_retrieved_successfully'));
     }
 
     /**
@@ -426,7 +426,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $input = array_except($input,['companySystemID','finance_item_category_master']);
 
             if (empty($financeItemCategorySubs)) {
-                return $this->sendError('Sub category not found');
+                return $this->sendError(trans('custom.sub_category_not_found'));
             }
 
             foreach ($input as $key => $value) {
@@ -459,7 +459,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financeItemCategorySubs = $this->financeItemCategorySubRepository->create($input);
         }
 
-        return $this->sendResponse($financeItemCategorySubs->toArray(), 'Finance Item Category Sub saved successfully');
+        return $this->sendResponse($financeItemCategorySubs->toArray(), trans('custom.finance_item_category_sub_saved_successfully'));
     }
 
     /**
@@ -476,10 +476,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub retrieved successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), trans('custom.finance_item_category_sub_retrieved_successfully'));
     }
 
     /**
@@ -499,7 +499,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
         $previosValue = $financeItemCategorySub->toArray();
@@ -518,7 +518,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $this->auditLog($db, $id,$uuid, "financeitemcategorysub", $financeItemCategorySub->categoryDescription." has updated", "U", $newValue, $previosValue);
          }
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), trans('custom.finance_item_category_sub_updated_successfully'));
     }
 
     public function finance_item_category_subs_update(Request $request)
@@ -542,7 +542,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
            if(!$include_pl_for_grvn) {
                if(!$balance_sheet_gl_code) {
                    if($consumption_gl_code) {
-                       return $this->sendError("Please check 'Include PL For GRV YN'",500);
+                       return $this->sendError(trans('custom.please_check_include_pl_for_grv_yn'),500);
                    }
                }
            }
@@ -556,85 +556,85 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         if ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
 
         } elseif ($itemCategory == 1 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
 
         } elseif ($itemCategory == 1 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
 
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
         } elseif ($itemCategory == 2 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         } elseif ($itemCategory == 3 && ($categoryTypeID->contains(2) || $categoryTypeID->contains(1) || $categoryTypeID->contains(1) && $categoryTypeID->contains(2))) {
             if(!$balance_sheet_gl_code){
-                return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+                return $this->sendError(trans('custom.please_select_balance_sheet_gl_code'),500);
             }
         } elseif ($itemCategory == 4  && $categoryTypeIDLength == 1 && $categoryTypeID->contains(2)) {
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
         } elseif ($itemCategory == 4 && $categoryTypeIDLength == 1 && $categoryTypeID->contains(1)) {
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
         } elseif ($itemCategory == 4 && $categoryTypeIDLength == 2 && $categoryTypeID->contains(1) && $categoryTypeID->contains(2)) {
             if(!$cogs_gl_code) {
-                return $this->sendError("Please select 'COGS GL Code'",500);
+                return $this->sendError(trans('custom.please_select_cogs_gl_code'),500);
             }
             if(!$consumption_gl_code) {
-                return $this->sendError("Please select 'Consumption GL Code'",500);
+                return $this->sendError(trans('custom.please_select_consumption_gl_code'),500);
             }
             if(!$revenue_gl_code){
-                return $this->sendError("Please select 'Revenue GL Code'",500);
+                return $this->sendError(trans('custom.please_select_revenue_gl_code'),500);
             }
         }
-        
+
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
         $financeGLcodePL = ChartOfAccount::find(isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] : null);
         $financeGLcodeRevenue = ChartOfAccount::find(isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] : null);
@@ -642,7 +642,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         if( ($input['isBSGlSelected']) && (($financeGLcodePL && ($financeGLcodePL->controlAccountsSystemID == 3 || $financeGLcodePL->controlAccountsSystemID == 4)) || ($financeCogsGLcodePL && ($financeCogsGLcodePL->controlAccountsSystemID == 3 || $financeCogsGLcodePL->controlAccountsSystemID == 4))) )
         {
-            return $this->sendError('Balance sheet GL code/s has been selected for Consumption/COGS GL code selection. Generally these two fields correspond to expense GL codes. Are you sure you want to proceed ?', 500,['type' => 'BSGlSelected']);
+            return $this->sendError(trans('custom.balance_sheet_gl_code_selected_for_consumption_cogs'), 500,['type' => 'BSGlSelected']);
         }
 
 
@@ -673,7 +673,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                         $newItemArr = $categoryTypeNew->pluck('id')->toArray();
                         foreach ($itemArr as $item) {
                             if (!in_array($item, $newItemArr)) {
-                                return $this->sendError("Cannot change the Category Type. This Item Finance Sub Category is already selected for Item/Items.'", 500);
+                                return $this->sendError(trans('custom.cannot_change_the_category_type_this_item_finance_'), 500);
                             }
                         }
                     }
@@ -744,7 +744,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has updated", "U", $newValue, $previosValue);
             
-            return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
+            return $this->sendResponse($itemCategorySubUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
 
@@ -757,7 +757,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             
             $this->auditLog($db, $itemCategorySubCreate['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has created", "C", $newValue, []);
             
-            return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
+            return $this->sendResponse($itemCategorySubCreate, trans('custom.finance_item_category_sub_created_successfully'));
         }
     }
 
@@ -780,7 +780,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
 
-        return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
 
     }
 
@@ -800,7 +800,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
 
-        return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
+        return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
     }
 
 
@@ -820,11 +820,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
 
         if (empty($financeItemCategorySub)) {
-            return $this->sendError('Finance Item Category Sub not found');
+            return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
         }
 
         $financeItemCategorySub->delete();
 
-        return $this->sendResponse($id, 'Finance Item Category Sub deleted successfully');
+        return $this->sendResponse($id, trans('custom.finance_item_category_sub_deleted_successfully'));
     }
 }

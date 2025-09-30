@@ -76,7 +76,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $this->poAdvancePaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poAdvancePayments = $this->poAdvancePaymentRepository->all();
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payments retrieved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payments_retrieved_successfully'));
     }
 
     /**
@@ -100,7 +100,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
         $poTermAmount = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
             ->where('poID', $input['poID'])
@@ -165,7 +165,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
                 ->update(['isRequested' => 1]);
         }
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payment_saved_successfully'));
     }
 
     /**
@@ -183,10 +183,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
-        return $this->sendResponse($poAdvancePayment->toArray(), 'Po Advance Payment retrieved successfully');
+        return $this->sendResponse($poAdvancePayment->toArray(), trans('custom.po_advance_payment_retrieved_successfully'));
     }
 
     /**
@@ -206,12 +206,12 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         $poAdvancePayment = $this->poAdvancePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($poAdvancePayment->toArray(), 'PoAdvancePayment updated successfully');
+        return $this->sendResponse($poAdvancePayment->toArray(), trans('custom.poadvancepayment_updated_successfully'));
     }
 
     /**
@@ -229,7 +229,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         try {
             $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
             if (empty($poAdvancePayment)) {
-                return $this->sendError('Po Advance Payment not found');
+                return $this->sendError(trans('custom.po_advance_payment_not_found'));
             }
             if ($poAdvancePayment["grvAutoID"]) {
                 $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
@@ -264,7 +264,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
             }
             DB::commit();
-            return $this->sendResponse($id, 'Po advance payment deleted successfully');
+            return $this->sendResponse($id, trans('custom.po_advance_payment_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($id, 'Error Occurred');
@@ -278,7 +278,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->with(['cancelled_by'])->first();
 
         if (empty($AdvancePayment)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $AdvancePayment->poID)->first();
@@ -294,7 +294,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             'ptype' => $detailPaymentType
         );
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function loadPoPaymentTermsLogistic(Request $request)
@@ -310,7 +310,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->with(['category_by', 'vat_sub_category','grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function storePoPaymentTermsLogistic(Request $request)
@@ -326,13 +326,13 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['detail']['supplierID'])->first();
 
         if (empty($supplier)) {
-            return $this->sendError('Supplier not found');
+            return $this->sendError(trans('custom.supplier_not_found'));
         }
 
         // checking grv detail exist
@@ -358,15 +358,15 @@ ORDER BY
 
         if ($purchaseOrder->grvRecieved == 1) {
             if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
-                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+                return $this->sendError(trans('custom.please_select_grv_as_there_is_grv_done_for_this_po'));
             }
         }
 
         if ($purchaseOrder->grvRecieved == 2) {
             if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
-                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+                return $this->sendError(trans('custom.please_select_grv_as_there_is_grv_done_for_this_po'));
             } else if (empty($detail)) {
-                return $this->sendError('PO is fully received you cannot add logistic');
+                return $this->sendError(trans('custom.po_is_fully_received_you_cannot_add_logistic'));
             }
         }
 
@@ -374,7 +374,7 @@ ORDER BY
         $checkCategory = AddonCostCategories::find($input['detail']['logisticCategoryID']);
 
         if (!$checkCategory) {
-            return $this->sendError('Logistic category not found');    
+            return $this->sendError(trans('custom.logistic_category_not_found'));    
         }
 
         if (is_null($checkCategory->itemSystemCode)) {
@@ -468,7 +468,7 @@ ORDER BY
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 
-        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
+        return $this->sendResponse($poAdvancePayments->toArray(), trans('custom.po_advance_payment_saved_successfully'));
     }
 
     public function getLogisticPrintDetail(Request $request)
@@ -492,7 +492,7 @@ ORDER BY
         $purchaseOrder = ProcumentOrder::find($items->poID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
@@ -508,7 +508,7 @@ ORDER BY
             'docRef' => $newRefDocNew
         );
 
-        return $this->sendResponse($printData, 'Data retrieved successfully');
+        return $this->sendResponse($printData, trans('custom.data_retrieved_successfully'));
     }
 
     public function loadPoPaymentTermsLogisticForGRV(Request $request)
@@ -522,7 +522,7 @@ ORDER BY
             ->with(['category_by', 'grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function unlinkLogistic(Request $request)
@@ -531,7 +531,7 @@ ORDER BY
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($request->poAdvPaymentID);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         if ($poAdvancePayment["grvAutoID"]) {
@@ -545,7 +545,7 @@ ORDER BY
 
         $poAdvancePayment = $this->poAdvancePaymentRepository->update(['grvAutoID' => 0], $request->poAdvPaymentID);
 
-        return $this->sendResponse([], 'Successfully unlinked');
+        return $this->sendResponse([], trans('custom.successfully_unlinked'));
     }
 
     public function getPoLogisticPrintPDF(Request $request)
@@ -566,13 +566,13 @@ ORDER BY
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
         if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+            return $this->sendError(trans('custom.po_advance_payment_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::find($poAdvancePayment->poID);
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $PoAdvancePaymentData = PoAdvancePayment::where('poAdvPaymentID', $id)
@@ -775,7 +775,7 @@ ORDER BY
         $company_name = $company->CompanyName;
         $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
 
-        $fileName = 'Advance Payment Request';
+        $fileName = trans('custom.advance_payment_request');
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
@@ -820,66 +820,66 @@ ORDER BY
 
 
                     if (\Helper::checkIsCompanyGroup($input['companyId'])) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
                     }
 
-                    $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                    $data[$x]['Supplier Name'] = $val->supplierName;
-                    $data[$x]['Purchase Order Code'] = $val->poCode;
-                    $data[$x]['Req Date'] =  \Helper::dateFormat($val->reqDate);
-                    $data[$x]['Narration'] = $val->narration;
+                    $data[$x][trans('custom.supplier_code')] = $val->primarySupplierCode;
+                    $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                    $data[$x][trans('custom.purchase_order_code')] = $val->poCode;
+                    $data[$x][trans('custom.req_date')] =  \Helper::dateFormat($val->reqDate);
+                    $data[$x][trans('custom.narration')] = $val->narration;
 
                     if ($input['currencyID'] == 1) {
-                        $data[$x]['PO Currency'] = $val->potrnsCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalSupplierTransactionCurrency,$poTransCurDecimal);
-                        $data[$x]['Req Currency'] = $val->trnsCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmount,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->potrnsCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalSupplierTransactionCurrency,$poTransCurDecimal);
+                        $data[$x][trans('custom.req_currency')] = $val->trnsCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmount,$decimal);
                     } else if ($input['currencyID'] == 2) {
-                        $data[$x]['PO Currency'] = $val->localCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalLocalCurrency,$decimal);
-                        $data[$x]['Req Currency'] = $val->localCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmountInPOLocalCur,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->localCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalLocalCurrency,$decimal);
+                        $data[$x][trans('custom.req_currency')] = $val->localCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmountInPOLocalCur,$decimal);
                     } else if ($input['currencyID'] == 3) {
-                        $data[$x]['PO Currency'] = $val->rptCurrencyCode;
-                        $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency,$decimal);
-                        $data[$x]['Req Currency'] = $val->rptCurrencyCode;
-                        $data[$x]['Req Amount'] = round($val->reqAmountInPORptCur,$decimal);
+                        $data[$x][trans('custom.po_currency')] = $val->rptCurrencyCode;
+                        $data[$x][trans('custom.po_amount')] = round($val->poTotalComRptCurrency,$decimal);
+                        $data[$x][trans('custom.req_currency')] = $val->rptCurrencyCode;
+                        $data[$x][trans('custom.req_amount')] = round($val->reqAmountInPORptCur,$decimal);
                     }else{
-                        $data[$x]['PO Currency'] = '';
-                        $data[$x]['PO Amount'] = round(0,$decimal);
-                        $data[$x]['Req Currency'] = '';
-                        $data[$x]['Req Amount'] = round(0,$decimal);
+                        $data[$x][trans('custom.po_currency')] = '';
+                        $data[$x][trans('custom.po_amount')] = round(0,$decimal);
+                        $data[$x][trans('custom.req_currency')] = '';
+                        $data[$x][trans('custom.req_amount')] = round(0,$decimal);
                     }
 
-                    $data[$x]['Paid Amount'] = round($val->SumOfpaymentAmount,$decimal);
+                    $data[$x][trans('custom.paid_amount')] = round($val->SumOfpaymentAmount,$decimal);
 
                     $status = "";
                     if($val->status == 0){
-                        $status= "Payment Not Created";
+                        $status= trans('custom.payment_not_created');
                     } else if($val->status == 1){
-                        $status = "Payment Partially Released";
+                        $status = trans('custom.payment_partially_released');
                     }
                     else if($val->status == 2){
-                        $status= "Payment Released";
+                        $status= trans('custom.payment_released');
                     }
                     else if($val->status == 3){
-                        $status= "Payment Created but Not Released";
+                        $status= trans('custom.payment_created_but_not_released');
                     }
 
-                    $data[$x]['Status'] = $status;
+                    $data[$x][trans('custom.status')] = $status;
 
                     if($input['reportTypeID'] == 'APRA') {
-                        $data[$x]['<=30'] = number_format($val->case1, $decimal);
-                        $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
-                        $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
-                        $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
-                        $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
-                        $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
-                        $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
-                        $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
-                        $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
-                        $data[$x]['Over 365'] = number_format($val->case10, $decimal);
+                        $data[$x][trans('custom.aging_0_30')] = number_format($val->case1, $decimal);
+                        $data[$x][trans('custom.aging_31_60')] = number_format($val->case2, $decimal);
+                        $data[$x][trans('custom.aging_61_90')] = number_format($val->case3, $decimal);
+                        $data[$x][trans('custom.aging_91_120')] = number_format($val->case4, $decimal);
+                        $data[$x][trans('custom.aging_121_150')] = number_format($val->case5, $decimal);
+                        $data[$x][trans('custom.aging_151_180')] = number_format($val->case6, $decimal);
+                        $data[$x][trans('custom.aging_181_210')] = number_format($val->case7, $decimal);
+                        $data[$x][trans('custom.aging_211_240')] = number_format($val->case8, $decimal);
+                        $data[$x][trans('custom.aging_241_365')] = number_format($val->case9, $decimal);
+                        $data[$x][trans('custom.aging_over_365')] = number_format($val->case10, $decimal);
                     }
                     $x++;
                 }
@@ -890,11 +890,11 @@ ORDER BY
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
         $path = 'accounts-payable/report/advance_payment_request/excel/';
             if($input['reportTypeID'] == 'APRA') {
-                $title = 'Advance Payment Request Aging';
+                $title = trans('custom.advance_payment_request_aging');
             }
             else
             {
-                $title = 'Advance Payment Request Detail';
+                $title = trans('custom.advance_payment_request_detail');
             }
             
             $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
@@ -918,11 +918,11 @@ ORDER BY
         $advancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
 
         if (empty($advancePayment)) {
-            return $this->sendError('Advance Payment Terms not found');
+            return $this->sendError(trans('custom.advance_payment_terms_not_found'));
         }
 
         if ($advancePayment->selectedToPayment == -1) {
-            return $this->sendError('Advance payment request is slected for payment voucher, therefore cannot cancel', 500);
+            return $this->sendError(trans('custom.advance_payment_request_is_slected_for_payment_vou'), 500);
         }
 
         $advancePayment->cancelledYN = 1; 
@@ -942,6 +942,6 @@ ORDER BY
             'comPercentage' => 0
         ]);
 
-        return $this->sendResponse([], 'Successfully cancelled');
+        return $this->sendResponse([], trans('custom.successfully_cancelled'));
     }
 }

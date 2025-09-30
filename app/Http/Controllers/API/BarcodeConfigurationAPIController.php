@@ -73,7 +73,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $this->barcodeConfigurationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $barcodeConfigurations = $this->barcodeConfigurationRepository->all();
 
-        return $this->sendResponse($barcodeConfigurations->toArray(), 'Barcode Configurations retrieved successfully');
+        return $this->sendResponse($barcodeConfigurations->toArray(), trans('custom.barcode_configurations_retrieved_successfully'));
     }
 
     /**
@@ -131,16 +131,16 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $input['companyID'] = $company->CompanyID;
 
-        //return $this->sendResponse($input, 'Barcode Configuration saved successfully');
+        //return $this->sendResponse($input, trans('custom.barcode_configuration_saved_successfully'));
 
         $barcodeConfiguration = $this->barcodeConfigurationRepository->create($input);
 
-        return $this->sendResponse($barcodeConfiguration->toArray(), 'Barcode Configuration saved successfully');
+        return $this->sendResponse($barcodeConfiguration->toArray(), trans('custom.barcode_configuration_saved_successfully'));
     }
 
     /**
@@ -187,10 +187,10 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $barcodeConfiguration = $this->barcodeConfigurationRepository->findWithoutFail($id);
 
         if (empty($barcodeConfiguration)) {
-            return $this->sendError('Barcode Configuration not found');
+            return $this->sendError(trans('custom.barcode_configuration_not_found'));
         }
 
-        return $this->sendResponse($barcodeConfiguration->toArray(), 'Barcode Configuration retrieved successfully');
+        return $this->sendResponse($barcodeConfiguration->toArray(), trans('custom.barcode_configuration_retrieved_successfully'));
     }
 
     /**
@@ -257,12 +257,12 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $barcodeConfiguration = $this->barcodeConfigurationRepository->findWithoutFail($id);
 
         if (empty($barcodeConfiguration)) {
-            return $this->sendError('Barcode Configuration not found');
+            return $this->sendError(trans('custom.barcode_configuration_not_found'));
         }
 
         $barcodeConfiguration = $this->barcodeConfigurationRepository->update($input, $id);
 
-        return $this->sendResponse($barcodeConfiguration->toArray(), 'BarcodeConfiguration updated successfully');
+        return $this->sendResponse($barcodeConfiguration->toArray(), trans('custom.barcodeconfiguration_updated_successfully'));
     }
 
     /**
@@ -309,12 +309,12 @@ class BarcodeConfigurationAPIController extends AppBaseController
         $barcodeConfiguration = $this->barcodeConfigurationRepository->findWithoutFail($id);
 
         if (empty($barcodeConfiguration)) {
-            return $this->sendError('Barcode Configuration not found');
+            return $this->sendError(trans('custom.barcode_configuration_not_found'));
         }
 
         $barcodeConfiguration->delete();
 
-        return $this->sendResponse($id, 'Barcode Configuration deleted successfully');
+        return $this->sendResponse($id, trans('custom.barcode_configuration_deleted_successfully'));
     }
 
     public function getBarcodeConfigurationFormData(Request $request)
@@ -340,7 +340,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             'paper_szie' => $paper_szie,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -688,7 +688,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
         }
         else {
-            return $this->sendError('Barcode Configuration not found');
+            return $this->sendError(trans('custom.barcode_configuration_not_found'));
         }
     }
 
@@ -700,11 +700,11 @@ class BarcodeConfigurationAPIController extends AppBaseController
         if(isset($configuration))
         {
 
-        return $this->sendResponse(true, 'Record retrieved successfully');
+        return $this->sendResponse(true, trans('custom.record_retrieved_successfully_1'));
         }
         else
         {
-            return $this->sendError('Barcode Configuration not found');
+            return $this->sendError(trans('custom.barcode_configuration_not_found'));
         }
 
        

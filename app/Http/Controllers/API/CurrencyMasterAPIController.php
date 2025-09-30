@@ -69,7 +69,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $this->currencyMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyMasters = $this->currencyMasterRepository->all();
 
-        return $this->sendResponse($currencyMasters->toArray(), 'Currency Masters retrieved successfully');
+        return $this->sendResponse($currencyMasters->toArray(), trans('custom.currency_masters_retrieved_successfully'));
     }
 
     /**
@@ -87,7 +87,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $this->currencyMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyMasterRepository = $this->currencyMasterRepository->all();
 
-        return $this->sendResponse($currencyMasterRepository->toArray(), 'Country Masters retrieved successfully');
+        return $this->sendResponse($currencyMasterRepository->toArray(), trans('custom.country_masters_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class CurrencyMasterAPIController extends AppBaseController
             $supplierCurrencies = [];
         }
 
-        return $this->sendResponse($supplierCurrencies, 'Supplier Currencies retrieved successfully');
+        return $this->sendResponse($supplierCurrencies, trans('custom.supplier_currencies_retrieved_successfully'));
     }
 
     public function getAllConversionByCurrency(Request $request)
@@ -127,7 +127,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $currencyMaster = $this->currencyMasterRepository->findWithoutFail($id);
         $reportingId = 0;
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.currency_master_not_found'));
         }
         $employee = Helper::getEmployeeInfo();
         if(!empty($employee)){
@@ -142,7 +142,7 @@ class CurrencyMasterAPIController extends AppBaseController
             'reportingCurrency' => $reportingId,
             'conversions' => $conversions->toArray()
         );
-        return $this->sendResponse($array, 'Currency conversions retrieved successfully');
+        return $this->sendResponse($array, trans('custom.currency_conversions_retrieved_successfully'));
     }
 
     /**
@@ -171,7 +171,7 @@ class CurrencyMasterAPIController extends AppBaseController
                                             ->where('currencyID',$request['currencyId'])
                                             ->first();
         if($supplierCurrencyCheck){
-            return $this->sendError('Selected currency is assigned already',500);
+            return $this->sendError(trans('custom.selected_currency_is_assigned_already'),500);
         }
 
         $supplierCurrency = new SupplierCurrency();
@@ -197,7 +197,7 @@ class CurrencyMasterAPIController extends AppBaseController
             $temBankMemo->save();
         }
 
-        return $this->sendResponse($supplierCurrency, 'Supplier Currencies added successfully');
+        return $this->sendResponse($supplierCurrency, trans('custom.supplier_currencies_added_successfully'));
     }
 
     /**
@@ -217,7 +217,7 @@ class CurrencyMasterAPIController extends AppBaseController
             if ($request['isDefault'] == true) {
 
                 if ($request['isDefault'] == -1 && $request['isAssigned'] == false) {
-                    return $this->sendError('Cannot update,At least one currency should be default.', 500);
+                    return $this->sendError(trans('custom.cannot_updateat_least_one_currency_should_be_defau'), 500);
                 }
                 $supplierCurrencies = SupplierCurrency::where('supplierCodeSystem', $request['supplierCodeSystem'])->get();
                 foreach ($supplierCurrencies as $sc) {
@@ -229,7 +229,7 @@ class CurrencyMasterAPIController extends AppBaseController
                 $isSupplierCurrency= SupplierCurrency::where('supplierCodeSystem', $request['supplierCodeSystem'])->where('currencyID', $request['currencyID'])->first();
 
                 if ($request['isDefault'] == false && $isSupplierCurrency->isDefault == -1) {
-                    return $this->sendError('Cannot update,At least one currency should be default.', 500);
+                    return $this->sendError(trans('custom.cannot_updateat_least_one_currency_should_be_defau'), 500);
                 }
 
             }
@@ -246,7 +246,7 @@ class CurrencyMasterAPIController extends AppBaseController
             $supplierCurrency->isAssigned = $request['isAssigned'];
             $supplierCurrency->save();
         }
-        return $this->sendResponse($supplierCurrency, 'Supplier Currencies updated successfully');
+        return $this->sendResponse($supplierCurrency, trans('custom.supplier_currencies_updated_successfully'));
     }
 
     /**
@@ -309,7 +309,7 @@ class CurrencyMasterAPIController extends AppBaseController
             }
         }
         DB::commit();
-        return $this->sendResponse($currencyMasters->toArray(), 'Currency Master saved successfully');
+        return $this->sendResponse($currencyMasters->toArray(), trans('custom.currency_master_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
@@ -330,10 +330,10 @@ class CurrencyMasterAPIController extends AppBaseController
         $currencyMaster = $this->currencyMasterRepository->findWithoutFail($id);
 
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.currency_master_not_found'));
         }
 
-        return $this->sendResponse($currencyMaster->toArray(), 'Currency Master retrieved successfully');
+        return $this->sendResponse($currencyMaster->toArray(), trans('custom.currency_master_retrieved_successfully'));
     }
 
     /**
@@ -353,7 +353,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $currencyMaster = $this->currencyMasterRepository->findWithoutFail($id);
 
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.currency_master_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -374,7 +374,7 @@ class CurrencyMasterAPIController extends AppBaseController
 
         $currencyMaster = $this->currencyMasterRepository->update($input, $id);
 
-        return $this->sendResponse($currencyMaster->toArray(), 'Currency Master updated successfully');
+        return $this->sendResponse($currencyMaster->toArray(), trans('custom.currency_master_updated_successfully'));
     }
 
     /**
@@ -391,7 +391,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $currencyMaster = $this->currencyMasterRepository->findWithoutFail($id);
 
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.currency_master_not_found'));
         }
 
         $currencyMaster->delete();
@@ -399,7 +399,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $this->currencyConversionRepository->deleteWhere(['masterCurrencyID' => $id]);
         $this->currencyConversionRepository->deleteWhere(['subCurrencyID' => $id]);
 
-        return $this->sendResponse($id, 'Currency Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.currency_master_deleted_successfully'));
     }
 
     public function getCompanyLocalCurrency(Request $request)
@@ -410,16 +410,16 @@ class CurrencyMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companyID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company Master not found');
+            return $this->sendError(trans('custom.company_master_not_found'));
         }
 
         if (!empty($company->localCurrencyID)) {
             $localCurrency = $company->localCurrencyID;
         } else {
-            return $this->sendError('Company local currency not found');
+            return $this->sendError(trans('custom.company_local_currency_not_found'));
         }
 
-        return $this->sendResponse($localCurrency, 'Data retrieved successfully');
+        return $this->sendResponse($localCurrency, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -431,16 +431,16 @@ class CurrencyMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companyID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company Master not found');
+            return $this->sendError(trans('custom.company_master_not_found'));
         }
 
         if (!empty($company->reportingCurrency)) {
             $reportingCurrency = $company->reportingCurrency;
         } else {
-            return $this->sendError('Company reporting currency not found');
+            return $this->sendError(trans('custom.company_reporting_currency_not_found'));
         }
 
-        return $this->sendResponse($reportingCurrency, 'Data retrieved successfully');
+        return $this->sendResponse($reportingCurrency, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -452,17 +452,17 @@ class CurrencyMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companyID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company Master not found');
+            return $this->sendError(trans('custom.company_master_not_found'));
         }
 
         if (!empty($company->reportingCurrency)) {
             $reportingCurrency = $company->reportingCurrency;
             $reportingCurrencyCode = CurrencyMaster::find($reportingCurrency);
         } else {
-            return $this->sendError('Company reporting currency not found');
+            return $this->sendError(trans('custom.company_reporting_currency_not_found'));
         }
 
-        return $this->sendResponse($reportingCurrencyCode, 'Data retrieved successfully');
+        return $this->sendResponse($reportingCurrencyCode, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -474,17 +474,17 @@ class CurrencyMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companyID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company Master not found');
+            return $this->sendError(trans('custom.company_master_not_found'));
         }
 
         if (!empty($company->localCurrencyID)) {
             $localCurrency = $company->localCurrencyID;
             $localCurrencyCode = CurrencyMaster::find($localCurrency);
         } else {
-            return $this->sendError('Company local currency not found');
+            return $this->sendError(trans('custom.company_local_currency_not_found'));
         }
 
-        return $this->sendResponse($localCurrencyCode, 'Data retrieved successfully');
+        return $this->sendResponse($localCurrencyCode, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -503,6 +503,6 @@ class CurrencyMasterAPIController extends AppBaseController
             ->whereIn('currencyID', $currencyIds)
             ->get();
 
-        return $this->sendResponse($companyCurrencies, 'Data retrieved successfully');
+        return $this->sendResponse($companyCurrencies, trans('custom.data_retrieved_successfully'));
     }
 }

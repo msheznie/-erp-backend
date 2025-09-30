@@ -138,7 +138,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
 
                 $categoryMasterUpdate = CustomerMasterCategory::find($request->categoryID);
                 if (!$categoryMasterUpdate) {
-                    return $this->sendError('Customer category not found');
+                    return $this->sendError(trans('custom.customer_category_not_found'));
                 }
 
                 $categoryMasterUpdate->categoryDescription = $input["categoryDescription"];
@@ -337,7 +337,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $customerMasterCategory = $this->customerMasterCategoryRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategory)) {
-            return $this->sendError('Customer Master Category not found', 500);
+            return $this->sendError(trans('custom.customer_master_category_not_found'), 500);
         }
 
         $checkCustomerMaster = CustomerMaster::where('customerCategoryID', $id)->first();
@@ -425,6 +425,6 @@ class CustomerMasterCategoryAPIController extends AppBaseController
             })->where('isGroup',0)
             ->get(['companySystemID','CompanyID','CompanyName']);
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.companies_retrieved_successfully'));
     }
 }

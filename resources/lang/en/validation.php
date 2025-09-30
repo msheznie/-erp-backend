@@ -105,6 +105,67 @@ return [
         ],
         'select' => [
             'select' => 'The :attribute field is required.'
+        ],
+        'reportType' => [
+            'required' => 'The report type field is required.',
+            'not_in' => 'The report type field is required.'
+        ],
+        'reportType.*' => [
+            'required' => 'The report type field is required.',
+            'not_in' => 'The report type field is required.'
+        ],
+        'companySystemId' => [
+            'required' => 'Company id not found.'
+        ],
+        'details' => [
+            'required' => 'Materiel Issue details not found.'
+        ],
+        'itemIssueAutoId' => [
+            'required' => 'Material issue auto id not found.'
+        ],
+        'reportTypeID' => [
+            'required' => 'The report type field is required.'
+        ],
+        'fromDate' => [
+            'required' => 'The from date field is required.'
+        ],
+        'toDate' => [
+            'required' => 'The to date field is required.',
+            'date' => 'The to date must be a valid date.',
+            'after_or_equal' => 'The to date must be after or equal to from date.'
+        ],
+        'assetCategory' => [
+            'required' => 'The asset category field is required.'
+        ],
+        'typeID' => [
+            'required' => 'The type field is required.'
+        ],
+        'financePeriod' => [
+            'required' => 'The finance period field is required.'
+        ],
+        'financeYear' => [
+            'required' => 'The finance year field is required.'
+        ],
+        'currencyID' => [
+            'required' => 'The currency field is required.'
+        ],
+        'fromMonth' => [
+            'required' => 'The from month field is required.'
+        ],
+        'toMonth' => [
+            'required' => 'The to month field is required.'
+        ],
+        'year' => [
+            'required' => 'The year field is required.'
+        ],
+        'month' => [
+            'required' => 'The month field is required.'
+        ],
+        'glAccounts' => [
+            'required' => 'The GL accounts field is required.'
+        ],
+        'assets' => [
+            'required' => 'The assets field is required.'
         ]
     ],
 
@@ -211,7 +272,33 @@ return [
         'supplierTransCurrencyID' => 'Currency',
         'BPVsupplierID' => 'Supplier',
         'directPaymentPayeeEmpID' => 'Payee',
-        'directPaymentPayee' => 'Other'
+        'directPaymentPayee' => 'Other',
+        'fromDate' => 'From Date',
+        'toDate' => 'To Date',
+        'Items' => 'Items',
+        'reportType' => 'Report Type',
+        'chartOfAccountAllocationMasterID' => 'chart of account allocation id',
+        'allocationmaid' => 'allocation maid',
+        'productLineID' => 'product line id',
+        'percentage' => 'percentage',
+        'glCodes' => 'GL Codes',
+        'departments' => 'Departments',
+        'jvType' => 'JV Type',
+        'documentTypes' => 'Document Types',
+        'reportTypeID' => 'Report Type',
+        'fromDate' => 'From Date',
+        'toDate' => 'To Date',
+        'assetCategory' => 'Asset Category',
+        'typeID' => 'Type',
+        'financePeriod' => 'Finance Period',
+        'financeYear' => 'Finance Year',
+        'currencyID' => 'Currency',
+        'fromMonth' => 'From Month',
+        'toMonth' => 'To Month',
+        'year' => 'Year',
+        'month' => 'Month',
+        'glAccounts' => 'GL Accounts',
+        'assets' => 'Assets'
     ],
 
 ];

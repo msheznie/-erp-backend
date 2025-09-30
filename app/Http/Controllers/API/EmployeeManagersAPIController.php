@@ -65,7 +65,7 @@ class EmployeeManagersAPIController extends AppBaseController
         $this->employeeManagersRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeManagers = $this->employeeManagersRepository->all();
 
-        return $this->sendResponse($employeeManagers->toArray(), 'Employee Managers retrieved successfully');
+        return $this->sendResponse($employeeManagers->toArray(), trans('custom.employee_managers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmployeeManagersAPIController extends AppBaseController
 
         $employeeManagers = $this->employeeManagersRepository->create($input);
 
-        return $this->sendResponse($employeeManagers->toArray(), 'Employee Managers saved successfully');
+        return $this->sendResponse($employeeManagers->toArray(), trans('custom.employee_managers_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmployeeManagersAPIController extends AppBaseController
         $employeeManagers = $this->employeeManagersRepository->findWithoutFail($id);
 
         if (empty($employeeManagers)) {
-            return $this->sendError('Employee Managers not found');
+            return $this->sendError(trans('custom.employee_managers_not_found'));
         }
 
-        return $this->sendResponse($employeeManagers->toArray(), 'Employee Managers retrieved successfully');
+        return $this->sendResponse($employeeManagers->toArray(), trans('custom.employee_managers_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmployeeManagersAPIController extends AppBaseController
         $employeeManagers = $this->employeeManagersRepository->findWithoutFail($id);
 
         if (empty($employeeManagers)) {
-            return $this->sendError('Employee Managers not found');
+            return $this->sendError(trans('custom.employee_managers_not_found'));
         }
 
         $employeeManagers = $this->employeeManagersRepository->update($input, $id);
 
-        return $this->sendResponse($employeeManagers->toArray(), 'EmployeeManagers updated successfully');
+        return $this->sendResponse($employeeManagers->toArray(), trans('custom.employeemanagers_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class EmployeeManagersAPIController extends AppBaseController
         $employeeManagers = $this->employeeManagersRepository->findWithoutFail($id);
 
         if (empty($employeeManagers)) {
-            return $this->sendError('Employee Managers not found');
+            return $this->sendError(trans('custom.employee_managers_not_found'));
         }
 
         $employeeManagers->delete();
 
-        return $this->sendResponse($id, 'Employee Managers deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_managers_deleted_successfully'));
     }
 }

@@ -140,7 +140,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $this->customerReceivePaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerReceivePayments = $this->customerReceivePaymentRepository->all();
 
-        return $this->sendResponse($customerReceivePayments->toArray(), 'Customer Receive Payments retrieved successfully');
+        return $this->sendResponse($customerReceivePayments->toArray(), trans('custom.customer_receive_payments_retrieved_successfully'));
     }
 
     /**
@@ -190,7 +190,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_required'),
                     500
                 );
             }
@@ -262,10 +262,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         },'bank_info'])->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
-        return $this->sendResponse($customerReceivePayment->toArray(), 'Customer Receive Payment retrieved successfully');
+        return $this->sendResponse($customerReceivePayment->toArray(), trans('custom.customer_receive_payment_retrieved_successfully'));
     }
 
     /**
@@ -324,7 +324,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_required'),
                 500
             );
         }
@@ -333,7 +333,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Receipt Voucher not found');
+            return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
         if(empty($input['projectID'])){
@@ -378,12 +378,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!', 500);
+            return $this->sendError(trans('custom.document_date_is_not_within_financial_period'), 500);
         }
 
 
         if(empty($input['custTransactionCurrencyID'])){
-            $message = 'Currency field is required.';
+            $message = trans('custom.currency_field_required');
             return $this->sendError($message, 500);
         }
 
@@ -424,17 +424,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if(isset($input['payeeTypeID'])){
                 if($input['payeeTypeID'] == 1){
                     if(!$input['customerID'] > 0){
-                        return $this->sendError('Customer field is required', 500);
+                        return $this->sendError(trans('custom.customer_field_is_required'), 500);
                     }
                 }
                 if($input['payeeTypeID'] == 2){
                     if(!$input['employeeID'] > 0){
-                        return $this->sendError('Employee field is required', 500);
+                        return $this->sendError(trans('custom.employee_field_is_required'), 500);
                     }
                 }
                 if($input['payeeTypeID'] == 3){
                     if($input['PayeeName'] == null){
-                        return $this->sendError('Other field is required', 500);
+                        return $this->sendError(trans('custom.other_field_is_required'), 500);
                     }
                 }
 
@@ -455,13 +455,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['customerID'] != $customerReceivePayment->customerID) {
 
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                    return $this->sendError(trans('custom.invoice_details_exist_cannot_change_customer'), 500);
                 }
 
                 /*if customer change*/
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
                 if (empty($customer)) {
-                    return $this->sendError('Customer not found.', 500);
+                    return $this->sendError(trans('custom.customer_not_found_1'), 500);
                 }
                 $input['customerGLCode'] = $customer->custGLaccount;
                 $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
@@ -518,7 +518,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             if ($input['custTransactionCurrencyID'] != $customerReceivePayment->custTransactionCurrencyID) {
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                    return $this->sendError(trans('custom.invoice_details_exist_cannot_change_currency'), 500);
                 } else {
                     $myCurr = $input['custTransactionCurrencyID'];
                     $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
@@ -735,7 +735,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                     ->count();
                 if ($customerReceivePaymentDetailCount == 0) {
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
             }
             else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
@@ -743,13 +743,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->count();
 
                 if($input['documentType'] == 14 && $checkDirectItemsCount == 0){
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
 
                 $checkAdvReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->count();
 
                 if ($checkAdvReceiptDetails == 0 && $checkDirectItemsCount == 0) {
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
             }
             // checking minus value
@@ -764,7 +764,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $netMinustot = $checkReciveDetailMinusTotal + $checkDirectMinusTotal;
 
                 if ($netMinustot < 0) {
-                    return $this->sendError('Net amount cannot be minus total', 500);
+                    return $this->sendError(trans('custom.net_amount_cannot_be_minus_total'), 500);
                 }
             }
 
@@ -792,7 +792,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ->count();
 
                             if ($checkAmount > 0) {
-                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                                return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         } elseif ($row['addedDocumentSystemID'] == 19) {
                             $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
@@ -808,7 +808,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ->count();
 
                             if ($checkAmount > 0) {
-                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                                return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         }
                     }
@@ -825,7 +825,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
             }
 
@@ -841,7 +841,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     })
                     ->count();
                 if ($input['documentType'] == 14 && $checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
 
                 $checkAdvReceiptDetailsAmount = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)
@@ -856,7 +856,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                                                         ->count();
 
                 if ($checkAdvReceiptDetailsAmount > 0 || $checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
             }
 
@@ -920,7 +920,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                 if ($error_count > 0) {
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
                 }
             }
 
@@ -959,7 +959,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                 if ($error_count > 0) {
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
                 }
             }
             // updating accounts receivable ledger table
@@ -1001,14 +1001,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                         if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount'] + $_documentTransAmount), $documentCurrencyDecimalPlace)) {
 
-                            $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                            $itemDrt = trans('custom.selected_invoice_booked_more_than_amount', ['invoice' => $item['bookingInvCode']]);
                             $itemExistArray[] = [$itemDrt];
     
                         }
                     }else {
                         if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
 
-                            $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                            $itemDrt = trans('custom.selected_invoice_booked_more_than_amount', ['invoice' => $item['bookingInvCode']]);
                             $itemExistArray[] = [$itemDrt];
     
                         }
@@ -1128,11 +1128,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
 
                 if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                 }
 
                 if($input['documentType'] == 15 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -1154,7 +1154,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $taxDetail['payeeCode'] = $customer->CutomerCode;
                         $taxDetail['payeeName'] = $customer->CustomerName;
                     }else{
-                        return $this->sendError('Customer not found', 500);
+                        return $this->sendError(trans('custom.customer_not_found'), 500);
                     }
                 }else {
                     $taxDetail['payeeSystemCode'] = 0;
@@ -1197,7 +1197,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                       ->first();
 
                 if ($pdcLogValidation) {
-                    return $this->sendError('PDC Cheque date cannot be empty', 500); 
+                    return $this->sendError(trans('custom.pdc_cheque_date_cannot_be_empty'), 500); 
                 }
 
                 $pdcLogValidationChequeNo = PdcLog::where('documentSystemID', $input['documentSystemID'])
@@ -1206,7 +1206,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                       ->first();
 
                 if ($pdcLogValidationChequeNo) {
-                    return $this->sendError('PDC Cheque no cannot be empty', 500); 
+                    return $this->sendError(trans('custom.pdc_cheque_no_cannot_be_empty'), 500); 
                 }
 
 
@@ -1228,7 +1228,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                       ->get();
 
                 if (count($pdcLog) == 0) {
-                    return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                    return $this->sendError(trans('custom.pdc_cheques_not_created_please_create_atleast_one_'), 500);
                 } 
 
                 $pdcLogAmount = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
@@ -1238,14 +1238,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
 
                 if ($checkingAmount > 0.001 || $checkingAmount < 0) {
-                    return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
+                    return $this->sendError(trans('custom.pdc_cheque_amount_should_equal_to_pv_total_amount'), 500);
                 }
 
                 $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "pdc-receivable-account");
 
                 if (is_null($checkPlAccount)) {
-                    return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
-                } 
+                    return $this->sendError(trans('custom.please_configure_pdc_payable_account_for_payment_voucher'), 500);
+                }
             }
 
             if ($input['documentType'] == 14) {
@@ -1327,7 +1327,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($input, 'Receipt Voucher updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($input, trans('custom.receipt_voucher_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateCustomerReceivePaymentAPIRequest $request)
@@ -1340,7 +1340,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_required'),
                 500
             );
         }
@@ -1349,7 +1349,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Receipt Voucher not found');
+            return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
@@ -1390,7 +1390,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!', 500);
+            return $this->sendError(trans('custom.document_date_is_not_within_financial_period'), 500);
         }
 
         $validator = \Validator::make($input, [
@@ -1423,13 +1423,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['customerID'] != $customerReceivePayment->customerID) {
 
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                    return $this->sendError(trans('custom.invoice_details_exist_cannot_change_customer'), 500);
                 }
 
                 /*if customer change*/
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
                 if (empty($customer)) {
-                    return $this->sendError('Customer not found.', 500);
+                    return $this->sendError(trans('custom.customer_not_found_1'), 500);
                 }
                 $input['customerGLCode'] = $customer->custGLaccount;
                 $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
@@ -1486,7 +1486,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             if ($input['custTransactionCurrencyID'] != $customerReceivePayment->custTransactionCurrencyID) {
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                    return $this->sendError(trans('custom.invoice_details_exist_cannot_change_currency'), 500);
                 } else {
                     $myCurr = $input['custTransactionCurrencyID'];
                     $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
@@ -1695,7 +1695,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                     ->count();
                 if ($customerReceivePaymentDetailCount == 0) {
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
             }
             else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
@@ -1703,13 +1703,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->count();
 
                 if($input['documentType'] == 14 && $checkDirectItemsCount == 0){
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
 
                 $checkAdvReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->count();
 
                 if ($checkAdvReceiptDetails == 0 && $checkDirectItemsCount == 0) {
-                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
             }
             // checking minus value
@@ -1724,7 +1724,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $netMinustot = $checkReciveDetailMinusTotal + $checkDirectMinusTotal;
 
                 if ($netMinustot < 0) {
-                    return $this->sendError('Net amount cannot be minus total', 500);
+                    return $this->sendError(trans('custom.net_amount_cannot_be_minus_total'), 500);
                 }
             }
 
@@ -1750,7 +1750,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ->count();
 
                             if ($checkAmount > 0) {
-                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                                return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         } elseif ($row['addedDocumentSystemID'] == 19) {
                             $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
@@ -1766,7 +1766,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ->count();
 
                             if ($checkAmount > 0) {
-                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                                return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         }
                     }
@@ -1783,7 +1783,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     })
                     ->count();
                 if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
             }
 
@@ -1799,7 +1799,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     })
                     ->count();
                 if ($input['documentType'] == 14 && $checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
 
                 $checkAdvReceiptDetailsAmount = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)
@@ -1814,7 +1814,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->count();
 
                 if ($checkAdvReceiptDetailsAmount > 0 || $checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                    return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                 }
             }
 
@@ -1879,7 +1879,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                 if ($error_count > 0) {
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
                 }
             }
 
@@ -1918,7 +1918,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                 if ($error_count > 0) {
-                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
                 }
             }
             // updating accounts receivable ledger table
@@ -1936,7 +1936,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
                     if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
 
-                        $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                        $itemDrt = trans('custom.selected_invoice_booked_more_than_amount', ['invoice' => $item['bookingInvCode']]);
                         $itemExistArray[] = [$itemDrt];
 
                     }
@@ -2054,11 +2054,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
 
                 if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                 }
 
                 if($input['documentType'] == 15 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_transfer_gl_account_not_'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -2080,7 +2080,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $taxDetail['payeeCode'] = $customer->CutomerCode;
                         $taxDetail['payeeName'] = $customer->CustomerName;
                     }else{
-                        return $this->sendError('Customer not found', 500);
+                        return $this->sendError(trans('custom.customer_not_found'), 500);
                     }
                 }else {
                     $taxDetail['payeeSystemCode'] = 0;
@@ -2121,7 +2121,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->first();
 
                 if ($pdcLogValidation) {
-                    return $this->sendError('PDC Cheque date cannot be empty', 500);
+                    return $this->sendError(trans('custom.pdc_cheque_date_cannot_be_empty'), 500);
                 }
 
                 $pdcLogValidationChequeNo = PdcLog::where('documentSystemID', $input['documentSystemID'])
@@ -2130,7 +2130,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->first();
 
                 if ($pdcLogValidationChequeNo) {
-                    return $this->sendError('PDC Cheque no cannot be empty', 500);
+                    return $this->sendError(trans('custom.pdc_cheque_no_cannot_be_empty'), 500);
                 }
 
 
@@ -2152,7 +2152,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->get();
 
                 if (count($pdcLog) == 0) {
-                    return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                    return $this->sendError(trans('custom.pdc_cheques_not_created_please_create_atleast_one_'), 500);
                 }
 
                 $pdcLogAmount = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
@@ -2162,13 +2162,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
 
                 if ($checkingAmount > 0.001 || $checkingAmount < 0) {
-                    return $this->sendError('PDC Cheque amount should equal to PV total amount', 500);
+                    return $this->sendError(trans('custom.pdc_cheque_amount_should_equal_to_pv_total_amount'), 500);
                 }
 
                 $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "pdc-receivable-account");
 
                 if (is_null($checkPlAccount)) {
-                    return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
+                    return $this->sendError(trans('custom.please_configure_pdc_payable_account_for_payment_voucher'), 500);
                 }
             }
 
@@ -2226,7 +2226,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($input, 'Receipt Voucher updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($input, trans('custom.receipt_voucher_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -2273,12 +2273,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         $customerReceivePayment->delete();
 
-        return $this->sendResponse($id, 'Customer Receive Payment deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_receive_payment_deleted_successfully'));
     }
 
     public function recieptVoucherLocalUpdate($id, Request $request){
@@ -2311,10 +2311,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse([$id,$value], 'Update Local ER');
+        return $this->sendResponse([$id,$value], trans('custom.update_local_er'));
         }
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
     }
 
@@ -2348,10 +2348,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse([$id,$value], 'Update Reporting ER');
+        return $this->sendResponse([$id,$value], trans('custom.update_reporting_er'));
         }
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
     }
 
@@ -2361,7 +2361,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         /*companySystemID*/
         $companySystemID = isset($input['companyId']) ? $input['companyId'] : 0;
         $type = $input['type']; /*value ['filter','create','getCurrency']*/
-        $advaceReceipt  = array('value' => 15, 'label' => 'Advance Receipt');
+        $advaceReceipt  = array('value' => 15, 'label' => trans('custom.advance_receipt'));
 
         switch ($type) {
             case 'filter':
@@ -2374,8 +2374,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->groupby('year')
                     ->orderby('year', 'desc')
                     ->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                                               array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                                               array('value' => 14, 'label' => trans('custom.direct_receipt')));
 
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
@@ -2412,8 +2412,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                                               array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                                               array('value' => 14, 'label' => trans('custom.direct_receipt')));
                 $output['paymentType'] = PaymentType::all();
                 
                 if(Helper::checkPolicy($companySystemID,49)){
@@ -2471,8 +2471,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isAssigned', -1)
                     ->where('companySystemID', $companySystemID)
                     ->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
-                    array('value' => 14, 'label' => 'Direct Receipt'),array('value' => 15, 'label' => 'Advance Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
+                    array('value' => 14, 'label' => trans('custom.direct_receipt')),array('value' => 15, 'label' => trans('custom.advance_receipt')));
 
 
                 $output['bankAccount'] = [];
@@ -2622,7 +2622,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function receiptVoucherReopen(Request $request)
@@ -2635,19 +2635,19 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $emails = array();
         if (empty($custReceivePaymentMaster)) {
-            return $this->sendError('Customer receive payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found_1'));
         }
 
         if ($custReceivePaymentMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this receipt voucher it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_receipt_voucher_it_is_alrea_1'));
         }
 
         if ($custReceivePaymentMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this receipt voucher it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_receipt_voucher_it_is_alrea'));
         }
 
         if ($custReceivePaymentMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this receipt voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_receipt_voucher_it_is_not_c'));
         }
 
         // updating fields
@@ -2667,9 +2667,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $custReceivePaymentMaster->bookingInvCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $custReceivePaymentMaster->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $custReceivePaymentMaster->companySystemID)
             ->where('documentSystemCode', $custReceivePaymentMaster->bookingSuppMasInvAutoID)
@@ -2726,7 +2731,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
+        return $this->sendResponse($custReceivePaymentMaster->toArray(), trans('custom.supplier_invoice_reopened_successfully'));
     }
 
     public function printReceiptVoucher(Request $request)
@@ -2737,7 +2742,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData = CustomerReceivePayment::find($id);
 
         if (empty($customerReceivePaymentData)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['project','payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
@@ -2750,7 +2755,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }])->first();
 
         if (empty($customerReceivePaymentRecord)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($customerReceivePaymentRecord->companySystemID, $customerReceivePaymentRecord->documentSystemID);
@@ -3032,11 +3037,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
 
         if (empty($customerReceivePaymentData)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         if ($customerReceivePaymentData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this Receipt Voucher');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_receipt_voucher'));
         }
 
         $receivePaymentArray = $customerReceivePaymentData->toArray();
@@ -3112,7 +3117,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher amend successfully');
+        return $this->sendResponse($customerReceivePaymentData->toArray(), trans('custom.receipt_voucher_amend_successfully'));
     }
 
     public function receiptVoucherCancel(Request $request)
@@ -3124,31 +3129,31 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
 
         if (empty($customerReceivePaymentData)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         if ($customerReceivePaymentData->confirmedYN == 1) {
-            return $this->sendError('You cannot cancel this receipt voucher, this is already confirmed');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_this_is_alr'));
         }
 
         if ($customerReceivePaymentData->approved == -1) {
-            return $this->sendError('You cannot cancel this receipt voucher, this is already approved');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_this_is_alr_1'));
         }
 
         if ($customerReceivePaymentData->cancelYN == -1) {
-            return $this->sendError('You cannot cancel this receipt voucher, this is already cancelled');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_this_is_alr_2'));
         }
 
         $directDetail = DirectReceiptDetail::where('directReceiptAutoID', $custReceivePaymentAutoID)->get();
 
         if (count($directDetail) > 0) {
-            return $this->sendError('You cannot cancel this receipt voucher, invoice details are exist');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_invoice_det'));
         }
 
         $customerReceiptDetail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
 
         if (count($customerReceiptDetail) > 0) {
-            return $this->sendError('You cannot cancel this receipt voucher, invoice details are exist');
+            return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_invoice_det'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3164,7 +3169,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['cancelComments'],'Cancelled');
 
-        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher cancelled successfully');
+        return $this->sendResponse($customerReceivePaymentData->toArray(), trans('custom.receipt_voucher_cancelled_successfully'));
     }
 
     public function approvalPreCheckReceiptVoucher(Request $request)
@@ -3189,17 +3194,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $masterData = $this->customerReceivePaymentRepository->findWithoutFail($id);
         if (empty($masterData)) {
-            return $this->sendError('Receipt Voucher Master not found');
+            return $this->sendError(trans('custom.receipt_voucher_master_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend, this Receipt Voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_receipt_vouch_1'));
         }
 
 
         if(!ApiPermissionServices::checkAmendPermission($masterData->custReceivePaymentAutoID,21))
         {
-            return $this->sendError('This is an autogenerated document. This cannot be returned back to amend');
+            return $this->sendError(trans('custom.this_is_an_autogenerated_document_this_cannot_be_r'));
         }
 
 
@@ -3240,7 +3245,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$masterData->companySystemID);
             if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
-                $errorMessage = "Receipt Voucher " . $validateVatReturnFilling['message'];
+                $errorMessage = trans('custom.receipt_voucher') . " " . $validateVatReturnFilling['message'];
                 return $this->sendError($errorMessage);
             }
         }
@@ -3253,7 +3258,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('You cannot return back to amend. this Receipt Voucher is added to matching');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_receipt_vouch'));
         }
 
         $checkBLDataExist = BankLedger::where('documentSystemCode', $id)
@@ -3263,21 +3268,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if ($checkBLDataExist) {
             if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+                return $this->sendError(trans('custom.treasury_cleared_you_cannot_return_back_to_amend'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Bank cleared. You cannot return back to amend.');
+                return $this->sendError(trans('custom.bank_cleared_you_cannot_return_back_to_amend'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_and_bank_cleared_you_cannot'));
             } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'));
             }
         }
 
-        $emailBody = '<p>' . $masterData->custPaymentReceiveCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailBody = '<p>' . $masterData->custPaymentReceiveCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
 
-        $emailSubject = $masterData->custPaymentReceiveCode . ' has been return back to amend';
+        $emailSubject = $masterData->custPaymentReceiveCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -3382,7 +3387,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             AuditTrial::insertAuditTrial('CustomerReceivePayment', $id, $input['returnComment'], 'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Receipt Voucher return back to amend successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.receipt_voucher_return_back_to_amend_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3399,7 +3404,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterData = $this->customerReceivePaymentRepository->findWithoutFail($input["custReceivePaymentAutoID"]);
 
         if (empty($masterData)) {
-            return $this->sendError('Receipt Voucher not found');
+            return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
         $bankMaster = BankAssign::ofCompany($masterData->companySystemID)
@@ -3408,16 +3413,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->first();
 
         if (empty($bankMaster)) {
-            return $this->sendError('Selected Bank is not active', 500);
+            return $this->sendError(trans('custom.selected_bank_is_not_active'), 500);
         }
 
         $bankAccount = BankAccount::isActive()->find($masterData->bankAccount);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Selected Bank Account is not active', 500);
+            return $this->sendError(trans('custom.selected_bank_account_is_not_active'), 500);
         }
 
-        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+        return $this->sendResponse($bankAccount, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getADVPaymentForBRV(Request $request)
@@ -3429,7 +3434,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterData = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Receipt Voucher not found');
+            return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
         $output = DB::select('SELECT
@@ -3490,7 +3495,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 AND ( ( erp_quotationmaster.approvedYN ) = -1 ) 
                                 AND ( ( erp_salesorderadvpayment.fullyPaid ) <> 2 ) 
                                 );');
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generatePdcForReceiptVoucher(Request $request)
@@ -3500,7 +3505,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $receipt = CustomerReceivePayment::find($input['custReceivePaymentAutoID']);
 
         if (empty($receipt)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         DB::beginTransaction();
@@ -3510,7 +3515,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $bankAccount = BankAccount::find($receipt->bankAccount);
 
             if (!$bankAccount) {
-                return $this->sendError('Bank Account not selected');
+                return $this->sendError(trans('custom.bank_account_not_selected'));
             }
     
             $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
@@ -3532,7 +3537,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], "PDC cheques generated successfully");
+            return $this->sendResponse([], trans('custom.pdc_cheques_generated_successfully'));
         } catch
         (\Exception $exception) {
             DB::rollBack();
@@ -3582,21 +3587,25 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($input['documentID']);
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Receipt Voucher not found');
+            return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
         $currencyConversion = Helper::currencyConversion($input['companyID'], $customerReceivePayment->custTransactionCurrencyID, $customerReceivePayment->bankCurrency, 0);
         if(($customerReceivePayment->bankCurrencyER != $currencyConversion['transToDocER']) || ($customerReceivePayment->localCurrencyER != $currencyConversion['trasToLocER']) || ($customerReceivePayment->companyRptCurrencyER != $currencyConversion['trasToRptER'])) {
             $data['isShowWarning'] = 1;
-            $data['message'] = "The exchange rates are updated as follows,<br><br>".
-                "Previous rates Bank ER ".$customerReceivePayment->bankCurrencyER." | Local ER ".$customerReceivePayment->localCurrencyER." | Reporting ER ".$customerReceivePayment->companyRptCurrencyER."<br><br>".
-                "Current rates Bank ER ".$currencyConversion['transToDocER']." | Local ER ".$currencyConversion['trasToLocER']." | Reporting ER ".$currencyConversion['trasToRptER']."<br><br>".
-                "Are you sure you want to proceed?";
-            return $this->sendResponse($data, "Conversion rates changed");
+            $data['message'] = trans('custom.exchange_rates_updated_message', [
+                'bank_er' => $customerReceivePayment->bankCurrencyER,
+                'local_er' => $customerReceivePayment->localCurrencyER,
+                'reporting_er' => $customerReceivePayment->companyRptCurrencyER,
+                'current_bank_er' => $currencyConversion['transToDocER'],
+                'current_local_er' => $currencyConversion['trasToLocER'],
+                'current_reporting_er' => $currencyConversion['trasToRptER']
+            ]);
+            return $this->sendResponse($data, trans('custom.conversion_rates_changed'));
         }
         else {
             $data['isShowWarning'] = 0;
-            return $this->sendResponse($data, "Conversion rates not change");
+            return $this->sendResponse($data, trans('custom.conversion_rates_not_change'));
         }
     }
 

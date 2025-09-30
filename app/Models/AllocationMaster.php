@@ -71,4 +71,35 @@ class AllocationMaster extends Model
     public static $rules = [
 
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['Desciption'];
+
+    /**
+     * Get the description based on current language.
+     *
+     * @return string
+     */
+    public function getDesciptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->Desciption : $this->attributes['Desciption'];
+    }
+
+    /**
+     * Get the translations for the allocation master.
+     */
+    public function translations()
+    {
+        return $this->hasMany(AllocationMasterTranslation::class, 'AutoID', 'AutoID');
+    }
 }

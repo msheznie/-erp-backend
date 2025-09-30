@@ -71,7 +71,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (empty($directReceiptDetails)) {
                 return [
                     'status' => false,
-                    'message' => "Details not found",
+                    'message' => trans('custom.details_not_found_validation'),
                     'type' => []
                 ];
             }
@@ -85,7 +85,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (empty($customerReceivePaymentMaster)) {
                 return [
                     'status' => false,
-                    'message' => 'Customer Receive Payment not found'
+                    'message' => trans('custom.customer_receive_payment_not_found')
                 ];
             }
 
@@ -99,7 +99,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if($existCheck){
                 return [
                     'status' => false,
-                    'message' => "A matching document for the selected receipt voucher is created and not confirmed. Please confirm the previously created document and try again.",
+                    'message' => trans('custom.receipt_voucher_matching_exists'),
                     'type' => []
                 ];
             }
@@ -127,14 +127,14 @@ class ReceiptMatchingAPIService extends AppBaseController
                 if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                     return [
                         'status' => false,
-                        'message' => "Selected customer receive payment is not updated in general ledger. Please check again",
+                        'message' => trans('custom.customer_receive_payment_not_in_gl'),
                         'type' => []
                     ];
                 }
             } else {
                 return [
                     'status' => false,
-                    'message' => "Selected customer receive payment is not updated in general ledger. Please check again",
+                    'message' => trans('custom.customer_receive_payment_not_in_gl'),
                     'type' => []
                 ];
             }
@@ -250,16 +250,16 @@ class ReceiptMatchingAPIService extends AppBaseController
                 if (empty($creditNoteDetails)) {
                     return [
                         'status' => false,
-                        'message' => "Credit Note Details not found",
+                        'message' => trans('custom.credit_note_details_not_found'),
                         'type' => []
                     ];
                 }
-    
+
                 $creditNoteMaster = CreditNote::find($input['custReceivePaymentAutoID']);
                 if (empty($creditNoteMaster)) {
                     return [
                         'status' => false,
-                        'message' => "Credit Note not found",
+                        'message' => trans('custom.credit_note_not_found'),
                         'type' => []
                     ];
                 }
@@ -268,7 +268,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                 if (empty($creditNoteDetails)) {
                     return [
                         'status' => false,
-                        'message' => "Credit Note Details not found",
+                        'message' => trans('custom.credit_note_details_not_found'),
                         'type' => []
                     ];
                 }
@@ -277,7 +277,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                 if (empty($creditNoteMaster)) {
                     return [
                         'status' => false,
-                        'message' => "Credit Note not found",
+                        'message' => trans('custom.credit_note_not_found'),
                         'type' => []
                     ];
                 }
@@ -294,7 +294,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if($existCheck){
                 return [
                     'status' => false,
-                    'message' => "A matching document for the selected credit note is created and not confirmed. Please confirm the previously created document and try again.",
+                    'message' => trans('custom.credit_note_matching_exists'),
                     'type' => []
                 ];
             }
@@ -305,14 +305,14 @@ class ReceiptMatchingAPIService extends AppBaseController
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         return [
                             'status' => false,
-                            'message' => "Selected credit note is not updated in general ledger. Please check again",
+                            'message' => trans('custom.credit_note_not_in_gl'),
                             'type' => []
                         ];
                     }
                 } else {
                     return [
                         'status' => false,
-                        'message' => "Selected credit note is not updated in general ledger. Please check again",
+                        'message' => trans('custom.credit_note_not_in_gl'),
                         'type' => []
                     ];
                 }
@@ -417,12 +417,12 @@ class ReceiptMatchingAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => $matchDocumentMasters->refresh()->toArray(),
-                'message' => 'Receipt Matching saved successfully'
+                'message' => trans('custom.receipt_matching_saved')
             ];
         } else {
             return [
                 'status' => false,
-                'message' => 'Receipt Matching not saved',
+                'message' => trans('custom.receipt_matching_not_saved'),
                 'type' => []
             ];
         }
@@ -443,7 +443,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $arLedger = AccountsReceivableLedger::find($input['arAutoID']);
        
         if (!$master || !$arLedger) {
-            return ['status' => false, 'message' => "Required master or invoice data not found."];
+            return ['status' => false, 'message' => trans('custom.master_or_invoice_not_found')];
         }
 
         //Find the source document (Invoice, Direct Invoice, or Credit Note) to get all details from.
@@ -585,7 +585,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             throw new Exception("Failed to save receipt matching detail for invoice " . $detail->bookingInvCode);
         }
 
-        return ['status' => true, 'message' => "Receipt matching detail created successfully"];
+        return ['status' => true, 'message' => trans('custom.receipt_matching_detail_created')];
     }
 
 
@@ -599,7 +599,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $matchDocumentMaster = MatchDocumentMaster::find($id);
         
         if (empty($matchDocumentMaster)) {
-            return ['status' => false, 'message' => "Match Document Master not found"];
+            return ['status' => false, 'message' => trans('custom.match_document_master_not_found')];
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
@@ -647,7 +647,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if ($formattedMatchingDate < $postedDate) {
                 return [
                     'status' => false,
-                    'message' => 'Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !',
+                    'message' => trans('custom.receipt_voucher_posted_date', ['date' => $postedDate]),
                     'type' => ['posted_date']
                 ];
             }
@@ -658,7 +658,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (empty($creditNoteDataUpdateCHK)) {
                 return [
                     'status' => false,
-                    'message' => 'Credit Note not found',
+                    'message' => trans('custom.credit_note_not_found'),
                     'type' => ['credit_note_not_found']
                 ];
             }
@@ -670,7 +670,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if ($formattedMatchingDate < $postedDate) {
                 return [
                     'status' => false,
-                    'message' => 'Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !',
+                    'message' => trans('custom.credit_note_posted_date', ['date' => $postedDate]),
                     'type' => ['posted_date']
                 ];
             }
@@ -687,7 +687,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (empty($pvDetailExist)) {
                 return [
                     'status' => false,
-                    'message' => 'Matching document cannot confirm without details',
+                    'message' => trans('custom.matching_document_confirm_without_details'),
                     'type' => ['confirm']
                 ];
             }
@@ -715,7 +715,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                         if ($checkAmount > 0) {
                             return [
                                 'status' => false,
-                                'message' => 'Matching amount cannot be 0',
+                                'message' => trans('custom.matching_amount_cannot_be_zero'),
                                 'type' => ['confirm']
                             ];
                         }
@@ -728,7 +728,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                         if ($checkAmount > 0) {
                             return [
                                 'status' => false,
-                                'message' => 'Matching amount cannot be 0',
+                                'message' => trans('custom.matching_amount_cannot_be_zero'),
                                 'type' => ['confirm']
                             ];
                         }
@@ -742,7 +742,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
                 return [
                     'status' => false,
-                    'message' => 'Detail amount cannot be greater than balance amount to match',
+                    'message' => trans('custom.detail_amount_greater_than_balance'),
                     'type' => ['confirm']
                 ];
             }
@@ -886,7 +886,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                 if (empty($creditNoteDataUpdate)) {
                     return [
                         'status' => false,
-                        'message' => 'Credit Note not found',
+                        'message' => trans('custom.credit_note_not_found'),
                         'type' => ['credit_note_not_found']
                     ];
                 }
@@ -1464,7 +1464,7 @@ class ReceiptMatchingAPIService extends AppBaseController
         $matchDocumentMaster->update($input);
         return [
             'status' => true,
-            'message' => "Receipt matching updated successfully",
+            'message' => trans('custom.receipt_matching_updated'),
             'data' => $matchDocumentMaster
         ];
     }

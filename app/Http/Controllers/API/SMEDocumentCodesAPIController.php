@@ -65,7 +65,7 @@ class SMEDocumentCodesAPIController extends AppBaseController
         $this->sMEDocumentCodesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->all();
 
-        return $this->sendResponse($sMEDocumentCodes->toArray(), 'S M E Document Codes retrieved successfully');
+        return $this->sendResponse($sMEDocumentCodes->toArray(), trans('custom.s_m_e_document_codes_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEDocumentCodesAPIController extends AppBaseController
 
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->create($input);
 
-        return $this->sendResponse($sMEDocumentCodes->toArray(), 'S M E Document Codes saved successfully');
+        return $this->sendResponse($sMEDocumentCodes->toArray(), trans('custom.s_m_e_document_codes_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEDocumentCodesAPIController extends AppBaseController
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodes)) {
-            return $this->sendError('S M E Document Codes not found');
+            return $this->sendError(trans('custom.s_m_e_document_codes_not_found'));
         }
 
-        return $this->sendResponse($sMEDocumentCodes->toArray(), 'S M E Document Codes retrieved successfully');
+        return $this->sendResponse($sMEDocumentCodes->toArray(), trans('custom.s_m_e_document_codes_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEDocumentCodesAPIController extends AppBaseController
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodes)) {
-            return $this->sendError('S M E Document Codes not found');
+            return $this->sendError(trans('custom.s_m_e_document_codes_not_found'));
         }
 
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->update($input, $id);
 
-        return $this->sendResponse($sMEDocumentCodes->toArray(), 'SMEDocumentCodes updated successfully');
+        return $this->sendResponse($sMEDocumentCodes->toArray(), trans('custom.smedocumentcodes_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEDocumentCodesAPIController extends AppBaseController
         $sMEDocumentCodes = $this->sMEDocumentCodesRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodes)) {
-            return $this->sendError('S M E Document Codes not found');
+            return $this->sendError(trans('custom.s_m_e_document_codes_not_found'));
         }
 
         $sMEDocumentCodes->delete();

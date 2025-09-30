@@ -99,7 +99,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $this->fixedAssetDepreciationMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->all();
 
-        return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Masters retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), trans('custom.fixed_asset_depreciation_masters_retrieved_success'));
     }
 
     /**
@@ -161,7 +161,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             ->get();
 
         if (count($alreadyExist) > 0) {
-            return $this->sendError('Depreciation already processed for the selected month', 500);
+            return $this->sendError(trans('custom.depreciation_already_processed_for_the_selected_mo'), 500);
         }
 
         DB::beginTransaction();
@@ -185,7 +185,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                 if(($depeciatedAssets) > 0 && $input['depAssets'])
                 {
-                    return $this->sendError('Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month', 300,['type' => 'depreciatedAssets']);
+                    return $this->sendError(trans('custom.depreciation_processed_only_for_assets_no_depreciation_recorded'), 300,['type' => 'depreciatedAssets']);
                 }   
                 
                 $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
@@ -239,7 +239,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     </table>';
 
 
-                    return $this->sendError("The following assets will not be added to depreciation as they are linked to Disposal </br></br>  $body  </br> Are you sure you want to proceed ?", 300,['type' => 'dispoasalAsset']);
+                    return $this->sendError(trans('custom.assets_not_added_depreciation_linked_disposal') . ' </br></br>  $body  </br> Are you sure you want to proceed ?', 300,['type' => 'dispoasalAsset']);
 
                 }
 
@@ -247,7 +247,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                 if(count($unconfirmedAssest) > 0 && $input['unConfirm'])
                 {
-                    return $this->sendError('There  are assets to be approved. Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
+                    return $this->sendError(trans('custom.assets_to_be_approved_sure_proceed'), 300,['type' => 'UnconfirmAsset']);
                 }    
                 
                 $assest_fixds =  $this->getAssests($doc_date->dateTo,-1,$input['companySystemID']);
@@ -300,7 +300,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                                         ->get();
 
                 if (count($alreadyExist) > 0) {
-                    return $this->sendError('Depreciation already processed for the selected month', 500);
+                    return $this->sendError(trans('custom.depreciation_already_processed_for_the_selected_mo'), 500);
                 }
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -331,7 +331,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     
                 if (!empty($lastMonthRun)) {
                     if ($lastMonthRun->approved == 0) {
-                        return $this->sendError('Last month depreciation is not approved. Please approve it before you run for this month', 500);
+                        return $this->sendError(trans('custom.last_month_depreciation_not_approved'), 500);
                     }
                 }
     
@@ -383,19 +383,19 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
 
                 DB::commit();
-                return $this->sendResponse($input, 'Fixed Asset Depreciation Master saved successfully');
+                return $this->sendResponse($input, trans('custom.fixed_asset_depreciation_master_saved_successfully'));
 
                }
                else{
 
-                return $this->sendError('There is a no assest for this date period. please choose different date period', 500);
+                return $this->sendError(trans('custom.no_asset_for_date_period_choose_different'), 500);
                }
                 
 
             }
             else
             {
-                return $this->sendError('There is a unapproved depreciation running. please confirm and proceed', 500);
+                return $this->sendError(trans('custom.unapproved_depreciation_running_confirm_proceed'), 500);
             }
 
         } catch (\Exception $exception) {
@@ -466,10 +466,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'Fixed Asset Depreciation Master retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), trans('custom.fixed_asset_depreciation_master_retrieved_successf'));
     }
 
     /**
@@ -526,7 +526,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
         if ($fixedAssetDepreciationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -544,7 +544,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), 'FixedAssetDepreciationMaster updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($fixedAssetDepreciationMaster->toArray(), trans('custom.fixed_asset_depreciation_master_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -594,20 +594,20 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
         if($fixedAssetDepreciationMaster->confirmedYN == 1){
-            return $this->sendError('You cannot delete confirmed document');
+            return $this->sendError(trans('custom.you_cannot_delete_confirmed_document'));
         }
 
         if($fixedAssetDepreciationMaster->isDepProcessingYN == 0){
-            return $this->sendError('Depreciation is still running', 500);
+            return $this->sendError(trans('custom.depreciation_still_running'), 500);
         }
 
         $fixedAssetDepreciationMaster->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Depreciation Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_depreciation_master_deleted_successful'));
     }
 
     public function getAllDepreciationByCompany(Request $request)
@@ -672,21 +672,21 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function assetDepreciationByID($id)
     {
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
         $detail = FixedAssetDepreciationPeriod::with(['maincategory_by', 'financecategory_by', 'serviceline_by'])->ofDepreciation($id)->get();
 
         $output = ['master' => $fixedAssetDepreciationMaster, 'detail' => $detail];
 
-        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 
     public function assetDepreciationMaster(Request $request)
@@ -696,10 +696,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $query->where('documentSystemID', 23);
         }, 'confirmed_by', 'created_by','audit_trial.modified_by'])->findWithoutFail($request['depMasterAutoID']);
         if (empty($fixedAssetDepreciationMaster)) {
-            return $this->sendError('Fixed Asset Depreciation Master not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 
 
@@ -713,20 +713,20 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $fixedAssetDep = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
             $emails = array();
             if (empty($fixedAssetDep)) {
-                return $this->sendError('Fixed Asset Master not found');
+                return $this->sendError(trans('custom.fixed_asset_master_not_found'));
             }
 
 
             if ($fixedAssetDep->approved == -1) {
-                return $this->sendError('You cannot reopen this Asset Depreciation it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_depreciation_it_is_al'));
             }
 
             if ($fixedAssetDep->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this Asset Depreciation it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_depreciation_it_is_al_1'));
             }
 
             if ($fixedAssetDep->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this Asset Depreciation, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_depreciation_it_is_no'));
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -741,9 +741,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetDep->depCode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetDep->depCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetDep->companySystemID)
                 ->where('documentSystemCode', $fixedAssetDep->depMasterAutoID)
@@ -797,7 +797,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($fixedAssetDep->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
-            return $this->sendResponse($fixedAssetDep->toArray(), 'Asset depreciation reopened successfully');
+            return $this->sendResponse($fixedAssetDep->toArray(), trans('custom.asset_depreciation_reopened_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -954,11 +954,11 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $fixedAssetDep = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($depMasterAutoID);
             if (empty($fixedAssetDep)) {
-                return $this->sendError('Fixed Asset Depreciation not found');
+                return $this->sendError(trans('custom.fixed_asset_depreciation_not_found'));
             }
 
             if ($fixedAssetDep->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
             }
 
 
@@ -999,7 +999,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             CreateDepreciationAmend::dispatch($depMasterAutoID);
 
             DB::commit();
-            return $this->sendResponse($fixedAssetDep->toArray(), 'Fixed asset depreciation amended successfully');
+            return $this->sendResponse($fixedAssetDep->toArray(), trans('custom.fixed_asset_depreciation_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1017,11 +1017,11 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $masterData = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
         if (empty($masterData)) {
-            return $this->sendError('Asset depreciation not found');
+            return $this->sendError(trans('custom.asset_depreciation_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this asset depreciation, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_depreci_1'));
         }
 
         $documentAutoId = $id;
@@ -1068,7 +1068,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         {
             if($maxDepAsset > 0)
             {
-                return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+                return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_depreci'));
             }
         }
         
@@ -1082,14 +1082,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             if($isMonthlyExists)
             {
-                return $this->sendError('You cannot return back to amend ! This asset already has monthly depreciation processed against it. ');
+                return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_already'));
 
             }
 
         }
 
-        $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->faCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -1155,7 +1155,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.asset_costing_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

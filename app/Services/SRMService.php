@@ -6467,7 +6467,7 @@ class SRMService
         $body = "Dear Supplier,"."<br /><br />"." Document successfully attached. The document is under review. Access to the Tender will be provided shortly. Please wait.";
         $dataEmail = [
             'companySystemID' => $params['company'],
-            'alertMessage' => 'Payment Proof Attachment',
+            'alertMessage' => trans('email.payment_proof_attachment'),
             'empEmail' => $params['email'],
             'emailAlertMessage' => $body,
         ];

@@ -63,13 +63,13 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!in_array($request['salesType'], [1,2,3])) {
                                 $errorData[] = [
                                     'field' => "salesType",
-                                    'message' => ["Invalid value selected for Sales Type"]
+                                    'message' => [trans('custom.invalid_sales_type')]
                                 ];
                             }
                         } else {
                             $errorData[] = [
                                 'field' => "salesType",
-                                'message' => ["The sales type is mandatory"]
+                                'message' => [trans('custom.sales_type_mandatory')]
                             ];
                         }
 
@@ -84,13 +84,13 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!$segment){
                                 $errorData[] = [
                                     'field' => "segment_code",
-                                    'message' => ["Segment Not Found"]
+                                    'message' => [trans('custom.segment_not_found')]
                                 ];
                             } else {
                                 if($segment->approved_yn == 0) {
                                     $errorData[] = [
                                         'field' => "segment",
-                                        'message' => ["Selected segment is not approved"]
+                                        'message' => [trans('custom.segment_not_approved')]
                                     ];
                                 } else {
                                     $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
@@ -101,7 +101,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     if(!$segmentAssigned){
                                         $errorData[] = [
                                             'field' => "segment",
-                                            'message' => ["Selected segment is not assigned to the company"]
+                                            'message' => [trans('custom.segment_not_assigned')]
                                         ];
                                     }
                                 }
@@ -110,7 +110,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                         else {
                             $errorData[] = [
                                 'field' => "segment_code",
-                                'message' => ["segment_code field is required"]
+                                'message' => [trans('custom.segment_code_required')]
                             ];
                         }
 
@@ -123,14 +123,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!$warehouse){
                                 $errorData[] = [
                                     'field' => "warehouse_code",
-                                    'message' => ["Warehouse Not Found"]
+                                    'message' => [trans('custom.warehouse_not_found')]
                                 ];
                             }
                         }
                         else {
                             $errorData[] = [
                                 'field' => "warehouse_code",
-                                'message' => ["warehouse_code field is required"]
+                                'message' => [trans('custom.warehouse_code_required')]
                             ];
                         }
                     }
@@ -138,21 +138,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                 else {
                     $errorData[] = [
                         'field' => "invoice_type",
-                        'message' => ["invoice_type format is invalid"]
+                        'message' => [trans('custom.invoice_type_invalid')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "invoice_type",
-                    'message' => ["invoice_type must be an integer"]
+                    'message' => [trans('custom.invoice_type_integer')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "invoice_type",
-                'message' => ["invoice_type field is required"]
+                'message' => [trans('custom.invoice_type_required')]
             ];
         }
 
@@ -169,7 +169,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if(!$customer){
                 $errorData[] = [
                     'field' => "customer_code",
-                    'message' => ["Invalid Customer Code"]
+                    'message' => [trans('custom.invalid_customer_code')]
                 ];
             }
             else {
@@ -179,7 +179,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if ($verifyCompanyInvoiceNo) {
                         $fieldErrors = [
                             'field' => "customer_invoice_number",
-                            'message' => ["Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again"]
+                            'message' => [trans('custom.customer_invoice_used', ['bookingInvCode' => $verifyCompanyInvoiceNo->bookingInvCode])]
                         ];
                         $errorData[] = $fieldErrors;
                     }
@@ -187,7 +187,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 else {
                     $fieldErrors = [
                         'field' => "customer_invoice_number",
-                        'message' => ["customer_invoice_number field is required"]
+                        'message' => [trans('custom.customer_invoice_number_required')]
                     ];
                     $errorData[] = $fieldErrors;
                 }
@@ -204,7 +204,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if(!$currency){
                         $errorData[] = [
                             'field' => "currency_code",
-                            'message' => ["Invalid Currency"]
+                            'message' => [trans('custom.invalid_currency')]
                         ];
                     }
                     else {
@@ -219,7 +219,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!$bank){
                                 $errorData[] = [
                                     'field' => "bank_code",
-                                    'message' => ["Bank Not Found"]
+                                    'message' => [trans('custom.bank_not_found')]
                                 ];
                             }
                             else {
@@ -236,14 +236,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     if(!$bankAccount){
                                         $errorData[] = [
                                             'field' => "account_number",
-                                            'message' => ["Bank Account Not Found"]
+                                            'message' => [trans('custom.bank_account_not_found')]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "account_number",
-                                        'message' => ["account_number field is required"]
+                                        'message' => [trans('custom.account_number_required')]
                                     ];
                                 }
                             }
@@ -251,7 +251,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                         else {
                             $errorData[] = [
                                 'field' => "bank_code",
-                                'message' => ["bank_code field is required"]
+                                'message' => [trans('custom.bank_code_required')]
                             ];
                         }
                     }
@@ -259,7 +259,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 else {
                     $errorData[] = [
                         'field' => "currency_code",
-                        'message' => ["currency_code field is required"]
+                        'message' => [trans('custom.currency_code_required')]
                     ];
                 }
 
@@ -289,28 +289,28 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!$financePeriod){
                                 $errorData[] = [
                                     'field' => "document_date",
-                                    'message' => ["Finance Period Not Active"]
+                                    'message' => [trans('custom.finance_period_not_active')]
                                 ];
                             }
                         }
                         else{
                             $errorData[] = [
                                 'field' => "document_date",
-                                'message' => ["Finance Year Not Found"]
+                                'message' => [trans('custom.finance_year_not_found')]
                             ];
                         }
                     }
                     else {
                         $errorData[] = [
                             'field' => "document_date",
-                            'message' => ["document_date format is invalid"]
+                            'message' => [trans('custom.document_date_invalid')]
                         ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "document_date",
-                        'message' => ["document_date field is required"]
+                        'message' => [trans('custom.document_date_required')]
                     ];
                 }
             }
@@ -326,7 +326,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (!isset($request['comment'])) {
             $errorData[] = [
                 'field' => "comment",
-                'message' => ["comment field is required"]
+                'message' => [trans('custom.comment_required')]
             ];
         }
 
@@ -339,21 +339,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(empty($detailsCollection->count())) {
                     $errorData[] = [
                         'field' => "details",
-                        'message' => ["details cannot be less than one"]
+                        'message' => [trans('custom.details_less_than_one')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "details",
-                    'message' => ["details format invalid"]
+                    'message' => [trans('custom.details_format_invalid')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "details",
-                'message' => ["details field is required"]
+                'message' => [trans('custom.details_required')]
             ];
         }
 
@@ -413,14 +413,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if(!$chartOfAccountAssign){
                         $errorData[] = [
                             'field' => "gl_code",
-                            'message' => ["GL Code Not Found"]
+                            'message' => [trans('custom.gl_code_not_found')]
                         ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "gl_code",
-                        'message' => ["gl_code field is required"]
+                        'message' => [trans('custom.gl_code_required')]
                     ];
                 }
 
@@ -434,13 +434,13 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if(!$segment){
                         $errorData[] = [
                             'field' => "segment_code",
-                            'message' => ["Segment Not Found"]
+                            'message' => [trans('custom.segment_not_found')]
                         ];
                     } else {
                         if($segment->approved_yn == 0) {
                             $errorData[] = [
                                 'field' => "segment",
-                                'message' => ["The segment is not approved."]
+                                'message' => [trans('custom.segment_not_approved_detail')]
                             ];
                         } else {
                             $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
@@ -451,7 +451,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if(!$segmentAssigned){
                                 $errorData[] = [
                                     'field' => "segment",
-                                    'message' => ["The segment is not assigned to the selected company."]
+                                    'message' => [trans('custom.segment_not_assigned_detail')]
                                 ];
                             }
                         }
@@ -460,7 +460,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 else {
                     $errorData[] = [
                         'field' => "segment_code",
-                        'message' => ["segment_code field is required"]
+                        'message' => [trans('custom.segment_code_required_detail')]
                     ];
                 }
             }
@@ -470,7 +470,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if (!isset($masterData['salesType'])) {
                     $errorData[] = [
                         'field' => "salesType",
-                        'message' => ["The sales type is mandatory"]
+                        'message' => [trans('custom.sales_type_mandatory')]
                     ];
                 } else {
                     // Validate user qty
@@ -480,19 +480,19 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 if($request['userQty'] < 0){
                                     $errorData[] = [
                                         'field' => "userQty",
-                                        'message' => ["The quantity field value entered by the user should be a positive number"]
+                                        'message' => [trans('custom.user_qty_positive')]
                                     ];
                                 }
                             } else {
                                 $errorData[] = [
                                     'field' => "userQty",
-                                    'message' => ["The quantity field value entered by the user should be a positive number"]
+                                    'message' => [trans('custom.user_qty_positive')]
                                 ];
                             }
                         } else {
                             $errorData[] = [
                                 'field' => "userQty",
-                                'message' => ["User Qty field is required"]
+                                'message' => [trans('custom.user_qty_required')]
                             ];
                         }
                     }
@@ -508,18 +508,18 @@ class CustomerInvoiceAPIService extends AppBaseController
                         if(!$serviceCode){
                             $errorData[] = [
                                 'field' => "service_code",
-                                'message' => ["Service Code Not Found"]
+                                'message' => [trans('custom.service_code_not_found')]
                             ];
                         } else {
                             if($masterData['salesType'] == 1 && $serviceCode->financeCategoryMaster == 2){
                                 $errorData[] = [
                                     'field' => "service_code",
-                                    'message' => ["Item category should be inventory or non-inventory"]
+                                    'message' => [trans('custom.item_category_inventory')]
                                 ];
                             } else if(($masterData['salesType'] == 2 || $masterData['salesType'] == 3) && $serviceCode->financeCategoryMaster != 2){
                                 $errorData[] = [
                                     'field' => "service_code",
-                                    'message' => ["Item category should be service "]
+                                    'message' => [trans('custom.item_category_service')]
                                 ];
                             }
                         }
@@ -527,7 +527,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     else {
                         $errorData[] = [
                             'field' => "service_code",
-                            'message' => ["service_code field is required"]
+                            'message' => [trans('custom.service_code_required')]
                         ];
                     }
 
@@ -537,14 +537,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                             if ($request['margin_percentage'] < 0) {
                                 $errorData[] = [
                                     'field' => "margin_percentage",
-                                    'message' => ["margin_percentage must be at least 0"]
+                                    'message' => [trans('custom.margin_percentage_min')]
                                 ];
                             }
                         }
                         else {
                             $errorData[] = [
                                 'field' => "margin_percentage",
-                                'message' => ["margin_percentage must be a numeric"]
+                                'message' => [trans('custom.margin_percentage_numeric')]
                             ];
                         }
                     }
@@ -559,14 +559,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             if(!$unit){
                 $errorData[] = [
                     'field' => "uom",
-                    'message' => ["Unit Not Found"]
+                    'message' => [trans('custom.unit_not_found')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "uom",
-                'message' => ["uom field is required"]
+                'message' => [trans('custom.uom_required')]
             ];
         }
 
@@ -576,21 +576,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['quantity'] <= 0) {
                     $errorData[] = [
                         'field' => "quantity",
-                        'message' => ["quantity must be at least 1"]
+                        'message' => [trans('custom.quantity_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "quantity",
-                    'message' => ["quantity must be an integer"]
+                    'message' => [trans('custom.quantity_integer')]
                 ];
             }
         }
         else{
             $errorData[] = [
                 'field' => "quantity",
-                'message' => ["quantity field is required"]
+                'message' => [trans('custom.quantity_required')]
             ];
         }
 
@@ -600,21 +600,21 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['sales_price'] <= 0) {
                     $errorData[] = [
                         'field' => "sales_price",
-                        'message' => ["sales_price must be at least 1"]
+                        'message' => [trans('custom.sales_price_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "sales_price",
-                    'message' => ["sales_price must be a numeric"]
+                    'message' => [trans('custom.sales_price_numeric')]
                 ];
             }
         }
         else{
             $errorData[] = [
                 'field' => "sales_price",
-                'message' => ["sales_price field is required"]
+                'message' => [trans('custom.sales_price_required')]
             ];
         }
 
@@ -624,14 +624,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['discount_percentage'] < 0) {
                     $errorData[] = [
                         'field' => "discount_percentage",
-                        'message' => ["discount_percentage must be at least 0"]
+                        'message' => [trans('custom.discount_percentage_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "discount_percentage",
-                    'message' => ["discount_percentage must be a numeric"]
+                    'message' => [trans('custom.discount_percentage_numeric')]
                 ];
             }
         }
@@ -642,14 +642,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['discount_amount'] < 0) {
                     $errorData[] = [
                         'field' => "discount_amount",
-                        'message' => ["discount_amount must be at least 0"]
+                        'message' => [trans('custom.discount_amount_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "discount_amount",
-                    'message' => ["discount_amount must be a numeric"]
+                    'message' => [trans('custom.discount_amount_numeric')]
                 ];
             }
         }
@@ -660,14 +660,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['vat_percentage'] < 0) {
                     $errorData[] = [
                         'field' => "vat_percentage",
-                        'message' => ["vat_percentage must be at least 0"]
+                        'message' => [trans('custom.vat_percentage_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "vat_percentage",
-                    'message' => ["vat_percentage must be a numeric"]
+                    'message' => [trans('custom.vat_percentage_numeric')]
                 ];
             }
         }
@@ -678,14 +678,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if ($request['vat_amount'] < 0) {
                     $errorData[] = [
                         'field' => "vat_amount",
-                        'message' => ["vat_amount must be at least 0"]
+                        'message' => [trans('custom.vat_amount_min')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "vat_amount",
-                    'message' => ["vat_amount must be a numeric"]
+                    'message' => [trans('custom.vat_amount_numeric')]
                 ];
             }
         }
@@ -780,7 +780,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if (!$serviceLine) {
                 return [
                     'status' => false,
-                    'message' => "Please select a Segment"
+                    'message' => trans('custom.please_select_segment')
                 ];
             }
             $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -835,7 +835,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         catch (\Exception $e){
             return [
                 'status' => false,
-                'message' => "Invalid Due Date format"
+                'message' => trans('custom.invalid_due_date_format')
             ];
         }
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
@@ -870,7 +870,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => "e",
-                'message' => "Document date cannot be greater than current date"
+                'message' => trans('custom.document_date_greater_than_current')
             ];
         }
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
@@ -878,14 +878,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => $customerInvoiceDirects->refresh()->toArray(),
-                'message' => "Customer Invoice  saved successfully"
+                'message' => trans('custom.customer_invoice_saved')
             ];
         }
         else {
             return [
                 'status' => true,
                 'data' => "e",
-                'message' => "Document date should be between financial period start date and end date"
+                'message' => trans('custom.document_date_between_period')
             ];
         }
     }
@@ -897,7 +897,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Customer Invoice Direct not found'
+                'message' => trans('custom.customer_invoice_not_found')
             ];
         }
 
@@ -926,14 +926,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                         return [
                             'status' => false,
                             'code' => 500,
-                            'message' => 'Please select a Segment in GL Selection'
+                            'message' => trans('custom.please_select_segment_gl')
                         ];
                     }
                     if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
                         return [
                             'status' => false,
                             'code' => 500,
-                            'message' => 'Amount is required in GL Selection'
+                            'message' => trans('custom.amount_required_gl')
                         ];
                     }
                 }
@@ -973,7 +973,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Please select a warehouse'
+                        'message' => trans('custom.please_select_warehouse')
                     ];
                 }
                 $_post['wareHouseSystemCode'] = $input['wareHouseSystemCode'];
@@ -984,7 +984,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Please select a Segment'
+                        'message' => trans('custom.please_select_segment')
                     ];
                 }
                 $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -999,7 +999,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Please select a Currency'
+                    'message' => trans('custom.please_select_currency')
                 ];
             }
 
@@ -1011,7 +1011,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Invoice details exist. You cannot change the currency.'
+                        'message' => trans('custom.invoice_details_exist_currency')
                     ];
                 } else {
                     $myCurr = $_post['custTransactionCurrencyID'];
@@ -1104,7 +1104,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     'status' => false,
                     'code' => 500,
                     'type' => array('type' => 'grvAssigned'),
-                    'message' => 'Selected GRV is already assigned to ' . $checkGrv->bookingInvCode
+                    'message' => trans('custom.selected_grv_already_assigned', ['bookingInvCode' => $checkGrv->bookingInvCode])
                 ];
             }
         } else {
@@ -1151,7 +1151,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Invoice details exist. You cannot change the customer.'
+                    'message' => trans('custom.invoice_details_exist_cannot_change_customer')
                 ];
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
@@ -1160,7 +1160,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     'status' => false,
                     'code' => 500,
                     'type' => array('type' => 'customer_credit_days'),
-                    'message' => $customer->CustomerName . ' - Credit days not mentioned for this customer'
+                    'message' => trans('custom.credit_days_not_mentioned_customer', ['customerName' => $customer->CustomerName])
                 ];
             }
 
@@ -1240,7 +1240,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Service start date cannot be greater than service end date.'
+                    'message' => trans('custom.service_start_date_greater')
                 ];
             }
         }
@@ -1251,7 +1251,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Document date cannot be greater than current date'
+                'message' => trans('custom.document_date_greater_than_current')
             ];
         }
 
@@ -1267,7 +1267,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Date of supply is required'
+                'message' => trans('custom.date_of_supply_required')
             ];
         }
 
@@ -1286,7 +1286,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Document Date should be between financial period start date and end date.'
+                'message' => trans('custom.document_date_between_period_detail')
             ];
             $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
             // $_post['bookingDate'] = $curentDate;
@@ -1317,7 +1317,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Document date should be between the selected financial period start date and end date.'
+                        'message' => trans('custom.document_date_between_selected_period')
                     ];
                 }
 
@@ -1346,7 +1346,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Are you sure you want to update the customer invoice number as the document number',
+                        'message' => trans('custom.are_you_sure_update_invoice'),
                         'type' => ['type' => 'autoInvoice'],
                     ];
                 }
@@ -1357,17 +1357,17 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                     $messages = [
 
-                        'custTransactionCurrencyID.required' => 'Currency is required.',
-                        'bankID.required' => 'Bank is required.',
-                        'bankAccountID.required' => 'Bank account is required.',
+                        'custTransactionCurrencyID.required' => trans('custom.currency_required'),
+                        'bankID.required' => trans('custom.bank_required'),
+                        'bankAccountID.required' => trans('custom.bank_account_required'),
 
-                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
-                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
-                        'PONumber.required' => 'Po number is required.',
-                        'servicePeriod.required' => 'Service period is required.',
-                        'serviceStartDate.required' => 'Service start date is required.',
-                        'serviceEndDate.required' => 'Service end date is required.',
-                        'bookingDate.required' => 'Document date is required.'
+                        'customerInvoiceNo.required' => trans('custom.customer_invoice_no_required'),
+                        'customerInvoiceDate.required' => trans('custom.customer_invoice_date_required'),
+                        'PONumber.required' => trans('custom.po_number_required'),
+                        'servicePeriod.required' => trans('custom.service_period_required'),
+                        'serviceStartDate.required' => trans('custom.service_start_date_required'),
+                        'serviceEndDate.required' => trans('custom.service_end_date_required'),
+                        'bookingDate.required' => trans('custom.booking_date_required')
 
                     ];
                     $validator = \Validator::make($_post, [
@@ -1388,17 +1388,17 @@ class CustomerInvoiceAPIService extends AppBaseController
                 } else {
 
                     $messages = [
-                        'custTransactionCurrencyID.required' => 'Currency is required.',
-                        'bankID.required' => 'Bank is required.',
-                        'bankAccountID.required' => 'Bank account is required.',
+                        'custTransactionCurrencyID.required' => trans('custom.currency_required'),
+                        'bankID.required' => trans('custom.bank_required'),
+                        'bankAccountID.required' => trans('custom.bank_account_required'),
 
-                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
-                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
-                        'PONumber.required' => 'Po number is required.',
-                        'servicePeriod.required' => 'Service period is required.',
-                        'serviceStartDate.required' => 'Service start date is required.',
-                        'serviceEndDate.required' => 'Service end date is required.',
-                        'bookingDate.required' => 'Document date is required.'
+                        'customerInvoiceNo.required' => trans('custom.customer_invoice_no_required'),
+                        'customerInvoiceDate.required' => trans('custom.customer_invoice_date_required'),
+                        'PONumber.required' => trans('custom.po_number_required'),
+                        'servicePeriod.required' => trans('custom.service_period_required'),
+                        'serviceStartDate.required' => trans('custom.service_start_date_required'),
+                        'serviceEndDate.required' => trans('custom.service_end_date_required'),
+                        'bookingDate.required' => trans('custom.booking_date_required')
 
                     ];
                     $validator = \Validator::make($_post, [
@@ -1446,7 +1446,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'You cannot confirm. Invoice Details not found.'
+                        'message' => trans('custom.cannot_confirm_no_details')
                     ];
                 }
                 else {
@@ -1474,7 +1474,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => false,
                                 'code' => 500,
-                                'message' => 'Every Item should have at least one minimum Qty Requested'
+                                'message' => trans('custom.every_item_min_qty')
                             ];
                         }
 
@@ -1489,7 +1489,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 return [
                                     'status' => false,
                                     'code' => 500,
-                                    'message' => 'Every Item should have at least one minimum User Qty Requested'
+                                    'message' => trans('custom.every_item_min_user_qty')
                                 ];
                             }
                         }
@@ -1502,7 +1502,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => false,
                                 'code' => 500,
-                                'message' => 'Multiple finance category cannot be added. Different finance category found on saved details.'
+                                'message' => trans('custom.multiple_finance_category')
                             ];
                         }
                         foreach ($details as $item) {
@@ -1513,19 +1513,19 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 return [
                                     'status' => false,
                                     'code' => 500,
-                                    'message' => 'BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                                    'message' => trans('custom.bs_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
                                 ];
                             } elseif (!($item->financeGLcodePLSystemID > 0)) {
                                 return [
                                     'status' => false,
                                     'code' => 500,
-                                    'message' => 'Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                                    'message' => trans('custom.cost_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
                                 ];
                             } elseif (!($item->financeGLcodeRevenueSystemID > 0)) {
                                 return [
                                     'status' => false,
                                     'code' => 500,
-                                    'message' => 'Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                                    'message' => trans('custom.revenue_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
                                 ];
                             }
 
@@ -1602,35 +1602,35 @@ class CustomerInvoiceAPIService extends AppBaseController
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Item must not have zero cost'
+                                            'message' => trans('custom.item_must_not_zero_cost')
                                         ];
                                     }
                                     if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Item must not have negative cost'
+                                            'message' => trans('custom.item_must_not_negative_cost')
                                         ];
                                     }
                                     if ($updateItem->currentWareHouseStockQty <= 0) {
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Warehouse stock Qty is 0 for ' . $updateItem->itemDescription
+                                            'message' => trans('custom.warehouse_stock_qty_zero', ['itemDescription' => $updateItem->itemDescription])
                                         ];
                                     }
                                     if ($updateItem->currentStockQty <= 0) {
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Stock Qty is 0 for ' . $updateItem->itemDescription
+                                            'message' => trans('custom.stock_qty_zero', ['itemDescription' => $updateItem->itemDescription])
                                         ];
                                     }
                                     if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Insufficient Stock Qty for ' . $updateItem->itemDescription
+                                            'message' => trans('custom.insufficient_stock_qty', ['itemDescription' => $updateItem->itemDescription])
                                         ];
                                     }
 
@@ -1638,7 +1638,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                         return [
                                             'status' => false,
                                             'code' => 500,
-                                            'message' => 'Insufficient Warehouse Qty for ' . $updateItem->itemDescription
+                                            'message' => trans('custom.insufficient_warehouse_qty', ['itemDescription' => $updateItem->itemDescription])
                                         ];
                                     }
                                 }else{
@@ -1661,7 +1661,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => false,
                                 'code' => 500,
-                                'message' => 'Cannot confirm. Output VAT GL Account not configured.'
+                                'message' => trans('custom.cannot_confirm_output_vat_gl')
                             ];
                         }
 
@@ -1669,7 +1669,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => false,
                                 'code' => 500,
-                                'message' => 'Cannot confirm. Output VAT Transfer GL Account not configured.'
+                                'message' => trans('custom.cannot_confirm_output_vat_transfer_gl')
                             ];
                         }
 
@@ -1700,7 +1700,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => true,
                                 'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                'message' => 'Customer invoice confirmed successfully',
+                                'message' => trans('custom.customer_invoice_confirmed'),
                                 'detail' => $confirm['data'] ?? null
                             ];
                         }
@@ -1744,12 +1744,12 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     'salesPrice' => 'required|numeric|min:1',
                                 ], [
 
-                                    'serviceLineSystemID.required' => 'Segment is required.',
-                                    'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
-                                    'unitOfMeasure.required' => 'UOM is required.',
-                                    'invoiceQty.required' => 'Qty is required.',
-                                    'salesPrice.required' => 'Sales price is required.',
-                                    'unitCost.required' => 'Unit cost is required.'
+                                    'serviceLineSystemID.required' => trans('custom.serviceline_system_id_required'),
+                                    'serviceLineCode.required' => trans('custom.serviceline_code_required'),
+                                    'unitOfMeasure.required' => trans('custom.unit_of_measure_required'),
+                                    'invoiceQty.required' => trans('custom.invoice_qty_required'),
+                                    'salesPrice.required' => trans('custom.sales_price_required'),
+                                    'unitCost.required' => trans('custom.unit_cost_required')
 
                                 ]);
 
@@ -1773,7 +1773,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                         $contractValidator = \Validator::make($item, [
                                             'contractID' => 'required|numeric|min:1'
                                         ], [
-                                            'contractID.required' => 'Contract no. is required.'
+                                            'contractID.required' => trans('custom.contract_no_required')
                                         ]);
                                         if ($contractValidator->fails()) {
                                             return [
@@ -1799,7 +1799,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                 return [
                                     'status' => false,
                                     'code' => 500,
-                                    'message' => 'You cannot continue . multiple contract exist in details.'
+                                    'message' => trans('custom.you_cannot_continue_multiple_contract')
                                 ];
                             } else {
 
@@ -1813,7 +1813,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     return [
                                         'status' => false,
                                         'code' => 500,
-                                        'message' => 'Cannot confirm. Output VAT GL Account not configured.'
+                                        'message' => trans('custom.cannot_confirm_output_vat_gl')
                                     ];
                                 }
 
@@ -1840,7 +1840,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                                     return [
                                         'status' => true,
                                         'data' => $customerInvoiceDirect->refresh()->toArray(),
-                                        'message' => 'Customer invoice confirmed successfully',
+                                        'message' => trans('custom.customer_invoice_confirmed'),
                                         'detail' => $confirm['data'] ?? null
                                     ];
                                 }
@@ -1849,7 +1849,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             return [
                                 'status' => false,
                                 'code' => 500,
-                                'message' => 'No invoice details found.'
+                                'message' => trans('custom.no_invoice_details_found')
                             ];
                         }
 
@@ -1863,7 +1863,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => $_post,
-                'message' => 'Invoice Updated Successfully'
+                'message' => trans('custom.invoice_updated_successfully')
             ];
         }
     }
@@ -1957,7 +1957,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($request['VATAmount'] > 0) || ($request['VATPercentage'] > 0)){
                     return [
                         'status' => false,
-                        'message' => 'The company is not registered for vat'
+                        'message' => trans('custom.company_not_registered_vat')
                     ];
                 }
             }
@@ -2015,14 +2015,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => true,
                     'data' => $customerInvoiceDirectDetail->refresh(),
-                    'message' => "successfully created"
+                    'message' => trans('custom.successfully_created')
                 ];
             }
         } catch (\Exception $exception) {
             DB::rollback();
             return [
                 'status' => false,
-                'message' => "Error Occured !"
+                'message' => trans('custom.error_occurred')
             ];
         }
     }
@@ -2035,7 +2035,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($detail)) {
             return [
                 'status' => false,
-                'message' => 'Customer Invoice Direct Detail not found'
+                'message' => trans('custom.customer_invoice_direct_detail_not_found')
             ];
         }
 
@@ -2044,7 +2044,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($master)) {
             return [
                 'status' => false,
-                'message' => 'Customer Invoice Direct not found'
+                'message' => trans('custom.customer_invoice_direct_not_found')
             ];
         }
 
@@ -2085,14 +2085,14 @@ class CustomerInvoiceAPIService extends AppBaseController
                     if ($contract->paymentInDaysForJob <= 0) {
                         return [
                             'status' => false,
-                            'message' => 'Payment Period is not updated in the contract. Please update and try again'
+                            'message' => trans('custom.payment_period_not_updated_contract')
                         ];
                     }
                 }
             } else {
                 return [
                     'status' => false,
-                    'message' => 'Contract not exist.'
+                    'message' => trans('custom.contract_not_exist')
                 ];
             }
         }
@@ -2101,7 +2101,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'type' => array('type' => 'discountPercentageError'),
-                'message' => 'Discount Percentage cannot be greater than 100 percentage'
+                'message' => trans('custom.discount_percentage_cannot_be_greater')
             ];
         }
 
@@ -2109,7 +2109,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'type' => array('type' => 'discountAmountLineError'),
-                'message' => 'Discount amount cannot be greater than sales price'
+                'message' => trans('custom.discount_amount_cannot_be_greater')
             ];
         }
 
@@ -2121,7 +2121,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'type' => array('type' => 'VATPercentageError'),
-                'message' => 'Vat Percentage cannot be greater than 100 percentage'
+                'message' => trans('custom.vat_percentage_cannot_be_greater')
             ];
         }
 
@@ -2131,7 +2131,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'type' => array('type' => 'VATAmountError'),
-                        'message' => 'Vat Amount cannot be greater than sales price'
+                        'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                     ];
                 }
             }
@@ -2141,7 +2141,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'type' => array('type' => 'VATAmountError'),
-                        'message' => 'Vat Amount cannot be greater than unit price'
+                        'message' => trans('custom.vat_amount_cannot_be_greater_unit_price')
                     ];
                 }
             }
@@ -2175,7 +2175,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($checkDiscountAmount != $input["discountAmountLine"]) && ($checkDiscountPercentage != $input["discountPercentage"])){
                     return [
                         'status' => false,
-                        'message' => 'Discount% and Discount Amount is not matching'
+                        'message' => trans('custom.discount_percentage_amount_not_matching')
                     ];
                 }
             }
@@ -2279,7 +2279,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($checkVatAmount != $input["VATAmount"]) && ($checkVatPercentage != $input["VATPercentage"])){
                     return [
                         'status' => false,
-                        'message' => 'VAT% and VAT Amount is not matching'
+                        'message' => trans('custom.vat_percentage_amount_not_matching')
                     ];
                 }
             }
@@ -2297,14 +2297,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             if($input["VATPercentage"] > 100){
                 return [
                     'status' => false,
-                    'message' => 'VAT% cannot exceed 100%'
+                    'message' => trans('custom.vat_percentage_exceed_100')
                 ];
             }
 
             if($input['VATAmount'] > $input['salesPrice']){
                 return [
                     'status' => false,
-                    'message' => 'Vat amount cannot be greater than sales price'
+                    'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                 ];
             }
         }
@@ -2403,7 +2403,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => 's',
-                'message' => 'successfully created'
+                'message' => trans('custom.successfully_created')
             ];
         } catch (\Exception $exception) {
             DB::rollback();
@@ -2439,7 +2439,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($item)) {
             return [
                 'status' => false,
-                'message' => 'Item not found'
+                'message' => trans('custom.item_not_found')
             ];
         }
 
@@ -2448,7 +2448,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($customerInvoiceDirect)) {
             return [
                 'status' => false,
-                'message' => 'Customer Invoice Direct Not Found'
+                'message' => trans('custom.customer_invoice_direct_not_found')
             ];
         }
 
@@ -2458,7 +2458,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Different finance category found. You can not add different finance category items for same invoice'
+                'message' => trans('custom.different_finance_category_found')
             ];
         }
 
@@ -2508,7 +2508,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Stock Qty is 0. You cannot issue.'
+                    'message' => trans('custom.stock_qty_zero_cannot_issue_item')
                 ];
             }
 
@@ -2516,7 +2516,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Warehouse stock Qty is 0. You cannot issue.'
+                    'message' => trans('custom.warehouse_stock_qty_zero_cannot_issue_item')
                 ];
             }
 
@@ -2524,7 +2524,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Cost is 0. You cannot issue.'
+                    'message' => trans('custom.cost_zero_cannot_issue_item')
                 ];
             }
 
@@ -2532,7 +2532,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Cost is negative. You cannot issue.'
+                    'message' => trans('custom.cost_negative_cannot_issue_item')
                 ];
             }
         }
@@ -2555,7 +2555,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if(empty($catalogDetail)){
                 return [
                     'status' => false,
-                    'message' => 'Customer catalog Not Found'
+                    'message' => trans('custom.customer_catalog_not_found')
                 ];
             }
 
@@ -2623,7 +2623,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Finance Item category sub assigned not found'
+                'message' => trans('custom.finance_item_category_sub_assigned_not_found')
             ];
         }
 
@@ -2631,19 +2631,19 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                'message' => trans('custom.bs_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
             ];
         }elseif (!$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                'message' => trans('custom.cost_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
             ];
         }elseif (!$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']){
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription
+                'message' => trans('custom.revenue_account_cannot_be_null', ['itemCode' => $item->itemPrimaryCode, 'itemDescription' => $item->itemDescription])
             ];
         }
 
@@ -2663,7 +2663,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => "Selected item is already added. Please check again"
+                        'message' => trans('custom.selected_item_already_added')
                     ];
                 }
 
@@ -2705,7 +2705,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "There is a Customer Invoice (" . $checkWhether->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again."
+                    'message' => trans('custom.customer_invoice_pending_approval', ['bookingInvCode' => $checkWhether->bookingInvCode])
                 ];
             }
 
@@ -2737,7 +2737,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again."
+                    'message' => trans('custom.material_issue_pending_approval', ['itemIssueCode' => $checkWhetherItemIssueMaster->itemIssueCode])
                 ];
             }
 
@@ -2768,7 +2768,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again."
+                    'message' => trans('custom.stock_transfer_pending_approval', ['stockTransferCode' => $checkWhetherStockTransfer->stockTransferCode])
                 ];
             }
 
@@ -2792,7 +2792,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again."
+                    'message' => trans('custom.delivery_order_pending_approval', ['deliveryOrderCode' => $checkWhetherDeliveryOrder->deliveryOrderCode])
                 ];
             }
 
@@ -2820,7 +2820,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again."
+                    'message' => trans('custom.purchase_return_pending_approval', ['purchaseReturnCode' => $checkWhetherPR->purchaseReturnCode])
                 ];
             }
         }
@@ -2835,7 +2835,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($updateData['VATAmount'] > 0) || ($updateData['VATPercentage'] > 0)){
                     return [
                         'status' => false,
-                        'message' => 'The company is not registered for vat'
+                        'message' => trans('custom.company_not_registered_vat')
                     ];
                 }
             }
@@ -2895,14 +2895,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => $customerInvoiceItemDetails->toArray(),
-                'message' => 'Customer Invoice Item Details saved successfully'
+                'message' => trans('custom.customer_invoice_item_details_saved_successfully')
             ];
         }
     }
 
     public static function customerInvoiceItemDetailsUpdate($input): array {
         $qtyError = array('type' => 'qty');
-        $message = "Item updated successfully";
+        $message = trans('custom.item_updated_successfully');
 
         $id = $input['customerItemDetailID'];
 
@@ -2911,7 +2911,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($customerInvoiceItemDetails)) {
             return [
                 'status' => false,
-                'message' => 'Customer Invoice Item Details not found'
+                'message' => trans('custom.customer_invoice_item_details_not_found')
             ];
         }
 
@@ -2920,7 +2920,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (empty($customerDirectInvoice)) {
             return [
                 'status' => false,
-                'message' => 'Customer Invoice Details not found'
+                'message' => trans('custom.customer_invoice_details_not_found')
             ];
         }
 
@@ -2941,14 +2941,14 @@ class CustomerInvoiceAPIService extends AppBaseController
         if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
             return [
                 'status' => false,
-                'message' => 'Discount Percentage cannot be greater than 100 percentage'
+                'message' => trans('custom.discount_percentage_cannot_be_greater')
             ];
         }
 
         if (isset($input["discountAmount"]) && isset($input['salesPrice']) && $input['discountAmount'] > $input['salesPrice']) {
             return [
                 'status' => false,
-                'message' => 'Discount amount cannot be greater than sales price'
+                'message' => trans('custom.discount_amount_cannot_be_greater')
             ];
         }
 
@@ -2962,7 +2962,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             return [
                 'status' => false,
                 'type' => array('type' => 'VATPercentageError'),
-                'message' => 'Vat Percentage cannot be greater than 100 percentage'
+                'message' => trans('custom.vat_percentage_cannot_be_greater')
             ];
         }
 
@@ -2972,7 +2972,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'type' => array('type' => 'VATAmountError'),
-                        'message' => 'Vat Amount cannot be greater than sales price'
+                        'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                     ];
                 }
             }
@@ -2982,7 +2982,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'type' => array('type' => 'VATAmountError'),
-                        'message' => 'Vat Amount cannot be greater than unit price'
+                        'message' => trans('custom.vat_amount_cannot_be_greater_unit_price')
                     ];
                 }
             }
@@ -2997,7 +2997,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "Unit conversion isn't valid or configured"
+                    'message' => trans('custom.unit_conversion_not_valid_configured')
                 ];
             }
 
@@ -3022,7 +3022,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => "Sales Price and Margin% is not matching"
+                        'message' => trans('custom.sales_price_margin_not_matching')
                     ];
                 }
             }
@@ -3068,7 +3068,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($checkDiscountAmount != $input["discountAmount"]) && ($checkDiscountPercentage != $input["discountPercentage"])){
                     return [
                         'status' => false,
-                        'message' => 'Discount% and Discount Amount is not matching'
+                        'message' => trans('custom.discount_percentage_amount_not_matching')
                     ];
                 }
             }
@@ -3124,7 +3124,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                 if(($checkVatAmount != $input["VATAmount"]) && ($checkVatPercentage != $input["VATPercentage"])){
                     return [
                         'status' => false,
-                        'message' => 'VAT% and VAT Amount is not matching'
+                        'message' => trans('custom.vat_percentage_amount_not_matching')
                     ];
                 }
             }
@@ -3142,14 +3142,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             if($input["VATPercentage"] > 100){
                 return [
                     'status' => false,
-                    'message' => 'VAT% cannot exceed 100%'
+                    'message' => trans('custom.vat_percentage_exceed_100')
                 ];
             }
 
             if($input['VATAmount'] > $unitCostForCalculation){
                 return [
                     'status' => false,
-                    'message' => 'Vat amount cannot be greater than sales price'
+                    'message' => trans('custom.vat_amount_cannot_be_greater_sales_price')
                 ];
             }
         }
@@ -3352,13 +3352,13 @@ class CustomerInvoiceAPIService extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
 
         $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.no_invoice_details_found')];
         }
 
         $totalAmount = 0;
@@ -3378,7 +3378,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
@@ -3527,13 +3527,13 @@ class CustomerInvoiceAPIService extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
 
         $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.no_invoice_details_found')];
         }
 
         $totalAmount = 0;
@@ -3553,7 +3553,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
@@ -3774,7 +3774,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             DB::rollBack();
                             $returnData['status'] = false;
                             $returnData['responseData'] = self::createResponceDataArray($masterData['customerInvoiceNo'], $i, [], $headerData, $detailData);
-                            $returnData['message'] = "Invoice Type Error";
+                            $returnData['message'] = trans('custom.invoice_type_error');
                             break 2;
                         }
 

@@ -93,7 +93,7 @@ class TenderNegotiationController extends AppBaseController
     public function show($id)
     {
         $tenderNeotiation = $this->tenderNegotiationRepository->withRelations($id,['confirmed_by']);
-        return $this->sendResponse($tenderNeotiation->toArray(), 'Data reterived successfully');
+        return $this->sendResponse($tenderNeotiation->toArray(), trans('custom.data_reterived_successfully'));
     }
 
 
@@ -271,7 +271,7 @@ class TenderNegotiationController extends AppBaseController
 
     public function getFormData(Request $request) {
         $yesNoSelection = YesNoSelection::all();
-        return $this->sendResponse($yesNoSelection, 'Data reterived successfully');
+        return $this->sendResponse($yesNoSelection, trans('custom.data_reterived_successfully'));
     }
 
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
@@ -312,7 +312,7 @@ class TenderNegotiationController extends AppBaseController
                         $redirectUrl = env('ERP_APPROVE_URL');
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
                         // $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br> The Follwing bid submission are available $table <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                        $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $temp = trans('email.hi') . "  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                         $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -526,7 +526,7 @@ class TenderNegotiationController extends AppBaseController
             $result =  $this->supplierTenderNegotiationRepository->getSupplierList($validatedData['negotiationId'], $validatedData['tenderUuid']);
             return $this->sendResponse($result,'Received supplier List');
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred');
+            return $this->sendError(trans('custom.error_occurred_1'));
         }
     }
 }

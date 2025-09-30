@@ -69,7 +69,7 @@ class TenderFaqAPIController extends AppBaseController
         $this->tenderFaqRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderFaqs = $this->tenderFaqRepository->all();
 
-        return $this->sendResponse($tenderFaqs->toArray(), 'Tender Faqs retrieved successfully');
+        return $this->sendResponse($tenderFaqs->toArray(), trans('custom.tender_faqs_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class TenderFaqAPIController extends AppBaseController
 
         $tenderFaq = $this->tenderFaqRepository->create($input);
 
-        return $this->sendResponse($tenderFaq->toArray(), 'Tender Faq saved successfully');
+        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tender_faq_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError('Tender Faq not found');
+            return $this->sendError(trans('custom.tender_faq_not_found'));
         }
 
-        return $this->sendResponse($tenderFaq->toArray(), 'Tender Faq retrieved successfully');
+        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tender_faq_retrieved_successfully'));
     }
 
     /**
@@ -223,12 +223,12 @@ class TenderFaqAPIController extends AppBaseController
         $tenderFaq = $this->tenderFaqRepository->findWithoutFail($id);
 
         if (empty($tenderFaq)) {
-            return $this->sendError('Tender Faq not found');
+            return $this->sendError(trans('custom.tender_faq_not_found'));
         }
 
         $tenderFaq = $this->tenderFaqRepository->update($input, $id);
 
-        return $this->sendResponse($tenderFaq->toArray(), 'TenderFaq updated successfully');
+        return $this->sendResponse($tenderFaq->toArray(), trans('custom.tenderfaq_updated_successfully'));
     }
 
     /**

@@ -103,7 +103,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $this->paySupplierInvoiceDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paySupplierInvoiceDetails = $this->paySupplierInvoiceDetailRepository->all();
 
-        return $this->sendResponse($paySupplierInvoiceDetails->toArray(), 'Pay Supplier Invoice Details retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetails->toArray(), trans('custom.pay_supplier_invoice_details_retrieved_successfull'));
     }
 
     /**
@@ -150,7 +150,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $paySupplierInvoiceDetails = $this->paySupplierInvoiceDetailRepository->create($input);
 
-        return $this->sendResponse($paySupplierInvoiceDetails->toArray(), 'Pay Supplier Invoice Detail saved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetails->toArray(), trans('custom.pay_supplier_invoice_detail_saved_successfully'));
     }
 
     /**
@@ -197,10 +197,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceDetail)) {
-            return $this->sendError('Pay Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_not_found'));
         }
 
-        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'Pay Supplier Invoice Detail retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), trans('custom.pay_supplier_invoice_detail_retrieved_successfully'));
     }
 
     /**
@@ -257,18 +257,18 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceDetail)) {
-            return $this->sendError('Pay Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_not_found'));
         }
 
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
         $invoi = $payMaster->invoiceType;
 
         if (empty($payMaster)) {
-            return $this->sendError('Payment voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_1'));
         }
 
         if ($payMaster->confirmedYN) {
-            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_supplier_po_payment_detail_this_doc'), 500);
         }
 
         $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
@@ -344,12 +344,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
             if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         }
        
@@ -506,7 +506,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
+        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), trans('custom.paysupplierinvoicedetail_updated_successfully'));
     }
 
     /**
@@ -557,14 +557,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
 
             if (empty($paySupplierInvoiceDetail)) {
-                return $this->sendError('Pay Supplier Invoice Detail not found');
+                return $this->sendError(trans('custom.pay_supplier_invoice_detail_not_found'));
             }
 
             if($paySupplierInvoiceDetail->documentID == 'PV' && $paySupplierInvoiceDetail->documentSystemID == 4){
                 $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
 
                 if (empty($payMaster)) {
-                    return $this->sendError('Payment voucher not found');
+                    return $this->sendError(trans('custom.payment_voucher_not_found_1'));
                 }
                 $isPaymentVoucher = true;
             } else {
@@ -575,7 +575,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $payMaster = DebitNote::find($paySupplierInvoiceDetail->PayMasterAutoId);
 
                 if (empty($payMaster)) {
-                    return $this->sendError('Debit Note not found');
+                    return $this->sendError(trans('custom.debit_note_not_found'));
                 }
                 $isDebitNote = true;
             } else {
@@ -584,7 +584,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             if ($paySupplierInvoiceDetail->matchingDocID == 0) {
                 if ($paySupplierInvoiceDetail->payment_master && $paySupplierInvoiceDetail->payment_master->confirmedYN) {
-                    return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
+                    return $this->sendError(trans('custom.you_cannot_delete_the_detail_this_document_already'), 500);
                 }
             }
             $user_type = null;
@@ -607,7 +607,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             if ($paySupplierInvoiceDetail->documentSystemID != 0) {
                 if ($paySupplierInvoiceDetail->matching_master && $paySupplierInvoiceDetail->matching_master->matchingConfirmedYN) {
-                    return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
+                    return $this->sendError(trans('custom.you_cannot_delete_the_detail_this_document_already'), 500);
                 }
             }
 
@@ -794,7 +794,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($id, 'Pay Supplier Invoice Detail deleted successfully');
+            return $this->sendResponse($id, trans('custom.pay_supplier_invoice_detail_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 500);
@@ -812,18 +812,18 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $payMaster = PaySupplierInvoiceMaster::find($payMasterAutoId);
 
             if (empty($payMaster)) {
-                return $this->sendError('Payment voucher not found');
+                return $this->sendError(trans('custom.payment_voucher_not_found_1'));
             }
 
             if ($payMaster->confirmedYN) {
-                return $this->sendError('You cannot delete Supplier PO Payment Detail, this document already confirmed', 500);
+                return $this->sendError(trans('custom.you_cannot_delete_supplier_po_payment_detail_this_'), 500);
             }
 
             /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
             $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
             if (empty($paySupplierInvoiceDetail)) {
-                return $this->sendError('Pay Supplier Invoice Detail not found');
+                return $this->sendError(trans('custom.pay_supplier_invoice_detail_not_found'));
             }
 
             foreach ($paySupplierInvoiceDetail as $val) {
@@ -915,10 +915,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($payMasterAutoId, 'Pay Supplier Invoice Detail deleted successfully');
+            return $this->sendResponse($payMasterAutoId, trans('custom.pay_supplier_invoice_detail_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 
@@ -932,11 +932,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
         if (empty($payMaster)) {
-            return $this->sendError('Payment voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_1'));
         }
         
         if ($payMaster->confirmedYN) {
-            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_supplier_po_payment_detail_this_doc'), 500);
         }
 
         if ($payMaster->invoiceType == 6) {
@@ -944,7 +944,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if (!$result['status']) {
                 return $this->sendError("Error. Please check again.", 500, $result['message']);
             } else {
-                return $this->sendResponse('', 'Payment details saved successfully');
+                return $this->sendResponse('', trans('custom.payment_details_saved_successfully'));
             }
         }
 
@@ -983,7 +983,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                 $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
                                                 $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
                                                 $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
-                                                array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
+                                                array_push($finalError_ap['advance_payment_paid'], trans('custom.please_note_that_an_advance_payment_of'). $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . trans('custom.is_paid_for_this_supplier_for_the_selected_purchase_order') . $poCode);
                                                 $error_count_ap++;
                                             }
     
@@ -1096,7 +1096,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse('', 'Payment details saved successfully');
+            return $this->sendResponse('', trans('custom.payment_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1240,14 +1240,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             'supplierPaymentVoucher' => $supplierPaymentVouchers,
             'bankChargeAndOthers' => $bankChargeAndOthers
         ];
-        return $this->sendResponse($finalData, 'Payment details saved successfully');
+        return $this->sendResponse($finalData, trans('custom.payment_details_saved_successfully'));
     }
 
     function getMatchingPaymentDetails(Request $request)
     {
         $data = PaySupplierInvoiceDetail::with(['pomaster'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
-        return $this->sendResponse($data, 'Payment details saved successfully');
+        return $this->sendResponse($data, trans('custom.payment_details_saved_successfully'));
     }
 
     public function addPaymentVoucherMatchingPaymentDetail(Request $request)
@@ -1270,11 +1270,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $user_type = $matchDocumentMasterData->user_type;
 
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching not found');
+            return $this->sendError(trans('custom.matching_not_found'));
         }
 
         if ($matchDocumentMasterData->matchingConfirmedYN) {
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         $itemExistArray = array();
@@ -1480,7 +1480,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse('', 'Payment details saved successfully');
+            return $this->sendResponse('', trans('custom.payment_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError("Error Occurred");
@@ -1497,17 +1497,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($input['payDetailAutoID']);
 
         if (empty($paySupplierInvoiceDetail)) {
-            return $this->sendError('Pay Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_not_found'));
         }
         
         $matchDocumentMasterData = MatchDocumentMaster::find($input['matchingDocID']);
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching document not found');
+            return $this->sendError(trans('custom.matching_document_not_found'));
         }
 
         $user_type = $matchDocumentMasterData->user_type;
         if ($matchDocumentMasterData->matchingConfirmedYN) {
-            return $this->sendError('You cannot update the detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_update_the_detail_this_document_already'), 500);
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
@@ -1515,7 +1515,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         
 
         if ($input['supplierPaymentAmount'] > $input['paymentBalancedAmount']) {
-            return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+            return $this->sendError(trans('custom.matching_amount_cannot_be_greater_than_balance_amo'), 500, ['type' => 'amountmismatch']);
         }
         
         //calculate the total
@@ -1528,7 +1528,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $currencyDecimal = CurrencyMaster::where('currencyID',$matchDocumentMasterData->supplierTransCurrencyID)->select('DecimalPlaces')->first();
         $matchAmount = round($matchDocumentMasterData->matchBalanceAmount,$currencyDecimal->DecimalPlaces);
         if (($existTotal - $matchAmount) > 0.00001) {
-            return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
+            return $this->sendError(trans('custom.matching_amount_total_cannot_be_greater_than_balan'), 500, ['type' => 'amountmismatch']);
         }
 
         if ($input['supplierPaymentAmount'] == "") {
@@ -1635,12 +1635,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
             if (($input["supplierPaymentAmount"] - $paymentBalancedAmount) > 0.00001) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             //debit note
             if (($paymentBalancedAmount - $input["supplierPaymentAmount"]) > 0.00001) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         }
        
@@ -1848,7 +1848,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
   
         }
-        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
+        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), trans('custom.paysupplierinvoicedetail_updated_successfully'));
     }
 
     public function storePaymentVoucherBankChargeDetails(Request $request)
@@ -1878,11 +1878,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $payMasterAutoID)->first();
 
         if(empty($master)){
-            return $this->sendError('Payment Voucher not found.');
+            return $this->sendError(trans('custom.payment_voucher_not_found'));
         }
 
         if($master->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         $company = Company::where('companySystemID', $companySystemID)->first();
@@ -1916,7 +1916,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         try {
             PaymentVoucherBankChargeDetails::create($inputData);
             DB::commit();
-            return $this->sendResponse(null, 'successfully created');
+            return $this->sendResponse(null, trans('custom.successfully_created'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getLine());
@@ -1936,17 +1936,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $detail = PaymentVoucherBankChargeDetails::where('id', $id)->first();
 
         if (empty($detail)) {
-            return $this->sendError('Payment voucher bank detail not found', 500);
+            return $this->sendError(trans('custom.payment_voucher_bank_detail_not_found'), 500);
         }
 
         $master = PaySupplierInvoiceMaster::where('PayMasterAutoId', $detail->payMasterAutoID)->first();
 
         if(empty($master)){
-            return $this->sendError('Payment Voucher not found.');
+            return $this->sendError(trans('custom.payment_voucher_not_found'));
         }
 
         if($master->confirmedYN){
-            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_update_detail_this_document_already_con'), 500);
         }
 
         if($input['serviceLineSystemID'] == 0){
@@ -1977,7 +1977,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             PaymentVoucherBankChargeDetails::where('id', $id)->update($input);
 
             DB::commit();
-            return $this->sendResponse('s', 'successfully updated');
+            return $this->sendResponse('s', trans('custom.successfully_updated_1'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage());

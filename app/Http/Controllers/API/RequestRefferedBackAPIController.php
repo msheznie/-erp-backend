@@ -75,7 +75,7 @@ class RequestRefferedBackAPIController extends AppBaseController
         $this->requestRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $requestRefferedBacks = $this->requestRefferedBackRepository->all();
 
-        return $this->sendResponse($requestRefferedBacks->toArray(), 'Request Reffered Backs retrieved successfully');
+        return $this->sendResponse($requestRefferedBacks->toArray(), trans('custom.request_reffered_backs_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class RequestRefferedBackAPIController extends AppBaseController
 
         $requestRefferedBacks = $this->requestRefferedBackRepository->create($input);
 
-        return $this->sendResponse($requestRefferedBacks->toArray(), 'Request Reffered Back saved successfully');
+        return $this->sendResponse($requestRefferedBacks->toArray(), trans('custom.request_reffered_back_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class RequestRefferedBackAPIController extends AppBaseController
         $requestRefferedBack = $this->requestRefferedBackRepository->with(['segment_by','created_by','confirmed_by'])->findWithoutFail($id);
 
         if (empty($requestRefferedBack)) {
-            return $this->sendError('Request Reffered Back not found');
+            return $this->sendError(trans('custom.request_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($requestRefferedBack->toArray(), 'Request Reffered Back retrieved successfully');
+        return $this->sendResponse($requestRefferedBack->toArray(), trans('custom.request_reffered_back_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class RequestRefferedBackAPIController extends AppBaseController
         $requestRefferedBack = $this->requestRefferedBackRepository->findWithoutFail($id);
 
         if (empty($requestRefferedBack)) {
-            return $this->sendError('Request Reffered Back not found');
+            return $this->sendError(trans('custom.request_reffered_back_not_found'));
         }
 
         $requestRefferedBack = $this->requestRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($requestRefferedBack->toArray(), 'RequestRefferedBack updated successfully');
+        return $this->sendResponse($requestRefferedBack->toArray(), trans('custom.requestrefferedback_updated_successfully'));
     }
 
     /**
@@ -281,12 +281,12 @@ class RequestRefferedBackAPIController extends AppBaseController
         $requestRefferedBack = $this->requestRefferedBackRepository->findWithoutFail($id);
 
         if (empty($requestRefferedBack)) {
-            return $this->sendError('Request Reffered Back not found');
+            return $this->sendError(trans('custom.request_reffered_back_not_found'));
         }
 
         $requestRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Request Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.request_reffered_back_deleted_successfully'));
     }
 
     public function getReferBackHistoryByRequest(Request $request)

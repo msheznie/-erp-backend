@@ -74,7 +74,7 @@ class HRMSLeaveAccrualMasterAPIController extends AppBaseController
         $this->hRMSLeaveAccrualMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSLeaveAccrualMasters = $this->hRMSLeaveAccrualMasterRepository->all();
 
-        return $this->sendResponse($hRMSLeaveAccrualMasters->toArray(), 'H R M S Leave Accrual Masters retrieved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualMasters->toArray(), trans('custom.h_r_m_s_leave_accrual_masters_retrieved_successful'));
     }
 
     /**
@@ -121,7 +121,7 @@ class HRMSLeaveAccrualMasterAPIController extends AppBaseController
 
         $hRMSLeaveAccrualMaster = $this->hRMSLeaveAccrualMasterRepository->create($input);
 
-        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), 'H R M S Leave Accrual Master saved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), trans('custom.h_r_m_s_leave_accrual_master_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class HRMSLeaveAccrualMasterAPIController extends AppBaseController
         $hRMSLeaveAccrualMaster = $this->hRMSLeaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualMaster)) {
-            return $this->sendError('H R M S Leave Accrual Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_master_not_found'));
         }
 
-        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), 'H R M S Leave Accrual Master retrieved successfully');
+        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), trans('custom.h_r_m_s_leave_accrual_master_retrieved_successfull'));
     }
 
     /**
@@ -228,12 +228,12 @@ class HRMSLeaveAccrualMasterAPIController extends AppBaseController
         $hRMSLeaveAccrualMaster = $this->hRMSLeaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualMaster)) {
-            return $this->sendError('H R M S Leave Accrual Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_master_not_found'));
         }
 
         $hRMSLeaveAccrualMaster = $this->hRMSLeaveAccrualMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), 'HRMSLeaveAccrualMaster updated successfully');
+        return $this->sendResponse($hRMSLeaveAccrualMaster->toArray(), trans('custom.hrmsleaveaccrualmaster_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class HRMSLeaveAccrualMasterAPIController extends AppBaseController
         $hRMSLeaveAccrualMaster = $this->hRMSLeaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($hRMSLeaveAccrualMaster)) {
-            return $this->sendError('H R M S Leave Accrual Master not found');
+            return $this->sendError(trans('custom.h_r_m_s_leave_accrual_master_not_found'));
         }
 
         $hRMSLeaveAccrualMaster->delete();
 
-        return $this->sendResponse($id, 'H R M S Leave Accrual Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_leave_accrual_master_deleted_successfully'));
     }
 }

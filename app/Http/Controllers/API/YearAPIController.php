@@ -65,7 +65,7 @@ class YearAPIController extends AppBaseController
         $this->yearRepository->pushCriteria(new LimitOffsetCriteria($request));
         $years = $this->yearRepository->all();
 
-        return $this->sendResponse($years->toArray(), 'Years retrieved successfully');
+        return $this->sendResponse($years->toArray(), trans('custom.years_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class YearAPIController extends AppBaseController
 
         $years = $this->yearRepository->create($input);
 
-        return $this->sendResponse($years->toArray(), 'Year saved successfully');
+        return $this->sendResponse($years->toArray(), trans('custom.year_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class YearAPIController extends AppBaseController
         $year = $this->yearRepository->findWithoutFail($id);
 
         if (empty($year)) {
-            return $this->sendError('Year not found');
+            return $this->sendError(trans('custom.year_not_found'));
         }
 
-        return $this->sendResponse($year->toArray(), 'Year retrieved successfully');
+        return $this->sendResponse($year->toArray(), trans('custom.year_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class YearAPIController extends AppBaseController
         $year = $this->yearRepository->findWithoutFail($id);
 
         if (empty($year)) {
-            return $this->sendError('Year not found');
+            return $this->sendError(trans('custom.year_not_found'));
         }
 
         $year = $this->yearRepository->update($input, $id);
 
-        return $this->sendResponse($year->toArray(), 'Year updated successfully');
+        return $this->sendResponse($year->toArray(), trans('custom.year_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class YearAPIController extends AppBaseController
         $year = $this->yearRepository->findWithoutFail($id);
 
         if (empty($year)) {
-            return $this->sendError('Year not found');
+            return $this->sendError(trans('custom.year_not_found'));
         }
 
         $year->delete();
 
-        return $this->sendResponse($id, 'Year deleted successfully');
+        return $this->sendResponse($id, trans('custom.year_deleted_successfully'));
     }
 }

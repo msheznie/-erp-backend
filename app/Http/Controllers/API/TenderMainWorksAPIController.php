@@ -72,7 +72,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $this->tenderMainWorksRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMainWorks = $this->tenderMainWorksRepository->all();
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works retrieved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class TenderMainWorksAPIController extends AppBaseController
 
         $tenderMainWorks = $this->tenderMainWorksRepository->create($input);
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works saved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'Tender Main Works retrieved successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tender_main_works_retrieved_successfully'));
     }
 
     /**
@@ -226,12 +226,12 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
         $tenderMainWorks = $this->tenderMainWorksRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMainWorks->toArray(), 'TenderMainWorks updated successfully');
+        return $this->sendResponse($tenderMainWorks->toArray(), trans('custom.tendermainworks_updated_successfully'));
     }
 
     /**
@@ -278,7 +278,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $tenderMainWorks = $this->tenderMainWorksRepository->findWithoutFail($id);
 
         if (empty($tenderMainWorks)) {
-            return $this->sendError('Tender Main Works not found');
+            return $this->sendError(trans('custom.tender_main_works_not_found'));
         }
 
         $tenderMainWorks->delete();

@@ -82,7 +82,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $this->tenderBidClarificationsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->all();
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications retrieved successfully');
+        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->create($input);
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications saved successfully');
+        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_saved_successfully'));
     }
 
     /**
@@ -176,10 +176,10 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError('Tender Bid Clarifications not found');
+            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
         }
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), 'Tender Bid Clarifications retrieved successfully');
+        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tender_bid_clarifications_retrieved_successfully'));
     }
 
     /**
@@ -236,12 +236,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError('Tender Bid Clarifications not found');
+            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
         }
 
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBidClarifications->toArray(), 'TenderBidClarifications updated successfully');
+        return $this->sendResponse($tenderBidClarifications->toArray(), trans('custom.tenderbidclarifications_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderBidClarifications = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderBidClarifications)) {
-            return $this->sendError('Tender Bid Clarifications not found');
+            return $this->sendError(trans('custom.tender_bid_clarifications_not_found'));
         }
 
         $tenderBidClarifications->delete();
@@ -639,6 +639,6 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
 
-        return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
+        return $this->sendResponse($raiseAsPrivate, trans('custom.prebid_clarifications_policy_retrieved_successfull'));
     }
 }

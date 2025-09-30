@@ -64,7 +64,7 @@ class DocumentCodePrefixAPIController extends AppBaseController
         $this->documentCodePrefixRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodePrefixes = $this->documentCodePrefixRepository->all();
 
-        return $this->sendResponse($documentCodePrefixes->toArray(), 'Document Code Prefixes retrieved successfully');
+        return $this->sendResponse($documentCodePrefixes->toArray(), trans('custom.document_code_prefixes_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentCodePrefixAPIController extends AppBaseController
 
         $documentCodePrefix = $this->documentCodePrefixRepository->create($input);
 
-        return $this->sendResponse($documentCodePrefix->toArray(), 'Document Code Prefix saved successfully');
+        return $this->sendResponse($documentCodePrefix->toArray(), trans('custom.document_code_prefix_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentCodePrefixAPIController extends AppBaseController
         $documentCodePrefix = $this->documentCodePrefixRepository->findWithoutFail($id);
 
         if (empty($documentCodePrefix)) {
-            return $this->sendError('Document Code Prefix not found');
+            return $this->sendError(trans('custom.document_code_prefix_not_found'));
         }
 
-        return $this->sendResponse($documentCodePrefix->toArray(), 'Document Code Prefix retrieved successfully');
+        return $this->sendResponse($documentCodePrefix->toArray(), trans('custom.document_code_prefix_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentCodePrefixAPIController extends AppBaseController
         $documentCodePrefix = $this->documentCodePrefixRepository->findWithoutFail($id);
 
         if (empty($documentCodePrefix)) {
-            return $this->sendError('Document Code Prefix not found');
+            return $this->sendError(trans('custom.document_code_prefix_not_found'));
         }
 
         $documentCodePrefix = $this->documentCodePrefixRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodePrefix->toArray(), 'DocumentCodePrefix updated successfully');
+        return $this->sendResponse($documentCodePrefix->toArray(), trans('custom.documentcodeprefix_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentCodePrefixAPIController extends AppBaseController
         $documentCodePrefix = $this->documentCodePrefixRepository->findWithoutFail($id);
 
         if (empty($documentCodePrefix)) {
-            return $this->sendError('Document Code Prefix not found');
+            return $this->sendError(trans('custom.document_code_prefix_not_found'));
         }
 
         $documentCodePrefix->delete();
@@ -315,10 +315,10 @@ class DocumentCodePrefixAPIController extends AppBaseController
                                                     ->where('company_id', $company_id)
                                                     ->first();
             if (!$documentCodePrefix) {
-                return $this->sendError('Document Code Prefix not found');
+                return $this->sendError(trans('custom.document_code_prefix_not_found'));
             }
     
-            return $this->sendResponse($documentCodePrefix->toArray(), 'Document Code Prefix retrieved successfully');
+            return $this->sendResponse($documentCodePrefix->toArray(), trans('custom.document_code_prefix_retrieved_successfully'));
         }
         
         if($common_id  > 0){
@@ -327,10 +327,10 @@ class DocumentCodePrefixAPIController extends AppBaseController
                                                     ->where('company_id', $company_id)
                                                     ->first();
             if (!$documentCodePrefix) {
-                return $this->sendError('Document Code Prefix not found');
+                return $this->sendError(trans('custom.document_code_prefix_not_found'));
             }
     
-            return $this->sendResponse($documentCodePrefix->toArray(), 'Document Code Prefix retrieved successfully');
+            return $this->sendResponse($documentCodePrefix->toArray(), trans('custom.document_code_prefix_retrieved_successfully'));
         }
 
     }
@@ -344,7 +344,7 @@ class DocumentCodePrefixAPIController extends AppBaseController
         $documentCodePrefix = $this->documentCodePrefixRepository->findWithoutFail($id);
 
         if (empty($documentCodePrefix)) {
-            return $this->sendError('Document Code Prefix not found');
+            return $this->sendError(trans('custom.document_code_prefix_not_found'));
         }
 
         // Validation for common_id
@@ -359,7 +359,7 @@ class DocumentCodePrefixAPIController extends AppBaseController
                 ->exists();
 
             if ($existingDescription) {
-                return $this->sendError('Description already exists for this company with a different transaction or type.');
+                return $this->sendError(trans('custom.description_already_exists_for_this_company_with_a'));
             }
         }
 
@@ -375,12 +375,12 @@ class DocumentCodePrefixAPIController extends AppBaseController
                 ->exists();
 
             if ($existingDescription) {
-                return $this->sendError('Description already exists for this company with a different type or transaction.');
+                return $this->sendError(trans('custom.description_already_exists_for_this_company_with_a_1'));
             }
         }
 
         $updateDocumentCodePrefix = $this->documentCodePrefixRepository->update($input, $id);
 
-        return $this->sendResponse($updateDocumentCodePrefix->toArray(), 'Document Code Prefix updated successfully');
+        return $this->sendResponse($updateDocumentCodePrefix->toArray(), trans('custom.document_code_prefix_updated_successfully'));
     }
 }

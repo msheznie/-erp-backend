@@ -27,6 +27,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierMaster;
 use App\Providers\AuthServiceProvider;
 use App\Repositories\PurchaseOrderStatusRepository;
+use App\helper\CreateExcel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -87,7 +88,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $this->purchaseOrderStatusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderStatuses = $this->purchaseOrderStatusRepository->all();
 
-        return $this->sendResponse($purchaseOrderStatuses->toArray(), 'Purchase Order Statuses retrieved successfully');
+        return $this->sendResponse($purchaseOrderStatuses->toArray(), trans('custom.purchase_order_statuses_retrieved_successfully'));
     }
 
     /**
@@ -106,7 +107,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $procumentOrderStatus = PurchaseOrderStatus::where('purchaseOrderID', $input['purchaseOrderID'])
@@ -115,7 +116,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             ->paginate($input['itemPerPage']);
 
 
-        return $this->sendResponse($procumentOrderStatus, 'Procurement Order retrieved successfully');
+        return $this->sendResponse($procumentOrderStatus, trans('custom.procurement_order_retrieved_successfully'));
     }
 
     /**
@@ -162,7 +163,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $input['purchaseOrderCode'] = $purchaseOrder->purchaseOrderCode;
@@ -174,7 +175,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrderStatuses = $this->purchaseOrderStatusRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderStatuses->toArray(), 'Purchase Order Status saved successfully');
+        return $this->sendResponse($purchaseOrderStatuses->toArray(), trans('custom.purchase_order_status_saved_successfully'));
     }
 
 
@@ -222,10 +223,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderStatus)) {
-            return $this->sendError('Purchase Order Status not found');
+            return $this->sendError(trans('custom.purchase_order_status_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderStatus->toArray(), 'Purchase Order Status retrieved successfully');
+        return $this->sendResponse($purchaseOrderStatus->toArray(), trans('custom.purchase_order_status_retrieved_successfully'));
     }
 
     /**
@@ -284,12 +285,12 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderStatus)) {
-            return $this->sendError('Purchase Order Status not found');
+            return $this->sendError(trans('custom.purchase_order_status_not_found'));
         }
 
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderStatus->toArray(), 'PurchaseOrderStatus updated successfully');
+        return $this->sendResponse($purchaseOrderStatus->toArray(), trans('custom.purchaseorderstatus_updated_successfully'));
     }
 
     /**
@@ -338,7 +339,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderStatus)) {
-            return $this->sendError('Purchase Order Status not found');
+            return $this->sendError(trans('custom.purchase_order_status_not_found'));
         }
 
         if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
@@ -347,7 +348,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrderStatus->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_status_deleted_successfully'));
     }
 
     /**
@@ -370,7 +371,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderStatus)) {
-            return $this->sendError('Purchase Order Status not found');
+            return $this->sendError(trans('custom.purchase_order_status_not_found'));
         }
 
         if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
@@ -386,7 +387,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             return $this->sendError($errorMessage, 500);
         }
 
-        return $this->sendResponse($id, 'Purchase Order Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_status_deleted_successfully'));
     }
 
     /**
@@ -409,7 +410,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderStatus)) {
-            return $this->sendError('Purchase Order Status not found');
+            return $this->sendError(trans('custom.purchase_order_status_not_found'));
         }
 
         if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
@@ -428,7 +429,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderStatus->purchaseOrderID)->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $statusCategory = PurchaseOrderStatus::where('POCategoryID', $purchaseOrderStatus->POCategoryID)->first();
@@ -471,7 +472,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             return $this->sendError($sendEmail["message"], 500);
         }
 
-        return $this->sendResponse($id, 'Purchase Order Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_status_deleted_successfully'));
     }
 
     /**
@@ -654,7 +655,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             'segment' => $segments
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -765,34 +766,37 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
 
             $data[] = array(
-                'Company ID' => $val->companyID,
-                'PO Code' => $val->purchaseOrderCode,
-                'Segment' => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
-                'Created Date' => \Helper::dateFormat($val->createdDateTime),
-                'Approved Date' => \Helper::dateFormat($val->approvedDate),
-                'ETA' => \Helper::dateFormat($val->expectedDeliveryDate),
-                'Narration' => $val->narration,
-                'Supplier Code' => $val->supplierPrimaryCode,
-                'Supplier Name' => $val->supplierName,
-                'Supplier Country' => $countryName,
-                'Currency' => $currencyName,
-                'Amount' => $val->poTotalSupplierTransactionCurrency,
-                'GRV Status' => $grvStatus,
-                'Status' => $status,
-                'Comments' => $comments,
+                trans('custom.company_id') => $val->companyID,
+                trans('custom.po_code') => $val->purchaseOrderCode,
+                trans('custom.segment') => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
+                trans('custom.created_date') => \Helper::dateFormat($val->createdDateTime),
+                trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+                trans('custom.eta') => \Helper::dateFormat($val->expectedDeliveryDate),
+                trans('custom.narration') => $val->narration,
+                trans('custom.supplier_code') => $val->supplierPrimaryCode,
+                trans('custom.supplier_name') => $val->supplierName,
+                trans('custom.supplier_country') => $countryName,
+                trans('custom.currency') => $currencyName,
+                trans('custom.amount') => $val->poTotalSupplierTransactionCurrency,
+                trans('custom.grv_status') => $grvStatus,
+                trans('custom.status') => $status,
+                trans('custom.comments') => $comments,
             );
         }
-         \Excel::create('order_status', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-        return $this->sendResponse(array(), 'successfully export');
+        $fileName = 'order_status';
+        $path = 'procurement/report/order_status/excel/';
+        $companyMaster = Company::find($selectedCompanyId);
+        $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+        $detail_array = array(
+            'company_code' => $companyCode,
+        );
+        $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+        if ($basePath == '') {
+            return $this->sendError(trans('custom.unable_to_export_excel'));
+        } else {
+            return $this->sendResponse(['data' => $basePath], trans('custom.success_export'));
+        }
     }
 
 }

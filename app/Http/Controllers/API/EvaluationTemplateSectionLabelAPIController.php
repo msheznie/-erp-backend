@@ -65,7 +65,7 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
         $this->evaluationTemplateSectionLabelRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationTemplateSectionLabels = $this->evaluationTemplateSectionLabelRepository->all();
 
-        return $this->sendResponse($evaluationTemplateSectionLabels->toArray(), 'Evaluation Template Section Labels retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSectionLabels->toArray(), trans('custom.evaluation_template_section_labels_retrieved_succe'));
     }
 
     /**
@@ -119,7 +119,7 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
 
         $evaluationTemplateSectionLabel = $this->evaluationTemplateSectionLabelRepository->create($input);
 
-        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), 'Evaluation Template Section Label saved successfully');
+        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), trans('custom.evaluation_template_section_label_saved_successful'));
     }
 
     public function getTemplateSectionLabel(Request $request)
@@ -209,10 +209,10 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
         $evaluationTemplateSectionLabel = $this->evaluationTemplateSectionLabelRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionLabel)) {
-            return $this->sendError('Evaluation Template Section Label not found');
+            return $this->sendError(trans('custom.evaluation_template_section_label_not_found'));
         }
 
-        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), 'Evaluation Template Section Label retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), trans('custom.evaluation_template_section_label_retrieved_succes'));
     }
 
     /**
@@ -278,12 +278,12 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
         $evaluationTemplateSectionLabel = $this->evaluationTemplateSectionLabelRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionLabel)) {
-            return $this->sendError('Evaluation Template Section Label not found');
+            return $this->sendError(trans('custom.evaluation_template_section_label_not_found'));
         }
 
         $evaluationTemplateSectionLabel = $this->evaluationTemplateSectionLabelRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), 'EvaluationTemplateSectionLabel updated successfully');
+        return $this->sendResponse($evaluationTemplateSectionLabel->toArray(), trans('custom.evaluationtemplatesectionlabel_updated_successfull'));
     }
 
     /**
@@ -331,17 +331,17 @@ class EvaluationTemplateSectionLabelAPIController extends AppBaseController
         $evaluationTemplateSectionLabel = $this->evaluationTemplateSectionLabelRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionLabel)) {
-            return $this->sendError('Evaluation Template Section Label not found');
+            return $this->sendError(trans('custom.evaluation_template_section_label_not_found'));
         }
 
         $formula = EvaluationTemplateSectionFormula::where('lable_id', $id)->first();
 
         if ($formula) {
-            return $this->sendError('Can not delete. Label already used in formula');
+            return $this->sendError(trans('custom.can_not_delete_label_already_used_in_formula'));
         }
 
         $evaluationTemplateSectionLabel->delete();
 
-        return $this->sendResponse($id,'Evaluation Template Section Label deleted successfully');
+        return $this->sendResponse($id,trans('custom.evaluation_template_section_label_deleted_successf'));
     }
 }

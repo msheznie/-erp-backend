@@ -59,7 +59,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $this->supplierCategoryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategoryMasters = $this->supplierCategoryMasterRepository->all();
 
-        return $this->sendResponse($supplierCategoryMasters->toArray(), 'Supplier Category Masters retrieved successfully');
+        return $this->sendResponse($supplierCategoryMasters->toArray(), trans('custom.supplier_category_masters_retrieved_successfully'));
     }
 
     /**
@@ -79,8 +79,8 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             'categoryName' => 'required|unique:suppliercategorymaster',
             'categoryDescription' => 'required'
         ],[
-            'categoryCode.unique'   => 'Category code already exists',
-            'categoryName.unique'   => 'Category name already exists'
+            'categoryCode.unique'   => trans('custom.category_code_exists'),
+            'categoryName.unique'   => trans('custom.category_name_exists')
         ]);
 
         if ($validator->fails()) {
@@ -145,7 +145,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             $validator = Validator::make($input, [
                 'categoryCode' => 'unique:suppliercategorymaster'
             ],[
-                'categoryCode.unique'   => 'Category code already exists'
+                'categoryCode.unique'   => trans('custom.category_code_exists')
             ]);
 
             if ($validator->fails()) {
@@ -157,7 +157,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             $validator = Validator::make($input, [
                 'categoryName' => 'unique:suppliercategorymaster'
             ],[
-                'categoryName.unique'   => 'Category name already exists'
+                'categoryName.unique'   => trans('custom.category_name_exists')
             ]);
 
             if ($validator->fails()) {
@@ -216,10 +216,10 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierCategoryAssign = SupplierBusinessCategoryAssign::where('supCategoryMasterID', $id)->first();
 
         if ($supplierCategoryAssign) {
-            return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
+            return $this->sendError(trans('custom.this_category_has_already_been_pulled_to_supplier_'));
         }
 
-        return $this->sendResponse($id,"This category can be delete");
+        return $this->sendResponse($id,trans('custom.this_category_can_be_delete'));
     }
 
     public function getAllSupplierBusinessCategories(Request $request){
@@ -252,7 +252,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
 
     public function getSupplierBusinessCategoryFormData(Request $request)
     {
-        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $yesNoSelection = YesNoSelection::all();
 
         $output = array('yesNoSelection' => $yesNoSelection);
 
@@ -276,10 +276,10 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierMaster = SupplierBusinessCategoryAssign::where('supCategoryMasterID', $input['id'])->first();
 
         if ($supplierMaster) {
-            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
+            $errorMessages = trans('custom.cannot_be_amended');
             $amendable = false;
         } else {
-            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $successMessages = trans('custom.supplier_checking_note');
             $amendable = true;
         }
 

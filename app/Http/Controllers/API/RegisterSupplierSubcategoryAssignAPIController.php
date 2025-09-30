@@ -64,7 +64,7 @@ class RegisterSupplierSubcategoryAssignAPIController extends AppBaseController
         $this->registerSupplierSubcategoryAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registerSupplierSubcategoryAssigns = $this->registerSupplierSubcategoryAssignRepository->all();
 
-        return $this->sendResponse($registerSupplierSubcategoryAssigns->toArray(), 'Register Supplier Subcategory Assigns retrieved successfully');
+        return $this->sendResponse($registerSupplierSubcategoryAssigns->toArray(), trans('custom.register_supplier_subcategory_assigns_retrieved_su'));
     }
 
     /**
@@ -118,7 +118,7 @@ class RegisterSupplierSubcategoryAssignAPIController extends AppBaseController
 
         $registerSupplierSubcategoryAssign = $this->registerSupplierSubcategoryAssignRepository->create($input);
 
-        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), 'Register Supplier Subcategory Assign saved successfully');
+        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), trans('custom.register_supplier_subcategory_assign_saved_success'));
     }
 
     /**
@@ -166,10 +166,10 @@ class RegisterSupplierSubcategoryAssignAPIController extends AppBaseController
         $registerSupplierSubcategoryAssign = $this->registerSupplierSubcategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierSubcategoryAssign)) {
-            return $this->sendError('Register Supplier Subcategory Assign not found');
+            return $this->sendError(trans('custom.register_supplier_subcategory_assign_not_found'));
         }
 
-        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), 'Register Supplier Subcategory Assign retrieved successfully');
+        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), trans('custom.register_supplier_subcategory_assign_retrieved_suc'));
     }
 
     /**
@@ -235,12 +235,12 @@ class RegisterSupplierSubcategoryAssignAPIController extends AppBaseController
         $registerSupplierSubcategoryAssign = $this->registerSupplierSubcategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierSubcategoryAssign)) {
-            return $this->sendError('Register Supplier Subcategory Assign not found');
+            return $this->sendError(trans('custom.register_supplier_subcategory_assign_not_found'));
         }
 
         $registerSupplierSubcategoryAssign = $this->registerSupplierSubcategoryAssignRepository->update($input, $id);
 
-        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), 'RegisterSupplierSubcategoryAssign updated successfully');
+        return $this->sendResponse($registerSupplierSubcategoryAssign->toArray(), trans('custom.registersuppliersubcategoryassign_updated_successf'));
     }
 
     /**
@@ -288,7 +288,7 @@ class RegisterSupplierSubcategoryAssignAPIController extends AppBaseController
         $registerSupplierSubcategoryAssign = $this->registerSupplierSubcategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierSubcategoryAssign)) {
-            return $this->sendError('Register Supplier Subcategory Assign not found');
+            return $this->sendError(trans('custom.register_supplier_subcategory_assign_not_found'));
         }
 
         $registerSupplierSubcategoryAssign->delete();

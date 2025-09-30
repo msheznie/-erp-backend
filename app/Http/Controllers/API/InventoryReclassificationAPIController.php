@@ -92,7 +92,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $this->inventoryReclassificationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $inventoryReclassifications = $this->inventoryReclassificationRepository->all();
 
-        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory reclassifications retrieved successfully');
+        return $this->sendResponse($inventoryReclassifications->toArray(), trans('custom.inventory_reclassifications_retrieved_successfully'));
     }
 
     /**
@@ -173,7 +173,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Reclassification date is not within financial period!', 500);
+            return $this->sendError(trans('custom.reclassification_date_not_within_financial_period'), 500);
         }
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -225,7 +225,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $inventoryReclassifications = $this->inventoryReclassificationRepository->create($input);
         DB::commit();
-        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory Reclassification saved successfully');
+        return $this->sendResponse($inventoryReclassifications->toArray(), trans('custom.inventory_reclassification_saved_successfully'));
     }
 
     /**
@@ -276,10 +276,10 @@ class InventoryReclassificationAPIController extends AppBaseController
         }, 'segment_by', 'warehouse_by'])->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
-            return $this->sendError('Inventory Reclassification not found');
+            return $this->sendError(trans('custom.inventory_reclassification_not_found'));
         }
 
-        return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory Reclassification retrieved successfully');
+        return $this->sendResponse($inventoryReclassification->toArray(), trans('custom.inventory_reclassification_retrieved_successfully'));
     }
 
     /**
@@ -350,7 +350,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
-            return $this->sendError('Inventory Reclassification not found');
+            return $this->sendError(trans('custom.inventory_reclassification_not_found'));
         }
 
         $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
@@ -358,10 +358,10 @@ class InventoryReclassificationAPIController extends AppBaseController
         if ($input['serviceLineSystemID']) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
+                return $this->sendError(trans('custom.department_not_found'));
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select an active department', 500);
+                return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
@@ -369,10 +369,10 @@ class InventoryReclassificationAPIController extends AppBaseController
         if ($input['wareHouseSystemCode']) {
             $checkWarehouseActive = WarehouseMaster::find($input['wareHouseSystemCode']);
             if (empty($checkWarehouseActive)) {
-                return $this->sendError('Warehouse not found');
+                return $this->sendError(trans('custom.warehouse_not_found'));
             }
             if ($checkWarehouseActive->isActive == 0) {
-                return $this->sendError('Please select an active warehouse', 500);
+                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
             }
             $input['wareHouseCode'] = $checkWarehouseActive->wareHouseCode;
         }
@@ -401,13 +401,13 @@ class InventoryReclassificationAPIController extends AppBaseController
 
             if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
             } else {
-                return $this->sendError('Reclassification date is not within financial period!', 500);
+                return $this->sendError(trans('custom.reclassification_date_not_within_financial_period'), 500);
             }
 
             $checkItems = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every recalssification should have at least one item', 500);
+                return $this->sendError(trans('custom.every_reclassification_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -417,7 +417,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum Qty', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty'), 500);
             }
 
             $finalError = array(
@@ -448,12 +448,12 @@ class InventoryReclassificationAPIController extends AppBaseController
             $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, "inventory-reclassification-bs-account");
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Please configure BS account for inventory recalssification', 500);
+                return $this->sendError(trans('custom.please_configure_bs_account_for_inventory_reclassification'), 500);
             }
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             $amount = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -479,7 +479,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $inventoryReclassification = $this->inventoryReclassificationRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($inventoryReclassification->toArray(), 'Inventory reclassification updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($inventoryReclassification->toArray(), trans('custom.inventory_reclassification_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -526,12 +526,12 @@ class InventoryReclassificationAPIController extends AppBaseController
         $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
-            return $this->sendError('Inventory Reclassification not found');
+            return $this->sendError(trans('custom.inventory_reclassification_not_found'));
         }
 
         $inventoryReclassification->delete();
 
-        return $this->sendResponse($id, 'Inventory Reclassification deleted successfully');
+        return $this->sendResponse($id, trans('custom.inventory_reclassification_deleted_successfully'));
     }
 
 
@@ -612,7 +612,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             'years' => $years,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -631,7 +631,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -641,12 +641,12 @@ class InventoryReclassificationAPIController extends AppBaseController
         $invReclassification = $this->inventoryReclassificationRepository->getAudit($id);
 
         if (empty($invReclassification)) {
-            return $this->sendError('Inventory Reclassification not found');
+            return $this->sendError(trans('custom.inventory_reclassification_not_found'));
         }
 
         $invReclassification->docRefNo = \Helper::getCompanyDocRefNo($invReclassification->companySystemID, $invReclassification->documentSystemID);
 
-        return $this->sendResponse($invReclassification->toArray(), 'Inventory reclassification retrieved successfully');
+        return $this->sendResponse($invReclassification->toArray(), trans('custom.inventory_reclassification_retrieved_successfully_1'));
     }
 
 
@@ -842,19 +842,19 @@ class InventoryReclassificationAPIController extends AppBaseController
             $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($inventoryreclassificationID);
             $emails = array();
             if (empty($inventoryReclassification)) {
-                return $this->sendError('Inventory Reclassification not found');
+                return $this->sendError(trans('custom.inventory_reclassification_not_found'));
             }
 
             if ($inventoryReclassification->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this inventory reclassification it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_inventory_reclassification_'));
             }
 
             if ($inventoryReclassification->approved == -1) {
-                return $this->sendError('You cannot reopen this inventory reclassification it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_inventory_reclassification__1'));
             }
 
             if ($inventoryReclassification->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this inventory reclassification, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_inventory_reclassification__2'));
             }
 
             // updating fields
@@ -870,8 +870,8 @@ class InventoryReclassificationAPIController extends AppBaseController
             $document = DocumentMaster::where('documentSystemID', $inventoryReclassification->documentSystemID)->first();
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $inventoryReclassification->documentCode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $inventoryReclassification->documentCode;
-            $subject = $cancelDocNameSubject . ' is reopened';
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $inventoryReclassification->companySystemID)
                 ->where('documentSystemCode', $inventoryReclassification->inventoryreclassificationID)
@@ -885,7 +885,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                         ->where('documentSystemID', $inventoryReclassification->documentSystemID)
                         ->first();
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                     }
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                         ->where('companySystemID', $documentApproval->companySystemID)
@@ -912,7 +912,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                             }
                         }
                     } else {
-                        return $this->sendError('Approval list not found!', 500);
+                        return $this->sendError(trans('custom.approval_list_not_found'), 500);
                     }
 
                     $sendEmail = \Email::sendEmail($emails);
@@ -931,10 +931,10 @@ class InventoryReclassificationAPIController extends AppBaseController
             AuditTrial::createAuditTrial($inventoryReclassification->documentSystemID,$inventoryreclassificationID,$input['reopenComments'],'Reopened');
 
             DB::commit();
-            return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory Reclassification reopened successfully');
+            return $this->sendResponse($inventoryReclassification->toArray(), trans('custom.inventory_reclassification_reopened_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error Occurred', 500);
+            return $this->sendError(trans('custom.error_occurred'), 500);
         }
     }
 

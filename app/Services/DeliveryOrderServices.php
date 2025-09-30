@@ -117,12 +117,17 @@ class DeliveryOrderServices
         }
         if($isExist)
         {
-            return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
-                                        Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
+            return ['status' => false,'message' => trans('custom.cannot_amend_delivery_order_stock_out')];
         }
 
-        $emailBody = '<p>' . $masterData->deliveryOrderCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->deliveryOrderCode . ' has been return back to amend';
+        $emailBody = __('email.delivery_order_returned_to_amend_body', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.delivery_order_returned_to_amend', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode
+        ]);
 
 
         if ($masterData->confirmedYN == 1) {

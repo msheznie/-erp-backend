@@ -64,7 +64,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $this->employeesDepartmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeesDepartments = $this->employeesDepartmentRepository->all();
 
-        return $this->sendResponse($employeesDepartments->toArray(), 'Employees Departments retrieved successfully');
+        return $this->sendResponse($employeesDepartments->toArray(), trans('custom.employees_departments_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         //$employeesDepartments = $this->employeesDepartmentRepository->create($input);
         $employeesDepartments = EmployeesDepartment::insert($input);
 
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 
     /**
@@ -138,10 +138,10 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
 
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
-        return $this->sendResponse($employeesDepartment->toArray(), 'Employees Department retrieved successfully');
+        return $this->sendResponse($employeesDepartment->toArray(), trans('custom.employees_department_retrieved_successfully'));
     }
 
     /**
@@ -161,12 +161,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
 
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $employeesDepartment = $this->employeesDepartmentRepository->update($input, $id);
 
-        return $this->sendResponse($employeesDepartment->toArray(), 'EmployeesDepartment updated successfully');
+        return $this->sendResponse($employeesDepartment->toArray(), trans('custom.employeesdepartment_updated_successfully'));
     }
 
     /**
@@ -182,7 +182,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         /** @var EmployeesDepartment $employeesDepartment */
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $emp_id = $employeesDepartment->employeeSystemID;
@@ -211,7 +211,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         ->exists();
         if($department)
         {
-            return $this->sendError('Unable to delete,since the deligator has delegation documents',422, ['type' => 'validation']);
+            return $this->sendError(trans('custom.unable_to_delete_delegation'),422, ['type' => 'validation']);
         }
 
         $employeeData = \Helper::getEmployeeInfo();
@@ -230,7 +230,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment->save();
 
-        return $this->sendResponse($id, 'Employees Department deleted successfully');
+        return $this->sendResponse($id, trans('custom.employees_department_deleted_successfully'));
     }
 
     public function getApprovalAccessRightsDatatable(Request $request)
@@ -353,16 +353,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $categories = FinanceItemCategoryMaster::all();
         $yesNoSelections = YesNoSelection::all();
         $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(), 'department' => $department, 'documents' => $documents, 'segments' => $segments, 'categories' => $categories, 'yesNoSelections' => $yesNoSelections);
-        return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
+        return $this->sendResponse($employeesDepartment, trans('custom.employees_department_retrieved_successfully'));
     }
 
     public function getDepartmentDocument(Request $request)
     {
         $document = DocumentMaster::where('departmentSystemID', $request['departmentSystemID'])->get();
         if (empty($document)) {
-            return $this->sendError('Document not found');
+            return $this->sendError(trans('custom.document_not_found'));
         }
-        return $this->sendResponse($document, 'Document retrieved successfully');
+        return $this->sendResponse($document, trans('custom.document_retrieved_successfully'));
     }
 
     function deleteAllAccessRights(Request $request)
@@ -408,7 +408,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->update(['removedYN' => 1, 'removedByEmpID' => $employeeData->empID, 'removedByEmpSystemID' => $employeeData->employeeSystemID, 'removedDate' => date("Y-m-d H:m:s")]);
 
 
-        return $this->sendResponse(array(), 'Employees Department deleted successfully');
+        return $this->sendResponse(array(), trans('custom.employees_department_deleted_successfully'));
     }
 
 
@@ -455,7 +455,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->update(['isActive' => $input['type'], 'activatedByEmpID' => $employeeData->empID, 'activatedByEmpSystemID' => $employeeData->employeeSystemID, 'activatedDate' => date("Y-m-d H:m:s")]);
 
 
-        return $this->sendResponse(array(), 'Employees Department deleted successfully');
+        return $this->sendResponse(array(), trans('custom.employees_department_deleted_successfully'));
     }
 
 
@@ -480,7 +480,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $employeesDepartments[] = EmployeesDepartment::insert($value);
             }
         }
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 
     public function getExistingApprovalAccessRights($input)
@@ -594,7 +594,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($input['employeesDepartmentsID']);
         if (empty($employeesDepartment)) {
-            return $this->sendError('Employees Department not found');
+            return $this->sendError(trans('custom.employees_department_not_found'));
         }
 
         $emp_id = $employeesDepartment->employeeSystemID;
@@ -623,7 +623,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         ->exists();
         if($department)
         {
-            return $this->sendError('Unable to perform,since the deligator has delegation documents',422, ['type' => 'validation']);
+            return $this->sendError(trans('custom.unable_to_perform_delegation'),422, ['type' => 'validation']);
         }
 
         $employeeData = \Helper::getEmployeeInfo();
@@ -635,7 +635,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment->save();
 
-        return $this->sendResponse($input['employeesDepartmentsID'], 'Employees updated successfully');
+        return $this->sendResponse($input['employeesDepartmentsID'], trans('custom.employees_updated_successfully'));
     }
 
     public function approvalMatrixReport(Request $request)
@@ -932,7 +932,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $key => $value) {
-                $data[$x]['Department'] = $value['DepartmentDescription'];
+                $data[$x][trans('custom.department')] = $value['DepartmentDescription'];
 
                 if (!empty($value['documents'])) {
                     $documentCount = 0;
@@ -940,10 +940,10 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                         if ($documentCount != 0) {
                             $x++;
-                            $data[$x]['Department'] = '';
+                            $data[$x][trans('custom.department')] = '';
                         }
 
-                        $data[$x]['Document Type'] = $document['documentDescription'];
+                        $data[$x][trans('custom.document_type')] = $document['documentDescription'];
 
                         if (!empty($document['approval_levels'])) {
                             $approvalLevelCount = 0;
@@ -951,16 +951,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                                 if ($approvalLevelCount != 0) {
                                     $x++;
-                                    $data[$x]['Department'] = '';
-                                    $data[$x]['Document Type'] = '';
+                                    $data[$x][trans('custom.department')] = '';
+                                    $data[$x][trans('custom.document_type')] = '';
                                 }
 
-                                $data[$x]['Segment'] = (is_null($approval_level['serviceline'])) ? "" : $approval_level['serviceline']['ServiceLineDes'];
-                                $data[$x]['Limit'] = ($approval_level['valueWise'] == 1) ? $approval_level['valueFrom'] . '-' . $approval_level['valueTo'] : "";
-                                $data[$x]['Category'] = (is_null($approval_level['category'])) ? "" : $approval_level['category']['categoryDescription'];
+                                $data[$x][trans('custom.segment')] = (is_null($approval_level['serviceline'])) ? "" : $approval_level['serviceline']['ServiceLineDes'];
+                                $data[$x][trans('custom.limit')] = ($approval_level['valueWise'] == 1) ? $approval_level['valueFrom'] . '-' . $approval_level['valueTo'] : "";
+                                $data[$x][trans('custom.category')] = (is_null($approval_level['category'])) ? "" : $approval_level['category']['categoryDescription'];
 
-                                $data[$x]['Level Description'] = $approval_level['levelDescription'];
-                                $data[$x]['Level Status'] = ($approval_level['isActive'] == -1) ? 'Active' : 'In Active';
+                                $data[$x][trans('custom.level_description')] = $approval_level['levelDescription'];
+                                $data[$x][trans('custom.level_status')] = ($approval_level['isActive'] == -1) ? trans('custom.active') : trans('custom.inactive');
 
                                 if (!empty($approval_level['approvalrole'])) {
                                     $approvalRoleCount = 0;
@@ -968,16 +968,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                                         if ($approvalRoleCount != 0) {
                                             $x++;
-                                            $data[$x]['Department'] = '';
-                                            $data[$x]['Document Type'] = '';
-                                            $data[$x]['Segment'] = '';
-                                            $data[$x]['Limit'] = '';
-                                            $data[$x]['Category'] = '';
-                                            $data[$x]['Level Description'] = '';
-                                            $data[$x]['Level Status'] = '';
+                                            $data[$x][trans('custom.department')] = '';
+                                            $data[$x][trans('custom.document_type')] = '';
+                                            $data[$x][trans('custom.segment')] = '';
+                                            $data[$x][trans('custom.limit')] = '';
+                                            $data[$x][trans('custom.category')] = '';
+                                            $data[$x][trans('custom.level_description')] = '';
+                                            $data[$x][trans('custom.level_status')] = '';
                                         }
-                                        $data[$x]['Approval Level'] = $approvalrole['rollLevel'];
-                                        $data[$x]['Group Description'] = (!is_null($approvalrole['approval_group']) && isset($approvalrole['approval_group']['rightsGroupDes'])) ? $approvalrole['approval_group']['rightsGroupDes'] : "";
+                                        $data[$x][trans('custom.approval_level')] = $approvalrole['rollLevel'];
+                                        $data[$x][trans('custom.group_description')] = (!is_null($approvalrole['approval_group']) && isset($approvalrole['approval_group']['rightsGroupDes'])) ? $approvalrole['approval_group']['rightsGroupDes'] : "";
 
                                         if (!is_null($approvalrole['approval_group']) && isset($approvalrole['approval_group']['employee_department_data'])) {
                                             $employeeDepCount = 0;
@@ -985,31 +985,31 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                                                 if ($employeeDepCount != 0) {
                                                     $x++;
-                                                    $data[$x]['Department'] = '';
-                                                    $data[$x]['Document Type'] = '';
-                                                    $data[$x]['Segment'] = '';
-                                                    $data[$x]['Limit'] = '';
-                                                    $data[$x]['Category'] = '';
-                                                    $data[$x]['Level Description'] = '';
-                                                    $data[$x]['Level Status'] = '';
-                                                    $data[$x]['Approval Level'] = '';
-                                                    $data[$x]['Group Description'] = '';
+                                                    $data[$x][trans('custom.department')] = '';
+                                                    $data[$x][trans('custom.document_type')] = '';
+                                                    $data[$x][trans('custom.segment')] = '';
+                                                    $data[$x][trans('custom.limit')] = '';
+                                                    $data[$x][trans('custom.category')] = '';
+                                                    $data[$x][trans('custom.level_description')] = '';
+                                                    $data[$x][trans('custom.level_status')] = '';
+                                                    $data[$x][trans('custom.approval_level')] = '';
+                                                    $data[$x][trans('custom.group_description')] = '';
                                                 }
 
-                                                $data[$x]['Approver Name'] = $employee_department['employee']['empName'];
+                                                $data[$x][trans('custom.approver_name')] = $employee_department['employee']['empName'];
 
                                                 if ($employee_department['removedYN'] == 1) {
-                                                    $data[$x]['Approver Status'] = 'Deleted';
+                                                    $data[$x][trans('custom.approver_status')] = trans('custom.deleted');
                                                 } else {
-                                                    $data[$x]['Approver Status'] = ($employee_department['isActive'] == 1) ? 'Active' : 'In Active';
+                                                    $data[$x][trans('custom.approver_status')] = ($employee_department['isActive'] == 1) ? trans('custom.active') : trans('custom.inactive');
                                                 }
 
                                                 $employeeDepCount++;
                                                 $x++;
                                             }
                                         } else {
-                                            $data[$x]['Approver Name'] = '';
-                                            $data[$x]['Approver Status'] = '';
+                                            $data[$x][trans('custom.approver_name')] = '';
+                                            $data[$x][trans('custom.approver_status')] = '';
                                         }
 
                                         $approvalRoleCount++;
@@ -1041,7 +1041,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -1167,7 +1167,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
         if($employeeGroupID == 0) {
-            return $this->sendError('The approval group has not been selected at the approval level',422, ['type' => 'validation']);
+            return $this->sendError(trans('custom.approval_group_not_selected'),422, ['type' => 'validation']);
         }
 
         foreach ($input['selectedEmpIds']['employeeSystemID'] as $key => $val) {
@@ -1205,7 +1205,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
                  if($department)
                  {
-                     return $this->sendError('Unable to assign,The employee included in delegation process ',422, ['type' => 'validation']);
+                     return $this->sendError(trans('custom.unable_to_assign_delegation'),422, ['type' => 'validation']);
                  }
 
             $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
@@ -1266,6 +1266,6 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartments = EmployeesDepartment::insert($saveData);
 
-        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, trans('custom.employees_department_saved_successfully'));
     }
 }

@@ -65,7 +65,7 @@ class TemplatesMasterAPIController extends AppBaseController
         $this->templatesMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $templatesMasters = $this->templatesMasterRepository->all();
 
-        return $this->sendResponse($templatesMasters->toArray(), 'Templates Masters retrieved successfully');
+        return $this->sendResponse($templatesMasters->toArray(), trans('custom.templates_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TemplatesMasterAPIController extends AppBaseController
 
         $templatesMasters = $this->templatesMasterRepository->create($input);
 
-        return $this->sendResponse($templatesMasters->toArray(), 'Templates Master saved successfully');
+        return $this->sendResponse($templatesMasters->toArray(), trans('custom.templates_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TemplatesMasterAPIController extends AppBaseController
         $templatesMaster = $this->templatesMasterRepository->findWithoutFail($id);
 
         if (empty($templatesMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
-        return $this->sendResponse($templatesMaster->toArray(), 'Templates Master retrieved successfully');
+        return $this->sendResponse($templatesMaster->toArray(), trans('custom.templates_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TemplatesMasterAPIController extends AppBaseController
         $templatesMaster = $this->templatesMasterRepository->findWithoutFail($id);
 
         if (empty($templatesMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $templatesMaster = $this->templatesMasterRepository->update($input, $id);
 
-        return $this->sendResponse($templatesMaster->toArray(), 'TemplatesMaster updated successfully');
+        return $this->sendResponse($templatesMaster->toArray(), trans('custom.templatesmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class TemplatesMasterAPIController extends AppBaseController
         $templatesMaster = $this->templatesMasterRepository->findWithoutFail($id);
 
         if (empty($templatesMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $templatesMaster->delete();
 
-        return $this->sendResponse($id, 'Templates Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.templates_master_deleted_successfully'));
     }
 }

@@ -73,7 +73,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $this->srmBidDocumentattachmentsRepository->pushCriteria(new FilterTenderDocumentCriteria($request));
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->all();
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments retrieved successfully');
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_retrieved_successfully'));
     }
 
     /**
@@ -127,7 +127,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->create($input);
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments saved successfully');
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_saved_successfully'));
     }
 
     /**
@@ -175,10 +175,10 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError('Srm Bid Documentattachments not found');
+            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
         }
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments retrieved successfully');
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_retrieved_successfully'));
     }
 
     /**
@@ -244,12 +244,12 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError('Srm Bid Documentattachments not found');
+            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
         }
 
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->update($input, $id);
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'SrmBidDocumentattachments updated successfully');
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srmbiddocumentattachments_updated_successfully'));
     }
 
     /**
@@ -297,12 +297,12 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError('Srm Bid Documentattachments not found');
+            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
         }
 
         $srmBidDocumentattachments->delete();
 
-        return $this->sendResponse(true, 'Srm Bid Documentattachments deleted successfully');
+        return $this->sendResponse(true, trans('custom.srm_bid_documentattachments_deleted_successfully'));
 
     }
 
@@ -426,14 +426,14 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $documentAttachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         if (!is_null($documentAttachments->path)) {
             if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
                 return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             return $this->sendError('Attachment is not attached', 404);

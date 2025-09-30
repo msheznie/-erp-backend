@@ -41,7 +41,7 @@ class FinanceItemCategoryMaster extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'itemCategoryID';
-
+    protected $appends = ['categoryDescription'];
 
     protected $dates = ['deleted_at'];
 
@@ -104,5 +104,41 @@ class FinanceItemCategoryMaster extends Model
             ->get();
     }
 
+    /**
+     * Relationship to FinanceItemCategoryMasterLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(FinanceItemCategoryMasterLanguage::class, 'itemCategoryID', 'itemCategoryID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated category description
+     */
+    public function getCategoryDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->categoryDescription) {
+            return $translation->categoryDescription;
+        }
+        
+        
+        return $this->attributes['categoryDescription'] ?? '';
+    }
     
 }

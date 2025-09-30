@@ -1,7 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Recurring Voucher</title>
+    <title>{{ __('custom.recurring_voucher') }}</title>
     <style>
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         @page {
             margin-left: 30px;
             margin-right: 30px;
@@ -169,17 +191,17 @@
     <table style="width:100%;">
         <tr>
             <td width="40%">
-                <span class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+                <span style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
             </td>
             <td>
-                <span class="font-weight-bold">Review By :</span>
+                <span style="font-weight: bold;">{{ __('custom.reviewed_by') }} :</span>
             </td>
         </tr>
     </table>
     <table style="width:100%;">
         <tr>
             <td>
-                <span class="font-weight-bold">Electronically Approved By :</span>
+                <span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span>
             </td>
         </tr>
         <tr>
@@ -220,14 +242,14 @@
                 <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span>
                 <br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -243,7 +265,7 @@
                 <br>
                 <div>
                     <span style="font-size: 18px">
-                        Recurring Voucher
+                        {{ __('custom.recurring_voucher') }}
                     </span>
                 </div>
             </td>
@@ -255,10 +277,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Doc Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->RRVcode}}</span>
@@ -266,10 +288,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Doc Date </span>
+                            <span style="font-weight: bold;">{{ __('custom.document_date') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -288,10 +310,10 @@
                 <table>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Narration</span>
+                            <span style="font-weight: bold;">{{ __('custom.narration') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->narration}}</span>
@@ -303,14 +325,14 @@
                 <table style="width: 100%">
                     <tr style="width: 100%">
                         <td valign="bottom" class="text-right">
-                            <span class="font-weight-bold">
+                            <span style="font-weight: bold;">
                              <h3 class="text-muted">
                                  @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                     Not Confirmed
+                                     {{ __('custom.not_confirmed') }}
                                  @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                     Pending Approval
+                                     {{ __('custom.pending_approval') }}
                                  @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                     Fully Approved
+                                     {{ __('custom.fully_approved') }}
                                  @endif
                              </h3>
  `                          </span>
@@ -321,7 +343,7 @@
                     </tr>
                     <tr>
                         <td valign="bottom" class="text-right">
-                            <span class="font-weight-bold"> Currency:</span>
+                            <span style="font-weight: bold;"> {{ __('custom.currency') }}:</span>
                             @if($masterdata->transactioncurrency)
                                 {{$masterdata->transactioncurrency->CurrencyCode}}
                             @endif
@@ -336,16 +358,16 @@
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-center">GL Code</th>
-                <th class="text-center">GL Code Description</th>
+                <th class="text-center">{{ __('custom.gl_code') }}</th>
+                <th class="text-center">{{ __('custom.gl_code_description') }}</th>
                 @if ($isProject_base)
-                    <th class="text-center">Project</th>
+                    <th class="text-center">{{ __('custom.project') }}</th>
                 @endif
-                <th class="text-center">Department</th>
-                <th class="text-center">Client Contract</th>
-                <th class="text-center">Comments</th>
-                <th class="text-center">Debit Amount</th>
-                <th class="text-center">Credit Amount</th>
+                <th class="text-center">{{ __('custom.department') }}</th>
+                <th class="text-center">{{ __('custom.client_contract') }}</th>
+                <th class="text-center">{{ __('custom.comments') }}</th>
+                <th class="text-center">{{ __('custom.debit_amount') }}</th>
+                <th class="text-center">{{ __('custom.credit_amount') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -377,7 +399,7 @@
                     <td class="text-right border-bottom-remov">&nbsp;</td>
                 @endif
                 <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
-                <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
+                <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.total') }}</td>
                 <td class="text-right" style="background-color: rgb(215,215,215)">{{number_format($debitTotal, $transDecimal)}}</td>
                 <td class="text-right" style="background-color: rgb(215,215,215)">{{number_format($creditTotal, $transDecimal)}}</td>>
             </tr>

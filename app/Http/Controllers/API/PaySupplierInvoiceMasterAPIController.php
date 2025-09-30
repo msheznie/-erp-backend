@@ -162,7 +162,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $this->paySupplierInvoiceMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->all();
 
-        return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Masters retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceMasters->toArray(), trans('custom.pay_supplier_invoice_masters_retrieved_successfull'));
     }
 
     /**
@@ -212,7 +212,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500,
                     ['type' => 'create']
                 );
@@ -274,7 +274,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $paymentVoucherProject = PaySupplierInvoiceMaster::where('PayMasterAutoId', $PayMasterAutoId)->first();
 
             DB::commit();
-            return $this->sendResponse($paymentVoucherProject, 'Project updated successfully');
+            return $this->sendResponse($paymentVoucherProject, trans('custom.project_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -335,7 +335,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $paySupplierInvoiceMaster['supplierTransCurrencyCode'] = CurrencyMaster::where('currencyID',$paySupplierInvoiceMaster['supplierTransCurrencyID'])->first()->CurrencyCode ?? null;
@@ -362,7 +362,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceMaster->toArray(), trans('custom.pay_supplier_invoice_master_retrieved_successfully'));
     }
 
 
@@ -422,7 +422,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500
                 );
             }
@@ -431,7 +431,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
             if (empty($paySupplierInvoiceMaster)) {
-                return $this->sendError('Pay Supplier Invoice Master not found');
+                return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
             }
 
             $customValidation = CustomValidation::validation(4, $paySupplierInvoiceMaster, 2, $input);
@@ -608,7 +608,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
 
                     if ($pdcLogValidation) {
-                        return $this->sendError('PDC Cheque date cannot be empty', 500);
+                        return $this->sendError(trans('custom.pdc_cheque_date_cannot_be_empty'), 500);
                     }
 
 
@@ -629,7 +629,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->get();
 
                     if (count($pdcLog) == 0) {
-                        return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                        return $this->sendError(trans('custom.pdc_cheques_not_created_please_create_atleast_one_'), 500);
                     }
 
                     $pdcLogAmount = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
@@ -714,7 +714,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 $bank = BankAccount::find($input['BPVAccount']);
                 if (empty($bank)) {
-                    return $this->sendError('Bank account not found', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.bank_account_not_found'), 500, ['type' => 'confirm']);
                 }
 
                 if (!$bank->chartOfAccountSystemID) {
@@ -729,7 +729,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($pvDetailExist)) {
-                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.pv_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
 
                     $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')
@@ -745,7 +745,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
 
@@ -891,7 +891,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($pvDetailExist)) {
-                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.pv_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
 
                     $checkAmountGreater = AdvancePaymentDetails::selectRaw('PayMasterAutoId,SUM(paymentAmount) as supplierPaymentAmount')
@@ -907,7 +907,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
                     $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
@@ -949,7 +949,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $pvDetailExist = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
 
                     if (count($pvDetailExist) == 0) {
-                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.pv_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                     }
 
                     $finalError = array(
@@ -1088,7 +1088,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.every_item_should_have_a_payment_amount'), 500, ['type' => 'confirm']);
                     }
 
                 }
@@ -1143,7 +1143,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
 
                             } else {
-                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500);
+                                return $this->sendError(trans('custom.could_not_found_any_unassigned_cheques_please_add_'), 500);
                             }
 
                         } else {
@@ -1343,7 +1343,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $BPVdate = new Carbon($input['BPVdate']);
         }
         catch (\Exception $e){
-            return $this->sendError('Invalid Pay Invoice Date format');
+            return $this->sendError(trans('custom.invalid_pay_invoice_date_format'));
         }
         $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
         if($details) {
@@ -1372,7 +1372,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransCurrencyID'])) {
                 return $this->sendError(
-                    'Currency exchange rate to local and reporting currency must be greater than zero.',
+                    trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                     500
                 );
             }
@@ -1588,12 +1588,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $paySupplierInvoiceMaster->delete();
 
-        return $this->sendResponse($id, 'Pay Supplier Invoice Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.pay_supplier_invoice_master_deleted_successfully'));
     }
 
     public function getPaymentVoucherMaster(Request $request)
@@ -1636,7 +1636,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -1876,7 +1876,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             );
         }
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -1884,7 +1884,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     function getBankAccount(Request $request)
     {
         $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->where('bankmasterAutoID', $request["bankmasterAutoID"])->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
-        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+        return $this->sendResponse($bankAccount, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getMultipleAccountsByBank(Request $request)
@@ -1894,7 +1894,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
 
         $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->whereIn('bankmasterAutoID', $bankmasterAutoID)->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
-        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+        return $this->sendResponse($bankAccount, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function checkPVDocumentActive(Request $request)
@@ -1906,7 +1906,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input["PayMasterAutoId"]);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $companySystemID = $paySupplierInvoiceMaster->companySystemID;
@@ -1924,20 +1924,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError('Selected Bank Account is not active', 500);
         }
 
-        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+        return $this->sendResponse($bankAccount, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getPaymentVoucherPendingAmountDetails(Request $request) {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["id"]);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Payment voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_1'));
         }
 
         if ($paySupplierInvoiceMaster->invoiceType == 6) {
             $sql = 'SELECT * FROM erp_accountspayableledger WHERE documentSystemCode ='.$request["id"].' ORDER BY apAutoID DESC';
             $output1 = DB::select($sql);
-            return $this->sendResponse($output1, 'Record retrieved successfully');
+            return $this->sendResponse($output1, trans('custom.record_retrieved_successfully_1'));
         }
 
         $decimalPlaces  = Helper::getCurrencyDecimalPlace($paySupplierInvoiceMaster->supplierTransCurrencyID);
@@ -2031,7 +2031,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $output = DB::select($sql);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -2041,7 +2041,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Payment voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_1'));
         }
 
         if ($paySupplierInvoiceMaster->invoiceType == 6) {
@@ -2049,7 +2049,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError('Employee not selcted');
             }
             $output1 = $this->getEmployeePaymentForPV($request, $paySupplierInvoiceMaster);
-            return $this->sendResponse($output1, 'Record retrieved successfully');
+            return $this->sendResponse($output1, trans('custom.record_retrieved_successfully_1'));
         }
 
         $decimalPlaces  = Helper::getCurrencyDecimalPlace($paySupplierInvoiceMaster->supplierTransCurrencyID);
@@ -2236,7 +2236,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
         }
         $output = DB::select($sql);
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public static function getEmployeePaymentForPV($request, $paySupplierInvoiceMaster)
@@ -2484,7 +2484,7 @@ WHERE
 	AND ( ( erp_purchaseordermaster.WO_confirmedYN ) = 1 ) 
 	AND ( ( erp_purchaseorderadvpayment.fullyPaid ) <> 2 )
 	);');
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getADVPaymentForMatchingDocument(Request $request)
@@ -2547,7 +2547,7 @@ WHERE
 	AND ( ( erp_purchaseordermaster.WO_confirmedYN ) = 1 ) 
 	AND ( ( erp_purchaseorderadvpayment.fullyPaid ) <> 2 )
 	);');
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getPaymentVoucherMatchItems(Request $request)
@@ -2817,7 +2817,7 @@ AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
 
-        return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
+        return $this->sendResponse($invoiceMaster, trans('custom.data_retrived_successfully'));
     }
 
     public
@@ -2832,19 +2832,19 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
             $emails = array();
             if (empty($payInvoice)) {
-                return $this->sendError('Payment Voucher not found');
+                return $this->sendError(trans('custom.payment_voucher_not_found_2'));
             }
 
             if ($payInvoice->approved == -1) {
-                return $this->sendError('You cannot reopen this Payment Voucher it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_payment_voucher_it_is_alrea_1'));
             }
 
             if ($payInvoice->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this Payment Voucher it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_payment_voucher_it_is_alrea'));
             }
 
             if ($payInvoice->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this Payment Voucher, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_payment_voucher_it_is_not_c'));
             }
 
             /*
@@ -2866,9 +2866,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $payInvoice->BPVcode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $payInvoice->BPVcode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $payInvoice->companySystemID)
                 ->where('documentSystemCode', $payInvoice->PayMasterAutoId)
@@ -3011,7 +3011,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             AuditTrial::createAuditTrial($payInvoice->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
-            return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher reopened successfully');
+            return $this->sendResponse($payInvoice->toArray(), trans('custom.payment_voucher_reopened_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3023,7 +3023,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
     {
         $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request['PayMasterAutoId']);
         if (empty($payInvoice)) {
-            return $this->sendError('Payment Voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_2'));
         }
         $payInvoice->cancelYN = -1;
         $payInvoice->cancelComment = $request['cancelComments'];
@@ -3035,7 +3035,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         /*Audit entry*/
         AuditTrial::createAuditTrial($payInvoice->documentSystemID,$request['PayMasterAutoId'],$request['cancelComments'],'Cancelled');
 
-        return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher cancelled successfully');
+        return $this->sendResponse($payInvoice->toArray(), trans('custom.payment_voucher_cancelled_successfully'));
 
     }
 
@@ -3045,15 +3045,15 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request['PayMasterAutoId']);
 
         if (empty($payInvoice)) {
-            return $this->sendError('Payment Voucher not found');
+            return $this->sendError(trans('custom.payment_voucher_not_found_2'));
         }
 
         if ($payInvoice->confirmedYN == 0) {
-            return $this->sendError('You cannot send to treasury this PV, this is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_send_to_treasury_this_pv_this_is_not_co'));
         }
 
         if ($payInvoice->approved == -1) {
-            return $this->sendError('You cannot send to treasury this PV, this is already approved');
+            return $this->sendError(trans('custom.you_cannot_send_to_treasury_this_pv_this_is_alread'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -3065,7 +3065,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $payInvoice->chequeSentToTreasuryDate = NOW();
         $payInvoice->save();
 
-        return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher updated successfully');
+        return $this->sendResponse($payInvoice->toArray(), trans('custom.payment_voucher_updated_successfully'));
 
     }
 
@@ -3079,7 +3079,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $PaySupplierInvoiceMasterData = PaySupplierInvoiceMaster::find($id);
 
         if (empty($PaySupplierInvoiceMasterData)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
@@ -3098,7 +3098,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }])->first();
 
         if (empty($output)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
         if ($output) {
@@ -3381,11 +3381,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $paymentVoucher = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
             if (empty($paymentVoucher)) {
-                return $this->sendError('Payment Voucher Master not found');
+                return $this->sendError(trans('custom.payment_voucher_master_not_found'));
             }
 
             if ($paymentVoucher->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
             }
 
             $paymentVoucherArray = $paymentVoucher->toArray();
@@ -3468,7 +3468,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             }
 
             DB::commit();
-            return $this->sendResponse($paymentVoucher->toArray(), 'Payment Voucher amended successfully');
+            return $this->sendResponse($paymentVoucher->toArray(), trans('custom.payment_voucher_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3486,12 +3486,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         $paymentVoucherData = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
         if (empty($paymentVoucherData)) {
-            return $this->sendError('Payment Voucher Master not found');
+            return $this->sendError(trans('custom.payment_voucher_master_not_found'));
         }
 
         $isAPIDocument = DocumentSystemMapping::where('documentId',$PayMasterAutoId)->where('documentSystemID',4)->exists();
         if ($isAPIDocument){
-            return $this->sendError('The auto-generated documents cannot be amended.');
+            return $this->sendError(trans('custom.the_autogenerated_documents_cannot_be_amended'));
         }
 
         $documentAutoId = $PayMasterAutoId;
@@ -3530,14 +3530,14 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
             $validateVatReturnFilling = ValidateDocumentAmend::validateVatReturnFilling($documentAutoId,$documentSystemID,$paymentVoucherData->companySystemID);
             if(isset($validateVatReturnFilling['status']) && $validateVatReturnFilling['status'] == false){
-                $errorMessage = "Payment Voucher " . $validateVatReturnFilling['message'];
+                $errorMessage = trans('custom.payment_voucher'). $validateVatReturnFilling['message'];
                 return $this->sendError($errorMessage);
             }
         }
 
 
         if ($paymentVoucherData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_payment_vouch'));
         }
 
         /*       // checking document matched in matchmaster
@@ -3547,7 +3547,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                    ->first();
 
                if ($checkDetailExistMatch) {
-                   return $this->sendError('Cannot return back to amend. payment voucher is added to matching');
+                   return $this->sendError(trans('custom.cannot_return_back_to_amend_payment_voucher_is_add'));
                }*/
 
         // checking document matched in matchmaster
@@ -3557,7 +3557,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_payment_vouch_1'));
         }
 
         $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
@@ -3567,21 +3567,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         if ($checkBLDataExist) {
             if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+                return $this->sendError(trans('custom.treasury_cleared_you_cannot_return_back_to_amend'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Bank cleared. You cannot return back to amend.');
+                return $this->sendError(trans('custom.bank_cleared_you_cannot_return_back_to_amend'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'));
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_and_bank_cleared_you_cannot'));
             } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'));
             }
         }
 
-        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
 
-        $emailSubject = $paymentVoucherData->BPVcode . ' has been return back to amend';
+        $emailSubject = $paymentVoucherData->BPVcode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -3769,7 +3769,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($PayMasterAutoId, $paymentVoucherData->documentSystemID);
 
             DB::commit();
-            return $this->sendResponse($paymentVoucherData->toArray(), 'Payment voucher return back to amend successfully');
+            return $this->sendResponse($paymentVoucherData->toArray(), trans('custom.payment_voucher_return_back_to_amend_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -3785,12 +3785,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         $paymentVoucherData = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
         if (empty($paymentVoucherData)) {
-            return $this->sendError('Payment Voucher Master not found');
+            return $this->sendError(trans('custom.payment_voucher_master_not_found'));
         }
 
 
         if ($paymentVoucherData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_payment_vouch'));
         }
 
         // checking document matched in matchmaster
@@ -3800,7 +3800,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_payment_vouch_1'));
         }
 
         $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
@@ -3811,15 +3811,15 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
         if ($checkBLDataExist) {
             if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Treasury cleared, You cannot return back to amend.', 404,['type' => 'error']);
+                return $this->sendError(trans('custom.treasury_cleared_you_cannot_return_back_to_amend'), 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Bank cleared. You cannot return back to amend.', 404,['type' => 'error']);
+                return $this->sendError(trans('custom.bank_cleared_you_cannot_return_back_to_amend'), 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404,['type' => 'error']);
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'), 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.', 404, ['type' => 'error']);
+                return $this->sendError(trans('custom.added_to_bank_transfer_and_bank_cleared_you_cannot'), 404, ['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404, ['type' => 'error']);
+                return $this->sendError(trans('custom.added_to_bank_transfer_you_cannot_return_back_to_a'), 404, ['type' => 'error']);
             }
         }
 
@@ -3830,13 +3830,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                                       ->count();
 
             if ($cheqkPrintedPdcs == 1) {
-                return $this->sendError('The PDC cheque is already printed.', 404, ['type' => 'warning']);
+                return $this->sendError(trans('custom.the_pdc_cheque_is_already_printed'), 404, ['type' => 'warning']);
             } else if ($cheqkPrintedPdcs > 1) {
-                return $this->sendError('The PDC cheques are already printed.', 404, ['type' => 'warning']);
+                return $this->sendError(trans('custom.the_pdc_cheques_are_already_printed'), 404, ['type' => 'warning']);
             }
         }
 
-        return $this->sendResponse($paymentVoucherData, 'Payment voucher pre checked successfully');
+        return $this->sendResponse($paymentVoucherData, trans('custom.payment_voucher_pre_checked_successfully'));
     }
 
     public function updateBankBalance(Request $request)
@@ -3860,7 +3860,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }
                 else
                 {
-                    return $this->sendError('Bank currency not found');
+                    return $this->sendError(trans('custom.bank_currency_not_found'));
                 }
 
 
@@ -3883,7 +3883,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 
                 $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($details, $id);
                 DB::commit();
-                return $this->sendResponse($paySupplierInvoiceMaster, 'successfully updated');
+                return $this->sendResponse($paySupplierInvoiceMaster, trans('custom.successfully_updated_1'));
 
             }
         }
@@ -3939,7 +3939,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             }
         }
 
-        return $this->sendResponse($checkRegisterDetails, 'Data fetched successfully');
+        return $this->sendResponse($checkRegisterDetails, trans('custom.data_fetched_successfully'));
     }
 
     public function createPaymentVoucherAPI(Request $request){

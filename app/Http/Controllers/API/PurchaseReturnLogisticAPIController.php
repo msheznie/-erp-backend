@@ -65,7 +65,7 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
         $this->purchaseReturnLogisticRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseReturnLogistics = $this->purchaseReturnLogisticRepository->all();
 
-        return $this->sendResponse($purchaseReturnLogistics->toArray(), 'Purchase Return Logistics retrieved successfully');
+        return $this->sendResponse($purchaseReturnLogistics->toArray(), trans('custom.purchase_return_logistics_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
 
         $purchaseReturnLogistic = $this->purchaseReturnLogisticRepository->create($input);
 
-        return $this->sendResponse($purchaseReturnLogistic->toArray(), 'Purchase Return Logistic saved successfully');
+        return $this->sendResponse($purchaseReturnLogistic->toArray(), trans('custom.purchase_return_logistic_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
         $purchaseReturnLogistic = $this->purchaseReturnLogisticRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnLogistic)) {
-            return $this->sendError('Purchase Return Logistic not found');
+            return $this->sendError(trans('custom.purchase_return_logistic_not_found'));
         }
 
-        return $this->sendResponse($purchaseReturnLogistic->toArray(), 'Purchase Return Logistic retrieved successfully');
+        return $this->sendResponse($purchaseReturnLogistic->toArray(), trans('custom.purchase_return_logistic_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
         $purchaseReturnLogistic = $this->purchaseReturnLogisticRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnLogistic)) {
-            return $this->sendError('Purchase Return Logistic not found');
+            return $this->sendError(trans('custom.purchase_return_logistic_not_found'));
         }
 
         $purchaseReturnLogistic = $this->purchaseReturnLogisticRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseReturnLogistic->toArray(), 'PurchaseReturnLogistic updated successfully');
+        return $this->sendResponse($purchaseReturnLogistic->toArray(), trans('custom.purchasereturnlogistic_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class PurchaseReturnLogisticAPIController extends AppBaseController
         $purchaseReturnLogistic = $this->purchaseReturnLogisticRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnLogistic)) {
-            return $this->sendError('Purchase Return Logistic not found');
+            return $this->sendError(trans('custom.purchase_return_logistic_not_found'));
         }
 
         $purchaseReturnLogistic->delete();
 
-        return $this->sendSuccess('Purchase Return Logistic deleted successfully');
+        return $this->sendSuccess(trans('custom.purchase_return_logistic_deleted_successfully'));
     }
 }

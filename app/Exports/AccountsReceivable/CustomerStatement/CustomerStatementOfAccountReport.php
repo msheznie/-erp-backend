@@ -34,21 +34,21 @@ class CustomerStatementOfAccountReport
 
     public function getHeader() {
         return  [
-            'Company ID',
-            'Company Name',
-            'Customer Name',
-            'Document Code',
-            'Posted Date',
-            'Contract',
-            'PO number',
-            'Invoice Date',
-            'Narration',
-            'Currency',
-            'Invoice Amount',
-            'Receipt/CN Code',
-            'Receipt/CN Date',
-            'Receipt Amount',
-            'Balance Amount'
+            trans('custom.company_id'),
+            trans('custom.company_name'),
+            trans('custom.customer_name'),
+            trans('custom.document_code'),
+            trans('custom.posted_date'),
+            trans('custom.contract'),
+            trans('custom.po_number'),
+            trans('custom.invoice_date'),
+            trans('custom.narration'),
+            trans('custom.currency'),
+            trans('custom.invoice_amount'),
+            trans('custom.receipt_cn_code'),
+            trans('custom.receipt_cn_date'),
+            trans('custom.receipt_amount'),
+            trans('custom.balance_amount')
         ];
     }
 

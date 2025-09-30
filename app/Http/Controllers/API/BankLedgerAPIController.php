@@ -294,7 +294,7 @@ class BankLedgerAPIController extends AppBaseController
                                     })
                                     ->first();
         if ($ExsistsInMatching) {
-            return $this->sendError('Selected document in matching process', 500);
+            return $this->sendError(trans('custom.selected_document_in_matching_process'), 500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -346,7 +346,7 @@ class BankLedgerAPIController extends AppBaseController
                     : 0;
 
                 if(!$bankLedger->trsClearedYN) {
-                    return $this->sendError('Treasury not cleared for this document '.$bankLedger->documentCode, 500);
+                    return $this->sendError(trans('custom.treasury_not_cleared_for_this_document', ['documentCode' => $bankLedger->documentCode]), 500);
                 }
 
                 if ($updateArray['bankClearedYN']) {
@@ -703,13 +703,13 @@ class BankLedgerAPIController extends AppBaseController
 
     public function pvSupplierPrint(Request $request)
     {
-
-        $id = 76605;
+        $id = $request->get('id', 76605); // Get ID from request, default to 76605
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $PaySupplierInvoiceMasterData = PaySupplierInvoiceMaster::find($id);
 
         if (empty($PaySupplierInvoiceMasterData)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
@@ -756,16 +756,39 @@ class BankLedgerAPIController extends AppBaseController
             'rptDecimal' => $rptDecimal,
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
-            'advancePayDetailTotTra' => $advancePayDetailTotTra
+            'advancePayDetailTotTra' => $advancePayDetailTotTra,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'payment_voucher_' . $id . '_' . $time . '.pdf';
-        $html = view('print.payment_remittance_report_treasury_email', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.payment_remittance_report_treasury_email', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in pvSupplierPrint: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
 
     }
 
@@ -799,7 +822,7 @@ class BankLedgerAPIController extends AppBaseController
 
                 $bankAccountAutoID = $entity->BPVAccount;
             } else {
-                return $this->sendError('Error', 500);
+                return $this->sendError(trans('custom.error'), 500);
             }
 
 
@@ -860,7 +883,7 @@ class BankLedgerAPIController extends AppBaseController
                 $this->paySupplierInvoiceMasterRepository->update($updateArray, $id);
                 $entity = $this->paySupplierInvoiceMasterRepository->find($id);
             }
-            return $this->sendResponse($entity->toArray(), 'Successfully updated');
+            return $this->sendResponse($entity->toArray(), trans('custom.successfully_updated'));
         } else {
             return $this->sendError(trans('custom.error'), 500);
         }
@@ -2239,7 +2262,7 @@ class BankLedgerAPIController extends AppBaseController
             DB::rollback();
             return ['success' => false, 'message' => $e . trans('custom.error')];
         }
-        // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+        // return $this->sendResponse($bankLedger->toArray(), trans('custom.updated_successfully'));
     }
 
     public function printChequeItems(Request $request)
@@ -2395,8 +2418,8 @@ class BankLedgerAPIController extends AppBaseController
         }
 
 
-        $emailBody = '<p>' . $masterData->bankTransferDocumentCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->bankTransferDocumentCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->bankTransferDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankTransferDocumentCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -2637,57 +2660,57 @@ class BankLedgerAPIController extends AppBaseController
             $dataArrayNew = array();
 
             foreach ($output as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['Bank'] = $val->bankName;
-                $data[$x]['Account No'] = $val->AccountNo;
-                $data[$x]['Account Description'] = $val->AccountDescription;
-                $data[$x]['Document Number'] = $val->documentCode;
-                $data[$x]['Document Type'] = $val->documentID;
-                $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
-                $data[$x]['Document Narration'] = $val->documentNarration;
-                $data[$x]['Supplier/Customer'] = $val->partyName;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                $data[$x][trans('custom.bank')] = $val->bankName;
+                $data[$x][trans('custom.account_no')] = $val->AccountNo;
+                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                $data[$x][trans('custom.document_number')] = $val->documentCode;
+                $data[$x][trans('custom.document_type')] = $val->documentID;
+                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                $data[$x][trans('custom.supplier_customer')] = $val->partyName;
                 if (in_array('confi_name', $extraColumns)) {
-                    $data[$x]['Confirmed By'] = $val->confirmBy;
+                    $data[$x][trans('custom.confirmed_by')] = $val->confirmBy;
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmDate);
+                    $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmDate);
                 }
 
                 if (in_array('app_name', $extraColumns)) {
-                    $data[$x]['Approved By'] = $val->approvedBy;
+                    $data[$x][trans('custom.approved_by')] = $val->approvedBy;
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                    $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
                 }
 
                 if ($request->currencyID == 1) {
-                    $data[$x]['Currency'] = $val->bankCurrency;
-                    $data[$x]['Debit (Bank Currency)'] = round($val->bankDebit, $val->bankCurrencyDecimal);
-                    $data[$x]['Credit (Bank Currency)'] = round($val->bankCredit, $val->bankCurrencyDecimal);
+                    $data[$x][trans('custom.currency')] = $val->bankCurrency;
+                    $data[$x][trans('custom.debit_bank_currency')] = round($val->bankDebit, $val->bankCurrencyDecimal);
+                    $data[$x][trans('custom.credit_bank_currency')] = round($val->bankCredit, $val->bankCurrencyDecimal);
                     
                     if (count($request->accounts) == 1) {
-                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $val->bankCurrencyDecimal): "";
+                        $data[$x][trans('custom.account_balance')] = isset($val->accountBalance) ? round($val->accountBalance, $val->bankCurrencyDecimal): "";
                     }
                 }
 
                 if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
-                    $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = round($val->localDebit, $decimalPlace);
-                    $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($val->localCredit, $decimalPlace);
+                    $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyCode] = round($val->localDebit, $decimalPlace);
+                    $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyCode] = round($val->localCredit, $decimalPlace);
 
                     if (count($request->accounts) == 1) {
-                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
+                        $data[$x][trans('custom.account_balance')] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
                     }
                 }
 
                 if($request->currencyID == 2) {
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptDebit, $decimalPlace);
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptCredit, $decimalPlace);
+                    $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyCode] = round($val->rptDebit, $decimalPlace);
+                    $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyCode] = round($val->rptCredit, $decimalPlace);
 
                     if (count($request->accounts) == 1) {
-                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
+                        $data[$x][trans('custom.account_balance')] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
                     }
                 }
 
@@ -2705,51 +2728,51 @@ class BankLedgerAPIController extends AppBaseController
                 $x++;
             }
         }
-        $data[$x]['Company ID'] = "";
-        $data[$x]['Company Name'] = "";
-        $data[$x]['Bank'] = "";
-        $data[$x]['Account No'] = "";
-        $data[$x]['Account Description'] = "";
-        $data[$x]['Document Number'] = "";
-        $data[$x]['Document Type'] = "";
-        $data[$x]['Date'] = "";
-        $data[$x]['Document Narration'] = "";
+        $data[$x][trans('custom.company_id')] = "";
+        $data[$x][trans('custom.company_name')] = "";
+        $data[$x][trans('custom.bank')] = "";
+        $data[$x][trans('custom.account_no')] = "";
+        $data[$x][trans('custom.account_description')] = "";
+        $data[$x][trans('custom.document_number')] = "";
+        $data[$x][trans('custom.document_type')] = "";
+        $data[$x][trans('custom.date')] = "";
+        $data[$x][trans('custom.document_narration')] = "";
 
         if (in_array('confi_name', $extraColumns)) {
-            $data[$x]['Confirmed By'] = "";
+            $data[$x][trans('custom.confirmed_by')] = "";
         }
 
         if (in_array('confi_date', $extraColumns)) {
-            $data[$x]['Confirmed Date'] = "";
+            $data[$x][trans('custom.confirmed_date')] = "";
         }
 
         if (in_array('app_name', $extraColumns)) {
-            $data[$x]['Approved By'] = "";
+            $data[$x][trans('custom.approved_by')] = "";
         }
 
         if (in_array('app_date', $extraColumns)) {
-            $data[$x]['Approved Date'] = "";
+            $data[$x][trans('custom.approved_date')] = "";
         }
 
         if ($request->currencyID != 1) {
-            $data[$x]['Supplier/Customer'] = "Total Amount";
+            $data[$x][trans('custom.supplier_customer')] = trans('custom.total_amount');
         }
 
         if ($request->currencyID == 1 && count($request->accounts) == 1) {
-            $data[$x]['Supplier/Customer'] = "";
-            $data[$x]['Currency'] = "Total Amount";;
-            $data[$x]['Debit (Bank Currency)'] = $subTotalDebitBank;
-            $data[$x]['Credit (Bank Currency)'] = $subTotalCreditBank;
+            $data[$x][trans('custom.supplier_customer')] = "";
+            $data[$x][trans('custom.currency')] = trans('custom.total_amount');;
+            $data[$x][trans('custom.debit_bank_currency')] = $subTotalDebitBank;
+            $data[$x][trans('custom.credit_bank_currency')] = $subTotalCreditBank;
         }
 
         if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
-            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = round($subTotalDebitLocal, $decimalPlace);
-            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($subTotalCreditRptLocal, $decimalPlace);
+            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyCode] = round($subTotalDebitLocal, $decimalPlace);
+            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyCode] = round($subTotalCreditRptLocal, $decimalPlace);
         }
 
         if($request->currencyID == 2) {
-            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalDebitRpt, $decimalPlace);
-            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalCreditRpt, $decimalPlace);
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyCode] = round($subTotalDebitRpt, $decimalPlace);
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyCode] = round($subTotalCreditRpt, $decimalPlace);
         }
 
         $x++;
@@ -2764,41 +2787,41 @@ class BankLedgerAPIController extends AppBaseController
         $data[$x]['Document Narration'] = "";
 
         if (in_array('confi_name', $extraColumns)) {
-            $data[$x]['Confirmed By'] = "";
+            $data[$x][trans('custom.confirmed_by')] = "";
         }
 
         if (in_array('confi_date', $extraColumns)) {
-            $data[$x]['Confirmed Date'] = "";
+            $data[$x][trans('custom.confirmed_date')] = "";
         }
 
         if (in_array('app_name', $extraColumns)) {
-            $data[$x]['Approved By'] = "";
+            $data[$x][trans('custom.approved_by')] = "";
         }
 
         if (in_array('app_date', $extraColumns)) {
-            $data[$x]['Approved Date'] = "";
+            $data[$x][trans('custom.approved_date')] = "";
         }
 
         if ($request->currencyID != 1) {
-            $data[$x]['Supplier/Customer'] = "Net Amount";
+            $data[$x][trans('custom.supplier_customer')] = trans('custom.net_amount');
         }
 
         if ($request->currencyID == 1 && count($request->accounts) == 1) {
-            $data[$x]['Supplier/Customer'] = "";
-            $data[$x]['Currency'] = "Net Amount";;
-            $data[$x]['Debit (Bank Currency)'] = ($subTotalDebitBank - $subTotalCreditBank) > 0 ? ($subTotalDebitBank - $subTotalCreditBank) : "";;
-            $data[$x]['Credit (Bank Currency)'] = ($subTotalDebitBank - $subTotalCreditBank) < 0 ? ($subTotalDebitBank - $subTotalCreditBank) * -1 : "";;
+            $data[$x][trans('custom.supplier_customer')] = "";
+            $data[$x][trans('custom.currency')] = trans('custom.net_amount');;
+            $data[$x][trans('custom.debit_bank_currency')] = ($subTotalDebitBank - $subTotalCreditBank) > 0 ? ($subTotalDebitBank - $subTotalCreditBank) : "";;
+            $data[$x][trans('custom.credit_bank_currency')] = ($subTotalDebitBank - $subTotalCreditBank) < 0 ? ($subTotalDebitBank - $subTotalCreditBank) * -1 : "";;
         }
 
 
         if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
-            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = ($subTotalDebitLocal - $subTotalCreditRptLocal) > 0 ? round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlace) : "";
-            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = ($subTotalDebitLocal - $subTotalCreditRptLocal) < 0 ? round(($subTotalDebitLocal - $subTotalCreditRptLocal) * -1, $decimalPlace) : "";
+            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyCode] = ($subTotalDebitLocal - $subTotalCreditRptLocal) > 0 ? round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlace) : "";
+            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyCode] = ($subTotalDebitLocal - $subTotalCreditRptLocal) < 0 ? round(($subTotalDebitLocal - $subTotalCreditRptLocal) * -1, $decimalPlace) : "";
         }
 
         if($request->currencyID == 2) {
-            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = ($subTotalDebitRpt - $subTotalCreditRpt) > 0 ? round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlace) : "";
-            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = ($subTotalDebitRpt - $subTotalCreditRpt) < 0 ? round(($subTotalDebitRpt - $subTotalCreditRpt) * -1, $decimalPlace) : "";
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyCode] = ($subTotalDebitRpt - $subTotalCreditRpt) > 0 ? round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlace) : "";
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyCode] = ($subTotalDebitRpt - $subTotalCreditRpt) < 0 ? round(($subTotalDebitRpt - $subTotalCreditRpt) * -1, $decimalPlace) : "";
         }
 
         $type = $request->type;
@@ -2808,7 +2831,7 @@ class BankLedgerAPIController extends AppBaseController
         $to_date = \Helper::dateFormat($request->toDate);
         $from_date = \Helper::dateFormat($request->fromDate);
         $cur = null;
-        $title = "Bank Ledeger Details";
+        $title = trans('custom.bank_ledger_details');
         $detail_array = array(  'type' => 1,
                                 'from_date'=>$from_date,
                                 'to_date'=>$to_date,
@@ -2839,6 +2862,6 @@ class BankLedgerAPIController extends AppBaseController
         $employeeID = \Helper::getEmployeeSystemID();
         BankLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
-        return $this->sendResponse([], "Bank Ledger PDF report has been sent to queue");
+        return $this->sendResponse([], trans('custom.bank_ledger_PDF_report_has_been_sent_to_queue'));
     }
 }

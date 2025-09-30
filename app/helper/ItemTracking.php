@@ -27,7 +27,7 @@ class ItemTracking
                                          				->count();
 
         if ($checkGeneratedSerialCount > $noQty) {
-			return ['status' => false, 'message' => "Tracking details added. Please set the tracking details"];
+			return ['status' => false, 'message' => trans('custom.tracking_details_added_please_set')];
         }
 		
 		return ['status' => true];
@@ -58,7 +58,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->noQty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 
 						if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
@@ -70,7 +70,7 @@ class ItemTracking
 														   ->count();
 
 							if ($expireCheck > 0) {
-								$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+								$errorMessage[] = trans('custom.expiry_dates_of_item_required', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 							}
 						}
 					} else {
@@ -82,7 +82,7 @@ class ItemTracking
 														   ->sum('quantity');
 
 						if ($trackingCheck != $value->noQty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 
 						if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
@@ -94,7 +94,7 @@ class ItemTracking
 														   ->count();
 
 							if ($expireCheck > 0) {
-								$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+								$errorMessage[] = trans('custom.expiry_dates_of_item_required', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 							}
 						}
 					}
@@ -121,7 +121,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemIssueDetailID)
@@ -132,7 +132,7 @@ class ItemTracking
 														   ->sum('quantity');
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 
@@ -158,7 +158,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemReturnDetailID)
@@ -169,7 +169,7 @@ class ItemTracking
 														   ->sum('quantity');
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -194,7 +194,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->noQty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->purhasereturnDetailID)
@@ -205,7 +205,7 @@ class ItemTracking
 														   ->sum('quantity');
 
 						if ($trackingCheck != $value->noQty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -230,7 +230,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->stockTransferDetailsID)
@@ -241,7 +241,7 @@ class ItemTracking
 								   ->sum('quantity');
 
 						if ($trackingCheck != $value->qty) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -266,7 +266,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->deliveryOrderDetailID)
@@ -277,7 +277,7 @@ class ItemTracking
 								   ->sum('quantity');
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -310,7 +310,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->customerItemDetailID)
@@ -321,7 +321,7 @@ class ItemTracking
 								   ->sum('quantity');
 
 						if ($trackingCheck != $value->qtyIssued) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -346,7 +346,7 @@ class ItemTracking
 														   ->count();
 
 						if ($trackingCheck != $value->qtyReturned) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					} else {
 						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->salesReturnDetailID)
@@ -357,7 +357,7 @@ class ItemTracking
 								   ->sum('quantity');
 
 						if ($trackingCheck != $value->qtyReturned) {
-							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+							$errorMessage[] = trans('custom.tracking_details_of_item_not_completed', ['itemCode' => $value->itemPrimaryCode, 'itemDescription' => $value->itemDescription]);
 						}
 					}
 				}
@@ -388,7 +388,7 @@ class ItemTracking
 													   ->first();
 
 				if ($checkProduct) {
-					return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+					return ['status' => false, 'message' => trans('custom.serial_sold_cannot_edit_warehouse')];
 				}
 
 				$updateWareHouse = ItemSerial::whereHas('document_product', function($query) use ($documentSystemCode, $documentSystemID) {
@@ -414,7 +414,7 @@ class ItemTracking
                                                          ->first();
 
 	            if ($validateSubProductSold) {
-	            	return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+	            	return ['status' => false, 'message' => trans('custom.serial_sold_cannot_edit_warehouse')];
 	            }
 
 	            $subProductSerial = DocumentSubProduct::where('documentSystemID', $documentSystemID)
@@ -493,7 +493,7 @@ class ItemTracking
                                                          ->first();
 
 	            if ($validateSubProductSold) {
-	                return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+	                return ['status' => false, 'message' => trans('custom.serial_sold_cannot_edit_warehouse')];
 	            }
 
 	            $subProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)

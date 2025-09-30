@@ -65,7 +65,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $this->recurringVoucherSetupScheduleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $recurringVoucherSetupSchedules = $this->recurringVoucherSetupScheduleRepository->all();
 
-        return $this->sendResponse($recurringVoucherSetupSchedules->toArray(), 'Recurring Voucher Setup Schedules retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedules->toArray(), trans('custom.recurring_voucher_setup_schedules_retrieved_succes'));
     }
 
     /**
@@ -119,7 +119,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->create($input);
 
-        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'Recurring Voucher Setup Schedule saved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), trans('custom.recurring_voucher_setup_schedule_saved_successfull'));
     }
 
     /**
@@ -167,10 +167,10 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupSchedule)) {
-            return $this->sendError('Recurring Voucher Setup Schedule not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
         }
 
-        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), 'Recurring Voucher Setup Schedule retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetupSchedule->toArray(), trans('custom.recurring_voucher_setup_schedule_retrieved_success'));
     }
 
     public function dateCalculate($oldDate,$newDate){
@@ -243,7 +243,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
             if(isset($input[0]['id'])) {
                 $scheduleIdsInCroneJobProgress = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID',$input[0]['id'])->first();
-                $msg = "Reccurring voucher setup schedule process date is today, and it's  processing now";
+                $msg = trans('custom.recurring_voucher_setup_schedule_processing_now');
 
                 if($scheduleIdsInCroneJobProgress  && $scheduleIdsInCroneJobProgress->isInProccess)
                 {
@@ -257,11 +257,11 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->find($id);
 
                 if (empty($recurringVoucherSetupSchedule)) {
-                    return $this->sendError('Recurring Voucher Setup Schedule not found');
+                    return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
                 }
 
                 if($recurringVoucherSetupSchedule->isInProccess) {
-                    return $this->sendError("Reccurring voucher setup schedule process date is today, and it's  processing now");
+                    return $this->sendError(trans('custom.recurring_voucher_setup_schedule_processing_now'));
                 }
 
                 $rrvCurrentState = $recurringVoucherSetupSchedule->stopYN;
@@ -270,7 +270,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     ->update(['stopYN' => !$rrvCurrentState], $id);
                 return $this->sendResponse(
                     $recurringVoucherSetupSchedule->toArray(),
-                    $rrvCurrentState ? 'RRV schedule continue successfully' : 'RRV schedule stopped successfully'
+                    $rrvCurrentState ? trans('custom.rrv_schedule_continue_successfully') : trans('custom.rrv_schedule_stopped_successfully')
                 );
             }
             else{
@@ -281,7 +281,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     $newDate = Carbon::parse($input[0]['date']);
 
                     if ($newDate->isBefore(Carbon::today())) {
-                        return $this->sendError("past_dates_not_allow");
+                        return $this->sendError(trans('custom.past_dates_not_allow'));
                     }
                     if($input[0]['id'] == 0){
                         $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
@@ -323,7 +323,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                         $newDate = Carbon::parse($schedule['date']);
 
                         if ($newDate->isBefore(Carbon::today())) {
-                            return $this->sendError("past_dates_not_allow");
+                            return $this->sendError(trans('custom.past_dates_not_allow'));
                         }
                         $recurringVoucherSetupSchedule = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$id)
                             ->where('rrvSetupScheduleAutoID',$schedule['id'])->first();
@@ -342,7 +342,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     }
                 }
 
-                return $this->sendResponse($recurringVoucherSetupSchedule, 'RRV rescheduled successfully');
+                return $this->sendResponse($recurringVoucherSetupSchedule, trans('custom.rrv_rescheduled_successfully'));
             }
 
         }catch(\Exception $e){
@@ -395,12 +395,12 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         $recurringVoucherSetupSchedule = $this->recurringVoucherSetupScheduleRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetupSchedule)) {
-            return $this->sendError('Recurring Voucher Setup Schedule not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
         }
 
         $recurringVoucherSetupSchedule->delete();
 
-        return $this->sendSuccess('Recurring Voucher Setup Schedule deleted successfully');
+        return $this->sendSuccess(trans('custom.recurring_voucher_setup_schedule_deleted_successfully'));
     }
 
     public function getAllRecurringVoucherSchedules(Request $request)
@@ -409,7 +409,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
 
         $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->with(['generateDocument','detail'])->get();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function recurringVoucherSchedulesAllStop(Request $request)
@@ -428,9 +428,9 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     'modifiedUserSystemID' => $employee->employeeSystemID
                 ]);
 
-            return $this->sendResponse($output, 'All schedules stopped successfully');
+            return $this->sendResponse($output, trans('custom.all_schedules_stopped_successfully'));
         }catch (\Exception $e){
-            return $this->sendError('Try Again');
+            return $this->sendError(trans('custom.try_again'));
         }
     }
 

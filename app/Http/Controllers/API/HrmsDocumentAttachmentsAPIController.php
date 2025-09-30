@@ -67,7 +67,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         $this->hrmsDocumentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->all();
 
-        return $this->sendResponse($hrmsDocumentAttachments->toArray(), 'Hrms Document Attachments retrieved successfully');
+        return $this->sendResponse($hrmsDocumentAttachments->toArray(), trans('custom.hrms_document_attachments_retrieved_successfully'));
     }
 
     /**
@@ -114,7 +114,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
 
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->create($input);
 
-        return $this->sendResponse($hrmsDocumentAttachments->toArray(), 'Hrms Document Attachments saved successfully');
+        return $this->sendResponse($hrmsDocumentAttachments->toArray(), trans('custom.hrms_document_attachments_saved_successfully'));
     }
 
     /**
@@ -161,10 +161,10 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($hrmsDocumentAttachments)) {
-            return $this->sendError('Hrms Document Attachments not found');
+            return $this->sendError(trans('custom.hrms_document_attachments_not_found'));
         }
 
-        return $this->sendResponse($hrmsDocumentAttachments->toArray(), 'Hrms Document Attachments retrieved successfully');
+        return $this->sendResponse($hrmsDocumentAttachments->toArray(), trans('custom.hrms_document_attachments_retrieved_successfully'));
     }
 
     /**
@@ -221,12 +221,12 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($hrmsDocumentAttachments)) {
-            return $this->sendError('Hrms Document Attachments not found');
+            return $this->sendError(trans('custom.hrms_document_attachments_not_found'));
         }
 
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->update($input, $id);
 
-        return $this->sendResponse($hrmsDocumentAttachments->toArray(), 'HrmsDocumentAttachments updated successfully');
+        return $this->sendResponse($hrmsDocumentAttachments->toArray(), trans('custom.hrmsdocumentattachments_updated_successfully'));
     }
 
     /**
@@ -273,7 +273,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($hrmsDocumentAttachments)) {
-            return $this->sendError('Hrms Document Attachments not found');
+            return $this->sendError(trans('custom.hrms_document_attachments_not_found'));
         }
 
         $disk = Helper::policyWiseDisk($hrmsDocumentAttachments->companySystemID, 'public');
@@ -283,7 +283,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
             Storage::disk($disk)->delete($path);
         }
         $hrmsDocumentAttachments->delete();
-        return $this->sendResponse($id, 'Hrms Document Attachments deleted successfully');
+        return $this->sendResponse($id, trans('custom.hrms_document_attachments_deleted_successfully'));
 
     }
 
@@ -301,7 +301,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($hrmsDocumentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         $disk = Helper::policyWiseDisk($hrmsDocumentAttachments->companySystemID, 'public');
@@ -310,7 +310,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
             if ($exists = Storage::disk($disk)->exists($hrmsDocumentAttachments->myFileName)) {
                 return Storage::disk($disk)->download($hrmsDocumentAttachments->myFileName);
             } else {
-                return $this->sendError('Attachments detail not found');
+                return $this->sendError(trans('custom.attachments_detail_not_found'));
             }
         }else{
             return $this->sendError('Attachment is not attached', 404);

@@ -38,30 +38,30 @@ class VRFDocumentGenerateController extends AppBaseController
 //            return $this->sendError("In the previous VAT return filing, the related supplier invoice/debit note has not been generated. Are you sure you want to proceed?",400,array('type' => 1));
 
         if($vatReturnFillingMaster->isDocumentGenerated())
-            return $this->sendError("Supplier Invoice/Debit Note  generated for VAT return filing document",400,array('type' => 2));
+            return $this->sendError(trans('custom.supplier_invoice_debit_note_generated_for_vrf'),400,array('type' => 2));
 
         $tax = Tax::where('taxCategory',2)->where('isActive',true)->where('isDefault',true)->first();
 
 
         if(empty($tax->inputVatGLAccountAutoID) && empty($tax->outputVatGLAccountAutoID))
-            return  $this->sendError("Input & Output VAT GL Account not configured in the tax setup",500);
+            return  $this->sendError(trans('custom.input_output_vat_gl_account_not_configured'),500);
 
         if(empty($tax->inputVatGLAccountAutoID))
-            return  $this->sendError("Input VAT GL Account not configured in the tax setup",500);
+            return  $this->sendError(trans('custom.input_vat_gl_account_not_configured'),500);
 
         if(empty($tax->outputVatGLAccountAutoID))
-            return  $this->sendError("Output VAT GL Account not configured in the tax setup",500);
+            return  $this->sendError(trans('custom.output_vat_gl_account_not_configured'),500);
 
         if(empty($tax->authorityAutoID))
-            return  $this->sendError("The supplier is not assigned in the tax setup (tax authority)",500);
+            return  $this->sendError(trans('custom.supplier_not_assigned_tax_authority'),500);
 
         if($isGenerateDebitNote)
         {
             $result = $this->generateDebitNote($vatReturnFillingMaster,$tax);
-            $msg = "Debit Note generated successfully";
+            $msg = trans('custom.debit_note_generated_successfully');
         }else {
             $result = $this->generateSupplierInvoice($vatReturnFillingMaster,$tax);
-            $msg = "Supplier Invoice generated successfully";
+            $msg = trans('custom.supplier_invoice_generated_successfully');
         }
 
         if(!$result['success'])
@@ -86,7 +86,7 @@ class VRFDocumentGenerateController extends AppBaseController
             $supplierInvoice->setSupplier($tax->authorityAutoID);
             $supplierInvoice->setSupplierDetails($tax->authorityAutoID);
             $supplierInvoice->setSystemCreatedUserDetails();
-            $supplierInvoice->setNarration("BSI created BY VAT return filling ".$request->returnFillingCode);
+            $supplierInvoice->setNarration(trans('custom.bsi_created_by_vat_return_filling')." ".$request->returnFillingCode);
 
             $storeSupplierInvoice = $supplierInvoice->store();
 
@@ -135,13 +135,13 @@ class VRFDocumentGenerateController extends AppBaseController
             $data->setSystemCreatedUserDetails();
 
             if(!isset($data->master) && $data->master instanceof  DebitNote)
-                throw  new \Exception("Data not found!");
+                throw  new \Exception(trans('custom.data_not_found'));
 
             $debitNote = new CreateDebitNote($data->master);
             $storeDebitNote = $debitNote->execute();
 
             if(!$storeDebitNote)
-                throw new Exception("Cannot create debit not from VRF!");
+                throw new Exception(trans('custom.cannot_create_debit_note_from_vrf'));
 
             $glAccounts= [
                 'InputVATGLAccount','OutputVATGLAccount'
@@ -203,7 +203,7 @@ class VRFDocumentGenerateController extends AppBaseController
     {
 
         $approveData = DocumentAutoApproveService::getAutoApproveParams( $master->documentSystemID,  $master->getKey());
-        $approveData['approvedComments'] = "System auto generated";
+        $approveData['approvedComments'] = trans('custom.system_auto_generated');
         $approveData['supplierPrimaryCode'] = $master->supplierID;
         $approveData['db'] = $this->db;
         $approval = \Helper::approveDocument($approveData);
@@ -213,7 +213,7 @@ class VRFDocumentGenerateController extends AppBaseController
 
 
 
-        return ['success' => true , 'message' => 'Document successfully approved'];
+        return ['success' => true , 'message' => trans('custom.document_successfully_approved')];
 
     }
 }

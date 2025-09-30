@@ -65,7 +65,7 @@ class FixedAssetCostAPIController extends AppBaseController
         $this->fixedAssetCostRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetCosts = $this->fixedAssetCostRepository->all();
 
-        return $this->sendResponse($fixedAssetCosts->toArray(), 'Fixed Asset Costs retrieved successfully');
+        return $this->sendResponse($fixedAssetCosts->toArray(), trans('custom.fixed_asset_costs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FixedAssetCostAPIController extends AppBaseController
 
         $fixedAssetCosts = $this->fixedAssetCostRepository->create($input);
 
-        return $this->sendResponse($fixedAssetCosts->toArray(), 'Fixed Asset Cost saved successfully');
+        return $this->sendResponse($fixedAssetCosts->toArray(), trans('custom.fixed_asset_cost_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FixedAssetCostAPIController extends AppBaseController
         $fixedAssetCost = $this->fixedAssetCostRepository->findWithoutFail($id);
 
         if (empty($fixedAssetCost)) {
-            return $this->sendError('Fixed Asset Cost not found');
+            return $this->sendError(trans('custom.fixed_asset_cost_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetCost->toArray(), 'Fixed Asset Cost retrieved successfully');
+        return $this->sendResponse($fixedAssetCost->toArray(), trans('custom.fixed_asset_cost_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FixedAssetCostAPIController extends AppBaseController
         $fixedAssetCost = $this->fixedAssetCostRepository->findWithoutFail($id);
 
         if (empty($fixedAssetCost)) {
-            return $this->sendError('Fixed Asset Cost not found');
+            return $this->sendError(trans('custom.fixed_asset_cost_not_found'));
         }
 
         $fixedAssetCost = $this->fixedAssetCostRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetCost->toArray(), 'FixedAssetCost updated successfully');
+        return $this->sendResponse($fixedAssetCost->toArray(), trans('custom.fixedassetcost_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class FixedAssetCostAPIController extends AppBaseController
         $fixedAssetCost = $this->fixedAssetCostRepository->findWithoutFail($id);
 
         if (empty($fixedAssetCost)) {
-            return $this->sendError('Fixed Asset Cost not found');
+            return $this->sendError(trans('custom.fixed_asset_cost_not_found'));
         }
 
         $fixedAssetCost->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Cost deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_cost_deleted_successfully'));
     }
 }

@@ -65,7 +65,7 @@ class ReportTemplateFieldTypeAPIController extends AppBaseController
         $this->reportTemplateFieldTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateFieldTypes = $this->reportTemplateFieldTypeRepository->all();
 
-        return $this->sendResponse($reportTemplateFieldTypes->toArray(), 'Report Template Field Types retrieved successfully');
+        return $this->sendResponse($reportTemplateFieldTypes->toArray(), trans('custom.report_template_field_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ReportTemplateFieldTypeAPIController extends AppBaseController
 
         $reportTemplateFieldTypes = $this->reportTemplateFieldTypeRepository->create($input);
 
-        return $this->sendResponse($reportTemplateFieldTypes->toArray(), 'Report Template Field Type saved successfully');
+        return $this->sendResponse($reportTemplateFieldTypes->toArray(), trans('custom.report_template_field_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ReportTemplateFieldTypeAPIController extends AppBaseController
         $reportTemplateFieldType = $this->reportTemplateFieldTypeRepository->findWithoutFail($id);
 
         if (empty($reportTemplateFieldType)) {
-            return $this->sendError('Report Template Field Type not found');
+            return $this->sendError(trans('custom.report_template_field_type_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateFieldType->toArray(), 'Report Template Field Type retrieved successfully');
+        return $this->sendResponse($reportTemplateFieldType->toArray(), trans('custom.report_template_field_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ReportTemplateFieldTypeAPIController extends AppBaseController
         $reportTemplateFieldType = $this->reportTemplateFieldTypeRepository->findWithoutFail($id);
 
         if (empty($reportTemplateFieldType)) {
-            return $this->sendError('Report Template Field Type not found');
+            return $this->sendError(trans('custom.report_template_field_type_not_found'));
         }
 
         $reportTemplateFieldType = $this->reportTemplateFieldTypeRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateFieldType->toArray(), 'ReportTemplateFieldType updated successfully');
+        return $this->sendResponse($reportTemplateFieldType->toArray(), trans('custom.reporttemplatefieldtype_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ReportTemplateFieldTypeAPIController extends AppBaseController
         $reportTemplateFieldType = $this->reportTemplateFieldTypeRepository->findWithoutFail($id);
 
         if (empty($reportTemplateFieldType)) {
-            return $this->sendError('Report Template Field Type not found');
+            return $this->sendError(trans('custom.report_template_field_type_not_found'));
         }
 
         $reportTemplateFieldType->delete();
 
-        return $this->sendResponse($id, 'Report Template Field Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_field_type_deleted_successfully'));
     }
 }

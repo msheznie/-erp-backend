@@ -65,7 +65,7 @@ class SMENationalityAPIController extends AppBaseController
         $this->sMENationalityRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMENationalities = $this->sMENationalityRepository->all();
 
-        return $this->sendResponse($sMENationalities->toArray(), 'S M E Nationalities retrieved successfully');
+        return $this->sendResponse($sMENationalities->toArray(), trans('custom.s_m_e_nationalities_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMENationalityAPIController extends AppBaseController
 
         $sMENationality = $this->sMENationalityRepository->create($input);
 
-        return $this->sendResponse($sMENationality->toArray(), 'S M E Nationality saved successfully');
+        return $this->sendResponse($sMENationality->toArray(), trans('custom.s_m_e_nationality_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMENationalityAPIController extends AppBaseController
         $sMENationality = $this->sMENationalityRepository->findWithoutFail($id);
 
         if (empty($sMENationality)) {
-            return $this->sendError('S M E Nationality not found');
+            return $this->sendError(trans('custom.s_m_e_nationality_not_found'));
         }
 
-        return $this->sendResponse($sMENationality->toArray(), 'S M E Nationality retrieved successfully');
+        return $this->sendResponse($sMENationality->toArray(), trans('custom.s_m_e_nationality_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMENationalityAPIController extends AppBaseController
         $sMENationality = $this->sMENationalityRepository->findWithoutFail($id);
 
         if (empty($sMENationality)) {
-            return $this->sendError('S M E Nationality not found');
+            return $this->sendError(trans('custom.s_m_e_nationality_not_found'));
         }
 
         $sMENationality = $this->sMENationalityRepository->update($input, $id);
 
-        return $this->sendResponse($sMENationality->toArray(), 'SMENationality updated successfully');
+        return $this->sendResponse($sMENationality->toArray(), trans('custom.smenationality_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMENationalityAPIController extends AppBaseController
         $sMENationality = $this->sMENationalityRepository->findWithoutFail($id);
 
         if (empty($sMENationality)) {
-            return $this->sendError('S M E Nationality not found');
+            return $this->sendError(trans('custom.s_m_e_nationality_not_found'));
         }
 
         $sMENationality->delete();

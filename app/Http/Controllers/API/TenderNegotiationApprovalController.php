@@ -170,7 +170,7 @@ class TenderNegotiationApprovalController extends AppBaseController
             $dt['status_id'] = ($status) ? $status->id : 0;
           
         }
-        return $this->sendResponse($data, 'Employee reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_reterived_successfully'));
     
     }
 

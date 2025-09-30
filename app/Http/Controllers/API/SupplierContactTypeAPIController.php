@@ -49,7 +49,7 @@ class SupplierContactTypeAPIController extends AppBaseController
         $this->supplierContactTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierContactTypes = $this->supplierContactTypeRepository->all();
 
-        return $this->sendResponse($supplierContactTypes->toArray(), 'Supplier Contact Types retrieved successfully');
+        return $this->sendResponse($supplierContactTypes->toArray(), trans('custom.supplier_contact_types_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class SupplierContactTypeAPIController extends AppBaseController
 
         $supplierContactTypes = $this->supplierContactTypeRepository->create($input);
 
-        return $this->sendResponse($supplierContactTypes->toArray(), 'Supplier Contact Type saved successfully');
+        return $this->sendResponse($supplierContactTypes->toArray(), trans('custom.supplier_contact_type_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class SupplierContactTypeAPIController extends AppBaseController
         $supplierContactType = $this->supplierContactTypeRepository->findWithoutFail($id);
 
         if (empty($supplierContactType)) {
-            return $this->sendError('Supplier Contact Type not found');
+            return $this->sendError(trans('custom.supplier_contact_type_not_found'));
         }
 
-        return $this->sendResponse($supplierContactType->toArray(), 'Supplier Contact Type retrieved successfully');
+        return $this->sendResponse($supplierContactType->toArray(), trans('custom.supplier_contact_type_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class SupplierContactTypeAPIController extends AppBaseController
         $supplierContactType = $this->supplierContactTypeRepository->findWithoutFail($id);
 
         if (empty($supplierContactType)) {
-            return $this->sendError('Supplier Contact Type not found');
+            return $this->sendError(trans('custom.supplier_contact_type_not_found'));
         }
 
         $supplierContactType = $this->supplierContactTypeRepository->update($input, $id);
 
-        return $this->sendResponse($supplierContactType->toArray(), 'SupplierContactType updated successfully');
+        return $this->sendResponse($supplierContactType->toArray(), trans('custom.suppliercontacttype_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class SupplierContactTypeAPIController extends AppBaseController
         $supplierContactType = $this->supplierContactTypeRepository->findWithoutFail($id);
 
         if (empty($supplierContactType)) {
-            return $this->sendError('Supplier Contact Type not found');
+            return $this->sendError(trans('custom.supplier_contact_type_not_found'));
         }
 
         $supplierContactType->delete();
 
-        return $this->sendResponse($id, 'Supplier Contact Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_contact_type_deleted_successfully'));
     }
 }

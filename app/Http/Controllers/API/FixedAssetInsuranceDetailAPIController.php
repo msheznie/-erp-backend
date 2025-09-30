@@ -67,7 +67,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $this->fixedAssetInsuranceDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetInsuranceDetails = $this->fixedAssetInsuranceDetailRepository->all();
 
-        return $this->sendResponse($fixedAssetInsuranceDetails->toArray(), 'Fixed Asset Insurance Details retrieved successfully');
+        return $this->sendResponse($fixedAssetInsuranceDetails->toArray(), trans('custom.fixed_asset_insurance_details_retrieved_successful'));
     }
 
     /**
@@ -114,7 +114,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+            'dateOfExpiry.after_or_equal' => trans('custom.date_of_expiry_cannot_be_less_than_date_of_insurance'),
         ];
         $validator = \Validator::make($request->all(), [
             'dateOfInsurance' => 'required|date',
@@ -147,7 +147,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
 
         $fixedAssetInsuranceDetails = $this->fixedAssetInsuranceDetailRepository->create($input);
 
-        return $this->sendResponse($fixedAssetInsuranceDetails->toArray(), 'Fixed Asset Insurance Detail saved successfully');
+        return $this->sendResponse($fixedAssetInsuranceDetails->toArray(), trans('custom.fixed_asset_insurance_detail_saved_successfully'));
     }
 
     /**
@@ -194,10 +194,10 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $fixedAssetInsuranceDetail = $this->fixedAssetInsuranceDetailRepository->findWithoutFail($id);
 
         if (empty($fixedAssetInsuranceDetail)) {
-            return $this->sendError('Fixed Asset Insurance Detail not found');
+            return $this->sendError(trans('custom.fixed_asset_insurance_detail_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetInsuranceDetail->toArray(), 'Fixed Asset Insurance Detail retrieved successfully');
+        return $this->sendResponse($fixedAssetInsuranceDetail->toArray(), trans('custom.fixed_asset_insurance_detail_retrieved_successfull'));
     }
 
     /**
@@ -253,7 +253,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+            'dateOfExpiry.after_or_equal' => trans('custom.date_of_expiry_cannot_be_less_than_date_of_insurance'),
         ];
         $validator = \Validator::make($request->all(), [
             'dateOfInsurance' => 'required|date',
@@ -280,12 +280,12 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $fixedAssetInsuranceDetail = $this->fixedAssetInsuranceDetailRepository->findWithoutFail($id);
 
         if (empty($fixedAssetInsuranceDetail)) {
-            return $this->sendError('Fixed Asset Insurance Detail not found');
+            return $this->sendError(trans('custom.fixed_asset_insurance_detail_not_found'));
         }
 
         $fixedAssetInsuranceDetail = $this->fixedAssetInsuranceDetailRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetInsuranceDetail->toArray(), 'FixedAssetInsuranceDetail updated successfully');
+        return $this->sendResponse($fixedAssetInsuranceDetail->toArray(), trans('custom.fixedassetinsurancedetail_updated_successfully'));
     }
 
     /**
@@ -332,11 +332,11 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
         $fixedAssetInsuranceDetail = $this->fixedAssetInsuranceDetailRepository->findWithoutFail($id);
 
         if (empty($fixedAssetInsuranceDetail)) {
-            return $this->sendError('Fixed Asset Insurance Detail not found');
+            return $this->sendError(trans('custom.fixed_asset_insurance_detail_not_found'));
         }
 
         $fixedAssetInsuranceDetail->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Insurance Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_insurance_detail_deleted_successfully'));
     }
 }

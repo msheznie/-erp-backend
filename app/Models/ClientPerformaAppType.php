@@ -34,6 +34,8 @@ class ClientPerformaAppType extends Model
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
+    protected $primaryKey = 'performaAppTypeID';
+    protected $appends = ['description'];
 
 
 
@@ -62,5 +64,42 @@ class ClientPerformaAppType extends Model
 //        'performaAppTypeID' => 'required'
     ];
 
+    /**
+     * Relationship to ClientPerformaAppTypeLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(ClientPerformaAppTypeLanguage::class, 'performaAppTypeID', 'performaAppTypeID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated description
+     */
+    public function getDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        
+        
+        
+        return $this->attributes['description'] ?? '';
+    }
     
 }

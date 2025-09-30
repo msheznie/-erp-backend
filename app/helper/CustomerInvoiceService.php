@@ -117,7 +117,7 @@ class CustomerInvoiceService
 
             //Check Customer Code & CR Number both have value
             if($cutomerCode == null && $crNumber == null){
-                $errorMsg = "In the fields Customer Code & CR Number. At least one of the field should have a value.";
+                $errorMsg = trans('custom.customer_code_cr_number_at_least_one_should_have_value');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
 
             }
@@ -130,7 +130,7 @@ class CustomerInvoiceService
                 ->first();
 
                 if(!$customerMasters){
-                    $errorMsg = "Active customer not found for the customer code $cutomerCode & CR Number $crNumber";
+                    $errorMsg = trans('custom.active_customer_not_found_for_customer_code_cr_number') . " $cutomerCode & CR Number $crNumber";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             } elseif ($cutomerCode != null ){
@@ -139,7 +139,7 @@ class CustomerInvoiceService
                 ->first();
 
                 if(!$customerMasters){
-                    $errorMsg = "Active customer not found for the customer code $cutomerCode";
+                    $errorMsg = trans('custom.active_customer_not_found_for_customer_code') . " $cutomerCode";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             } elseif ($crNumber != null){
@@ -148,14 +148,14 @@ class CustomerInvoiceService
                 ->first();
                 
                 if(!$customerMasters){
-                    $errorMsg = "Active customer not found for the customer registration number $crNumber";
+                    $errorMsg = trans('custom.active_customer_not_found_for_customer_registration_number') . " $crNumber";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             }
 
             //Check Currency for Currency code
             if($currency == null){
-                $errorMsg = "Currency field can not be null.";
+                $errorMsg = trans('custom.currency_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
@@ -164,7 +164,7 @@ class CustomerInvoiceService
                 ->first();
 
                 if(!$currencyMaster){
-                    $errorMsg = "Currency master not found for the currency code $currency";
+                    $errorMsg = trans('custom.currency_master_not_found_for_currency_code') . " $currency";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
@@ -177,7 +177,7 @@ class CustomerInvoiceService
                                                             ->first();
 
                     if(!$customerCurrency){
-                        $errorMsg = "Currency $currency is not assigned to the customer $customerMasters->customerCode";
+                        $errorMsg = trans('custom.currency') . " $currency " . trans('custom.currency_not_assigned_to_customer') . " $customerMasters->customerCode";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -187,13 +187,13 @@ class CustomerInvoiceService
             
             //Check headerComments
             if($headerComments == null){
-                $errorMsg = "Header comments field can not be null.";
+                $errorMsg = trans('custom.header_comments_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
             //Check documentDate  //Check Active Financial Period
             if($documentDate == null){
-                $errorMsg = "Document Date field can not be null.";
+                $errorMsg = trans('custom.document_date_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
@@ -207,7 +207,7 @@ class CustomerInvoiceService
                 ]);
 
                 if ($validator->fails()) {
-                    $errorMsg = "Invalid Invoice Document Date format  $documentDate.";
+                    $errorMsg = trans('custom.invalid_invoice_document_date_format') . "  $documentDate.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                 }
 
@@ -218,7 +218,7 @@ class CustomerInvoiceService
                 
                 if (!isset($companyFinanceYear) && empty($companyFinanceYear)) 
                 {
-                    $errorMsg = "Finance Year not active";
+                    $errorMsg = trans('custom.finance_year_not_active');
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                 }
                 $checkDate = Carbon::parse($documentDate);
@@ -231,19 +231,19 @@ class CustomerInvoiceService
             
 
                 if (!$CompanyFinancePeriod) {
-                    $errorMsg = "The financial period for the  Document date $documentDateBeforeFormat  is not active.";
+                    $errorMsg = trans('custom.financial_period_inactive_with_code', ['document_date' => $documentDateBeforeFormat]);
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
                 $curentDate = Carbon::now();
                 if ($checkDate > $curentDate) {
-                    $errorMsg = "Document date $documentDateBeforeFormat cannot be greater than current date.";
+                    $errorMsg = trans('custom.document_date') . $documentDateBeforeFormat . trans('custom.cannot_be_greater_than_current_date');
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             }
 
             //Check invoiceDueDate
             if($invoiceDueDate == null){
-                $errorMsg = "invoice Due Date field can not be null.";
+                $errorMsg = trans('custom.invoice_due_date_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
@@ -256,7 +256,7 @@ class CustomerInvoiceService
                 ]);
 
                 if ($validator->fails()) {
-                    $errorMsg = "Invalid Invoice Due Date format  $invoiceDueDate.";
+                    $errorMsg = trans('custom.invalid_invoice_due_date_format') . "  $invoiceDueDate.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                 }
                 $invoiceDueDateBeforeFormat = $invoiceDueDate;
@@ -266,27 +266,27 @@ class CustomerInvoiceService
 
             //customerInvoiceNo
             if($customerInvoiceNo == null){
-                $errorMsg = "customerInvoiceNo field can not be null.";
+                $errorMsg = trans('custom.customer_invoice_no_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
             //bank
             if($bank == null){
-                $errorMsg = "Bank field can not be null.";
+                $errorMsg = trans('custom.bank_field_cannot_be_null');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
             }
 
             if($bank != null){
                 $bankMaster = BankAssign::where('bankShortCode',$bank)->first();
                 if(!$bankMaster){
-                    $errorMsg = "Bank not found for bank code $bank.";
+                    $errorMsg = trans('custom.bank_not_found_for_bank_code') . " $bank.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
                 if($bankMaster){
                     //Account No
                     if($accountNo == null){
-                        $errorMsg = "Account No field can not be null.";
+                        $errorMsg = trans('custom.account_no_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
@@ -295,7 +295,7 @@ class CustomerInvoiceService
                                                 ->where('bankmasterAutoID',$bankMaster->bankmasterAutoID)
                                                 ->first();
                         if(!$account){
-                            $errorMsg = "The Bank Account No $accountNo not found for the bank code $bank .";
+                            $errorMsg = trans('custom.bank_account_no_not_found', ['account_no' => $accountNo, 'bank_code'  => $bank]);
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
@@ -308,7 +308,7 @@ class CustomerInvoiceService
                                                 ->where('empActive',1)
                                                 ->first();
                 if(!$confirmedEmployee){
-                    $errorMsg = "Active employee not found for Confirmed By $confirmedBy.";
+                    $errorMsg = trans('custom.active_employee_not_found_for_confirmed_by') . " $confirmedBy.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
@@ -324,7 +324,7 @@ class CustomerInvoiceService
                                     ->first();
 
                 if(!$approvedEmployee){
-                    $errorMsg = "Active employee not found for Approved By $approvedBy.";
+                    $errorMsg = trans('custom.active_employee_not_found_for_approved_by') . " $approvedBy.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
@@ -345,13 +345,13 @@ class CustomerInvoiceService
                             if ($val->approvalGroupID) {
                                 $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
                             } else {
-                                $errorMsg = "'Please set the approval group.";
+                                $errorMsg = trans('custom.please_set_approval_group');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         }
                     }
                 } else {
-                    $errorMsg = "No approval setup created for this document.";
+                    $errorMsg = trans('custom.no_approval_setup_created_for_document');
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
@@ -370,7 +370,7 @@ class CustomerInvoiceService
                                     ->first();
 
                 if(!$approvalAccess){
-                    $errorMsg = "Approver $approvedBy does not have approval access.";
+                    $errorMsg = $approvedBy . trans('custom.approver_does_not_have_approval_access');
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             }
@@ -397,13 +397,13 @@ class CustomerInvoiceService
                             if ($val->approvalGroupID) {
                                 $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
                             } else {
-                                $errorMsg = "'Please set the approval group.";
+                                $errorMsg = trans('custom.please_set_approval_group');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         }
                     }
                 } else {
-                    $errorMsg = "No approval setup created for this document.";
+                    $errorMsg = trans('custom.no_approval_setup_created_for_document');
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
@@ -422,7 +422,7 @@ class CustomerInvoiceService
                                     ->first();
 
                 if(!$approvalAccess){
-                    $errorMsg = "Uploaded employee $employee->empID does not have approval access.";
+                    $errorMsg = trans('custom.uploaded_employee_does_not_have_approval_access') . " $employee->empID.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
             }
@@ -493,7 +493,7 @@ class CustomerInvoiceService
 
 
                     if($glCode == null){
-                        $errorMsg = "GL Account field can not be null.";
+                        $errorMsg = trans('custom.gl_account_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
@@ -505,7 +505,7 @@ class CustomerInvoiceService
                                                             ->first();
 
                         if(!$chartOfAccounts){
-                            $errorMsg = "Chart Of Account not found for the GL Code $glCode.";
+                            $errorMsg = trans('custom.chart_of_account_not_found_for_gl_code') . " $glCode.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
@@ -517,7 +517,7 @@ class CustomerInvoiceService
                                                             ->first();
                         
                         if(!$projectExist){
-                            $errorMsg = "Project master not found for the Project Code $project.";
+                            $errorMsg = trans('custom.project_master_not_found_for_project_code') . " $project.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
@@ -528,7 +528,7 @@ class CustomerInvoiceService
                     }
 
                     if($segment == null){
-                        $errorMsg = "Segment field can not be null.";
+                        $errorMsg = trans('custom.segment_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
@@ -540,13 +540,13 @@ class CustomerInvoiceService
                                                         ->first();
 
                         if(!$segmentExist){
-                            $errorMsg = "Active Segment master not found for the Segment Code $segment.";
+                            $errorMsg = trans('custom.active_segment_master_not_found_for_segment_code') . " $segment.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
 
                     if($UOM == null){
-                        $errorMsg = "UOM field can not be null.";
+                        $errorMsg = trans('custom.uom_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
@@ -556,41 +556,41 @@ class CustomerInvoiceService
                                         ->first();
 
                         if(!$UOMExist){
-                            $errorMsg = "Active UOM master not found for the UOM Short Code $UOM.";
+                            $errorMsg = trans('custom.active_uom_master_not_found_for_uom_short_code') . " $UOM.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
 
                     
                     if($Qty == null){
-                        $errorMsg = "Quantity field can not be null.";
+                        $errorMsg = trans('custom.quantity_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                     if($Qty != null){
                         if (is_numeric($Qty)) {
                             if(0 > $Qty){
-                                $errorMsg = "Quantity can not have negative value.";
+                                $errorMsg = trans('custom.quantity_cannot_have_negative_value');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         } else {
-                            $errorMsg = "Quantity $Qty is not a numeric value.";
+                            $errorMsg = trans('custom.quantity_is_not_numeric_value') . " $Qty.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
 
                     }
 
                     if($salesPrice == null){
-                        $errorMsg = "Sales Price field can not be null.";
+                        $errorMsg = trans('custom.sales_price_field_cannot_be_null');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                     if($salesPrice != null){
                         if (is_numeric($salesPrice)) {
                             if( 0 > $salesPrice){
-                                $errorMsg = "Sales Price can not have negative value.";
+                                $errorMsg = trans('custom.sales_price_cannot_have_negative_value');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         } else {
-                            $errorMsg = "Sales Price $salesPrice is not a numeric value.";
+                            $errorMsg = trans('custom.sales_price_is_not_numeric_value') . " $salesPrice.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
 
@@ -599,11 +599,11 @@ class CustomerInvoiceService
                     if($discountAmount != null){
                         if (is_numeric($discountAmount)) {
                             if( 0 > $discountAmount){
-                                $errorMsg = "Discount Amount can not have negative value.";
+                                $errorMsg = trans('custom.discount_amount_cannot_have_negative_value');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         } else {
-                            $errorMsg = "Discount Amount $discountAmount is not a numeric value.";
+                            $errorMsg = trans('custom.discount_amount_is_not_numeric_value') . " $discountAmount.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
 
@@ -618,11 +618,11 @@ class CustomerInvoiceService
                     if($vatAmount != null){
                         if (is_numeric($vatAmount)) {
                             if( 0 > $vatAmount){
-                                $errorMsg = "Vat Amount can not have negative value.";
+                                $errorMsg = trans('custom.vat_amount_cannot_have_negative_value');
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         } else {
-                            $errorMsg = "Vat Amount $vatAmount is not a numeric value.";
+                            $errorMsg = trans('custom.vat_amount_is_not_numeric_value') . " $vatAmount.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
 
@@ -798,7 +798,7 @@ class CustomerInvoiceService
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return ['status' => true,'data'=>$customerInvoiceDirects];
         } else {
-            $errorMsg = "Document date should be between financial period start date and end date.";
+            $errorMsg = trans('custom.document_date_should_be_between_financial_period_start_end');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
 
         }
@@ -962,7 +962,7 @@ class CustomerInvoiceService
         if($createdData){
             return ['status' => true,'data'=>$createdData];
         } else {
-            $errorMsg = "Error Occured !.";
+            $errorMsg = trans('custom.error_occurred');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $request['excelRow']];
         }
 
@@ -981,7 +981,7 @@ class CustomerInvoiceService
 
 
         if (empty($detail)) {
-            $errorMsg = "Customer Invoice Direct Detail not found.";
+            $errorMsg = trans('custom.customer_invoice_direct_detail_not_found');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
 
         }
@@ -989,7 +989,7 @@ class CustomerInvoiceService
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
         if (empty($master)) {
-            $errorMsg = "Customer Invoice Direct not found.";
+            $errorMsg = trans('custom.customer_invoice_direct_not_found');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
         }
 
@@ -1025,23 +1025,23 @@ class CustomerInvoiceService
             if (!empty($contract)) {
                 if($contract->contractStatus != 6){
                     if ($contract->paymentInDaysForJob <= 0) {
-                        $errorMsg = "Payment Period is not updated in the contract. Please update and try again.";
+                        $errorMsg = trans('custom.payment_period_not_updated_in_contract');
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
                     }
                 }
             } else {
-                $errorMsg = "Contract not exist.";
+                $errorMsg = trans('custom.contract_not_exist');
                 return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
             }
         }
 
         if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
-            $errorMsg = "Discount Percentage cannot be greater than 100 percentage.";
+            $errorMsg = trans('custom.discount_percentage_cannot_be_greater_than_100');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
         }
 
         if (isset($input["discountAmountLine"]) && isset($input['salesPrice']) && $input['discountAmountLine'] > $input['salesPrice']) {
-            $errorMsg = "Discount amount cannot be greater than sales price.";
+            $errorMsg = trans('custom.discount_amount_cannot_be_greater_than_sales_price');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
         }
 
@@ -1229,7 +1229,7 @@ class CustomerInvoiceService
         if($x){
             return ['status' => true];
         } else {
-            $errorMsg = "Error Occured While Udpating the Customer Invoice Direct Details";
+            $errorMsg = trans('custom.error_occurred_while_updating_customer_invoice_direct_details');
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
         }
 
@@ -1280,13 +1280,13 @@ class CustomerInvoiceService
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
 
         $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
       
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Invoice Details not found.'];
+            return ['status' => false, 'message' => trans('custom.invoice_details_not_found')];
         }
 
         $totalAmount = 0;
@@ -1306,7 +1306,7 @@ class CustomerInvoiceService
             ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
@@ -1395,7 +1395,7 @@ class CustomerInvoiceService
         $id = $customerInvoiceUploadDetails->custInvoiceDirectID;
         $masterData = CustomerInvoiceDirect::find($id);
         if (empty($masterData)) {
-            return ['status' => false, 'message' => 'Customer Invoice not found'];
+            return ['status' => false, 'message' => trans('custom.customer_invoice_not_found')];
         }
         
         //deleting from approval table
@@ -1431,7 +1431,7 @@ class CustomerInvoiceService
         $masterData->invoicedetail()->delete();
         $masterData->delete();
 
-        return ['status' => true, 'message' => 'Customer Invoice deleted successfully'];
+        return ['status' => true, 'message' => trans('custom.customer_invoice_deleted_successfully')];
 
 
     }

@@ -65,7 +65,7 @@ class HRDocumentDescriptionMasterAPIController extends AppBaseController
         $this->hRDocumentDescriptionMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRDocumentDescriptionMasters = $this->hRDocumentDescriptionMasterRepository->all();
 
-        return $this->sendResponse($hRDocumentDescriptionMasters->toArray(), 'H R Document Description Masters retrieved successfully');
+        return $this->sendResponse($hRDocumentDescriptionMasters->toArray(), trans('custom.h_r_document_description_masters_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRDocumentDescriptionMasterAPIController extends AppBaseController
 
         $hRDocumentDescriptionMaster = $this->hRDocumentDescriptionMasterRepository->create($input);
 
-        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), 'H R Document Description Master saved successfully');
+        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), trans('custom.h_r_document_description_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRDocumentDescriptionMasterAPIController extends AppBaseController
         $hRDocumentDescriptionMaster = $this->hRDocumentDescriptionMasterRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionMaster)) {
-            return $this->sendError('H R Document Description Master not found');
+            return $this->sendError(trans('custom.h_r_document_description_master_not_found'));
         }
 
-        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), 'H R Document Description Master retrieved successfully');
+        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), trans('custom.h_r_document_description_master_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRDocumentDescriptionMasterAPIController extends AppBaseController
         $hRDocumentDescriptionMaster = $this->hRDocumentDescriptionMasterRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionMaster)) {
-            return $this->sendError('H R Document Description Master not found');
+            return $this->sendError(trans('custom.h_r_document_description_master_not_found'));
         }
 
         $hRDocumentDescriptionMaster = $this->hRDocumentDescriptionMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), 'HRDocumentDescriptionMaster updated successfully');
+        return $this->sendResponse($hRDocumentDescriptionMaster->toArray(), trans('custom.hrdocumentdescriptionmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HRDocumentDescriptionMasterAPIController extends AppBaseController
         $hRDocumentDescriptionMaster = $this->hRDocumentDescriptionMasterRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionMaster)) {
-            return $this->sendError('H R Document Description Master not found');
+            return $this->sendError(trans('custom.h_r_document_description_master_not_found'));
         }
 
         $hRDocumentDescriptionMaster->delete();

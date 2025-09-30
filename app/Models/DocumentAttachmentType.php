@@ -67,5 +67,35 @@ class DocumentAttachmentType extends Model
     public static function getAllDocumentAttachmentType(){
         return self::select('travelClaimAttachmentTypeID', 'documentID', 'description')->get();
     }
-    
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['description'];
+
+    /**
+     * Get the description based on current language.
+     *
+     * @return string
+     */
+    public function getDescriptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->description : $this->attributes['description'];
+    }
+
+    /**
+     * Get the translations for the document attachment type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(DocumentAttachmentTypeTranslation::class, 'travelClaimAttachmentTypeID', 'travelClaimAttachmentTypeID');
+    }
 }

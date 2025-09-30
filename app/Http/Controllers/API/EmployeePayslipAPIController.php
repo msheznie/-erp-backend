@@ -42,7 +42,7 @@ class EmployeePayslipAPIController extends AppBaseController
         });
 
         $output = array('processPeriods' => $processPeriods->toArray());
-        return $this->sendResponse($output, 'Salary Process Periods retrieved successfully');
+        return $this->sendResponse($output, trans('custom.salary_process_periods_retrieved_successfully'));
     }
 
     public function getEmployeePayslip(Request $request)
@@ -50,7 +50,7 @@ class EmployeePayslipAPIController extends AppBaseController
         $periodMasterID = $request['periodMasterID'];
 
         if($periodMasterID==null){
-            return $this->sendError('Salary Payslip details not found',200);
+            return $this->sendError(trans('custom.salary_payslip_details_not_found'),200);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -60,7 +60,7 @@ class EmployeePayslipAPIController extends AppBaseController
         $company_id = isset($payslip_details->companyID)?$payslip_details->companyID:null;
         $salaryProcessMasterID =  isset($payslip_details->salaryProcessMasterID)?$payslip_details->salaryProcessMasterID:null;
         if($salaryProcessMasterID==null){
-            return $this->sendError('Salary Payslip details not found',200);
+            return $this->sendError(trans('custom.salary_payslip_details_not_found'),200);
         }
         $company_details = $this->getCompanyData($company_id);
 
@@ -112,7 +112,7 @@ class EmployeePayslipAPIController extends AppBaseController
 
         );
 
-        return $this->sendResponse($output, 'Salary Payslip details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.salary_payslip_details_retrieved_successfully'));
     }
 
     private function getPayslipDetails($periodMasterID,$empID)

@@ -65,7 +65,7 @@ class SrpErpTemplateMasterAPIController extends AppBaseController
         $this->srpErpTemplateMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpTemplateMasters = $this->srpErpTemplateMasterRepository->all();
 
-        return $this->sendResponse($srpErpTemplateMasters->toArray(), 'Srp Erp Template Masters retrieved successfully');
+        return $this->sendResponse($srpErpTemplateMasters->toArray(), trans('custom.srp_erp_template_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpErpTemplateMasterAPIController extends AppBaseController
 
         $srpErpTemplateMaster = $this->srpErpTemplateMasterRepository->create($input);
 
-        return $this->sendResponse($srpErpTemplateMaster->toArray(), 'Srp Erp Template Master saved successfully');
+        return $this->sendResponse($srpErpTemplateMaster->toArray(), trans('custom.srp_erp_template_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpErpTemplateMasterAPIController extends AppBaseController
         $srpErpTemplateMaster = $this->srpErpTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplateMaster)) {
-            return $this->sendError('Srp Erp Template Master not found');
+            return $this->sendError(trans('custom.srp_erp_template_master_not_found'));
         }
 
-        return $this->sendResponse($srpErpTemplateMaster->toArray(), 'Srp Erp Template Master retrieved successfully');
+        return $this->sendResponse($srpErpTemplateMaster->toArray(), trans('custom.srp_erp_template_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpErpTemplateMasterAPIController extends AppBaseController
         $srpErpTemplateMaster = $this->srpErpTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplateMaster)) {
-            return $this->sendError('Srp Erp Template Master not found');
+            return $this->sendError(trans('custom.srp_erp_template_master_not_found'));
         }
 
         $srpErpTemplateMaster = $this->srpErpTemplateMasterRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpTemplateMaster->toArray(), 'SrpErpTemplateMaster updated successfully');
+        return $this->sendResponse($srpErpTemplateMaster->toArray(), trans('custom.srperptemplatemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpErpTemplateMasterAPIController extends AppBaseController
         $srpErpTemplateMaster = $this->srpErpTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpTemplateMaster)) {
-            return $this->sendError('Srp Erp Template Master not found');
+            return $this->sendError(trans('custom.srp_erp_template_master_not_found'));
         }
 
         $srpErpTemplateMaster->delete();

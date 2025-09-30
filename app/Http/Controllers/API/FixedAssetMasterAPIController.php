@@ -135,7 +135,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $this->fixedAssetMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetMasters = $this->fixedAssetMasterRepository->all();
 
-        return $this->sendResponse($fixedAssetMasters->toArray(), 'Fixed Asset Masters retrieved successfully');
+        return $this->sendResponse($fixedAssetMasters->toArray(), trans('custom.fixed_asset_masters_retrieved_successfully'));
     }
 
     /**
@@ -199,25 +199,25 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
             if(isset($input['faCatID']) && empty($input['faCatID'])){
-                return $this->sendError("Main Category is required", 500);
+                return $this->sendError(trans('custom.main_category_is_required'), 500);
             }
 
             if(isset($input['faSubCatID']) && empty($input['faSubCatID'])){
-                return $this->sendError("Sub Category is required",500);
+                return $this->sendError(trans('custom.sub_category_is_required'),500);
             }
 
                 foreach ($input['assetSerialNo'] as $assetSN) {
                     if (empty($assetSN['faUnitSerialNo'])) {
-                        return $this->sendError("Asset Serial No is required", 500);
+                        return $this->sendError(trans('custom.asset_serial_no_is_required'), 500);
                     }
                 }
 
 
             $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
-                'assetSerialNo.*.required' => 'Asset Serial No is required',
-                'assetSerialNo.*.unique' => 'The FA Serial-No has already been taken',
-                'AUDITCATOGARY.required' => 'Audit Category is required',
+                'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
+                'assetSerialNo.*.required' => trans('custom.asset_serial_no_is_required'),
+                'assetSerialNo.*.unique' => trans('custom.fa_serial_no_has_been_taken'),
+                'AUDITCATOGARY.required' => trans('custom.audit_category_is_required'),
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
@@ -233,14 +233,14 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
 
             
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+                return $this->sendError(trans('custom.life_time_years_cannot_be_blank_or_zero'), 500);
             }
 
 
@@ -315,11 +315,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                                                                      ->first();
 
                             if ($checkForDuplicateCode) {
-                                return $this->sendError("Asset code is already found.", 500);
+                                return $this->sendError(trans('custom.asset_code_already_found'), 500);
                             }
 
                         } else {
-                            return $this->sendError("Asset code is not configured.", 500);
+                            return $this->sendError(trans('custom.asset_code_not_configured'), 500);
                         }
 
                         if ($input['assetSerialNo'][0]['faUnitSerialNo']) {
@@ -366,7 +366,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                         if($checkDuplicate > 0)
                         {
-                            return $this->sendError('Already created asset costing for '. $fixedAssetMasters['faCode'], 500);
+                            return $this->sendError(trans('custom.already_created_asset_costing_for'). $fixedAssetMasters['faCode'], 500);
                         }
 
                         $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
@@ -415,11 +415,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                                                     ->first();
 
                                                 if ($checkForDuplicateCode) {
-                                                    return $this->sendError("Asset code is already found.", 500);
+                                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
                                                 }
 
                                             } else {
-                                                return $this->sendError("Asset code is not configured.", 500);
+                                                return $this->sendError(trans('custom.asset_code_not_configured'), 500);
                                             }
                                         }
                                     }
@@ -464,7 +464,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                                 if($checkDuplicate > 0)
                                 {
-                                    return $this->sendError('Already created asset costing for ' .$fixedAssetMasters['faCode'], 500);
+                                    return $this->sendError(trans('custom.already_created_asset_costing_for') .$fixedAssetMasters['faCode'], 500);
                                 }
                               
                                 $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
@@ -496,7 +496,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     DB::commit();
                 }
             }
-            return $this->sendResponse([], 'Fixed Asset Master saved successfully');
+            return $this->sendResponse([], trans('custom.fixed_asset_master_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -519,7 +519,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if ($assetCreate['status'] === true) {
 
-            return $this->sendResponse($assetCreate['data'], 'Fixed Asset Master saved successfully');
+            return $this->sendResponse($assetCreate['data'], trans('custom.fixed_asset_master_saved_successfully'));
 
         } else {
             if($assetCreate['code'] == null) {
@@ -576,10 +576,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetMaster->toArray(), 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($fixedAssetMaster->toArray(), trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 
     /**
@@ -641,7 +641,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
         // Validate accumulated depreciation date is not later than asset end date
@@ -657,7 +657,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $accDepreciationDate = new DateTime($input['accumulated_depreciation_date']);
             
             if($accDepreciationDate > $endOfDepreciationDate) {
-                return $this->sendError("Accumulated depreciation date cannot be later than the asset end date.", 500);
+                return $this->sendError(trans('custom.accumulated_depreciation_date_cannot_be_later_than'), 500);
             }
         }
      
@@ -670,7 +670,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
                 if($is_pending_job_exist > 0)
                 {
-                    return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+                    return $this->sendError(trans('custom.there_are_monthly_depreciation_pending_for_confirm'), 500);
     
                 }
     
@@ -680,7 +680,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if(isset($input['assetType']) && $input['assetType'] == 1){
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
-                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+                return $this->sendError(trans('custom.life_time_years_cannot_be_blank_or_zero'), 500);
             }
         } else {
             if(isset($input['depMonth']) && $input['depMonth'] == ''){
@@ -693,7 +693,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             {
                 if(isset($attribute['is_mendatory']) && $attribute['is_mendatory'] == 1) {
                     if(isset($attribute['attribute_values'][0]) && $attribute['attribute_values'][0]['value'] == null) {
-                        return $this->sendError('Please enter a value for all mandatory fields in the attributes', 500);
+                        return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
                     }
                 }
             }
@@ -703,11 +703,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             if(isset($input['salvage_value_rpt']))
         {
             if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
-                return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+                return $this->sendError(trans('custom.salvage_value_cannot_be_greater'), 500);
             }
     
             if(doubleval($input['salvage_value_rpt']) < 0) {
-                return $this->sendError("Salvage value cannot be less than Zero", 500);
+                return $this->sendError(trans('custom.salvage_value_cannot_be_less'), 500);
             }
         }
 
@@ -717,7 +717,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             // check restriction policy enabled
             $chkRestrctPolicy = Helper::checkRestrictionByPolicy($input['companySystemID'], 7);
             if(!$chkRestrctPolicy){
-                return $this->sendError('Document already approved',500);
+                return $this->sendError(trans('custom.document_already_approved_1'),500);
             }
 
             // check is there any depreciation
@@ -728,7 +728,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 // check finance grouping input is changed
                 if(isset($input['AUDITCATOGARY'])){
                     if($input['AUDITCATOGARY'] != $fixedAssetMaster->AUDITCATOGARY){
-                        return $this->sendError('Document Already Have Depreciations. You Cannot Update Finance Grouping Details',500);
+                        return $this->sendError(trans('custom.document_already_have_depreciations_you_cannot_upd'),500);
                     }
                 }
             }
@@ -741,7 +741,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             if($depAssetNotApproved){
                 // check finance grouping input is changed
                 if((isset($input['AUDITCATOGARY']) && $input['AUDITCATOGARY'] != $fixedAssetMaster->AUDITCATOGARY) || (isset($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != $fixedAssetMaster->serviceLineSystemID)){
-                    return $this->sendError('Asset has been pulled to open depreciation document. Approve/Delete the document & try again',500);
+                    return $this->sendError(trans('custom.asset_pulled_to_open_depreciation'),500);
                 }
 
             }
@@ -752,10 +752,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
 
             $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
-                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
-                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
-                'faBarcode.unique' => 'The Barcode has already been taken',
+                'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
+                'documentDate.before_or_equal' => trans('custom.document_date_cannot_be_greater'),
+                'faUnitSerialNo.unique' => trans('custom.fa_serial_no_has_been_taken'),
+                'faBarcode.unique' => trans('custom.barcode_has_been_taken'),
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
@@ -775,7 +775,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
                 if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -867,38 +867,38 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
                 if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
-                    return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+                    return $this->sendError(trans('custom.unit_price_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
             if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
                 if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
-                    return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
+                    return $this->sendError(trans('custom.acc_depreciation_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
             if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
                 if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
-                    return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
+                    return $this->sendError(trans('custom.residual_value_rpt_cant_be_zero_when_local_has_value'),500);
                 }
             }
 
 
             if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
                 if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
-                    return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
+                    return $this->sendError(trans('custom.unit_price_local_cant_be_zero'),500);
                 }
             }
 
             if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
                 if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
-                    return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
+                    return $this->sendError(trans('custom.acc_depreciation_local_cant_be_zero_when_rpt_has_value'),500);
                 }
             }
 
             if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
                 if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
-                    return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
+                    return $this->sendError(trans('custom.residual_value_local_cant_be_zero_when_rpt_has_value'),500);
                 }
             }
 
@@ -924,10 +924,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                         if($documentDateYearActive) {
                             $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['documentDate']->format('Y-m-d'));
                             if(!$documentDateMonthActive) {
-                                return $this->sendError('Document Date is not within the active Financial Period.',500);
+                                return $this->sendError(trans('custom.document_date_not_within_active_financial_period'),500);
                             }
                         } else {
-                            return $this->sendError('Document Date is not within the active Financial Period.',500);
+                            return $this->sendError(trans('custom.document_date_not_within_active_financial_period'),500);
                         }
                     }
                 }
@@ -938,10 +938,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                         if($accumulatedDateYearActive) {
                             $accumulatedMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], 9, $input['accumulated_depreciation_date']->format('Y-m-d'));
                             if(!$accumulatedMonthActive) {
-                                return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                                return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'),500);
                             }
                         } else {
-                            return $this->sendError('Accumulated Depreciation Date is not within the active Financial Period.',500);
+                            return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'),500);
                         }
                     }
                 }
@@ -1017,7 +1017,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($fixedAssetMaster->toArray(), trans('custom.fixed_asset_master_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -1071,12 +1071,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
         $fixedAssetMaster->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_master_deleted_successfully'));
     }
 
     public function getAssetCostingUploadData(){
@@ -1086,7 +1086,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $asf->financeCatDescription = htmlspecialchars_decode($asf->financeCatDescription);
         }
 
-        return $this->sendResponse($assetFinanceCategory, 'Record retrieved successfully');
+        return $this->sendResponse($assetFinanceCategory, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -1160,7 +1160,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'insuranceType' => $insuranceType
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getFixedAssetSubCat(Request $request)
@@ -1169,13 +1169,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         $faCatID = (array)$faCatID;
         $faCatID= collect($faCatID)->pluck('id');
         $subCategory = FixedAssetCategorySub::ofCompany([$request->companySystemID])->byFaCatIDMultiSelect([$request->faCatID])->get();
-        return $this->sendResponse($subCategory, 'Record retrieved successfully');
+        return $this->sendResponse($subCategory, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getFinanceGLCode(Request $request)
     {
         $subCategory = AssetFinanceCategory::with(['costaccount', 'accdepaccount', 'depaccount', 'disaccount'])->find($request->faFinanceCatID);
-        return $this->sendResponse($subCategory, 'Record retrieved successfully');
+        return $this->sendResponse($subCategory, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getFAGrvDetailsByID(Request $request)
@@ -1189,7 +1189,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         ])->find($request->grvDetailsID);
-        return $this->sendResponse($subCategory, 'Record retrieved successfully');
+        return $this->sendResponse($subCategory, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -1333,7 +1333,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         /** @var FixedAssetMaster $fixedAssetMaster */
         $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
@@ -1344,12 +1344,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
         $financeCat = AssetFinanceCategory::find($fixedAssetMaster->AUDITCATOGARY);
         $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
-        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 
     public function assetAttributes(Request $request){
@@ -1426,7 +1426,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+        return $this->sendResponse($attributes, trans('custom.fixed_asset_attributes_updated_successfully'));
 
     }
 
@@ -1437,11 +1437,11 @@ class FixedAssetMasterAPIController extends AppBaseController
         $attributeValueCount = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('is_active', 1)->count();
 
         if($attributeValueCount > 3 && $input['action'] == 1){
-            return $this->sendError('Maximum number of selections exceeded');
+            return $this->sendError(trans('custom.maximum_selections_exceeded'));
         }
 
         if($input['value'] == null && $input['action'] == 1){
-            return $this->sendError('Please select/insert a value to field');
+            return $this->sendError(trans('custom.please_select_insert_value_to_field'));
         }
 
         if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
@@ -1461,7 +1461,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color, 'is_active' => $input['action']]);
             }
         }
-        return $this->sendResponse($attributes, 'Fixed Asset Attributes updated successfully');
+        return $this->sendResponse($attributes, trans('custom.fixed_asset_attributes_updated_successfully'));
 
     }
 
@@ -1471,12 +1471,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         
         $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department', 'departmentmaster', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by3', 'location', 'assettypemaster', 'finance_category'])->findWithoutFail($input['id']);
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
         $output = ['fixedAssetMaster' => $fixedAssetMaster];
 
-        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
 
     function assetCostingReopen(Request $request)
@@ -1489,20 +1489,20 @@ class FixedAssetMasterAPIController extends AppBaseController
             $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
             $emails = array();
             if (empty($fixedAssetMaster)) {
-                return $this->sendError('Fixed Asset Master not found');
+                return $this->sendError(trans('custom.fixed_asset_master_not_found'));
             }
 
 
             if ($fixedAssetMaster->approved == -1) {
-                return $this->sendError('You cannot reopen this Asset costing it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_costing_it_is_already_1'));
             }
 
             if ($fixedAssetMaster->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this Asset costing it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_costing_it_is_already'));
             }
 
             if ($fixedAssetMaster->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this Asset costing, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_costing_it_is_not_con'));
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -1517,9 +1517,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetMaster->faCode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetMaster->faCode;
 
-            $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
             $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetMaster->companySystemID)
                 ->where('documentSystemCode', $fixedAssetMaster->faID)
@@ -1534,7 +1534,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_document')];
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1570,10 +1570,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                 ->delete();
 
             /*Audit entry*/
-            AuditTrial::createAuditTrial($fixedAssetMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
+            AuditTrial::createAuditTrial($fixedAssetMaster->documentSystemID,$id,$input['reopenComments'],trans('custom.reopened'));
 
             DB::commit();
-            return $this->sendResponse($fixedAssetMaster->toArray(), 'Asset Costing reopened successfully');
+            return $this->sendResponse($fixedAssetMaster->toArray(), trans('custom.asset_costing_reopened_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1748,7 +1748,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->where('documentSystemID', 22);
             }, 'created_by', 'modified_by','audit_trial.modified_by'])->findWithoutFail($input['faID']);
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
     public function generateAssetInsuranceReport(Request $request)
@@ -1796,25 +1796,25 @@ class FixedAssetMasterAPIController extends AppBaseController
         if ($assetInsurance) {
             $x = 0;
             foreach ($assetInsurance as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Asset Type'] = $val->AssetType;
-                $data[$x]['Category'] = $val->Category;
-                $data[$x]['Asset Code'] = $val->AssetCode;
-                $data[$x]['Asset Description'] = $val->AssetDescription;
-                $data[$x]['Serial Number'] = $val->SerialNumber;
-                $data[$x]['Date AQ'] = \Helper::dateFormat($val->dateAQ);
-                $data[$x]['Date DEP'] = \Helper::dateFormat($val->dateDEP);
-                $data[$x]['DEP Percentage'] = $val->DEPpercentage;
-                $data[$x]['Cost Local'] = number_format($val->CostLocal, 3);
-                $data[$x]['Dep Local'] = number_format($val->DepLocal, 3);
-                $data[$x]['Cost Rpt'] = number_format($val->CostRpt, 3);
-                $data[$x]['Dep Rpt'] = number_format($val->DepRpt, 3);
-                $data[$x]['Departmentt'] = $val->department;
-                $data[$x]['Policy Type'] = $val->policyType;
-                $data[$x]['Policy Number'] = $val->policyNumber;
-                $data[$x]['Date From'] = \Helper::dateFormat($val->dateFrom);
-                $data[$x]['Date To'] = \Helper::dateFormat($val->dateTo);
-                $data[$x]['Insurer Name'] = $val->insurerName;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.asset_type')] = $val->AssetType;
+                $data[$x][trans('custom.category')] = $val->Category;
+                $data[$x][trans('custom.asset_code')] = $val->AssetCode;
+                $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
+                $data[$x][trans('custom.serial_number')] = $val->SerialNumber;
+                $data[$x][trans('custom.date_aq')] = \Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.date_dep')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                $data[$x][trans('custom.cost_local')] = number_format($val->CostLocal, 3);
+                $data[$x][trans('custom.dep_local')] = number_format($val->DepLocal, 3);
+                $data[$x][trans('custom.cost_rpt')] = number_format($val->CostRpt, 3);
+                $data[$x][trans('custom.dep_rpt')] = number_format($val->DepRpt, 3);
+                $data[$x][trans('custom.department')] = $val->department;
+                $data[$x][trans('custom.policy_type')] = $val->policyType;
+                $data[$x][trans('custom.policy_number')] = $val->policyNumber;
+                $data[$x][trans('custom.date_from')] = \Helper::dateFormat($val->dateFrom);
+                $data[$x][trans('custom.date_to')] = \Helper::dateFormat($val->dateTo);
+                $data[$x][trans('custom.insurer_name')] = $val->insurerName;
                 $x++;
             }
         } else {
@@ -1833,7 +1833,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -1926,7 +1926,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'department', 'departmentmaster', 'assettypemaster', 'supplier', 'finance_category', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by2'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
         $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id, 'approved' => -1]);
@@ -1934,12 +1934,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
         $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
-        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+        return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
 
     }
 
@@ -1954,11 +1954,11 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $fixedAsset = $this->fixedAssetMasterRepository->findWithoutFail($faID);
             if (empty($fixedAsset)) {
-                return $this->sendError('Fixed Asset Master not found');
+                return $this->sendError(trans('custom.fixed_asset_master_not_found'));
             }
 
             if ($fixedAsset->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
             }
 
             $fixedAssetArray = $fixedAsset->toArray();
@@ -1996,7 +1996,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($fixedAsset->toArray(), 'Fixed asset amended successfully');
+            return $this->sendResponse($fixedAsset->toArray(), trans('custom.fixed_asset_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2022,7 +2022,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -2035,11 +2035,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             if(isset($input['assetCostingTypeID'])) {
 
                 if($input['assetDescription']== ''){
-                    return $this->sendError('Description is required',500);
+                    return $this->sendError(trans('custom.description_is_required'),500);
                 }
 
                 if($input['assetExcelUpload']== null){
-                    return $this->sendError('Please Select a File',500);
+                    return $this->sendError(trans('custom.please_select_a_file'),500);
                 }
 
 
@@ -2056,11 +2056,11 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 if (!in_array($extension, $allowedExtensions))
                 {
-                    return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                    return $this->sendError(trans('custom.this_type_file_not_allow_upload'),500);
                 }
 
                 if ($size > 20000000) {
-                    return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                    return $this->sendError(trans('custom.maximum_size_allow_upload_20mb'),500);
                 }
 
                 $employee = \Helper::getEmployeeInfo();
@@ -2116,7 +2116,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
                 DB::commit();
-                return $this->sendResponse([], 'Asset Costing uploaded successfully');
+                return $this->sendResponse([], trans('custom.asset_costing_uploaded_successfully'));
 
             }
         } catch (\Exception $exception) {
@@ -2132,7 +2132,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->update(['isCancelled' => 1, 'uploadStatus' => 0]);
 
-        return $this->sendResponse([], 'Asset costing cancelled successfully');
+        return $this->sendResponse([], trans('custom.asset_costing_cancelled_successfully'));
 
     }
 
@@ -2140,11 +2140,11 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $deleteCondition = UploadAssetCosting::where('id', $request->assetCostingUploadID)->first();
         if($deleteCondition->uploadStatus == -1){
-            return $this->sendError('Please cancel the asset costing upload');
+            return $this->sendError(trans('custom.please_cancel_asset_costing_upload'));
         }
 
         if($deleteCondition->uploadStatus == 1){
-            return $this->sendError('Unable to delete as asset costing is already successfully uploaded');
+            return $this->sendError(trans('custom.unable_to_delete_as_asset_costing_is_already_succe'));
         }
 
         app(AssetCreationService::class)->assetDeletion($request->assetCostingUploadID, null);
@@ -2153,7 +2153,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         UploadAssetCosting::where('id', $request->assetCostingUploadID)->delete();
         LogUploadAssetCosting::where('assetCostingUploadID', $request->assetCostingUploadID)->delete();
 
-        return $this->sendResponse([], 'Asset costing deleted successfully');
+        return $this->sendResponse([], trans('custom.asset_costing_deleted_successfully'));
     }
 
     public function downloadAssetTemplate(Request $request)
@@ -2180,7 +2180,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     }
 
     function errorMessageForAttachments(){
-        return $this->sendError('Attachments not found', 500);
+        return $this->sendError(trans('custom.attachments_not_found'), 500);
     }
 
     public function getAssetCostingUploads(Request $request) {
@@ -2269,55 +2269,55 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (count($output) > 0) {
             $x = 0;
             foreach ($output as $val) {
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Department Code'] = $val->departmentID;
-                $data[$x]['Department'] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
-                $data[$x]['ServiceLine Code'] = $val->serviceLineCode;
-                $data[$x]['ServiceLine'] = $val->department?$val->department->ServiceLineDes:'';
-                $data[$x]['FA Code'] = $val->faCode;
-                $data[$x]['Asset Description'] = $val->assetDescription;
-                $data[$x]['Serial No'] = $val->faUnitSerialNo;
-                $data[$x]['Comments'] = $val->COMMENTS;
-                $data[$x]['Manufacture'] = $val->MANUFACTURE;
-                $data[$x]['Date Acquired'] = \Helper::dateFormat($val->dateAQ);
-                $data[$x]['Dep Date Start'] = \Helper::dateFormat($val->dateDEP);
-                $data[$x]['Life time in years'] = $val->depMonth;
-                $data[$x]['Dep %'] = $val->DEPpercentage;
-                $data[$x]['GRV No'] = $val->docOrigin;
-                $data[$x]['Main Cat'] = $val->category_by?$val->category_by->catDescription:'';
-                $data[$x]['Sub Cat'] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
-                $data[$x]['Sub Cat2'] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
-                $data[$x]['Sub Cat3'] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
-                $data[$x]['Audit Category'] = $val->finance_category?$val->finance_category->financeCatDescription:'';
-                $data[$x]['Cost Account'] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
-                $data[$x]['Acc Dep GL Code'] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
-                $data[$x]['Dep GL Code'] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
-                $data[$x]['Dis Po GL Code'] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
-                $data[$x]['Post to GL Account'] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
-                $data[$x]['Asset Type'] = $val->asset_type?$val->asset_type->typeDes:'';
-                $data[$x]['Supplier Code'] = $val->supplier?$val->supplier->primarySupplierCode:'';
-                $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName:'';
-                $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
-                $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
-                $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
-                $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.department_code')] = $val->departmentID;
+                $data[$x][trans('custom.department')] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
+                $data[$x][trans('custom.serviceline_code')] = $val->serviceLineCode;
+                $data[$x][trans('custom.serviceline')] = $val->department?$val->department->ServiceLineDes:'';
+                $data[$x][trans('custom.fa_code')] = $val->faCode;
+                $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                $data[$x][trans('custom.serial_no')] = $val->faUnitSerialNo;
+                $data[$x][trans('custom.comments')] = $val->COMMENTS;
+                $data[$x][trans('custom.manufacture')] = $val->MANUFACTURE;
+                $data[$x][trans('custom.date_acquired')] = \Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.dep_date_start')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.life_time_in_years')] = $val->depMonth;
+                $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                $data[$x][trans('custom.grv_no')] = $val->docOrigin;
+                $data[$x][trans('custom.main_cat')] = $val->category_by?$val->category_by->catDescription:'';
+                $data[$x][trans('custom.sub_cat')] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
+                $data[$x][trans('custom.sub_cat2')] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
+                $data[$x][trans('custom.sub_cat3')] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
+                $data[$x][trans('custom.audit_category')] = $val->finance_category?$val->finance_category->financeCatDescription:'';
+                $data[$x][trans('custom.cost_account')] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
+                $data[$x][trans('custom.acc_dep_gl_code')] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
+                $data[$x][trans('custom.dep_gl_code')] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
+                $data[$x][trans('custom.dis_po_gl_code')] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
+                $data[$x][trans('custom.post_to_gl_account')] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
+                $data[$x][trans('custom.asset_type')] = $val->asset_type?$val->asset_type->typeDes:'';
+                $data[$x][trans('custom.supplier_code')] = $val->supplier?$val->supplier->primarySupplierCode:'';
+                $data[$x][trans('custom.supplier_name')] = $val->supplier? $val->supplier->supplierName:'';
+                $data[$x][trans('custom.disposed_date')] = \Helper::dateFormat($val->disposedDate);
+                $data[$x][trans('custom.last_physical_verified_date')] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x][trans('custom.unit_price_local')] = $val->COSTUNIT;
+                $data[$x][trans('custom.unit_price_rpt')] = $val->costUnitRpt;
 
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
-                    $data[$x]['Confirmed Status'] = 'Yes';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Confirmed Status'] = 'No';
+                    $data[$x][trans('custom.confirmed_status')] = trans('custom.no');
                 }
-                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Confirmed By'] = $val->confirmed_by?$val->confirmed_by->empName:'';
+                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.confirmed_by')] = $val->confirmed_by?$val->confirmed_by->empName:'';
                 if ($val->approved == -1) {
-                    $data[$x]['Approved Status'] = 'Yes';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.yes');
                 } else {
-                    $data[$x]['Approved Status'] = 'No';
+                    $data[$x][trans('custom.approved_status')] = trans('custom.no');
                 }
-                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
                 $x++;
             }
         } else {
@@ -2330,7 +2330,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel_general'));
         }
         else
         {
@@ -2352,14 +2352,14 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $masterData = $this->fixedAssetMasterRepository->findWithoutFail($id);
         if (empty($masterData)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }   
 
         $accumulated_amount = $masterData->accumulated_depreciation_amount_rpt;
 
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this asset costing, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_costing_1'));
         }
 
         $isAccDepExists = FixedAssetDepreciationPeriod::where('faID',$id)->whereHas('master_by', function ($q) {
@@ -2374,13 +2374,13 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if($isMonthlyExists > 0 )
             {
-                return $this->sendError('This asset cannot be returned back to amend. Monthly Depreciation has already been generated for this asset');
+                return $this->sendError(trans('custom.this_asset_cannot_be_returned_back_to_amend_monthl'));
 
             }
             
             if(!$isAccDepExists->exists() && $masterData->assetType == 1 && ($accumulated_amount > 0 && $accumulated_amount != null) )
             {
-                return $this->sendError('This asset cannot be returned back to amend. An approved accumulated depreciation document is linked with this asset. Refer-back the Acc. depreciation and try again'); 
+                return $this->sendError(trans('custom.this_asset_cannot_be_returned_back_to_amend_an_app')); 
             }
 
             $documentAutoId = $id;
@@ -2406,8 +2406,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             
 
 
-            $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-            $emailSubject = $masterData->faCode . ' has been return back to amend';
+            $emailBody = '<p>' . $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+            $emailSubject = $masterData->faCode . ' ' . trans('email.has_been_returned_back_to_amend');
     
             DB::beginTransaction();
             try {
@@ -2491,7 +2491,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
     
                 DB::commit();
-                return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');
+                return $this->sendResponse($masterData->toArray(), trans('custom.asset_costing_amend_saved_successfully'));
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return $this->sendError($exception->getMessage());
@@ -2504,7 +2504,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         // })->count();
 
         // if($depAsset > 0){
-        //     return $this->sendError('You cannot return back to amend this asset costing,Depreciation has been run for the particular asset');
+        //     return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_costing'));
         // }
 
     }
@@ -2516,26 +2516,26 @@ class FixedAssetMasterAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
 
         if($id == 0){
-            return $this->sendError('ID not found',500);
+            return $this->sendError(trans('custom.id_not_found'),500);
         }
 
         if($comment == '' || $comment==null){
-            return $this->sendError('Comment is required',500);
+            return $this->sendError(trans('custom.comment_is_required'),500);
         }
 
         /** @var FixedAssetMaster $fixedAssetMaster */
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found',500);
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'),500);
         }
 
         if($fixedAssetMaster->approved == -1){
-            return $this->sendError('Approved asset cannot be deleted',500);
+            return $this->sendError(trans('custom.approved_asset_cannot_be_deleted'),500);
         }
 
         if($fixedAssetMaster->confirmedYN == 1){
-            return $this->sendError('Confirmed asset cannot be deleted',500);
+            return $this->sendError(trans('custom.confirmed_asset_cannot_be_deleted'),500);
         }
         $fixedAssetMasterOld = $fixedAssetMaster;
         $fixedAssetMaster->deleteComment = $comment;
@@ -2560,7 +2560,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         // add to user activity log
         UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMasterOld->documentSystemID,$fixedAssetMasterOld->companySystemID,$fixedAssetMasterOld->faID,$employee->empName." Delete Asset Costing (".$fixedAssetMasterOld->faID.")",'','','itemPicture');
 
-        return $this->sendResponse($id, 'Fixed Asset Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_master_deleted_successfully'));
     }
 
     public function getCostingBulkApprovalByUser(Request $request)

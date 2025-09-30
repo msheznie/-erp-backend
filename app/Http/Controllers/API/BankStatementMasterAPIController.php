@@ -69,7 +69,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $this->bankStatementMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankStatementMasters = $this->bankStatementMasterRepository->all();
 
-        return $this->sendResponse($bankStatementMasters->toArray(), 'Bank Statement Masters retrieved successfully');
+        return $this->sendResponse($bankStatementMasters->toArray(), trans('custom.bank_statement_masters_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class BankStatementMasterAPIController extends AppBaseController
 
         $bankStatementMaster = $this->bankStatementMasterRepository->create($input);
 
-        return $this->sendResponse($bankStatementMaster->toArray(), 'Bank Statement Master saved successfully');
+        return $this->sendResponse($bankStatementMaster->toArray(), trans('custom.bank_statement_master_saved_successfully'));
     }
 
     /**
@@ -171,10 +171,10 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($id);
 
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank Statement Master not found');
+            return $this->sendError(trans('custom.bank_statement_master_not_found'));
         }
 
-        return $this->sendResponse($bankStatementMaster->toArray(), 'Bank Statement Master retrieved successfully');
+        return $this->sendResponse($bankStatementMaster->toArray(), trans('custom.bank_statement_master_retrieved_successfully'));
     }
 
     /**
@@ -240,12 +240,12 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($id);
 
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank Statement Master not found');
+            return $this->sendError(trans('custom.bank_statement_master_not_found'));
         }
 
         $bankStatementMaster = $this->bankStatementMasterRepository->update($input, $id);
 
-        return $this->sendResponse($bankStatementMaster->toArray(), 'BankStatementMaster updated successfully');
+        return $this->sendResponse($bankStatementMaster->toArray(), trans('custom.bankstatementmaster_updated_successfully'));
     }
 
     /**
@@ -293,12 +293,12 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($id);
 
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank Statement Master not found');
+            return $this->sendError(trans('custom.bank_statement_master_not_found'));
         }
 
         $bankStatementMaster->delete();
 
-        return $this->sendSuccess('Bank Statement Master deleted successfully');
+        return $this->sendSuccess(trans('custom.bank_statement_master_deleted_successfully'));
     }
 
     public function getBankStatementImportHistory(Request $request)
@@ -332,11 +332,11 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
 
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank statement not found');
+            return $this->sendError(trans('custom.bank_statement_not_found'));
         }
         $bankStatementMaster->delete();
         BankStatementDetail::where('statementId', $statementId)->delete();
-        return $this->sendResponse([], 'Bank statement deleted successfully');
+        return $this->sendResponse([], trans('custom.bank_statement_deleted_successfully'));
     }
 
     public function getBankStatementWorkBook(Request $request)
@@ -377,17 +377,17 @@ class BankStatementMasterAPIController extends AppBaseController
         $statementId = $input['statementId'];
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank Statement not found.', 422);
+            return $this->sendError(trans('custom.bank_statement_not_found_1'), 422);
         }
 
         $exists = BankReconciliation::where('approvedYN', 0)->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
         if (!empty($exists)) {
-            return $this->sendError('There is a bank reconciliation '. $exists->bankRecPrimaryCode .' pending for approval for this account. Please check.');
+            return $this->sendError(trans('custom.bank_reconciliation_pending_approval_for_account', ['code' => $exists->bankRecPrimaryCode]));
         }
 
         $validateAsOfDate = BankReconciliation::where('bankRecAsOf', '>=', Carbon::parse($bankStatementMaster->statementEndDate))->where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)->first();
         if (!empty($validateAsOfDate)) {
-            return $this->sendError('Bank reconciliation already available. Proceed for the as-of date.');
+            return $this->sendError(trans('custom.bank_reconciliation_already_available_proceed_for_'));
         }
 
         /** validate matching rule */
@@ -400,7 +400,7 @@ class BankStatementMasterAPIController extends AppBaseController
                                     ->toArray();
                                     
         if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
-            return $this->sendError('The matching rules are not active to proceed.', 500, ['type' => 'rulesNotFound', 'bankAccountAutoID' => $bankStatementMaster->bankAccountAutoID]);
+            return $this->sendError(trans('custom.matching_rules_not_active_to_proceed'), 500, ['type' => 'rulesNotFound', 'bankAccountAutoID' => $bankStatementMaster->bankAccountAutoID]);
 
         }
 
@@ -412,7 +412,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : "";
         BankStatementMatch::dispatch($db, $statementId);
 
-        return $this->sendResponse([], 'Workbook validation success.');
+        return $this->sendResponse([], trans('custom.workbook_validation_success'));
     }
 
     public function getWorkBookHeaderData(Request $request)
@@ -430,7 +430,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $companySystemID = $input['companyId'];
 
         $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookHeaderDetails($statementId, $companySystemID);
-        return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+        return $this->sendResponse($bankRecDetails, trans('custom.workbook_details_fetched_successfully'));
     }
 
     public function getUnmatchedDetails(Request $request)
@@ -449,7 +449,7 @@ class BankStatementMasterAPIController extends AppBaseController
 
         try {
             $bankRecDetails = $this->bankStatementMasterRepository->getBankWorkbookDetails($statementId, $companySystemID);
-            return $this->sendResponse($bankRecDetails, 'Workbook details fetched successfully.');
+            return $this->sendResponse($bankRecDetails, trans('custom.workbook_details_fetched_successfully'));
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 422);
         }
@@ -470,13 +470,13 @@ class BankStatementMasterAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
 
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank statement not found');
+            return $this->sendError(trans('custom.bank_statement_not_found'));
         } else {
             $data['status'] = $bankStatementMaster->matchingInprogress == 3? 1 : 0;
             if($bankStatementMaster->generateBankRec == 1){
                 $data['status'] = 2;
             }
-            return $this->sendResponse($data, 'Workbook job status fetched successfully.');
+            return $this->sendResponse($data, trans('custom.workbook_job_status_fetched_successfully'));
         }
     }
 
@@ -496,7 +496,7 @@ class BankStatementMasterAPIController extends AppBaseController
         
         $bankStatementMaster = $this->bankStatementMasterRepository->findWithoutFail($statementId);
         if (empty($bankStatementMaster)) {
-            return $this->sendError('Bank statement not found');
+            return $this->sendError(trans('custom.bank_statement_not_found'));
         }
 
         $matchingRule = BankReconciliationRules::where('bankAccountAutoID', $bankStatementMaster->bankAccountAutoID)
@@ -508,7 +508,7 @@ class BankStatementMasterAPIController extends AppBaseController
                                                 ->toArray();
         
         if (!in_array(1, $matchingRule) || !in_array(2, $matchingRule)) {
-            return $this->sendError('The matching rules are not active to proceed');
+            return $this->sendError(trans('custom.matching_rules_not_active_to_proceed'));
         }
 
         /** updating matchingInprogress to 1 to start rematching */
@@ -519,7 +519,7 @@ class BankStatementMasterAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : "";
         BankStatementMatch::dispatch($db, $statementId);
 
-        return $this->sendResponse([], 'Workbook validation success.');
+        return $this->sendResponse([], trans('custom.workbook_validation_success'));
     }
 
     function getWorkbookAdditionalEntries(Request $request)
@@ -536,6 +536,6 @@ class BankStatementMasterAPIController extends AppBaseController
         $statementId = $input['statementId'];
         $companySystemID = $input['companyId'];
         $bankRecDetails = $this->bankStatementMasterRepository->getWorkbookAdditionalEntries($statementId, $companySystemID);
-        return $this->sendResponse($bankRecDetails, 'Workbook additional entries fetched successfully.');
+        return $this->sendResponse($bankRecDetails, trans('custom.workbook_additional_entries_fetched_successfully'));
     }
 }

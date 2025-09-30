@@ -101,7 +101,7 @@ class StockReceiveAPIController extends AppBaseController
         $this->stockReceiveRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockReceives = $this->stockReceiveRepository->all();
 
-        return $this->sendResponse($stockReceives->toArray(), 'Stock Receives retrieved successfully');
+        return $this->sendResponse($stockReceives->toArray(), trans('custom.stock_receives_retrieved_successfully'));
     }
 
     /**
@@ -202,7 +202,7 @@ class StockReceiveAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Receive date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.receive_date_not_within_financial_period'), 500);
         }
 
         $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['locationTo'])
@@ -210,18 +210,18 @@ class StockReceiveAPIController extends AppBaseController
 
         if (!$warehouse) {
             DB::rollBack();
-            return $this->sendError('Location To not found', 500);
+            return $this->sendError(trans('custom.location_to_not_found_1'), 500);
         }
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
                 DB::rollBack();
-                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                return $this->sendError(trans('custom.please_assigned_wip_glcode_warehouse'), 500);
             } else {
                 $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
                 if (!$checkGLIsAssigned) {
                     DB::rollBack();
-                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                    return $this->sendError(trans('custom.assigned_wip_gl_code_not_assigned_to_company'), 500);
                 }
             }
         }
@@ -246,12 +246,12 @@ class StockReceiveAPIController extends AppBaseController
 
         if (empty($segments)) {
             DB::rollBack();
-            return $this->sendError('Selected segment is not active. Please select an active segment', 500);
+            return $this->sendError(trans('custom.selected_segment_not_active'), 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
             DB::rollBack();
-            return $this->sendError('Location From and Location To  cannot be same', 500);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -307,7 +307,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceives = $this->stockReceiveRepository->create($input);
 
         DB::commit();
-        return $this->sendResponse($stockReceives->toArray(), 'Stock Receive saved successfully');
+        return $this->sendResponse($stockReceives->toArray(), trans('custom.stock_receive_saved_successfully'));
     }
 
     /**
@@ -358,10 +358,10 @@ class StockReceiveAPIController extends AppBaseController
         },'location_to_by','location_from_by','company_from','company_to'])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_receive_retrieved_successfully'));
     }
 
     /**
@@ -422,7 +422,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -444,7 +444,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if (empty($segment)) {
                 $this->stockReceiveRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Selected segment is not active. Please select an active segment',500,$serviceLineError);
+                return $this->sendError(trans('custom.selected_segment_not_active'),500,$serviceLineError);
             }
 
             if ($segment) {
@@ -455,33 +455,33 @@ class StockReceiveAPIController extends AppBaseController
         if (isset($input['locationFrom'])) {
             $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
             if (empty($checkWareHouseActiveFrom)) {
-                return $this->sendError('Location from not found', 500, $wareHouseFromError);
+                return $this->sendError(trans('custom.location_from_not_found'), 500, $wareHouseFromError);
             }
 
             if ($checkWareHouseActiveFrom->isActive == 0) {
                 $this->stockReceiveRepository->update(['locationFrom' => null],$id);
-                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+                return $this->sendError(trans('custom.selected_location_from_not_active'), 500, $wareHouseFromError);
             }
         }
 
         if (isset($input['locationTo'])) {
             $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
             if (empty($checkWareHouseActiveTo)) {
-                return $this->sendError('Location to not found', 500, $wareHouseToError);
+                return $this->sendError(trans('custom.location_to_not_found'), 500, $wareHouseToError);
             }
 
             if ($checkWareHouseActiveTo->isActive == 0) {
                 $this->stockReceiveRepository->update(['locationTo' => null],$id);
-                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+                return $this->sendError(trans('custom.selected_location_to_not_active'), 500, $wareHouseToError);
             }
 
             if ($checkWareHouseActiveTo->manufacturingYN == 1) {
                 if (is_null($checkWareHouseActiveTo->WIPGLCode)) {
-                    return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                    return $this->sendError(trans('custom.please_assigned_wip_glcode_warehouse'), 500);
                 } else {
                     $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkWareHouseActiveTo->WIPGLCode, $input['companyToSystemID']);
                     if (!$checkGLIsAssigned) {
-                        return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                        return $this->sendError(trans('custom.assigned_wip_gl_code_not_assigned_to_company'), 500);
                     }
                 }
             }
@@ -489,7 +489,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if ($input['locationFrom'] == $input['locationTo']) {
             $this->stockReceiveRepository->update(['locationTo' => null], $id);
-            return $this->sendError('Location From and Location To  cannot be same',500,$wareHouseToError);
+            return $this->sendError(trans('custom.location_from_and_location_to_cannot_be_same'),500,$wareHouseToError);
         }
 
         if (isset($input['companyFromSystemID'])) {
@@ -529,14 +529,14 @@ class StockReceiveAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Receive date is not within the selected financial period !',500);
+                return $this->sendError(trans('custom.receive_date_not_within_financial_period'),500);
             }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
                 ->count();
 
             if ($stockReceiveDetailExist == 0) {
-                return $this->sendError('Stock Receive document cannot confirm without details',500);
+                return $this->sendError(trans('custom.stock_receive_document_cannot_confirm_without_deta'),500);
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
@@ -544,7 +544,7 @@ class StockReceiveAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum Qty', 500);
+                return $this->sendError(trans('custom.every_item_should_have_minimum_qty'), 500);
             }
 
             $validator = \Validator::make($input, [
@@ -565,7 +565,7 @@ class StockReceiveAPIController extends AppBaseController
             }
 
             if ($input['companyFromSystemID'] == $input['companyToSystemID'] && $input['interCompanyTransferYN'] == -1) {
-                return $this->sendError('This receive document is marked as Inter company. Company from and Company to is same.', 500);
+                return $this->sendError(trans('custom.receive_document_inter_company_same'), 500);
             }
 
             $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->with(['transfer'])->get();
@@ -580,7 +580,7 @@ class StockReceiveAPIController extends AppBaseController
                         $transferDate = Carbon::parse($srDetail->transfer->tranferDate)->format('Y-m-d');
                         $documentDate = Carbon::parse($documentDate)->format('Y-m-d');
                         if($transferDate>$documentDate){
-                            return $this->sendError('Receive date can not be less than transfer date', 500);
+                            return $this->sendError(trans('custom.receive_date_cannot_be_less_than_transfer_date'), 500);
                         }
                     }
 
@@ -604,7 +604,7 @@ class StockReceiveAPIController extends AppBaseController
                         $notAssignItems = $notAssignItems . " are not assigned to " . $stockReceive->companyID . ". Please assign and try again";
                         return $this->sendError($notAssignItems, 500);
                     } else {
-                        return $this->sendError("Some items are not assigned to " . $stockReceive->companyID . ". Please assign and try again", 500);
+                        return $this->sendError(trans('custom.some_items_not_assigned_to_company', ['company' => $stockReceive->companyID]), 500);
                     }
                 }
             }
@@ -612,7 +612,7 @@ class StockReceiveAPIController extends AppBaseController
             $checkPlAccount = ($stockReceive->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account-for-inter-company-transfer") : SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, "stock-transfer-pl-account");
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Please configure PL account for stock receive', 500);
+                return $this->sendError(trans('custom.please_configure_pl_account_stock_receive'), 500);
             }
 
 
@@ -631,7 +631,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($stockReceive->toArray(), 'StockReceive updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($stockReceive->toArray(), trans('custom.stock_receive_updated_successfully'),1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
@@ -678,12 +678,12 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockReceive->delete();
 
-        return $this->sendResponse($id, 'Stock Receive deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_receive_deleted_successfully'));
     }
 
     public function getAllStockReceiveByCompany(Request $request)
@@ -769,7 +769,7 @@ class StockReceiveAPIController extends AppBaseController
             'companies' => $companies
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function stockReceiveAudit(Request $request)
@@ -778,12 +778,12 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Materiel Return not found');
+            return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
         $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_receive_retrieved_successfully'));
     }
 
     public function printStockReceive(Request $request)
@@ -792,7 +792,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
@@ -821,7 +821,7 @@ class StockReceiveAPIController extends AppBaseController
         $stockReceive = StockReceive::find($id);
 
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         $validator = \Validator::make($stockReceive->toArray(), [
@@ -844,28 +844,28 @@ class StockReceiveAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected Department is not active. Please select an active segment', 500);
+            return $this->sendError(trans('custom.selected_department_not_active'), 500);
         }
 
         $checkWareHouseActiveFrom = WarehouseMaster::find($stockReceive->locationFrom);
         if (empty($checkWareHouseActiveFrom)) {
-            return $this->sendError('Location from not found', 500);
+            return $this->sendError(trans('custom.location_from_not_found'), 500);
         }
 
         if ($checkWareHouseActiveFrom->isActive == 0) {
-            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+            return $this->sendError(trans('custom.selected_location_from_not_active'), 500);
         }
 
         $checkWareHouseActiveTo = WarehouseMaster::find($stockReceive->locationTo);
         if (empty($checkWareHouseActiveTo)) {
-            return $this->sendError('Location to not found', 500);
+            return $this->sendError(trans('custom.location_to_not_found'), 500);
         }
 
         if ($checkWareHouseActiveTo->isActive == 0) {
-            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
+            return $this->sendError(trans('custom.selected_location_to_not_active'), 500);
         }
 
-        return $this->sendResponse($id, 'success');
+        return $this->sendResponse($id, trans('custom.success'));
     }
 
     public function getApprovedSRForCurrentUser(Request $request)
@@ -1032,19 +1032,19 @@ class StockReceiveAPIController extends AppBaseController
         $stockTransfer = $this->stockReceiveRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockTransfer)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         if ($stockTransfer->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Receive it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_already'));
         }
 
         if ($stockTransfer->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Receive it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_already_1'));
         }
 
         if ($stockTransfer->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Receive, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_receive_it_is_not_con'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1059,9 +1059,14 @@ class StockReceiveAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockTransfer->stockTransferCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $stockTransfer->stockTransferCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $stockTransfer->companySystemID)
             ->where('documentSystemCode', $stockTransfer->stockReceiveAutoID)
@@ -1118,7 +1123,7 @@ class StockReceiveAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($stockTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($stockTransfer->toArray(), 'Stock Receive reopened successfully');
+        return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_receive_reopened_successfully'));
     }
 
     public function stockReceiveReferBack(Request $request)
@@ -1129,11 +1134,11 @@ class StockReceiveAPIController extends AppBaseController
 
         $stockReceive = $this->stockReceiveRepository->find($id);
         if (empty($stockReceive)) {
-            return $this->sendError('Stock Receive not found');
+            return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
         if ($stockReceive->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this stock receive');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_stock_receive'));
         }
 
         $stockReceiveArray = $stockReceive->toArray();
@@ -1181,7 +1186,7 @@ class StockReceiveAPIController extends AppBaseController
             $this->stockReceiveRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Transfer Amend successfully');
+        return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_transfer_amend_successfully'));
     }
 
 }

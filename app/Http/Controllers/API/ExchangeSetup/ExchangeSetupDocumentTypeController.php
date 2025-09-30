@@ -18,7 +18,7 @@ class ExchangeSetupDocumentTypeController extends AppBaseController
     {
         $documentType = ExchangeSetupDocumentType::all();
 
-        return $this->sendResponse($documentType,'Data Reterived Successfully!');
+        return $this->sendResponse($documentType,trans('custom.data_reterived_successfully_1'));
     }
 
 

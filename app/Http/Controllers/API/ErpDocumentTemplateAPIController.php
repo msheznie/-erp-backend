@@ -65,7 +65,7 @@ class ErpDocumentTemplateAPIController extends AppBaseController
         $this->erpDocumentTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpDocumentTemplates = $this->erpDocumentTemplateRepository->all();
 
-        return $this->sendResponse($erpDocumentTemplates->toArray(), 'Erp Document Templates retrieved successfully');
+        return $this->sendResponse($erpDocumentTemplates->toArray(), trans('custom.erp_document_templates_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ErpDocumentTemplateAPIController extends AppBaseController
 
         $erpDocumentTemplate = $this->erpDocumentTemplateRepository->create($input);
 
-        return $this->sendResponse($erpDocumentTemplate->toArray(), 'Erp Document Template saved successfully');
+        return $this->sendResponse($erpDocumentTemplate->toArray(), trans('custom.erp_document_template_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ErpDocumentTemplateAPIController extends AppBaseController
         $erpDocumentTemplate = $this->erpDocumentTemplateRepository->findWithoutFail($id);
 
         if (empty($erpDocumentTemplate)) {
-            return $this->sendError('Erp Document Template not found');
+            return $this->sendError(trans('custom.erp_document_template_not_found'));
         }
 
-        return $this->sendResponse($erpDocumentTemplate->toArray(), 'Erp Document Template retrieved successfully');
+        return $this->sendResponse($erpDocumentTemplate->toArray(), trans('custom.erp_document_template_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ErpDocumentTemplateAPIController extends AppBaseController
         $erpDocumentTemplate = $this->erpDocumentTemplateRepository->findWithoutFail($id);
 
         if (empty($erpDocumentTemplate)) {
-            return $this->sendError('Erp Document Template not found');
+            return $this->sendError(trans('custom.erp_document_template_not_found'));
         }
 
         $erpDocumentTemplate = $this->erpDocumentTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($erpDocumentTemplate->toArray(), 'ErpDocumentTemplate updated successfully');
+        return $this->sendResponse($erpDocumentTemplate->toArray(), trans('custom.erpdocumenttemplate_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ErpDocumentTemplateAPIController extends AppBaseController
         $erpDocumentTemplate = $this->erpDocumentTemplateRepository->findWithoutFail($id);
 
         if (empty($erpDocumentTemplate)) {
-            return $this->sendError('Erp Document Template not found');
+            return $this->sendError(trans('custom.erp_document_template_not_found'));
         }
 
         $erpDocumentTemplate->delete();
 
-        return $this->sendResponse($id, 'Erp Document Template deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_document_template_deleted_successfully'));
     }
 }

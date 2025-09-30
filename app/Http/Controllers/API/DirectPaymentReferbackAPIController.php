@@ -76,7 +76,7 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $this->directPaymentReferbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directPaymentReferbacks = $this->directPaymentReferbackRepository->all();
 
-        return $this->sendResponse($directPaymentReferbacks->toArray(), 'Direct Payment Referbacks retrieved successfully');
+        return $this->sendResponse($directPaymentReferbacks->toArray(), trans('custom.direct_payment_referbacks_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class DirectPaymentReferbackAPIController extends AppBaseController
 
         $directPaymentReferbacks = $this->directPaymentReferbackRepository->create($input);
 
-        return $this->sendResponse($directPaymentReferbacks->toArray(), 'Direct Payment Referback saved successfully');
+        return $this->sendResponse($directPaymentReferbacks->toArray(), trans('custom.direct_payment_referback_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentReferback = $this->directPaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($directPaymentReferback)) {
-            return $this->sendError('Direct Payment Referback not found');
+            return $this->sendError(trans('custom.direct_payment_referback_not_found'));
         }
 
-        return $this->sendResponse($directPaymentReferback->toArray(), 'Direct Payment Referback retrieved successfully');
+        return $this->sendResponse($directPaymentReferback->toArray(), trans('custom.direct_payment_referback_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentReferback = $this->directPaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($directPaymentReferback)) {
-            return $this->sendError('Direct Payment Referback not found');
+            return $this->sendError(trans('custom.direct_payment_referback_not_found'));
         }
 
         $directPaymentReferback = $this->directPaymentReferbackRepository->update($input, $id);
 
-        return $this->sendResponse($directPaymentReferback->toArray(), 'DirectPaymentReferback updated successfully');
+        return $this->sendResponse($directPaymentReferback->toArray(), trans('custom.directpaymentreferback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentReferback = $this->directPaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($directPaymentReferback)) {
-            return $this->sendError('Direct Payment Referback not found');
+            return $this->sendError(trans('custom.direct_payment_referback_not_found'));
         }
 
         $directPaymentReferback->delete();
 
-        return $this->sendResponse($id, 'Direct Payment Referback deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_payment_referback_deleted_successfully'));
     }
 
     public function getDirectPaymentHistoryDetails(Request $request)
@@ -296,7 +296,7 @@ class DirectPaymentReferbackAPIController extends AppBaseController
 
         $directPaymentDetails = $this->directPaymentReferbackRepository->with(['segment', 'chartofaccount'])->findWhere(['directPaymentAutoID' => $id, 'timesReferred' => $request->timesReferred]);
 
-        return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
+        return $this->sendResponse($directPaymentDetails, trans('custom.details_retrieved_successfully'));
     }
 
     public function getDPHistoryExchangeRateAmount(Request $request)
@@ -304,7 +304,7 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentDetails = DirectPaymentReferback::where('directPaymentDetailsID', $request->directPaymentDetailsID)->where('timesReferred', $request->timesReferred)->first();
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
         if ($request->toBankCurrencyID) {
@@ -332,10 +332,10 @@ class DirectPaymentReferbackAPIController extends AppBaseController
             }
 
             $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
-            return $this->sendResponse($output, 'Successfully data retrieved');
+            return $this->sendResponse($output, trans('custom.successfully_data_retrieved'));
         } else {
             $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
-            return $this->sendResponse($output, 'Successfully data retrieved');
+            return $this->sendResponse($output, trans('custom.successfully_data_retrieved'));
         }
     }
 
@@ -344,9 +344,9 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentDetails = DirectPaymentReferback::where('directPaymentDetailsID', $request->directPaymentDetailsID)->where('timesReferred', $request->timesReferred)->first();
 
         if (empty($directPaymentDetails)) {
-            return $this->sendError('Direct Payment Details not found');
+            return $this->sendError(trans('custom.direct_payment_details_not_found'));
         }
 
-        return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details retrieved successfully');
+        return $this->sendResponse($directPaymentDetails->toArray(), trans('custom.direct_payment_details_retrieved_successfully'));
     }
 }

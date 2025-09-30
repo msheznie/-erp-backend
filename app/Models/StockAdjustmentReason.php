@@ -29,7 +29,10 @@ class StockAdjustmentReason extends Model
     public $table = 'stockadjustment_reasons';
     
     protected $primaryKey  = 'id';
-
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+    protected $appends = ['reason'];
 
     public $fillable = [
         'reason',
@@ -47,5 +50,40 @@ class StockAdjustmentReason extends Model
         
     ];
 
+    /**
+     * Relationship to StockAdjustmentReasonTranslation
+     */
+    public function translations()
+    {
+        return $this->hasMany(StockAdjustmentReasonLanguage::class, 'reasonID', 'id');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated reason description
+     */
+    public function getReasonAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->reasonDescription) {
+            return $translation->reasonDescription;
+        }
+        
+        return $this->attributes['reason'] ?? '';
+    }
  
 }

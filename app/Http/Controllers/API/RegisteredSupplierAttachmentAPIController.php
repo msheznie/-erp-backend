@@ -65,7 +65,7 @@ class RegisteredSupplierAttachmentAPIController extends AppBaseController
         $this->registeredSupplierAttachmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registeredSupplierAttachments = $this->registeredSupplierAttachmentRepository->all();
 
-        return $this->sendResponse($registeredSupplierAttachments->toArray(), 'Registered Supplier Attachments retrieved successfully');
+        return $this->sendResponse($registeredSupplierAttachments->toArray(), trans('custom.registered_supplier_attachments_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class RegisteredSupplierAttachmentAPIController extends AppBaseController
 
         $registeredSupplierAttachment = $this->registeredSupplierAttachmentRepository->create($input);
 
-        return $this->sendResponse($registeredSupplierAttachment->toArray(), 'Registered Supplier Attachment saved successfully');
+        return $this->sendResponse($registeredSupplierAttachment->toArray(), trans('custom.registered_supplier_attachment_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class RegisteredSupplierAttachmentAPIController extends AppBaseController
         $registeredSupplierAttachment = $this->registeredSupplierAttachmentRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierAttachment)) {
-            return $this->sendError('Registered Supplier Attachment not found');
+            return $this->sendError(trans('custom.registered_supplier_attachment_not_found'));
         }
 
-        return $this->sendResponse($registeredSupplierAttachment->toArray(), 'Registered Supplier Attachment retrieved successfully');
+        return $this->sendResponse($registeredSupplierAttachment->toArray(), trans('custom.registered_supplier_attachment_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class RegisteredSupplierAttachmentAPIController extends AppBaseController
         $registeredSupplierAttachment = $this->registeredSupplierAttachmentRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierAttachment)) {
-            return $this->sendError('Registered Supplier Attachment not found');
+            return $this->sendError(trans('custom.registered_supplier_attachment_not_found'));
         }
 
         $registeredSupplierAttachment = $this->registeredSupplierAttachmentRepository->update($input, $id);
 
-        return $this->sendResponse($registeredSupplierAttachment->toArray(), 'RegisteredSupplierAttachment updated successfully');
+        return $this->sendResponse($registeredSupplierAttachment->toArray(), trans('custom.registeredsupplierattachment_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class RegisteredSupplierAttachmentAPIController extends AppBaseController
         $registeredSupplierAttachment = $this->registeredSupplierAttachmentRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierAttachment)) {
-            return $this->sendError('Registered Supplier Attachment not found');
+            return $this->sendError(trans('custom.registered_supplier_attachment_not_found'));
         }
 
         $registeredSupplierAttachment->delete();
 
-        return $this->sendResponse([], 'Registered Supplier Attachment deleted successfully');
+        return $this->sendResponse([], trans('custom.registered_supplier_attachment_deleted_successfull'));
     }
 }

@@ -65,7 +65,7 @@ class POSSOURCECustomerMasterAPIController extends AppBaseController
         $this->pOSSOURCECustomerMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCECustomerMasters = $this->pOSSOURCECustomerMasterRepository->all();
 
-        return $this->sendResponse($pOSSOURCECustomerMasters->toArray(), 'P O S S O U R C E Customer Masters retrieved successfully');
+        return $this->sendResponse($pOSSOURCECustomerMasters->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_customer_masters_retrieved_succe'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCECustomerMasterAPIController extends AppBaseController
 
         $pOSSOURCECustomerMaster = $this->pOSSOURCECustomerMasterRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), 'P O S S O U R C E Customer Master saved successfully');
+        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_customer_master_saved_successful'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCECustomerMasterAPIController extends AppBaseController
         $pOSSOURCECustomerMaster = $this->pOSSOURCECustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCECustomerMaster)) {
-            return $this->sendError('P O S S O U R C E Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_customer_master_not_found'));
         }
 
-        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), 'P O S S O U R C E Customer Master retrieved successfully');
+        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_customer_master_retrieved_succes'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCECustomerMasterAPIController extends AppBaseController
         $pOSSOURCECustomerMaster = $this->pOSSOURCECustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCECustomerMaster)) {
-            return $this->sendError('P O S S O U R C E Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_customer_master_not_found'));
         }
 
         $pOSSOURCECustomerMaster = $this->pOSSOURCECustomerMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), 'POSSOURCECustomerMaster updated successfully');
+        return $this->sendResponse($pOSSOURCECustomerMaster->toArray(), trans('custom.possourcecustomermaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCECustomerMasterAPIController extends AppBaseController
         $pOSSOURCECustomerMaster = $this->pOSSOURCECustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCECustomerMaster)) {
-            return $this->sendError('P O S S O U R C E Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_customer_master_not_found'));
         }
 
         $pOSSOURCECustomerMaster->delete();

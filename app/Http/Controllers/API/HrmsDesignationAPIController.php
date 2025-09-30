@@ -65,7 +65,7 @@ class HrmsDesignationAPIController extends AppBaseController
         $this->hrmsDesignationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrmsDesignations = $this->hrmsDesignationRepository->all();
 
-        return $this->sendResponse($hrmsDesignations->toArray(), 'Hrms Designations retrieved successfully');
+        return $this->sendResponse($hrmsDesignations->toArray(), trans('custom.hrms_designations_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrmsDesignationAPIController extends AppBaseController
 
         $hrmsDesignation = $this->hrmsDesignationRepository->create($input);
 
-        return $this->sendResponse($hrmsDesignation->toArray(), 'Hrms Designation saved successfully');
+        return $this->sendResponse($hrmsDesignation->toArray(), trans('custom.hrms_designation_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrmsDesignationAPIController extends AppBaseController
         $hrmsDesignation = $this->hrmsDesignationRepository->findWithoutFail($id);
 
         if (empty($hrmsDesignation)) {
-            return $this->sendError('Hrms Designation not found');
+            return $this->sendError(trans('custom.hrms_designation_not_found'));
         }
 
-        return $this->sendResponse($hrmsDesignation->toArray(), 'Hrms Designation retrieved successfully');
+        return $this->sendResponse($hrmsDesignation->toArray(), trans('custom.hrms_designation_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrmsDesignationAPIController extends AppBaseController
         $hrmsDesignation = $this->hrmsDesignationRepository->findWithoutFail($id);
 
         if (empty($hrmsDesignation)) {
-            return $this->sendError('Hrms Designation not found');
+            return $this->sendError(trans('custom.hrms_designation_not_found'));
         }
 
         $hrmsDesignation = $this->hrmsDesignationRepository->update($input, $id);
 
-        return $this->sendResponse($hrmsDesignation->toArray(), 'HrmsDesignation updated successfully');
+        return $this->sendResponse($hrmsDesignation->toArray(), trans('custom.hrmsdesignation_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrmsDesignationAPIController extends AppBaseController
         $hrmsDesignation = $this->hrmsDesignationRepository->findWithoutFail($id);
 
         if (empty($hrmsDesignation)) {
-            return $this->sendError('Hrms Designation not found');
+            return $this->sendError(trans('custom.hrms_designation_not_found'));
         }
 
         $hrmsDesignation->delete();

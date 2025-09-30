@@ -39,7 +39,7 @@
                     </tr>
                     <tr>
                         <td colspan="15">
-                            In Customer Code, CR Number at least one field should have a value in any given row. Both fields cannot be blank. 
+                            In Customer Code, CR Number at least one field should have a value in any given row. Both fields cannot be blank.
                         </td>
                     </tr>
                 </tbody>

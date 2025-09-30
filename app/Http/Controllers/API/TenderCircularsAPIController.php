@@ -86,7 +86,7 @@ class TenderCircularsAPIController extends AppBaseController
         $this->tenderCircularsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderCirculars = $this->tenderCircularsRepository->all();
 
-        return $this->sendResponse($tenderCirculars->toArray(), 'Tender Circulars retrieved successfully');
+        return $this->sendResponse($tenderCirculars->toArray(), trans('custom.tender_circulars_retrieved_successfully'));
     }
 
     /**
@@ -133,7 +133,7 @@ class TenderCircularsAPIController extends AppBaseController
 
         $tenderCirculars = $this->tenderCircularsRepository->create($input);
 
-        return $this->sendResponse($tenderCirculars->toArray(), 'Tender Circulars saved successfully');
+        return $this->sendResponse($tenderCirculars->toArray(), trans('custom.tender_circulars_saved_successfully'));
     }
 
     /**
@@ -180,10 +180,10 @@ class TenderCircularsAPIController extends AppBaseController
         $tenderCirculars = $this->tenderCircularsRepository->findWithoutFail($id);
 
         if (empty($tenderCirculars)) {
-            return $this->sendError('Tender Circulars not found');
+            return $this->sendError(trans('custom.tender_circulars_not_found'));
         }
 
-        return $this->sendResponse($tenderCirculars->toArray(), 'Tender Circulars retrieved successfully');
+        return $this->sendResponse($tenderCirculars->toArray(), trans('custom.tender_circulars_retrieved_successfully'));
     }
 
     /**
@@ -240,12 +240,12 @@ class TenderCircularsAPIController extends AppBaseController
         $tenderCirculars = $this->tenderCircularsRepository->findWithoutFail($id);
 
         if (empty($tenderCirculars)) {
-            return $this->sendError('Tender Circulars not found');
+            return $this->sendError(trans('custom.tender_circulars_not_found'));
         }
 
         $tenderCirculars = $this->tenderCircularsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderCirculars->toArray(), 'TenderCirculars updated successfully');
+        return $this->sendResponse($tenderCirculars->toArray(), trans('custom.tendercirculars_updated_successfully'));
     }
 
     /**
@@ -292,7 +292,7 @@ class TenderCircularsAPIController extends AppBaseController
         $tenderCirculars = $this->tenderCircularsRepository->findWithoutFail($id);
 
         if (empty($tenderCirculars)) {
-            return $this->sendError('Tender Circulars not found');
+            return $this->sendError(trans('custom.tender_circulars_not_found'));
         }
 
         $tenderCirculars->delete();

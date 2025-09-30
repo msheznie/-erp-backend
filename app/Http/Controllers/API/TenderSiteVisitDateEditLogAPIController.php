@@ -64,7 +64,7 @@ class TenderSiteVisitDateEditLogAPIController extends AppBaseController
         $this->tenderSiteVisitDateEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderSiteVisitDateEditLogs = $this->tenderSiteVisitDateEditLogRepository->all();
 
-        return $this->sendResponse($tenderSiteVisitDateEditLogs->toArray(), 'Tender Site Visit Date Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderSiteVisitDateEditLogs->toArray(), trans('custom.tender_site_visit_date_edit_logs_retrieved_success'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderSiteVisitDateEditLogAPIController extends AppBaseController
 
         $tenderSiteVisitDateEditLog = $this->tenderSiteVisitDateEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), 'Tender Site Visit Date Edit Log saved successfully');
+        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), trans('custom.tender_site_visit_date_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderSiteVisitDateEditLogAPIController extends AppBaseController
         $tenderSiteVisitDateEditLog = $this->tenderSiteVisitDateEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDateEditLog)) {
-            return $this->sendError('Tender Site Visit Date Edit Log not found');
+            return $this->sendError(trans('custom.tender_site_visit_date_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), 'Tender Site Visit Date Edit Log retrieved successfully');
+        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), trans('custom.tender_site_visit_date_edit_log_retrieved_successf'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderSiteVisitDateEditLogAPIController extends AppBaseController
         $tenderSiteVisitDateEditLog = $this->tenderSiteVisitDateEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDateEditLog)) {
-            return $this->sendError('Tender Site Visit Date Edit Log not found');
+            return $this->sendError(trans('custom.tender_site_visit_date_edit_log_not_found'));
         }
 
         $tenderSiteVisitDateEditLog = $this->tenderSiteVisitDateEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), 'TenderSiteVisitDateEditLog updated successfully');
+        return $this->sendResponse($tenderSiteVisitDateEditLog->toArray(), trans('custom.tendersitevisitdateeditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderSiteVisitDateEditLogAPIController extends AppBaseController
         $tenderSiteVisitDateEditLog = $this->tenderSiteVisitDateEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSiteVisitDateEditLog)) {
-            return $this->sendError('Tender Site Visit Date Edit Log not found');
+            return $this->sendError(trans('custom.tender_site_visit_date_edit_log_not_found'));
         }
 
         $tenderSiteVisitDateEditLog->delete();

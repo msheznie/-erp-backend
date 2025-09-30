@@ -125,7 +125,7 @@ class BankStatus implements ShouldQueue
 
                             if (isset($this->tenantDb)) {
                                 $webPushData = [
-                                    'title' => "Bank Transfer portal status updated",
+                                    'title' => "bank_transfer_portal_status_updated",
                                     'body' => "",
                                     'url' => "treasury/bank-transfer-list",
                                     'path' => "",

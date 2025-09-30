@@ -1,6 +1,6 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Debit Note Voucher</title>
+    <title>{{ __('custom.debit_note_voucher') }}</title>
     <style>
         @page {
             margin-left: 30px;
@@ -13,6 +13,29 @@
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
+
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
 
         h3 {
             font-size: 24.5px;
@@ -186,14 +209,14 @@
     <table style="width: 100%" class="table_height">
        {{-- <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
-            --}}{{--<span class="font-weight-bold">
+            --}}{{--<span style="font-weight: bold;">
                 <h3 class="text-muted">
                     @if($entity->confirmedYN == 0 && $entity->approved == 0)
-                        Not Confirmed
+                       {{ __('custom.not_confirmed') }}
                     @elseif($entity->confirmedYN == 1 && $entity->approved == 0)
-                        Pending Approval
+                       {{ __('custom.pending_approval') }}
                     @elseif($entity->confirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
-                        Fully Approved
+                        {{ __('custom.fully_approved') }}
                     @endif
                     </h3>
 `             </span>--}}{{--
@@ -213,10 +236,10 @@
                     <table>
                         <tr>
                             <td width="100px">
-                                <span class="font-weight-bold">Doc Code</span>
+                                <span style="font-weight: bold;">{{ __('custom.doc_code') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight: bold;">:</span>
                             </td>
                             <td>
                                 <span>{{$entity->debitNoteCode}}</span>
@@ -224,10 +247,10 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Doc Date </span>
+                                <span style="font-weight: bold;">{{ __('custom.doc_date') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight: bold;">:</span>
                             </td>
                             <td>
                             <span>
@@ -241,7 +264,7 @@
     </table>
     <hr style="color: #d3d9df">
     <div>
-        <span style="font-size: 18px">Debit Note Voucher</span>
+        <span style="font-size: 18px">{{ __('custom.debit_note_voucher') }}</span>
     </div>
     <br>
     <br>
@@ -252,10 +275,10 @@
                     <tr>
                        @if($entity->type == 1)
                         <td width="150px">
-                            <span class="font-weight-bold">Supplier Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.supplier_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->supplier)
@@ -266,10 +289,10 @@
 
                         @if($entity->type == 2)
                         <td width="150px">
-                            <span class="font-weight-bold">Employee Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.employee_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->employee)
@@ -281,10 +304,10 @@
                     <tr>
                        @if($entity->type == 1)
                         <td width="50px">
-                            <span class="font-weight-bold">Supplier Name</span>
+                            <span style="font-weight: bold;">{{ __('custom.supplier_name') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->supplier)
@@ -295,10 +318,10 @@
 
                         @if($entity->type == 2)
                         <td width="50px">
-                            <span class="font-weight-bold">Employee Name</span>
+                            <span style="font-weight: bold;">{{ __('custom.employee_name') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->employee)
@@ -309,10 +332,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Invoice Number</span>
+                            <span style="font-weight: bold;">{{ __('custom.invoice_number') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->invoiceNumber}}
@@ -320,10 +343,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Reference Number</span>
+                            <span style="font-weight: bold;">{{ __('custom.reference_number') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->referenceNumber}}
@@ -331,10 +354,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Narration </span>
+                            <span style="font-weight: bold;">{{ __('custom.narration') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->comments}}</span>
@@ -343,10 +366,10 @@
                     @if($entity->isVATApplicable)
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">VAT Percentage (%) </span>
+                            <span style="font-weight: bold;">{{ __('custom.vat_percentage') }} (%) </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->VATPercentage}}</span>
@@ -356,7 +379,7 @@
                 </table>
             </td>
             <td style="width: 20%" valign="bottom" class="text-right">
-                <span class="font-weight-bold"> Currency:</span>
+                <span style="font-weight: bold;"> {{ __('custom.currency') }}:</span>
                 @if($entity->transactioncurrency)
                     {{$entity->transactioncurrency->CurrencyCode}}
                 @endif
@@ -369,20 +392,20 @@
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-center">GL Code</th>
-                <th class="text-center">GL Code Description</th>
-                <th class="text-center">Segment</th>
-                <th class="text-center">Amount</th>
+                <th class="text-center">{{ __('custom.gl_code') }}</th>
+                <th class="text-center">{{ __('custom.gl_code_description') }}</th>
+                <th class="text-center">{{ __('custom.segment') }}</th>
+                <th class="text-center">{{ __('custom.amount') }}</th>
                 @if($entity->isVATApplicable)
-                    <th class="text-center">VAT Amount</th>
-                    <th class="text-center">Net Amount</th>
+                    <th class="text-center">{{ __('custom.vat_amount') }}</th>
+                    <th class="text-center">{{ __('custom.net_amount') }}</th>
                 @endif
-                {{--<th class="text-center">Local Amt (
+                {{--<th class="text-center">{{ __('custom.amount_local') }} (
                     @if($entity->localcurrency)
                         {{$entity->localcurrency->CurrencyCode}}
                     @endif
                     )</th>
-                <th class="text-center">Rpt Amt (@if($entity->rptcurrency)
+                <th class="text-center">{{ __('custom.amount_rpt') }} (@if($entity->rptcurrency)
                         {{$entity->rptcurrency->CurrencyCode}}
                     @endif)</th>--}}
             </tr>
@@ -408,7 +431,10 @@
                 </tr>
             @endforeach
             <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                <td colspan="4" class="text-right">Total Payment</td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                <td class="text-right"></td>
+                <td class="text-right" style="background-color: #DEDEDE !important; border-bottom: 1px solid #333 !important;"><b>{{ __('custom.total_payment') }}:</b></td>
                 <td class="text-right">{{round($entity->totalAmount,$entity->transDecimal)}}</td>
                 @if($entity->isVATApplicable)
                     <td class="text-right">{{round($entity->totalVATAmount,$entity->transDecimal)}}</td>
@@ -428,7 +454,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Confirmed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -447,7 +473,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

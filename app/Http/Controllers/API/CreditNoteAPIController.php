@@ -121,7 +121,7 @@ class CreditNoteAPIController extends AppBaseController
         $this->creditNoteRepository->pushCriteria(new LimitOffsetCriteria($request));
         $creditNotes = $this->creditNoteRepository->all();
 
-        return $this->sendResponse($creditNotes->toArray(), 'Credit Notes retrieved successfully');
+        return $this->sendResponse($creditNotes->toArray(), trans('custom.credit_notes_retrieved_successfully'));
     }
 
     /**
@@ -172,7 +172,7 @@ class CreditNoteAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -182,13 +182,13 @@ class CreditNoteAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyUsed) {
-                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+                return $this->sendError(trans('custom.debit_note_already_used', ['creditNoteCode' => $alreadyUsed->creditNoteCode]), 500);
             }
         }
 
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($input['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Document date cannot be greater than current date', 500);
+            return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
 
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -233,7 +233,7 @@ class CreditNoteAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the financial period!');
+            return $this->sendError(trans('custom.document_date_not_within_financial_period'));
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
@@ -259,7 +259,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNotes = $this->creditNoteRepository->create($input);
 
-        return $this->sendResponse($creditNotes->toArray(), 'Credit note saved successfully');
+        return $this->sendResponse($creditNotes->toArray(), trans('custom.credit_note_saved_successfully'));
     }
 
     /**
@@ -312,10 +312,10 @@ class CreditNoteAPIController extends AppBaseController
         },'customer'])->findWithoutFail($id);
 
         if (empty($creditNote)) {
-            return $this->sendError('Credit Note not found');
+            return $this->sendError(trans('custom.credit_note_not_found'));
         }
 
-        return $this->sendResponse($creditNote->toArray(), 'Credit Note retrieved successfully');
+        return $this->sendResponse($creditNote->toArray(), trans('custom.credit_note_retrieved_successfully'));
     }
 
     /**
@@ -375,7 +375,7 @@ class CreditNoteAPIController extends AppBaseController
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
         if (empty($creditNote)) {
-            return $this->sendError('Credit note not found', 500);
+            return $this->sendError(trans('custom.credit_note_not_found'), 500);
         }
 
         if(empty($input['projectID'])){
@@ -388,7 +388,7 @@ class CreditNoteAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyUsed) {
-                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+                return $this->sendError(trans('custom.debit_note_already_used', ['creditNoteCode' => $alreadyUsed->creditNoteCode]), 500);
             }
         }
 
@@ -478,15 +478,15 @@ class CreditNoteAPIController extends AppBaseController
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Document date cannot be greater than current date', 500);
+            return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
 
         if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $messages = [
-                'customerCurrencyID.required' => 'Currency is required.',
-                'customerID.required' => 'Customer is required.',
-                'companyFinanceYearID.required' => 'Financial Year is required.',
-                'companyFinancePeriodID.required' => 'Financial Period is required.',
+                'customerCurrencyID.required' => trans('custom.currency_is_required'),
+                'customerID.required' => trans('custom.customer_is_required'),
+                'companyFinanceYearID.required' => trans('custom.financial_year_is_required'),
+                'companyFinancePeriodID.required' => trans('custom.financial_period_is_required'),
 
             ];
             $validator = \Validator::make($input, [
@@ -506,11 +506,11 @@ class CreditNoteAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.document_date_not_within_selected_financial_period'), 500);
             }
 
             if (count($detail) == 0) {
-                return $this->sendError('You cannot confirm. Credit note should have at least one item.', 500);
+                return $this->sendError(trans('custom.you_cannot_confirm_credit_note_should_have_at_leas'), 500);
             }
 
             $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
@@ -541,10 +541,10 @@ class CreditNoteAPIController extends AppBaseController
 
                     $validators = \Validator::make($item, $validations, [
 
-                        'serviceLineSystemID.required' => 'Department is required.',
-                        'serviceLineCode.required' => 'Cannot confirm. Segment code is not updated.',
-                        'contractUID.required' => 'Contract no is required.',
-                        'creditAmount.required' => 'Amount should be greater than 0 for every items.',
+                        'serviceLineSystemID.required' => trans('custom.department_is_required'),
+                        'serviceLineCode.required' => trans('custom.segment_code_not_updated'),
+                        'contractUID.required' => trans('custom.contract_no_is_required'),
+                        'creditAmount.required' => trans('custom.amount_should_be_greater_than_zero'),
 
                     ]);
                     if ($validators->fails()) {
@@ -557,7 +557,7 @@ class CreditNoteAPIController extends AppBaseController
             $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
             $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
             if(count($groupby) == 0) {
-                return $this->sendError('Credit note details not found.', 500);
+                return $this->sendError(trans('custom.credit_note_details_not_found_1'), 500);
             }
 
             Taxdetail::where('documentSystemCode', $id)
@@ -568,7 +568,7 @@ class CreditNoteAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
 
                 if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                 }
 
                 $outputChartOfAc = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -576,7 +576,7 @@ class CreditNoteAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -641,7 +641,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($creditNote->toArray(), 'Credit note updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($creditNote->toArray(), trans('custom.credit_note_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
@@ -654,7 +654,7 @@ class CreditNoteAPIController extends AppBaseController
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
             return $this->sendError(
-                'Currency exchange rate to local and reporting currency must be greater than zero.',
+                trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
             );
         }
@@ -662,7 +662,7 @@ class CreditNoteAPIController extends AppBaseController
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
         if (empty($creditNote)) {
-            return $this->sendError('Credit note not found', 500);
+            return $this->sendError(trans('custom.credit_note_not_found'), 500);
         }
 
         if (isset($input['debitNoteAutoID'])) {
@@ -671,7 +671,7 @@ class CreditNoteAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyUsed) {
-                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+                return $this->sendError(trans('custom.debit_note_already_used', ['creditNoteCode' => $alreadyUsed->creditNoteCode]), 500);
             }
         }
 
@@ -755,15 +755,15 @@ class CreditNoteAPIController extends AppBaseController
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Document date cannot be greater than current date', 500);
+            return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
 
         if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $messages = [
-                'customerCurrencyID.required' => 'Currency is required.',
-                'customerID.required' => 'Customer is required.',
-                'companyFinanceYearID.required' => 'Financial Year is required.',
-                'companyFinancePeriodID.required' => 'Financial Period is required.',
+                'customerCurrencyID.required' => trans('custom.currency_is_required'),
+                'customerID.required' => trans('custom.customer_is_required'),
+                'companyFinanceYearID.required' => trans('custom.financial_year_is_required'),
+                'companyFinancePeriodID.required' => trans('custom.financial_period_is_required'),
 
             ];
             $validator = \Validator::make($input, [
@@ -783,11 +783,11 @@ class CreditNoteAPIController extends AppBaseController
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.document_date_not_within_selected_financial_period'), 500);
             }
 
             if (count($detail) == 0) {
-                return $this->sendError('You cannot confirm. Credit note should have at least one item.', 500);
+                return $this->sendError(trans('custom.you_cannot_confirm_credit_note_should_have_at_leas'), 500);
             }
 
             $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
@@ -818,10 +818,10 @@ class CreditNoteAPIController extends AppBaseController
 
                     $validators = \Validator::make($item, $validations, [
 
-                        'serviceLineSystemID.required' => 'Department is required.',
-                        'serviceLineCode.required' => 'Cannot confirm. Segment code is not updated.',
-                        'contractUID.required' => 'Contract no is required.',
-                        'creditAmount.required' => 'Amount should be greater than 0 for every items.',
+                        'serviceLineSystemID.required' => trans('custom.department_is_required'),
+                        'serviceLineCode.required' => trans('custom.segment_code_not_updated'),
+                        'contractUID.required' => trans('custom.contract_no_is_required'),
+                        'creditAmount.required' => trans('custom.amount_should_be_greater_than_zero'),
 
                     ]);
                     if ($validators->fails()) {
@@ -836,13 +836,13 @@ class CreditNoteAPIController extends AppBaseController
             if (count($groupby) != 0) {
                 if (count($groupby) > 1 || count($groupbycontract) > 1) {
                     if ($isOperationIntergrated) {
-                        return $this->sendError('You cannot continue. Multiple segment or contract exist in details.', 500);
+                        return $this->sendError(trans('custom.you_cannot_continue_multiple_segment_or_contract_e'), 500);
                     } else {
-                        return $this->sendError('You cannot continue. Multiple segment exist in details.', 500);
+                        return $this->sendError(trans('custom.you_cannot_continue_multiple_segment_exist_in_deta'), 500);
                     }
                 }
             } else {
-                return $this->sendError('Credit note details not found.', 500);
+                return $this->sendError(trans('custom.credit_note_details_not_found_1'), 500);
             }
 
             Taxdetail::where('documentSystemCode', $id)
@@ -853,7 +853,7 @@ class CreditNoteAPIController extends AppBaseController
             if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
 
                 if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_configure'), 500);
                 }
 
                 $outputChartOfAc = TaxService::getOutputVATGLAccount($input["companySystemID"]);
@@ -861,7 +861,7 @@ class CreditNoteAPIController extends AppBaseController
                 $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->outputVatGLAccountAutoID, $input["companySystemID"]);
 
                 if (!$checkAssignedStatus) {
-                    return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                    return $this->sendError(trans('custom.cannot_confirm_output_vat_gl_account_not_assigned_'), 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];
@@ -926,7 +926,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($creditNote->toArray(), 'Credit note updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($creditNote->toArray(), trans('custom.credit_note_updated_successfully'),1,$confirm['data'] ?? null);
     }
     /**
      * @param int $id
@@ -972,12 +972,12 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
 
         if (empty($creditNote)) {
-            return $this->sendError('Credit Note not found');
+            return $this->sendError(trans('custom.credit_note_not_found'));
         }
 
         $creditNote->delete();
 
-        return $this->sendResponse($id, 'Credit Note deleted successfully');
+        return $this->sendResponse($id, trans('custom.credit_note_deleted_successfully'));
     }
 
     public function creditNoteLocalUpdate($id,Request $request){
@@ -1010,11 +1010,11 @@ class CreditNoteAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse([$id,$value], 'Update Local ER');
+        return $this->sendResponse([$id,$value], trans('custom.update_local_er'));
 
         }
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
     }
 
@@ -1048,11 +1048,11 @@ class CreditNoteAPIController extends AppBaseController
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
 
-        return $this->sendResponse($id, 'Update Reporting ER');
+        return $this->sendResponse($id, trans('custom.update_reporting_er'));
         }
 
         else{
-            return $this->sendError('Policy not enabled', 400);
+            return $this->sendError(trans('custom.policy_not_enabled'), 400);
         }
 
     }
@@ -1067,7 +1067,7 @@ class CreditNoteAPIController extends AppBaseController
             $query->with('employee');
             $query->where('documentSystemID', 19);
         }, 'company', 'currency', 'customer', 'confirmed_by', 'createduser'])->first();
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
 
@@ -1254,19 +1254,19 @@ class CreditNoteAPIController extends AppBaseController
         $creditnote = CreditNote::find($creditNoteAutoID);
         $emails = array();
         if (empty($creditnote)) {
-            return $this->sendError('Credit note not found');
+            return $this->sendError(trans('custom.credit_note_not_found_1'));
         }
 
         if ($creditnote->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this credit note it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_credit_note_it_is_already_p'));
         }
 
         if ($creditnote->approved == -1) {
-            return $this->sendError('You cannot reopen this credit note it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_credit_note_it_is_already_f'));
         }
 
         if ($creditnote->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this credit note, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_credit_note_it_is_not_confi'));
         }
 
         // updating fields
@@ -1285,9 +1285,9 @@ class CreditNoteAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $creditnote->creditNoteCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $creditnote->creditNoteCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $creditnote->companySystemID)
             ->where('documentSystemCode', $creditnote->custInvoiceDirectAutoID)
@@ -1344,7 +1344,7 @@ class CreditNoteAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($creditnote->documentSystemiD,$creditNoteAutoID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse('s', 'Credit note reopened successfully');
+        return $this->sendResponse('s', trans('custom.credit_note_reopened_successfully'));
 
     }
 
@@ -1361,26 +1361,26 @@ class CreditNoteAPIController extends AppBaseController
 
 
         if (empty($creditNote)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
-        return $this->sendResponse($creditNote->toArray(), 'Credit Note retrieved successfully');
+        return $this->sendResponse($creditNote->toArray(), trans('custom.credit_note_retrieved_successfully'));
     }
 
     public function printCreditNote(Request $request)
     {
         $id = $request->get('id');
-
+        $lang = $request->get('lang', 'en');
         $creditNote = $this->creditNoteRepository->getAudit($id);
 
         if (empty($creditNote)) {
-            return $this->sendError('Credit note not found.');
+            return $this->sendError(trans('custom.credit_note_not_found_2'));
         }
 
 
         $creditNote->docRefNo = \Helper::getCompanyDocRefNo($creditNote->companySystemID, $creditNote->documentSystemiD);
 
-        $array = array('request' => $creditNote);
+        $array = array('request' => $creditNote, 'lang' => $lang);
         $time = strtotime("now");
         $fileName = 'credit_note_' . $id . '_' . $time . '.pdf';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')
@@ -1388,10 +1388,28 @@ class CreditNoteAPIController extends AppBaseController
                                             ->where('documentID', 19)
                                             ->first();
 
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        $direction = $isRTL ? 'rtl' : 'ltr';
+
         if ($printTemplate && $printTemplate->printTemplateID == 9) {
             $html = view('print.credit_note_template.credit_note_gulf', $array);
             $htmlFooter = view('print.credit_note_template.credit_note_gulf_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+
+            // Configure mPDF for RTL support if Arabic
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4-P',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10
+            ];
+
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
             $mpdf->AddPage('P');
             $mpdf->setAutoBottomMargin = 'stretch';
             $mpdf->SetHTMLFooter($htmlFooter);
@@ -1399,14 +1417,27 @@ class CreditNoteAPIController extends AppBaseController
             $mpdf->WriteHTML($html);
             return $mpdf->Output($fileName, 'I');
         } else {
-      
             $html = view('print.credit_note', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+
+            // Configure mPDF for RTL support if Arabic
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10
+            ];
+
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
         }
-
-
     }
 
     public function getCreditNoteApprovedByUser(Request $request)
@@ -1666,7 +1697,7 @@ WHERE
 	erp_customerreceivepayment.companyID ='$creditnote->companyID'
 	AND erp_custreceivepaymentdet.addedDocumentID = '$creditnote->documentID'
 	AND erp_custreceivepaymentdet.bookingInvCodeSystem = $creditnote->creditNoteAutoID ");
-        return $this->sendResponse($data, 'Credit Note retrieved successfully');
+        return $this->sendResponse($data, trans('custom.credit_note_retrieved_successfully'));
     }
 
     public function amendCreditNote(Request $request)
@@ -1678,11 +1709,11 @@ WHERE
         $creditNoteMasterData = CreditNote::find($creditNoteAutoID);
 
         if (empty($creditNoteMasterData)) {
-            return $this->sendError('Credit Note not found');
+            return $this->sendError(trans('custom.credit_note_not_found'));
         }
 
         if ($creditNoteMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this credit note');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_credit_note'));
         }
 
         $creditNoteArray = $creditNoteMasterData->toArray();
@@ -1732,7 +1763,7 @@ WHERE
             $creditNoteMasterData->save();
         }
 
-        return $this->sendResponse($creditNoteMasterData->toArray(), 'Credit note amend successfully');
+        return $this->sendResponse($creditNoteMasterData->toArray(), trans('custom.credit_note_amend_successfully'));
     }
 
     public function approvalPreCheckCreditNote(Request $request)
@@ -1758,11 +1789,11 @@ WHERE
         $masterData = CreditNote::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Credit Note not found');
+            return $this->sendError(trans('custom.credit_note_not_found'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this Credit Note, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_credit_note_i'));
         }
 
         // checking document matched in receive payment
@@ -1772,7 +1803,7 @@ WHERE
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. Credit Note is added to receipt');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_credit_note_is_added_t_1'));
         }
 
         // checking document matched in erp_matchdocumentmaster
@@ -1782,13 +1813,13 @@ WHERE
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. credit note is added to matching');
+            return $this->sendError(trans('custom.cannot_return_back_to_amend_credit_note_is_added_t'));
         }
 
         if($masterData->approved == -1) {
             $isAPIDocument = DocumentSystemMapping::where('documentId',$id)->where('documentSystemID',$masterData->documentSystemiD)->exists();
             if ($isAPIDocument){
-                return $this->sendError('The auto-generated documents cannot be amended.');
+                return $this->sendError(trans('custom.the_autogenerated_documents_cannot_be_amended'));
             }
         }
 
@@ -1820,8 +1851,8 @@ WHERE
         }
 
 
-        $emailBody = '<p>' . $masterData->creditNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->creditNoteCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->creditNoteCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->creditNoteCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -1920,7 +1951,7 @@ WHERE
             AuditTrial::createAuditTrial($masterData->documentSystemiD, $id, $input['returnComment'], 'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Credit Note amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.credit_note_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1942,7 +1973,7 @@ WHERE
             ->orderBy('debitNoteAutoID', 'desc')
             ->take(30)
             ->get()->toArray();
-        return $this->sendResponse($debitNote, 'Data retrieved successfully');
+        return $this->sendResponse($debitNote, trans('custom.data_retrieved_successfully'));
     }
 
     public function createCreditNoteAPI(Request $request){
@@ -1957,7 +1988,7 @@ WHERE
             $compId = $input['company_id'];
             $company = Company::where('companySystemID', $compId)->first();
             if (!$company) {
-                return $this->sendError("Company details not found");
+                return $this->sendError(trans('custom.company_details_not_found'));
             }
 
             // Get tracking parameters from ThirdPartyApiLogger middleware
@@ -1966,10 +1997,10 @@ WHERE
 
             CreateCreditNote::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
 
-            return $this->sendResponse(['externalReference' => $externalReference],"Credit note request has been successfully queued for processing!");
+            return $this->sendResponse(['externalReference' => $externalReference],trans('custom.credit_note_request_queued_successfully'));
         }
         else {
-            return $this->sendError("Invalid Data Format");
+            return $this->sendError(trans('custom.invalid_data_format'));
         }
 
     }

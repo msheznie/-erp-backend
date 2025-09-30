@@ -208,13 +208,13 @@ class TransactionsExportExcel extends AppBaseController
                 $createdBy = collect($createdBy)->pluck('id');
 
                 $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
-                $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
+                $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '6':
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'glCodeAssignedYN', 'approved', 'year'));
                 $dataQry = $this->expenseClaimRepository->expenseClaimListQuery($request, $input, $search);
-                $data = $this->expenseClaimRepository->setExportExcelData($dataQry);
+                $data = $this->expenseClaimRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '7':
@@ -276,7 +276,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = collect($projectID)->pluck('id');
 
                 $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID, $projectID);
-                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry);
+                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 
             case '12':
@@ -499,7 +499,7 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
             default:
-                return $this->sendResponse(array(), 'export failed');
+                return $this->sendResponse(array(), trans('custom.export_failed'));
         }
 
         $companyID = isset($input['companyId']) ? $input['companyId']: null;
@@ -524,10 +524,16 @@ class TransactionsExportExcel extends AppBaseController
             $userId = \Helper::getEmployeeSystemID();
             ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode);
 
-            return $this->sendResponse('', 'PR Detailed report Export in progress, you will be notified once ready !!');
+            return $this->sendResponse('', trans('custom.pr_detailed_report_export_in_progress'));
         }
 
-        $basePath = CreateExcel::process($data,$type,$input['docName'],$path, $detail_array);
+        $fileName = $input['docName'];
+        $translatedFileName = trans('exportExcelFile.'.$input['docName']);
+        if($translatedFileName !== 'exportExcelFile'.$input['docName']) {
+            $fileName = $translatedFileName;
+        } 
+        
+        $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {

@@ -54,7 +54,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         $this->financeItemcategorySubAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeItemcategorySubAssigneds = $this->financeItemcategorySubAssignedRepository->all();
 
-        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), 'Finance Itemcategory Sub Assigneds retrieved successfully');
+        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), trans('custom.finance_itemcategory_sub_assigneds_retrieved_succe'));
     }
 
     /**
@@ -84,7 +84,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             ->paginate(10);
         //->get();
 
-        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), 'Finance Itemcategory Sub Assigneds retrieved successfully');
+        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), trans('custom.finance_itemcategory_sub_assigneds_retrieved_succe'));
     }
 
 
@@ -164,7 +164,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('itemCategoryAssignedID', $input['itemCategoryAssignedID'])->first();
 
             if (empty($financeItemCategorySubAssigned)) {
-                return $this->sendError('company Assigned not found');
+                return $this->sendError(trans('custom.company_assigned_not_found'));
             }
             $previousValue = $financeItemCategorySubAssigned->toArray();
 
@@ -210,7 +210,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
         }
         
-        return $this->sendResponse($financeItemCategorySubAssigned->toArray(), 'Finance Item Category Sub Assigned saved successfully');
+        return $this->sendResponse($financeItemCategorySubAssigned->toArray(), trans('custom.finance_item_category_sub_assigned_saved_successfu'));
     }
 
 
@@ -251,7 +251,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 )
             ->get();
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.companies_retrieved_successfully'));
     }
 
     /**
@@ -268,10 +268,10 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
 
         if (empty($financeItemcategorySubAssigned)) {
-            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+            return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
 
-        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), 'Finance Itemcategory Sub Assigned retrieved successfully');
+        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), trans('custom.finance_itemcategory_sub_assigned_retrieved_succes'));
     }
 
     /**
@@ -291,12 +291,12 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
 
         if (empty($financeItemcategorySubAssigned)) {
-            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+            return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
 
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), 'FinanceItemcategorySubAssigned updated successfully');
+        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), trans('custom.financeitemcategorysubassigned_updated_successfull'));
     }
 
     /**
@@ -312,7 +312,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
         if (empty($financeItemcategorySubAssigned)) {
-            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+            return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
         $masterData = $financeItemcategorySubAssigned->toArray();
 
@@ -323,6 +323,6 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
         $this->auditLog($db, $id,$uuid, "financeitemcategorysubassigned", "Company Assign ".$financeItemcategorySubAssigned->categoryDescription." has been deleted", "D", [], $masterData, $financeItemcategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
 
-        return $this->sendResponse($id, 'Finance Itemcategory Sub Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.finance_itemcategory_sub_assigned_deleted_successf'));
     }
 }

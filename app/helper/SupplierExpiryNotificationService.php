@@ -155,7 +155,7 @@ class SupplierExpiryNotificationService
         }
         $empEmail = $mailTo->empEmail ?? null;
         if (!empty($empEmail)) {
-            $mailBody = "Hi {$mailTo->empName},<br/>";
+            $mailBody = trans('email.hi') . " {$mailTo->empName},<br/>";
             $mailBody .= $this->emailBody(1);
             $mailBody .= "<br/>";
             $mailBody .= $this->expiryTable($this->expiredSuppliers);
@@ -183,7 +183,7 @@ class SupplierExpiryNotificationService
             $empEmail = $row['supEmail'] ?? null;
             if (!empty($empEmail)) {
                 $supplierName = $row['supplierName'];
-                $mailBody = "Hi {$supplierName},<br/>";
+                $mailBody = trans('email.hi') . " {$supplierName},<br/>";
 
                 $mailBody .= $this->emailBody(2);
                 $mailBody .= "<br/>";

@@ -65,7 +65,7 @@ class ProjectGlDetailAPIController extends AppBaseController
         $this->projectGlDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $projectGlDetails = $this->projectGlDetailRepository->all();
 
-        return $this->sendResponse($projectGlDetails->toArray(), 'Project Gl Details retrieved successfully');
+        return $this->sendResponse($projectGlDetails->toArray(), trans('custom.project_gl_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ProjectGlDetailAPIController extends AppBaseController
 
         $projectGlDetail = $this->projectGlDetailRepository->create($input);
 
-        return $this->sendResponse($projectGlDetail->toArray(), 'Project Gl Detail saved successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), trans('custom.project_gl_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ProjectGlDetailAPIController extends AppBaseController
         $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
         if (empty($projectGlDetail)) {
-            return $this->sendError('Project Gl Detail not found');
+            return $this->sendError(trans('custom.project_gl_detail_not_found'));
         }
 
-        return $this->sendResponse($projectGlDetail->toArray(), 'Project Gl Detail retrieved successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), trans('custom.project_gl_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ProjectGlDetailAPIController extends AppBaseController
         $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
         if (empty($projectGlDetail)) {
-            return $this->sendError('Project Gl Detail not found');
+            return $this->sendError(trans('custom.project_gl_detail_not_found'));
         }
 
         $projectGlDetail = $this->projectGlDetailRepository->update($input, $id);
 
-        return $this->sendResponse($projectGlDetail->toArray(), 'ProjectGlDetail updated successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), trans('custom.projectgldetail_updated_successfully'));
     }
 
     /**
@@ -271,12 +271,12 @@ class ProjectGlDetailAPIController extends AppBaseController
         $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
         if (empty($projectGlDetail)) {
-            return $this->sendError('Project Gl Detail not found');
+            return $this->sendError(trans('custom.project_gl_detail_not_found'));
         }
 
         $projectGlDetail->delete();
 
-        // return $this->sendSuccess('Project Gl Detail deleted successfully');
-        return $this->sendResponse([], 'Project Gl Detail deleted successfully');
+        // return $this->sendSuccess(trans('custom.project_gl_detail_deleted_successfully'));
+        return $this->sendResponse([], trans('custom.project_gl_detail_deleted_successfully'));
     }
 }

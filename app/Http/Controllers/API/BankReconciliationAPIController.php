@@ -47,6 +47,9 @@ use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationDocumentsRepository;
 use App\Repositories\BankReconciliationRepository;
 use App\Services\CustomerReceivePaymentService;
+use App\Services\Excel\ExportReportToExcelService;
+use App\Exports\TreasuryManagement\BankReconciliation\BankReconciliationDetails;
+use App\Exports\TreasuryManagement\BankReconciliation\TreasuryClearedDetails;
 use App\Services\PaymentVoucherServices;
 use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
@@ -194,7 +197,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $end = (new Carbon())->endOfMonth();
         if ($input['bankRecAsOf'] > $end) {
-            // return $this->sendError('You cannot select a date greater than the current month last day', 500);
+            // return $this->sendError(trans('custom.you_cannot_select_a_date_greater_than_the_current_'), 500);
         }
 
         $input['documentSystemID'] = 62;
@@ -446,7 +449,7 @@ class BankReconciliationAPIController extends AppBaseController
         if ($bankReconciliation->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
             if(!$validateAdditionalEntryApproved->isEmpty()) {
-                return $this->sendError('There are some manually created documents pending approval', 500);
+                return $this->sendError(trans('custom.there_are_some_manually_created_documents_pending_'), 500);
             }
 
             $checkItems = BankLedger::where('bankRecAutoID', $id)
@@ -526,7 +529,7 @@ class BankReconciliationAPIController extends AppBaseController
         if (empty($bankStatementMaster)) {
             $validateAdditionalEntryApproved = $this->bankReconciliationDocument->validateConfirmation($id, $bankReconciliation->companySystemID);
             if(!$validateAdditionalEntryApproved->isEmpty()) {
-                return $this->sendError('There are some pending additional entries to approve', 500);
+                return $this->sendError(trans('custom.there_are_some_pending_additional_entries_to_approve'), 500);
             }
         }
        
@@ -662,7 +665,7 @@ class BankReconciliationAPIController extends AppBaseController
                                                     ->first();
         if(!empty($matchingInProgress))
         {
-            return $this->sendError('Auto bank reconciliation is in progress. Manual reconciliation is not allowed.', 500);
+            return $this->sendError(trans('custom.auto_bank_reconciliation_in_progress'), 500);
         }
 
         $checkPending = BankReconciliation::where('bankAccountAutoID', $bankAccountAutoID)
@@ -862,6 +865,7 @@ class BankReconciliationAPIController extends AppBaseController
     public function printBankReconciliation(Request $request)
     {
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en');
         $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
 
         if (empty($bankReconciliation)) {
@@ -881,14 +885,33 @@ class BankReconciliationAPIController extends AppBaseController
 
         $array = array('entity' => $bankReconciliation,
                        'decimalPlaces' => $decimalPlaces,
-                       'date' => Carbon::now());
+                       'date' => Carbon::now(),
+                       'lang' => $lang);
         $time = strtotime("now");
-        $fileName = 'bank_reconciliation' . $id . '_' . $time . '.pdf';
+        $fileName = trans('custom.bank_reconciliation') . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-L', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.bank_reconciliation', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
 
@@ -1038,9 +1061,10 @@ class BankReconciliationAPIController extends AppBaseController
     }
 
 
-    public function exportReport(Request $request)
+    public function exportReport(Request $request, ExportReportToExcelService $exportReportToExcelService)
     {
-        $reportID = $request->reportID;
+        try {
+            $reportID = $request->reportID;
         switch ($reportID) {
             case 'BRC': //// Bank Reconciliation
                 $reportTypeID = $request->reportTypeID;
@@ -1049,46 +1073,79 @@ class BankReconciliationAPIController extends AppBaseController
                 $data = array();
                 $output = $this->getBankReconciliationReportQry($request);
 
+                if(empty($data))
+                {
+                    $bankReconciliationDetailsHeader = new BankReconciliationDetails();
+                    array_push($data,collect($bankReconciliationDetailsHeader->getHeader())->toArray());
+                }
+
                 if ($output) {
-                    $x = 0;
+                    $x = 1; // Start from index 1 to avoid overwriting the header row
                     foreach ($output as $val) {
 
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Narration'] = $val->documentNarration;
-                        $data[$x]['Payee Name'] = $val->payeeName;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.narration')] = $val->documentNarration;
+                        $data[$x][trans('custom.payee_name')] = $val->payeeName;
                         $decimal = 3;
                         if ($val['bank_account']) {
                             if ($val['bank_account']['currency']) {
-                                $data[$x]['Bank Currency'] = $val['bank_account']['currency']['CurrencyCode'];
+                                $data[$x][trans('custom.bank_currency')] = $val['bank_account']['currency']['CurrencyCode'];
                                 $decimal = $val['bank_account']['currency']['DecimalPlaces'];
                             } else {
-                                $data[$x]['Bank Currency'] = '';
+                                $data[$x][trans('custom.bank_currency')] = '';
                             }
                         } else {
-                            $data[$x]['Bank Currency'] = '';
+                            $data[$x][trans('custom.bank_currency')] = '';
                         }
-                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $decimal);
-                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
-                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
-                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
+                        $data[$x][trans('custom.bank_amount')] = number_format($val->payAmountBank, $decimal);
+                        $data[$x][trans('custom.reconciliation_date')] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x][trans('custom.bank_cleared_by')] = $val->bankClearedByEmpName;
+                        $data[$x][trans('custom.bank_cleared_date')] = \Helper::dateFormat($val->bankClearedDate);
                         $x++;
                     }
                 }
 
-                 \Excel::create('bank_reconciliation', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                    $fileName = trans('custom.bank_reconciliation');
+                    $title = trans('custom.bank_reconciliation');
+                    $objBankReconciliationDetails = new BankReconciliationDetails();
+                    $excelColumnFormat = $objBankReconciliationDetails->getCloumnFormat();
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
-                break;
+                    $from_date = $request->fromDate;
+                    $to_date = $request->toDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $dataType = 2;
+
+                    $requestCurrency = NULL;
+                    $path = 'bank_reconciliation/';
+                    $path = 'treasury-management/report/bank_reconciliation/' . $path . 'excel/';
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($requestCurrency)
+                        ->setDateType($dataType)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+
+                    break;
              case 'TCS': //// Treasury Cleared Report
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
@@ -1096,51 +1153,87 @@ class BankReconciliationAPIController extends AppBaseController
                 $data = array();
                 $output = $this->getBankReconciliationReportQry($request);
 
+                if(empty($data))
+                {
+                    $treasuryClearedDetailsHeader = new TreasuryClearedDetails();
+                    array_push($data,collect($treasuryClearedDetailsHeader->getHeader())->toArray());
+                }
+
                 if ($output) {
-                    $x = 0;
+                    $x = 1; // Start from index 1 to avoid overwriting the header row
                     foreach ($output as $val) {
 
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Narration'] = $val->documentNarration;
-                        $data[$x]['Payee Name'] = $val->payeeName;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.narration')] = $val->documentNarration;
+                        $data[$x][trans('custom.payee_name')] = $val->payeeName;
                         $decimal = 3;
                         if ($val['bank_account']) {
                             if ($val['bank_account']['currency']) {
-                                $data[$x]['Bank Currency'] = $val['bank_account']['currency']['CurrencyCode'];
+                                $data[$x][trans('custom.bank_currency')] = $val['bank_account']['currency']['CurrencyCode'];
                                 $decimal = $val['bank_account']['currency']['DecimalPlaces'];
                             } else {
-                                $data[$x]['Bank Currency'] = '';
+                                $data[$x][trans('custom.bank_currency')] = '';
                             }
                         } else {
-                            $data[$x]['Bank Currency'] = '';
+                            $data[$x][trans('custom.bank_currency')] = '';
                         }
-                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $decimal);
-                        $data[$x]['Treasury Cleared Status'] = ($val->trsClearedYN == -1) ? "Yes" : "No";
-                        $data[$x]['Treasury Cleared Date'] = \Helper::dateFormat($val->trsClearedDate);
-                        $data[$x]['Treasury Cleared By'] = $val->trsClearedByEmpName;
-                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
-                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
-                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
+                        $data[$x][trans('custom.bank_amount')] = number_format($val->payAmountBank, $decimal);
+                        $data[$x][trans('custom.treasury_cleared_status')] = ($val->trsClearedYN == -1) ? trans('custom.yes') : trans('custom.no');
+                        $data[$x][trans('custom.treasury_cleared_date')] = \Helper::dateFormat($val->trsClearedDate);
+                        $data[$x][trans('custom.treasury_cleared_by')] = $val->trsClearedByEmpName;
+                        $data[$x][trans('custom.reconciliation_date')] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x][trans('custom.bank_cleared_by')] = $val->bankClearedByEmpName;
+                        $data[$x][trans('custom.bank_cleared_date')] = \Helper::dateFormat($val->bankClearedDate);
                         $x++;
                     }
                 }
 
-                 \Excel::create('bank_reconciliation', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                    $fileName = trans('custom.treasury_cleared_status');
+                    $title = trans('custom.treasury_cleared_status');
+                    $objTreasuryClearedDetails = new TreasuryClearedDetails();
+                    $excelColumnFormat = $objTreasuryClearedDetails->getCloumnFormat();
 
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            default:
-                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+                    $from_date = $request->fromDate;
+                    $to_date = $request->toDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $dataType = 2;
+
+                    $requestCurrency = NULL;
+                    $path = 'treasury_cleared/';
+                    $path = 'treasury-management/report/treasury_cleared/' . $path . 'excel/';
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
+
+                    $exportToExcel = $exportReportToExcelService
+                        ->setTitle($title)
+                        ->setFileName($fileName)
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
+                        ->setCompanyName($company_name)
+                        ->setFromDate($from_date)
+                        ->setToDate($to_date)
+                        ->setData($data)
+                        ->setReportType(2)
+                        ->setType('xls')
+                        ->setCurrency($requestCurrency)
+                        ->setDateType($dataType)
+                        ->setExcelFormat($excelColumnFormat)
+                        ->setDetails()
+                        ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+
+                    break;
+                default:
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+            }
+        } catch(\Exception $e){
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 
@@ -1213,9 +1306,9 @@ class BankReconciliationAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $bankReconciliation->bankRecPrimaryCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('documentSystemCode', $bankReconciliation->bankRecAutoID)
@@ -1367,8 +1460,8 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
 
-        $emailBody = '<p>' . $masterData->bankRecPrimaryCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->bankRecPrimaryCode . ' has been return back to amend';
+        $emailBody = '<p>' . $masterData->bankRecPrimaryCode . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankRecPrimaryCode . ' ' . trans('email.has_been_returned_back_to_amend');
 
         DB::beginTransaction();
         try {
@@ -1485,7 +1578,7 @@ class BankReconciliationAPIController extends AppBaseController
         $output = array(
             'segments' => $segments
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function saveAdditionalEntry(Request $request)
@@ -1499,14 +1592,14 @@ class BankReconciliationAPIController extends AppBaseController
                 $input['companyFinanceYearID'] = $documentDateYearActive['companyFinanceYearID'];
                 $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($input['companySystemID'], $departmentSystemId, $documentDate);
                 if(!$documentDateMonthActive) {
-                    return $this->sendError('Document Date is not within the active Financial Period.',500);
+                    return $this->sendError(trans('custom.document_date_not_within_active_financial_period'),500);
                 }
                 $input['companyFinancePeriodID'] = $documentDateMonthActive['companyFinancePeriodID'];
             } else {
-                return $this->sendError('Document Date is not within the current financial year.',500);
+                return $this->sendError(trans('custom.document_date_not_within_current_financial_year'),500);
             }
         } else {
-            return $this->sendError('Document Date is not within the active Financial Year.',500);
+            return $this->sendError(trans('custom.document_date_not_within_active_financial_year'),500);
         }
 
         if($input['documentType'] == 1) {
@@ -1534,7 +1627,7 @@ class BankReconciliationAPIController extends AppBaseController
             }
         }
         $DataReturn = $this->bankReconciliationDocument->create($document);
-        return $this->sendResponse($DataReturn->toArray(), 'Additional entry created successfully.');
+        return $this->sendResponse($DataReturn->toArray(), trans('custom.additional_entry_created_successfully'));
     }
 
     public function uploadBankStatement(Request $request)
@@ -1557,7 +1650,7 @@ class BankReconciliationAPIController extends AppBaseController
                                     ->first();
         if(!$template) {
             /*** later need to modify to configure template and then continue */
-            return $this->sendError('Template not configured', 500);
+            return $this->sendError(trans('custom.template_not_configured'), 500);
         }
         $template = $template->toArray();
 
@@ -1569,17 +1662,17 @@ class BankReconciliationAPIController extends AppBaseController
             $size = $excelUpload['size'];
             $allowedExtensions = ['xlsx','xls'];
         } else {
-            return $this->sendError('Invalid File',500);
+            return $this->sendError(trans('custom.invalid_file'),500);
         }
 
 
         if (!in_array($extension, $allowedExtensions))
         {
-            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx or .xls',500);
+            return $this->sendError(trans('custom.file_type_not_allowed_upload'),500);
         }
 
         if ($size > 20000000) {
-            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
         }
 
         $disk = 'local';
@@ -1592,14 +1685,14 @@ class BankReconciliationAPIController extends AppBaseController
         $statementStartDate = isset($template['statementStartDate']) ? $sheet->getCell($template['statementStartDate'])->getValue() : null;
         $statementEndDate = isset($template['statementEndDate']) ? $sheet->getCell($template['statementEndDate'])->getValue() : null;
         if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
-            return $this->sendError('Some header level dates are empty.',500);
+            return $this->sendError(trans('custom.header_level_dates_empty'),500);
         }
         $bankStatementDate = self::dateValidation($bankStatementDate);
         $statementStartDate = self::dateValidation($statementStartDate);
         $statementEndDate = self::dateValidation($statementEndDate);
 
         if(is_null($bankStatementDate) || is_null($statementStartDate) || is_null($statementEndDate)) {
-            return $this->sendError('Wrong date format - Correct format "DD/MM/YYYY"',500);
+            return $this->sendError(trans('custom.wrong_date_format'),500);
         }
 
         $statementExists = $this->bankStatementMaster->where('companySystemID', $input['companySystemID'])
@@ -1607,14 +1700,14 @@ class BankReconciliationAPIController extends AppBaseController
                                     ->where('importStatus', 1)
                                     ->where('bankStatementDate', $bankStatementDate)->first();
         if($statementExists) {
-            return $this->sendError('Bank Statement already uploaded!', 500);
+            return $this->sendError(trans('custom.bank_statement_already_uploaded'), 500);
         }
 
         /** bank validation */
         $bankName = trim($sheet->getCell($template['bankName'])->getValue());
         $bankAccount = trim($sheet->getCell($template['bankAccountNumber'])->getValue());
         if ($bankName != $template['bank_account']['bankName'] || $bankAccount != $template['bank_account']['AccountNo']) {
-            return $this->sendError('Bank Account details not matched', 500);
+            return $this->sendError(trans('custom.bank_account_details_not_matched'), 500);
         }
 
         /** Opening balance and closing balance validation */
@@ -1623,7 +1716,7 @@ class BankReconciliationAPIController extends AppBaseController
         $openingBalance = str_replace(',', '', $openingBalance);
         $endingBalance = str_replace(',', '', $endingBalance);
         if (!is_numeric($openingBalance) || !is_numeric($endingBalance)) {
-            return $this->sendError('Opening balance and closing balance amount should be numbers', 500);
+            return $this->sendError(trans('custom.opening_balance_closing_balance_should_be_numbers'), 500);
         }
 
         /** dates validation */
@@ -1661,9 +1754,9 @@ class BankReconciliationAPIController extends AppBaseController
                 'transactionCount' => $input['transactionCount']
             ];
             UploadBankStatement::dispatch($db, $uploadData);
-            return $this->sendResponse([], 'Statement Upload send to queue.');
+            return $this->sendResponse([], trans('custom.statement_upload_send_to_queue'));
         } else {
-            return $this->sendError('Bank statement master not created', 500);
+            return $this->sendError(trans('custom.bank_statement_master_not_created'), 500);
         }
     }
 
@@ -1718,7 +1811,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $bankStatement = BankStatementMaster::where('statementId', $statementId)->first();
         if(!$bankStatement){
-            return $this->sendError('Bank statement not found', 500);
+            return $this->sendError(trans('custom.bank_statement_not_found'), 500);
         }
        
         $document = DocumentMaster::where('documentSystemID', 62)->first();
@@ -1736,13 +1829,13 @@ class BankReconciliationAPIController extends AppBaseController
                     if ($val->approvalGroupID) {
                         $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
                     } else {
-                        $errorMsg = "'Please set the approval group.";
+                        $errorMsg = trans('custom.please_set_approval_group');
                         return $this->sendError($errorMsg, 500);
                     }
                 }
             }
         } else {
-            $errorMsg = "Approval setup not created for bank reconciliation";
+            $errorMsg = trans('custom.approval_setup_not_created_bank_reconciliation');
             return $this->sendError($errorMsg, 500);
         }
 
@@ -1762,7 +1855,7 @@ class BankReconciliationAPIController extends AppBaseController
             GenerateBankReconciliation::dispatch($db, $data);
          
             DB::commit();
-            return $this->sendResponse([], 'Bank reconciliation generate process started.');
+            return $this->sendResponse([], trans('custom.bank_reconciliation_generate_process_started'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

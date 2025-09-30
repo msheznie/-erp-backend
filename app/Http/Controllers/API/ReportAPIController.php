@@ -70,7 +70,7 @@ class ReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
 
     }
@@ -775,7 +775,7 @@ class ReportAPIController extends AppBaseController
                     ->make(true);
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -792,7 +792,7 @@ class ReportAPIController extends AppBaseController
 
                 $exportToExcel = $poAnalysisService->getPOAExportData($request,$exportReportToExcelService);
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -813,25 +813,25 @@ class ReportAPIController extends AppBaseController
                 $data = array();
                 foreach ($output as $val) {
                     $data[] = array(
-                        'Company' => $val->companyID,
-                        'PO Code' => $val->purchaseOrderCode,
-                        'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
-                        'Created Date' => Helper::dateFormat($val->createdDateTime),
-                        'Created By' => $val->created_by ? $val->created_by->empFullName : '',
-                        'Supplier Code' => $val->supplierPrimaryCode,
-                        'Supplier Name' => $val->supplierName,
-                        'LCC' => $val->supplier ? $val->supplier->isLcc : '',
-                        'SME' => $val->supplier ? $val->supplier->isSme : '',
-                        'JSRS Number' => $val->supplier ? $val->supplier->jsrsNo : '',
-                        'JSRS Expiry' =>($val->supplier && $val->supplier->jsrsExpiry)  ? $val->supplier->jsrsExpiry : '',
-                        'ICV Category' => $val->icv_category ? $val->icv_category->categoryDescription : '',
-                        'ICV Sub Category' => $val->icv_sub_category ? $val->icv_sub_category->categoryDescription : '',
-                        'Expected Delivery Date' => Helper::dateFormat($val->expectedDeliveryDate),
-                        'Narration' => $val->narration,
-                        'Currency' => $val->currency ? $val->currency->CurrencyCode : '',
-                        'Amount' => number_format($val->poTotalSupplierTransactionCurrency, ($val->currency ? $val->currency->DecimalPlaces : 2)),
-                        'Approved Date' => Helper::dateFormat($val->approvedDate),
-                        'Status' => $val->manuallyClosed ? 'Manually Closed' : ''
+                        trans('custom.company') => $val->companyID,
+                        trans('custom.po_code') => $val->purchaseOrderCode,
+                        trans('custom.segment') => $val->segment ? $val->segment->ServiceLineDes : '',
+                        trans('custom.created_date') => Helper::dateFormat($val->createdDateTime),
+                        trans('custom.created_by') => $val->created_by ? $val->created_by->empFullName : '',
+                        trans('custom.supplier_code') => $val->supplierPrimaryCode,
+                        trans('custom.supplier_name') => $val->supplierName,
+                        trans('custom.lcc') => $val->supplier ? trans('custom.' . strtolower($val->supplier->isLcc)) : '',
+                        trans('custom.sme') => $val->supplier ? trans('custom.' . strtolower($val->supplier->isSme)) : '',
+                        trans('custom.jsrs_number') => $val->supplier ? $val->supplier->jsrsNo : '',
+                        trans('custom.jsrs_expiry') =>($val->supplier && $val->supplier->jsrsExpiry)  ? $val->supplier->jsrsExpiry : '',
+                        trans('custom.icv_category') => $val->icv_category ? $val->icv_category->categoryDescription : '',
+                        trans('custom.icv_sub_category') => $val->icv_sub_category ? $val->icv_sub_category->categoryDescription : '',
+                        trans('custom.expected_delivery_date') => Helper::dateFormat($val->expectedDeliveryDate),
+                        trans('custom.narration') => $val->narration,
+                        trans('custom.currency') => $val->currency ? $val->currency->CurrencyCode : '',
+                        trans('custom.amount') => number_format($val->poTotalSupplierTransactionCurrency, ($val->currency ? $val->currency->DecimalPlaces : 2)),
+                        trans('custom.approved_date') => Helper::dateFormat($val->approvedDate),
+                        trans('custom.status') => $val->manuallyClosed ? trans('custom.manually_closed') : ''
                     );
                 }
 
@@ -846,7 +846,7 @@ class ReportAPIController extends AppBaseController
                 //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 // })->download($type);
 
-                // return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), trans('custom.success_export'));
 
 
 
@@ -861,7 +861,7 @@ class ReportAPIController extends AppBaseController
         
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -871,7 +871,7 @@ class ReportAPIController extends AppBaseController
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -1265,7 +1265,7 @@ class ReportAPIController extends AppBaseController
         $input = $request->all();
         $output = $this->getSavingReportData($input);
 
-        return $this->sendResponse($output, 'successfully generated report');
+        return $this->sendResponse($output, trans('custom.successfully_generated_report'));
     }
 
     public function exportExcelSavingReport(Request $request)
@@ -1278,59 +1278,59 @@ class ReportAPIController extends AppBaseController
             foreach ($output as $val) {
                 /*$data[$x]['Company ID'] = $val->companyID;
                 $data[$x]['Company Name'] = $val->CompanyName;*/
-                $data[$x]['Item Code'] = $val->itemPrimaryCode;
-                $data[$x]['Item Description'] = $val->itemDescription;
-                $data[$x]['UOM'] = $val->UnitShortCode;
-                $data[$x]['Jan'] = '';
-                $data[$x]['Feb'] = round($val->Feb_UnitCost, 2);
-                $data[$x]['Mar'] = round($val->March_UnitCost, 2);
-                $data[$x]['Apr'] = round($val->April_UnitCost, 2);
-                $data[$x]['May'] = round($val->May_UnitCost, 2);
-                $data[$x]['Jun'] = round($val->June_UnitCost, 2);
-                $data[$x]['Jul'] = round($val->July_UnitCost, 2);
-                $data[$x]['Aug'] = round($val->Aug_UnitCost, 2);
-                $data[$x]['Sep'] = round($val->Sept_UnitCost, 2);
-                $data[$x]['Oct'] = round($val->Oct_UnitCost, 2);
-                $data[$x]['Nov'] = round($val->Nov_UnitCost, 2);
-                $data[$x]['Dec'] = round($val->Dece_UnitCost, 2);
-                $data[$x]['Saving Total'] = '';
+                $data[$x][trans('custom.item_code')] = $val->itemPrimaryCode;
+                $data[$x][trans('custom.item_description')] = $val->itemDescription;
+                $data[$x][trans('custom.uom')] = $val->UnitShortCode;
+                $data[$x][trans('custom.jan')] = '';
+                $data[$x][trans('custom.feb')] = round($val->Feb_UnitCost, 2);
+                $data[$x][trans('custom.mar')] = round($val->March_UnitCost, 2);
+                $data[$x][trans('custom.apr')] = round($val->April_UnitCost, 2);
+                $data[$x][trans('custom.may')] = round($val->May_UnitCost, 2);
+                $data[$x][trans('custom.jun')] = round($val->June_UnitCost, 2);
+                $data[$x][trans('custom.jul')] = round($val->July_UnitCost, 2);
+                $data[$x][trans('custom.aug')] = round($val->Aug_UnitCost, 2);
+                $data[$x][trans('custom.sep')] = round($val->Sept_UnitCost, 2);
+                $data[$x][trans('custom.oct')] = round($val->Oct_UnitCost, 2);
+                $data[$x][trans('custom.nov')] = round($val->Nov_UnitCost, 2);
+                $data[$x][trans('custom.dec')] = round($val->Dece_UnitCost, 2);
+                $data[$x][trans('custom.saving_total')] = '';
                 $x++;
 
-                $data[$x]['Item Code'] = '';
-                $data[$x]['Item Description'] = '';
-                $data[$x]['UOM'] = '';
-                $data[$x]['Jan'] = 'QTY';
-                $data[$x]['Feb'] = round($val->Feb_qty, 2);
-                $data[$x]['Mar'] = round($val->March_qty, 2);
-                $data[$x]['Apr'] = round($val->April_qty, 2);
-                $data[$x]['May'] = round($val->May_qty, 2);
-                $data[$x]['Jun'] = round($val->June_qty, 2);
-                $data[$x]['Jul'] = round($val->July_qty, 2);
-                $data[$x]['Aug'] = round($val->Aug_qty, 2);
-                $data[$x]['Sep'] = round($val->Sept_qty, 2);
-                $data[$x]['Oct'] = round($val->Oct_qty, 2);
-                $data[$x]['Nov'] = round($val->Nov_qty, 2);
-                $data[$x]['Dec'] = round($val->Dece_qty, 2);
-                $data[$x]['Saving Total'] = '';
+                $data[$x][trans('custom.item_code')] = '';
+                $data[$x][trans('custom.item_description')] = '';
+                $data[$x][trans('custom.uom')] = '';
+                $data[$x][trans('custom.jan')] = trans('custom.qty');
+                $data[$x][trans('custom.feb')] = round($val->Feb_qty, 2);
+                $data[$x][trans('custom.mar')] = round($val->March_qty, 2);
+                $data[$x][trans('custom.apr')] = round($val->April_qty, 2);
+                $data[$x][trans('custom.may')] = round($val->May_qty, 2);
+                $data[$x][trans('custom.jun')] = round($val->June_qty, 2);
+                $data[$x][trans('custom.jul')] = round($val->July_qty, 2);
+                $data[$x][trans('custom.aug')] = round($val->Aug_qty, 2);
+                $data[$x][trans('custom.sep')] = round($val->Sept_qty, 2);
+                $data[$x][trans('custom.oct')] = round($val->Oct_qty, 2);
+                $data[$x][trans('custom.nov')] = round($val->Nov_qty, 2);
+                $data[$x][trans('custom.dec')] = round($val->Dece_qty, 2);
+                $data[$x][trans('custom.saving_total')] = '';
 
                 $x++;
 
-                $data[$x]['Item Code'] = '';
-                $data[$x]['Item Description'] = '';
-                $data[$x]['UOM'] = '';
-                $data[$x]['Jan'] = 'Saving';
-                $data[$x]['Feb'] = round($val->Feb_SavingAmount, 2);
-                $data[$x]['Mar'] = round($val->March_SavingAmount, 2);
-                $data[$x]['Apr'] = round($val->April_SavingAmount, 2);
-                $data[$x]['May'] = round($val->May_SavingAmount, 2);
-                $data[$x]['Jun'] = round($val->June_SavingAmount, 2);
-                $data[$x]['Jul'] = round($val->July_SavingAmount, 2);
-                $data[$x]['Aug'] = round($val->Aug_SavingAmount, 2);
-                $data[$x]['Sep'] = round($val->Sept_SavingAmount, 2);
-                $data[$x]['Oct'] = round($val->Oct_SavingAmount, 2);
-                $data[$x]['Nov'] = round($val->Nov_SavingAmount, 2);
-                $data[$x]['Dec'] = round($val->Dece_SavingAmount, 2);
-                $data[$x]['Saving Total'] = round($val->total_SavingAmount, 2);
+                $data[$x][trans('custom.item_code')] = '';
+                $data[$x][trans('custom.item_description')] = '';
+                $data[$x][trans('custom.uom')] = '';
+                $data[$x][trans('custom.jan')] = trans('custom.saving');
+                $data[$x][trans('custom.feb')] = round($val->Feb_SavingAmount, 2);
+                $data[$x][trans('custom.mar')] = round($val->March_SavingAmount, 2);
+                $data[$x][trans('custom.apr')] = round($val->April_SavingAmount, 2);
+                $data[$x][trans('custom.may')] = round($val->May_SavingAmount, 2);
+                $data[$x][trans('custom.jun')] = round($val->June_SavingAmount, 2);
+                $data[$x][trans('custom.jul')] = round($val->July_SavingAmount, 2);
+                $data[$x][trans('custom.aug')] = round($val->Aug_SavingAmount, 2);
+                $data[$x][trans('custom.sep')] = round($val->Sept_SavingAmount, 2);
+                $data[$x][trans('custom.oct')] = round($val->Oct_SavingAmount, 2);
+                $data[$x][trans('custom.nov')] = round($val->Nov_SavingAmount, 2);
+                $data[$x][trans('custom.dec')] = round($val->Dece_SavingAmount, 2);
+                $data[$x][trans('custom.saving_total')] = round($val->total_SavingAmount, 2);
 
                 $x++;
             }
@@ -1350,7 +1350,7 @@ class ReportAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

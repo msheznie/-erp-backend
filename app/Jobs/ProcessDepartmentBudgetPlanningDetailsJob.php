@@ -27,7 +27,8 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
     public $db;
     public $departmentBudgetPlanningId;
     public $userId;
-
+    public $chartOfAccountSystemIDs;
+    public $selectedSegments;
     /**
      * Create a new job instance.
      *
@@ -35,7 +36,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * @param int $departmentBudgetPlanningId
      * @param int $userId
      */
-    public function __construct($db, $departmentBudgetPlanningId, $userId = null)
+    public function __construct($db, $departmentBudgetPlanningId, $userId = null,$chartOfAccountSystemIDs =null,$selectedSegments = null)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -52,6 +53,8 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $this->db = $db;
         $this->departmentBudgetPlanningId = $departmentBudgetPlanningId;
         $this->userId = $userId ?? auth()->id() ?? 1;
+        $this->chartOfAccountSystemIDs = $chartOfAccountSystemIDs;
+        $this->selectedSegments = $selectedSegments;
     }
 
     /**
@@ -128,10 +131,21 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
             return collect([]);
         }
 
-        // Get GLs assigned to this template
-        $budgetTemplateGls = DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplate->departmentBudgetTemplateID)
-            ->with(['chartOfAccount','departmentBudgetTemplate'])
-            ->get();
+        if(empty($this->chartOfAccountSystemIDs))
+        {
+            // Get GLs assigned to this template
+            $budgetTemplateGls = DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplate->departmentBudgetTemplateID)
+                ->with(['chartOfAccount','departmentBudgetTemplate'])
+                ->get();
+
+        }else {
+            // Get GLs assigned to this template
+            $budgetTemplateGls = DepBudgetTemplateGl::where('departmentBudgetTemplateID', $departmentBudgetTemplate->departmentBudgetTemplateID)
+                ->whereIn('chartOfAccountSystemID',$this->chartOfAccountSystemIDs)
+                ->with(['chartOfAccount','departmentBudgetTemplate'])
+                ->get();
+
+        }
 
         return $budgetTemplateGls;
     }
@@ -146,7 +160,14 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
 
         if ($departmentBudgetPlanning->workflow->method == 1) {
-            $companyDepartmentSegments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID)->get();
+            $companyDepartmentSegments = CompanyDepartmentSegment::where('departmentSystemID', $departmentBudgetPlanning->departmentID);
+
+            if(!empty($this->selectedSegments))
+            {
+                $companyDepartmentSegments = $companyDepartmentSegments->whereIn('serviceLineSystemID',$this->selectedSegments);
+            }
+
+            $companyDepartmentSegments = $companyDepartmentSegments->get();
             foreach ($companyDepartmentSegments as $companyDepartmentSegment) {
                 $this->createNewDetail($departmentBudgetPlanning, $templateGl, $companyDepartmentSegment);
             }

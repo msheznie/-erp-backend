@@ -9,6 +9,7 @@ use App\Models\DepartmentBudgetPlanning;
 use App\Models\DeptBudgetPlanningTimeRequest;
 use App\Repositories\DepartmentBudgetPlanningRepository;
 use App\Rules\NoEmoji;
+use App\Services\TimeRequestExtensionService;
 use App\Traits\AuditLogsTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -33,9 +34,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     /** @var  DepartmentBudgetPlanningRepository */
     private $departmentBudgetPlanningRepository;
 
-    public function __construct(DepartmentBudgetPlanningRepository $departmentBudgetPlanningRepo)
+    private $timeRequestExtensionService;
+
+    public function __construct(
+        DepartmentBudgetPlanningRepository $departmentBudgetPlanningRepo,
+        TimeRequestExtensionService $timeRequestExtensionService
+    )
     {
         $this->departmentBudgetPlanningRepository = $departmentBudgetPlanningRepo;
+        $this->timeRequestExtensionService = $timeRequestExtensionService;
     }
 
     /**
@@ -75,7 +82,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $this->departmentBudgetPlanningRepository->pushCriteria(new LimitOffsetCriteria($request));
         $departmentBudgetPlannings = $this->departmentBudgetPlanningRepository->all();
 
-        return $this->sendResponse($departmentBudgetPlannings->toArray(), 'Department Budget Plannings retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlannings->toArray(), trans('custom.department_budget_plannings_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +136,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->create($input);
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning saved successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_saved_successfully'));
     }
 
     /**
@@ -176,12 +183,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department','delegateAccess'])->findWithoutFail($id);
 
-        $departmentBudgetPlanning['isActiveToSubmit'] = Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
+        $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -247,12 +254,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($input, $id);
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'DepartmentBudgetPlanning updated successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.departmentbudgetplanning_updated_successfully'));
     }
 
     /**
@@ -300,7 +307,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         $departmentBudgetPlanning->delete();
@@ -361,6 +368,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function updateStatus(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
 
         // Validate required fields
         if (!isset($input['budgetPlanningId']) || !isset($input['workStatus'])) {
@@ -371,7 +380,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($input['budgetPlanningId']);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         //prevent status change if new status is 0
@@ -383,17 +392,22 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Status cannot be changed to Submitted');
         }
 
+        if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
+            return $this->sendError('Status cannot be changed from submitted');
+        }
+
         try {
             \DB::beginTransaction();
 
             // Load department budget planning with relationships for validation
             $departmentBudgetPlanning = \App\Models\DepartmentBudgetPlanning::with([
                 'masterBudgetPlannings.company',
+                'budgetPlanningDetails.budgetDelegateAccessDetails',
                 'department'
             ])->find($input['budgetPlanningId']);
 
             if (!$departmentBudgetPlanning) {
-                return $this->sendError('Department Budget Planning not found');
+                return $this->sendError(trans('custom.department_budget_planning_not_found'));
             }
 
             // Validate budget template assignment before processing
@@ -403,6 +417,38 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             $oldValue = $departmentBudgetPlanning->toArray();
+
+            if($input['workStatus'] == 3)
+            {
+                // Check if all budget planning details have request_amount > 0
+                $budgetPlanningDetails = $departmentBudgetPlanning->budgetPlanningDetails;
+                $invalidDetails = $budgetPlanningDetails->where('request_amount', '<=', 0);
+                
+                if ($invalidDetails->count() > 0 && $input['validationOne'] === false) {
+                    return $this->sendError('Some assigned GL accounts do not have a request amount entered. Are you sure you want to proceed?',422);
+                }
+
+                // Check if all budgetPlanningDetails have budgetDelegateAccessDetails with workStatus = 3
+                $invalidDelegateAccess = [];
+                foreach ($budgetPlanningDetails as $detail) {
+                    if ($detail->budgetDelegateAccessDetails) {
+                        $workStatuses = $detail->budgetDelegateAccessDetails->pluck('work_status')->toArray();
+                        // Check if all work statuses are equal to 3
+                        $allStatusThree = array_reduce($workStatuses, function($carry, $status) {
+                            return $carry && ($status == 3);
+                        }, true);
+                        
+                        if (!$allStatusThree) {
+                            $invalidDelegateAccess[] = $detail->id;
+                        }
+                    }
+                }
+                
+                if (count($invalidDelegateAccess) > 0 && $input['validationTwo'] === false) {
+                    return $this->sendError('Not all delegated users have submitted their budgets to the HOD. Are you sure you want to proceed?',422);
+                }
+
+            }
 
             // Update only the status field
             $updateData = ['workStatus' => $input['workStatus']];
@@ -438,10 +484,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             \DB::commit();
 
-            return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning status updated successfully and details processing initiated');
+            return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_status_updated_successf'));
         } catch (\Exception $e) {
             \DB::rollback();
-            return $this->sendError('Error updating status - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_updating_status') . $e->getMessage(), 500);
         }
     }
 
@@ -563,7 +609,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $currentSubmissionDate = \Carbon\Carbon::parse($input['currentSubmissionDate'])->format('Y-m-d');
                     $dateOfRequest = \Carbon\Carbon::parse($input['dateOfRequest'])->format('Y-m-d');
                 } catch (\Exception $secondError) {
-                    return $this->sendError('Date parsing error', 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
+                    return $this->sendError(trans('custom.date_parsing_error'), 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
                 }
             }
 
@@ -584,6 +630,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 'created_by' => auth()->id() ?: 1, // Fallback to user ID 1 if no auth
                 'updated_by' => auth()->id() ?: 1 // Fallback to user ID 1 if no auth
             ];
+
+            // check record existing for this
+
+            if($this->timeRequestExtensionService->checkExistingRecord($requestData))
+            {
+                return $this->sendError("There is already a time extension request, and it is still in pending status.");
+            }
 
             // Create time extension request using Eloquent model
             $timeRequest = \App\Models\DeptBudgetPlanningTimeRequest::create($requestData);
@@ -689,11 +742,11 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             \DB::commit();
 
-            return $this->sendResponse(['id' => $timeRequest->id], 'Time extension request created successfully');
+            return $this->sendResponse(['id' => $timeRequest->id], trans('custom.time_extension_request_created_successfully'));
 
         } catch (\Exception $e) {
             \DB::rollback();
-            return $this->sendError('Error creating time extension request - '.$e->getMessage());
+            return $this->sendError(trans('custom.error_creating_time_extension_request').$e->getMessage());
         }
     }
 
@@ -818,12 +871,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         if (!$companySystemID) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
 
         if (!$budgetPlanning) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         // Get the last request code for this budget planning using Eloquent model
@@ -846,7 +899,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Generate the new request code
         $requestCode = 'RQ' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-        return $this->sendResponse(['requestCode' => $requestCode], 'Request code generated successfully');
+        return $this->sendResponse(['requestCode' => $requestCode], trans('custom.request_code_generated_successfully'));
     }
 
     /**
@@ -890,9 +943,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 $attachment->uploaded_by_name = $attachment->uploader ? $attachment->uploader->name : 'Unknown';
             }
 
-            return $this->sendResponse($attachments, 'Attachments retrieved successfully');
+            return $this->sendResponse($attachments, trans('custom.attachments_retrieved_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving attachments - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_attachments') . $e->getMessage(), 500);
         }
     }
 
@@ -906,7 +959,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $attachment = \App\Models\DeptBudgetPlanningTimeRequestAttachment::find($attachmentId);
 
             if (!$attachment) {
-                return $this->sendError('Attachment not found', 404);
+                return $this->sendError(trans('custom.attachment_not_found'), 404);
             }
 
             // Get company info for determining disk
@@ -914,7 +967,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 ->find($attachment->time_request_id);
 
             if (!$timeRequest) {
-                return $this->sendError('Time request not found');
+                return $this->sendError(trans('custom.time_request_not_found'));
             }
 
             $companySystemID = $timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
@@ -924,7 +977,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             // Check if file exists
             if (!\Storage::disk($disk)->exists($attachment->file_path)) {
-                return $this->sendError('File not found on storage');
+                return $this->sendError(trans('custom.file_not_found_on_storage'));
             }
 
             // Get file contents
@@ -936,7 +989,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 ->header('Content-Disposition', 'attachment; filename="' . $attachment->original_file_name . '"');
 
         } catch (\Exception $e) {
-            return $this->sendError('Error downloading attachment - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_downloading_attachment') . $e->getMessage(), 500);
         }
     }
 
@@ -1005,7 +1058,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $timeExtensionRequest = DeptBudgetPlanningTimeRequest::find($input['id']);
         if (!$timeExtensionRequest) {
-            return $this->sendError('Time extension request not found');
+            return $this->sendError(trans('custom.time_extension_request_not_found'));
         }
 
         $oldValue = $timeExtensionRequest->toArray();
@@ -1029,5 +1082,103 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         );
 
         return $this->sendResponse(null,'Time extension request cancelled successfully');
+    }
+
+    public function deleteTimeExtensionRequest(Request $request) {
+        $input = $request->all();
+
+        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::find($input['id']);
+        if (!$timeExtensionRequest) {
+            return $this->sendError('Time request not found');
+        }
+
+        $oldValue = $timeExtensionRequest->toArray();
+
+        // Delete the time extension request
+        $timeExtensionRequest->delete();
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $timeExtensionRequest->department_budget_planning_id,
+            $uuid,
+            "department_budget_plannings",
+            "Time extension request ".$timeExtensionRequest->request_code." has been deleted",
+            "D",
+            null,
+            $oldValue,
+            1
+        );
+
+        return $this->sendResponse(null,'Time extension request deleted successfully');
+    }
+
+    public function acceptTimeExtensionRequest(Request $request) {
+        $input = $request->all();
+
+        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning')->find($input['id']);
+        if (!$timeExtensionRequest) {
+            return $this->sendError('Time request not found');
+        }
+
+        $oldValue = $timeExtensionRequest->toArray();
+
+        // Update status to 2 (accepted)
+        $timeExtensionRequest->status = 2;
+        $timeExtensionRequest->new_time = $timeExtensionRequest->date_of_request;
+        $timeExtensionRequest->save();
+
+        // Update submission dates for budget planning and its details
+        $this->updateSubmissionDates($timeExtensionRequest);
+
+        // Add audit log
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $timeExtensionRequest->department_budget_planning_id,
+            $uuid,
+            "department_budget_plannings",
+            "Time extension request ".$timeExtensionRequest->request_code." has been accepted",
+            "U",
+            $timeExtensionRequest->refresh()->toArray(),
+            $oldValue,
+            1
+        );
+
+        return $this->sendResponse(null,'Time extension request accepted successfully');
+    }
+
+    /**
+     * Update submission dates for DepartmentBudgetPlanning and all related DepartmentBudgetPlanningDetails
+     *
+     * @param DeptBudgetPlanningTimeRequest $timeExtensionRequest
+     * @return void
+     */
+    private function updateSubmissionDates($timeExtensionRequest)
+    {
+        $departmentBudgetPlanning = $timeExtensionRequest->departmentBudgetPlanning;
+        
+        if ($departmentBudgetPlanning && isset($timeExtensionRequest->date_of_request)) {
+            $newSubmissionDate = $timeExtensionRequest->date_of_request;
+            
+            // Update DepartmentBudgetPlanning's submissionDate
+            $departmentBudgetPlanning->submissionDate = $newSubmissionDate;
+            
+            // Check if submission date is less than current date, set isActive to false
+            $currentDate = now();
+            if ($departmentBudgetPlanning->submissionDate < $currentDate) {
+                $departmentBudgetPlanning->isActive = false;
+            }
+            
+            $departmentBudgetPlanning->save();
+            
+            // Update all related DepartmentBudgetPlanningDetails' time_for_submission
+            $departmentBudgetPlanning->budgetPlanningDetails()->update([
+                'time_for_submission' => $newSubmissionDate
+            ]);
+        }
     }
 }

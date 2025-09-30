@@ -112,7 +112,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $messages = [
-            'allocationmaid.required' => 'Allocation Master ID is required.'
+            'allocationmaid.required' => trans('custom.validation_allocation_master_id_required')
         ];
         $validator = \Validator::make($input, [
             'chartOfAccountAllocationMasterID' => 'required|numeric|min:1',
@@ -265,7 +265,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
         $totalAllocationPercentage = $input['percentage'] + (($checkAllocationPercentage) ? $checkAllocationPercentage : 0);
 
         if ($totalAllocationPercentage > 100) {
-            return $this->sendError("Total allocation percentage cannot be greater than 100",500);
+            return $this->sendError(trans('custom.total_allocation_percentage_cannot_be_greater_than'),500);
         }
 
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->update($input, $id);

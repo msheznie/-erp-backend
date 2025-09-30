@@ -72,5 +72,36 @@ class CountryMaster extends Model
         
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['countryName'];
+
+    /**
+     * Get the translations for the country.
+     */
+    public function translations()
+    {
+        return $this->hasMany(CountryMasterTranslation::class, 'countryID', 'countryID');
+    }
+
+    /**
+     * Get the translated country name based on current locale.
+     *
+     * @return string
+     */
+    public function getCountryNameAttribute()
+    {
+        $locale = app()->getLocale();
+
+        if ($locale === 'ar') {
+            $translation = $this->translations()->where('languageCode', 'ar')->first();
+            return $translation ? $translation->countryName : $this->attributes['countryName'];
+        }
+
+        return $this->attributes['countryName'];
+    }
     
 }

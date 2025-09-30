@@ -65,7 +65,7 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
         $this->contingencyBudgetRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $contingencyBudgetRefferedBacks = $this->contingencyBudgetRefferedBackRepository->all();
 
-        return $this->sendResponse($contingencyBudgetRefferedBacks->toArray(), 'Contingency Budget Reffered Backs retrieved successfully');
+        return $this->sendResponse($contingencyBudgetRefferedBacks->toArray(), trans('custom.contingency_budget_reffered_backs_retrieved_succes'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
 
         $contingencyBudgetRefferedBack = $this->contingencyBudgetRefferedBackRepository->create($input);
 
-        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), 'Contingency Budget Reffered Back saved successfully');
+        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), trans('custom.contingency_budget_reffered_back_saved_successfull'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
         $contingencyBudgetRefferedBack = $this->contingencyBudgetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetRefferedBack)) {
-            return $this->sendError('Contingency Budget Reffered Back not found');
+            return $this->sendError(trans('custom.contingency_budget_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), 'Contingency Budget Reffered Back retrieved successfully');
+        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), trans('custom.contingency_budget_reffered_back_retrieved_success'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
         $contingencyBudgetRefferedBack = $this->contingencyBudgetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetRefferedBack)) {
-            return $this->sendError('Contingency Budget Reffered Back not found');
+            return $this->sendError(trans('custom.contingency_budget_reffered_back_not_found'));
         }
 
         $contingencyBudgetRefferedBack = $this->contingencyBudgetRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), 'ContingencyBudgetRefferedBack updated successfully');
+        return $this->sendResponse($contingencyBudgetRefferedBack->toArray(), trans('custom.contingencybudgetrefferedback_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
         $contingencyBudgetRefferedBack = $this->contingencyBudgetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetRefferedBack)) {
-            return $this->sendError('Contingency Budget Reffered Back not found');
+            return $this->sendError(trans('custom.contingency_budget_reffered_back_not_found'));
         }
 
         $contingencyBudgetRefferedBack->delete();
@@ -291,16 +291,16 @@ class ContingencyBudgetRefferedBackAPIController extends AppBaseController
                     $q->select('currencyID', 'DecimalPlaces');
                 }
             ])->get();
-        return $this->sendResponse($contingency, 'Contingency budget Amend retrieved successfully');
+        return $this->sendResponse($contingency, trans('custom.contingency_budget_amend_retrieved_successfully'));
     }
     public function contingencyBudgetAmend($id)
     {
         $contingencyBudgetPlan = $this->contingencyBudgetRefferedBackRepository->with(['confirmed_by', 'currency_by'])->findWithoutFail($id);
 
         if (empty($contingencyBudgetPlan)) {
-            return $this->sendError('Contingency Budget Plan amend not found');
+            return $this->sendError(trans('custom.contingency_budget_plan_amend_not_found'));
         }
 
-        return $this->sendResponse($contingencyBudgetPlan->toArray(), 'Contingency Budget Plan amend retrieved successfully');
+        return $this->sendResponse($contingencyBudgetPlan->toArray(), trans('custom.contingency_budget_plan_amend_retrieved_successful'));
     }
 }

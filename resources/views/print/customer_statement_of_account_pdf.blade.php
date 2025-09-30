@@ -1,30 +1,26 @@
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    table {
+        direction: rtl;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    .table th, .table td {
+        text-align: right;
     }
 
-    .footer {
-        position: absolute;
+    .table .text-left {
+        text-align: left !important;
     }
 
+    .text-float-right {
+        float: left !important;
+    }
+    @endif
     body {
         font-size: 10px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
@@ -54,7 +50,7 @@
     }
 
     .text-left {
-        text-align: left;
+        text-align: left !important;
     }
 
     table {
@@ -117,65 +113,20 @@
         margin-top: 0 !important;
     }
 
-    .pagenum:after {
-        content: counter(page);
+    .text-float-right {
+        float: right;
     }
 
-
-
 </style>
-<div id="footer">
-    <table style="width:100%;">
-        <tr>
-            <td colspan="2" style="width:100%">
-                <span class="font-weight-bold">Kindly confirm the balance and settle the pending invoices at the earliest.</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 40%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 60%">
-                        <br><br>
-                        <span class="font-weight-bold">Statement of Account for the Period {{ $fromDate }}
-                            to {{ $toDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
 <div class="content">
     <table style="width:100%;">
 
         <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
+{{--            <td style="width:50%;font-size: 10px;vertical-align: bottom;">--}}
 
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;"><b>{{ $currency }}</b></span><br>
+{{--            </td>--}}
+            <td style="width:100%; font-size: 10px;vertical-align: bottom;" class="@if(isset($lang) && $lang === 'ar') text-left @else text-right @endif">
+                <span style="@if(isset($lang) && $lang === 'ar') float: left !important; @else float: right; @endif"><b>{{ $currency }}</b></span><br>
             </td>
         </tr>
     </table>
@@ -188,21 +139,21 @@
                     $subReceiptAmount = 0;
                     $subBalanceAmount = 0;
                 @endphp
-            <table style="width:95%;border:1px solid #9fcdff" class="table">
+            <table style="width:100%;border:1px solid #9fcdff" class="table">
                 <thead>
                 <tr>
-                    <th width="10%">Document Code</th>
-                    <th width="6%">Posted Date</th>
-                    <th width="5%">Contract</th>
-                    <th width="5%">PO Number</th>
-                    <th width="7%">Invoice Date</th>
-                    <th width="10%">Narration</th>
-                    <th width="5%">Currency</th>
-                    <th width="10%">Invoice Amount</th>
-                    <th width="5%">Receipt/CN Code</th>
-                    <th width="5%">Receipt/CN Date</th>
-                    <th width="10%">Receipt Amount</th>
-                    <th width="10%">Balance Amount</th>
+                    <th width="10%">{{ trans('custom.document_code') }}</th>
+                    <th width="6%">{{ trans('custom.posted_date') }}</th>
+                    <th width="5%">{{ trans('custom.contract') }}</th>
+                    <th width="5%">{{ trans('custom.po_number') }}</th>
+                    <th width="7%">{{ trans('custom.invoice_date') }}</th>
+                    <th width="10%">{{ trans('custom.narration') }}</th>
+                    <th width="5%">{{ trans('custom.currency') }}</th>
+                    <th width="10%">{{ trans('custom.invoice_amount') }}</th>
+                    <th width="5%">{{ trans('custom.receipt_cn_code') }}</th>
+                    <th width="5%">{{ trans('custom.receipt_cn_date') }}</th>
+                    <th width="10%">{{ trans('custom.receipt_amount') }}</th>
+                    <th width="10%">{{ trans('custom.balance_amount') }}</th>
                 </tr>
                 </thead>
 
@@ -225,31 +176,26 @@
                         <td class="text-right">{{number_format($det->balanceAmount, $det->balanceDecimalPlaces)}}</td>
                     </tr>
                 @endforeach
-                    <tr style="background-color: #E7E7E7">
-                        <td colspan="7" class="text-right"
-                            style=""><b>Sub Total:</b>
-                        </td>
-                        <td class="text-right">
-                            <b>{{number_format($subInvoiceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
-                        <td colspan="2" style=""
-                            class="text-right"></td>
-                        <td class="text-right">
-                            <b>{{number_format($subReceiptAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
-                        <td class="text-right">
-                            <b>{{number_format($subBalanceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
-                    </tr>
-            @if($currencyID != 1)
                 <tr style="background-color: #E7E7E7">
-                    <td colspan="7" class="text-right"
-                        style=""><b>Grand Total:</b></td>
-                    <td class="text-right"><b>{{number_format($invoiceAmount, $currencyDecimalPlace)}}</b></td>
-                    <td colspan="2" style=""
-                        class="text-right"></td>
-                    <td class="text-right"><b>{{number_format($receiptAmount, $currencyDecimalPlace)}}</b></td>
-                    <td class="text-right"><b>{{number_format($balanceAmount, $currencyDecimalPlace)}}</b></td>
+                    <td colspan="7" class="@if(isset($lang) && $lang === 'ar') text-left @else text-right @endif"><b>{{ trans('custom.sub_total') }}:</b></td>
+                    <td class="text-right">
+                        <b>{{number_format($subInvoiceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
+                    <td colspan="2" class="text-right"></td>
+                    <td class="text-right">
+                        <b>{{number_format($subReceiptAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
+                    <td class="text-right">
+                        <b>{{number_format($subBalanceAmount, $val[$key1][0]->balanceDecimalPlaces)}}</b></td>
                 </tr>
-            @endif
-    </table>
+                @if($currencyID != 1)
+                    <tr style="background-color: #E7E7E7">
+                        <td colspan="7" class="@if(isset($lang) && $lang === 'ar') text-left @else text-right @endif"><b>{{ trans('custom.grand_total') }}:</b></td>
+                        <td class="text-right"><b>{{number_format($invoiceAmount, $currencyDecimalPlace)}}</b></td>
+                        <td colspan="2" class="text-right"></td>
+                        <td class="text-right"><b>{{number_format($receiptAmount, $currencyDecimalPlace)}}</b></td>
+                        <td class="text-right"><b>{{number_format($balanceAmount, $currencyDecimalPlace)}}</b></td>
+                    </tr>
+                @endif
+            </table>
         @endforeach
 
     @endforeach

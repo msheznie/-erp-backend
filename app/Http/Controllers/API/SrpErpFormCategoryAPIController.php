@@ -65,7 +65,7 @@ class SrpErpFormCategoryAPIController extends AppBaseController
         $this->srpErpFormCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpFormCategories = $this->srpErpFormCategoryRepository->all();
 
-        return $this->sendResponse($srpErpFormCategories->toArray(), 'Srp Erp Form Categories retrieved successfully');
+        return $this->sendResponse($srpErpFormCategories->toArray(), trans('custom.srp_erp_form_categories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpErpFormCategoryAPIController extends AppBaseController
 
         $srpErpFormCategory = $this->srpErpFormCategoryRepository->create($input);
 
-        return $this->sendResponse($srpErpFormCategory->toArray(), 'Srp Erp Form Category saved successfully');
+        return $this->sendResponse($srpErpFormCategory->toArray(), trans('custom.srp_erp_form_category_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpErpFormCategoryAPIController extends AppBaseController
         $srpErpFormCategory = $this->srpErpFormCategoryRepository->findWithoutFail($id);
 
         if (empty($srpErpFormCategory)) {
-            return $this->sendError('Srp Erp Form Category not found');
+            return $this->sendError(trans('custom.srp_erp_form_category_not_found'));
         }
 
-        return $this->sendResponse($srpErpFormCategory->toArray(), 'Srp Erp Form Category retrieved successfully');
+        return $this->sendResponse($srpErpFormCategory->toArray(), trans('custom.srp_erp_form_category_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpErpFormCategoryAPIController extends AppBaseController
         $srpErpFormCategory = $this->srpErpFormCategoryRepository->findWithoutFail($id);
 
         if (empty($srpErpFormCategory)) {
-            return $this->sendError('Srp Erp Form Category not found');
+            return $this->sendError(trans('custom.srp_erp_form_category_not_found'));
         }
 
         $srpErpFormCategory = $this->srpErpFormCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpFormCategory->toArray(), 'SrpErpFormCategory updated successfully');
+        return $this->sendResponse($srpErpFormCategory->toArray(), trans('custom.srperpformcategory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpErpFormCategoryAPIController extends AppBaseController
         $srpErpFormCategory = $this->srpErpFormCategoryRepository->findWithoutFail($id);
 
         if (empty($srpErpFormCategory)) {
-            return $this->sendError('Srp Erp Form Category not found');
+            return $this->sendError(trans('custom.srp_erp_form_category_not_found'));
         }
 
         $srpErpFormCategory->delete();

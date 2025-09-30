@@ -429,7 +429,7 @@ class ExportPODetailExcel {
 
     private function sendNotification($basePath) {
         $webPushData = [
-            'title' => "Purchase Order Detailed Excel has been generated",
+            'title' => "purchase_order_detailed_excel_generated",
             'body' => '',
             'url' => '',
             'path' => $basePath,

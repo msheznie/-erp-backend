@@ -65,7 +65,7 @@ class InterCompanyAssetDisposalAPIController extends AppBaseController
         $this->interCompanyAssetDisposalRepository->pushCriteria(new LimitOffsetCriteria($request));
         $interCompanyAssetDisposals = $this->interCompanyAssetDisposalRepository->all();
 
-        return $this->sendResponse($interCompanyAssetDisposals->toArray(), 'Inter Company Asset Disposals retrieved successfully');
+        return $this->sendResponse($interCompanyAssetDisposals->toArray(), trans('custom.inter_company_asset_disposals_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class InterCompanyAssetDisposalAPIController extends AppBaseController
 
         $interCompanyAssetDisposal = $this->interCompanyAssetDisposalRepository->create($input);
 
-        return $this->sendResponse($interCompanyAssetDisposal->toArray(), 'Inter Company Asset Disposal saved successfully');
+        return $this->sendResponse($interCompanyAssetDisposal->toArray(), trans('custom.inter_company_asset_disposal_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class InterCompanyAssetDisposalAPIController extends AppBaseController
         $interCompanyAssetDisposal = $this->interCompanyAssetDisposalRepository->findWithoutFail($id);
 
         if (empty($interCompanyAssetDisposal)) {
-            return $this->sendError('Inter Company Asset Disposal not found');
+            return $this->sendError(trans('custom.inter_company_asset_disposal_not_found'));
         }
 
-        return $this->sendResponse($interCompanyAssetDisposal->toArray(), 'Inter Company Asset Disposal retrieved successfully');
+        return $this->sendResponse($interCompanyAssetDisposal->toArray(), trans('custom.inter_company_asset_disposal_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class InterCompanyAssetDisposalAPIController extends AppBaseController
         $interCompanyAssetDisposal = $this->interCompanyAssetDisposalRepository->findWithoutFail($id);
 
         if (empty($interCompanyAssetDisposal)) {
-            return $this->sendError('Inter Company Asset Disposal not found');
+            return $this->sendError(trans('custom.inter_company_asset_disposal_not_found'));
         }
 
         $interCompanyAssetDisposal = $this->interCompanyAssetDisposalRepository->update($input, $id);
 
-        return $this->sendResponse($interCompanyAssetDisposal->toArray(), 'InterCompanyAssetDisposal updated successfully');
+        return $this->sendResponse($interCompanyAssetDisposal->toArray(), trans('custom.intercompanyassetdisposal_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class InterCompanyAssetDisposalAPIController extends AppBaseController
         $interCompanyAssetDisposal = $this->interCompanyAssetDisposalRepository->findWithoutFail($id);
 
         if (empty($interCompanyAssetDisposal)) {
-            return $this->sendError('Inter Company Asset Disposal not found');
+            return $this->sendError(trans('custom.inter_company_asset_disposal_not_found'));
         }
 
         $interCompanyAssetDisposal->delete();

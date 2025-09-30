@@ -557,7 +557,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
         {
-            return $this->sendError('The invoice type and details have already been modified by another user');
+            return $this->sendError(trans('custom.the_invoice_type_and_details_have_already_been_mod'));
         }
 
         DB::beginTransaction();
@@ -824,7 +824,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         DB::beginTransaction();

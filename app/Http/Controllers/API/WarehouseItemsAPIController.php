@@ -82,7 +82,7 @@ class WarehouseItemsAPIController extends AppBaseController
         $this->warehouseItemsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseItems = $this->warehouseItemsRepository->all();
 
-        return $this->sendResponse($warehouseItems->toArray(), 'Warehouse Items retrieved successfully');
+        return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouse_items_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class WarehouseItemsAPIController extends AppBaseController
 
         $warehouseItems = $this->warehouseItemsRepository->create($input);
 
-        return $this->sendResponse($warehouseItems->toArray(), 'Warehouse Items saved successfully');
+        return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouse_items_saved_successfully'));
     }
 
     /**
@@ -176,10 +176,10 @@ class WarehouseItemsAPIController extends AppBaseController
         $warehouseItems = $this->warehouseItemsRepository->findWithoutFail($id);
 
         if (empty($warehouseItems)) {
-            return $this->sendError('Warehouse Items not found');
+            return $this->sendError(trans('custom.warehouse_items_not_found'));
         }
 
-        return $this->sendResponse($warehouseItems->toArray(), 'Warehouse Items retrieved successfully');
+        return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouse_items_retrieved_successfully'));
     }
 
     /**
@@ -236,7 +236,7 @@ class WarehouseItemsAPIController extends AppBaseController
         $warehouseItems = $this->warehouseItemsRepository->findWithoutFail($id);
 
         if (empty($warehouseItems)) {
-            return $this->sendError('Warehouse Items not found');
+            return $this->sendError(trans('custom.warehouse_items_not_found'));
         }
 
         if (!isset($input['binNumber'])) {
@@ -259,7 +259,7 @@ class WarehouseItemsAPIController extends AppBaseController
         {
             $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
         }
-        return $this->sendResponse($warehouseItems->toArray(), 'WarehouseItems updated successfully');
+        return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouseitems_updated_successfully'));
     }
 
     /**
@@ -306,12 +306,12 @@ class WarehouseItemsAPIController extends AppBaseController
         $warehouseItems = $this->warehouseItemsRepository->findWithoutFail($id);
 
         if (empty($warehouseItems)) {
-            return $this->sendError('Warehouse Items not found');
+            return $this->sendError(trans('custom.warehouse_items_not_found'));
         }
 
         $warehouseItems->delete();
 
-        return $this->sendResponse($id, 'Warehouse Items deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_items_deleted_successfully'));
     }
 
     /**
@@ -407,27 +407,27 @@ class WarehouseItemsAPIController extends AppBaseController
             $x = 0;
             foreach ($output as $value) {
 
-                $data[$x]['Item code'] = $value->itemPrimaryCode;
-                $data[$x]['Item Description'] = $value->itemDescription;
+                $data[$x][trans('custom.item_code')] = $value->itemPrimaryCode;
+                $data[$x][trans('custom.item_description')] = $value->itemDescription;
 
                 if ($value->unit) {
-                    $data[$x]['Unit'] = $value->unit['UnitShortCode'];
+                    $data[$x][trans('custom.unit')] = $value->unit['UnitShortCode'];
                 } else {
-                    $data[$x]['Unit'] = '-';
+                    $data[$x][trans('custom.unit')] = '-';
                 }
 
                 if ($value->finance_sub_category) {
-                    $data[$x]['Category'] = $value->finance_sub_category['categoryDescription'];
+                    $data[$x][trans('custom.category')] = $value->finance_sub_category['categoryDescription'];
                 } else {
-                    $data[$x]['Category'] = '-';
+                    $data[$x][trans('custom.category')] = '-';
                 }
 
-                $data[$x]['warehouse'] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
+                $data[$x][trans('custom.warehouse')] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
                 $bin = WarehouseBinLocation::find($value->binNumber);
-                $data[$x]['Bin Location'] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
+                $data[$x][trans('custom.bin_location')] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
               
-                $data[$x]['Min Qty'] = number_format($value->minimumQty, 2);
-                $data[$x]['Max Qty'] = number_format($value->maximunQty, 2);
+                $data[$x][trans('custom.min_qty')] = number_format($value->minimumQty, 2);
+                $data[$x][trans('custom.max_qty')] = number_format($value->maximunQty, 2);
 
                 $localDecimal = 3;
                 $rptDecimal = 2;
@@ -443,27 +443,23 @@ class WarehouseItemsAPIController extends AppBaseController
                     'wareHouseId' => $value->warehouseSystemCode);
                  $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);                
 
-                 $data[$x]['Stock Qty'] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
-                 $data[$x]['WAC Local'] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
-                 $data[$x]['WAC Rpt'] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
-                 $data[$x]['WAC Local Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostLocal'],$localDecimal) :number_format($value->current['totalWacCostLocal'],$localDecimal);
-                 $data[$x]['WAC Rpt Val'] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostRpt'],$rptDecimal) :number_format($value->current['totalWacCostRpt'],$rptDecimal);
+                 $data[$x][trans('custom.stock_qty')] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
+                 $data[$x][trans('custom.wac_local')] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
+                 $data[$x][trans('custom.wac_rpt')] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
+                 $data[$x][trans('custom.wac_local_val')] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostLocal'],$localDecimal) :number_format($value->current['totalWacCostLocal'],$localDecimal);
+                 $data[$x][trans('custom.wac_rpt_val')] = $value->isTrack == 1? number_format($value->binLocation['totalWacCostRpt'],$rptDecimal) :number_format($value->current['totalWacCostRpt'],$rptDecimal);
                  $x++;
             }
         }
 
-
          \Excel::create('items_by_warehouse', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet('Items by warehouse', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+         })->download('xls');
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     public function getAssignedItemsByWareHouse($input)

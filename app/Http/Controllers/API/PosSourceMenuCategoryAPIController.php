@@ -65,7 +65,7 @@ class PosSourceMenuCategoryAPIController extends AppBaseController
         $this->posSourceMenuCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $posSourceMenuCategories = $this->posSourceMenuCategoryRepository->all();
 
-        return $this->sendResponse($posSourceMenuCategories->toArray(), 'Pos Source Menu Categories retrieved successfully');
+        return $this->sendResponse($posSourceMenuCategories->toArray(), trans('custom.pos_source_menu_categories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PosSourceMenuCategoryAPIController extends AppBaseController
 
         $posSourceMenuCategory = $this->posSourceMenuCategoryRepository->create($input);
 
-        return $this->sendResponse($posSourceMenuCategory->toArray(), 'Pos Source Menu Category saved successfully');
+        return $this->sendResponse($posSourceMenuCategory->toArray(), trans('custom.pos_source_menu_category_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PosSourceMenuCategoryAPIController extends AppBaseController
         $posSourceMenuCategory = $this->posSourceMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuCategory)) {
-            return $this->sendError('Pos Source Menu Category not found');
+            return $this->sendError(trans('custom.pos_source_menu_category_not_found'));
         }
 
-        return $this->sendResponse($posSourceMenuCategory->toArray(), 'Pos Source Menu Category retrieved successfully');
+        return $this->sendResponse($posSourceMenuCategory->toArray(), trans('custom.pos_source_menu_category_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PosSourceMenuCategoryAPIController extends AppBaseController
         $posSourceMenuCategory = $this->posSourceMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuCategory)) {
-            return $this->sendError('Pos Source Menu Category not found');
+            return $this->sendError(trans('custom.pos_source_menu_category_not_found'));
         }
 
         $posSourceMenuCategory = $this->posSourceMenuCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($posSourceMenuCategory->toArray(), 'PosSourceMenuCategory updated successfully');
+        return $this->sendResponse($posSourceMenuCategory->toArray(), trans('custom.possourcemenucategory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PosSourceMenuCategoryAPIController extends AppBaseController
         $posSourceMenuCategory = $this->posSourceMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuCategory)) {
-            return $this->sendError('Pos Source Menu Category not found');
+            return $this->sendError(trans('custom.pos_source_menu_category_not_found'));
         }
 
         $posSourceMenuCategory->delete();

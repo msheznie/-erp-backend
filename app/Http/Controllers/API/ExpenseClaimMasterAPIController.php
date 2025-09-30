@@ -65,7 +65,7 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $this->expenseClaimMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseClaimMasters = $this->expenseClaimMasterRepository->all();
 
-        return $this->sendResponse($expenseClaimMasters->toArray(), 'Expense Claim Masters retrieved successfully');
+        return $this->sendResponse($expenseClaimMasters->toArray(), trans('custom.expense_claim_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ExpenseClaimMasterAPIController extends AppBaseController
 
         $expenseClaimMaster = $this->expenseClaimMasterRepository->create($input);
 
-        return $this->sendResponse($expenseClaimMaster->toArray(), 'Expense Claim Master saved successfully');
+        return $this->sendResponse($expenseClaimMaster->toArray(), trans('custom.expense_claim_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimMaster)) {
-            return $this->sendError('Expense Claim Master not found');
+            return $this->sendError(trans('custom.expense_claim_master_not_found_1'));
         }
 
-        return $this->sendResponse($expenseClaimMaster->toArray(), 'Expense Claim Master retrieved successfully');
+        return $this->sendResponse($expenseClaimMaster->toArray(), trans('custom.expense_claim_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimMaster)) {
-            return $this->sendError('Expense Claim Master not found');
+            return $this->sendError(trans('custom.expense_claim_master_not_found_1'));
         }
 
         $expenseClaimMaster = $this->expenseClaimMasterRepository->update($input, $id);
 
-        return $this->sendResponse($expenseClaimMaster->toArray(), 'ExpenseClaimMaster updated successfully');
+        return $this->sendResponse($expenseClaimMaster->toArray(), trans('custom.expenseclaimmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimMaster)) {
-            return $this->sendError('Expense Claim Master not found');
+            return $this->sendError(trans('custom.expense_claim_master_not_found_1'));
         }
 
         $expenseClaimMaster->delete();
@@ -285,21 +285,22 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
         $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
 
-        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim retrieved successfully');
+        return $this->sendResponse($expenseClaim->toArray(), trans('custom.expense_claim_retrieved_successfully'));
     }
 
     public function printExpenseClaimMaster(Request $request)
     {
         $id = $request->get('id');
+        $lang = $request->get('lang', 'en');
         $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
         $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
@@ -330,14 +331,32 @@ class ExpenseClaimMasterAPIController extends AppBaseController
             }
         }
 
-        $array = array('entity' => $expenseClaim);
+        $array = array('entity' => $expenseClaim, 'lang' => $lang);
         $time = strtotime("now");
         $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
+        
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+        
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-L', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+        
         $html = view('print.expense_claim', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
 
@@ -377,7 +396,7 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
 
         if (empty($expenseClaim)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
         $detail = \DB::select('SELECT
@@ -420,6 +439,6 @@ class ExpenseClaimMasterAPIController extends AppBaseController
                             ;');
 
 
-        return $this->sendResponse($detail, 'payment status retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
 }

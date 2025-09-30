@@ -40,6 +40,7 @@ use App\Models\AssetType;
 use App\Scopes\ActiveScope;
 use App\Services\AssetManagementService;
 use App\Services\Currency\CurrencyService;
+use App\Services\Excel\ExportReportToExcelService;
 use App\Services\Excel\ExportVatDetailReportService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -427,9 +428,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
 
                     $costTotal['total'] = collect($costTotal)->values()->sum();
-                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $costTotal['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $depTotal['total'] = collect($depTotal)->values()->sum();
-                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $output['depQry'] = collect($output['depQry'])->toArray();
                     $output['costQry'] = collect($output['costQry'])->toArray();
                     $output['depQry'][] = $depTotal;
@@ -438,7 +439,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $nbv['total'] = collect($nbv)->values()->sum();
                     $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
                     $nbv['description'] = $beginingFinancialYear;
-                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $nbvEnd['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $output['nbvQry'][] = $nbv;
                     $output['nbvQry'][] = $nbvEnd;
 
@@ -857,8 +858,8 @@ class AssetManagementReportAPIController extends AppBaseController
                         'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
 
                     ];
-                    $title = "Asset Register Detail Report";
-                    $fileName = 'asset_register_detail';
+                    $title = trans('custom.asset_register_detail_report');
+                    $fileName = trans('custom.asset_register_detail');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -880,7 +881,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                     if(!$exportToExcel['success'])
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
                     return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -911,33 +912,33 @@ class AssetManagementReportAPIController extends AppBaseController
                             $datetime = Carbon::parse($value->dateAQ);
                             $datetime2 = Carbon::parse($value->dateDEP);
 
-                            $data[$x]["Fixed Asset Code"] = $value->faCode;
-                            $data[$x]["Asset Description"] = $value->assetDescription;
-                            $data[$x]["Account Code"] = $value->COSTGLCODE;
-                            $data[$x]["Asset Class"] = is_string($value->financeCatDescription) ? htmlspecialchars_decode($value->financeCatDescription) : $value->financeCatDescription;
-                            $data[$x]["Serial Number"] = $value->faUnitSerialNo;
-                            $data[$x]["Location"] = $value->locationName;
-                            $data[$x]["Sub-Location"] = $value->ServiceLineDes;
-                            $data[$x]["Acquisition Date"] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateAQ)) : null;
-                            $data[$x]["Supplier Name"] = $value->supplierName;
-                            $data[$x]["Acquisition Cost (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces));
-                            $data[$x]["Place in Service Date"] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateDEP)) : null;
-                            $data[$x]["Useful Life"] = $value->depMonth;
-                            $data[$x]["Remaining Life"] = $value->depMonth - $value->depreciatedMonths;
-                            $data[$x]["Depr. Type"] = "SL";
-                            $data[$x]["Depreciation %"] = $value->DEPpercentage;
-                            $data[$x]["Depreciation for the period (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces));
-                            $data[$x]["Accumulated Depreciation  (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces));
-                            $data[$x]["NBV (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces));
-                            $data[$x]["Additions"] = 0;
-                            $data[$x]["Revaluations"] = 0;
+                            $data[$x][trans('custom.fixed_asset_code')] = $value->faCode;
+                            $data[$x][trans('custom.asset_description')] = $value->assetDescription;
+                            $data[$x][trans('custom.account_code')] = $value->COSTGLCODE;
+                            $data[$x][trans('custom.asset_class')] = is_string($value->financeCatDescription) ? htmlspecialchars_decode($value->financeCatDescription) : $value->financeCatDescription;
+                            $data[$x][trans('custom.serial_number')] = $value->faUnitSerialNo;
+                            $data[$x][trans('custom.location')] = $value->locationName;
+                            $data[$x][trans('custom.sub_location')] = $value->ServiceLineDes;
+                            $data[$x][trans('custom.acquisition_date')] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateAQ)) : null;
+                            $data[$x][trans('custom.supplier_name')] = $value->supplierName;
+                            $data[$x][trans('custom.acquisition_cost')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces));
+                            $data[$x][trans('custom.place_in_service_date')] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateDEP)) : null;
+                            $data[$x][trans('custom.useful_life')] = $value->depMonth;
+                            $data[$x][trans('custom.remaining_life')] = $value->depMonth - $value->depreciatedMonths;
+                            $data[$x][trans('custom.depr_type')] = "SL";
+                            $data[$x][trans('custom.depreciation_percentage')] = $value->DEPpercentage;
+                            $data[$x][trans('custom.depreciation_for_the_period')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces));
+                            $data[$x][trans('custom.accumulated_depreciation')."  (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces));
+                            $data[$x][trans('custom.nbv')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces));
+                            $data[$x][trans('custom.additions')] = 0;
+                            $data[$x][trans('custom.revaluations')] = 0;
 
                             $disposalValue = $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
-                            $data[$x]["Disposals (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round((($value->DIPOSED == -1) ? $disposalValue : 0), $decimalPlaces));
+                            $data[$x][trans('custom.disposals')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round((($value->DIPOSED == -1) ? $disposalValue : 0), $decimalPlaces));
                             $disposalProfit = $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - (floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt))) : (floatval($value->sellingPriceLocal) - (floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)));
-                            $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6) ? $disposalProfit : 0, $decimalPlaces));
-                            $data[$x]["Impairment"] = 0;
-                            $data[$x]["Write-Offs"] = 0;
+                            $data[$x][trans('custom.profit_loss_on_disposal')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6) ? $disposalProfit : 0, $decimalPlaces));
+                            $data[$x][trans('custom.impairment')] = 0;
+                            $data[$x][trans('custom.write_offs')] = 0;
 
                             $totAcq += ($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT;
                            $totDepPed += ($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal;
@@ -962,7 +963,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x][5] = "";
                         $data[$x][6] = "";
                         $data[$x][7] = "";
-                        $data[$x][8] = "Total";
+                        $data[$x][8] = trans('custom.total');
                         $data[$x][9] = CurrencyService::convertNumberFormatToNumber(round($totAcq, $decimalPlaces));;
                         $data[$x][10] = "";
                         $data[$x][11] = "";
@@ -997,13 +998,13 @@ class AssetManagementReportAPIController extends AppBaseController
                         'excelFormat' => $excelColumnFormat
                     );
 
-                    $fileName = 'asset_register_detail_3';
+                    $fileName = trans('custom.asset_register_detail_3');
                     $path = 'asset_register/report/excel/';
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                     if($basePath == '')
                     {
-                         return $this->sendError('Unable to export excel');
+                         return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
@@ -1012,7 +1013,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID', 'excelType'));
 
 
                     $output = $this->getAssetRegisterDetail2($request);
@@ -1036,7 +1037,20 @@ class AssetManagementReportAPIController extends AppBaseController
                         $headers = collect($assetRegisterDetail2Header->getHeader())->toArray();
 
                         foreach ($headers as &$header) {
-                            if (in_array($header, ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])) {
+                            if (in_array($header, [
+                                trans('custom.jan'),
+                                trans('custom.feb'),
+                                trans('custom.mar'),
+                                trans('custom.apr'),
+                                trans('custom.may'),
+                                trans('custom.jun'),
+                                trans('custom.jul'),
+                                trans('custom.aug'),
+                                trans('custom.sep'),
+                                trans('custom.oct'),
+                                trans('custom.nov'),
+                                trans('custom.dec')
+                            ])) {
                                 $header .= '-' . substr($year, -2);
                             }
                         }
@@ -1116,8 +1130,8 @@ class AssetManagementReportAPIController extends AppBaseController
                         'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
-                    $title = "Asset Register Detail2 Report";
-                    $fileName = 'asset_register_detail_2';
+                    $title = trans('custom.asset_register_detail2_report');
+                    $fileName = trans('custom.asset_register_detail2_report');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
@@ -1128,20 +1142,24 @@ class AssetManagementReportAPIController extends AppBaseController
                         ->setCompanyName("")
                         ->setFromDate("")
                         ->setToDate("")
-                        ->setType($type)
-                        ->setReportType(4)
+                        ->setType('xls')
+                        ->setReportType(2)
                         ->setCurrency("")
                         ->setExcelFormat($excelColumnFormat)
                         ->setData($dataArray)
                         ->setDateType(2)
                         ->setDetails()
-                        ->setExcelType(2)
                         ->generateExcel();
+
+                    if(!$exportToExcel['success'])
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
+
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID', 'excelType'));
                     $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
                     $financeYear = CompanyFinanceYear::find($request->financeYear);
                     $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
@@ -1156,26 +1174,22 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $filteredCostQry = $costQry->firstWhere('description', $beginingFinancialYear);
                     $filteredDepQry = $depQry->firstWhere('description', $beginingFinancialYear);
-                    $data = array();
+                    // Use the same data processing as generateReport function
                     if (count($assetCategory) > 0) {
-                        $assetRegisterSummaryHeaderObj = new AssetRegisterSummary();
-                        $headerArray = $assetRegisterSummaryHeaderObj->getHeader($assetCategory);
-                        array($data,$headerArray);
                         foreach ($assetCategory as $val) {
                             $depTotal[$val['financeCatDescription']] = $depQry->sum($val['financeCatDescription']);
                             $costTotal[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']);
                             $nbv[$val['financeCatDescription']] = $filteredCostQry[$val['financeCatDescription']] - $filteredDepQry[$val['financeCatDescription']];
                             $nbvEnd[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']) - $depQry->sum($val['financeCatDescription']);
                         }
-
                     }
 
                     $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
 
                     $costTotal['total'] = collect($costTotal)->values()->sum();
-                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $costTotal['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $depTotal['total'] = collect($depTotal)->values()->sum();
-                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $output['depQry'] = collect($output['depQry'])->toArray();
                     $output['costQry'] = collect($output['costQry'])->toArray();
                     $output['depQry'][] = $depTotal;
@@ -1184,7 +1198,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $nbv['total'] = collect($nbv)->values()->sum();
                     $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
                     $nbv['description'] = $beginingFinancialYear;
-                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $nbvEnd['description'] = trans('custom.as_at_end_of') . ' ' . $selectedMonthYear;
                     $output['nbvQry'][] = $nbv;
                     $output['nbvQry'][] = $nbvEnd;
 
@@ -1200,52 +1214,69 @@ class AssetManagementReportAPIController extends AppBaseController
                         $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
                     }
 
-                    $x = 0;
+                    // Generate data for Excel export
+                    $data = array();
+                    
+                    // Add header row with proper column headers
+                    $headerRow = array();
+                    $headerRow[trans('custom.description')] = trans('custom.description');
                     if (count($assetCategory) > 0) {
                         foreach ($assetCategory as $val2) {
-                            $data[$x]['Description'] = '';
-                            $data[$x][$val2['financeCatDescription']] = '';
+                            $headerRow[$val2['financeCatDescription']] = $val2['financeCatDescription'];
                         }
                     }
-                    $data[$x]['Total'] = '';
-                    $x++;
-                    $data[$x][''] = 'Cost(' . $currencyCode . ')';
-                    $x++;
+                    $headerRow[trans('custom.total')] = trans('custom.total');
+                    $data[] = $headerRow;
+                    
+                    // Add Cost section
+                    $costSectionRow = array_fill_keys(array_keys($headerRow), '');
+                    $costSectionRow[trans('custom.description')] = 'Cost(' . $currencyCode . ')';
+                    $data[] = $costSectionRow;
+                    
                     foreach ($output['costQry'] as $val) {
+                        $row = array();
+                        $row[trans('custom.description')] = $val['description'];
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
                             }
                         }
-                        $data[$x]['Total'] = $val['total'];
-                        $x++;
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $data[] = $row;
                     }
-                    $x++;
-                    $data[$x][''] = 'Depreciation(' . $currencyCode . ')';
-                    $x++;
+                    
+                    // Add Depreciation section
+                    $depSectionRow = array_fill_keys(array_keys($headerRow), '');
+                    $depSectionRow[trans('custom.description')] = 'Depreciation(' . $currencyCode . ')';
+                    $data[] = $depSectionRow;
+                    
                     foreach ($output['depQry'] as $val) {
+                        $row = array();
+                        $row[trans('custom.description')] = $val['description'];
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
                             }
                         }
-                        $data[$x]['Total'] = $val['total'];
-                        $x++;
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $data[] = $row;
                     }
-                    $x++;
-                    $data[$x][''] = 'Net Book Value(' . $currencyCode . ')';
-                    $x++;
+                    
+                    // Add Net Book Value section
+                    $nbvSectionRow = array_fill_keys(array_keys($headerRow), '');
+                    $nbvSectionRow[trans('custom.description')] = 'Net Book Value(' . $currencyCode . ')';
+                    $data[] = $nbvSectionRow;
+                    
                     foreach ($output['nbvQry'] as $val) {
+                        $row = array();
+                        $row[trans('custom.description')] = $val['description'];
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
                             }
                         }
-                        $data[$x]['Total'] = $val['total'];
-                        $x++;
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $data[] = $row;
                     }
 
 
@@ -1276,28 +1307,34 @@ class AssetManagementReportAPIController extends AppBaseController
                         'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
-                    $title = "Asset Register Summary Report";
-                    $fileName = 'asset_register_summary';
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    
+                    $title = trans('custom.asset_register_summary_report');
+                    $fileName = trans('custom.asset_register_summary_report');
+                    $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
                         ->setTitle($title)
                         ->setFileName($fileName)
-                        ->setPath("")
-                        ->setCompanyCode("")
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
                         ->setCompanyName("")
                         ->setFromDate("")
                         ->setToDate("")
-                        ->setType($type)
+                        ->setType("xls")
                         ->setReportType(2)
                         ->setCurrency("")
                         ->setExcelFormat($excelColumnFormat)
                         ->setData($data)
-                        ->setDateType(1)
+                        ->setDateType(2)
                         ->setDetails()
-                        ->setExcelType(2)
                         ->generateExcel();
 
+                    if(!$exportToExcel['success'])
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                 }
 
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
@@ -1312,68 +1349,68 @@ class AssetManagementReportAPIController extends AppBaseController
                     if (!empty($outputArr)) {
 
                         foreach ($outputArr as $masterKey => $masterVal) {
-                            $data[$x]['Cost GL'] = $masterKey;
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
+                            $data[$x][trans('custom.cost_gl')] = $masterKey;
+                            $data[$x][trans('custom.acc_dep_gl')] = '';
+                            $data[$x][trans('custom.e_type')] = '';
 
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = '';
-                            $data[$x]['Local Amount unitcost'] = '';
-                            $data[$x]['Local Amount accDep'] = '';
-                            $data[$x]['Local Amount net Value'] = '';
-                            $data[$x]['Rpt Amount unit cost'] = '';
-                            $data[$x]['Rpt Amount acc dep'] = '';
-                            $data[$x]['Rpt Amount acc net value'] = '';
-
-                            $x++;
-
-                            $data[$x]['Cost GL'] = 'Cost GL';
-                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
-                            $data[$x]['Type'] = 'Type';
-                            $data[$x]['Segment'] = 'Segment';
-                            $data[$x]['category'] = 'Finance Category';
-                            $data[$x]['FA Code'] = 'FA Code';
-                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
-                            $data[$x]['Serial Number'] = 'Serial Number';
-                            $data[$x]['Asset Description'] = 'Asset Description';
-                            $data[$x]['DEP %'] = 'DEP %';
-                            $data[$x]['Date Aquired'] = 'Date Aquired';
-                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
-                            $data[$x]['Local Amount unitcost'] = '';
-                            $data[$x]['Local Amount accDep'] = '';
-                            $data[$x]['Local Amount net Value'] = 'Local Amount';
-                            $data[$x]['Rpt Amount unit cost'] = '';
-                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
-                            $data[$x]['Rpt Amount acc net value'] = '';
+                            $data[$x][trans('custom.e_segment')] = '';
+                            $data[$x][trans('custom.category')] = '';
+                            $data[$x][trans('custom.fa_code')] = '';
+                            $data[$x][trans('custom.grouped_yn')] = '';
+                            $data[$x][trans('custom.serial_number')] = '';
+                            $data[$x][trans('custom.asset_description')] = '';
+                            $data[$x][trans('custom.dep_percentage')] = '';
+                            $data[$x][trans('custom.date_acquired')] = '';
+                            $data[$x][trans('custom.dep_start_date')] = '';
+                            $data[$x][trans('custom.local_amount_unitcost')] = '';
+                            $data[$x][trans('custom.local_amount_accdep')] = '';
+                            $data[$x][trans('custom.local_amount_net_value')] = '';
+                            $data[$x][trans('custom.rpt_amount_unit_cost')] = '';
+                            $data[$x][trans('custom.rpt_amount_acc_dep')] = '';
+                            $data[$x][trans('custom.rpt_amount_acc_net_value')] = '';
 
                             $x++;
 
-                            $data[$x]['Cost GL'] = '';
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x][trans('custom.cost_gl')] = trans('custom.cost_gl');
+                            $data[$x][trans('custom.acc_dep_gl')] = trans('custom.acc_dep_gl');
+                            $data[$x][trans('custom.e_type')] = trans('custom.e_type');
+                            $data[$x][trans('custom.e_segment')] = trans('custom.e_segment');
+                            $data[$x][trans('custom.category')] = trans('custom.finance_category');
+                            $data[$x][trans('custom.fa_code')] = trans('custom.fa_code');
+                            $data[$x][trans('custom.grouped_yn')] = trans('custom.grouped_fa_code');
+                            $data[$x][trans('custom.serial_number')] = trans('custom.serial_number');
+                            $data[$x][trans('custom.asset_description')] = trans('custom.asset_description');
+                            $data[$x][trans('custom.dep_percentage')] = trans('custom.dep_percentage');
+                            $data[$x][trans('custom.date_acquired')] = trans('custom.date_acquired');
+                            $data[$x][trans('custom.dep_start_date')] = trans('custom.dep_start_date');
+                            $data[$x][trans('custom.local_amount_unitcost')] = '';
+                            $data[$x][trans('custom.local_amount_accdep')] = '';
+                            $data[$x][trans('custom.local_amount_net_value')] = trans('custom.local_amount');
+                            $data[$x][trans('custom.rpt_amount_unit_cost')] = '';
+                            $data[$x][trans('custom.rpt_amount_acc_dep')] = trans('custom.rpt_amount');
+                            $data[$x][trans('custom.rpt_amount_acc_net_value')] = '';
 
-                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
-                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
-                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
-                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
-                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
-                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+                            $x++;
+
+                            $data[$x][trans('custom.cost_gl')] = '';
+                            $data[$x][trans('custom.acc_dep_gl')] = '';
+                            $data[$x][trans('custom.e_type')] = '';
+                            $data[$x][trans('custom.e_segment')] = '';
+                            $data[$x][trans('custom.category')] = '';
+                            $data[$x][trans('custom.fa_code')] = '';
+                            $data[$x][trans('custom.grouped_yn')] = '';
+                            $data[$x][trans('custom.serial_number')] = '';
+                            $data[$x][trans('custom.asset_description')] = '';
+                            $data[$x][trans('custom.dep_percentage')] = '';
+                            $data[$x][trans('custom.date_acquired')] = '';
+                            $data[$x][trans('custom.dep_start_date')] = '';
+
+                            $data[$x][trans('custom.local_amount_unitcost')] = trans('custom.unit_cost');
+                            $data[$x][trans('custom.local_amount_accdep')] = trans('custom.accdep_amount');
+                            $data[$x][trans('custom.local_amount_net_value')] = trans('custom.net_book_value');
+                            $data[$x][trans('custom.rpt_amount_unit_cost')] = trans('custom.unit_cost');
+                            $data[$x][trans('custom.rpt_amount_acc_dep')] = trans('custom.accdep_amount');
+                            $data[$x][trans('custom.rpt_amount_acc_net_value')] = trans('custom.net_book_value');
 
                             $x++;
 
@@ -1395,24 +1432,24 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $x++;
                                     $datetime = Carbon::parse($value->postedDate);
                                     $datetime2 = Carbon::parse($value->dateDEP);
-                                    $data[$x]['Cost GL'] = $value->COSTGLCODE;
-                                    $data[$x]['Acc Dep GL'] = $value->ACCDEPGLCODE;
-                                    $data[$x]['Type'] = $value->typeDes;
-                                    $data[$x]['Segment'] = $value->ServiceLineDes;
-                                    $data[$x]['category'] = $masterKey;
-                                    $data[$x]['FA Code'] = $value->faCode;
-                                    $data[$x]['Grouped YN'] = $value->groupbydesc;
-                                    $data[$x]['Serial Number'] = $value->faUnitSerialNo;
-                                    $data[$x]['Asset Description'] = $value->assetDescription;
-                                    $data[$x]['DEP %'] = round($value->DEPpercentage, 2);
-                                    $data[$x]['Date Aquired'] = ($value->postedDate) ?  $datetime->toDateString() : null;
-                                    $data[$x]['Dep Start Date'] = ($value->dateDEP) ?  $datetime2->toDateString() : null;
-                                    $data[$x]['Local Amount unitcost'] = CurrencyService::convertNumberFormatToNumber(round($value->COSTUNIT, $localDecimalPlace));
-                                    $data[$x]['Local Amount accDep'] = CurrencyService::convertNumberFormatToNumber(round($value->depAmountLocal, $localDecimalPlace));
-                                    $data[$x]['Local Amount net Value'] = CurrencyService::convertNumberFormatToNumber(round($value->localnbv, $localDecimalPlace));
-                                    $data[$x]['Rpt Amount unit cost'] = CurrencyService::convertNumberFormatToNumber(round($value->costUnitRpt, $rptDecimalPlace));
-                                    $data[$x]['Rpt Amount acc dep'] = CurrencyService::convertNumberFormatToNumber(round($value->depAmountRpt, $rptDecimalPlace));
-                                    $data[$x]['Rpt Amount acc net value'] = CurrencyService::convertNumberFormatToNumber(round($value->rptnbv, $rptDecimalPlace));
+                                    $data[$x][trans('custom.cost_gl')] = $value->COSTGLCODE;
+                                    $data[$x][trans('custom.acc_dep_gl')] = $value->ACCDEPGLCODE;
+                                    $data[$x][trans('custom.e_type')] = $value->typeDes;
+                                    $data[$x][trans('custom.e_segment')] = $value->ServiceLineDes;
+                                    $data[$x][trans('custom.category')] = $masterKey;
+                                    $data[$x][trans('custom.fa_code')] = $value->faCode;
+                                    $data[$x][trans('custom.grouped_yn')] = $value->groupbydesc;
+                                    $data[$x][trans('custom.serial_number')] = $value->faUnitSerialNo;
+                                    $data[$x][trans('custom.asset_description')] = $value->assetDescription;
+                                    $data[$x][trans('custom.dep_percentage')] = round($value->DEPpercentage, 2);
+                                    $data[$x][trans('custom.date_acquired')] = ($value->postedDate) ?  $datetime->toDateString() : null;
+                                    $data[$x][trans('custom.dep_start_date')] = ($value->dateDEP) ?  $datetime2->toDateString() : null;
+                                    $data[$x][trans('custom.local_amount_unitcost')] = CurrencyService::convertNumberFormatToNumber(round($value->COSTUNIT, $localDecimalPlace));
+                                    $data[$x][trans('custom.local_amount_accdep')] = CurrencyService::convertNumberFormatToNumber(round($value->depAmountLocal, $localDecimalPlace));
+                                    $data[$x][trans('custom.local_amount_net_value')] = CurrencyService::convertNumberFormatToNumber(round($value->localnbv, $localDecimalPlace));
+                                    $data[$x][trans('custom.rpt_amount_unit_cost')] = CurrencyService::convertNumberFormatToNumber(round($value->costUnitRpt, $rptDecimalPlace));
+                                    $data[$x][trans('custom.rpt_amount_acc_dep')] = CurrencyService::convertNumberFormatToNumber(round($value->depAmountRpt, $rptDecimalPlace));
+                                    $data[$x][trans('custom.rpt_amount_acc_net_value')] = CurrencyService::convertNumberFormatToNumber(round($value->rptnbv, $rptDecimalPlace));
 
                                     if(!$value->isHeader ){
                                         $COSTUNIT += $value->COSTUNIT;
@@ -1427,48 +1464,48 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                                 $x++;
-                                $data[$x]['Cost GL'] = '';
-                                $data[$x]['Acc Dep GL'] = '';
-                                $data[$x]['Type'] = '';
+                                $data[$x][trans('custom.cost_gl')] = '';
+                                $data[$x][trans('custom.acc_dep_gl')] = '';
+                                $data[$x][trans('custom.e_type')] = '';
 
-                                $data[$x]['Segment'] = '';
-                                $data[$x]['category'] = '';
-                                $data[$x]['FA Code'] = '';
-                                $data[$x]['Grouped YN'] = '';
-                                $data[$x]['Serial Number'] = '';
-                                $data[$x]['Asset Description'] = '';
-                                $data[$x]['DEP %'] = '';
-                                $data[$x]['Date Aquired'] = '';
-                                $data[$x]['Dep Start Date'] = '';
-                                $data[$x]['Local Amount unitcost'] = '';
-                                $data[$x]['Local Amount accDep'] = '';
-                                $data[$x]['Local Amount net Value'] = '';
-                                $data[$x]['Rpt Amount unit cost'] = '';
-                                $data[$x]['Rpt Amount acc dep'] = '';
-                                $data[$x]['Rpt Amount acc net value'] = '';
+                                $data[$x][trans('custom.e_segment')] = '';
+                                $data[$x][trans('custom.category')] = '';
+                                $data[$x][trans('custom.fa_code')] = '';
+                                $data[$x][trans('custom.grouped_yn')] = '';
+                                $data[$x][trans('custom.serial_number')] = '';
+                                $data[$x][trans('custom.asset_description')] = '';
+                                $data[$x][trans('custom.dep_percentage')] = '';
+                                $data[$x][trans('custom.date_acquired')] = '';
+                                $data[$x][trans('custom.dep_start_date')] = '';
+                                $data[$x][trans('custom.local_amount_unitcost')] = '';
+                                $data[$x][trans('custom.local_amount_accdep')] = '';
+                                $data[$x][trans('custom.local_amount_net_value')] = '';
+                                $data[$x][trans('custom.rpt_amount_unit_cost')] = '';
+                                $data[$x][trans('custom.rpt_amount_acc_dep')] = '';
+                                $data[$x][trans('custom.rpt_amount_acc_net_value')] = '';
 
                             }
                             $x++;
 
-                            $data[$x]['Cost GL'] = '';
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = 'Sub Total';
+                            $data[$x][trans('custom.cost_gl')] = '';
+                            $data[$x][trans('custom.acc_dep_gl')] = '';
+                            $data[$x][trans('custom.e_type')] = '';
+                            $data[$x][trans('custom.e_segment')] = '';
+                            $data[$x][trans('custom.category')] = '';
+                            $data[$x][trans('custom.fa_code')] = '';
+                            $data[$x][trans('custom.grouped_yn')] = '';
+                            $data[$x][trans('custom.serial_number')] = '';
+                            $data[$x][trans('custom.asset_description')] = '';
+                            $data[$x][trans('custom.dep_percentage')] = '';
+                            $data[$x][trans('custom.date_acquired')] = '';
+                            $data[$x][trans('custom.dep_start_date')] = trans('custom.sub_total');
 
-                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
-                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
-                            $data[$x]['Local Amount net Value'] = $localnbv;
-                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
-                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
-                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+                            $data[$x][trans('custom.local_amount_unitcost')] = $COSTUNIT;
+                            $data[$x][trans('custom.local_amount_accdep')] = $depAmountLocal;
+                            $data[$x][trans('custom.local_amount_net_value')] = $localnbv;
+                            $data[$x][trans('custom.rpt_amount_unit_cost')] = $costUnitRpt;
+                            $data[$x][trans('custom.rpt_amount_acc_dep')] = $depAmountRpt;
+                            $data[$x][trans('custom.rpt_amount_acc_net_value')] = $rptnbv;
 
                             $x++;
 
@@ -1476,26 +1513,28 @@ class AssetManagementReportAPIController extends AppBaseController
 
                         $x++;
 
-                        $data[$x]['Cost GL'] = '';
-                        $data[$x]['Acc Dep GL'] = '';
-                        $data[$x]['Type'] = '';
-                        $data[$x]['Segment'] = '';
-                        $data[$x]['category'] = '';
-                        $data[$x]['FA Code'] = '';
-                        $data[$x]['Grouped YN'] = '';
-                        $data[$x]['Serial Number'] = '';
-                        $data[$x]['Asset Description'] = '';
-                        $data[$x]['DEP %'] = '';
-                        $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = 'Total';
-                        $data[$x]['Local Amount unitcost'] =  CurrencyService::convertNumberFormatToNumber($final['COSTUNIT']);
-                        $data[$x]['Local Amount accDep'] =  CurrencyService::convertNumberFormatToNumber($final['depAmountLocal']);
-                        $data[$x]['Local Amount net Value'] =  CurrencyService::convertNumberFormatToNumber($final['localnbv']);
-                        $data[$x]['Rpt Amount unit cost'] =  CurrencyService::convertNumberFormatToNumber($final['costUnitRpt']);
-                        $data[$x]['Rpt Amount acc dep'] =  CurrencyService::convertNumberFormatToNumber($final['depAmountRpt']);
-                        $data[$x]['Rpt Amount acc net value'] =  CurrencyService::convertNumberFormatToNumber($final['rptnbv']);
+                        $data[$x][trans('custom.cost_gl')] = '';
+                        $data[$x][trans('custom.acc_dep_gl')] = '';
+                        $data[$x][trans('custom.e_type')] = '';
+                        $data[$x][trans('custom.e_segment')] = '';
+                        $data[$x][trans('custom.category')] = '';
+                        $data[$x][trans('custom.fa_code')] = '';
+                        $data[$x][trans('custom.grouped_yn')] = '';
+                        $data[$x][trans('custom.serial_number')] = '';
+                        $data[$x][trans('custom.asset_description')] = '';
+                        $data[$x][trans('custom.dep_percentage')] = '';
+                        $data[$x][trans('custom.date_acquired')] = '';
+                        $data[$x][trans('custom.dep_start_date')] = trans('custom.total');
+                        $data[$x][trans('custom.local_amount_unitcost')] =  CurrencyService::convertNumberFormatToNumber($final['COSTUNIT']);
+                        $data[$x][trans('custom.local_amount_accdep')] =  CurrencyService::convertNumberFormatToNumber($final['depAmountLocal']);
+                        $data[$x][trans('custom.local_amount_net_value')] =  CurrencyService::convertNumberFormatToNumber($final['localnbv']);
+                        $data[$x][trans('custom.rpt_amount_unit_cost')] =  CurrencyService::convertNumberFormatToNumber($final['costUnitRpt']);
+                        $data[$x][trans('custom.rpt_amount_acc_dep')] =  CurrencyService::convertNumberFormatToNumber($final['depAmountRpt']);
+                        $data[$x][trans('custom.rpt_amount_acc_net_value')] =  CurrencyService::convertNumberFormatToNumber($final['rptnbv']);
                     }
 
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
 
                     $excelColumnFormat = [
                         'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
@@ -1507,28 +1546,31 @@ class AssetManagementReportAPIController extends AppBaseController
                         'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
-                    $title = "Asset Register Grouped Detail Report";
-                    $fileName = 'asset_register_group';
+                    $title = trans('custom.asset_register_grouped_detail_report');
+                    $fileName = trans('custom.asset_register_grouped_detail_report');
+                    $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service
                         ->setTitle($title)
                         ->setFileName($fileName)
-                        ->setPath("")
-                        ->setCompanyCode("")
+                        ->setPath($path)
+                        ->setCompanyCode($companyCode)
                         ->setCompanyName("")
                         ->setFromDate("")
                         ->setToDate("")
-                        ->setType($type)
+                        ->setType("xls")
                         ->setReportType(2)
                         ->setCurrency("")
                         ->setExcelFormat($excelColumnFormat)
                         ->setData($data)
                         ->setDateType(1)
                         ->setDetails()
-                        ->setExcelType(2)
                         ->generateExcel();
 
+                    if(!$exportToExcel['success'])
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
+                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                 }
 
                 return $this->sendResponse("", trans('custom.success_export'));
@@ -1557,28 +1599,28 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Asset Category'] = $val->AssetCategory;
-                        $data[$x]['Asset Type'] = $val->AssetType;
-                        $data[$x]['Asset Code'] = $val->AssetCODE;
-                        $data[$x]['Serial Number'] = $val->SerialNumber;
-                        $data[$x]['Asset Description'] = $val->AssetDescription;
-                        $data[$x]['DEP percentage'] = $val->DEPpercentage;
-                        $data[$x]['Posted Date'] = ($val->postedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->postedDate)) : null;
-                        $data[$x]['GRV Code'] = $val->GRVCODE;
-                        $data[$x]['Supplier Invoice'] = $val->supplierInvoiceBSI;
-                        $data[$x]['PO Code'] = $val->POCODE;
-                        $data[$x]['PO Amount Rpt'] = $val->poTotalComRptCurrency;
-                        $data[$x]['Payment Date'] = $val->paymentDate;
-                        $data[$x]['Service Line'] = $val->ServiceLineDes;
-                        $data[$x]['Supplier'] = $val->Supplier;
-                        $data[$x]['Cost GL'] = $val->COSTGLCODE;
-                        $data[$x]['Cost GL Desc'] = $val->COSTGLCODEdes;
-                        $data[$x]['Asset Cost Local Curr'] = $val->localCurrency;
-                        $data[$x]['Asset Cost Local'] = CurrencyService::convertNumberFormatToNumber($val->AssetCostLocal);
-                        $data[$x]['Asset Cost Rpt Curr'] = $val->reportCurrency;
-                        $data[$x]['Asset Cost Rpt'] = CurrencyService::convertNumberFormatToNumber($val->AssetCostRpt);
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                        $data[$x][trans('custom.asset_category')] = $val->AssetCategory;
+                        $data[$x][trans('custom.asset_type')] = $val->AssetType;
+                        $data[$x][trans('custom.asset_code')] = $val->AssetCODE;
+                        $data[$x][trans('custom.serial_number')] = $val->SerialNumber;
+                        $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
+                        $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                        $data[$x][trans('custom.posted_date')] = ($val->postedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->postedDate)) : null;
+                        $data[$x][trans('custom.grv_code')] = $val->GRVCODE;
+                        $data[$x][trans('custom.supplier_invoice')] = $val->supplierInvoiceBSI;
+                        $data[$x][trans('custom.po_code')] = $val->POCODE;
+                        $data[$x][trans('custom.po_amount_rpt')] = $val->poTotalComRptCurrency;
+                        $data[$x][trans('custom.payment_date')] = $val->paymentDate;
+                        $data[$x][trans('custom.service_line')] = $val->ServiceLineDes;
+                        $data[$x][trans('custom.supplier')] = $val->Supplier;
+                        $data[$x][trans('custom.cost_gl')] = $val->COSTGLCODE;
+                        $data[$x][trans('custom.cost_gl_desc')] = $val->COSTGLCODEdes;
+                        $data[$x][trans('custom.asset_cost_local_curr')] = $val->localCurrency;
+                        $data[$x][trans('custom.asset_cost_local')] = CurrencyService::convertNumberFormatToNumber($val->AssetCostLocal);
+                        $data[$x][trans('custom.asset_cost_rpt_curr')] = $val->reportCurrency;
+                        $data[$x][trans('custom.asset_cost_rpt')] = CurrencyService::convertNumberFormatToNumber($val->AssetCostRpt);
                         $x++;
                     }
                 } else {
@@ -1597,24 +1639,18 @@ class AssetManagementReportAPIController extends AppBaseController
                     'company_code'=>$companyCode,
                     'excelFormat' => $excelColumnFormat
                 );
-                $fileName = 'asset-addition';
+                $fileName = trans('custom.asset_addition');
                 $path = 'asset/report/asset-addition/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
                      return $this->sendResponse($basePath, trans('custom.success_export'));
                 }
-
-
-
-
-
-
                 break;
             case 'AMAD': //Asset Disposal
 
@@ -1625,35 +1661,35 @@ class AssetManagementReportAPIController extends AppBaseController
                 $data = array();
                 $x = 0;
                 foreach ($output as $val) {
-                    $data[$x]['Company ID'] = $val->companyID;
-                    $data[$x]['Company Name'] = $val->CompanyName;
+                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
 
-                    $data[$x]['Disposal Date'] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->disposalDate)): null;
-                    $data[$x]['Doc.Code'] = $val->disposalDocumentCode;
-                    $data[$x]['Narration'] = $val->narration;
-                    $data[$x]['Category'] = $val->AssetCategory;
-                    $data[$x]['Asset Code'] = $val->AssetCODE;
-                    $data[$x]['Serial Number'] = $val->AssetSerialNumber;
-                    $data[$x]['Asset Description'] = $val->AssetDescription;
+                    $data[$x][trans('custom.disposal_date')] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->disposalDate)): null;
+                    $data[$x][trans('custom.doc_code')] = $val->disposalDocumentCode;
+                    $data[$x][trans('custom.narration')] = $val->narration;
+                    $data[$x][trans('custom.category')] = $val->AssetCategory;
+                    $data[$x][trans('custom.asset_code')] = $val->AssetCODE;
+                    $data[$x][trans('custom.serial_number')] = $val->AssetSerialNumber;
+                    $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
 
-                    $data[$x]['Currency (Local)'] = $val->localCurrency;
-                    $data[$x]['Currency (Reporting)'] = $val->reportCurrency;
+                    $data[$x][trans('custom.currency_local')] = $val->localCurrency;
+                    $data[$x][trans('custom.currency_reporting')] = $val->reportCurrency;
 
-                    $data[$x]['Asset Cost (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostLocal, $val->localCurrencyDeci));
-                    $data[$x]['Asset Cost (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostRPT, $val->reportCurrencyDeci));
+                    $data[$x][trans('custom.asset_cost_local')] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostLocal, $val->localCurrencyDeci));
+                    $data[$x][trans('custom.asset_cost_reporting')] = CurrencyService::convertNumberFormatToNumber(round($val->AssetCostRPT, $val->reportCurrencyDeci));
 
-                    $data[$x]['Accumulated Depreciation (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationLocal, $val->localCurrencyDeci));
-                    $data[$x]['Accumulated Depreciation (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationRPT, $val->reportCurrencyDeci));
+                    $data[$x][trans('custom.accumulated_depreciation_local')] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationLocal, $val->localCurrencyDeci));
+                    $data[$x][trans('custom.accumulated_depreciation_reporting')] = CurrencyService::convertNumberFormatToNumber(round($val->AccumulatedDepreciationRPT, $val->reportCurrencyDeci));
 
-                    $data[$x]['Net Book Value (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUELocal, $val->localCurrencyDeci));
-                    $data[$x]['Net Book Value (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUERPT, $val->reportCurrencyDeci));
+                    $data[$x][trans('custom.net_book_value_local')] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUELocal, $val->localCurrencyDeci));
+                    $data[$x][trans('custom.net_book_value_reporting')] = CurrencyService::convertNumberFormatToNumber(round($val->NetBookVALUERPT, $val->reportCurrencyDeci));
 
 
-                    $data[$x]['Selling Price (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceLocal, $val->localCurrencyDeci));
-                    $data[$x]['Selling Price (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceRpt, $val->reportCurrencyDeci));
+                    $data[$x][trans('custom.selling_price_local')] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceLocal, $val->localCurrencyDeci));
+                    $data[$x][trans('custom.selling_price_reporting')] = CurrencyService::convertNumberFormatToNumber(round($val->SellingPriceRpt, $val->reportCurrencyDeci));
 
-                    $data[$x]['Profit/Loss (Local)'] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitLocal, $val->localCurrencyDeci));
-                    $data[$x]['Profit/Loss (Reporting)'] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitRpt, $val->reportCurrencyDeci));
+                    $data[$x][trans('custom.profit_loss_local')] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitLocal, $val->localCurrencyDeci));
+                    $data[$x][trans('custom.profit_loss_reporting')] = CurrencyService::convertNumberFormatToNumber(round($val->ProfitRpt, $val->reportCurrencyDeci));
 
 
                     $x++;
@@ -1679,13 +1715,13 @@ class AssetManagementReportAPIController extends AppBaseController
                     'company_code'=>$companyCode,
                     'excelFormat' => $excelColumnFormat
                 );
-                $fileName = 'asset_disposal';
+                $fileName = trans('custom.asset_disposal');
                 $path = 'asset/report/asset_disposal/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1702,9 +1738,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
-                            $data[$x]['Asset Code'] = $val->faCode;
-                            $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->AuditCategory;
+                            $data[$x][trans('custom.asset_code')] = $val->faCode;
+                            $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                            $data[$x][trans('custom.category')] = $val->AuditCategory;
                             foreach ($output['month'] as $val2) {
                                 $data[$x][$val2] = CurrencyService::convertNumberFormatToNumber($val->$val2);
                             }
@@ -1733,16 +1769,16 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Asset Code'] = $val->faCode;
-                            $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->AuditCategory;
-                            $data[$x]['Cost Amount'] = CurrencyService::convertNumberFormatToNumber($val->cost);
-                            $data[$x]['Dep %'] = $val->DEPpercentage;
-                            $data[$x]['Dep Amount ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->currentMonthDepreciation);
-                            $data[$x]['Opeining Dep'] = 0;
-                            $data[$x]['Current Year Dep'] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
-                            $data[$x]['Accumilated Dep ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
-                            $data[$x]['Net Book Value ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
+                            $data[$x][trans('custom.asset_code')] = $val->faCode;
+                            $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                            $data[$x][trans('custom.category')] = $val->AuditCategory;
+                            $data[$x][trans('custom.cost_amount')] = CurrencyService::convertNumberFormatToNumber($val->cost);
+                            $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                            $data[$x][trans('custom.dep_amount') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->currentMonthDepreciation);
+                            $data[$x][trans('custom.opening_dep')] = 0;
+                            $data[$x][trans('custom.current_year_dep')] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
+                            $data[$x][trans('custom.accumulated_dep') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
+                            $data[$x][trans('custom.net_book_value') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
                             foreach ($arrayMonth as $val2) {
                                 $data[$x][$val2] = CurrencyService::convertNumberFormatToNumber($val->$val2);
                             }
@@ -1775,16 +1811,16 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Asset Code'] = $val->faCode;
-                            $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->AuditCategory;
-                            $data[$x]['Cost Amount'] = CurrencyService::convertNumberFormatToNumber($val->cost);
-                            $data[$x]['Dep %'] = $val->DEPpercentage;
-                            $data[$x]['Dep Amount ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->currentMonthDepreciation);
-                            $data[$x]['Opeining Dep'] = 0;
-                            $data[$x]['Current Year Dep'] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
-                            $data[$x]['Accumilated Dep ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
-                            $data[$x]['Net Book Value ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
+                            $data[$x][trans('custom.asset_code')] = $val->faCode;
+                            $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                            $data[$x][trans('custom.category')] = $val->AuditCategory;
+                            $data[$x][trans('custom.cost_amount')] = CurrencyService::convertNumberFormatToNumber($val->cost);
+                            $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                            $data[$x][trans('custom.dep_amount') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->currentMonthDepreciation);
+                            $data[$x][trans('custom.opening_dep')] = 0;
+                            $data[$x][trans('custom.current_year_dep')] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
+                            $data[$x][trans('custom.accumulated_dep') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
+                            $data[$x][trans('custom.net_book_value') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
 
                             $x++;
                         }
@@ -1805,12 +1841,12 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Category'] = $val->AuditCategory;
-                            $data[$x]['Cost Amount'] = CurrencyService::convertNumberFormatToNumber($val->cost);
-                            $data[$x]['Dep %'] = $val->DEPpercentage;
-                            $data[$x]['Current Year Dep'] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
-                            $data[$x]['Accumilated Dep' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
-                            $data[$x]['Net Book Value ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
+                            $data[$x][trans('custom.category')] = $val->AuditCategory;
+                            $data[$x][trans('custom.cost_amount')] = CurrencyService::convertNumberFormatToNumber($val->cost);
+                            $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                            $data[$x][trans('custom.current_year_dep')] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
+                            $data[$x][trans('custom.accumulated_dep') . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
+                            $data[$x][trans('custom.net_book_value') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
                             $x++;
                         }
                     }
@@ -1830,12 +1866,12 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Category'] = $val->AuditCategory;
-                            $data[$x]['Cost Amount'] = CurrencyService::convertNumberFormatToNumber($val->cost);
-                            $data[$x]['Dep %'] = $val->DEPpercentage;
-                            $data[$x]['Current Year Dep'] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
-                            $data[$x]['Accumilated Dep' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
-                            $data[$x]['Net Book Value ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
+                            $data[$x][trans('custom.category')] = $val->AuditCategory;
+                            $data[$x][trans('custom.cost_amount')] = CurrencyService::convertNumberFormatToNumber($val->cost);
+                            $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
+                            $data[$x][trans('custom.current_year_dep')] = CurrencyService::convertNumberFormatToNumber($val->currentYearDepAmount);
+                            $data[$x][trans('custom.accumulated_dep') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->accumulatedDepreciation);
+                            $data[$x][trans('custom.net_book_value') . ' ' . $arrayMonth[$request->month - 1]] = CurrencyService::convertNumberFormatToNumber($val->netBookValue);
                             foreach ($arrayMonth as $val2) {
                                 $data[$x][$val2] = CurrencyService::convertNumberFormatToNumber($val->$val2);
                             }
@@ -1868,13 +1904,13 @@ class AssetManagementReportAPIController extends AppBaseController
                     'excelFormat'=>$excelColumnFormat
                 );
 
-                $fileName = 'asset_depreciation_register';
+                $fileName = trans('custom.asset_depreciation_register');
                 $path = 'asset/report/asset_depreciation_register/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1892,12 +1928,12 @@ class AssetManagementReportAPIController extends AppBaseController
                 if (count($output) > 0) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['GRV Number'] = $val->grvPrimaryCode;
-                        $data[$x]['GRV Posting Date'] = $val->approvedDate;
-                        $data[$x]['Opening'] = $val->opening;
-                        $data[$x]['Addition'] = $val->addition;
-                        $data[$x]['Capitalization'] = $val->capitalization;
-                        $data[$x]['Closing'] = $val->closing;
+                        $data[$x][trans('custom.grv_number')] = $val->grvPrimaryCode;
+                        $data[$x][trans('custom.grv_posting_date')] = $val->approvedDate;
+                        $data[$x][trans('custom.opening')] = $val->opening;
+                        $data[$x][trans('custom.addition')] = $val->addition;
+                        $data[$x][trans('custom.capitalization')] = $val->capitalization;
+                        $data[$x][trans('custom.closing')] = $val->closing;
                         $x++;
                     }
                 }
@@ -1905,13 +1941,13 @@ class AssetManagementReportAPIController extends AppBaseController
                 $detail_array = array(
                     'company_code'=>$companyCode,
                 );
-                $fileName = 'asset_cwip';
+                $fileName = trans('custom.asset_cwip');
                 $path = 'asset/report/asset_cwip/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1930,43 +1966,43 @@ class AssetManagementReportAPIController extends AppBaseController
                 if (count($output) > 0) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['AccountCode'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
-                        $data[$x]['AccountDescription'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['AssetCode'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
-                        $data[$x]['AssetDescription'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
-                        $data[$x]['ChartOfAccountSystemID'] = isset($val->chartOfAccountSystemID) ? $val->chartOfAccountSystemID : 0;
-                        $data[$x]['AssetID'] = isset($val->assetID) ? $val->assetID : 0;
+                        $data[$x][trans('custom.account_code')] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
+                        $data[$x][trans('custom.account_description')] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
+                        $data[$x][trans('custom.asset_code')] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x][trans('custom.asset_description')] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x][trans('custom.chart_of_account_system_id')] = isset($val->chartOfAccountSystemID) ? $val->chartOfAccountSystemID : 0;
+                        $data[$x][trans('custom.asset_id')] = isset($val->assetID) ? $val->assetID : 0;
 
                         if ($val->documentSystemID == 11) {
-                            $data[$x]['DocumentCode'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
-                            $data[$x]['DocumentDate'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
                         } else if ($val->documentSystemID == 4){
-                            $data[$x]['DocumentCode'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
-                            $data[$x]['DocumentDate'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 3){
-                            $data[$x]['DocumentCode'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
-                            $data[$x]['DocumentDate'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 17){
-                            $data[$x]['DocumentCode'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
-                            $data[$x]['DocumentDate'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 161){
-                            $data[$x]['DocumentCode'] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
-                            $data[$x]['DocumentDate'] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
                         }
                         else {
-                            $data[$x]['DocumentCode'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
-                            $data[$x]['DocumentDate'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
+                            $data[$x][trans('custom.document_code')] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x][trans('custom.document_date')] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
                         }
 
                         if ($request->currencyID == 2) {
-                            $data[$x]['Currency'] = $companyCurrency->localcurrency->CurrencyCode;
-                            $data[$x]['Amount'] = round($val->amountLocal, $companyCurrency->localcurrency->DecimalPlaces);
+                            $data[$x][trans('custom.currency')] = $companyCurrency->localcurrency->CurrencyCode;
+                            $data[$x][trans('custom.amount')] = round($val->amountLocal, $companyCurrency->localcurrency->DecimalPlaces);
                         } else {
-                             $data[$x]['Currency'] = $companyCurrency->reportingcurrency->CurrencyCode;
-                            $data[$x]['Amount'] = round($val->amountRpt, $companyCurrency->reportingcurrency->DecimalPlaces);
+                             $data[$x][trans('custom.currency')] = $companyCurrency->reportingcurrency->CurrencyCode;
+                            $data[$x][trans('custom.amount')] = round($val->amountRpt, $companyCurrency->reportingcurrency->DecimalPlaces);
                         }
                         
                         $x++;
@@ -2015,7 +2051,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     $templateName = "export_report.asset_expenses";
                 }
 
-                return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                $name = trans('custom.finance');
+
+                return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                     });
@@ -2030,7 +2068,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     $reportData = array('reportData' => $output,  'fromDate' => $fromDate, 'toDate' => $toDate);
                     $templateName = "export_report.asset_tracking";
 
-                    return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $name = trans('custom.finance');
+
+                    return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
                         $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                             $sheet->loadView($templateName, $reportData);
                         });
@@ -3613,10 +3653,10 @@ WHERE
 
     }
 
-    function getAssetRegisterSummaryDrillDownExport(Request $request)
+    public function getAssetRegisterSummaryDrillDownExport(Request $request, ExportReportToExcelService $service)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currencyID', 'excelType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -3730,63 +3770,106 @@ WHERE
 
         $output = $output->get();
         $data = [];
-        $x = 0;
+        
+        // Add header row
+        $headerRow = array();
+        $headerRow[] = trans('custom.asset_code');
+        $headerRow[] = trans('custom.description');
+        $headerRow[] = trans('custom.posted_date');
+        $headerRow[] = trans('custom.main_category');
+        $headerRow[] = trans('custom.sub_category');
+        if ($request->catType == 1) {
+            $headerRow[] = trans('custom.cost').'('.$request->currencyCode.')';
+        } else {
+            $headerRow[] = trans('custom.dep_amount').'('.$request->currencyCode.')';
+        }
+        $data[] = $headerRow;
+        
+        $x = 1; // Start from 1 since we added header at index 0
         foreach ($output as $val) {
             if ($request->catType == 1) {
-                $data[$x]['Asset Code'] = $val->faCode;
+                $data[$x][trans('custom.asset_code')] = $val->faCode;
             } else {
-                $data[$x]['Asset Code'] = $val->asset_by->faCode;
+                $data[$x][trans('custom.asset_code')] = $val->asset_by->faCode;
             }
 
             if ($request->catType == 1) {
-                $data[$x]['Description'] = $val->assetDescription;
+                $data[$x][trans('custom.description')] = $val->assetDescription;
             } else {
-                $data[$x]['Description'] = $val->asset_by->assetDescription;
+                $data[$x][trans('custom.description')] = $val->asset_by->assetDescription;
             }
 
             if ($request->subType == 3) {
                 if ($request->catType == 1) {
-                    $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->disposedDate);
                 } else {
-                    $data[$x]['Disposed Date'] = \Helper::dateFormat($val->asset_by->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->asset_by->disposedDate);
                 }
             } else {
                 if ($request->catType == 1) {
-                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
+                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->postedDate);
                 } else {
-                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->asset_by->postedDate);
+                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->asset_by->postedDate);
                 }
             }
 
             if ($request->catType == 1) {
-                $data[$x]['Main Category'] = $val->category_by->catDescription;
+                $data[$x][trans('custom.main_category')] = $val->category_by->catDescription;
             } else {
-                $data[$x]['Main Category'] = $val->asset_by->category_by->catDescription;
+                $data[$x][trans('custom.main_category')] = $val->asset_by->category_by->catDescription;
             }
 
             if ($request->catType == 1) {
-                $data[$x]['Sub Category'] = $val->sub_category_by->catDescription;
+                $data[$x][trans('custom.sub_category')] = $val->sub_category_by->catDescription;
             } else {
-                $data[$x]['Sub Category'] = $val->asset_by->sub_category_by->catDescription;
+                $data[$x][trans('custom.sub_category')] = $val->asset_by->sub_category_by->catDescription;
             }
 
             if ($request->catType == 1) {
-                $data[$x]['Cost('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
+                $data[$x][trans('custom.cost').'('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
             } else {
-                $data[$x]['Dep Amount('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
+                $data[$x][trans('custom.dep_amount').'('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
             }
             $x++;
         }
 
-         \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($request->type);
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+
+        $excelColumnFormat = [
+            'A' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'B' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDD2,
+            'D' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'E' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
+            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+        ];
+
+        $title = "";
+        $fileName = 'asset_register_drilldown';
+        $path = 'asset_register/report/excel/';
+
+        $exportToExcel = $service
+            ->setTitle($title)
+            ->setFileName($fileName)
+            ->setPath($path)
+            ->setCompanyCode($companyCode)
+            ->setCompanyName("")
+            ->setFromDate("")
+            ->setToDate("")
+            ->setType('xls')
+            ->setReportType(2)
+            ->setCurrency("")
+            ->setExcelFormat($excelColumnFormat)
+            ->setData($data)
+            ->setDateType(2)
+            ->setDetails()
+            ->generateExcel();
+
+        if(!$exportToExcel['success'])
+            return $this->sendError(trans('custom.unable_to_export_excel'));
+
+        return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
     }
 

@@ -66,7 +66,7 @@ class UserActivityLogAPIController extends AppBaseController
         $this->userActivityLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userActivityLogs = $this->userActivityLogRepository->all();
 
-        return $this->sendResponse($userActivityLogs->toArray(), 'User Activity Logs retrieved successfully');
+        return $this->sendResponse($userActivityLogs->toArray(), trans('custom.user_activity_logs_retrieved_successfully'));
     }
 
     /**
@@ -113,7 +113,7 @@ class UserActivityLogAPIController extends AppBaseController
 
         $userActivityLog = $this->userActivityLogRepository->create($input);
 
-        return $this->sendResponse($userActivityLog->toArray(), 'User Activity Log saved successfully');
+        return $this->sendResponse($userActivityLog->toArray(), trans('custom.user_activity_log_saved_successfully'));
     }
 
     /**
@@ -160,10 +160,10 @@ class UserActivityLogAPIController extends AppBaseController
         $userActivityLog = $this->userActivityLogRepository->findWithoutFail($id);
 
         if (empty($userActivityLog)) {
-            return $this->sendError('User Activity Log not found');
+            return $this->sendError(trans('custom.user_activity_log_not_found'));
         }
 
-        return $this->sendResponse($userActivityLog->toArray(), 'User Activity Log retrieved successfully');
+        return $this->sendResponse($userActivityLog->toArray(), trans('custom.user_activity_log_retrieved_successfully'));
     }
 
     /**
@@ -220,12 +220,12 @@ class UserActivityLogAPIController extends AppBaseController
         $userActivityLog = $this->userActivityLogRepository->findWithoutFail($id);
 
         if (empty($userActivityLog)) {
-            return $this->sendError('User Activity Log not found');
+            return $this->sendError(trans('custom.user_activity_log_not_found'));
         }
 
         $userActivityLog = $this->userActivityLogRepository->update($input, $id);
 
-        return $this->sendResponse($userActivityLog->toArray(), 'UserActivityLog updated successfully');
+        return $this->sendResponse($userActivityLog->toArray(), trans('custom.useractivitylog_updated_successfully'));
     }
 
     /**
@@ -272,12 +272,12 @@ class UserActivityLogAPIController extends AppBaseController
         $userActivityLog = $this->userActivityLogRepository->findWithoutFail($id);
 
         if (empty($userActivityLog)) {
-            return $this->sendError('User Activity Log not found');
+            return $this->sendError(trans('custom.user_activity_log_not_found'));
         }
 
         $userActivityLog->delete();
 
-        return $this->sendResponse($id, 'User Activity Log deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_activity_log_deleted_successfully'));
     }
 
     /*get All View Log*/

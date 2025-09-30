@@ -66,7 +66,7 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
         $this->budgetAdditionRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetAdditionRefferedBacks = $this->budgetAdditionRefferedBackRepository->all();
 
-        return $this->sendResponse($budgetAdditionRefferedBacks->toArray(), 'Budget Addition Reffered Backs retrieved successfully');
+        return $this->sendResponse($budgetAdditionRefferedBacks->toArray(), trans('custom.budget_addition_reffered_backs_retrieved_successfu'));
     }
 
     /**
@@ -113,7 +113,7 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
 
         $budgetAdditionRefferedBack = $this->budgetAdditionRefferedBackRepository->create($input);
 
-        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), 'Budget Addition Reffered Back saved successfully');
+        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), trans('custom.budget_addition_reffered_back_saved_successfully'));
     }
 
     /**
@@ -160,10 +160,10 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
         $budgetAdditionRefferedBack = $this->budgetAdditionRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionRefferedBack)) {
-            return $this->sendError('Budget Addition Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), 'Budget Addition Reffered Back retrieved successfully');
+        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), trans('custom.budget_addition_reffered_back_retrieved_successful'));
     }
 
     /**
@@ -220,12 +220,12 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
         $budgetAdditionRefferedBack = $this->budgetAdditionRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionRefferedBack)) {
-            return $this->sendError('Budget Addition Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_reffered_back_not_found'));
         }
 
         $budgetAdditionRefferedBack = $this->budgetAdditionRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), 'BudgetAdditionRefferedBack updated successfully');
+        return $this->sendResponse($budgetAdditionRefferedBack->toArray(), trans('custom.budgetadditionrefferedback_updated_successfully'));
     }
 
     /**
@@ -272,7 +272,7 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
         $budgetAdditionRefferedBack = $this->budgetAdditionRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionRefferedBack)) {
-            return $this->sendError('Budget Addition Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_reffered_back_not_found'));
         }
 
         $budgetAdditionRefferedBack->delete();
@@ -287,15 +287,15 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
         $budgetAdditionAmendHistory = BudgetAdditionRefferedBack::with(['created_by'])
             ->where('id', $budgetAdditionID)
             ->get();
-        return $this->sendResponse($budgetAdditionAmendHistory, 'Budget Addition Amend retrieved successfully');
+        return $this->sendResponse($budgetAdditionAmendHistory, trans('custom.budget_addition_amend_retrieved_successfully'));
     }
     public function budget_addition_amend($id)
     {
         $erpBudgetAddition = $this->budgetAdditionRefferedBackRepository->fetchBudgetData($id);
         if (empty($erpBudgetAddition)) {
-            return $this->sendError('Erp Budget Addition not found');
+            return $this->sendError(trans('custom.erp_budget_addition_not_found'));
         }
-        return $this->sendResponse($erpBudgetAddition->toArray(), 'Erp Budget Addition RefferedBack retrieved successfully');
+        return $this->sendResponse($erpBudgetAddition->toArray(), trans('custom.erp_budget_addition_refferedback_retrieved_success'));
     }
 
     public function getDetailsByBudgetAdditionAmend(Request $request)
@@ -311,6 +311,6 @@ class BudgetAdditionRefferedBackAPIController extends AppBaseController
             ->with(['segment', 'template'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Budget Addition amen Form Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.budget_addition_amen_form_detail_retrieved_success'));
     }
 }

@@ -65,7 +65,7 @@ class TenderCriteriaAnswerTypeAPIController extends AppBaseController
         $this->tenderCriteriaAnswerTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderCriteriaAnswerTypes = $this->tenderCriteriaAnswerTypeRepository->all();
 
-        return $this->sendResponse($tenderCriteriaAnswerTypes->toArray(), 'Tender Criteria Answer Types retrieved successfully');
+        return $this->sendResponse($tenderCriteriaAnswerTypes->toArray(), trans('custom.tender_criteria_answer_types_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderCriteriaAnswerTypeAPIController extends AppBaseController
 
         $tenderCriteriaAnswerType = $this->tenderCriteriaAnswerTypeRepository->create($input);
 
-        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), 'Tender Criteria Answer Type saved successfully');
+        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), trans('custom.tender_criteria_answer_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderCriteriaAnswerTypeAPIController extends AppBaseController
         $tenderCriteriaAnswerType = $this->tenderCriteriaAnswerTypeRepository->findWithoutFail($id);
 
         if (empty($tenderCriteriaAnswerType)) {
-            return $this->sendError('Tender Criteria Answer Type not found');
+            return $this->sendError(trans('custom.tender_criteria_answer_type_not_found'));
         }
 
-        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), 'Tender Criteria Answer Type retrieved successfully');
+        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), trans('custom.tender_criteria_answer_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderCriteriaAnswerTypeAPIController extends AppBaseController
         $tenderCriteriaAnswerType = $this->tenderCriteriaAnswerTypeRepository->findWithoutFail($id);
 
         if (empty($tenderCriteriaAnswerType)) {
-            return $this->sendError('Tender Criteria Answer Type not found');
+            return $this->sendError(trans('custom.tender_criteria_answer_type_not_found'));
         }
 
         $tenderCriteriaAnswerType = $this->tenderCriteriaAnswerTypeRepository->update($input, $id);
 
-        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), 'TenderCriteriaAnswerType updated successfully');
+        return $this->sendResponse($tenderCriteriaAnswerType->toArray(), trans('custom.tendercriteriaanswertype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderCriteriaAnswerTypeAPIController extends AppBaseController
         $tenderCriteriaAnswerType = $this->tenderCriteriaAnswerTypeRepository->findWithoutFail($id);
 
         if (empty($tenderCriteriaAnswerType)) {
-            return $this->sendError('Tender Criteria Answer Type not found');
+            return $this->sendError(trans('custom.tender_criteria_answer_type_not_found'));
         }
 
         $tenderCriteriaAnswerType->delete();

@@ -190,17 +190,17 @@ class StockCountRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Doc Code'] = $val->stockCountCode;
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->refNo;
-                $data[$x]['Date'] = \Helper::dateFormat($val->stockCountDate);
-                $data[$x]['Location'] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
-                $data[$x]['Comment'] = $val->comment;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Status'] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.doc_code')] = $val->stockCountCode;
+                $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.reference_no')] = $val->refNo;
+                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->stockCountDate);
+                $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
+                $data[$x][trans('custom.comment')] = $val->comment;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

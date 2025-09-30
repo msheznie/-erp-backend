@@ -6,7 +6,7 @@ use App\Models\BookInvSuppMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
-
+use Illuminate\Http\Request;
 /**
  * Class BookInvSuppMasterRepository
  * @package App\Repositories
@@ -206,32 +206,37 @@ class BookInvSuppMasterRepository extends BaseRepository
         return $invMaster;
     }
 
-    public function setExportExcelData($dataSet) {
+    public function setExportExcelData($dataSet,Request $request) {
+
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
 
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Invoice Code'] = $val->bookingInvCode;
-                $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
-                $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
-                $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
-                $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateAndTime);
-                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.invoice_code')] = $val->bookingInvCode;
+                $data[$x][trans('custom.type')] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
+                $data[$x][trans('custom.supplier')] = $val->supplier? $val->supplier->supplierName : '';
+                $data[$x][trans('custom.invoice_no')] = $val->supplierInvoiceNo;
+                $data[$x][trans('custom.booking_invoice_date')] = \Helper::dateFormat($val->bookingDate);
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateAndTime);
+                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
  
-                $data[$x]['Transaction Currency'] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
-                $data[$x]['Transaction Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
-                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
-                $data[$x]['Local Amount'] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
-                $data[$x]['Reporting Currency'] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
-                $data[$x]['Reporting Amount'] = $val->rptcurrency? number_format($val->bookingAmountRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->bookingAmountRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
 
-                $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

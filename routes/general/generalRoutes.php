@@ -1,6 +1,6 @@
 <?php
 
-Route::group(['middleware' => 'max_memory_limit'], function () {
+Route::group(['middleware' => ['max_memory_limit']], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
         Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");

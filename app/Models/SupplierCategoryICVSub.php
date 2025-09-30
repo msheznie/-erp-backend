@@ -80,5 +80,46 @@ class SupplierCategoryICVSub extends Model
         
     ];
 
-    
+    /**
+     * Get the translations for the supplier category ICV sub.
+     */
+    public function translations()
+    {
+        return $this->hasMany('App\Models\SupplierCategoryICVSubTranslation', 'supCategorySubICVID', 'supCategorySubICVID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated category description
+     */
+    public function getCategoryDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->categoryDescription) {
+            return $translation->categoryDescription;
+        }
+        
+        return $this->attributes['categoryDescription'] ?? '';
+    }
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['categoryDescription'];
 }

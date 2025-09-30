@@ -229,7 +229,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         Log::error('Uploaded company is different from the template company');
 
                         $webPushData = [
-                            'title' => "Upload Budget Failed",
+                            'title' => "upload_budget_failed",
                             'body' => "",
                             'url' => "general-ledger/budget-upload",
                             'path' => "",
@@ -263,7 +263,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         Log::error('Zero segments available');
 
                         $webPushData = [
-                            'title' => "Upload Budget Failed",
+                            'title' => "upload_budget_failed",
                             'body' => "",
                             'url' => "general-ledger/budget-upload",
                             'path' => "",
@@ -285,7 +285,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             Log::error($e->getMessage());
             DB::beginTransaction();
             $webPushData = [
-                'title' => "Upload Budget Failed",
+                'title' => "upload_budget_failed",
                 'body' => "",
                 'url' => "general-ledger/budget-upload",
                 'path' => "",
@@ -319,7 +319,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
         $logUploadBudget= logUploadBudget::create($uploadLogArray);
 
         $webPushData = [
-            'title' => "Upload Budget Failed",
+            'title' => "upload_budget_failed",
             'body' => "",
             'url' => "general-ledger/budget-upload",
             'path' => "",

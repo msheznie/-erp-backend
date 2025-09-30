@@ -64,7 +64,7 @@ class TenderDocumentTypeAssignLogAPIController extends AppBaseController
         $this->tenderDocumentTypeAssignLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderDocumentTypeAssignLogs = $this->tenderDocumentTypeAssignLogRepository->all();
 
-        return $this->sendResponse($tenderDocumentTypeAssignLogs->toArray(), 'Tender Document Type Assign Logs retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssignLogs->toArray(), trans('custom.tender_document_type_assign_logs_retrieved_success'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderDocumentTypeAssignLogAPIController extends AppBaseController
 
         $tenderDocumentTypeAssignLog = $this->tenderDocumentTypeAssignLogRepository->create($input);
 
-        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), 'Tender Document Type Assign Log saved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), trans('custom.tender_document_type_assign_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderDocumentTypeAssignLogAPIController extends AppBaseController
         $tenderDocumentTypeAssignLog = $this->tenderDocumentTypeAssignLogRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssignLog)) {
-            return $this->sendError('Tender Document Type Assign Log not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_log_not_found'));
         }
 
-        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), 'Tender Document Type Assign Log retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), trans('custom.tender_document_type_assign_log_retrieved_successf'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderDocumentTypeAssignLogAPIController extends AppBaseController
         $tenderDocumentTypeAssignLog = $this->tenderDocumentTypeAssignLogRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssignLog)) {
-            return $this->sendError('Tender Document Type Assign Log not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_log_not_found'));
         }
 
         $tenderDocumentTypeAssignLog = $this->tenderDocumentTypeAssignLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), 'TenderDocumentTypeAssignLog updated successfully');
+        return $this->sendResponse($tenderDocumentTypeAssignLog->toArray(), trans('custom.tenderdocumenttypeassignlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderDocumentTypeAssignLogAPIController extends AppBaseController
         $tenderDocumentTypeAssignLog = $this->tenderDocumentTypeAssignLogRepository->findWithoutFail($id);
 
         if (empty($tenderDocumentTypeAssignLog)) {
-            return $this->sendError('Tender Document Type Assign Log not found');
+            return $this->sendError(trans('custom.tender_document_type_assign_log_not_found'));
         }
 
         $tenderDocumentTypeAssignLog->delete();

@@ -115,7 +115,7 @@ class TenderCommitteeController extends AppBaseController
 
         $requestData = $this->documentModifyService->checkForEditOrAmendRequest($request['tender_id']);
         $data = $this->srmCommonService->getActiveEmployeesForBid($request, $requestData);
-        return $this->sendResponse($data,'Data retrieved successfully');
+        return $this->sendResponse($data,trans('custom.data_retrieved_successfully'));
     }
 
 

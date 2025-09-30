@@ -49,7 +49,7 @@ class YesNoSelectionAPIController extends AppBaseController
         $this->yesNoSelectionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $yesNoSelections = $this->yesNoSelectionRepository->all();
 
-        return $this->sendResponse($yesNoSelections->toArray(), 'Yes No Selections retrieved successfully');
+        return $this->sendResponse($yesNoSelections->toArray(), trans('custom.yes_no_selections_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class YesNoSelectionAPIController extends AppBaseController
 
         $yesNoSelections = $this->yesNoSelectionRepository->create($input);
 
-        return $this->sendResponse($yesNoSelections->toArray(), 'Yes No Selection saved successfully');
+        return $this->sendResponse($yesNoSelections->toArray(), trans('custom.yes_no_selection_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class YesNoSelectionAPIController extends AppBaseController
         $yesNoSelection = $this->yesNoSelectionRepository->findWithoutFail($id);
 
         if (empty($yesNoSelection)) {
-            return $this->sendError('Yes No Selection not found');
+            return $this->sendError(trans('custom.yes_no_selection_not_found'));
         }
 
-        return $this->sendResponse($yesNoSelection->toArray(), 'Yes No Selection retrieved successfully');
+        return $this->sendResponse($yesNoSelection->toArray(), trans('custom.yes_no_selection_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class YesNoSelectionAPIController extends AppBaseController
         $yesNoSelection = $this->yesNoSelectionRepository->findWithoutFail($id);
 
         if (empty($yesNoSelection)) {
-            return $this->sendError('Yes No Selection not found');
+            return $this->sendError(trans('custom.yes_no_selection_not_found'));
         }
 
         $yesNoSelection = $this->yesNoSelectionRepository->update($input, $id);
 
-        return $this->sendResponse($yesNoSelection->toArray(), 'YesNoSelection updated successfully');
+        return $this->sendResponse($yesNoSelection->toArray(), trans('custom.yesnoselection_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class YesNoSelectionAPIController extends AppBaseController
         $yesNoSelection = $this->yesNoSelectionRepository->findWithoutFail($id);
 
         if (empty($yesNoSelection)) {
-            return $this->sendError('Yes No Selection not found');
+            return $this->sendError(trans('custom.yes_no_selection_not_found'));
         }
 
         $yesNoSelection->delete();
 
-        return $this->sendResponse($id, 'Yes No Selection deleted successfully');
+        return $this->sendResponse($id, trans('custom.yes_no_selection_deleted_successfully'));
     }
 }

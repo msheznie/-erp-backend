@@ -89,7 +89,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $this->purchaseOrderDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->all();
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetails->toArray(), trans('custom.purchase_order_details_retrieved_successfully'));
     }
 
     /**
@@ -152,7 +152,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->paginate(15);
 
-        return $this->sendResponse($purchaseOrderDetails, 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetails, trans('custom.purchase_order_details_retrieved_successfully'));
     }
 
     public function exportPurchaseHistory(Request $request)
@@ -228,32 +228,27 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
-                'Company Name' => $order->CompanyName,
-                'PO Code' => $order->purchaseOrderCode,
-                'Supplier Code' => $order->supplierPrimaryCode,
-                'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
-                'supplier Name' => $order->supplierName,
-                'Part No / Ref.Number' => $order->supplierPartNumber,
-                'UOM' => $order->UnitShortCode,
-                'Currency' => $order->CurrencyCode,
-                'PO Qty' => $qua_req,
-                'Unit Cost' => $tran_amount,
+                trans('custom.company_name') => $order->CompanyName,
+                trans('custom.po_number') => $order->purchaseOrderCode,
+                trans('custom.supplier_code') => $order->supplierPrimaryCode,
+                trans('custom.approved_date') => date("Y-m-d", strtotime($order->approvedDate)),
+                trans('custom.supplier_name') => $order->supplierName,
+                trans('custom.part_no_ref_number') => $order->supplierPartNumber,
+                trans('custom.uom') => $order->UnitShortCode,
+                trans('custom.currency') => $order->CurrencyCode,
+                trans('custom.po_qty') => $qua_req,
+                trans('custom.unit_cost') => $tran_amount,
             );
         }
 
         \Excel::create('purchaseHistory', function ($excel) use ($data) {
-
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        })->download('xls');
 
-        return $this->sendResponse($csv, 'successfully export');
+        return $this->sendResponse($csv, trans('custom.success_export'));
     }
 
     public function getItemsByProcumentOrder(Request $request)
@@ -274,7 +269,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $index++;
         }
 
-        return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.purchase_order_details_retrieved_successfully'));
     }
 
     /**
@@ -308,27 +303,27 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
        if(in_array($poType, [2, 3])) {
            if ($item->financeCategoryMaster == 1) {
                if (!empty($itemExist)) {
-                   return $this->sendError('Added item already exist');
+                   return $this->sendError(trans('custom.added_item_already_exist'));
                }
            }
        }
 
         if(!in_array($poType, [2, 3])) {
             if (!empty($itemExist)) {
-                return $this->sendError('Added item already exist');
+                return $this->sendError(trans('custom.added_item_already_exist'));
             }
         }
 
 
             if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
 
@@ -339,7 +334,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if($purchaseOrder->poTypeID == 2 && ($expenseCOA && $expenseCOA->isDefault) && $purchaseOrder->rcmActivated)
         {
-            return $this->sendError('Invalid transaction: RCM and Exempt VAT cannot be selected together. Please change the VAT category to proceed');
+            return $this->sendError(trans('custom.invalid_transaction_rcm_and_exempt_vat_cannot_be_s'));
         }
 
         $companyPolicyMaster = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -365,7 +360,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($anyPendingApproval)) {
-                    return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.purchase_order_pending_approval', ['code' => $anyPendingApproval->purchaseOrderCode]), 500);
                 }
 
             }
@@ -378,7 +373,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $policy = $allowFinanceCategory->isYesNO;
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError('Category is not found.', 500);
+                    return $this->sendError(trans('custom.category_is_not_found'), 500);
                 }
 
                 //checking if item category is same or not
@@ -388,7 +383,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if ($pRDetailExistSameItem) {
                     if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError('You cannot add different category item', 500);
+                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                     }
                 }
             }
@@ -400,7 +395,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance category not assigned for the selected item.');
+            return $this->sendError(trans('custom.finance_category_not_assigned_for_the_selected_item'));
         }
 
     
@@ -409,7 +404,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         if ($item->financeCategoryMaster == 3) {
             $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
             if (!$assetCategory) {
-                return $this->sendError('Asset category not assigned for the selected item.');
+                return $this->sendError(trans('custom.asset_category_not_assigned_for_selected_item'));
             }
             $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
             $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
@@ -531,7 +526,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         // }
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details saved successfully');
+        return $this->sendResponse($purchaseOrderDetails->toArray(), trans('custom.purchase_order_details_saved_successfully'));
     }
 
     public function storePurchaseOrderDetailsFromPR(Request $request)
@@ -545,14 +540,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] && $newValidation['poQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'PO quantity field is required.',
+                    'required' => trans('custom.po_quantity_field_is_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -578,7 +573,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if (!empty($prDetailExist)) {
                     foreach ($prDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
+                        $itemDrt = $row['itemPrimaryCode'] . " " . trans('custom.item_already_exist');
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -592,7 +587,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError("Request department is different from order");
+            return $this->sendError(trans('custom.request_department_is_different_from_order'));
         }
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -605,7 +600,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError('Category is not found.', 500);
+                    return $this->sendError(trans('custom.category_is_not_found'), 500);
                 }
             }
         }
@@ -619,7 +614,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $PRMaster = PurchaseRequest::find($itemExist['purchaseRequestID']);
 
                 if ($purchaseOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID) {
-                    return $this->sendError("Request department is different from order");
+                    return $this->sendError(trans('custom.request_department_different_from_order'));
                 }
             }
         }
@@ -629,7 +624,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)->orderBy('purchaseOrderDetailsID', 'DESC')->first();
         if (!empty($poDetails)) {
             if (isset($poDetails->budgetYear) && $poDetails->budgetYear && ($prDetailsBY != $poDetails->budgetYear)) {
-                return $this->sendError("Different Budget Year Found. You can not pull different budget year PR for same PO");
+                return $this->sendError(trans('custom.different_budget_year_found_cannot_pull_different_budget_year_pr'));
             }
         }
 
@@ -652,7 +647,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $totalAddedQty = PurchaseOrderDetails::RequestDetailSum($new['purchaseRequestDetailsID']);
                         $totalAddedQty = $new['poQty'] + $totalAddedQty;
                         if ($totalAddedQty > $new['quantityRequested']) {
-                            return $this->sendError($new['itemPrimaryCode']." item PO qty cannot be greater than balance qty", 500);
+                            return $this->sendError($new['itemPrimaryCode']." " . trans('custom.item_po_qty_cannot_be_greater_than_balance_qty'), 500);
                         }
 
                         if ($new['quantityRequested'] == $totalAddedQty) {
@@ -917,11 +912,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             $poUpdate = TaxService::updatePOVAT($purchaseOrderID);
             if (!$poUpdate) {
-                return $this->sendError("PO VAT update error", 500);
+                return $this->sendError(trans('custom.po_vat_update_error'), 500);
             }
 
             DB::commit();
-            return $this->sendResponse('', 'Purchase Order Details saved successfully');
+            return $this->sendResponse('', trans('custom.purchase_order_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 500);
@@ -942,10 +937,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetails)) {
-            return $this->sendError('Purchase Order Details not found');
+            return $this->sendError(trans('custom.purchase_order_details_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order details retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetails->toArray(), trans('custom.purchase_order_details_retrieved_successfully_1'));
     }
 
     /**
@@ -976,14 +971,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetails)) {
-            return $this->sendError('Purchase Order Details not found');
+            return $this->sendError(trans('custom.purchase_order_details_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderMasterID'])
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if (isset($input['madeLocallyYN']) && $input['madeLocallyYN']) {
@@ -1087,7 +1082,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
 
                 if ($checkQuentity < 0) {
-                    return $this->sendError("PO qty cannot be greater than requested qty", 500,array('type' => 'no_qty_issues'));
+                    return $this->sendError(trans('custom.po_qty_cannot_be_greater_than_requested'), 500,array('type' => 'no_qty_issues'));
                 }
 
                 if ($checkQuentity == 0) {
@@ -1130,7 +1125,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if ($subWoTotal > $mainWoTotal) {
                     DB::rollback();
-                    return $this->sendError('Sub work order is exceeding the main work order total qty. Cannot amend.', 500);
+                    return $this->sendError(trans('custom.sub_work_order_is_exceeding_the_main_work_order_to'), 500);
                 }
 
                 $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderDetailsID', $purchaseOrderDetails->WP_purchaseOrderDetailsID)
@@ -1143,7 +1138,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if ($subWoTotal > $mainWoTotal) {
                     DB::rollback();
-                    return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.', 500);
+                    return $this->sendError(trans('custom.sub_work_order_is_exceeding_the_main_work_order_to_1'), 500);
                 }
             }
 
@@ -1180,7 +1175,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                                  ->sum('allocatedQty');
 
                     if ($allocatedQty > $input['noQty']) {
-                        return $this->sendError("You cannot update the order quantity. since quantity has been allocated to segments", 500);
+                        return $this->sendError(trans('custom.cannot_update_order_quantity_allocated_to_segments'), 500);
                     }
                 }
 
@@ -1212,13 +1207,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                                                 ->sum('allocated_qty');
 
                    if ($allocatedQty > $input['noQty']) {
-                       return $this->sendError("You cannot update the order quantity. since quantity has been allocated to expected delivery dates", 500);
+                       return $this->sendError(trans('custom.cannot_update_order_quantity_allocated_to_delivery_dates'), 500);
                    }
                }
             }
 
             DB::commit();
-            return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
+            return $this->sendResponse($purchaseOrderDetails->toArray(), trans('custom.purchase_order_details_updated_successfully'));
         } catch (\Exception $ex) {
             DB::rollback();
             return $this->sendError($ex->getMessage(), 500);
@@ -1240,14 +1235,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderDetails)) {
-            return $this->sendError('Purchase Order Details not found');
+            return $this->sendError(trans('custom.purchase_order_details_not_found'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderDetails->purchaseOrderMasterID)
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         $checkSegmentAllocation = SegmentAllocatedItem::where('documentDetailAutoID', $id)
@@ -1334,7 +1329,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 ]);
         }
 
-        return $this->sendResponse($id, 'Purchase Order details deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_details_deleted_successfully_1'));
     }
 
     public function procumentOrderDeleteAllDetails(Request $request)
@@ -1353,11 +1348,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Procurement Order not found');
+            return $this->sendError(trans('custom.procurement_order_not_found'));
         }
 
         if (empty($detailExist)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.no_details_to_delete'));
         }
         if (!empty($detailExistAll)) {
 
@@ -1429,7 +1424,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'VATAmountRpt' => 0
             ]);
 
-        return $this->sendResponse($purchaseOrderID, 'Purchase Order Details deleted successfully');
+        return $this->sendResponse($purchaseOrderID, trans('custom.purchase_order_details_deleted_successfully'));
     }
 
     public function procumentOrderTotalDiscountUD(Request $request)
@@ -1443,7 +1438,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $poDiscountPercenrtageToUpdate = 0;
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
 
@@ -1498,10 +1493,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             }
 
-            return $this->sendResponse($purchaseOrderID, 'Total discount updated successfully');
+            return $this->sendResponse($purchaseOrderID, trans('custom.total_discount_updated_successfully'));
 
         } else {
-            return $this->sendResponse($purchaseOrderID, 'Total discount updated successfully');
+            return $this->sendResponse($purchaseOrderID, trans('custom.total_discount_updated_successfully'));
         }
 
     }
@@ -1516,7 +1511,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         if ($purchaseOrder->vatRegisteredYN == 0) {
@@ -1546,13 +1541,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
                 }
 
-                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
+                return $this->sendResponse($purchaseOrderID, trans('custom.total_vat_updated_successfully'));
 
             } else {
-                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
+                return $this->sendResponse($purchaseOrderID, trans('custom.total_vat_updated_successfully'));
             }
         } else {
-            return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
+            return $this->sendResponse($purchaseOrderID, trans('custom.total_vat_updated_successfully'));
         }
     }
 
@@ -1591,7 +1586,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($details, 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.purchase_order_details_retrieved_successfully'));
 
     }
 
@@ -1741,7 +1736,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (empty($purchaseOrder)) {
-                    return $this->sendError('Purchase Order not found', 500);
+                    return $this->sendError(trans('custom.purchase_order_not_found'), 500);
                 }
                 $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                     ->where('companySystemID', $purchaseOrder->companySystemID)
@@ -1750,7 +1745,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $policy = $allowFinanceCategory->isYesNO;
                     if ($policy == 0) {
                         if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                            return $this->sendError('Category is not found', 500);
+                            return $this->sendError(trans('custom.category_is_not_found_1'), 500);
                         }
 
                         //checking if item category is same or not
@@ -1760,7 +1755,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                         if ($pRDetailExistSameItem) {
                             if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                return $this->sendError('You cannot add different category item', 500);
+                                return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
                             }
                         }
                     }
@@ -1787,7 +1782,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         }
                     }
                     DB::commit();
-                    return $this->sendResponse('', 'Purchase Order Items saved successfully');
+                    return $this->sendResponse('', trans('custom.purchase_order_items_saved_successfully'));
                 } catch (\Exception $exception) {
                     DB::rollBack();
                     return $this->sendError($exception->getMessage(), 500);
@@ -1806,7 +1801,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (empty($deliveryOrder)) {
-                    return $this->sendError('Delivery Order not found', 500);
+                    return $this->sendError(trans('custom.delivery_order_not_found'), 500);
                 }
 
                 $data['isBulkItemJobRun'] = 1;
@@ -1829,7 +1824,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         }
                     }
                     DB::commit();
-                    return $this->sendResponse('', 'Delivery Order Items saved successfully');
+                    return $this->sendResponse('', trans('custom.delivery_order_items_saved_successfully'));
                 } catch (\Exception $exception) {
                     DB::rollBack();
                     return $this->sendError($exception->getMessage(), 500);

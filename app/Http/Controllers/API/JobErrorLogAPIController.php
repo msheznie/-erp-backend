@@ -65,7 +65,7 @@ class JobErrorLogAPIController extends AppBaseController
         $this->jobErrorLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $jobErrorLogs = $this->jobErrorLogRepository->all();
 
-        return $this->sendResponse($jobErrorLogs->toArray(), 'Job Error Logs retrieved successfully');
+        return $this->sendResponse($jobErrorLogs->toArray(), trans('custom.job_error_logs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class JobErrorLogAPIController extends AppBaseController
 
         $jobErrorLog = $this->jobErrorLogRepository->create($input);
 
-        return $this->sendResponse($jobErrorLog->toArray(), 'Job Error Log saved successfully');
+        return $this->sendResponse($jobErrorLog->toArray(), trans('custom.job_error_log_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class JobErrorLogAPIController extends AppBaseController
         $jobErrorLog = $this->jobErrorLogRepository->findWithoutFail($id);
 
         if (empty($jobErrorLog)) {
-            return $this->sendError('Job Error Log not found');
+            return $this->sendError(trans('custom.job_error_log_not_found'));
         }
 
-        return $this->sendResponse($jobErrorLog->toArray(), 'Job Error Log retrieved successfully');
+        return $this->sendResponse($jobErrorLog->toArray(), trans('custom.job_error_log_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class JobErrorLogAPIController extends AppBaseController
         $jobErrorLog = $this->jobErrorLogRepository->findWithoutFail($id);
 
         if (empty($jobErrorLog)) {
-            return $this->sendError('Job Error Log not found');
+            return $this->sendError(trans('custom.job_error_log_not_found'));
         }
 
         $jobErrorLog = $this->jobErrorLogRepository->update($input, $id);
 
-        return $this->sendResponse($jobErrorLog->toArray(), 'JobErrorLog updated successfully');
+        return $this->sendResponse($jobErrorLog->toArray(), trans('custom.joberrorlog_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class JobErrorLogAPIController extends AppBaseController
         $jobErrorLog = $this->jobErrorLogRepository->findWithoutFail($id);
 
         if (empty($jobErrorLog)) {
-            return $this->sendError('Job Error Log not found');
+            return $this->sendError(trans('custom.job_error_log_not_found'));
         }
 
         $jobErrorLog->delete();

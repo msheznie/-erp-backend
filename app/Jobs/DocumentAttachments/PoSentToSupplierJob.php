@@ -197,7 +197,10 @@ class PoSentToSupplierJob implements ShouldQueue
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
+                        $dataEmail['alertMessage'] = trans('email.new_order_from', [
+                            'companyName' => $company->CompanyName,
+                            'documentCode' => $procumentOrderUpdate->purchaseOrderCode
+                        ]);
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
@@ -236,7 +239,10 @@ class PoSentToSupplierJob implements ShouldQueue
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
+                        $dataEmail['alertMessage'] = trans('email.new_order_from', [
+                            'companyName' => $company->CompanyName,
+                            'documentCode' => $procumentOrderUpdate->purchaseOrderCode
+                        ]);
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {

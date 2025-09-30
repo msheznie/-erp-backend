@@ -219,7 +219,7 @@ class AssetTypeAPIController extends AppBaseController
         $assetType = $this->assetTypeRepository->findWithoutFail($id);
 
         if (empty($assetType)) {
-            return $this->sendError('Asset Type not found');
+            return $this->sendError(trans('custom.asset_type_not_found'));
         }
 
         $assetType = $this->assetTypeRepository->update($input, $id);

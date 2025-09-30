@@ -43,13 +43,13 @@ class TenderCustomEmailController extends AppBaseController
             $record = $this->repository->getCustomEmailSupplier($tenderUUID, $supplierUuid, $documentCode);
 
             if (isset($responseData['success']) && $responseData['success']) {
-                return $this->sendError('Error occurred', ['error' => $record['data']]);
+                return $this->sendError(trans('custom.error_occurred_1'), ['error' => $record['data']]);
             }
 
-            return $this->sendResponse($record,'The Email Record successfully Received');
+            return $this->sendResponse($record,trans('custom.the_email_record_successfully_received'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred', ['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_occurred_1'), ['error' => $e->getMessage()]);
         }
     }
 
@@ -61,13 +61,13 @@ class TenderCustomEmailController extends AppBaseController
             $responseData = $this->repository->getCustomEmailData($tenderId, $negotiationId);
 
             if (isset($responseData['success']) && $responseData['success']) {
-                return $this->sendError('Error occurred');
+                return $this->sendError(trans('custom.error_occurred_1'));
             }
 
-            return $this->sendResponse($responseData,'Supplier List successfully Received');
+            return $this->sendResponse($responseData,trans('custom.supplier_list_successfully_received'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred');
+            return $this->sendError(trans('custom.error_occurred_1'));
         }
     }
 
@@ -80,13 +80,13 @@ class TenderCustomEmailController extends AppBaseController
             $deleted = $this->repository->deleteByTenderAndSupplier($tenderId, $supplierUuid);
 
             if (isset($deleted['success']) && $deleted['success']) {
-                return $this->sendError('Error occurred', ['error' => $deleted['data']]);
+                return $this->sendError(trans('custom.error_occurred_1'), ['error' => $deleted['data']]);
             }
 
             return $this->sendResponse(true, trans('srm_ranking.records_deleted_success'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred', ['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_occurred_1'), ['error' => $e->getMessage()]);
         }
     }
 }

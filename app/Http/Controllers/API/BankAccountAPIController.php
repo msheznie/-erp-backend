@@ -122,7 +122,7 @@ class BankAccountAPIController extends AppBaseController
             ->first();
 
         if (empty($bank)) {
-            return $this->sendError('Bank not found', 500);
+            return $this->sendError(trans('custom.bank_not_found'), 500);
         }
 
         $input['bankShortCode'] = $bank->bankShortCode;
@@ -530,46 +530,42 @@ class BankAccountAPIController extends AppBaseController
         $x = 0;
         foreach ($bankAccounts as $val) {
             $x++;
-            $data[$x]['Company ID'] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
-            $data[$x]['Bank Short Code'] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
-            $data[$x]['Bank Name'] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
-            $data[$x]['Account No'] = $val->AccountNo;
-            $data[$x]['Currency'] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
-            $data[$x]['GL Code'] = $val->glCodeLinked;
-            $data[$x]['Branch'] = $val->bankBranch;
-            $data[$x]['Swift'] = $val->accountSwiftCode;
-            $data[$x]['Is Temporary Acc'] = ($val->isTempBank == 1) ? "Yes" : "No";
-            $data[$x]['Is Active'] = ($val->isAccountActive == 1) ? "Yes" : "No";
-            $data[$x]['Is Default'] = ($val->isDefault == 1) ? "Yes" : "No";
+            $data[$x][trans('custom.company_id')] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
+            $data[$x][trans('custom.bank_short_code')] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
+            $data[$x][trans('custom.bank_name')] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
+            $data[$x][trans('custom.account_no')] = $val->AccountNo;
+            $data[$x][trans('custom.currency')] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
+            $data[$x][trans('custom.gl_code')] = $val->glCodeLinked;
+            $data[$x][trans('custom.branch')] = $val->bankBranch;
+            $data[$x][trans('custom.swift')] = $val->accountSwiftCode;
+            $data[$x][trans('custom.is_temporary_acc')] = ($val->isTempBank == 1) ? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.is_active')] = ($val->isAccountActive == 1) ? trans('custom.yes') : trans('custom.no');
+            $data[$x][trans('custom.is_default')] = ($val->isDefault == 1) ? trans('custom.yes') : trans('custom.no');
 
             $status = "";
             if ($val->CancelledYN == -1) {
-                $status = "Cancelled";
+                $status = trans('custom.cancelled');
             } else if ($val->confirmedYN == 0 && $val->approvedYN == 0) {
-                $status = " Not Confirmed";
+                $status = trans('custom.not_confirmed');
             }
             else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == 0) {
-                $status = "Pending Approval";
+                $status = trans('custom.pending_approval');
             } else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == -1) {
-                $status = "Referred Back";
+                $status = trans('custom.referred_back');
             }
             else if ($val->confirmedYN == 1 && ($val->approvedYN == -1 || $val->approvedYN == 1 )) {
-                $status = "Fully Approved";
+                $status = trans('custom.fully_approved');
             }
 
-            $data[$x]['Status'] = $status;
+            $data[$x][trans('custom.status')] = $status;
         }
 
-         \Excel::create('bank_accounts', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+        \Excel::create('bank_accounts', function ($excel) use ($data) {
+            $excel->sheet('Bank Accounts', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
+        })->download('xls');
 
         return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }
@@ -626,7 +622,7 @@ class BankAccountAPIController extends AppBaseController
         if(!empty($currency) && isset($currency['bank_currency'])){
             $bank_currency = $currency['bank_currency'];
         }else{
-            return $this->sendError('Please select a Currency', 500);
+            return $this->sendError(trans('custom.please_select_currency'), 500);
         }
         
         $document_currency = $currency['document_currency'];
@@ -864,9 +860,9 @@ class BankAccountAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankAccount->AccountNo . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $bankAccount->AccountNo;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $bankAccount->companySystemID)
             ->where('documentSystemCode', $bankAccount->bankAccountAutoID)

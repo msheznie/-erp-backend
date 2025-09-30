@@ -64,7 +64,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
 
-        Route::group(['middleware' => 'auth.api.keycloak'], function () {
+        Route::group(['middleware' => ['auth.api.keycloak', 'csrf.api']], function () {
 
             Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
                 Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
@@ -940,10 +940,17 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('department_budget_plannings', 'DepartmentBudgetPlanningAPIController');
                 Route::resource('dep_budget_pl_det_columns', 'DepBudgetPlDetColumnAPIController');
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
+                require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
+                Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
             });
         });
 
-        require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
+        Route::group(['middleware' => 'max_memory_limit'], function () {
+            Route::group(['middleware' => 'max_execution_limit'], function () {
+                Route::get('pdf/stream/{signature}', 'SignedPdfController@streamPdf')->where('signature', '[A-Za-z0-9_-]+');
+            });
+        });
+        
         Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
         Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
         Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
@@ -1038,15 +1045,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
-        Route::get('updateNotPostedPVGLEntries', 'GeneralLedgerAPIController@updateNotPostedPVGLEntries');
-        Route::get('updateNotPostedRVGLEntries', 'GeneralLedgerAPIController@updateNotPostedRVGLEntries');
-        Route::get('updateNotPostedFAGLEntries', 'GeneralLedgerAPIController@updateNotPostedFAGLEntries');
-        Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
-        Route::get('updateNotPostedBSIGLEntries', 'GeneralLedgerAPIController@updateNotPostedBSIGLEntries');
-        Route::get('updateNotApprovedSegments', 'GeneralLedgerAPIController@updateNotApprovedSegments');
     }
-
-
 });
 
 

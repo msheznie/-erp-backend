@@ -128,7 +128,7 @@ class CheckRegisterNotificationService
         }
         $empEmail = $mailTo->empEmail ?? null;
         if (!empty($empEmail)) {
-            $mailBody = "Hi {$mailTo->empName},<br/>";
+            $mailBody = trans('email.hi') . " {$mailTo->empName},<br/>";
             $mailBody .= $this->emailBody( );
             $mailBody .= "<br/>";
             $mailBody .= $this->expiryTable();

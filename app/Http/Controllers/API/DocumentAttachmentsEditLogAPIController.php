@@ -64,7 +64,7 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
         $this->documentAttachmentsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentAttachmentsEditLogs = $this->documentAttachmentsEditLogRepository->all();
 
-        return $this->sendResponse($documentAttachmentsEditLogs->toArray(), 'Document Attachments Edit Logs retrieved successfully');
+        return $this->sendResponse($documentAttachmentsEditLogs->toArray(), trans('custom.document_attachments_edit_logs_retrieved_successfu'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
 
         $documentAttachmentsEditLog = $this->documentAttachmentsEditLogRepository->create($input);
 
-        return $this->sendResponse($documentAttachmentsEditLog->toArray(), 'Document Attachments Edit Log saved successfully');
+        return $this->sendResponse($documentAttachmentsEditLog->toArray(), trans('custom.document_attachments_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
         $documentAttachmentsEditLog = $this->documentAttachmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentsEditLog)) {
-            return $this->sendError('Document Attachments Edit Log not found');
+            return $this->sendError(trans('custom.document_attachments_edit_log_not_found'));
         }
 
-        return $this->sendResponse($documentAttachmentsEditLog->toArray(), 'Document Attachments Edit Log retrieved successfully');
+        return $this->sendResponse($documentAttachmentsEditLog->toArray(), trans('custom.document_attachments_edit_log_retrieved_successful'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
         $documentAttachmentsEditLog = $this->documentAttachmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentsEditLog)) {
-            return $this->sendError('Document Attachments Edit Log not found');
+            return $this->sendError(trans('custom.document_attachments_edit_log_not_found'));
         }
 
         $documentAttachmentsEditLog = $this->documentAttachmentsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($documentAttachmentsEditLog->toArray(), 'DocumentAttachmentsEditLog updated successfully');
+        return $this->sendResponse($documentAttachmentsEditLog->toArray(), trans('custom.documentattachmentseditlog_updated_successfully'));
     }
 
     /**
@@ -288,14 +288,14 @@ class DocumentAttachmentsEditLogAPIController extends AppBaseController
         $documentAttachmentsEditLog = $this->documentAttachmentsEditLogRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentsEditLog)) {
-            return $this->sendError('Document Attachments Edit Log not found');
+            return $this->sendError(trans('custom.document_attachments_edit_log_not_found'));
         }
         $deleteResp = $this->documentAttachmentsEditLogRepository->deleteAttachment($documentAttachmentsEditLog);
         if(!$deleteResp['success']){
             return $this->sendError($deleteResp['message']);
         }
 
-        return $this->sendResponse([], 'Document Attachments deleted successfully');
+        return $this->sendResponse([], trans('custom.document_attachments_deleted_successfully'));
     }
 
 

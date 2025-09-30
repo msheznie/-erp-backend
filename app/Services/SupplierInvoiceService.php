@@ -15,21 +15,21 @@ class SupplierInvoiceService
 
         $invoice = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $supplierInvoiceID)->first();
         if (empty($invoice)) {
-            return ['status' => false, 'message' => 'Supplier Invoice not found'];
+            return ['status' => false, 'message' => trans('custom.supplier_invoice_not_found')];
         }
 
         if(isset($input['type']) &&  $input['type'] != $invoice->documentType) {
-            return ['status' => false, 'message' => 'The Supplier Invoice type has changed, unable to proceed'];
+            return ['status' => false, 'message' => trans('custom.supplier_invoice_type_changed')];
         }
 
         if (empty($invoice->supplierTransactionCurrencyID)) {
-            return ['status' => false, 'message' => 'Please select a document currency'];
+            return ['status' => false, 'message' => trans('custom.please_select_document_currency')];
         }
 
         $itemAssign = ItemAssigned::with(['item_master'])->where('itemCodeSystem', $itemCode)->first();
 
         if (empty($itemAssign)) {
-            return ['status' => false, 'message' => 'Item not assigned'];
+            return ['status' => false, 'message' => trans('custom.item_not_assigned')];
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
@@ -43,7 +43,7 @@ class SupplierInvoiceService
 
         if ($item->financeCategoryMaster == 1) {
             if ($sameItem) {
-                return ['status' => false, 'message' => 'Selected item is already added from the same supplier invoice.'];
+                return ['status' => false, 'message' => trans('custom.selected_item_already_added_same_supplier_invoice')];
             }
         }
 

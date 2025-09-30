@@ -355,7 +355,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
@@ -483,7 +483,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
@@ -559,7 +559,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $glCode->items->push(['budjetAmtRpt' => $budjetAmtRptSum,'isText' => true]);
         }
 
-        return $this->sendResponse(['glData' => $glCodes],"Data reterived successfully");
+        return $this->sendResponse(['glData' => $glCodes], trans('custom.data_retrieved_successfully'));
     }
 
     public function exportReport(Request $request)
@@ -569,7 +569,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = $this->budgetMasterRepository->with(['confirmed_by','segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($id);
 
         if (empty($budgetMaster)) {
-            return $this->sendError('Budget Master not found');
+            return $this->sendError(trans('custom.budget_master_not_found'));
         }
 
 
@@ -588,7 +588,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
@@ -706,7 +706,7 @@ class BudjetdetailsAPIController extends AppBaseController
             });
         })->download('csv');
 
-//        return $this->sendResponse(array(), 'successfully export');
+//        return $this->sendResponse(array(), trans('custom.success_export'));
        return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
 
     }
@@ -723,7 +723,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID'] ?? null);
 
             if (empty($budgetDetail)) {
-                return $this->sendError('Budget details not found');
+                return $this->sendError(trans('custom.budget_details_not_found'));
             }
             if(!$item['budjetAmtRpt']){
                 $item['budjetAmtRpt'] = 0;
@@ -759,7 +759,7 @@ class BudjetdetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Budjetdetails deleted successfully');
+        return $this->sendResponse([], trans('custom.budjetdetails_deleted_successfully'));
     }
 
 
@@ -796,12 +796,12 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
             if (empty($budgetMaster)) {
-                return $this->sendError('Budget Master not found', 500);
+                return $this->sendError(trans('custom.budget_master_not_found'), 500);
             }
 
             $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
             if (empty($companyFinanceYear)) {
-                return $this->sendError('Selected financial year is not found.', 500);
+                return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
             }
 
             $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
@@ -893,7 +893,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
             Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
-            return $this->sendResponse([], "Budget details uploaded successfully");
+            return $this->sendResponse([], trans('custom.budget_details_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -925,12 +925,12 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
         if (!$budgetMaster) {
-            return $this->sendError("Budget master not fouund", 500);
+            return $this->sendError(trans('custom.budget_master_not_found'), 500);
         }
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
@@ -966,7 +966,7 @@ class BudjetdetailsAPIController extends AppBaseController
             AddBudgetDetails::dispatch($budgetMaster,$glData, $monthArray);
         }
 
-        return $this->sendResponse($budgetMaster->toArray(), 'Budget details synced successfully');
+        return $this->sendResponse($budgetMaster->toArray(), trans('custom.budget_details_synced_successfully'));
     }
 
     public function getBudgetDetailHistory(Request $request)
@@ -976,7 +976,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
 
         if (!$budgetMaster) {
-            return $this->sendError("Budget Master not found");
+            return $this->sendError(trans('custom.budget_master_not_found'));
         }
 
         $budgetHistoryData['initialBudget'] = BudgetDetailHistory::where('budgetmasterID', $input['budgetMasterID'])
@@ -1025,7 +1025,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($budgetHistoryData, 'Budget history retrived successfully');
+        return $this->sendResponse($budgetHistoryData, trans('custom.budget_history_retrived_successfully'));
     }
 
 }

@@ -67,7 +67,7 @@ class QuotationStatusAPIController extends AppBaseController
         $this->quotationStatusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationStatuses = $this->quotationStatusRepository->all();
 
-        return $this->sendResponse($quotationStatuses->toArray(), 'Quotation Statuses retrieved successfully');
+        return $this->sendResponse($quotationStatuses->toArray(), trans('custom.quotation_statuses_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class QuotationStatusAPIController extends AppBaseController
 
         $quotationMasterData = QuotationMaster::find($quotationID);
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation not found');
+            return $this->sendError(trans('custom.quotation_not_found'));
         }
 
         if (isset($input['quotationStatusDate']) && $input['quotationStatusDate']) {
@@ -130,7 +130,7 @@ class QuotationStatusAPIController extends AppBaseController
 
         $quotationStatus = $this->quotationStatusRepository->create($input);
 
-        return $this->sendResponse($quotationStatus->toArray(), 'Quotation Status saved successfully');
+        return $this->sendResponse($quotationStatus->toArray(), trans('custom.quotation_status_saved_successfully'));
     }
 
     /**
@@ -177,10 +177,10 @@ class QuotationStatusAPIController extends AppBaseController
         $quotationStatus = $this->quotationStatusRepository->findWithoutFail($id);
 
         if (empty($quotationStatus)) {
-            return $this->sendError('Quotation Status not found');
+            return $this->sendError(trans('custom.quotation_status_not_found'));
         }
 
-        return $this->sendResponse($quotationStatus->toArray(), 'Quotation Status retrieved successfully');
+        return $this->sendResponse($quotationStatus->toArray(), trans('custom.quotation_status_retrieved_successfully'));
     }
 
     /**
@@ -239,12 +239,12 @@ class QuotationStatusAPIController extends AppBaseController
         $quotationStatus = $this->quotationStatusRepository->findWithoutFail($id);
 
         if (empty($quotationStatus)) {
-            return $this->sendError('Quotation Status not found');
+            return $this->sendError(trans('custom.quotation_status_not_found'));
         }
 
         $quotationMasterData = QuotationMaster::find($input['quotationID']);
         if (empty($quotationMasterData)) {
-            return $this->sendError('Quotation not found');
+            return $this->sendError(trans('custom.quotation_not_found'));
         }
 
         if (isset($input['quotationStatusDate']) && $input['quotationStatusDate']) {
@@ -255,7 +255,7 @@ class QuotationStatusAPIController extends AppBaseController
 
         $quotationStatus = $this->quotationStatusRepository->update($input, $id);
 
-        return $this->sendResponse($quotationStatus->toArray(), 'Quotation Status updated successfully');
+        return $this->sendResponse($quotationStatus->toArray(), trans('custom.quotation_status_updated_successfully'));
     }
 
     /**
@@ -302,12 +302,12 @@ class QuotationStatusAPIController extends AppBaseController
         $quotationStatus = $this->quotationStatusRepository->findWithoutFail($id);
 
         if (empty($quotationStatus)) {
-            return $this->sendError('Quotation Status not found');
+            return $this->sendError(trans('custom.quotation_status_not_found'));
         }
 
         $quotationStatus->delete();
 
-        return $this->sendResponse($id, 'Quotation Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_status_deleted_successfully'));
     }
 
     public function getQuotationStatus(Request $request)
@@ -319,6 +319,6 @@ class QuotationStatusAPIController extends AppBaseController
                                 ->with(['modified_by'])
                                 ->get();
 
-        return $this->sendResponse($items->toArray(), 'Status details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.status_details_retrieved_successfully'));
     }
 }

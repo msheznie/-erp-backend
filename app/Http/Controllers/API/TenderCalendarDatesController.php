@@ -86,10 +86,10 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar date description not found');
+            return $this->sendError(trans('custom.calendar_date_description_not_found'));
         }
 
-        return $this->sendResponse($calendarDate->toArray(), 'Calendar date description retrieved successfully');
+        return $this->sendResponse($calendarDate->toArray(), trans('custom.calendar_date_description_retrieved_successfully'));
     }
 
     /**

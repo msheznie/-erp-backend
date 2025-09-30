@@ -65,7 +65,7 @@ class POSSOURCETaxMasterAPIController extends AppBaseController
         $this->pOSSOURCETaxMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCETaxMasters = $this->pOSSOURCETaxMasterRepository->all();
 
-        return $this->sendResponse($pOSSOURCETaxMasters->toArray(), 'P O S S O U R C E Tax Masters retrieved successfully');
+        return $this->sendResponse($pOSSOURCETaxMasters->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_masters_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCETaxMasterAPIController extends AppBaseController
 
         $pOSSOURCETaxMaster = $this->pOSSOURCETaxMasterRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), 'P O S S O U R C E Tax Master saved successfully');
+        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCETaxMasterAPIController extends AppBaseController
         $pOSSOURCETaxMaster = $this->pOSSOURCETaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxMaster)) {
-            return $this->sendError('P O S S O U R C E Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_master_not_found'));
         }
 
-        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), 'P O S S O U R C E Tax Master retrieved successfully');
+        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_master_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCETaxMasterAPIController extends AppBaseController
         $pOSSOURCETaxMaster = $this->pOSSOURCETaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxMaster)) {
-            return $this->sendError('P O S S O U R C E Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_master_not_found'));
         }
 
         $pOSSOURCETaxMaster = $this->pOSSOURCETaxMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), 'POSSOURCETaxMaster updated successfully');
+        return $this->sendResponse($pOSSOURCETaxMaster->toArray(), trans('custom.possourcetaxmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCETaxMasterAPIController extends AppBaseController
         $pOSSOURCETaxMaster = $this->pOSSOURCETaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxMaster)) {
-            return $this->sendError('P O S S O U R C E Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_master_not_found'));
         }
 
         $pOSSOURCETaxMaster->delete();

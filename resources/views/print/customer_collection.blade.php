@@ -1,29 +1,26 @@
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    .text-right {
+        text-align: left !important;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    table {
+        direction: rtl;
     }
 
-    #footer .page:after {
-        content: counter(page, upper-roman);
+    .table th, .table td {
+        text-align: right;
     }
+
+    .table .total{
+        text-align: left !important;
+    }
+    @endif
 
     body {
         font-size: 10px;
@@ -132,10 +129,6 @@
         padding-top: -20px;
     }
 
-    .pagenum:after {
-        content: counter(page);
-    }
-
     .content {
         margin-bottom: 45px;
     }
@@ -163,43 +156,34 @@
         z-index: 1000;
     }
 
-</style>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collection Report</span><br>
-                        <span class="font-weight-bold">Collection for the Period : {{ $fromDate }}
-                            to {{ $toDate }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currency {{ $selectedCurrency }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
-                    </td>
-                    <td>
+    .text-left-footer {
+        text-align: left !important;
+    }
 
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<div id="footer">
-    <table style="width:100%;">
+    .text-right-footer {
+        text-align: right !important;
+    }
+
+</style>
+<div style="width: 100%; text-align: center; font-size: 10px; margin-bottom: 20px;">
+    <table style="width: 100%">
         <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+            <td valign="top" style="width: 45%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <img src="{{$companylogo}}" width="180px" height="60px"><br>
             </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+            <td valign="top" style="width: 55%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <br><br>
+                <span style="font-weight: bold; font-size: 12px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.collection_report') }}</span><br>
+                <span style="font-weight: bold; font-size: 12px;">{{ trans('custom.collection_for_the_period') }} : {{ $fromDate }}
+                    {{ trans('custom.to') }} {{ $toDate }}</span><br>
+                <span style="font-weight: bold; font-size: 12px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.currency') }} {{ $selectedCurrency }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" valign="top" style="width: 45%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <span style="font-weight: bold;"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
+            </td>
+            <td>
             </td>
         </tr>
     </table>
@@ -211,11 +195,11 @@
                 <td colspan="5"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="20%" style="text-align: center">Customer Code</th>
-                <th width="50%" style="text-align: center">Customer Name</th>
-                <th width="10%" style="text-align: center">Bank Payment</th>
-                <th width="10%" style="text-align: center">Credit Note Issued</th>
-                <th width="10%" style="text-align: center">Total</th>
+                <th width="20%" style="text-align: center">{{ trans('custom.customer_code') }}</th>
+                <th width="50%" style="text-align: center">{{ trans('custom.customer_name') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.bank_payment') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.credit_note_issued') }}</th>
+                <th width="10%" style="text-align: center">{{ trans('custom.total') }}</th>
             </tr>
             <tbody>
             {{ $lineTotalBank = 0 }}
@@ -235,8 +219,8 @@
                     {{ $lineTotalCredit += $det2->CNDocumentAmount }}
                 @endforeach
                 <tr>
-                    <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Total:</b></td>
+                    <td colspan="2" style="border-inline-start:white !important;border-block-end-color:white !important;"
+                        class="text-right total"><b>{{ trans('custom.total') }}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotalBank, $decimalPlaces) }}</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotalCredit, $decimalPlaces) }}</b></td>
                     <td style="text-align: right">
@@ -248,8 +232,8 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+            <td colspan="2" style="border-inline-start:white !important;border-block-end-color:white !important;"
+                class="text-right total"><b>{{ trans('custom.grand_total') }}:</b></td>
             <td style="text-align: right"><b>{{ number_format($bankPaymentTotal, $decimalPlaces) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($creditNoteTotal, $decimalPlaces) }}</b></td>
             <td style="text-align: right">
@@ -259,3 +243,15 @@
     </table>
 </div>
 
+<div style="width: 100%; text-align: center; font-size: 10px; padding-top: 20px; margin-top: 20px;">
+    <table style="width:100%;">
+        <tr>
+            <td style="width:50%;font-size: 10px;vertical-align: bottom; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
+            </td>
+            <td class="@if(isset($lang) && $lang === 'ar') text-left-footer @else text-right-footer @endif" style="width:50%; font-size: 10px;vertical-align: bottom;">
+                <span style="@if(isset($lang) && $lang === 'ar') float: left !important; @else float: right !important; @endif">{{ trans('custom.page') }} <span>{PAGENO}</span></span><br>
+            </td>
+        </tr>
+    </table>
+</div>

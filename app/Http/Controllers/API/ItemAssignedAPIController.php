@@ -55,7 +55,7 @@ class ItemAssignedAPIController extends AppBaseController
         $this->itemAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemAssigneds = $this->itemAssignedRepository->all();
 
-        return $this->sendResponse($itemAssigneds->toArray(), 'Item Assigneds retrieved successfully');
+        return $this->sendResponse($itemAssigneds->toArray(), trans('custom.item_assigneds_retrieved_successfully'));
     }
 
     /**
@@ -84,7 +84,7 @@ class ItemAssignedAPIController extends AppBaseController
         $itemMaster = ItemMaster::find($itemId);
 
         if (empty($itemMaster)) {
-          return $this->sendError('Item master not found.',500);
+          return $this->sendError(trans('custom.item_master_not_found_1'),500);
         }
 
 
@@ -95,11 +95,11 @@ class ItemAssignedAPIController extends AppBaseController
             }
 
             if($input['isAssigned'] == -1 && $itemAssigneds->isAssigned == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0 )){
-                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+                return $this->sendError(trans('custom.master_data_is_deactivated_cannot_activate_or_assi'),500);
             }
 
             if($input['isActive'] == 1 && $itemAssigneds->isActive == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0)){
-                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+                return $this->sendError(trans('custom.master_data_is_deactivated_cannot_activate_or_assi'),500);
             }
             $itemAssigneds->isActive = $input['isActive'];
             $itemAssigneds->isAssigned = $input['isAssigned'];
@@ -118,7 +118,7 @@ class ItemAssignedAPIController extends AppBaseController
                 }
     
                 if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
-                    return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+                    return $this->sendError(trans('custom.master_data_is_deactivated_cannot_activate_or_assi'),500);
                 }
 
                 $company = Company::where('companySystemID', $companie['id'])->first();
@@ -138,7 +138,7 @@ class ItemAssignedAPIController extends AppBaseController
         }
 
         if (method_exists($itemAssigneds, 'toArray')) {
-            return $this->sendResponse($itemAssigneds->toArray(), 'Item Assigned saved successfully');
+            return $this->sendResponse($itemAssigneds->toArray(), trans('custom.item_assigned_saved_successfully'));
         } else {
             return $this->sendError('Unable to assign company', 500);
         }
@@ -158,10 +158,10 @@ class ItemAssignedAPIController extends AppBaseController
         $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
 
         if (empty($itemAssigned)) {
-            return $this->sendError('Item Assigned not found');
+            return $this->sendError(trans('custom.item_assigned_not_found'));
         }
 
-        return $this->sendResponse($itemAssigned->toArray(), 'Item Assigned retrieved successfully');
+        return $this->sendResponse($itemAssigned->toArray(), trans('custom.item_assigned_retrieved_successfully'));
     }
 
     /**
@@ -182,7 +182,7 @@ class ItemAssignedAPIController extends AppBaseController
         $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
 
         if (empty($itemAssigned)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity','itemMovementCategory','roQuantity'];
@@ -203,7 +203,7 @@ class ItemAssignedAPIController extends AppBaseController
 
         $itemAssigned = $this->itemAssignedRepository->update($updateColumns, $id);
 
-        return $this->sendResponse($itemAssigned->toArray(), 'Item updated successfully');
+        return $this->sendResponse($itemAssigned->toArray(), trans('custom.item_updated_successfully'));
     }
 
     /**
@@ -220,12 +220,12 @@ class ItemAssignedAPIController extends AppBaseController
         $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
 
         if (empty($itemAssigned)) {
-            return $this->sendError('Item Assigned not found');
+            return $this->sendError(trans('custom.item_assigned_not_found'));
         }
 
         $itemAssigned->delete();
 
-        return $this->sendResponse($id, 'Item Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_assigned_deleted_successfully'));
     }
 
     /**
@@ -270,7 +270,7 @@ class ItemAssignedAPIController extends AppBaseController
             })
             ->make(true);
         return $data;
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+        ///return $this->sendResponse($itemMasters->toArray(), trans('custom.item_masters_retrieved_successfully'));*/
     }
 
 
@@ -286,36 +286,36 @@ class ItemAssignedAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Item code'] = $value->itemPrimaryCode;
-                $data[$x]['Mfg No'] = $value->secondaryItemCode;
-                $data[$x]['Item Description'] = $value->itemDescription;
+                $data[$x][__('custom.item_code')] = $value->itemPrimaryCode;
+                $data[$x][__('custom.mfg_no')] = $value->secondaryItemCode;
+                $data[$x][__('custom.item_description')] = $value->itemDescription;
 
                 if ($value->unit) {
-                    $data[$x]['Unit'] = $value->unit->UnitShortCode;
+                    $data[$x][__('custom.unit')] = $value->unit->UnitShortCode;
                 } else {
-                    $data[$x]['Unit'] = '';
+                    $data[$x][__('custom.unit')] = '';
                 }
 
                 if ($value->financeMainCategory) {
-                    $data[$x]['Main Category'] = $value->financeMainCategory->categoryDescription;
+                    $data[$x][__('custom.main_category')] = $value->financeMainCategory->categoryDescription;
                 } else {
-                    $data[$x]['Main Category'] = '';
+                    $data[$x][__('custom.main_category')] = '';
                 }
 
                 if ($value->financeSubCategory) {
-                    $data[$x]['Sub Category'] = $value->financeSubCategory->categoryDescription;
-                    $data[$x]['Finance BS Code'] = $value->financeSubCategory->financeGLcodebBS;
-                    $data[$x]['Finance PL Code'] = $value->financeSubCategory->financeGLcodePL;
+                    $data[$x][__('custom.sub_category')] = $value->financeSubCategory->categoryDescription;
+                    $data[$x][__('custom.finance_bs_code')] = $value->financeSubCategory->financeGLcodebBS;
+                    $data[$x][__('custom.finance_pl_code')] = $value->financeSubCategory->financeGLcodePL;
                 } else {
-                    $data[$x]['Sub Category'] = '';
-                    $data[$x]['Finance BS Code'] = '';
-                    $data[$x]['Finance PL Code'] = '';
+                    $data[$x][__('custom.sub_category')] = '';
+                    $data[$x][__('custom.finance_bs_code')] = '';
+                    $data[$x][__('custom.finance_pl_code')] = '';
                 }
 
-                $data[$x]['Min Qty'] = round($value->minimumQty, 2);
-                $data[$x]['MAx Qty'] = round($value->maximunQty, 2);
-                $data[$x]['Order level'] = $value->rolQuantity;
-                $data[$x]['Total Qty'] = round($value->totalQty, 2);
+                $data[$x][__('custom.min_qty')] = round($value->minimumQty, 2);
+                $data[$x][__('custom.max_qty')] = round($value->maximunQty, 2);
+                $data[$x][__('custom.order_level')] = $value->rolQuantity;
+                $data[$x][__('custom.total_qty')] = round($value->totalQty, 2);
                 $localDecimal = 3;
                 $rptDecimal = 2;
                 if ($value->local_currency) {
@@ -325,15 +325,15 @@ class ItemAssignedAPIController extends AppBaseController
                     $rptDecimal = $value->rpt_currency->DecimalPlaces;
                 }
 
-                $data[$x]['WAC Value Local'] = round($value->wacValueLocal, $localDecimal);
-                $data[$x]['WAC Value Rpt'] = round($value->wacValueReporting, $rptDecimal);
-                $data[$x]['Category'] = $value->itemMovementCategory;
+                $data[$x][__('custom.wac_value_local')] = round($value->wacValueLocal, $localDecimal);
+                $data[$x][__('custom.wac_value_rpt')] = round($value->wacValueReporting, $rptDecimal);
+                $data[$x][__('custom.category')] = $value->itemMovementCategory;
                 $status = "Not Active";
                 if ($value->isActive == 1) {
                     $status = "Active Only";
                 }
 
-                $data[$x]['Status'] = $status;
+                $data[$x][__('custom.status')] = $status;
                 $x++;
             }
         }
@@ -348,7 +348,7 @@ class ItemAssignedAPIController extends AppBaseController
         //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         // })->download($type);
 
-        // return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), trans('custom.success_export'));
 
         $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
@@ -565,7 +565,7 @@ class ItemAssignedAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($input['pullList'], 'Successfully pulled items from inventory');
+        return $this->sendResponse($input['pullList'], trans('custom.successfully_pulled_items_from_inventory'));
 
     }
 
@@ -597,7 +597,7 @@ class ItemAssignedAPIController extends AppBaseController
                                     ->get();
 
 
-        return $this->sendResponse($itemMasters, 'Successfully items retrieved');
+        return $this->sendResponse($itemMasters, trans('custom.successfully_items_retrieved'));
 
     }
 }

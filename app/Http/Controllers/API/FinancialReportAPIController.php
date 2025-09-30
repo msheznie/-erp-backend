@@ -206,10 +206,11 @@ class FinancialReportAPIController extends AppBaseController
         }
 
 
-        $columns = DB::table('report_custom_columns')
-            ->where('isActive',true)
-            ->whereIn('id',$columnIds)
-            ->get(['id','column_name']);
+        $columns = ReportCustomColumn::where('isActive', true)
+            ->whereIn('id', $columnIds)
+            ->select('id', 'column_name')
+            ->get();
+
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
@@ -229,7 +230,7 @@ class FinancialReportAPIController extends AppBaseController
             'defaultSelectedColumns' => ReportCustomColumn::whereIn('id',$defaultSelectedColumns)->get()
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getUtilizationFilterFormData(Request $request)
@@ -264,7 +265,7 @@ class FinancialReportAPIController extends AppBaseController
             'company' => $company,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getSubsidiaryCompanies(Request $request)
@@ -281,7 +282,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         $companiesData = Company::whereIn('companySystemID', $this->subAssociateJVCompanies)->get();
-        return $this->sendResponse($companiesData, "companies retrived successfully");        
+        return $this->sendResponse($companiesData, trans('custom.companies_retrieved_successfully'));        
     }
 
     public function getSubSubsidiaryCompanies($subsidiary_companies)
@@ -384,7 +385,7 @@ class FinancialReportAPIController extends AppBaseController
             'controlAccount' => $controlAccount
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateFRReport(Request $request)
@@ -405,7 +406,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if (empty($companyFinanceYear)) {
-                    return $this->sendError('Finance Year Not Found');
+                    return $this->sendError(trans('custom.finance_year_not_found'));
                 }
 
                 $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
@@ -416,11 +417,11 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
-                    return $this->sendError('From Date not between Financial year !', 500);
+                    return $this->sendError(trans('custom.from_date_not_between_financial_year'), 500);
                 } else if (!($toDate >= $bigginingDate) || !($toDate <= $endingDate)) {
-                    return $this->sendError('To Date not between Financial year !', 500);
+                    return $this->sendError(trans('custom.to_date_not_between_financial_year'), 500);
                 } else if ($fromDate > $toDate) {
-                    return $this->sendError('The To date must be greater than the From date !', 500);
+                    return $this->sendError(trans('custom.to_date_must_be_greater_than_from_date'), 500);
                 }
 
                 if ($validator->fails()) {
@@ -467,11 +468,11 @@ class FinancialReportAPIController extends AppBaseController
 
                 if(!isset($request->reportViewID) || $request->reportViewID == 0)
                 {
-                    return $this->sendError('Please select a report type');
+                    return $this->sendError(trans('custom.please_select_report_type'));
                 }
 
                 if (!isset($request->tempType) || $request->tempType == 0) {
-                    return $this->sendError('Please select a document type');
+                    return $this->sendError(trans('custom.please_select_document_type'));
                 }
 
 
@@ -500,7 +501,7 @@ class FinancialReportAPIController extends AppBaseController
                 $checkDetails = ReportTemplateDetails::where('companyReportTemplateID', $input['templateType'])->exists();
 
                 if (!$checkDetails && $input['accountType'] != 4) {
-                    return $this->sendError("Report rows are not configured");
+                    return $this->sendError(trans('custom.report_rows_not_configured'));
                 }
 
                 $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->get();
@@ -513,25 +514,25 @@ class FinancialReportAPIController extends AppBaseController
                             if(count($missingColumns) > 0) {
                                 $columnData = ReportTemplateColumns::whereIn('shortCode', $missingColumns)->pluck('description')->toArray();
                                 if(count($columnData) > 0) {
-                                    return $this->sendError("Column configuration not completed, assign " . join(",",$columnData) . " Column/s.");
+                                    return $this->sendError(trans('custom.column_configuration_not_completed_assign_columns', ['columns' => join(",",$columnData)]));
                                 }
                             }
                         }
                         else {
-                            return $this->sendError("Column configuration not completed, assign Combined, Elimination and Consolidation Columns or a Template.");
+                            return $this->sendError(trans('custom.column_configuration_not_completed_assign_combined'));
                         }
                     }
                 }
                 else {
                     if ((count($checkColoumns) == 0) && $input['accountType'] != 4) {
-                        return $this->sendError("Report columns are not configured");
+                        return $this->sendError(trans('custom.report_columns_not_configured'));
                     }
                 }
 
                 $checkRows = ReportTemplateEquity::where('companySystemID', $input['selectedCompanyID'])->where('templateMasterID', $input['templateType'])->first();
 
                 if (!$checkRows && $input['accountType'] == 4) {
-                    return $this->sendError("Report columns are not configured");
+                    return $this->sendError(trans('custom.report_columns_not_configured'));
                 }
 
                 $isRetaineGlExists =  ReportTemplateLinks::where('companySystemID', $input['selectedCompanyID'])->where('templateMasterID', $input['templateType'])->whereHas('chartofaccount',function($q){
@@ -540,7 +541,7 @@ class FinancialReportAPIController extends AppBaseController
 
                   if(!$isRetaineGlExists && $input['accountType'] == 4)
                   {
-                    return $this->sendError("Retained Earnings GL not assigned to template.");
+                    return $this->sendError(trans('custom.retained_earnings_gl_not_assigned'));
                   }
 
                 break;
@@ -577,15 +578,13 @@ class FinancialReportAPIController extends AppBaseController
                         'toDate' => 'required|date|after_or_equal:fromDate',
                         'currencyID' => 'required',
                         'suppliers' => 'required',
-                    ],[
-                        'currencyID.required' => 'The currency field is required.',
                     ]);
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
                     break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -595,7 +594,7 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
 
         if ($fromDate > $toDate) {
-            return $this->sendError('The To date must be greater than the From date !', 500);
+            return $this->sendError(trans('custom.to_date_must_be_greater_than_from_date'), 500);
         }
 
         $projectID = $request->projectID;
@@ -654,7 +653,7 @@ class FinancialReportAPIController extends AppBaseController
             'detailsPOWise' => $detailsPOWise
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateprojectUtilizationReport(Request $request)
@@ -845,7 +844,7 @@ class FinancialReportAPIController extends AppBaseController
             'reportTittle' => 'Project Utilization Report'
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function generateEmployeeLedgerReport(Request $request) {
@@ -868,7 +867,7 @@ class FinancialReportAPIController extends AppBaseController
         $currencyID = $input['currencyID'];
 
         if(!$companyID) {
-            return $this->sendError('Company ID not found');
+            return $this->sendError(trans('custom.company_id_not_found'));
         }
 
         // Retrieve company currency information
@@ -1118,7 +1117,7 @@ class FinancialReportAPIController extends AppBaseController
 
             $reportData = array(
                 'companyName' => $companyName,
-                'report_tittle' => 'Employee Ledger',
+                'report_tittle' => trans('custom.employee_ledger'),
                 'datas' => $data,
                 'employees' => $employees,
                 'currencyCodeLocal' => $currencyCodeLocal,
@@ -1148,7 +1147,7 @@ class FinancialReportAPIController extends AppBaseController
                 $currencyDecimalLocal,
                 $currencyDecimalRpt,
                 $grandSumArray
-            ], 'Record retrieved successfully');
+            ], trans('custom.record_retrieved_successfully_1'));
         }
     }
 
@@ -2064,7 +2063,7 @@ class FinancialReportAPIController extends AppBaseController
                 );
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -2876,9 +2875,9 @@ class FinancialReportAPIController extends AppBaseController
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
-                                $data[$x]['Account Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-                                $data[$x]['Type'] = $val->glAccountType;
+                                $data[$x][trans('custom.account_code')] = $val->glCode;
+                                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                                $data[$x][trans('custom.type')] = $val->glAccountType;
                                 foreach ($subCompanies as $company) {
                                     $comCode = $company['CompanyID'];
                                     $data[$x][$comCode] = round($val->$comCode, 2);
@@ -2907,11 +2906,11 @@ class FinancialReportAPIController extends AppBaseController
                             foreach ($output as $val) {
                                 if ($request->reportSD == 'company_wise') {
                                     $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
                                 }
-                                $data[$x]['Account Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-                                $data[$x]['Type'] = $val->glAccountType;
+                                $data[$x][trans('custom.account_code')] = $val->glCode;
+                                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                                $data[$x][trans('custom.type')] = $val->glAccountType;
 
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
@@ -2974,10 +2973,10 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
                             }*/
-                            $data[$x]['Account Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['Type'] = $val->glAccountType;
-                            $data[$x]['Opening Balance'] = round($val->Opening, $decimalPlace);
+                            $data[$x][trans('custom.account_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.type')] = $val->glAccountType;
+                            $data[$x][trans('custom.opening_balance')] = round($val->Opening, $decimalPlace);
                             foreach ($headers as $header) {
                                 $closing = $header . 'Closing';
                                 $data[$x][$header] = round($val->$header, $decimalPlace);
@@ -3034,11 +3033,11 @@ class FinancialReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         if ($request->reportSD == 'company_wise') {
                             $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
@@ -3140,7 +3139,7 @@ class FinancialReportAPIController extends AppBaseController
                                         $data[$x]['approved_date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
 
 
-                                    $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                                    $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                                     if ($checkIsGroup->isGroup == 0) {
                                         $data[$x]['debit_local'] = round($val->localDebit, $decimalPlaceLocal);
                                         $data[$x]['credit_local'] = round($val->localCredit, $decimalPlaceLocal);
@@ -3199,7 +3198,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['confirmed_date'] = "";
                         $data[$x]['approved_by'] = "";
                         $data[$x]['approved_date'] = "";
-                        $data[$x]['Supplier/Customer'] = "Grand Total";
+                        $data[$x][trans('custom.supplier_customer')] = "Grand Total";
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['debit_local'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
                             $data[$x]['credit_local'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
@@ -3230,7 +3229,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['confirmed_date'] = "";
                         $data[$x]['approved_by'] = "";
                         $data[$x]['approved_date'] = "";
-                        $data[$x]['Supplier/Customer'] = "Grand Total";
+                        $data[$x][trans('custom.supplier_customer')] = "Grand Total";
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['debit_local'] = "";
                             $data[$x]['grand_local_balance'] = round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal);
@@ -3243,32 +3242,32 @@ class FinancialReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['GL  Type'] = $val->glAccountType;
-                            $data[$x]['Template Description'] = $val->templateDetailDescription;
-                            $data[$x]['Document Type'] = $val->documentID;
-                            $data[$x]['Document Number'] = $val->documentCode;
-                            $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Narration'] = $val->documentNarration;
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Contract'] = $val->clientContractID;
-                            $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                            $data[$x][trans('custom.gl_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.gl_type')] = $val->glAccountType;
+                            $data[$x][trans('custom.template_description')] = $val->templateDetailDescription;
+                            $data[$x][trans('custom.document_type')] = $val->documentID;
+                            $data[$x][trans('custom.document_number')] = $val->documentCode;
+                            $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                            $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                            $data[$x][trans('custom.contract')] = $val->clientContractID;
+                            $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                             if (in_array('confi_name', $extraColumns)) {
-                                $data[$x]['Confirmed By'] = $val->confirmedBy;
+                                $data[$x][trans('custom.confirmed_by')] = $val->confirmedBy;
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
-                                $data[$x]['Approved By'] = $val->approvedBy;
+                                $data[$x][trans('custom.approved_by')] = $val->approvedBy;
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
                             }
 
                             if ($checkIsGroup->isGroup == 0) {
@@ -3304,18 +3303,18 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Document Code'] = $val->bookingInvCode;
                             $data[$x]['Document Date'] = $val->bookingDate;
-                            $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
-                            $data[$x]['Invoice Date'] = $val->supplierInvoiceDate;
-                            $data[$x]['Narration'] = $val->comments;
-                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Currency'] = $val->CurrencyCode;
-                            $data[$x]['Value'] = ($val->bookingAmountTrans - $val->taxTotalAmount);
-                            $data[$x]['Discount'] = 0;
-                            $data[$x]['Net Value'] = ($val->bookingAmountTrans - $val->taxTotalAmount);
-                            $data[$x]['VAT'] = $val->taxTotalAmount;
-                            $data[$x]['Due Amount'] = $val->bookingAmountTrans;
-                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $data[$x][trans('custom.invoice_no')] = $val->supplierInvoiceNo;
+                            $data[$x][trans('custom.invoice_date')] = $val->supplierInvoiceDate;
+                            $data[$x][trans('custom.narration')] = $val->comments;
+                            $data[$x][trans('custom.supplier_code')] = $val->primarySupplierCode;
+                            $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                            $data[$x][trans('custom.currency')] = $val->CurrencyCode;
+                            $data[$x][trans('custom.value')] = ($val->bookingAmountTrans - $val->taxTotalAmount);
+                            $data[$x][trans('custom.discount')] = 0;
+                            $data[$x][trans('custom.net_value')] = ($val->bookingAmountTrans - $val->taxTotalAmount);
+                            $data[$x][trans('custom.vat')] = $val->taxTotalAmount;
+                            $data[$x][trans('custom.due_amount')] = $val->bookingAmountTrans;
+                            $data[$x][trans('custom.posted_date')] = $val->postedDate;
                             $x++;
                         }
                     }
@@ -3326,19 +3325,19 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Document Code'] = $val->bookingInvCode;
                             $data[$x]['Document Date'] = $val->bookingDate;
-                            $data[$x]['Invoice No'] = $val->bookingInvCode;
-                            $data[$x]['Invoice Date'] = $val->bookingDate;
-                            $data[$x]['Narration'] = $val->comments;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Short Code'] = $val->customerShortCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Currency'] = $val->CurrencyCode;
-                            $data[$x]['Value'] = $val->bookingAmountTrans;
-                            $data[$x]['Discount'] = 0;
-                            $data[$x]['Net Value'] = $val->bookingAmountTrans;
-                            $data[$x]['VAT'] = $val->taxTotalAmount;
-                            $data[$x]['Due Amount'] = ($val->bookingAmountTrans + $val->taxTotalAmount);
-                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $data[$x][trans('custom.invoice_no')] = $val->bookingInvCode;
+                            $data[$x][trans('custom.invoice_date')] = $val->bookingDate;
+                            $data[$x][trans('custom.narration')] = $val->comments;
+                            $data[$x][trans('custom.customer_code')] = $val->CutomerCode;
+                            $data[$x][trans('custom.customer_short_code')] = $val->customerShortCode;
+                            $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                            $data[$x][trans('custom.currency')] = $val->CurrencyCode;
+                            $data[$x][trans('custom.value')] = $val->bookingAmountTrans;
+                            $data[$x][trans('custom.discount')] = 0;
+                            $data[$x][trans('custom.net_value')] = $val->bookingAmountTrans;
+                            $data[$x][trans('custom.vat')] = $val->taxTotalAmount;
+                            $data[$x][trans('custom.due_amount')] = ($val->bookingAmountTrans + $val->taxTotalAmount);
+                            $data[$x][trans('custom.posted_date')] = $val->postedDate;
                             $x++;
                         }
                     }
@@ -3390,12 +3389,12 @@ class FinancialReportAPIController extends AppBaseController
                         //$data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Year'] = $val->YEAR;
-                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x][trans('custom.year')] = $val->YEAR;
+                        $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
-                            $data[$x]['Account Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['Type'] = $val->glAccountType;
+                            $data[$x][trans('custom.account_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.type')] = $val->glAccountType;
                         }
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->debitAmountLocal, $decimalPlaceLocal);
@@ -3404,10 +3403,10 @@ class FinancialReportAPIController extends AppBaseController
 
                         $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
-                        $data[$x]['Confirmed By'] = $val->confirmedByName;
-                        $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
-                        $data[$x]['Approved By'] = $val->FinalApprovedBy;
+                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
+                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
                 }
@@ -3416,7 +3415,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -3996,7 +3995,7 @@ class FinancialReportAPIController extends AppBaseController
             'detailsPOWise' => $detailsPOWise,
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
-            'reportTittle' => 'Project Utilization Report',
+            'reportTittle' => trans('custom.project_utilization_report'),
             'companyReportingCurrency' => $cur_rep,
         );
 
@@ -4038,9 +4037,9 @@ class FinancialReportAPIController extends AppBaseController
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
-                                $data[$x]['Account Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-                                $data[$x]['Type'] = $val->glAccountType;
+                                $data[$x][trans('custom.account_code')] = $val->glCode;
+                                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                                $data[$x][trans('custom.type')] = $val->glAccountType;
                                 foreach ($subCompanies as $company) {
                                     $comCode = $company['CompanyID'];
                                     $data[$x][$comCode] = CurrencyService::convertNumberFormatToNumber(number_format($val->$comCode, 2));
@@ -4084,12 +4083,12 @@ class FinancialReportAPIController extends AppBaseController
                             $x = 0;
                             foreach ($output as $val) {
                                 if ($request->reportSD == 'company_wise') {
-                                    $data[$x]['Company ID'] = $val->companyID;
-                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x][trans('custom.company_id')] = $val->companyID;
+                                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
                                 }
-                                $data[$x]['Account Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-                                $data[$x]['Type'] = $val->glAccountType;
+                                $data[$x][trans('custom.account_code')] = $val->glCode;
+                                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                                $data[$x][trans('custom.type')] = $val->glAccountType;
                                 if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
                                     $totalOpeningBalanceLocal = $totalOpeningBalanceLocal + $val->openingBalLocal;
                                     $totaldocumentLocalAmountDebit = $totaldocumentLocalAmountDebit + $val->documentLocalAmountDebit;
@@ -4097,10 +4096,10 @@ class FinancialReportAPIController extends AppBaseController
 
                                     $totalClosingBalanceLocal = $totalClosingBalanceLocal + $val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit);
 
-                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal));
-                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountDebit, $decimalPlaceLocal));
-                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountCredit, $decimalPlaceLocal));
-                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal));
+                                    $data[$x][trans('custom.opening_balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal));
+                                    $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountDebit, $decimalPlaceLocal));
+                                    $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentLocalAmountCredit, $decimalPlaceLocal));
+                                    $data[$x][trans('custom.closing_balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal));
                                 }
                                 if($currencyId == 2 || $currencyId == 3) {
                                     $totalOpeningBalanceRpt = $totalOpeningBalanceRpt + $val->openingBalRpt;
@@ -4109,10 +4108,10 @@ class FinancialReportAPIController extends AppBaseController
 
                                     $totaldocumentRptAmountCredit = $totaldocumentRptAmountCredit + $val->documentRptAmountCredit;
 
-                                    $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt));
-                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountDebit, $decimalPlaceRpt));
-                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountCredit, $decimalPlaceRpt));
-                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalRpt) ? $val->openingBalRpt : 0) + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt));
+                                    $data[$x][trans('custom.opening_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt));
+                                    $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountDebit, $decimalPlaceRpt));
+                                    $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->documentRptAmountCredit, $decimalPlaceRpt));
+                                    $data[$x][trans('custom.closing_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format((isset($val->openingBalRpt) ? $val->openingBalRpt : 0) + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt));
     
                                 }
                                 $x++;
@@ -4120,23 +4119,23 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
                         if ($request->reportSD == 'company_wise') {
-                            $data[$x]['Company ID'] = "";
-                            $data[$x]['Company Name'] = "";
+                            $data[$x][trans('custom.company_id')] = "";
+                            $data[$x][trans('custom.company_name')] = "";
                         }
-                        $data[$x]['Account Code'] = "";
-                        $data[$x]['Account Description'] = "Grand Total";
-                        $data[$x]['Type'] = "";
+                        $data[$x][trans('custom.account_code')] = "";
+                        $data[$x][trans('custom.account_description')] = trans('custom.grand_total');
+                        $data[$x][trans('custom.type')] = "";
                         if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
-                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceLocal, $decimalPlaceLocal));
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountDebit, $decimalPlaceLocal));
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountCredit, $decimalPlaceLocal));
-                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.opening_balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountDebit, $decimalPlaceLocal));
+                            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentLocalAmountCredit, $decimalPlaceLocal));
+                            $data[$x][trans('custom.closing_balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceLocal, $decimalPlaceLocal));
                         }
                         if($currencyId == 2 || $currencyId == 3) { 
-                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceRpt, $decimalPlaceRpt));
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountDebit, $decimalPlaceRpt));
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountCredit, $decimalPlaceRpt));
-                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
+                            $data[$x][trans('custom.opening_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalOpeningBalanceRpt, $decimalPlaceRpt));
+                            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountDebit, $decimalPlaceRpt));
+                            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totaldocumentRptAmountCredit, $decimalPlaceRpt));
+                            $data[$x][trans('custom.closing_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
                         }
                         $excelFormat = [
                             'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -4157,10 +4156,10 @@ class FinancialReportAPIController extends AppBaseController
                     $headers = $result['headers'];
 
                     $totalArray =  array(
-                        'Account Code' => '',
-                        'Account Description' => 'Grand Total',
-                        'Type' => '',
-                        'Opening Balance' => 0,
+                        trans('custom.account_code') => '',
+                        trans('custom.account_description') => trans('custom.grand_total'),
+                        trans('custom.type') => '',
+                        trans('custom.opening_balance') => 0,
                         'Jan' => 0,
                         'JanClosing' => 0,
                         'Feb' => 0,
@@ -4196,7 +4195,7 @@ class FinancialReportAPIController extends AppBaseController
                         $opening_total += round($ou->Opening,2);
                     }
 
-                    $totalArray['Opening Balance'] = round($opening_total,2);
+                    $totalArray[trans('custom.opening_balance')] = round($opening_total,2);
 
                     $currencyIdLocal = 1;
                     $currencyIdRpt = 2;
@@ -4239,10 +4238,10 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
                             }*/
-                            $data[$x]['Account Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['Type'] = $val->glAccountType;
-                            $data[$x]['Opening Balance'] = round($val->Opening, $decimalPlace);
+                            $data[$x][trans('custom.account_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.type')] = $val->glAccountType;
+                            $data[$x][trans('custom.opening_balance')] = round($val->Opening, $decimalPlace);
                             foreach ($headers as $header) {
                                 $closing = $header . 'Closing';
                                 $data[$x][$header] = round($val->$header, $decimalPlace);
@@ -4252,36 +4251,36 @@ class FinancialReportAPIController extends AppBaseController
                             $x++;
                         }
                     }
-                    $data[$x]['Account Code'] = '';
-                    $data[$x]['Account Description'] = '';
-                    $data[$x]['Type'] = '';
-                    $data[$x]['Opening Balance'] = '';
-                    $data[$x]['Jan'] = '';
-                    $data[$x]['JanClosing'] = '';
-                    $data[$x]['Feb'] = '';
-                    $data[$x]['FebClosing'] = '';
-                    $data[$x]['Mar'] = '';
-                    $data[$x]['MarClosing'] = '';
-                    $data[$x]['Apr'] = '';
-                    $data[$x]['AprClosing'] = '';
-                    $data[$x]['May'] = '';
-                    $data[$x]['MayClosing'] = '';
-                    $data[$x]['Jun'] = '';
-                    $data[$x]['JunClosing'] = '';
-                    $data[$x]['Jul'] = '';
-                    $data[$x]['JulClosing'] = '';
-                    $data[$x]['Aug'] = '';
-                    $data[$x]['AugClosing'] = '';
-                    $data[$x]['Sep'] = '';
-                    $data[$x]['SepClosing'] = '';
-                    $data[$x]['Oct'] = '';
-                    $data[$x]['OctClosing'] = '';
-                    $data[$x]['May'] = '';
-                    $data[$x]['MayClosing'] = '';
-                    $data[$x]['Nov'] = '';
-                    $data[$x]['NovClosing'] = '';
-                    $data[$x]['Dece'] = '';
-                    $data[$x]['DeceClosing'] = '';
+                    $data[$x][trans('custom.account_code')] = '';
+                    $data[$x][trans('custom.account_description')] = '';
+                    $data[$x][trans('custom.type')] = '';
+                    $data[$x][trans('custom.opening_balance')] = '';
+                    $data[$x][trans('custom.jan')] = '';
+                    $data[$x][trans('custom.jan') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.feb')] = '';
+                    $data[$x][trans('custom.feb') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.mar')] = '';
+                    $data[$x][trans('custom.mar') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.apr')] = '';
+                    $data[$x][trans('custom.apr') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.may')] = '';
+                    $data[$x][trans('custom.may') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.jun')] = '';
+                    $data[$x][trans('custom.jun') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.jul')] = '';
+                    $data[$x][trans('custom.jul') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.aug')] = '';
+                    $data[$x][trans('custom.aug') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.sep')] = '';
+                    $data[$x][trans('custom.sep') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.oct')] = '';
+                    $data[$x][trans('custom.oct') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.may')] = '';
+                    $data[$x][trans('custom.may') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.nov')] = '';
+                    $data[$x][trans('custom.nov') . trans('custom.closing')] = '';
+                    $data[$x][trans('custom.dece')] = '';
+                    $data[$x][trans('custom.dece') . trans('custom.closing')] = '';
     
                     array_push($data,$totalArray);
                     $excelFormat = [
@@ -4322,7 +4321,7 @@ class FinancialReportAPIController extends AppBaseController
                 $to_date = $request->toDate;
                 $from_date = $request->fromDate;
                 if ($reportTypeID == 'FTBM') {
-                    $title = 'Financial Trial Balance Month Wise';
+                    $title = trans('custom.financial_trial_balance_month_wise');
                     if ($request->currencyID == 1) {
                         $cur = $currencyLocal;
                     } else if ($request->currencyID == 2) {
@@ -4330,14 +4329,14 @@ class FinancialReportAPIController extends AppBaseController
                     }
                     $isString = true;
                 } else {
-                    $title = 'Financial Trial Balance';
+                    $title = trans('custom.financial_trial_balance');
                     $cur = null;
                     $isString = false;
                 }
 
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-                $fileName = 'financial_trial_balance';
+                $fileName = trans('custom.financial_trial_balance');
                 $path = 'general-ledger/report/trial_balance/excel/';
 
                 $exportToExcel = $exportGlToExcelService
@@ -4359,7 +4358,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -4403,17 +4402,17 @@ class FinancialReportAPIController extends AppBaseController
                 $data = array();
                 if ($output) {
                     if($request->glAccountTypeID == 1) {
-                        $data[0]['Document Code'] = '';
-                        $data[0]['Document Date'] = '';
-                        $data[0]['Document Narration'] = 'Opening Balance';
+                        $data[0][trans('custom.document_code')] = '';
+                        $data[0][trans('custom.document_date')] = '';
+                        $data[0][trans('custom.document_narration')] = trans('custom.opening_balance');
 
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[0]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
-                            $data[0]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
+                            $data[0][trans('custom.debit').' ('.trans('custom.local_currency').' - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
+                            $data[0][trans('custom.credit').' ('.trans('custom.local_currency').' - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
                         }
 
-                        $data[0]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
-                        $data[0]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
+                        $data[0][trans('custom.debit').' ('.trans('custom.reporting_currency').' - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
+                        $data[0][trans('custom.credit').' ('.trans('custom.reporting_currency').' - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
 
                         $x = 1;    
                     } else {
@@ -4422,35 +4421,36 @@ class FinancialReportAPIController extends AppBaseController
                     
                     foreach ($output as $val) {
                         if ($request->reportSD == 'company_wise') {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                            $data[$x][trans('custom.debit').' ('.trans('custom.local_currency'). $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                            $data[$x][trans('custom.credit').' ('.trans('custom.local_currency'). $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
                         }
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                        $data[$x][trans('custom.debit').' ('.trans('custom.reporting_currency'). $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
+                        $data[$x][trans('custom.credit').' ('.trans('custom.reporting_currency'). $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
                         $x++;
                     }
                 }
 
-                \Excel::create('trial_balance_details', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
-                return $this->sendResponse(array(), 'successfully export');
+                $fileName = trans('custom.trial_balance_details');
+                $path = 'general-ledger/report/trial_balance_details/excel/';
+
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
+
+                $exportToExcel = CreateExcel::process($data,'xls',$fileName,$path,$detail_array);
+
+                return $this->sendResponse($exportToExcel, trans('custom.success_export'));
                 break;
             case 'FGL':
                 $type = $request->type;
@@ -4491,9 +4491,9 @@ class FinancialReportAPIController extends AppBaseController
                 $reportSD = $request->reportSD;
                 $company_name = $companyCurrency->CompanyName;
                 $cur = null;
-                $title = "Financial General Ledger";
+                $title = trans('custom.financial_general_ledger');
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
-                $fileName = 'financial_general_ledger';
+                $fileName = trans('custom.financial_general_ledger');
                 $path = 'general-ledger/report/general_ledger/excel/';
 
                 if ($reportSD == "glCode_wise") {
@@ -4537,7 +4537,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -4598,7 +4598,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -4647,121 +4647,124 @@ class FinancialReportAPIController extends AppBaseController
                     $x = 0;
                     foreach ($output as $val) {
 
-                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
                         //$data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Year'] = $val->YEAR;
-                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x][trans('custom.document_code')] = $val->documentCode;
+                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.year')] = $val->YEAR;
+                        $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
-                            $data[$x]['Account Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['JV Type'] = $val->jv_type;
-                            $data[$x]['Type'] = $val->glAccountType;
+                            $data[$x][trans('custom.account_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.jv_type')] = $val->jv_type;
+                            $data[$x][trans('custom.type')] = $val->glAccountType;
                         }
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->debitAmountLocal, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->creditAmountLocal, $decimalPlaceLocal);
+                            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = round($val->debitAmountLocal, $decimalPlaceLocal);
+                            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = round($val->creditAmountLocal, $decimalPlaceLocal);
                         }
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
-                        $data[$x]['Confirmed By'] = $val->confirmedByName;
-                        $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
-                        $data[$x]['Approved By'] = $val->FinalApprovedBy;
+                        $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
+                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
                 }
 
-                \Excel::create('jv_detail', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = trans('custom.jv_detail');
+                $path = 'general_ledger/report/jv_detail/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
 
                 break;
-                case 'RTD':
-                    $type = $request->type;
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
+            case 'RTD':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    $checkIsGroup = Company::find($request->companySystemID);
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $checkIsGroup = Company::find($request->companySystemID);
 
-                    $output = $this->getRTDReportQry($request);
-                    $data = array();
+                $output = $this->getRTDReportQry($request);
+                $data = array();
 
-                    $cur = null;
-                    $title = 'Report Tax Details';
-                    $company_name = $companyCurrency->CompanyName;
-                    $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
-                    $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
-                    $toDate = (new Carbon($request->toDate))->format('Y-m-d');
-
-
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $cur = null;
+                $title = 'Report Tax Details';
+                $company_name = $companyCurrency->CompanyName;
+                $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
+                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                $toDate = (new Carbon($request->toDate))->format('Y-m-d');
 
 
-                    if($request->currencyID == 1) {
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+
+                if($request->currencyID == 1) {
+                    $currency = $companyCurrency->localcurrency;
+                }
+                if($request->currencyID == 2) {
+                    $currency = $companyCurrency->reportingcurrency;
+                }
+                if($request->currencyID == 3) {
+                    if(!empty($output->first()->supplierTransactionCurrencyID)) {
+                        $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
+                    } else {
                         $currency = $companyCurrency->localcurrency;
                     }
-                    if($request->currencyID == 2) {
-                        $currency = $companyCurrency->reportingcurrency;
-                    }   
-                    if($request->currencyID == 3) {
-                        if(!empty($output->first()->supplierTransactionCurrencyID)) {
-                            $currency = CurrencyMaster::find($output->first()->supplierTransactionCurrencyID);
-                        } else {
-                            $currency = $companyCurrency->localcurrency;
-                        }
-                    }
-       
-                   
+                }
 
 
-                    $detail_array = array(  'type' => 1,
-                                            'fromDate'=>$fromDate,  
-                                            'toDate'=>$toDate,
-                                            'company_name'=>$company_name,
-                                            'company_code'=>$companyID,
-                                            'cur'=>$cur,
-                                            'tempType' => 'csv',
-                                            'reportViewID' => 1,
-                                            'reportData' => $output,
-                                            'taxExtraColumn' => isset($request->taxExtraColumn) ? $request->taxExtraColumn : null,
-                                            'decimalPlaceRpt' => $currency->DecimalPlaces,
-                                            'currencyRpt' => $currency->CurrencyCode,
-                    );
-
-                    $templateName = "export_report.generalLedger.rtd_details";
-                    $fileName = 'Tax Deductibility';
-                    $path = 'general-ledger/report/rtd_details/excel/';
-                    $type = "xls";
-                    $excelColumnFormat = [
-
-                    ];
 
 
-                    $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
+                $detail_array = array(  'type' => 1,
+                                        'fromDate'=>$fromDate,
+                                        'toDate'=>$toDate,
+                                        'company_name'=>$company_name,
+                                        'company_code'=>$companyID,
+                                        'cur'=>$cur,
+                                        'tempType' => 'csv',
+                                        'reportViewID' => 1,
+                                        'reportData' => $output,
+                                        'taxExtraColumn' => isset($request->taxExtraColumn) ? $request->taxExtraColumn : null,
+                                        'decimalPlaceRpt' => $currency->DecimalPlaces,
+                                        'currencyRpt' => $currency->CurrencyCode,
+                );
 
-                    if($basePath == '')
-                    {
-                         return $this->sendError('Unable to export excel');
-                    }
-                    else
-                    {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+                $templateName = "export_report.generalLedger.rtd_details";
+                $fileName = 'Tax Deductibility';
+                $path = 'general-ledger/report/rtd_details/excel/';
+                $type = "xls";
+                $excelColumnFormat = [
 
-                    break;
-                default:
-                return $this->sendError('No report ID found');
+                ];
+
+
+                $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
+
+                if($basePath == '')
+                {
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+                break;
+            default:
+            return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -4784,41 +4787,41 @@ class FinancialReportAPIController extends AppBaseController
             foreach ($outputArr as $key => $values) {
                 $data[$x][''] = $key;
                 $x++;
-                $data[$x]['Company ID'] = 'Company ID';
-                $data[$x]['Company Name'] = 'Company Name';
-                $data[$x]['GL  Type'] = 'GL  Type';
-                $data[$x]['Template Description'] = 'Template Description';
-                $data[$x]['Document Type'] = 'Document Type';
-                $data[$x]['Document Number'] = 'Document Number';
-                $data[$x]['Date'] = 'Date';
-                $data[$x]['Document Narration'] = 'Document Narration';
-                $data[$x]['Service Line'] = 'Service Line';
-                $data[$x]['Contract'] = 'Contract';
+                $data[$x][trans('custom.company_id')] = trans('custom.company_id');
+                $data[$x][trans('custom.company_name')] = trans('custom.company_name');
+                $data[$x][trans('custom.gl_type')] = trans('custom.gl_type');
+                $data[$x][trans('custom.template_description')] = trans('custom.template_description');
+                $data[$x][trans('custom.document_type')] = trans('custom.document_type');
+                $data[$x][trans('custom.document_number')] = trans('custom.document_number');
+                $data[$x][trans('custom.date')] = trans('custom.date');
+                $data[$x][trans('custom.document_narration')] = trans('custom.document_narration');
+                $data[$x][trans('custom.service_line')] = trans('custom.service_line');
+                $data[$x][trans('custom.contract')] = trans('custom.contract');
 
                 if (in_array('confi_name', $extraColumns)) {
-                    $data[$x]['Confirmed By'] = 'Confirmed By';
+                    $data[$x][trans('custom.confirmed_by')] = trans('custom.confirmed_by');
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x]['Confirmed Date'] = 'Confirmed Date';
+                    $data[$x][trans('custom.confirmed_date')] = trans('custom.confirmed_date');
                 }
 
                 if (in_array('app_name', $extraColumns)) {
-                    $data[$x]['Approved By'] = 'Approved By';
+                    $data[$x][trans('custom.approved_by')] = trans('custom.approved_by');
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x]['Approved Date'] = 'Approved Date';
+                    $data[$x][trans('custom.approved_date')] = trans('custom.approved_date');
                 }
-                $data[$x]['Supplier/Customer'] = 'Supplier/Customer';
+                $data[$x][trans('custom.supplier_customer')] = trans('custom.supplier_customer');
                 if ($checkIsGroup->isGroup == 0) {
-                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = 'Debit (Local Currency - ' . $currencyLocal . ')';
-                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = 'Credit (Local Currency - ' . $currencyLocal . ')';
-                    $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = 'Balance (Local Currency - ' . $currencyLocal . ')';
+                    $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')';
+                    $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')';
+                    $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')';
                 }
-                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = 'Debit (Reporting Currency - ' . $currencyRpt . ')';
-                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = 'Credit (Reporting Currency - ' . $currencyRpt . ')';
-                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = 'Balance (Reporting Currency - ' . $currencyRpt . ')';
+                $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')';
+                $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')';
+                $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')';
                 if (!empty($values)) {
                     $subTotalDebitRpt = 0;
                     $subTotalCreditRpt = 0;
@@ -4830,42 +4833,42 @@ class FinancialReportAPIController extends AppBaseController
                         $runningBalanceLocal += $val->doucmentLocalBalanceAmount;
                         $runningBalanceRpt += $val->documentRptBalanceAmount;
                         $x++;
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['GL  Type'] = $val->glAccountType;
-                        $data[$x]['Template Description'] = $val->templateDescription;
-                        $data[$x]['Document Type'] = $val->documentID;
-                        $data[$x]['Document Number'] = $val->documentCode;
-                        $data[$x]['Date'] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->documentDate)) : null;
-                        $data[$x]['Document Narration'] = $val->documentNarration;
-                        $data[$x]['Service Line'] = $val->serviceLineCode;
-                        $data[$x]['Contract'] = $val->clientContractID;
+                        $data[$x][trans('custom.company_id')] = $val->companyID;
+                        $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                        $data[$x][trans('custom.gl_type')] = $val->glAccountType;
+                        $data[$x][trans('custom.template_description')] = $val->templateDescription;
+                        $data[$x][trans('custom.document_type')] = $val->documentID;
+                        $data[$x][trans('custom.document_number')] = $val->documentCode;
+                        $data[$x][trans('custom.date')] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->documentDate)) : null;
+                        $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                        $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                        $data[$x][trans('custom.contract')] = $val->clientContractID;
 
                         if (in_array('confi_name', $extraColumns)) {
-                            $data[$x]['Confirmed By'] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
+                            $data[$x][trans('custom.confirmed_by')] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
                         }
 
                         if (in_array('confi_date', $extraColumns)) {
-                            $data[$x]['Confirmed Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                            $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
                         }
 
                         if (in_array('app_name', $extraColumns)) {
-                            $data[$x]['Approved By'] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
+                            $data[$x][trans('custom.approved_by')] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
                         }
 
                         if (in_array('app_date', $extraColumns)) {
-                            $data[$x]['Approved Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                            $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
                         }
-                        $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                        $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
-                            $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
+                            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
+                            $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceLocal, $decimalPlaceLocal));
                         }
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
-                        $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceRpt, $decimalPlaceRpt));
+                        $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
+                        $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
+                        $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($runningBalanceRpt, $decimalPlaceRpt));
                         $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
                         $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
@@ -4873,80 +4876,80 @@ class FinancialReportAPIController extends AppBaseController
                         $subTotalCreditRptLocal += round($val->localCredit, $decimalPlaceLocal);
                     }
                     $x++;
-                    $data[$x]['Company ID'] = '';
-                    $data[$x]['Company Name'] = '';
-                    $data[$x]['GL  Type'] = '';
-                    $data[$x]['Template Description'] = '';
-                    $data[$x]['Document Type'] = '';
-                    $data[$x]['Document Number'] = '';
-                    $data[$x]['Date'] = '';
-                    $data[$x]['Document Narration'] = '';
-                    $data[$x]['Service Line'] = '';
-                    $data[$x]['Contract'] = '';
+                    $data[$x][trans('custom.company_id')] = '';
+                    $data[$x][trans('custom.company_name')] = '';
+                    $data[$x][trans('custom.gl_type')] = '';
+                    $data[$x][trans('custom.template_description')] = '';
+                    $data[$x][trans('custom.document_type')] = '';
+                    $data[$x][trans('custom.document_number')] = '';
+                    $data[$x][trans('custom.date')] = '';
+                    $data[$x][trans('custom.document_narration')] = '';
+                    $data[$x][trans('custom.service_line')] = '';
+                    $data[$x][trans('custom.contract')] = '';
 
                     if (in_array('confi_name', $extraColumns)) {
-                        $data[$x]['Confirmed By'] = '';
+                        $data[$x][trans('custom.confirmed_by')] = '';
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x]['Confirmed Date'] = '';
+                        $data[$x][trans('custom.confirmed_date')] = '';
                     }
 
                     if (in_array('app_name', $extraColumns)) {
-                        $data[$x]['Approved By'] = '';
+                        $data[$x][trans('custom.approved_by')] = '';
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x]['Approved Date'] = '';
+                        $data[$x][trans('custom.approved_date')] = '';
                     }
-                    $data[$x]['Supplier/Customer'] = 'Total';
+                    $data[$x][trans('custom.supplier_customer')] = trans('custom.total');
                     if ($checkIsGroup->isGroup == 0) {
-                        $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
-                        $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRptLocal, $decimalPlaceLocal));
-                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                        $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
+                        $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRptLocal, $decimalPlaceLocal));
+                        $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
                     }
 
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
-                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                    $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
+                    $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
+                    $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
 
                     $x++;
-                    $data[$x]['Company ID'] = '';
-                    $data[$x]['Company Name'] = '';
-                    $data[$x]['GL  Type'] = '';
-                    $data[$x]['Template Description'] = '';
-                    $data[$x]['Document Type'] = '';
-                    $data[$x]['Document Number'] = '';
-                    $data[$x]['Date'] = '';
-                    $data[$x]['Document Narration'] = '';
-                    $data[$x]['Service Line'] = '';
-                    $data[$x]['Contract'] = '';
+                    $data[$x][trans('custom.company_id')] = '';
+                    $data[$x][trans('custom.company_name')] = '';
+                    $data[$x][trans('custom.gl_type')] = '';
+                    $data[$x][trans('custom.template_description')] = '';
+                    $data[$x][trans('custom.document_type')] = '';
+                    $data[$x][trans('custom.document_number')] = '';
+                    $data[$x][trans('custom.date')] = '';
+                    $data[$x][trans('custom.document_narration')] = '';
+                    $data[$x][trans('custom.service_line')] = '';
+                    $data[$x][trans('custom.contract')] = '';
 
                     if (in_array('confi_name', $extraColumns)) {
-                        $data[$x]['Confirmed By'] = '';
+                        $data[$x][trans('custom.confirmed_by')] = '';
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x]['Confirmed Date'] = '';
+                        $data[$x][trans('custom.confirmed_date')] = '';
                     }
 
                     if (in_array('app_name', $extraColumns)) {
-                        $data[$x]['Approved By'] = '';
+                        $data[$x][trans('custom.approved_by')] = '';
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x]['Approved Date'] = '';
+                        $data[$x][trans('custom.approved_date')] = '';
                     }
-                    $data[$x]['Supplier/Customer'] = 'Balance';
+                    $data[$x][trans('custom.supplier_customer')] = trans('custom.balance');
                     if ($checkIsGroup->isGroup == 0) {
-                        $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] =  '';
-                        $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditRptLocal, $decimalPlaceLocal));
-                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                        $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] =  '';
+                        $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditRptLocal, $decimalPlaceLocal));
+                        $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
                     }
 
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] =  '';
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
-                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                    $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] =  '';
+                    $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
+                    $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
 
                     $x++;
                     $data[$x][''] = '';
@@ -4967,78 +4970,78 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
             $x++;
-            $data[$x]['Company ID'] = '';
-            $data[$x]['Company Name'] = '';
-            $data[$x]['GL  Type'] = '';
-            $data[$x]['Template Description'] = '';
-            $data[$x]['Document Type'] = '';
-            $data[$x]['Document Number'] = '';
-            $data[$x]['Date'] = '';
-            $data[$x]['Document Narration'] = '';
-            $data[$x]['Service Line'] = '';
-            $data[$x]['Contract'] = '';
+            $data[$x][trans('custom.company_id')] = '';
+            $data[$x][trans('custom.company_name')] = '';
+            $data[$x][trans('custom.gl_type')] = '';
+            $data[$x][trans('custom.template_description')] = '';
+            $data[$x][trans('custom.document_type')] = '';
+            $data[$x][trans('custom.document_number')] = '';
+            $data[$x][trans('custom.date')] = '';
+            $data[$x][trans('custom.document_narration')] = '';
+            $data[$x][trans('custom.service_line')] = '';
+            $data[$x][trans('custom.contract')] = '';
 
             if (in_array('confi_name', $extraColumns)) {
-                $data[$x]['Confirmed By'] = '';
+                $data[$x][trans('custom.confirmed_by')] = '';
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
-                $data[$x]['Approved By'] = '';
+                $data[$x][trans('custom.approved_by')] = '';
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
-            $data[$x]['Supplier/Customer'] = 'Grand Total';
+            $data[$x][trans('custom.supplier_customer')] = trans('custom.grand_total');
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
-                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
-                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
             }
-            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
-            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
-            $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
 
             $x++;
-            $data[$x]['Company ID'] = '';
-            $data[$x]['Company Name'] = '';
-            $data[$x]['GL  Type'] = '';
-            $data[$x]['Template Description'] = '';
-            $data[$x]['Document Type'] = '';
-            $data[$x]['Document Number'] = '';
-            $data[$x]['Date'] = '';
-            $data[$x]['Document Narration'] = '';
-            $data[$x]['Service Line'] = '';
-            $data[$x]['Contract'] = '';
+            $data[$x][trans('custom.company_id')] = '';
+            $data[$x][trans('custom.company_name')] = '';
+            $data[$x][trans('custom.gl_type')] = '';
+            $data[$x][trans('custom.template_description')] = '';
+            $data[$x][trans('custom.document_type')] = '';
+            $data[$x][trans('custom.document_number')] = '';
+            $data[$x][trans('custom.date')] = '';
+            $data[$x][trans('custom.document_narration')] = '';
+            $data[$x][trans('custom.service_line')] = '';
+            $data[$x][trans('custom.contract')] = '';
 
             if (in_array('confi_name', $extraColumns)) {
-                $data[$x]['Confirmed By'] = '';
+                $data[$x][trans('custom.confirmed_by')] = '';
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
-                $data[$x]['Approved By'] = '';
+                $data[$x][trans('custom.approved_by')] = '';
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
-            $data[$x]['Supplier/Customer'] = 'Total Balance';
+            $data[$x][trans('custom.supplier_customer')] = trans('custom.total_balance');
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
-                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal));
-                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = "";
+                $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
             }
-            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
-            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] =CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'] - $total['documentRptAmountCredit'], $decimalPlaceRpt));
-            $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] ="";
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] =CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'] - $total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] ="";
         }
 
         return $data;
@@ -5076,50 +5079,50 @@ class FinancialReportAPIController extends AppBaseController
                     $runningBalanceLocal += $val->doucmentLocalBalanceAmount;
                     $runningBalanceRpt += $val->documentRptBalanceAmount;
                 }
-                $data[$x]['Company ID'] = $val->companyID;
-                $data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['GL Code'] = $val->glCode;
-                $data[$x]['Account Description'] = $val->AccountDescription;
-                $data[$x]['GL  Type'] = $val->glAccountType;
-                $data[$x]['Template Description'] = $val->templateDescription;
-                $data[$x]['Document Type'] = $val->documentID;
-                $data[$x]['Document Number'] = $val->documentCode;
-                $data[$x]['Date'] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->documentDate)) : null;
-                $data[$x]['Document Narration'] = $val->documentNarration;
-                $data[$x]['Service Line'] = $val->serviceLineCode;
-                $data[$x]['Contract'] = $val->clientContractID;
-                $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                $data[$x][trans('custom.company_id')] = $val->companyID;
+                $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                $data[$x][trans('custom.gl_code')] = $val->glCode;
+                $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                $data[$x][trans('custom.gl_type')] = $val->glAccountType;
+                $data[$x][trans('custom.template_description')] = $val->templateDescription;
+                $data[$x][trans('custom.document_type')] = $val->documentID;
+                $data[$x][trans('custom.document_number')] = $val->documentCode;
+                $data[$x][trans('custom.date')] = ($val->documentDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->documentDate)) : null;
+                $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                $data[$x][trans('custom.contract')] = $val->clientContractID;
+                $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                 if (in_array('confi_name', $extraColumns)) {
-                    $data[$x]['Confirmed By'] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
+                    $data[$x][trans('custom.confirmed_by')] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x]['Confirmed Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                    $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
                 }
 
                 if (in_array('app_name', $extraColumns)) {
-                    $data[$x]['Approved By'] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
+                    $data[$x][trans('custom.approved_by')] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x]['Approved Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                    $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
                 }
 
                 if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localDebit, $decimalPlaceLocal));
-                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localCredit, $decimalPlaceLocal));
+                    $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localDebit, $decimalPlaceLocal));
+                    $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->localCredit, $decimalPlaceLocal));
 
                     if($viewBalance == 1) {
-                        $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceLocal, $decimalPlaceLocal));
+                        $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceLocal, $decimalPlaceLocal));
                     }
                 }
 
                 if($request->currencyID == 2 || !isset($request->month)) {
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptDebit, $decimalPlaceRpt));
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptCredit, $decimalPlaceRpt));
+                    $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptDebit, $decimalPlaceRpt));
+                    $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($val->rptCredit, $decimalPlaceRpt));
                 }
                 if($viewBalance == 1) {
-                    $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceRpt, $decimalPlaceLocal));
+                    $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($runningBalanceRpt, $decimalPlaceLocal));
                 }
 
                 $subTotalDebitRpt += round($val->rptDebit, $decimalPlaceRpt);
@@ -5130,64 +5133,64 @@ class FinancialReportAPIController extends AppBaseController
                 $x++;
             }
         }
-        $data[$x]['Company ID'] = "";
-        $data[$x]['Company Name'] = "";
-        $data[$x]['GL Code'] = "";
-        $data[$x]['Account Description'] = "";
-        $data[$x]['GL  Type'] = "";
-        $data[$x]['Template Description'] = "";
-        $data[$x]['Document Type'] = "";
-        $data[$x]['Document Number'] = "";
-        $data[$x]['Date'] = "";
-        $data[$x]['Document Narration'] = "";
-        $data[$x]['Service Line'] = "";
-        $data[$x]['Contract'] = "";
+        $data[$x][trans('custom.company_id')] = "";
+        $data[$x][trans('custom.company_name')] = "";
+        $data[$x][trans('custom.gl_code')] = "";
+        $data[$x][trans('custom.account_description')] = "";
+        $data[$x][trans('custom.gl_type')] = "";
+        $data[$x][trans('custom.template_description')] = "";
+        $data[$x][trans('custom.document_type')] = "";
+        $data[$x][trans('custom.document_number')] = "";
+        $data[$x][trans('custom.date')] = "";
+        $data[$x][trans('custom.document_narration')] = "";
+        $data[$x][trans('custom.service_line')] = "";
+        $data[$x][trans('custom.contract')] = "";
 
-        $data[$x]['Supplier/Customer'] = "Grand Total";
+        $data[$x][trans('custom.supplier_customer')] = trans('custom.grand_total');
         if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal, $decimalPlaceLocal));
-            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRptLocal, $decimalPlaceLocal));
+            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal, $decimalPlaceLocal));
+            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRptLocal, $decimalPlaceLocal));
             if($viewBalance == 1) {
-                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
             }
         }
 
         if($request->currencyID == 2 || !isset($request->month)) {
-            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
-            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt, $decimalPlaceRpt));
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalCreditRpt, $decimalPlaceRpt));
 
             if($viewBalance == 1) {
-                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
             }
         }
         $x++;
-        $data[$x]['Company ID'] = "";
-        $data[$x]['Company Name'] = "";
-        $data[$x]['GL Code'] = "";
-        $data[$x]['Account Description'] = "";
-        $data[$x]['GL  Type'] = "";
-        $data[$x]['Template Description'] = "";
-        $data[$x]['Document Type'] = "";
-        $data[$x]['Document Number'] = "";
-        $data[$x]['Date'] = "";
-        $data[$x]['Document Narration'] = "";
-        $data[$x]['Service Line'] = "";
-        $data[$x]['Contract'] = "";
+        $data[$x][trans('custom.company_id')] = "";
+        $data[$x][trans('custom.company_name')] = "";
+        $data[$x][trans('custom.gl_code')] = "";
+        $data[$x][trans('custom.account_description')] = "";
+        $data[$x][trans('custom.gl_type')] = "";
+        $data[$x][trans('custom.template_description')] = "";
+        $data[$x][trans('custom.document_type')] = "";
+        $data[$x][trans('custom.document_number')] = "";
+        $data[$x][trans('custom.date')] = "";
+        $data[$x][trans('custom.document_narration')] = "";
+        $data[$x][trans('custom.service_line')] = "";
+        $data[$x][trans('custom.contract')] = "";
 
-        $data[$x]['Supplier/Customer'] = "";
+        $data[$x][trans('custom.supplier_customer')] = "";
         if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
-            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal));
+            $data[$x][trans('custom.debit_local_currency') . ' - ' . $currencyLocal . ')'] = "";
+            $data[$x][trans('custom.credit_local_currency') . ' - ' . $currencyLocal . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal));
             if($viewBalance == 1) {
-                $data[$x]['Balance (Local Currency - ' . $currencyLocal . ')'] = "";
+                $data[$x][trans('custom.balance_local_currency') . ' - ' . $currencyLocal . ')'] = "";
             }
         }
 
         if($request->currencyID == 2 || !isset($request->month)) {
-            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
-            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
+            $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
+            $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt));
             if($viewBalance == 1) {
-                $data[$x]['Balance (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                $data[$x][trans('custom.balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = "";
             }
         }
 
@@ -5260,51 +5263,51 @@ class FinancialReportAPIController extends AppBaseController
                 foreach ($outputArr as $key => $values) {
                     $data[$x][''] = $key;
                     $x++;
-                    $data[$x]['Company ID'] = 'Company ID';
-                    $data[$x]['Company Name'] = 'Company Name';
-                    $data[$x]['Document Type'] = 'Document Type';
-                    $data[$x]['Document Description'] = 'Document Description';
-                    $data[$x]['Document Code'] = 'Document Code';
-                    $data[$x]['Posted Date'] = 'Posted Date';
-                    $data[$x]['Document Narration'] = 'Document Narration';
-                    $data[$x]['GL created date'] = 'GL created date';
-                    $data[$x]['Service Line'] = 'Service Line';
-                    $data[$x]['Contract'] = 'Contract';
-                    $data[$x]['GL Code'] = 'GL Code';
-                    $data[$x]['Account Description'] = 'Account Description';
-                    $data[$x]['GL Type'] = 'GL Type';
+                    $data[$x][trans('custom.company_id')] = trans('custom.company_id');
+                    $data[$x][trans('custom.company_name')] = trans('custom.company_name');
+                    $data[$x][trans('custom.document_type')] = trans('custom.document_type');
+                    $data[$x][trans('custom.document_description')] = trans('custom.document_description');
+                    $data[$x][trans('custom.document_code')] = trans('custom.document_code');
+                    $data[$x][trans('custom.posted_date')] = trans('custom.posted_date');
+                    $data[$x][trans('custom.document_narration')] = trans('custom.document_narration');
+                    $data[$x][trans('custom.gl_created_date')] = trans('custom.gl_created_date');
+                    $data[$x][trans('custom.service_line')] = trans('custom.service_line');
+                    $data[$x][trans('custom.contract')] = trans('custom.contract');
+                    $data[$x][trans('custom.gl_code')] = trans('custom.gl_code');
+                    $data[$x][trans('custom.account_description')] = trans('custom.account_description');
+                    $data[$x][trans('custom.gl_type')] = trans('custom.gl_type');
 
-                    $data[$x]['Transaction Currency'] = 'Transaction Currency';
-                    $data[$x]['Transaction Debit Amount'] = 'Transaction Debit Amount';
-                    $data[$x]['Transaction Credit Amount'] = 'Transaction Credit Amount';
+                    $data[$x][trans('custom.transaction_currency')] = trans('custom.transaction_currency');
+                    $data[$x][trans('custom.transaction_debit_amount')] = trans('custom.transaction_debit_amount');
+                    $data[$x][trans('custom.transaction_credit_amount')] = trans('custom.transaction_credit_amount');
 
                     if ($checkIsGroup->isGroup == 0) {
-                        $data[$x]['Local Currency'] = 'Local Currency';
-                        $data[$x]['Local Debit Amount'] = 'Local Debit Amount';
-                        $data[$x]['Local Credit Amount'] = 'Local Credit Amount';
+                        $data[$x][trans('custom.local_currency')] = trans('custom.local_currency');
+                        $data[$x][trans('custom.local_debit_amount')] = trans('custom.local_debit_amount');
+                        $data[$x][trans('custom.local_credit_amount')] = trans('custom.local_credit_amount');
                     }
-                    $data[$x]['Reporting Currency'] = 'Reporting Currency';
-                    $data[$x]['Reporting Debit Amount'] = 'Reporting Debit Amount';
-                    $data[$x]['Reporting Credit Amount'] = 'Reporting Credit Amount';
+                    $data[$x][trans('custom.reporting_currency')] = trans('custom.reporting_currency');
+                    $data[$x][trans('custom.reporting_debit_amount')] = trans('custom.reporting_debit_amount');
+                    $data[$x][trans('custom.reporting_credit_amount')] = trans('custom.reporting_credit_amount');
 
                     if (in_array('confi_name', $extraColumns)) {
-                        $data[$x]['Confirmed User'] = 'Confirmed User';
+                        $data[$x][trans('custom.confirmed_user')] = trans('custom.confirmed_user');
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x]['Confirmed Date'] = 'Confirmed Date';
+                        $data[$x][trans('custom.confirmed_date')] = trans('custom.confirmed_date');
                     }
 
                     if (in_array('app_name', $extraColumns)) {
-                        $data[$x]['Approved User'] = 'Approved User';
+                        $data[$x][trans('custom.approved_user')] = trans('custom.approved_user');
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x]['Approved Date'] = 'Approved Date';
+                        $data[$x][trans('custom.approved_date')] = trans('custom.approved_date');
                     }
-                    $data[$x]['Supplier Name/Customer Name'] = 'Supplier Name/Customer Name';
-                    $data[$x]['Supplier Code/Customer Code'] = 'Supplier Code/Customer Code';
-                    $data[$x]['Document Year'] = 'Document Year';
+                    $data[$x][trans('custom.supplier_name_customer_name')] = trans('custom.supplier_name_customer_name');
+                    $data[$x][trans('custom.supplier_code_customer_code')] = trans('custom.supplier_code_customer_code');
+                    $data[$x][trans('custom.document_year')] = trans('custom.document_year');
 
                     if (!empty($values)) {
                         $subTotalDebitRpt = 0;
@@ -5313,55 +5316,55 @@ class FinancialReportAPIController extends AppBaseController
                         $subTotalCreditLocal = 0;
                         foreach ($values as $val) {
                             $x++;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Type'] = $val->documentID;
-                            $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Narration'] = $val->documentNarration;
-                            $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Contract'] = $val->clientContractID;
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['GL Type'] = $val->glAccountType;
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                            $data[$x][trans('custom.document_type')] = $val->documentID;
+                            $data[$x][trans('custom.document_description')] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
+                            $data[$x][trans('custom.document_code')] = $val->documentCode;
+                            $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.document_narration')] = $val->documentNarration;
+                            $data[$x][trans('custom.gl_created_date')] = \Helper::dateFormat($val->createdDateTime);
+                            $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                            $data[$x][trans('custom.contract')] = $val->clientContractID;
+                            $data[$x][trans('custom.gl_code')] = $val->glCode;
+                            $data[$x][trans('custom.account_description')] = $val->AccountDescription;
+                            $data[$x][trans('custom.gl_type')] = $val->glAccountType;
 
                             $requestCurrencyTrans = CurrencyMaster::where('currencyID', $val->documentTransCurrencyID)->first();
                             $currencyTrans = !empty($requestCurrencyTrans) ? $requestCurrencyTrans->CurrencyCode : 'OMR';
                             $decimalPlaceTrans = !empty($requestCurrencyTrans) ? $requestCurrencyTrans->DecimalPlaces : 3;
 
-                            $data[$x]['Transaction Currency'] = $val->documentNarration == "Opening Balance" ? "" : $currencyTrans;
-                            $data[$x]['Transaction Debit Amount'] = $val->documentNarration == "Opening Balance" ? "" : CurrencyService::convertNumberFormatToNumber(round($val->transDebit, $decimalPlaceTrans));
-                            $data[$x]['Transaction Credit Amount'] = $val->documentNarration == "Opening Balance" ? "" : CurrencyService::convertNumberFormatToNumber(round($val->transCredit, $decimalPlaceTrans));
+                            $data[$x][trans('custom.transaction_currency')] = $val->documentNarration == "Opening Balance" ? "" : $currencyTrans;
+                            $data[$x][trans('custom.transaction_debit_amount')] = $val->documentNarration == "Opening Balance" ? "" : CurrencyService::convertNumberFormatToNumber(round($val->transDebit, $decimalPlaceTrans));
+                            $data[$x][trans('custom.transaction_credit_amount')] = $val->documentNarration == "Opening Balance" ? "" : CurrencyService::convertNumberFormatToNumber(round($val->transCredit, $decimalPlaceTrans));
                             if ($checkIsGroup->isGroup == 0) {
-                                $data[$x]['Local Currency'] = $currencyLocal;
-                                $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
-                                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
+                                $data[$x][trans('custom.local_currency')] = $currencyLocal;
+                                $data[$x][trans('custom.local_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($val->localDebit, $decimalPlaceLocal));
+                                $data[$x][trans('custom.local_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($val->localCredit, $decimalPlaceLocal));
                             }
 
-                            $data[$x]['Reporting Currency'] = $currencyRpt;
-                            $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
-                            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
+                            $data[$x][trans('custom.reporting_currency')] = $currencyRpt;
+                            $data[$x][trans('custom.reporting_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($val->rptDebit, $decimalPlaceRpt));
+                            $data[$x][trans('custom.reporting_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($val->rptCredit, $decimalPlaceRpt));
 
                             if (in_array('confi_name', $extraColumns)) {
-                                $data[$x]['Confirmed User'] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
+                                $data[$x][trans('custom.confirmed_user')] = $val->documentNarration == "Opening Balance" ? "" : $val->confirmedBy;
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x]['Confirmed Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
-                                $data[$x]['Approved User'] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
+                                $data[$x][trans('custom.approved_user')] = $val->documentNarration == "Opening Balance" ? "" : $val->approvedBy;
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x]['Approved Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
                             }
-                            $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
-                            $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
-                            $data[$x]['Document Year'] = $val->documentYear;
+                            $data[$x][trans('custom.supplier_name_customer_name')] = $val->supplierOrCustomerName;
+                            $data[$x][trans('custom.supplier_code_customer_code')] = $val->supplierOrCustomerCode;
+                            $data[$x][trans('custom.document_year')] = $val->documentYear;
                             $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
                             $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
@@ -5370,98 +5373,98 @@ class FinancialReportAPIController extends AppBaseController
 
                         }
                         $x++;
-                        $data[$x]['Company ID'] = '';
-                        $data[$x]['Company Name'] = '';
-                        $data[$x]['Document Type'] = '';
-                        $data[$x]['Document Description'] = '';
-                        $data[$x]['Document Code'] = '';
-                        $data[$x]['Posted Date'] = '';
-                        $data[$x]['Document Narration'] = '';
-                        $data[$x]['GL created date'] = '';
-                        $data[$x]['Service Line'] = '';
-                        $data[$x]['Contract'] = '';
-                        $data[$x]['GL Code'] = '';
-                        $data[$x]['Account Description'] = '';
-                        $data[$x]['GL Type'] = 'Total';
+                        $data[$x][trans('custom.company_id')] = '';
+                        $data[$x][trans('custom.company_name')] = '';
+                        $data[$x][trans('custom.document_type')] = '';
+                        $data[$x][trans('custom.document_description')] = '';
+                        $data[$x][trans('custom.document_code')] = '';
+                        $data[$x][trans('custom.posted_date')] = '';
+                        $data[$x][trans('custom.document_narration')] = '';
+                        $data[$x][trans('custom.gl_created_date')] = '';
+                        $data[$x][trans('custom.service_line')] = '';
+                        $data[$x][trans('custom.contract')] = '';
+                        $data[$x][trans('custom.gl_code')] = '';
+                        $data[$x][trans('custom.account_description')] = '';
+                        $data[$x][trans('custom.gl_type')] = trans('custom.total');
 
-                        $data[$x]['Transaction Currency'] = "";
-                        $data[$x]['Transaction Debit Amount'] = "";
-                        $data[$x]['Transaction Credit Amount'] = "";
+                        $data[$x][trans('custom.transaction_currency')] = "";
+                        $data[$x][trans('custom.transaction_debit_amount')] = "";
+                        $data[$x][trans('custom.transaction_credit_amount')] = "";
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Local Currency'] = $currencyLocal;
-                            $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
-                            $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.local_currency')] = $currencyLocal;
+                            $data[$x][trans('custom.local_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.local_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditLocal, $decimalPlaceLocal));
                         }
 
-                        $data[$x]['Reporting Currency'] = $currencyRpt;
-                        $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
-                        $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
+                        $data[$x][trans('custom.reporting_currency')] = $currencyRpt;
+                        $data[$x][trans('custom.reporting_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt, $decimalPlaceRpt));
+                        $data[$x][trans('custom.reporting_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalCreditRpt, $decimalPlaceRpt));
 
                         if (in_array('confi_name', $extraColumns)) {
-                            $data[$x]['Confirmed User'] = '';
+                            $data[$x][trans('custom.confirmed_user')] = '';
                         }
 
                         if (in_array('confi_date', $extraColumns)) {
-                            $data[$x]['Confirmed Date'] = '';
+                            $data[$x][trans('custom.confirmed_date')] = '';
                         }
 
                         if (in_array('app_name', $extraColumns)) {
-                            $data[$x]['Approved User'] = '';
+                            $data[$x][trans('custom.approved_user')] = '';
                         }
 
                         if (in_array('app_date', $extraColumns)) {
-                            $data[$x]['Approved Date'] = '';
+                            $data[$x][trans('custom.approved_date')] = '';
                         }
-                        $data[$x]['Supplier Name/Customer Name'] = '';
-                        $data[$x]['Supplier Code/Customer Code'] = '';
-                        $data[$x]['Document Year'] = '';
+                        $data[$x][trans('custom.supplier_name_customer_name')] = '';
+                        $data[$x][trans('custom.supplier_code_customer_code')] = '';
+                        $data[$x][trans('custom.document_year')] = '';
 
                         $x++;
-                        $data[$x]['Company ID'] = '';
-                        $data[$x]['Company Name'] = '';
-                        $data[$x]['Document Type'] = '';
-                        $data[$x]['Document Description'] = '';
-                        $data[$x]['Document Code'] = '';
-                        $data[$x]['Posted Date'] = '';
-                        $data[$x]['Document Narration'] = '';
-                        $data[$x]['GL created date'] = '';
-                        $data[$x]['Service Line'] = '';
-                        $data[$x]['Contract'] = '';
-                        $data[$x]['GL Code'] = '';
-                        $data[$x]['Account Description'] = '';
-                        $data[$x]['GL Type'] = 'Balance';
+                        $data[$x][trans('custom.company_id')] = '';
+                        $data[$x][trans('custom.company_name')] = '';
+                        $data[$x][trans('custom.document_type')] = '';
+                        $data[$x][trans('custom.document_description')] = '';
+                        $data[$x][trans('custom.document_code')] = '';
+                        $data[$x][trans('custom.posted_date')] = '';
+                        $data[$x][trans('custom.document_narration')] = '';
+                        $data[$x][trans('custom.gl_created_date')] = '';
+                        $data[$x][trans('custom.service_line')] = '';
+                        $data[$x][trans('custom.contract')] = '';
+                        $data[$x][trans('custom.gl_code')] = '';
+                        $data[$x][trans('custom.account_description')] = '';
+                        $data[$x][trans('custom.gl_type')] = trans('custom.balance');
 
-                        $data[$x]['Transaction Currency'] = "";
-                        $data[$x]['Transaction Debit Amount'] = "";
-                        $data[$x]['Transaction Credit Amount'] = "";
+                        $data[$x][trans('custom.transaction_currency')] = "";
+                        $data[$x][trans('custom.transaction_debit_amount')] = "";
+                        $data[$x][trans('custom.transaction_credit_amount')] = "";
                         if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Local Currency'] = $currencyLocal;
-                            $data[$x]['Local Debit Amount'] = '';
-                            $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditLocal, $decimalPlaceLocal));
+                            $data[$x][trans('custom.local_currency')] = $currencyLocal;
+                            $data[$x][trans('custom.local_debit_amount')] = '';
+                            $data[$x][trans('custom.local_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitLocal-$subTotalCreditLocal, $decimalPlaceLocal));
                         }
 
-                        $data[$x]['Reporting Currency'] = $currencyRpt;
-                        $data[$x]['Reporting Debit Amount'] = '';
-                        $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
+                        $data[$x][trans('custom.reporting_currency')] = $currencyRpt;
+                        $data[$x][trans('custom.reporting_debit_amount')] = '';
+                        $data[$x][trans('custom.reporting_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt));
 
                         if (in_array('confi_name', $extraColumns)) {
-                            $data[$x]['Confirmed User'] = '';
+                            $data[$x][trans('custom.confirmed_user')] = '';
                         }
 
                         if (in_array('confi_date', $extraColumns)) {
-                            $data[$x]['Confirmed Date'] = '';
+                            $data[$x][trans('custom.confirmed_date')] = '';
                         }
 
                         if (in_array('app_name', $extraColumns)) {
-                            $data[$x]['Approved User'] = '';
+                            $data[$x][trans('custom.approved_user')] = '';
                         }
 
                         if (in_array('app_date', $extraColumns)) {
-                            $data[$x]['Approved Date'] = '';
+                            $data[$x][trans('custom.approved_date')] = '';
                         }
-                        $data[$x]['Supplier Name/Customer Name'] = '';
-                        $data[$x]['Supplier Code/Customer Code'] = '';
-                        $data[$x]['Document Year'] = '';
+                        $data[$x][trans('custom.supplier_name_customer_name')] = '';
+                        $data[$x][trans('custom.supplier_code_customer_code')] = '';
+                        $data[$x][trans('custom.document_year')] = '';
 
                         $x++;
                         $data[$x]['Company ID'] = '';
@@ -5471,84 +5474,84 @@ class FinancialReportAPIController extends AppBaseController
                 }
             }
             $x++;
-            $data[$x]['Company ID'] = '';
-            $data[$x]['Company Name'] = '';
-            $data[$x]['Document Type'] = '';
-            $data[$x]['Document Description'] = '';
-            $data[$x]['Document Code'] = '';
-            $data[$x]['Posted Date'] = '';
-            $data[$x]['Document Narration'] = '';
-            $data[$x]['GL created date'] = '';
-            $data[$x]['Service Line'] = '';
-            $data[$x]['Contract'] = '';
-            $data[$x]['GL Code'] = '';
-            $data[$x]['Account Description'] = '';
-            $data[$x]['GL Type'] = 'Grand Total';
+            $data[$x][trans('custom.company_id')] = '';
+            $data[$x][trans('custom.company_name')] = '';
+            $data[$x][trans('custom.document_type')] = '';
+            $data[$x][trans('custom.document_description')] = '';
+            $data[$x][trans('custom.document_code')] = '';
+            $data[$x][trans('custom.posted_date')] = '';
+            $data[$x][trans('custom.document_narration')] = '';
+            $data[$x][trans('custom.gl_created_date')] = '';
+            $data[$x][trans('custom.service_line')] = '';
+            $data[$x][trans('custom.contract')] = '';
+            $data[$x][trans('custom.gl_code')] = '';
+            $data[$x][trans('custom.account_description')] = '';
+            $data[$x][trans('custom.gl_type')] = trans('custom.grand_total');
 
-            $data[$x]['Transaction Currency'] = "";
-            $data[$x]['Transaction Debit Amount'] = "";
-            $data[$x]['Transaction Credit Amount'] = "";
+            $data[$x][trans('custom.transaction_currency')] = "";
+            $data[$x][trans('custom.transaction_debit_amount')] = "";
+            $data[$x][trans('custom.transaction_credit_amount')] = "";
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Local Currency'] = $currencyLocal;
-                $data[$x]['Local Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
-                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.local_currency')] = $currencyLocal;
+                $data[$x][trans('custom.local_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.local_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountCredit'], $decimalPlaceLocal));
             }
-            $data[$x]['Reporting Currency'] = $currencyRpt;
-            $data[$x]['Reporting Debit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
-            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.reporting_currency')] = $currencyRpt;
+            $data[$x][trans('custom.reporting_debit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.reporting_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountCredit'], $decimalPlaceRpt));
 
             if (in_array('confi_name', $extraColumns)) {
-                $data[$x]['Confirmed User'] = '';
+                $data[$x][trans('custom.confirmed_user')] = '';
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
-                $data[$x]['Approved User'] = '';
+                $data[$x][trans('custom.approved_user')] = '';
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
-            $data[$x]['Supplier Name/Customer Name'] = '';
-            $data[$x]['Supplier Code/Customer Code'] = '';
-            $data[$x]['Document Year'] = '';
+            $data[$x][trans('custom.supplier_name_customer_name')] = '';
+            $data[$x][trans('custom.supplier_code_customer_code')] = '';
+            $data[$x][trans('custom.document_year')] = '';
 
             $x++;
-            $data[$x]['Company ID'] = '';
-            $data[$x]['Company Name'] = '';
-            $data[$x]['Document Type'] = '';
-            $data[$x]['Document Description'] = '';
-            $data[$x]['Document Code'] = '';
-            $data[$x]['Posted Date'] = '';
-            $data[$x]['Document Narration'] = '';
-            $data[$x]['GL created date'] = '';
-            $data[$x]['Service Line'] = '';
-            $data[$x]['Contract'] = '';
-            $data[$x]['GL Code'] = '';
-            $data[$x]['Account Description'] = '';
-            $data[$x]['GL Type'] = 'Total Balance';
+            $data[$x][trans('custom.company_id')] = '';
+            $data[$x][trans('custom.company_name')] = '';
+            $data[$x][trans('custom.document_type')] = '';
+            $data[$x][trans('custom.document_description')] = '';
+            $data[$x][trans('custom.document_code')] = '';
+            $data[$x][trans('custom.posted_date')] = '';
+            $data[$x][trans('custom.document_narration')] = '';
+            $data[$x][trans('custom.gl_created_date')] = '';
+            $data[$x][trans('custom.service_line')] = '';
+            $data[$x][trans('custom.contract')] = '';
+            $data[$x][trans('custom.gl_code')] = '';
+            $data[$x][trans('custom.account_description')] = '';
+            $data[$x][trans('custom.gl_type')] = trans('custom.total_balance');
 
-            $data[$x]['Transaction Currency'] = "";
-            $data[$x]['Transaction Debit Amount'] = "";
-            $data[$x]['Transaction Credit Amount'] = "";
+            $data[$x][trans('custom.transaction_currency')] = "";
+            $data[$x][trans('custom.transaction_debit_amount')] = "";
+            $data[$x][trans('custom.transaction_credit_amount')] = "";
             if ($checkIsGroup->isGroup == 0) {
-                $data[$x]['Local Currency'] = $currencyLocal;
-                $data[$x]['Local Debit Amount'] = '';
-                $data[$x]['Local Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit']-$total['documentLocalAmountCredit'], $decimalPlaceLocal));
+                $data[$x][trans('custom.local_currency')] = $currencyLocal;
+                $data[$x][trans('custom.local_debit_amount')] = '';
+                $data[$x][trans('custom.local_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentLocalAmountDebit']-$total['documentLocalAmountCredit'], $decimalPlaceLocal));
             }
-            $data[$x]['Reporting Currency'] = $currencyRpt;
-            $data[$x]['Reporting Debit Amount'] = '';
-            $data[$x]['Reporting Credit Amount'] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit']-$total['documentRptAmountCredit'], $decimalPlaceRpt));
+            $data[$x][trans('custom.reporting_currency')] = $currencyRpt;
+            $data[$x][trans('custom.reporting_debit_amount')] = '';
+            $data[$x][trans('custom.reporting_credit_amount')] = CurrencyService::convertNumberFormatToNumber(round($total['documentRptAmountDebit']-$total['documentRptAmountCredit'], $decimalPlaceRpt));
 
             if (in_array('confi_name', $extraColumns)) {
                 $data[$x]['Confirmed User'] = '';
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
@@ -5556,7 +5559,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
             $data[$x]['Supplier Name/Customer Name'] = '';
             $data[$x]['Supplier Code/Customer Code'] = '';
@@ -5584,17 +5587,17 @@ class FinancialReportAPIController extends AppBaseController
 
                 foreach ($output as $val) {
                     $data[$x]['Company ID'] = $val->companyID;
-                    $data[$x]['Company Name'] = $val->CompanyName;
-                    $data[$x]['Document Type'] = $val->documentID;
+                    $data[$x][trans('custom.company_name')] = $val->CompanyName;
+                    $data[$x][trans('custom.document_type')] = $val->documentID;
                     $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
                     $data[$x]['Document Code'] = $val->documentCode;
-                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                    $data[$x]['Document Narration'] = $val->documentNarration;
+                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                    $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                     $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
-                    $data[$x]['Service Line'] = $val->serviceLineCode;
-                    $data[$x]['Contract'] = $val->clientContractID;
-                    $data[$x]['GL Code'] = $val->glCode;
-                    $data[$x]['Account Description'] = $val->AccountDescription;
+                    $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                    $data[$x][trans('custom.contract')] = $val->clientContractID;
+                    $data[$x][trans('custom.gl_code')] = $val->glCode;
+                    $data[$x][trans('custom.account_description')] = $val->AccountDescription;
                     $data[$x]['GL Type'] = $val->glAccountType;
 
                     $requestCurrencyTrans = CurrencyMaster::where('currencyID', $val->documentTransCurrencyID)->first();
@@ -5624,7 +5627,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x]['Confirmed Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
                     }
 
                     if (in_array('app_name', $extraColumns)) {
@@ -5632,7 +5635,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x]['Approved Date'] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
                     }
                     $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
                     $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
@@ -5650,17 +5653,17 @@ class FinancialReportAPIController extends AppBaseController
                 $x++;
             }
             $data[$x]['Company ID'] = "";
-            $data[$x]['Company Name'] = "";
-            $data[$x]['Document Type'] = "";
+            $data[$x][trans('custom.company_name')] = "";
+            $data[$x][trans('custom.document_type')] = "";
             $data[$x]['Document Description'] = "";
             $data[$x]['Document Code'] = "";
-            $data[$x]['Posted Date'] = "";
-            $data[$x]['Document Narration'] = "";
+            $data[$x][trans('custom.posted_date')] = "";
+            $data[$x][trans('custom.document_narration')] = "";
             $data[$x]['GL created date'] = "";
-            $data[$x]['Service Line'] = "";
-            $data[$x]['Contract'] = "";
-            $data[$x]['GL Code'] = "";
-            $data[$x]['Account Description'] = "";
+            $data[$x][trans('custom.service_line')] = "";
+            $data[$x][trans('custom.contract')] = "";
+            $data[$x][trans('custom.gl_code')] = "";
+            $data[$x][trans('custom.account_description')] = "";
             $data[$x]['GL Type'] = "Grand Total";
 
             if($request->currencyID == 1 || !isset($request->month)){
@@ -5686,7 +5689,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
@@ -5694,7 +5697,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
             $data[$x]['Supplier Name/Customer Name'] = '';
             $data[$x]['Supplier Code/Customer Code'] = '';
@@ -5702,17 +5705,17 @@ class FinancialReportAPIController extends AppBaseController
 
             $x++;
             $data[$x]['Company ID'] = "";
-            $data[$x]['Company Name'] = "";
-            $data[$x]['Document Type'] = "";
+            $data[$x][trans('custom.company_name')] = "";
+            $data[$x][trans('custom.document_type')] = "";
             $data[$x]['Document Description'] = "";
             $data[$x]['Document Code'] = "";
-            $data[$x]['Posted Date'] = "";
-            $data[$x]['Document Narration'] = "";
+            $data[$x][trans('custom.posted_date')] = "";
+            $data[$x][trans('custom.document_narration')] = "";
             $data[$x]['GL created date'] = "";
-            $data[$x]['Service Line'] = "";
-            $data[$x]['Contract'] = "";
-            $data[$x]['GL Code'] = "";
-            $data[$x]['Account Description'] = "";
+            $data[$x][trans('custom.service_line')] = "";
+            $data[$x][trans('custom.contract')] = "";
+            $data[$x][trans('custom.gl_code')] = "";
+            $data[$x][trans('custom.account_description')] = "";
             $data[$x]['GL Type'] = "Total Balance";
 
             if($request->currencyID == 1 || !isset($request->month)){
@@ -5738,7 +5741,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if (in_array('confi_date', $extraColumns)) {
-                $data[$x]['Confirmed Date'] = '';
+                $data[$x][trans('custom.confirmed_date')] = '';
             }
 
             if (in_array('app_name', $extraColumns)) {
@@ -5746,7 +5749,7 @@ class FinancialReportAPIController extends AppBaseController
             }
 
             if (in_array('app_date', $extraColumns)) {
-                $data[$x]['Approved Date'] = '';
+                $data[$x][trans('custom.approved_date')] = '';
             }
             $data[$x]['Supplier Name/Customer Name'] = '';
             $data[$x]['Supplier Code/Customer Code'] = '';
@@ -5757,7 +5760,7 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = $request->toDate;
         $fromDate = $request->fromDate;
         $cur = null;
-        $title = "GL Dump Report";
+        $title = trans('custom.gl_dump_report');
 
         $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
@@ -5788,7 +5791,7 @@ class FinancialReportAPIController extends AppBaseController
             ->generateExcel();
 
         if(!$exportToExcel['success'])
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
 
         return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -9283,7 +9286,7 @@ GROUP BY id
                 $employeeID = \Helper::getEmployeeSystemID();
                 GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
-                return $this->sendResponse([], "General Ledger PDF report has been sent to queue");
+                return $this->sendResponse([], trans('custom.general_ledger_pdf_report'));
                 break;
 
             case 'FTB':
@@ -9371,7 +9374,7 @@ GROUP BY id
                 $mpdf->setAutoBottomMargin = 'stretch';
 
                 $mpdf->WriteHTML($html);
-                return $mpdf->Output('financial_trial_balance.pdf', 'I');   
+                return $mpdf->Output(trans('custom.financial_trial_balance').'.pdf', 'I');
                 break;
 
             case 'FCT':
@@ -9422,7 +9425,7 @@ GROUP BY id
                 if($month){
                     $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
                 }
-                $reportData['report_tittle'] = 'Finance Report';
+                $reportData['report_tittle'] = trans('custom.finance_report');
                 $reportData['from_date'] = $input['fromDate'];
                 $reportData['to_date'] = $input['toDate'];
 
@@ -9456,7 +9459,7 @@ GROUP BY id
                 break;
 
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -10926,22 +10929,22 @@ GROUP BY
             foreach ($output as $val) {
                 $tem = (array)$val;
 
-                $data[$x]['Document Number'] = $val->documentCode;
-                $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
-                $data[$x]['Document Narration'] = $val->documentNarration;
+                $data[$x][trans('custom.document_number')] = $val->documentCode;
+                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                 $data[$x]['Segment'] = $val->ServiceLineDes;
-                $data[$x]['Contract'] = $val->clientContractID;
-                $data[$x]['Supplier/Customer'] = $val->partyName;
+                $data[$x][trans('custom.contract')] = $val->clientContractID;
+                $data[$x][trans('custom.supplier_customer')] = $val->partyName;
                 $data[$x][$columName] = $tem[$input['selectedColumn']];
                 $x++;
             }
 
-            $data[$x]['Document Number'] = '';
-            $data[$x]['Date'] = '';
-            $data[$x]['Document Narration'] = '';
+            $data[$x][trans('custom.document_number')] = '';
+            $data[$x][trans('custom.date')] = '';
+            $data[$x][trans('custom.document_narration')] = '';
             $data[$x]['Segment'] = '';
-            $data[$x]['Contract'] = '';
-            $data[$x]['Supplier/Customer'] = 'Total';
+            $data[$x][trans('custom.contract')] = '';
+            $data[$x][trans('custom.supplier_customer')] = 'Total';
             $data[$x][$columName] = $total;
         }
 
@@ -10956,7 +10959,7 @@ GROUP BY
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 
     function getFinancialCustomizeRptColumnQry($request, $changeSelect = false, $companyWiseTemplate = false)
@@ -11520,7 +11523,7 @@ GROUP BY
             'unMatchedData' => collect($meregedResultTwo)->unique('documentCode')->values()->all()
         ];
 
-        return $this->sendResponse($respondData, "Unmatched data retrived successfully.");
+        return $this->sendResponse($respondData, trans('custom.unmatched_data_retrieved_successfully'));
     }
 
     public function getICFilterFormData(Request $request)
@@ -11553,7 +11556,7 @@ GROUP BY
             'expenseClaimTypes' => $expenseClaimTypes
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateICReport(Request $request)
@@ -11588,7 +11591,7 @@ GROUP BY
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -11634,7 +11637,7 @@ GROUP BY
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
 
         return \DataTables::of($output)
@@ -12125,6 +12128,7 @@ GROUP BY
         $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
         $type = $request->type;
+        $data = array();
 
         switch ($reportTypeID) {
 
@@ -12147,15 +12151,15 @@ GROUP BY
                         foreach ($output as $val) {
                             $x++;
 
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['PO Code'] = $val->companyID;
-                            $data[$x]['PO Date'] = Helper::dateFormat($val->PODate);
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency, $decimalPlaceRpt);
-                            $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
-                            $data[$x]['AP Invoice Amount'] = round($val->APAmount, $decimalPlaceRpt);
-                            $data[$x]['AR Invoice Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                            $data[$x]['Receipts/Adjustments'] = round($val->receiveAmountRpt, $decimalPlaceRpt);
+                            $data[$x][trans('custom.company_id')] = $val->companyID;
+                            $data[$x][trans('custom.po_code')] = $val->companyID;
+                            $data[$x][trans('custom.po_date')] = Helper::dateFormat($val->PODate);
+                            $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                            $data[$x][trans('custom.po_amount')] = round($val->poTotalComRptCurrency, $decimalPlaceRpt);
+                            $data[$x][trans('custom.grv_amount')] = round($val->GRVAmount, $decimalPlaceRpt);
+                            $data[$x][trans('custom.ap_invoice_amount')] = round($val->APAmount, $decimalPlaceRpt);
+                            $data[$x][trans('custom.ar_invoice_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                            $data[$x][trans('custom.receipts_adjustments')] = round($val->receiveAmountRpt, $decimalPlaceRpt);
 
                             $subTotalPOAmount += $val->poTotalComRptCurrency;
                             $subTotalGRVAmount += $val->GRVAmount;
@@ -12165,15 +12169,15 @@ GROUP BY
                         }
 
                         $x++;
-                        $data[$x]['Company ID'] = '';
-                        $data[$x]['PO Code'] = '';
-                        $data[$x]['PO Date'] = '';
-                        $data[$x]['Supplier Name'] = 'Total';
-                        $data[$x]['PO Amount'] = round($subTotalPOAmount, $decimalPlaceRpt);
-                        $data[$x]['GRV Amount'] = round($subTotalGRVAmount, $decimalPlaceRpt);
-                        $data[$x]['AP Invoice Amount'] = round($subTotalAPInvoiceAmount, $decimalPlaceRpt);
-                        $data[$x]['AR Invoice Amount'] = round($subTotalARInvoiceAmount, $decimalPlaceRpt);
-                        $data[$x]['Receipts/Adjustments'] = round($subTotalAdjAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_id')] = '';
+                        $data[$x][trans('custom.po_code')] = '';
+                        $data[$x][trans('custom.po_date')] = '';
+                        $data[$x][trans('custom.supplier_name')] = trans('custom.total');
+                        $data[$x][trans('custom.po_amount')] = round($subTotalPOAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.grv_amount')] = round($subTotalGRVAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.ap_invoice_amount')] = round($subTotalAPInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.ar_invoice_amount')] = round($subTotalARInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.receipts_adjustments')] = round($subTotalAdjAmount, $decimalPlaceRpt);
                     }
                 } else { // DUMP
 
@@ -12190,21 +12194,21 @@ GROUP BY
                             foreach ($output as $val) {
                                 $x++;
 
-                                $data[$x]['GRV Company'] = $val->grvCompany;
-                                $data[$x]['GRV Code'] = $val->grvCode;
-                                $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
-                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                                $data[$x]['GL Code'] = $val->grvGLCode;
-                                $data[$x]['GL Description'] = $val->grvGLCodeDes;
-                                $data[$x]['Department'] = $val->grvDepartment;
+                                $data[$x][trans('custom.grv_company')] = $val->grvCompany;
+                                $data[$x][trans('custom.grv_code')] = $val->grvCode;
+                                $data[$x][trans('custom.grv_amount')] = round($val->GRVAmount, $decimalPlaceRpt);
+                                $data[$x][trans('custom.grv_date')] = Helper::dateFormat($val->grvDate);
+                                $data[$x][trans('custom.gl_code')] = $val->grvGLCode;
+                                $data[$x][trans('custom.gl_description')] = $val->grvGLCodeDes;
+                                $data[$x][trans('custom.department')] = $val->grvDepartment;
 
-                                $data[$x]['Customer'] = $val->customer;
-                                $data[$x]['Booking Invoice Code'] = $val->bookingInvCode;
-                                $data[$x]['Booking Date'] = Helper::dateFormat($val->BookingDate);
-                                $data[$x]['Booking Amount Rpt'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                                $data[$x]['INV GL Code'] = $val->invGLCode;
-                                $data[$x]['INV GL Description'] = $val->invGLCodeDes;
-                                $data[$x]['INV Department'] = $val->invDepartment;
+                                $data[$x][trans('custom.customer')] = $val->customer;
+                                $data[$x][trans('custom.booking_invoice_code')] = $val->bookingInvCode;
+                                $data[$x][trans('custom.booking_date')] = Helper::dateFormat($val->BookingDate);
+                                $data[$x][trans('custom.booking_amount_rpt')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                                $data[$x][trans('custom.inv_gl_code')] = $val->invGLCode;
+                                $data[$x][trans('custom.inv_gl_description')] = $val->invGLCodeDes;
+                                $data[$x][trans('custom.inv_department')] = $val->invDepartment;
 
                                 $subTotalGRVAmount += $val->GRVAmount;
                                 $subTotalBookingAmount += $val->bookingAmountRpt;
@@ -12230,17 +12234,20 @@ GROUP BY
                     }
                 }
 
-                \Excel::create('inter_company', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = trans('custom.inter_company');
+                $path = 'financial_report/inter_company/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICST':
@@ -12254,64 +12261,67 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->companyFrom;
-                        $data[$x]['Stock Transfer Code'] = $val->stockTransferCode;
-                        $data[$x]['Stock Transfer Date'] = Helper::dateFormat($val->tranferDate);
-                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
-                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->companyFrom;
+                        $data[$x][trans('custom.stock_transfer_code')] = $val->stockTransferCode;
+                        $data[$x][trans('custom.stock_transfer_date')] = Helper::dateFormat($val->tranferDate);
+                        $data[$x][trans('custom.customer_inv_code')] = $val->bookingInvCode;
+                        $data[$x][trans('custom.customer_inv_date')] = Helper::dateFormat($val->bookingDate);
+                        $data[$x][trans('custom.customer_inv_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
 
-                        $data[$x]['INV GL Code'] = $val->invGLCode;
-                        $data[$x]['INV GL Description'] = $val->invGLCodeDes;
-                        $data[$x]['INV Department'] = $val->invDepartment;
+                        $data[$x][trans('custom.inv_gl_code')] = $val->invGLCode;
+                        $data[$x][trans('custom.inv_gl_description')] = $val->invGLCodeDes;
+                        $data[$x][trans('custom.inv_department')] = $val->invDepartment;
 
-                        $data[$x]['Company To'] = $val->companyTo;
-                        $data[$x]['Stock Receive Code'] = $val->stockReceiveCode;
-                        $data[$x]['Approved'] = $val->Approved;
-                        $data[$x]['Supplier Invoice Code'] = $val->supplierInvCode;
-                        $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvDate);
-                        $data[$x]['Supplier Invoice Amount'] = round($val->supplierAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->companyTo;
+                        $data[$x][trans('custom.stock_receive_code')] = $val->stockReceiveCode;
+                        $data[$x][trans('custom.approved')] = $val->Approved;
+                        $data[$x][trans('custom.supplier_invoice_code')] = $val->supplierInvCode;
+                        $data[$x][trans('custom.supplier_invoice_date')] = Helper::dateFormat($val->supplierInvDate);
+                        $data[$x][trans('custom.supplier_invoice_amount')] = round($val->supplierAmountRpt, $decimalPlaceRpt);
 
-                        $data[$x]['GL Code'] = $val->strGLCode;
-                        $data[$x]['GL Description'] = $val->strGLCodeDes;
-                        $data[$x]['Department'] = $val->strDepartment;
+                        $data[$x][trans('custom.gl_code')] = $val->strGLCode;
+                        $data[$x][trans('custom.gl_description')] = $val->strGLCodeDes;
+                        $data[$x][trans('custom.department')] = $val->strDepartment;
 
                         $subTotalBookingAmountRpt += $val->bookingAmountRpt;
                         $subTotalSupplierAmountRpt += $val->supplierAmountRpt;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Stock Transfer Code'] = '';
-                    $data[$x]['Stock Transfer Date'] = '';
-                    $data[$x]['Customer INV Code'] = '';
-                    $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
-                    $data[$x]['INV GL Code'] = '';
-                    $data[$x]['INV GL Description'] = '';
-                    $data[$x]['INV Department'] = '';
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Stock Receive Code'] = '';
-                    $data[$x]['Approved'] = '';
-                    $data[$x]['Supplier Invoice Code'] = '';
-                    $data[$x]['Supplier Invoice Date'] = '';
-                    $data[$x]['Supplier Invoice Amount'] = round($subTotalSupplierAmountRpt, $decimalPlaceRpt);
-                    $data[$x]['GL Code'] = '';
-                    $data[$x]['GL Description'] = '';
-                    $data[$x]['Department'] = '';
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.stock_transfer_code')] = '';
+                    $data[$x][trans('custom.stock_transfer_date')] = '';
+                    $data[$x][trans('custom.customer_inv_code')] = '';
+                    $data[$x][trans('custom.customer_inv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.customer_inv_amount')] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.inv_gl_code')] = '';
+                    $data[$x][trans('custom.inv_gl_description')] = '';
+                    $data[$x][trans('custom.inv_department')] = '';
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.stock_receive_code')] = '';
+                    $data[$x][trans('custom.approved')] = '';
+                    $data[$x][trans('custom.supplier_invoice_code')] = '';
+                    $data[$x][trans('custom.supplier_invoice_date')] = '';
+                    $data[$x][trans('custom.supplier_invoice_amount')] = round($subTotalSupplierAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.gl_code')] = '';
+                    $data[$x][trans('custom.gl_description')] = '';
+                    $data[$x][trans('custom.department')] = '';
                 }
 
-                \Excel::create('inter_company_stock_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = trans('custom.inter_company_stock_transfer');
+                $path = 'financial_report/inter_company_stock_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICAT':
@@ -12325,47 +12335,50 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->Company;
-                        $data[$x]['Disposal Document'] = $val->disposalDocumentCode;
-                        $data[$x]['Disposal Date'] = Helper::dateFormat($val->disposalDocumentDate);
-                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
-                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
-                        $data[$x]['Company To'] = $val->toCompanyID;
-                        $data[$x]['Direct GRV Code'] = $val->grvPrimaryCode;
-                        $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                        $data[$x]['Direct GRV Approved'] = $val->Approved;
-                        $data[$x]['GRV Amount'] = round($val->GrvAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->Company;
+                        $data[$x][trans('custom.disposal_document')] = $val->disposalDocumentCode;
+                        $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->disposalDocumentDate);
+                        $data[$x][trans('custom.customer_inv_code')] = $val->bookingInvCode;
+                        $data[$x][trans('custom.customer_inv_date')] = Helper::dateFormat($val->bookingDate);
+                        $data[$x][trans('custom.customer_inv_amount')] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->toCompanyID;
+                        $data[$x][trans('custom.direct_grv_code')] = $val->grvPrimaryCode;
+                        $data[$x][trans('custom.grv_date')] = Helper::dateFormat($val->grvDate);
+                        $data[$x][trans('custom.direct_grv_approved')] = $val->Approved;
+                        $data[$x][trans('custom.grv_amount')] = round($val->GrvAmount, $decimalPlaceRpt);
 
                         $subTotalBookingAmountRpt += $val->bookingAmountRpt;
                         $subTotalGrvAmount += $val->GrvAmount;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Disposal Document'] = '';
-                    $data[$x]['Disposal Date'] = '';
-                    $data[$x]['Customer INV Code'] = '';
-                    $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Direct GRV Code'] = '';
-                    $data[$x]['GRV Date'] = '';
-                    $data[$x]['Direct GRV Approved'] = '';
-                    $data[$x]['GRV Amount'] = round($subTotalGrvAmount, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.disposal_document')] = '';
+                    $data[$x][trans('custom.disposal_date')] = '';
+                    $data[$x][trans('custom.customer_inv_code')] = '';
+                    $data[$x][trans('custom.customer_inv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.customer_inv_amount')] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.direct_grv_code')] = '';
+                    $data[$x][trans('custom.grv_date')] = '';
+                    $data[$x][trans('custom.direct_grv_approved')] = '';
+                    $data[$x][trans('custom.grv_amount')] = round($subTotalGrvAmount, $decimalPlaceRpt);
                 }
 
-                \Excel::create('inter_company_Asset_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = trans('custom.inter_company_asset_transfer');
+                $path = 'financial_report/inter_company_asset_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
 
             case 'ICFT':
@@ -12379,48 +12392,51 @@ GROUP BY
                     foreach ($output as $val) {
                         $x++;
 
-                        $data[$x]['Company From'] = $val->companyID;
-                        $data[$x]['Transfer Type'] = $val->expenseClaimTypeDescription;
-                        $data[$x]['PV Code'] = $val->BPVcode;
-                        $data[$x]['PV Date'] = Helper::dateFormat($val->BPVdate);
-                        $data[$x]['PV Amount'] = round($val->payAmountCompRpt, $decimalPlaceRpt);
-                        $data[$x]['Company To'] = $val->companyIdTo;
-                        $data[$x]['Receipt Code'] = $val->custPaymentReceiveCode;
-                        $data[$x]['Receipt Date'] = Helper::dateFormat($val->custPaymentReceiveDate);
-                        $data[$x]['Receipt Approved'] = $val->Approved;
-                        $data[$x]['Receipt Amount'] = round($val->companyRptAmount, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_from')] = $val->companyID;
+                        $data[$x][trans('custom.transfer_type')] = $val->expenseClaimTypeDescription;
+                        $data[$x][trans('custom.pv_code')] = $val->BPVcode;
+                        $data[$x][trans('custom.pv_date')] = Helper::dateFormat($val->BPVdate);
+                        $data[$x][trans('custom.pv_amount')] = round($val->payAmountCompRpt, $decimalPlaceRpt);
+                        $data[$x][trans('custom.company_to')] = $val->companyIdTo;
+                        $data[$x][trans('custom.receipt_code')] = $val->custPaymentReceiveCode;
+                        $data[$x][trans('custom.receipt_date')] = Helper::dateFormat($val->custPaymentReceiveDate);
+                        $data[$x][trans('custom.receipt_approved')] = $val->Approved;
+                        $data[$x][trans('custom.receipt_amount')] = round($val->companyRptAmount, $decimalPlaceRpt);
 
                         $subTotalPayAmountCompRpt += $val->payAmountCompRpt;
                         $subTotalCompanyRptAmount += $val->companyRptAmount;
                     }
 
                     $x++;
-                    $data[$x]['Company From'] = '';
-                    $data[$x]['Transfer Type'] = '';
-                    $data[$x]['PV Code'] = '';
-                    $data[$x]['PV Date'] = 'Total';
-                    $data[$x]['PV Amount'] = round($subTotalPayAmountCompRpt, $decimalPlaceRpt);
-                    $data[$x]['Company To'] = '';
-                    $data[$x]['Receipt Code'] = '';
-                    $data[$x]['Receipt Date'] = '';
-                    $data[$x]['Receipt Approved'] = '';
-                    $data[$x]['Receipt Amount'] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_from')] = '';
+                    $data[$x][trans('custom.transfer_type')] = '';
+                    $data[$x][trans('custom.pv_code')] = '';
+                    $data[$x][trans('custom.pv_date')] = trans('custom.total');
+                    $data[$x][trans('custom.pv_amount')] = round($subTotalPayAmountCompRpt, $decimalPlaceRpt);
+                    $data[$x][trans('custom.company_to')] = '';
+                    $data[$x][trans('custom.receipt_code')] = '';
+                    $data[$x][trans('custom.receipt_date')] = '';
+                    $data[$x][trans('custom.receipt_approved')] = '';
+                    $data[$x][trans('custom.receipt_amount')] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
                 }
 
-                \Excel::create('inter_company_Fund_transfer', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = trans('custom.inter_company_fund_transfer');
+                $path = 'financial_report/inter_company_fund_transfer/excel/';
+                $companyMaster = Company::find($request->companySystemID);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse(['data' => $basePath], trans('custom.successfully_export'));
+                }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -12575,7 +12591,7 @@ GROUP BY
                 );
                 break;
             default:
-                return $this->sendError('Drill down type not found');
+                return $this->sendError(trans('custom.drill_down_type_not_found'));
         }
     }
 
@@ -12598,7 +12614,7 @@ GROUP BY
         $reportID = $request->get('reportID');
         if(!isset($reportID) && $reportID == null)
         {
-            return $this->sendError('No report ID found');
+            return $this->sendError(trans('custom.no_report_id_found'));
         }
         $reportData = $this->generateFRReport($request);
 
@@ -12642,7 +12658,7 @@ GROUP BY
         if($month){
             $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
         }
-        $reportData['report_tittle'] = 'Finance Report';
+        $reportData['report_tittle'] = trans('custom.finance_report');
         $reportData['from_date'] = $input['fromDate'];
         $reportData['to_date'] = $input['toDate'];
 
@@ -12659,7 +12675,9 @@ GROUP BY
 
         $excelColumnFormat = ExcelColumnFormat::getExcelColumnFormat($reportData['reportData'],$request['reportID']);
 
-        return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
+        $fileName = trans('custom.finance');
+
+        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);

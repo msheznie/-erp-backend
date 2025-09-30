@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Asset Transfer</title>
+    <title>{{ __('custom.asset_transfer') }}</title>
     <style>
         @page {
             margin-left: 30px;

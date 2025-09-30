@@ -150,7 +150,7 @@ class InventoryReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
         }
     }
 
@@ -199,7 +199,7 @@ class InventoryReportAPIController extends AppBaseController
             'company_name' => $company_name
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getScarpInventoryFilterData(Request $request)
@@ -231,7 +231,7 @@ class InventoryReportAPIController extends AppBaseController
             'item' => $item,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
     private function itemSummaryReport($from, $toDate, $warhouse,$category,$items,$currency)
     {
@@ -364,7 +364,7 @@ class InventoryReportAPIController extends AppBaseController
                     'company' => $company,
                     'currencyID' => $currency_id,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
 
@@ -388,7 +388,7 @@ class InventoryReportAPIController extends AppBaseController
                     'company' => $company,
                     'currencyID' => $currency_id,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
 
@@ -430,7 +430,7 @@ class InventoryReportAPIController extends AppBaseController
                     'currencyID' => $currency_id,
                     'grandClosing' => $GrandClosing,
                 );
-                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+                return $this->sendResponse($output, trans('custom.data_retrieved_retrieved_successfully'));
 
                  break;
             case 'INVST': //Stock Transaction Report
@@ -543,14 +543,14 @@ class InventoryReportAPIController extends AppBaseController
                     $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
 
                     $output = $this->stockAgingQry($input, 0);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+                    return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVSD':
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SD') {
                     $output = $this->stockDetailQry($request);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+                    return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVMMA':
@@ -564,7 +564,7 @@ class InventoryReportAPIController extends AppBaseController
                     $detail['output'] = $output;
                     $detail['company_name'] = $company_name;
 
-                    return $this->sendResponse($detail, 'Items retrieved successfully');
+                    return $this->sendResponse($detail, trans('custom.items_retrieved_successfully'));
                 }
                 break;
             case 'INVIM':
@@ -580,10 +580,10 @@ class InventoryReportAPIController extends AppBaseController
                 }else if($reportTypeID == 'IMSM'){
 
                 }
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
 
         }
     }
@@ -1176,7 +1176,7 @@ FROM
                 $templateName = "export_report.scrap_inventory_supplier_wise_report";
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=> trans('custom.scrap_inventory_report'), 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
 
                 $file_type = $request->type;  
@@ -1186,7 +1186,7 @@ FROM
         
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1220,7 +1220,7 @@ FROM
 
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=> trans('custom.scrap_inventory_report'), 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 $file_type = $request->type;  
                 $fileName = 'scrap_inventory_report';
@@ -1229,7 +1229,7 @@ FROM
         
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1273,19 +1273,19 @@ FROM
                     $outwardTotal = round($outwardTotal,$decimal_val) + round($val->outwards_value,$decimal_val);
 
                     $data[] = array(
-                        'Category' => $val->categoryDescription,
-                        'Item Code' => $val->itemPrimaryCode,
-                        'Part No / Reference No' => $val->secondaryItemCode,
-                        'Item Description' => $val->itemDescription,
-                        'UOM' => $val->UnitShortCode,
-                        'Opening Balance Qty' => $val->opening_balance_quantity,
-                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
-                        'Inwards Qty' => $val->inwards_quantity,
-                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $decimal_val, '.', ','),
-                        'Outwards Qty' => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
-                        'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
-                        'Closing Balance Qty' => $val->closing_balance_quantity,
-                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
+                        trans('custom.category') => $val->categoryDescription,
+                        trans('custom.item_code') => $val->itemPrimaryCode,
+                        trans('custom.Part No / Reference No') => $val->secondaryItemCode,
+                        trans('custom.item_description') => $val->itemDescription,
+                        trans('custom.uom') => $val->UnitShortCode,
+                        trans('custom.Opening Balance Qty') => $val->opening_balance_quantity,
+                        trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
+                        trans('custom.Inwards Qty') => $val->inwards_quantity,
+                        trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => number_format($val->inwards_value, $decimal_val, '.', ','),
+                        trans('custom.Outwards Qty') => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
+                        trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
+                        trans('custom.Closing Balance Qty') => $val->closing_balance_quantity,
+                        trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
 
                     );
                 }
@@ -1296,26 +1296,26 @@ FROM
                 $dataSorted = collect($data)->sortBy('Category');
 
                 $GrandTotal =  array(
-                    'Category' => '',
-                    'Item Code' => '',
-                    'Part No / Reference No' => '',
-                    'Item Description' => 'Grand Total',
-                    'UOM' => '',
-                    'Opening Balance Qty' => '',
-                    'Opening Balance Val ('.$currencyCode.')' =>  round($openeingBalanceTotal,3),
-                    'Inwards Qty' => '',
-                    'Inwards Val ('.$currencyCode.')' => $InwardsTotal,
-                    'Outwards Qty' => '',
-                    'Outwards Val ('.$currencyCode.')' => $outwardTotal,
-                    'Closing Balance Qty' => '',
-                    'Closing Balance Val ('.$currencyCode.')' => round($closingBalanceTotal,3),
+                    trans('custom.category') => '',
+                    trans('custom.item_code') => '',
+                    trans('custom.Part No / Reference No') => '',
+                    trans('custom.item_description') => trans('custom.grand_total'),
+                    trans('custom.uom') => '',
+                    trans('custom.Opening Balance Qty') => '',
+                    trans('custom.Opening Balance Val') . ' (' . $currencyCode . ')' =>  round($openeingBalanceTotal,3),
+                    trans('custom.Inwards Qty') => '',
+                    trans('custom.Inwards Val') . ' (' . $currencyCode . ')' => $InwardsTotal,
+                    trans('custom.Outwards Qty') => '',
+                    trans('custom.Outwards Val') . ' (' . $currencyCode . ')' => $outwardTotal,
+                    trans('custom.Closing Balance Qty') => '',
+                    trans('custom.Closing Balance Val') . ' (' . $currencyCode . ')' => round($closingBalanceTotal,3),
 
                 );
 
                 $dataSorted->push($GrandTotal);
 
                 $fileName = 'inventory_summary_report';
-                $title = 'Inventory Summary Report';
+                $title = trans('custom.inventory_summary_report');
                 $path = 'inventory/report/inventory_summary_report/excel/';
                 $cur = NULL;
                 $companyID = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1325,7 +1325,7 @@ FROM
         
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1436,26 +1436,26 @@ FROM
                         $x = 0;
                         foreach ($output as $val) {
                             $x++;
-                            $data[$x]['Doc ID'] = $val->documentID;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Trans Date'] = \Helper::dateFormat($val->transactionDate);
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Warehouse'] = $val->wareHouseDescription;
-                            $data[$x]['Ref Number'] = $val->referenceNumber;
-                            $data[$x]['Processed By'] = $val->empName;
-                            $data[$x]['Item Code'] = $val->itemPrimaryCode;
-                            $data[$x]['Item Desc'] = $val->itemDescription;
-                            $data[$x]['UOM'] = $val->UnitShortCode;
-                            $data[$x]['Part No / Ref.Number'] = $val->partNumber;
-                            $data[$x]['Qty'] = $val->inOutQty;
-                            $data[$x]['Cost (USD)'] = round($val->cost, 2);
-                            $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
-                            $data[$x]['Account Code'] = $val->AccountCode;
-                            $data[$x]['Account Desc'] = $val->AccountDescription;
-                            $data[$x]['Customer'] = $val->CustomerName;
-                            $data[$x]['Contract'] = $val->ContractNumber;
-                            $data[$x]['Jobs'] = $val->ticketNo;
-                            $data[$x]['Job/Ref No'] = $val->issueRefNo;
+                            $data[$x][trans('custom.doc_id')] = $val->documentID;
+                            $data[$x][trans('custom.document_code')] = $val->documentCode;
+                            $data[$x][trans('custom.trans_date')] = \Helper::dateFormat($val->transactionDate);
+                            $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
+                            $data[$x][trans('custom.warehouse')] = $val->wareHouseDescription;
+                            $data[$x][trans('custom.ref_number')] = $val->referenceNumber;
+                            $data[$x][trans('custom.processed_by')] = $val->empName;
+                            $data[$x][trans('custom.item_code')] = $val->itemPrimaryCode;
+                            $data[$x][trans('custom.item_desc')] = $val->itemDescription;
+                            $data[$x][trans('custom.uom')] = $val->UnitShortCode;
+                            $data[$x][trans('custom.part_no_ref_number')] = $val->partNumber;
+                            $data[$x][trans('custom.qty')] = $val->inOutQty;
+                            $data[$x][trans('custom.cost_usd')] = round($val->cost, 2);
+                            $data[$x][trans('custom.total_cost_usd')] = round($val->totalCost, 2);
+                            $data[$x][trans('custom.account_code')] = $val->AccountCode;
+                            $data[$x][trans('custom.account_desc')] = $val->AccountDescription;
+                            $data[$x][trans('custom.customer')] = $val->CustomerName;
+                            $data[$x][trans('custom.contract')] = $val->ContractNumber;
+                            $data[$x][trans('custom.jobs')] = $val->ticketNo;
+                            $data[$x][trans('custom.job_ref_no')] = $val->issueRefNo;
                         }
                     }
 
@@ -1472,7 +1472,7 @@ FROM
 
 
                     $fileName = 'stock_transaction';
-                    $title = 'Stock Transaction';
+                    $title = trans('custom.stock_transaction');
                     $path = 'inventory/report/stock_transaction/excel/';
                     $cur = NULL;
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1482,7 +1482,7 @@ FROM
             
                     if($basePath == '')
                     {
-                         return $this->sendError('Unable to export excel');
+                         return $this->sendError(trans('custom.unable_to_export_excel'));
                     }
                     else
                     {
@@ -1510,21 +1510,21 @@ FROM
                         foreach ($output['categories'] as $key) {
                             foreach ($key as $val) {
                                 $x++;
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Item Code'] = $val->itemPrimaryCode;
-                                $data[$x]['Item Description'] = $val->itemDescription;
-                                $data[$x]['Part No / Ref.Number'] = $val->secondaryItemCode;
-                                $data[$x]['Category'] = $val->categoryDescription;
-                                $data[$x]['Movement Category'] = $val->movementCatDescription;
-                                $data[$x]['UOM'] = $val->UnitShortCode;
-                                $data[$x]['Qty'] = $val->Qty;
+                                $data[$x][trans('custom.company_id')] = $val->companyID;
+                                $data[$x][trans('custom.item_code')] = $val->itemPrimaryCode;
+                                $data[$x][trans('custom.item_description')] = $val->itemDescription;
+                                $data[$x][trans('custom.part_no_ref_number')] = $val->secondaryItemCode;
+                                $data[$x][trans('custom.category')] = $val->categoryDescription;
+                                $data[$x][trans('custom.movement_category')] = $val->movementCatDescription;
+                                $data[$x][trans('custom.uom')] = $val->UnitShortCode;
+                                $data[$x][trans('custom.qty')] = $val->Qty;
 
                                 if ($input['currencyID'] == 1) {
-                                    $data[$x]['WAC Local'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal, $val->LocalCurrencyDecimals));
-                                    $data[$x]['Local Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
+                                    $data[$x][trans('custom.wac_local')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal, $val->LocalCurrencyDecimals));
+                                    $data[$x][trans('custom.local_amount')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
                                 } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['WAC Rep'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt, $val->RptCurrencyDecimals));
-                                    $data[$x]['Rep Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
+                                    $data[$x][trans('custom.wac_rep')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt, $val->RptCurrencyDecimals));
+                                    $data[$x][trans('custom.reporting_amount')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
                                 }
 
                                 if ($input['reportCategory'] == 2) { // yearly
@@ -1545,47 +1545,47 @@ FROM
                                         'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                                         'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                                     ];
-                                    $data[$x]['<= 1 year (Qty)'] = $val->case1;
+                                    $data[$x][trans('custom.aging_1_year_qty')] = $val->case1;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['<= 1 year (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_1_year_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['<= 1 year (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_1_year_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
                                     }
 
 
-                                    $data[$x]['1 to 2 years (Qty)'] = $val->case2;
+                                    $data[$x][trans('custom.aging_1_to_2_years_qty')] = $val->case2;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['1 to 2 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_1_to_2_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['1 to 2 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_1_to_2_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['2 to 3 years (Qty)'] = $val->case3;
+                                    $data[$x][trans('custom.aging_2_to_3_years_qty')] = $val->case3;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['2 to 3 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_2_to_3_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['2 to 3 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_2_to_3_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['3 to 4 years (Qty)'] = $val->case4;
+                                    $data[$x][trans('custom.aging_3_to_4_years_qty')] = $val->case4;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['3 to 4 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_3_to_4_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['3 to 4 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_3_to_4_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['4 to 5 years (Qty)'] = $val->case5;
+                                    $data[$x][trans('custom.aging_4_to_5_years_qty')] = $val->case5;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['4 to 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_4_to_5_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['4 to 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_4_to_5_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['Over 5 years (Qty)'] = $val->case6;
+                                    $data[$x][trans('custom.aging_over_5_years_qty')] = $val->case6;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['Over 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_over_5_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['Over 5 years (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_over_5_years_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
                                     }
 
                                 } else { // 0 - 730 days
@@ -1602,61 +1602,61 @@ FROM
                                         'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                                     ];
 
-                                    $data[$x]['<=30 (Qty)'] = $val->case1;
+                                    $data[$x][trans('custom.aging_30_days_qty')] = $val->case1;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['<=30 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_30_days_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['<=30 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_30_days_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals));
                                     }
 
 
-                                    $data[$x]['31 to 60 (Qty)'] = $val->case2;
+                                    $data[$x][trans('custom.aging_31_to_60_qty')] = $val->case2;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['31 to 60 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_31_to_60_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['31 to 60 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_31_to_60_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['61 to 90 (Qty)'] = $val->case3;
+                                    $data[$x][trans('custom.aging_61_to_90_qty')] = $val->case3;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['61 to 90 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_61_to_90_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['61 to 90 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_61_to_90_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['91 to 120 (Qty)'] = $val->case4;
+                                    $data[$x][trans('custom.aging_91_to_120_qty')] = $val->case4;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['91 to 120 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_91_to_120_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['91 to 120 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_91_to_120_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['121 to 365 (Qty)'] = $val->case5;
+                                    $data[$x][trans('custom.aging_121_to_365_qty')] = $val->case5;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['121 to 365 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_121_to_365_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['121 to 365 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_121_to_365_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['366 to 730 (Qty)'] = $val->case6;
+                                    $data[$x][trans('custom.aging_366_to_730_qty')] = $val->case6;
                                     if ($input['currencyID'] == 1) {
-                                        $data[$x]['366 to 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_366_to_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals));
                                     } else if ($input['currencyID'] == 2) {
-                                        $data[$x]['366 to 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
+                                        $data[$x][trans('custom.aging_366_to_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals));
                                     }
 
-                                    $data[$x]['Over 730 (Qty)'] = $val->case7;
+                                    $data[$x][trans('custom.aging_over_730_qty')] = $val->case7;
                                     if ($input['currencyID'] == 1) {
                                         if ($val->Qty == 0) {
-                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
+                                            $data[$x][trans('custom.aging_over_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals));
                                         } else {
-                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals));
+                                            $data[$x][trans('custom.aging_over_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals));
                                         }
                                     } else if ($input['currencyID'] == 2) {
                                         if ($val->Qty == 0) {
-                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
+                                            $data[$x][trans('custom.aging_over_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals));
                                         } else {
-                                            $data[$x]['Over 730 (Value)'] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals));
+                                            $data[$x][trans('custom.aging_over_730_value')] = CurrencyService::convertNumberFormatToNumber(number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals));
                                         }
                                     }
 
@@ -1667,7 +1667,7 @@ FROM
                     }
 
                     $fileName = 'stock_aging';
-                    $title = 'Stock Aging Report';
+                    $title = trans('custom.stock_aging_report');
                     $path = 'inventory/report/stock_aging/excel/';
                     $cur = NULL;
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1690,7 +1690,7 @@ FROM
                         ->generateExcel();
 
                     if(!$exportToExcel['success'])
-                        return $this->sendError('Unable to export excel');
+                        return $this->sendError(trans('custom.unable_to_export_excel'));
 
                     return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
                 }
@@ -1710,17 +1710,17 @@ FROM
                         foreach ($output['categories'] as $key => $vale) {
                             foreach ($output['categories'][$key] as $val) {
                                 $data[] = array(
-                                    'Item Code' => $val->itemPrimaryCode,
-                                    'Item Description' => $val->itemDescription,
-                                    'UOM' => $val->UnitShortCode,
-                                    'Part No / Ref.Number' => $val->secondaryItemCode,
-                                    'Sub Category' => $val->categoryDescription,
-                                    'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
-                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
-                                    'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
-                                    'Last Issued Qty' => $val->lastIssuedQty
+                                    trans('custom.excel_item_code') => $val->itemPrimaryCode,
+                                    trans('custom.excel_item_description') => $val->itemDescription,
+                                    trans('custom.excel_uom') => $val->UnitShortCode,
+                                    trans('custom.part_no_ref_number') => $val->secondaryItemCode,
+                                    trans('custom.sub_category') => $val->categoryDescription,
+                                    trans('custom.stock_qty') => $val->Qty,
+                                    trans('custom.total_value_usd') => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    trans('custom.last_receipt_date') => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
+                                    trans('custom.last_receipt_qty') => $val->lastReceiptQty,
+                                    trans('custom.last_issued_date') => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
+                                    trans('custom.last_issued_qty') => $val->lastIssuedQty
                                 );
                             }
                         }
@@ -1732,18 +1732,18 @@ FROM
                         foreach ($output['categories'] as $key => $vale) {
                             foreach ($output['categories'][$key] as $val) {
                                 $data[] = array(
-                                    'Company' => $val->companyID,
-                                    'Item Code' => $val->itemPrimaryCode,
-                                    'Item Description' => $val->itemDescription,
-                                    'UOM' => $val->UnitShortCode,
-                                    'Part No / Ref.Number' => $val->secondaryItemCode,
-                                    'Sub Category' => $val->categoryDescription,
-                                    'Stock Qty' => $val->Qty,
-                                    'Total Value (USD)' => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
-                                    'Last Receipt Date' => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
-                                    'Last Receipt Qty' => $val->lastReceiptQty,
-                                    'Last Issued Date' => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
-                                    'Last Issued Qty' => $val->lastIssuedQty
+                                    trans('custom.company') => $val->companyID,
+                                    trans('custom.excel_item_code') => $val->itemPrimaryCode,
+                                    trans('custom.excel_item_description') => $val->itemDescription,
+                                    trans('custom.excel_uom') => $val->UnitShortCode,
+                                    trans('custom.part_no_ref_number') => $val->secondaryItemCode,
+                                    trans('custom.sub_category') => $val->categoryDescription,
+                                    trans('custom.stock_qty') => $val->Qty,
+                                    trans('custom.total_value_usd') => CurrencyService::convertNumberFormatToNumber(number_format($val->WacRptAmount, $val->RptCurrencyDecimals)),
+                                    trans('custom.last_receipt_date') => ($val->lastReceiptDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastReceiptDate)) : null,
+                                    trans('custom.last_receipt_qty') => $val->lastReceiptQty,
+                                    trans('custom.last_issued_date') => ($val->lastIssuedDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->lastIssuedDate)) : null,
+                                    trans('custom.last_issued_qty') => $val->lastIssuedQty
                                 );
                             }
                         }
@@ -1756,7 +1756,7 @@ FROM
                 ];
 
                 $fileName = 'stock_detail';
-                $title = 'Stock Details Report';
+                $title = trans('custom.stock_details_report');
                 $path = 'inventory/report/stock_Detail/excel/';
                 $cur = NULL;
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
@@ -1780,7 +1780,7 @@ FROM
                     ->generateExcel();
 
                 if(!$exportToExcel['success'])
-                    return $this->sendError('Unable to export excel');
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
 
                 return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
 
@@ -1793,15 +1793,15 @@ FROM
                     $output = $this->minAndMaxAnalysis($request);
                     $x = 0;
                     foreach ($output as $item){
-                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
-                        $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
-                        $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
-                        $data[$x]['Stock Qty'] = $item->stock;
-                        $data[$x]['Qty On Order'] = $item->onOrder;
-                        $data[$x]['Max Qty'] = $item->maximunQty;
-                        $data[$x]['Min Qty'] = $item->minimumQty;
-                        $data[$x]['Rol Qty'] = $item->rolQuantity;
+                        $data[$x][trans('custom.item_code')] = $item->itemPrimaryCode;
+                        $data[$x][trans('custom.item_description')] = $item->itemDescription;
+                        $data[$x][trans('custom.part_no_ref_number')] = $item->secondaryItemCode;
+                        $data[$x][trans('custom.uom')] = $item->unit? $item->unit->UnitShortCode: '-';
+                        $data[$x][trans('custom.stock_qty')] = $item->stock;
+                        $data[$x][trans('custom.qty_on_order')] = $item->onOrder;
+                        $data[$x][trans('custom.max_qty')] = $item->maximunQty;
+                        $data[$x][trans('custom.min_qty')] = $item->minimumQty;
+                        $data[$x][trans('custom.rol_qty')] = $item->rolQuantity;
                         $x ++;
                     }
                 }
@@ -1815,7 +1815,7 @@ FROM
                 //     $lastrow = $excel->getActiveSheet()->getHighestRow();
                 //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 // })->download('csv');
-                // return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), trans('custom.success_export'));
 
                     
                 $company = Company::find($request->companySystemID);
@@ -1823,7 +1823,7 @@ FROM
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
 
                 $fileName = 'min_max_analysis';
-                $title = 'Inventory Min & Max Analysis';
+                $title = trans('custom.min_max_analysis');
                 $path = 'inventory/report/min_max_analysis/excel/';
                 $cur = NULL;
                 $from_date = null;
@@ -1833,7 +1833,7 @@ FROM
         
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                     return $this->sendError(trans('custom.unable_to_export_excel'));
                 }
                 else
                 {
@@ -1854,24 +1854,24 @@ FROM
                     $toDate = $toDate->format('d/m/Y');
                     $x = 0;
                     foreach ($output as $item){
-                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
-                        $data[$x]['Description'] = $item->itemDescription;
-                        $data[$x]['UOM'] = $item->UnitShortCode;
-                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
-                        $data[$x]['Category'] = $item->categoryLabel;
+                        $data[$x][trans('custom.item_code')] = $item->itemPrimaryCode;
+                        $data[$x][trans('custom.description')] = $item->itemDescription;
+                        $data[$x][trans('custom.uom')] = $item->UnitShortCode;
+                        $data[$x][trans('custom.part_no_ref_number')] = $item->secondaryItemCode;
+                        $data[$x][trans('custom.category')] = $item->categoryLabel;
                         if($reportTypeID == 'IMI'){
-                            $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
-                            $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                            $data[$x][trans('custom.total_units_issued') . ' ' . $fromDate . ' - ' . $toDate] = $item->TotalUnitsIssue;
+                            $data[$x][trans('custom.cost_per_unit_period') . ' ' . $fromDate . ' - ' . $toDate] = $item->CostPerUnitIssue_Rpt;
                         }
 
-                        $data[$x]['Total Cost '.$fromDate .' - '. $toDate] = $item->TotalCostIssue_Rpt;
+                        $data[$x][trans('custom.total_cost_period') . ' ' . $fromDate . ' - ' . $toDate] = $item->TotalCostIssue_Rpt;
                         if($reportTypeID == 'IMI') {
-                            $data[$x]['Quantity As Of ' . $toDate] = $item->totalQty;
+                            $data[$x][trans('custom.quantity_as_of') . ' ' . $toDate] = $item->totalQty;
                         }
                         if($reportTypeID == 'IMHV'){
-                            $data[$x]['Cost Per Unit'] = $item->costPerUnitRpt;
+                            $data[$x][trans('custom.cost_per_unit')] = $item->costPerUnitRpt;
                         }
-                        $data[$x]['Total Cost As Of '.$toDate] = $item->wacValueRpt;
+                        $data[$x][trans('custom.total_cost_as_of') . ' ' . $toDate] = $item->wacValueRpt;
                         $x ++;
                     }
                 }
@@ -1886,11 +1886,11 @@ FROM
                     });
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download('csv');
-                return $this->sendResponse(array(), 'successfully export');
+                })->download('xlsx');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.no_report_id_found'));
 
         }
     }

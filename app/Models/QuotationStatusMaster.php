@@ -33,6 +33,7 @@ class QuotationStatusMaster extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    protected $appends = ['quotationStatus'];
 
 
 
@@ -61,6 +62,33 @@ class QuotationStatusMaster extends Model
     public static $rules = [
         
     ];
+
+    public function translations()
+    {
+        return $this->hasMany(QuotationStatusMasterTranslation::class, 'quotationStatusMasterID', 'quotationStatusMasterID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getQuotationStatusAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+
+        return $this->attributes['quotationStatus'] ?? '';
+    }
 
     
 }

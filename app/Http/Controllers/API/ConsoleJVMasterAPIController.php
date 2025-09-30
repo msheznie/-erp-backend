@@ -400,11 +400,11 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $jvDetail = ConsoleJVDetail::selectRAW('SUM(debitAmount) as debitAmount,SUM(creditAmount) as creditAmount,SUM(debitAmount) - SUM(creditAmount) as balance')->ofMaster($id)->first();
             if($jvDetail){
                 if($jvDetail->balance != 0){
-                    return $this->sendError('Debit and Credit amount not matching',500,['type' => 'confirm']);
+                    return $this->sendError(trans('custom.debit_and_credit_amount_not_matching'),500,['type' => 'confirm']);
                 }
 
                 if($jvDetail->debitAmount == 0 && $jvDetail->creditAmount == 0){
-                    return $this->sendError('Total debit and credit amount cannot be zero',500,['type' => 'confirm']);
+                    return $this->sendError(trans('custom.total_debit_and_credit_amount_cannot_be_zero'),500,['type' => 'confirm']);
                 }
             }
 
@@ -767,19 +767,19 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $jvMasterData = ConsoleJVMaster::find($consoleJvAutoID);
         $emails = array();
         if (empty($jvMasterData)) {
-            return $this->sendError('Console JV not found');
+            return $this->sendError(trans('custom.console_jv_not_found'));
         }
 
         if ($jvMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this console journal voucher it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it__2'));
         }
 
         if ($jvMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this console journal voucher it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it_'));
         }
 
         if ($jvMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this console journal voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_console_journal_voucher_it__1'));
         }
 
         // updating fields
@@ -799,9 +799,9 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $jvMasterData->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $jvMasterData->companySystemID)
             ->where('documentSystemCode', $jvMasterData->consoleJvMasterAutoId)
@@ -858,7 +858,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$consoleJvAutoID,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($jvMasterData->toArray(), 'Console JV reopened successfully');
+        return $this->sendResponse($jvMasterData->toArray(), trans('custom.console_jv_reopened_successfully'));
     }
 
 

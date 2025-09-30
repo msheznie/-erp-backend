@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Cheque</title>
+    <title>{{ __('custom.cheque') }}</title>
     <style>
 
         body {

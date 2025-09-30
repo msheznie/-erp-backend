@@ -27,13 +27,13 @@ class MaterialRequestDetailService
         $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->first();
 
         if (empty($materielRequest))
-            return['success' => false,'message' => 'Materiel Request Details not found'];
+            return['success' => false,'message' => trans('custom.materiel_request_details_not_found')];
 
         if($materielRequest->ClosedYN == -1)
-            return['success' => false,'message' => 'This Materiel Request already closed. You can not add.'];
+            return['success' => false,'message' => trans('custom.materiel_request_already_closed')];
 
         if($materielRequest->approved == -1)
-            return['success' => false,'message' => 'This Materiel Request fully approved. You can not add.'];
+            return['success' => false,'message' => trans('custom.materiel_request_fully_approved')];
 
         if($this->checkAllowItemToType($companySystemID))
             $input['itemCode'] = isset($input['itemCode']['id']) ? $input['itemCode']['id'] : $input['itemCode'];
@@ -51,7 +51,7 @@ class MaterialRequestDetailService
             ->first();
 
         if (empty($financeItemCategorySubAssigned))
-            return['success' => false,'message' => 'Finance Category not found'];
+            return['success' => false,'message' => trans('custom.finance_category_not_found')];
 
         if ($item->financeCategoryMaster == 1) {
             $alreadyAdded = MaterielRequest::where('RequestID', $input['RequestID'])
@@ -60,14 +60,14 @@ class MaterialRequestDetailService
                 })
                 ->first();
             if ($alreadyAdded)
-                return['success' => false,'message' => 'Selected item is already added. Please check again'];
+                return['success' => false,'message' => trans('custom.selected_item_already_added')];
 
         }
 
         $materielRequestItemObj = $this->getMaterialRequestdetailObj($materielRequest,$item,$financeItemCategorySubAssigned,$companySystemID);
         $materielRequestDetails = $this->materielRequestDetailsRepository->create($materielRequestItemObj->toArray());
 
-        return['success' => true,'message' => 'Materiel Request Details saved successfully' , 'data' => $materielRequestDetails->toArray()];
+        return['success' => true,'message' => trans('custom.materiel_request_details_saved_successfully') , 'data' => $materielRequestDetails->toArray()];
 
     }
 
@@ -159,10 +159,10 @@ class MaterialRequestDetailService
 
         if (empty($item)) {
             if (!$this->checkAllowItemToType($companySystemID)) {
-                return ['success' => false,'message' => 'Item not found', 'data' => []];
+                return ['success' => false,'message' => trans('custom.item_not_found'), 'data' => []];
             }
         }
 
-        return ['success' => true , 'message'=>'Item Found' , 'data' => $item];
+        return ['success' => true , 'message'=> trans('custom.item_found') , 'data' => $item];
     }
 }

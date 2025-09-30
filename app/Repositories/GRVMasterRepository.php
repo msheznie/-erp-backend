@@ -16,6 +16,7 @@ use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
+use Illuminate\Http\Request;
 
 /**
  * Class GRVMasterRepository
@@ -125,7 +126,7 @@ class GRVMasterRepository extends BaseRepository
         if (empty($grvMaster)) {
             return [
                 'status' => 0,
-                'msg' => 'GRV not found'
+                'msg' => trans('custom.grv_not_found')
             ];
         }
 
@@ -133,21 +134,22 @@ class GRVMasterRepository extends BaseRepository
         {
             return [
                 'status' => 0,
-                'msg' => 'companySystemID not found'
+                'msg' => trans('custom.company_system_id_not_found')
             ];
         }
 
         if ($grvMaster->approved != -1) {
+            $message = $type == 'reversal' ? trans('custom.cannot_reverse_document_not_approved') : trans('custom.cannot_cancel_document_not_approved');
             return [
                 'status' => 0,
-                'msg' => 'You cannot '.$document.', This document not approved.'
+                'msg' => $message
             ];
         }
 
         if ($grvMaster->grvCancelledYN == -1) {
             return [
                 'status' => 0,
-                'msg' => 'GRV already cancelled'
+                'msg' => trans('custom.grv_already_cancelled')
             ];
         }
 
@@ -175,7 +177,7 @@ class GRVMasterRepository extends BaseRepository
         if($isPullPurchaseReturn) {
             return [
                 'status' => 0,
-                'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
+                'msg' => trans('custom.cannot_reverse_grv_already_added')
             ];
         }
         else {
@@ -184,7 +186,7 @@ class GRVMasterRepository extends BaseRepository
             if($isPullSupplierInvoice) {
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot reverse the GRV. The GRV is already added to Supplier Invoice or purchase return'
+                    'msg' => trans('custom.cannot_reverse_grv_already_added')
                 ];
             }
         }
@@ -214,7 +216,7 @@ class GRVMasterRepository extends BaseRepository
             if($deliveryNote || $directItemInvoice || $materialIssue || $stockTransferOut) {
                 return [
                     'status' => 0,
-                    'msg' => 'The Stock-Out Document Created for Selected GRV'
+                    'msg' => trans('custom.stock_out_document_created_for_grv')
                 ];
             }
 
@@ -307,7 +309,7 @@ class GRVMasterRepository extends BaseRepository
             if (!empty($invalidItemData)) {
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot reverse the GRV. Item not sufficient to reverse the GRV',
+                    'msg' => trans('custom.cannot_reverse_grv_insufficient_items'),
                     'data' => $invalidItemData,
                     'code' => 502
                 ];
@@ -318,9 +320,10 @@ class GRVMasterRepository extends BaseRepository
         if(empty($inventoryItems) && !empty($otherItems) || (!empty($inventoryItems) && !empty($otherItems))) {
             $checkInAllocation = FixedAssetMaster::where('docOriginDocumentSystemID', 3)->where('docOriginSystemCode', $input['grvAutoID'])->first();
             if ($checkInAllocation) {
+                $message = $type == 'reversal' ? trans('custom.cannot_reverse_grv_already_added_asset') : trans('custom.cannot_cancel_grv_already_added_asset');
                 return [
                     'status' => 0,
-                    'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
+                    'msg' => $message,
                 ];
             }
         }
@@ -454,32 +457,31 @@ class GRVMasterRepository extends BaseRepository
     }
 
     public function setExportExcelData($dataSet) {
-
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['GRV Code'] = $val->grvPrimaryCode;
-                $data[$x]['Type'] = $val->grvtype_by? $val->grvtype_by->des : '';
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->grvDoRefNo;
-                $data[$x]['GRV Date'] = \Helper::dateFormat($val->grvDate);
-                $data[$x]['Supplier Code'] = $val->supplier_by? $val->supplier_by->primarySupplierCode : '';
-                $data[$x]['Supplier Name'] = $val->supplier_by? $val->supplier_by->supplierName : '';
-                $data[$x]['Location'] = $val->location_by? $val->location_by->wareHouseDescription : '';
-                $data[$x]['Narration'] = $val->grvNarration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created Date'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed Date'] = \Helper::convertDateWithTime($val->grvConfirmedDate);
-                $data[$x]['Approved Date'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Transaction Currency'] = $val->supplierTransactionCurrencyID? ($val->currency_by? $val->currency_by->CurrencyCode : '') : '';
-                $data[$x]['Transaction Amount'] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by? $val->currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Local Currency'] = $val->localCurrencyID? ($val->local_currency_by? $val->local_currency_by->CurrencyCode : '') : '';
-                $data[$x]['Local Amount'] = number_format($val->grvTotalLocalCurrency, $val->local_currency_by? $val->local_currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Reporting Currency'] = $val->companyReportingCurrencyID? ($val->reporting_currency_by? $val->reporting_currency_by->CurrencyCode : '') : '';
-                $data[$x]['Reporting Amount'] = number_format($val->grvTotalComRptCurrency, $val->reporting_currency_by? $val->reporting_currency_by->DecimalPlaces : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus($val->grvCancelledYN, NULL, $val->grvConfirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.type')] = $val->grvtype_by ? $val->grvtype_by->grv_type_label : '';
+                $data[$x][trans('custom.grv_code')] = $val->grvPrimaryCode;
+                $data[$x][trans('custom.segment')] = $val->segment_by ? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.reference_no')] = $val->grvDoRefNo;
+                $data[$x][trans('custom.grv_date')] = Helper::dateFormat($val->grvDate);
+                $data[$x][trans('custom.supplier_code')] = $val->supplier_by ? $val->supplier_by->primarySupplierCode : '';
+                $data[$x][trans('custom.supplier_name')] = $val->supplier_by ? $val->supplier_by->supplierName : '';
+                $data[$x][trans('custom.location')] = $val->location_by ? $val->location_by->wareHouseDescription : '';
+                $data[$x][trans('custom.narration')] = $val->grvNarration;
+                $data[$x][trans('custom.created_by')] = $val->created_by ? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_date')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_date')] = Helper::convertDateWithTime($val->grvConfirmedDate);
+                $data[$x][trans('custom.approved_date')] = Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID ? ($val->currency_by ? $val->currency_by->CurrencyCode : '') : '';
+                $data[$x][trans('custom.transaction_amount')] = number_format($val->grvTotalSupplierTransactionCurrency, $val->currency_by ? $val->currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][trans('custom.local_currency')] = $val->localCurrencyID ? ($val->local_currency_by ? $val->local_currency_by->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = number_format($val->grvTotalLocalCurrency, $val->local_currency_by ? $val->local_currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][trans('custom.reporting_currency')] = $val->companyReportingCurrencyID ? ($val->reporting_currency_by ? $val->reporting_currency_by->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = number_format($val->grvTotalComRptCurrency, $val->reporting_currency_by ? $val->reporting_currency_by->DecimalPlaces : 0, ".", "");
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->grvCancelledYN, null, $val->grvConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

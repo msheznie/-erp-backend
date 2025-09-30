@@ -213,7 +213,10 @@ class AfterDocumentCreated
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = null;
-                    $dataEmail['alertMessage'] = $systemDocument->documentDescription . " - " . $document['companyID'] . " (Document code Jumped/Duplicated)";
+                    $dataEmail['alertMessage'] = trans('email.document_code_jumped_duplicated', [
+                        'documentDescription' => $systemDocument->documentDescription,
+                        'companyID' => $document['companyID']
+                    ]);
                     $dataEmail['emailAlertMessage'] = $temp;
 
                     $sendEmail = \Email::sendEmailErp($dataEmail);

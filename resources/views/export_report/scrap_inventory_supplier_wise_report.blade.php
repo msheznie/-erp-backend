@@ -28,11 +28,11 @@
     <table class="table table-sm table-striped hover table-bordered" >
         <thead>
         <tr>
-            <th>Report Type:</th>
-            <th>Supplier</th>
-            <th>Date From:</th>
+            <th>{{ trans('custom.report_type') }}:</th>
+            <th>{{ trans('custom.supplier') }}</th>
+            <th>{{ trans('custom.date_from') }}</th>
             <th>{{ $frDate }}</th>
-            <th>Date To:</th>
+            <th>{{ trans('custom.date_to') }}</th>
             <th>{{ $tDate }}</th>
 
         <tr>
@@ -95,24 +95,24 @@ foreach($grvItems as $grvItem){
            <thead>
 {{--           <tr><td>{{ $result }}</td></tr>--}}
             <tr>
-                <th>Date</th>
-                <th>Document Code</th>
-                <th>Reference No</th>
-                <th>Vehicle No</th>
-                <th>Item Short Code</th>
-                <th>Item Description</th>
-                <th>UOM</th>
+                <th>{{ trans('custom.date') }}</th>
+                <th>{{ trans('custom.document_code') }}</th>
+                <th>{{ trans('custom.reference_no') }}</th>
+                <th>{{ trans('custom.vehicle_no') }}</th>
+                <th>{{ trans('custom.item_short_code') }}</th>
+                <th>{{ trans('custom.item_description') }}</th>
+                <th>{{ trans('custom.uom') }}</th>
                 {{--            <th>Received Qty</th>--}}
-                <th>Waste Qty</th>
-                <th>Net Qty</th>
-                <th>Unit Rate</th>
-                <th>Total</th>
-                <th>Remarks</th>
+                <th>{{ trans('custom.waste_qty') }}</th>
+                <th>{{ trans('custom.net_qty') }}</th>
+                <th>{{ trans('custom.unit_rate') }}</th>
+                <th>{{ trans('custom.total') }}</th>
+                <th>{{ trans('custom.remarks') }}</th>
             </tr>
            </thead>
             <tbody>
             <tr><td></td></tr>
-            <tr><td>Supplier: {{$item}}</td></tr>
+            <tr><td>{{ trans('custom.supplier_label') }} {{$item}}</td></tr>
             <tr><td></td></tr>
             @php
                 $grvItems = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
@@ -180,7 +180,7 @@ foreach($grvItems as $grvItem){
                 <td></td>
                 <td></td>
                 <td></td>
-                <td>Total</td>
+                <td>{{ trans('custom.total') }}</td>
                 <td>{{ $totWaste }}</td>
                 <td>{{ $totQty }}</td>
 

@@ -1,29 +1,27 @@
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    .text-left {
+        text-align: right !important;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    .text-right {
+        text-align: left !important;
     }
 
-    #footer .page:after {
-        content: counter(page, upper-roman);
+    table {
+        direction: rtl;
     }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
 
     body {
         font-size: 9px;
@@ -110,50 +108,37 @@
         margin-top: 0 !important;
     }
 
-    .pagenum:after {
-        content: counter(page);
-    }
-
     .content {
         margin-bottom: 45px;
     }
 
-</style>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">Revenue Report - {{ $year }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currency {{ $currency }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
-                    </td>
-                    <td>
+    .text-left-footer {
+        text-align: left !important;
+    }
 
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<div id="footer">
-    <table style="width:100%;">
+    .text-right-footer {
+        text-align: right !important;
+    }
+
+</style>
+<div style="width: 100%; text-align: center; font-size: 10px; margin-bottom: 20px;">
+    <table style="width: 100%">
         <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+            <td valign="top" style="width: 45%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <img src="{{$companylogo}}" width="180px" height="60px"><br>
             </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+            <td valign="top" style="width: 55%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <br><br>
+                <span style="font-weight: bold; font-size: 12px;">{{ trans('custom.revenue_report_year') }} - {{ $year }}</span><br>
+                <span style="font-weight: bold; font-size: 12px;">@if(isset($lang) && $lang === 'en') &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @endif{{ trans('custom.as_of') }} {{ $fromDate }} @if(isset($lang) && $lang === 'ar') &nbsp;&nbsp;&nbsp; @endif</span><br>
+                <span style="font-weight: bold; font-size: 12px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ trans('custom.currency') }} {{ $currency }}@if(isset($lang) && $lang === 'ar') &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @endif</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" valign="top" style="width: 45%; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <span style="font-weight: bold;"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
+            </td>
+            <td>
             </td>
         </tr>
     </table>
@@ -166,20 +151,20 @@
                 <td colspan="14"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="20%" style="background-color: #D7E4BD">Customer Name</th>
-                <th width="6%">Jan</th>
-                <th width="6%">Feb</th>
-                <th width="6%">March</th>
-                <th width="6%">April</th>
-                <th width="6%">May</th>
-                <th width="6%">Jun</th>
-                <th width="6%">July</th>
-                <th width="6%">Aug</th>
-                <th width="6%">Sept</th>
-                <th width="6%">Oct</th>
-                <th width="6%">Nov</th>
-                <th width="6%">Dec</th>
-                <th width="15%">Total</th>
+                <th width="20%" style="background-color: #D7E4BD">{{ trans('custom.customer_name') }}</th>
+                <th width="6%">{{ trans('custom.jan') }}</th>
+                <th width="6%">{{ trans('custom.feb') }}</th>
+                <th width="6%">{{ trans('custom.mar') }}</th>
+                <th width="6%">{{ trans('custom.apr') }}</th>
+                <th width="6%">{{ trans('custom.may') }}</th>
+                <th width="6%">{{ trans('custom.jun') }}</th>
+                <th width="6%">{{ trans('custom.jul') }}</th>
+                <th width="6%">{{ trans('custom.aug') }}</th>
+                <th width="6%">{{ trans('custom.sep') }}</th>
+                <th width="6%">{{ trans('custom.oct') }}</th>
+                <th width="6%">{{ trans('custom.nov') }}</th>
+                <th width="6%">{{ trans('custom.dec') }}</th>
+                <th width="15%">{{ trans('custom.total') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -229,7 +214,7 @@
             @endforeach
             <tr>
                 <td class="text-right"
-                    style=""><b>Total:</b>
+                    style=""><b>{{ trans('custom.total') }}:</b>
                 </td>
                 <td class="text-right"><b>{{number_format($janTotal,$decimalPlace)}}</b></td>
                 <td class="text-right"><b>{{number_format($febTotal,$decimalPlace)}}</b></td>
@@ -250,7 +235,7 @@
         <tfoot>
         <tr>
             <td class="text-right"
-                style=""><b>Grand Total:</b>
+                style=""><b>{{ trans('custom.grand_total') }}:</b>
             </td>
             <td class="text-right"><b>{{number_format($total['Jan'],$decimalPlace)}}</b></td>
             <td class="text-right"><b>{{number_format($total['Feb'],$decimalPlace)}}</b></td>
@@ -269,3 +254,16 @@
         </tfoot>
     </table>
 </div>
+<div style="width: 100%; text-align: center; font-size: 10px; padding-top: 20px; margin-top: 20px;">
+    <table style="width:100%;">
+        <tr>
+            <td style="width:50%;font-size: 10px;vertical-align: bottom; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
+            </td>
+            <td class="@if(isset($lang) && $lang === 'ar') text-left-footer @else text-right-footer @endif" style="width:50%; font-size: 10px;vertical-align: bottom;">
+                <span style="@if(isset($lang) && $lang === 'ar') float: left !important; @else float: right !important; @endif">{{ trans('custom.page') }} <span>{PAGENO}</span></span><br>
+            </td>
+        </tr>
+    </table>
+</div>
+</html>

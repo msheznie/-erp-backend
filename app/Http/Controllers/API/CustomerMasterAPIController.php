@@ -119,7 +119,7 @@ class CustomerMasterAPIController extends AppBaseController
         $this->customerMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerMasters = $this->customerMasterRepository->all();
 
-        return $this->sendResponse($customerMasters->toArray(), 'Customer Masters retrieved successfully');
+        return $this->sendResponse($customerMasters->toArray(), trans('custom.customer_masters_retrieved_successfully'));
     }
 
 
@@ -322,14 +322,14 @@ class CustomerMasterAPIController extends AppBaseController
             'isCustomerCatalogPolicyOn'=>$hasPolicy
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getApprovedCustomers(Request $request){
 
         $customers = CustomerMaster::where('primaryCompanySystemID', $request['companySystemID'])->where('approvedYN',1)->get();
 
-        return $this->sendResponse($customers, 'Record retrieved successfully');
+        return $this->sendResponse($customers, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -337,7 +337,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         $supplier = SupplierMaster::where('primaryCompanySystemID', $request['selectedCompanyId'])->where('linkCustomerID',$request['customerID'])->where('linkCustomerYN',1)->first();
 
-        return $this->sendResponse($supplier, 'Record retrieved successfully');
+        return $this->sendResponse($supplier, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -397,7 +397,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $selectedCompanyId)
                                     ->get();
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -426,7 +426,7 @@ class CustomerMasterAPIController extends AppBaseController
                                                     })
                                                     ->get();
 
-        return $this->sendResponse($customerCategories, 'Record retrieved successfully');
+        return $this->sendResponse($customerCategories, trans('custom.record_retrieved_successfully_1'));
     }
 
     /**
@@ -460,7 +460,7 @@ class CustomerMasterAPIController extends AppBaseController
             $customerCompanies = [];
         }
 
-        return $this->sendResponse($customerCompanies, 'customer companies retrieved successfully');
+        return $this->sendResponse($customerCompanies, trans('custom.customer_companies_retrieved_successfully'));
     }
 
     /**
@@ -497,7 +497,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
             if(!$input['customer_registration_expiry_date']){
-                return $this->sendError('Registration expiry date is required.');
+                return $this->sendError(trans('custom.registration_expiry_date_is_required'));
             }
         }
    
@@ -522,7 +522,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
-                return $this->sendError('Linked company is required',500);
+                return $this->sendError(trans('custom.linked_company_is_required'),500);
             }
 
             $checkCustomerForInterCompany = CustomerMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
@@ -532,7 +532,7 @@ class CustomerMasterAPIController extends AppBaseController
                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->CustomerName,500);
+                return $this->sendError(trans('custom.the_selected_company_is_already_assigned_to') .$checkCustomerForInterCompany->CustomerName,500);
             }
 
 
@@ -611,10 +611,10 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy', 'gl_account', 'unbilled_account'])->findWithoutFail($id);
         // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
-        return $this->sendResponse($customerMaster->toArray(), 'Customer Master retrieved successfully');
+        return $this->sendResponse($customerMaster->toArray(), trans('custom.customer_master_retrieved_successfully'));
     }
 
     /**
@@ -635,7 +635,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
 
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         if (array_key_exists('custUnbilledAccountSystemID', $input)) {
@@ -647,7 +647,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customerMaster = $this->customerMasterRepository->update($input, $id);
 
-        return $this->sendResponse($customerMaster->toArray(), 'CustomerMaster updated successfully');
+        return $this->sendResponse($customerMaster->toArray(), trans('custom.customermaster_updated_successfully'));
     }
 
     /**
@@ -664,12 +664,12 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
 
         if (empty($customerMaster)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         $customerMaster->delete();
 
-        return $this->sendResponse($id, 'Customer Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_master_deleted_successfully'));
     }
 
     public function approveCustomer(Request $request)
@@ -730,7 +730,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($customers->toArray(), 'Customer Master retrieved successfully');
+        return $this->sendResponse($customers->toArray(), trans('custom.customer_master_retrieved_successfully'));
     }
 
     public function getJobsByContractAndCustomer(Request $request)
@@ -758,7 +758,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get(['ticketidAtuto', 'ticketNo']);
 
 
-        return $this->sendResponse($jobs->toArray(), 'Jobs by Customer retrieved successfully');
+        return $this->sendResponse($jobs->toArray(), trans('custom.jobs_by_customer_retrieved_successfully'));
     }
 
     public function getContractByCustomer(Request $request)
@@ -784,7 +784,7 @@ class CustomerMasterAPIController extends AppBaseController
             ->get(['ContractNumber', 'contractUID']);
 
 
-        return $this->sendResponse($contract->toArray(), 'Contracts by Customer retrieved successfully');
+        return $this->sendResponse($contract->toArray(), trans('custom.contracts_by_customer_retrieved_successfully'));
     }
 
     public function getCustomerByCompany(Request $request)
@@ -821,7 +821,7 @@ class CustomerMasterAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');
+        return $this->sendResponse($customerCompanies->toArray(), trans('custom.customer_companies_retrieved_successfully'));
     }
 
     public function customerReferBack(Request $request)
@@ -832,11 +832,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customer = $this->customerMasterRepository->find($id);
         if (empty($customer)) {
-            return $this->sendError('Customer Master not found');
+            return $this->sendError(trans('custom.customer_master_not_found'));
         }
 
         if ($customer->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this customer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_customer'));
         }
 
         $customerArray = $customer->toArray();
@@ -875,7 +875,7 @@ class CustomerMasterAPIController extends AppBaseController
             $this->customerMasterRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($customer->toArray(), 'Customer Master Amend successfully');
+        return $this->sendResponse($customer->toArray(), trans('custom.customer_master_amend_successfully'));
     }
 
     public function exportCustomerMaster(Request $request)
@@ -894,18 +894,18 @@ class CustomerMasterAPIController extends AppBaseController
             $x = 0;
             $data = array();
             foreach ($customerMasters as $val) {
-                $data[$x]['Primary Code'] = $val->CutomerCode;
-                $data[$x]['Secondary Code'] = $val->customerShortCode;
-                $data[$x]['Customer Name'] = $val->CustomerName;
-                $data[$x]['Report Title'] = $val->ReportTitle;
-                $data[$x]['Currency'] = isset($val->customer_default_currency->currencyMaster->CurrencyCode)?$val->customer_default_currency->currencyMaster->CurrencyCode:'-';
-                $data[$x]['Credit Period'] = $val->creditDays;
-                $data[$x]['Credit Limit'] = $val->creditLimit;
-                $data[$x]['Address'] = $val->customerAddress1.", ".$val->customerAddress2;
-                $data[$x]['City'] = $val->customerCity;
-                $data[$x]['Country'] = isset($val->country->countryName)?$val->country->countryName:"-";
-                $data[$x]['Telephone'] = isset($val->customer_default_contacts->contactPersonTelephone)?$val->customer_default_contacts->contactPersonTelephone:0;
-                $data[$x]['Email'] = isset($val->customer_default_contacts->contactPersonEmail)?$val->customer_default_contacts->contactPersonEmail:'-';
+                $data[$x][trans('custom.primary_code')] = $val->CutomerCode;
+                $data[$x][trans('custom.secondary_code')] = $val->customerShortCode;
+                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                $data[$x][trans('custom.report_title')] = $val->ReportTitle;
+                $data[$x][trans('custom.currency')] = isset($val->customer_default_currency->currencyMaster->CurrencyCode)?$val->customer_default_currency->currencyMaster->CurrencyCode:'-';
+                $data[$x][trans('custom.credit_period')] = $val->creditDays;
+                $data[$x][trans('custom.credit_limit')] = $val->creditLimit;
+                $data[$x][trans('custom.address')] = $val->customerAddress1.", ".$val->customerAddress2;
+                $data[$x][trans('custom.city')] = $val->customerCity;
+                $data[$x][trans('custom.country')] = isset($val->country->countryName)?$val->country->countryName:"-";
+                $data[$x][trans('custom.telephone')] = isset($val->customer_default_contacts->contactPersonTelephone)?$val->customer_default_contacts->contactPersonTelephone:0;
+                $data[$x][trans('custom.email')] = isset($val->customer_default_contacts->contactPersonEmail)?$val->customer_default_contacts->contactPersonEmail:'-';
 
                 $x++;
             }
@@ -924,11 +924,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
+            return $this->sendResponse($basePath, trans('custom.success_export'));
         }
 
 
@@ -971,7 +971,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     $customers = $customers->take(10)->get();
 
-    return $this->sendResponse($customers->toArray(), 'Data retrieved successfully');
+    return $this->sendResponse($customers->toArray(), trans('custom.data_retrieved_successfully'));
 }
 
     public function getSelectedCompanyReportingCurrencyData(Request $request)
@@ -999,7 +999,7 @@ class CustomerMasterAPIController extends AppBaseController
         ];
 
 
-        return $this->sendResponse($resData, 'Data retrieved successfully');
+        return $this->sendResponse($resData, trans('custom.data_retrieved_successfully'));
     }
 
      public function customerReOpen(Request $request)
@@ -1025,14 +1025,14 @@ class CustomerMasterAPIController extends AppBaseController
             if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/item_pos_template.xlsx')) {
                 return Storage::disk($disk)->download('Master_Template/'.$document_id.'/item_pos_template.xlsx', 'item_pos_template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
 
             if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
                 return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
 
         }
@@ -1071,11 +1071,11 @@ class CustomerMasterAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.this_type_of_file_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
             }
 
            
@@ -1214,7 +1214,7 @@ class CustomerMasterAPIController extends AppBaseController
                                             {
                                                 $name = $value['customer_name'];
                                             }
-                                            array_push($customer_error['Primary Company'], $name.',line number '.$count.' company not exist');
+                                            array_push($customer_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.company_not_exist'));
                                     }
                                     else
                                     {
@@ -1231,7 +1231,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['Primary Company'], $name.',line number '.$count.' company not exist');
+                                    array_push($customer_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.company_not_exist'));
 
                                     
                                 }
@@ -1245,7 +1245,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Primary Company'], $name.',line number '.$count.' null value');
+                                array_push($customer_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
                          
 
@@ -1273,8 +1273,8 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['GL Account'], $name.',line number '.$count.' value invalid');
-                            
+                                    array_push($customer_error['GL Account'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.value_invalid'));
+
                                 }else
                                 {
                                     $customer_data['custGLAccountSystemID'] = $gl_account->chartOfAccountSystemID;
@@ -1291,7 +1291,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['GL Account'], $name.',line number '.$count.' null value');
+                                array_push($customer_error['GL Account'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
 
@@ -1309,8 +1309,8 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['Country'], $name.',line number '.$count.' invalid country');
-                            
+                                    array_push($customer_error['Country'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.invalid_country'));
+
                                 }
                                 else
                                 {
@@ -1327,8 +1327,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                         
-                                array_push($customer_error['Country'], $name.',line number '.$count.' null value');
+
+                                array_push($customer_error['Country'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
 
                              
                             }
@@ -1427,7 +1427,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Secondary Code'], $name.',line number '.$count.' null value');
+                                array_push($customer_error['Secondary Code'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
                      
                             //check customer name validation
@@ -1446,7 +1446,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['Customer Name'], 'line number '.$count.' not only numeric value');
+                                    array_push($customer_error['Customer Name'], trans('custom.line_number').' '.$count.' '.trans('custom.not_only_numeric_value'));
                                 }
                                 
                             }
@@ -1459,7 +1459,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Customer Name'], 'line number '.$count.' null value');
+                                array_push($customer_error['Customer Name'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
                             
                             //check report title
@@ -1476,8 +1476,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Report title'], $name.',line number '.$count.' null value');
-                            }  
+                                array_push($customer_error['Report title'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
+                            }
                             
                             //check address 1
                             if ( (isset($value['address_1']) && !is_null($value['address_1'])) )
@@ -1542,7 +1542,7 @@ class CustomerMasterAPIController extends AppBaseController
                                         {
                                             $name = $value['customer_name'];
                                         }
-                                        array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' not a positive value');
+                                        array_push($customer_error['Credit Limit (USD)'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_positive_value'));
                                     }
                                 }
                                 else
@@ -1554,7 +1554,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' not numeric value');
+                                    array_push($customer_error['Credit Limit (USD)'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_numeric_value'));
                                 }
 
 
@@ -1568,8 +1568,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' null value');
-                            }  
+                                array_push($customer_error['Credit Limit (USD)'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
+                            }
 
                             
                             //check Credit Period
@@ -1591,7 +1591,7 @@ class CustomerMasterAPIController extends AppBaseController
                                         {
                                             $name = $value['customer_name'];
                                         }
-                                        array_push($customer_error['Credit Period'], $name.',line number '.$count.' not positive value');
+                                        array_push($customer_error['Credit Period'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_positive_value'));
                                     }
                                 }
                                 else
@@ -1602,7 +1602,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['customer_name'];
                                     }
-                                    array_push($customer_error['Credit Period'], $name.',line number '.$count.' not numeric value');
+                                    array_push($customer_error['Credit Period'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_numeric_value'));
                                 }
                             }
                             else
@@ -1613,8 +1613,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['customer_name'];
                                 }
-                                array_push($customer_error['Credit Period'], $name.',line number '.$count.' null value');
-                            }  
+                                array_push($customer_error['Credit Period'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
+                            }
 
                             //check vatNumber
                             if ( (isset($value['vat_number']) && !is_null($value['vat_number'])) )
@@ -1678,26 +1678,26 @@ class CustomerMasterAPIController extends AppBaseController
                             if($total_count == 0 )
                             {
                                 Storage::disk($disk)->delete($originalFileName);
-                                return $this->sendError('No Records found!', 500);
+                                return $this->sendError(trans('custom.no_records_found'), 500);
                             }
                             else
                             {
                                 
                                 if ($succesfully_created == $totalItemCount) {
-                                    $message = "All record Upload successfully";
+                                    $message = trans('custom.all_record_upload_successfully');
                                     $msg_detail = [];
                                     $is_success = true;
                                    
                                 } 
                                 else if($succesfully_created == 0)
                                 {
-                                    $message = "Nothing uploaded !try agian";
+                                    $message = trans('custom.nothing_uploaded_try_agian');
                                     $msg_detail = $customer_error;
                                     $is_success = false;
                                 }
                                  else {
-                                    $message = "Successfully uploadedf ".$succesfully_created." customers out of ".$totalItemCount.".";
-        
+                                    $message = trans('custom.successfully_uploaded_customers').' '.$succesfully_created.' '.trans('custom.customers_out_of').' '.$totalItemCount.'.';
+
                                    
                                     $msg_detail = $customer_error;
                                     $is_success = true;
@@ -1713,8 +1713,8 @@ class CustomerMasterAPIController extends AppBaseController
                             $details['msg_detail'] = $msg_detail;
                             $details['success'] = $is_success;
                             //Storage::disk($disk)->delete($originalFileName);
-                             return $this->sendResponse($details, 'Added succefully');
-                        
+                             return $this->sendResponse($details, trans('custom.added_successfully'));
+
                 
                     break;
                 case '56':
@@ -1770,7 +1770,7 @@ class CustomerMasterAPIController extends AppBaseController
                                             {
                                                 $name = $value['supplier_name'];
                                             }
-                                            array_push($supplier_error['Primary Company'], $name.',line number '.$count.' company not valid');
+                                            array_push($supplier_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.company_not_valid'));
                                     }
                                     else
                                     {
@@ -1787,7 +1787,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Primary Company'], $name.',line number '.$count.' company not exist');
+                                    array_push($supplier_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.company_not_exist'));
 
                                 }
 
@@ -1800,7 +1800,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Primary Company'], $name.',line number '.$count.' null value');
+                                array_push($supplier_error['Primary Company'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
 
                             }
                       
@@ -1861,14 +1861,14 @@ class CustomerMasterAPIController extends AppBaseController
                                      {
                                          $name = $value['supplier_name'];
                                      }
-                                     array_push($supplier_error['Supplier Name'],'line number '.$count.' not only numeric value');
+                                     array_push($supplier_error['Supplier Name'], trans('custom.line_number').' '.$count.' '.trans('custom.not_only_numeric_value'));
                                  }
                                                                
                             }
                             else
                             {
                                 $nullValue = true;
-                                array_push($supplier_error['Supplier Name'],'line number '.$count.' null value');
+                                array_push($supplier_error['Supplier Name'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
                             //check payment check name validation
@@ -1886,7 +1886,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Check Name'], $name.',line number '.$count.' null value');
+                                array_push($supplier_error['Check Name'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
                       
@@ -1909,7 +1909,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Address'],'line number '.$count.' not only numeric value');
+                                    array_push($supplier_error['Address'], trans('custom.line_number').' '.$count.' '.trans('custom.not_only_numeric_value'));
                                 }
                                                                 
                             }
@@ -1923,7 +1923,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Address'], $name.',line number '.$count.' null value');
+                                array_push($supplier_error['Address'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
                             //check supplier country validation
@@ -1941,8 +1941,8 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Country'], $name.',line number '.$count.' country not valid');
-                            
+                                    array_push($supplier_error['Country'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.country_not_valid'));
+
                                 }
                                 else
                                 {
@@ -1960,8 +1960,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Country'], $name.',line number '.$count.' null value');
-                                
+                                array_push($supplier_error['Country'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
+
 
 
                             }
@@ -1984,8 +1984,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Category'], $name.',line number '.$count.' category not exist');
-                        
+                                array_push($supplier_error['Category'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.category_not_exist'));
+
                             }
                             else
                             {
@@ -2002,7 +2002,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Category'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Category'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
                         
 
@@ -2028,7 +2028,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should positive');
+                                    array_push($supplier_error['Mobile'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.mobile_should_positive'));
                                 }
                             }
                             else
@@ -2041,7 +2041,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should be numbers');
+                                array_push($supplier_error['Mobile'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.mobile_should_be_numbers'));
                             }
                             //return $this->sendResponse($value['telephone'], 'Added succefully');
                             
@@ -2058,7 +2058,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Mobile'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Mobile'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
 
 
@@ -2089,7 +2089,7 @@ class CustomerMasterAPIController extends AppBaseController
                                {
                                    $name = $value['supplier_name'];
                                }
-                               array_push($supplier_error['Email'], $name.',line number '.$count.' email not valid');
+                               array_push($supplier_error['Email'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.email_not_valid'));
                             }
                             else
                             {
@@ -2105,7 +2105,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Email'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Email'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
                       
                         //check web address validation
@@ -2132,8 +2132,8 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Currency'], $name.',line number '.$count.' currency not valid');
-                                
+                                array_push($supplier_error['Currency'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.currency_not_valid'));
+
                         
                             }
                             else
@@ -2151,7 +2151,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Currency'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Currency'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
 
                    
@@ -2222,7 +2222,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Credit Limit'], $name.',line number '.$count.' not valid');
+                                    array_push($supplier_error['Credit Limit'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                                 }
                             }
                             else
@@ -2233,7 +2233,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['credit_limit'], $name.'-line number '.$count.'not valid');
+                                array_push($supplier_error['credit_limit'], $name.'-'.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                             }
 
                         }
@@ -2245,7 +2245,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Credit Limit'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Credit Limit'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
 
                         
@@ -2269,7 +2269,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Credit Period'], $name.',line number '.$count.' not valid');
+                                    array_push($supplier_error['Credit Period'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                                 }
                             }
                             else
@@ -2279,7 +2279,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['credit_period'], $name.'-line number '.$count.' not valid');
+                                array_push($supplier_error['credit_period'], $name.'-'.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                             }
                          
                             
@@ -2291,7 +2291,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Credit Period'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Credit Period'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
 
 
@@ -2317,7 +2317,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Register Number'], $name.',line number '.$count.' register number must positive');
+                                    array_push($supplier_error['Register Number'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.register_number_must_positive'));
                                 }
                             }
                             else
@@ -2327,7 +2327,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Register Number'], $name.',line number '.$count.' only numeric value allowed');
+                                array_push($supplier_error['Register Number'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.only_numeric_value_allowed'));
                             }
 
                          
@@ -2341,7 +2341,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Register Number'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Register Number'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                         }
 
                         
@@ -2358,7 +2358,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 {
                                     $name = $value['supplier_name'];
                                 }
-                                array_push($supplier_error['Register Expire'], $name.',line number '.$count.' not valid');
+                                array_push($supplier_error['Register Expire'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                             }
                             else
                             {
@@ -2372,7 +2372,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     {
                                         $name = $value['supplier_name'];
                                     }
-                                    array_push($supplier_error['Register Expire'], $name.',line number '.$count.' not valid');
+                                    array_push($supplier_error['Register Expire'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.not_valid'));
                                 }
                                 else
                                 {
@@ -2494,19 +2494,19 @@ class CustomerMasterAPIController extends AppBaseController
                     if($total_count == 0 )
                     {
                         Storage::disk($disk)->delete($originalFileName);
-                        return $this->sendError('No Records found!', 500);
+                        return $this->sendError(trans('custom.no_records_found'), 500);
                     }
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All record Upload successfully";
+                            $message = trans('custom.all_record_upload_successfully');
                             $msg_detail = [];
                             $is_success = true;
                            
                         } 
                         else if($succesfully_created == 0)
                         {
-                            $message = "Nothing uploaded !try agian";
+                            $message = trans('custom.nothing_uploaded_try_agian');
                             $msg_detail = $supplier_error;
                             $is_success = false;
                         }
@@ -2527,7 +2527,7 @@ class CustomerMasterAPIController extends AppBaseController
                     $details['msg_detail'] = $msg_detail;
                     $details['success'] = $is_success;
                     Storage::disk($disk)->delete($originalFileName);
-                    return $this->sendResponse($details, 'Added succefully');
+                    return $this->sendResponse($details, trans('custom.added_successfully'));
 
 
 
@@ -2559,7 +2559,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 if($value['item_type'] != "S" && $value['item_type'] != "P" && $value['item_type'] != "SP") {
                                     $valueNotExit = true;
-                                    array_push($item_error['Item Type'], 'line number '.$count.' Item Type should only have the values S, P and SP');
+                                    array_push($item_error['Item Type'], trans('custom.line_number').' '.$count.' '.trans('custom.item_type_should_only_have_values'));
                                 } else {
                                     if (isset($value['finance_sub_category']) && $value['item_type'] == 'S') {
                                         $subCat = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])
@@ -2579,7 +2579,7 @@ class CustomerMasterAPIController extends AppBaseController
 
                                     if (empty($subCat)) {
                                         $valueNotExit = true;
-                                        array_push($item_error['Item Type'], 'Item Type not valid Item Type and Finance Sub Category mis-match in line item ' . $count . ', Finance Sub Category should match the Item Type selection. If Purchase it can be Purchase or Purchase & Sale, If Sales it can be  Sales or Purchase & Sale, If Purchase & Sales it can be of any type');
+                                        array_push($item_error['Item Type'], trans('custom.item_type_not_valid_mismatch').' ' . $count . ', '.trans('custom.finance_sub_category_should_match'));
                                     }
                                 }
 
@@ -2588,7 +2588,7 @@ class CustomerMasterAPIController extends AppBaseController
                             else
                             {
                                 $nullValue = true;
-                                array_push($item_error['Item Type'], 'line number '.$count.' null value');
+                                array_push($item_error['Item Type'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
                                       //check companu validation
@@ -2606,8 +2606,8 @@ class CustomerMasterAPIController extends AppBaseController
                                             $groupOfComapnyFalse = true;
                                             $company_group_msg = $validatorResult['message'];
 
-                                        
-                                            array_push($item_error['Primary Company'], 'line number '.$count.' company not valid');
+
+                                            array_push($item_error['Primary Company'], trans('custom.line_number').' '.$count.' '.trans('custom.company_not_valid'));
                                     }
                                     else
                                     {
@@ -2619,14 +2619,14 @@ class CustomerMasterAPIController extends AppBaseController
                                 else
                                 {
                                     $valueNotExit = true;
-                                    array_push($item_error['Primary Company'], 'line number '.$count.' company not valid');
+                                    array_push($item_error['Primary Company'], trans('custom.line_number').' '.$count.' '.trans('custom.company_not_valid'));
                                 }
 
                             }
                             else
                             {
                                 $nullValue = true;
-                                array_push($item_error['Primary Company'], 'line number '.$count.' null value');
+                                array_push($item_error['Primary Company'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
                             //check finance category master
@@ -2671,7 +2671,7 @@ class CustomerMasterAPIController extends AppBaseController
                                             else
                                             {
                                                 $valueNotExit = true;
-                                                array_push($item_error['Finance Sub Category'], 'line number '.$count.' subgetory not found for this category'); 
+                                                array_push($item_error['Finance Sub Category'], trans('custom.line_number').' '.$count.' '.trans('custom.subcategory_not_found_for_category'));
                                             }
 
                                          
@@ -2679,7 +2679,7 @@ class CustomerMasterAPIController extends AppBaseController
                                         else
                                         {
                                             $valueNotExit = true;
-                                            array_push($item_error['Finance Sub Category'], 'line number '.$count.' value not valid');
+                                            array_push($item_error['Finance Sub Category'], trans('custom.line_number').' '.$count.' '.trans('custom.value_invalid'));
                                         }
                                        
 
@@ -2691,7 +2691,7 @@ class CustomerMasterAPIController extends AppBaseController
                                    
 
                                         $nullValue = true;
-                                        array_push($item_error['Finance Sub Category'], 'line number '.$count.' null'); 
+                                        array_push($item_error['Finance Sub Category'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                                     }
                                  
                             
@@ -2699,14 +2699,14 @@ class CustomerMasterAPIController extends AppBaseController
                                 else
                                 {
                                     $valueNotExit = true;
-                                    array_push($item_error['Finance Category'], 'line number '.$count.' value not valid');
+                                    array_push($item_error['Finance Category'], trans('custom.line_number').' '.$count.' '.trans('custom.value_invalid'));
                                 }
 
                             }
                             else
                             {
                                 $nullValue = true;
-                                array_push($item_error['Finance Category'], 'line number '.$count.' null value');
+                                array_push($item_error['Finance Category'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             }
 
 
@@ -2720,7 +2720,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 if(isset($secondary_Exists))
                                 {
                                     $valueNotExit = true;
-                                    array_push($item_error['Part No / Ref.Number'], 'line number '.$count.' Part No / Ref.Number already exists');
+                                    array_push($item_error['Part No / Ref.Number'], trans('custom.line_number').' '.$count.' '.trans('custom.part_no_already_exists'));
                                 }
                                 else
                                 {
@@ -2740,7 +2740,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 else
                                {
                                    $nullValue = true;
-                                   array_push($item_error['Item Description'], 'line number '.$count.' null value');
+                                   array_push($item_error['Item Description'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                                }
 
 
@@ -2760,14 +2760,14 @@ class CustomerMasterAPIController extends AppBaseController
                                    else
                                    {
                                        $valueNotExit = true;
-                                       array_push($item_error['Unit of Measure'], 'line number '.$count.' unit not valid');
+                                       array_push($item_error['Unit of Measure'], trans('custom.line_number').' '.$count.' '.trans('custom.unit_not_valid'));
                                    }
    
                                }
                                else
                                {
                                    $nullValue = true;
-                                   array_push($item_error['Unit of Measure'], 'line number '.$count.' null value');
+                                   array_push($item_error['Unit of Measure'], trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                                }
 
 
@@ -2785,7 +2785,7 @@ class CustomerMasterAPIController extends AppBaseController
                                     $item_data['pos_type'] = 3;
                                 } else{
                                         $valueNotExit = true;
-                                        array_push($item_error['POS type'], 'line number '.$count.' pos value not valid');
+                                        array_push($item_error['POS type'], trans('custom.line_number').' '.$count.' '.trans('custom.pos_value_not_valid'));
                                 }
                             }
 
@@ -2892,24 +2892,24 @@ class CustomerMasterAPIController extends AppBaseController
                     if($total_count == 0 )
                     {
                         Storage::disk($disk)->delete($originalFileName);
-                        return $this->sendError('No Records found!', 500);
+                        return $this->sendError(trans('custom.no_records_found'), 500);
                     }
                     else
                     {
                         if ($succesfully_created == $totalItemCount) {
-                            $message = "All records uploaded Successfully";
+                            $message = trans('custom.all_record_upload_successfully');
                             $msg_detail = [];
                             $is_success = true;
                            
                         } 
                         else if($succesfully_created == 0)
                         {
-                            $message = "Nothing uploaded !try agian";
+                            $message = trans('custom.nothing_uploaded_try_agian');
                             $msg_detail = $item_error;
                             $is_success = false;
                         }
                          else {
-                            $message = "Successfully uploaded ".$succesfully_created." items out of ".$totalItemCount.".";
+                            $message = trans('custom.successfully_uploaded_items').' '.$succesfully_created.' '.trans('custom.items_out_of').' '.$totalItemCount.'.';
 
                            
                             $msg_detail = $item_error;
@@ -2925,8 +2925,8 @@ class CustomerMasterAPIController extends AppBaseController
                     $details['msg_detail'] = $msg_detail;
                     $details['success'] = $is_success;
                     Storage::disk($disk)->delete($originalFileName);
-                    return $this->sendResponse($details, 'Added succefully');
-                     
+                    return $this->sendResponse($details, trans('custom.added_successfully'));
+
                     break;
                 default:
                     return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.document')]));
@@ -2972,7 +2972,7 @@ class CustomerMasterAPIController extends AppBaseController
                     ->exists();
 
 
-        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], 'Record retrieved successfully');
+        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], trans('custom.record_retrieved_successfully_1'));
     }
 
     public function validateCustomerAmend(Request $request)
@@ -2982,7 +2982,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster = CustomerMaster::find($input['customerID']);
 
         if (!$customerMaster) {
-            return $this->sendError('Customer Data not found');
+            return $this->sendError(trans('custom.customer_data_not_found'));
         }
       
 
@@ -2993,10 +2993,10 @@ class CustomerMasterAPIController extends AppBaseController
         $cusInvoice = CustomerInvoice::where('customerID', $input['customerID'])->where('customerGLSystemID', $customerMaster->custGLAccountSystemID)->first();//check GL account
     
         if ($cusInvoice) {
-            $errorMessages[] = "Receivable Account cannot be amended. it had used in customer Invoice";
+            $errorMessages[] = trans('custom.receivable_account_cannot_be_amended');
             $amendable['GLAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Receivable Account checking is done in customer Invoice";
+            $successMessages[] = trans('custom.use_of_receivable_account_checking');
             $amendable['GLAmendable'] = true;
         }
 
@@ -3006,12 +3006,12 @@ class CustomerMasterAPIController extends AppBaseController
 
         if($isFullyMatched || $matDoc)
         {
-            $errorMessages[] = "Advance Account cannot be amended. Match all pending Advance Receipt Voucher documents to update this account";
+            $errorMessages[] = trans('custom.advance_account_cannot_be_amended');
             $amendable['advanceAmendable'] = false;
         }
         else
         {
-            $successMessages[] = "Use of Advance Account checking is done in Advance Receipt Voucher";
+            $successMessages[] = trans('custom.use_of_advance_account_checking');
             $amendable['advanceAmendable'] = true;
         }
        
@@ -3020,10 +3020,10 @@ class CustomerMasterAPIController extends AppBaseController
                                       ->first();//check Unbilled Receivable Account
 
         if ($deliveryOrder) {
-            $errorMessages[] = "Unbilled Account cannot be amended. it had used in delivery order";
+            $errorMessages[] = trans('custom.unbilled_account_cannot_be_amended');
             $amendable['unbilledAmendable'] = false;
         } else {
-            $successMessages[] = "Use of Unbilled Account checking is done in delivery order";
+            $successMessages[] = trans('custom.use_of_unbilled_account_checking');
             $amendable['unbilledAmendable'] = true;
         }
         
@@ -3032,7 +3032,7 @@ class CustomerMasterAPIController extends AppBaseController
         $cusInvoicee = CustomerInvoice::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($cusInvoicee)
         {
-            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved customer invoice";
+            $errorMessages[] = trans('custom.unable_to_amend_isactive_customer_invoice');
             $amendable['isActive'] = false;
         }
         else
@@ -3045,7 +3045,7 @@ class CustomerMasterAPIController extends AppBaseController
         $credit = CreditNote::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($credit)
         {
-            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved credit Note";
+            $errorMessages[] = trans('custom.unable_to_amend_isactive_credit_note');
             $amendable['isActive'] = false;
         }
         else
@@ -3057,7 +3057,7 @@ class CustomerMasterAPIController extends AppBaseController
         $recived = CustomerReceivePayment::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($recived)
         {
-            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved Customer Receipt Voucher";
+            $errorMessages[] = trans('custom.unable_to_amend_isactive_receipt_voucher');
             $amendable['isActive'] = false;
         }
         else
@@ -3068,7 +3068,7 @@ class CustomerMasterAPIController extends AppBaseController
         $QuotationMaster = QuotationMaster::where('customerSystemCode', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved QuotationMaster which include the current customer
         if($QuotationMaster)
         {
-            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved Quotation/Sales Order";
+            $errorMessages[] = trans('custom.unable_to_amend_isactive_quotation');
             $amendable['isActive'] = false;
         }
         else
@@ -3080,7 +3080,7 @@ class CustomerMasterAPIController extends AppBaseController
         $deliveryOrderr = DeliveryOrder::where('customerID', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved deliverymaster which include the current customer 
         if($deliveryOrderr)
         {
-            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved delivery order Order";
+            $errorMessages[] = trans('custom.unable_to_amend_isactive_delivery_order');
             $amendable['isActive'] = false;
         }
         else
@@ -3089,7 +3089,7 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
+        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], trans('custom.validated_successfully'));
     }
 
     public function getSearchCustomers(Request $request)
@@ -3109,7 +3109,7 @@ class CustomerMasterAPIController extends AppBaseController
             })
             ->get();
 
-        return $this->sendResponse($customers, 'Customer Master retrieved successfully');
+        return $this->sendResponse($customers, trans('custom.customer_master_retrieved_successfully'));
     }
 
 }

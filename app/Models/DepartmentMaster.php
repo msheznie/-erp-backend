@@ -52,6 +52,7 @@ class DepartmentMaster extends Model
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'departmentSystemID';
 
+    protected $appends = ['department_description'];
 
     public $fillable = [
         'DepartmentID',
@@ -135,5 +136,28 @@ class DepartmentMaster extends Model
 
     public function documents(){
         return $this->hasMany('App\Models\DocumentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(DepartmentMasterTranslations::class, 'DepartmentID', 'DepartmentID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDepartmentDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['department_description'] ?? '';
     }
 }
