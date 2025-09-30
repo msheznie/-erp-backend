@@ -20,7 +20,7 @@ class SignedPdfController extends AppBaseController
         try {
             $routeName = $request->input('route');
             $params = $request->input('params', []);
-            $expiresInMinutes = env('SIGNED_PDF_EXPIRES_IN_MINUTES', 15);
+            $expiresInMinutes = env('SIGNED_PDF_EXPIRES', 10);
 
             if (!$routeName) {
                 return $this->sendError('Route name is required');
