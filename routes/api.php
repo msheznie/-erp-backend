@@ -943,6 +943,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
                 Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
             });
+            Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
+            Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
+            Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
+            Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
         });
 
         Route::group(['middleware' => 'max_memory_limit'], function () {

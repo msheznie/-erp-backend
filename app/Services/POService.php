@@ -139,7 +139,8 @@ class POService
 
     public function getPoAddons($purchaseOrderID)
     {
-        $orderAddons = PoAddons::where('poId', $purchaseOrderID)
+        $orderAddons = PoAddons::select('poId', 'idaddOnCostCategories', 'amount', 'glCode')
+            ->where('poId', $purchaseOrderID)
             ->with(['category'])
             ->orderBy('idpoAddons', 'DESC')
             ->get();

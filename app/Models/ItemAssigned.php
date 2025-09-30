@@ -218,7 +218,23 @@ class ItemAssigned extends Model
 
     public static function getItemMaster($itemCodes,$childCompanies)
     {
-        return ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory'])
+        return ItemAssigned::select('itemCodeSystem',
+            'itemPrimaryCode',
+            'secondaryItemCode',
+            'itemDescription',
+            'itemUnitOfMeasure',
+            'financeCategoryMaster',
+            'financeCategorySub')
+            ->with(['unit' => function ($q) {
+                    $q->select(['UnitID', 'UnitShortCode']);
+                },
+                'financeMainCategory' => function ($q) {
+                    $q->select(['itemCategoryID', 'categoryDescription']);
+                },
+                'financeSubCategory' => function ($q) {
+                    $q->select(['itemCategorySubID', 'categoryDescription']);
+                }
+            ])
             ->whereHas('item_master', function ($sub) {
                 $sub->where('itemApprovedYN', 1);
             })
