@@ -3846,7 +3846,7 @@ WHERE
         ];
 
         $title = "";
-        $fileName = 'asset_register_drilldown';
+        $fileName = trans('custom.asset_register_drilldown');
         $path = 'asset_register/report/excel/';
 
         $exportToExcel = $service

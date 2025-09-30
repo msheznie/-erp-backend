@@ -9488,5 +9488,7 @@ return [
     'item_not_assigned' => 'العنصر غير معين',
     'selected_item_already_added_same_supplier_invoice' => 'العنصر المحدد مضاف بالفعل من نفس فاتورة المورد.',
     'no_records_found_unbilled_grv_table' => 'لم يتم العثور على سجلات في جدول إيصال الاستلام غير المفوتر',
-    'chart_of_account_inactive_with_accounts' => 'مخطط/مخططات الحسابات :accounts غير نشطة، يرجى تحديثها لتكون نشطة/تغيير رمز GL للمتابعة.'
+    'chart_of_account_inactive_with_accounts' => 'مخطط/مخططات الحسابات :accounts غير نشطة، يرجى تحديثها لتكون نشطة/تغيير رمز GL للمتابعة.',
+    'asset_register_drilldown' => 'التفصيل التفصيلي لسجل الأصول',
+    'asset_insurance_report' => 'تقرير تأمين الأصول'
   ];

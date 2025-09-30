@@ -9569,5 +9569,7 @@ return [
     'cannot_update_order_quantity_allocated_to_segments' => 'You cannot update the order quantity. since quantity has been allocated to segments',
     'cannot_update_order_quantity_allocated_to_delivery_dates' => 'You cannot update the order quantity. since quantity has been allocated to expected delivery dates',
     'no_details_to_delete' => 'There are no details to delete',
+    'asset_register_drilldown' => 'asset_register_drilldown',
+    'asset_insurance_report' => 'asset_insurance_report',
     'chart_of_account_inactive_with_accounts' => 'The Chart of Account/s :accounts are Inactive, update it as active/change the GL code to proceed.'
   ];
