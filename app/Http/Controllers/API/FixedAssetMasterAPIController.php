@@ -1822,7 +1822,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
 
-        $fileName = 'asset_insurance_report';
+        $fileName = trans('custom.asset_insurance_report');
         $path = 'asset/report/asset_insurance_report/excel/';
         $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
