@@ -75,7 +75,7 @@ class PurcahseRequestDetail
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
-                return ['status' => false , 'message' => 'Item not found'];
+                return ['status' => false , 'message' => trans('custom.item_not_found')];
             } else {
                 $itemNotound = true;
             }
@@ -125,7 +125,7 @@ class PurcahseRequestDetail
                 ->first();
 
             if (empty($financeItemCategorySubAssigned)) {
-                return ['status' => false , 'message' => 'Finance category not assigned for the selected item.'];
+                return ['status' => false , 'message' => trans('custom.finance_category_not_assigned_for_selected_item')];
 
                 // return $this->sendError('Finance category not assigned for the selected item.');
             }
@@ -159,7 +159,7 @@ class PurcahseRequestDetail
             if ($item->financeCategoryMaster == 3) {
                 $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
                 if (!$assetCategory) {
-                    return ['status' => false , 'message' => 'Asset category not assigned for the selected item.'];
+                    return ['status' => false , 'message' => trans('custom.asset_category_not_assigned_for_selected_item')];
 
                     // return $this->sendError('Asset category not assigned for the selected item.');
                 }
@@ -182,7 +182,7 @@ class PurcahseRequestDetail
                 if ($policy == 0) {
                     if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
                         // return $this->sendError('Category is not found.', 500);
-                        return ['status' => false , 'message' => 'Category is not found.'];
+                        return ['status' => false , 'message' => trans('custom.category_is_not_found')];
 
                     }
 
@@ -193,7 +193,7 @@ class PurcahseRequestDetail
 
                     if ($pRDetailExistSameItem) {
                         if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return ['status' => false , 'message' => 'You cannot add different category item'];
+                            return ['status' => false , 'message' => trans('custom.you_cannot_add_different_category_item')];
                             // return $this->sendError('You cannot add different category item', 500);
                         }
                     }
@@ -255,7 +255,7 @@ class PurcahseRequestDetail
                     /* approved=0 And cancelledYN=0*/
 
                     if (!empty($anyPendingApproval)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again."];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_pending_approval', ['code' => $anyPendingApproval->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                     }
@@ -308,7 +308,7 @@ class PurcahseRequestDetail
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
 
                     if (!empty($anyApprovedPRButPONotProcessed)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again"];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_approved_po_not_processed', ['code' => $anyApprovedPRButPONotProcessed->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
                     }
@@ -359,7 +359,7 @@ class PurcahseRequestDetail
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=1*/
 
                     if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again"];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_approved_po_partially_processed', ['code' => $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
                     }
@@ -377,7 +377,7 @@ class PurcahseRequestDetail
                         ->first();
 
                     if (!empty($checkPOPending)) {
-                        return ['status' => false , 'message' => "There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again."];
+                        return ['status' => false , 'message' => trans('custom.purchase_order_pending_approval', ['code' => $checkPOPending->purchaseOrderCode])];
 
                         // return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                     }
@@ -498,7 +498,7 @@ class PurcahseRequestDetail
 
         if (empty($item)) {
             if (!$allowItemToTypePolicy) {
-                return ['status' => false , 'message' => 'Item not found'];
+                return ['status' => false , 'message' => trans('custom.item_not_found')];
             } else {
                 $itemNotound = true;
             }
@@ -548,7 +548,7 @@ class PurcahseRequestDetail
                 ->first();
 
             if (empty($financeItemCategorySubAssigned)) {
-                return ['status' => false , 'message' => 'Finance category not assigned for the selected item.'];
+                return ['status' => false , 'message' => trans('custom.finance_category_not_assigned_for_selected_item')];
 
                 // return $this->sendError('Finance category not assigned for the selected item.');
             }
@@ -572,7 +572,7 @@ class PurcahseRequestDetail
             if ($item->financeCategoryMaster == 3) {
                 $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
                 if (!$assetCategory) {
-                    return ['status' => false , 'message' => 'Asset category not assigned for the selected item.'];
+                    return ['status' => false , 'message' => trans('custom.asset_category_not_assigned_for_selected_item')];
 
                     // return $this->sendError('Asset category not assigned for the selected item.');
                 }
@@ -595,7 +595,7 @@ class PurcahseRequestDetail
                 if ($policy == 0) {
                     if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
                         // return $this->sendError('Category is not found.', 500);
-                        return ['status' => false , 'message' => 'Category is not found.'];
+                        return ['status' => false , 'message' => trans('custom.category_is_not_found')];
 
                     }
 
@@ -606,7 +606,7 @@ class PurcahseRequestDetail
 
                     if ($pRDetailExistSameItem) {
                         if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return ['status' => false , 'message' => 'You cannot add different category item'];
+                            return ['status' => false , 'message' => trans('custom.you_cannot_add_different_category_item')];
                             // return $this->sendError('You cannot add different category item', 500);
                         }
                     }
@@ -668,7 +668,7 @@ class PurcahseRequestDetail
                     /* approved=0 And cancelledYN=0*/
 
                     if (!empty($anyPendingApproval)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again."];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_pending_approval', ['code' => $anyPendingApproval->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                     }
@@ -721,7 +721,7 @@ class PurcahseRequestDetail
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
 
                     if (!empty($anyApprovedPRButPONotProcessed)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again"];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_approved_po_not_processed', ['code' => $anyApprovedPRButPONotProcessed->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
                     }
@@ -772,7 +772,7 @@ class PurcahseRequestDetail
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=1*/
 
                     if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
-                        return ['status' => false , 'message' => "There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again"];
+                        return ['status' => false , 'message' => trans('custom.purchase_request_approved_po_partially_processed', ['code' => $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode])];
 
                         // return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
                     }
@@ -790,7 +790,7 @@ class PurcahseRequestDetail
                         ->first();
 
                     if (!empty($checkPOPending)) {
-                        return ['status' => false , 'message' => "There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again."];
+                        return ['status' => false , 'message' => trans('custom.purchase_order_pending_approval', ['code' => $checkPOPending->purchaseOrderCode])];
 
                         // return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                     }
@@ -925,7 +925,7 @@ class PurcahseRequestDetail
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

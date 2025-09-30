@@ -360,7 +360,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($anyPendingApproval)) {
-                    return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.purchase_order_pending_approval', ['code' => $anyPendingApproval->purchaseOrderCode]), 500);
                 }
 
             }
@@ -404,7 +404,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         if ($item->financeCategoryMaster == 3) {
             $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
             if (!$assetCategory) {
-                return $this->sendError('Asset category not assigned for the selected item.');
+                return $this->sendError(trans('custom.asset_category_not_assigned_for_selected_item'));
             }
             $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
             $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
@@ -614,7 +614,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $PRMaster = PurchaseRequest::find($itemExist['purchaseRequestID']);
 
                 if ($purchaseOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID) {
-                    return $this->sendError("Request department is different from order");
+                    return $this->sendError(trans('custom.request_department_different_from_order'));
                 }
             }
         }
@@ -912,7 +912,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             $poUpdate = TaxService::updatePOVAT($purchaseOrderID);
             if (!$poUpdate) {
-                return $this->sendError("PO VAT update error", 500);
+                return $this->sendError(trans('custom.po_vat_update_error'), 500);
             }
 
             DB::commit();
@@ -1082,7 +1082,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
 
                 if ($checkQuentity < 0) {
-                    return $this->sendError("PO qty cannot be greater than requested qty", 500,array('type' => 'no_qty_issues'));
+                    return $this->sendError(trans('custom.po_qty_cannot_be_greater_than_requested'), 500,array('type' => 'no_qty_issues'));
                 }
 
                 if ($checkQuentity == 0) {
@@ -1175,7 +1175,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                                  ->sum('allocatedQty');
 
                     if ($allocatedQty > $input['noQty']) {
-                        return $this->sendError("You cannot update the order quantity. since quantity has been allocated to segments", 500);
+                        return $this->sendError(trans('custom.cannot_update_order_quantity_allocated_to_segments'), 500);
                     }
                 }
 
@@ -1207,7 +1207,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                                                 ->sum('allocated_qty');
 
                    if ($allocatedQty > $input['noQty']) {
-                       return $this->sendError("You cannot update the order quantity. since quantity has been allocated to expected delivery dates", 500);
+                       return $this->sendError(trans('custom.cannot_update_order_quantity_allocated_to_delivery_dates'), 500);
                    }
                }
             }
@@ -1352,7 +1352,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         if (empty($detailExist)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.no_details_to_delete'));
         }
         if (!empty($detailExistAll)) {
 
