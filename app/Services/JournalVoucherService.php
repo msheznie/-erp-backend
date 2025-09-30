@@ -371,7 +371,7 @@ class JournalVoucherService
                 else{
                     return [
                         "status" => false,
-                        "message" => "The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",
+                        "message" => trans('custom.chart_of_account_inactive_with_accounts', ['accounts' => $msg]),
                         "type" => 'ca_inactive',
                         "httpCode" => 500
                     ];
