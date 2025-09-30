@@ -87,25 +87,24 @@ class SlotMasterRepository extends AppBaseController
             $countConfirmedAppointment = Appointment::countConfirmedAppointment($slotDetailIDs, $input['companyId']);
 
             if($countConfirmedAppointment > 0){
-                return ['status' => false, 'message' => 'You cannot update this slot, because there are pending approve,
-             approve, reject, or cancel records associated with other relevant slots'];
+                return ['status' => false, 'message' => trans('srm_supplier_management.cannot_update_slot_due_to_pending_or_related_records')];
             }
         }
 
         if($toTime <= $fromTime){
-            return ['status' => false, 'message' => 'Time To cannot be less than or equal to Time From'];
+            return ['status' => false, 'message' => trans('srm_supplier_management.time_to_cannot_be_less_than_or_equal_to_time_from')];
         }
 
         if( $fromDate <= $dt->toDateString()){
-            return ['status' => false, 'message' => 'Invalid From Date is selected'];
+            return ['status' => false, 'message' => trans('srm_supplier_management.invalid_from_date_is_selected')];
         }
 
         if($fromDate->toDateString() === $dt->toDateString() && $fromTime <= $dt->toTimeString()){
-            return ['status' => false, 'message' => 'Invalid Time From is selected'];
+            return ['status' => false, 'message' => trans('srm_supplier_management.invalid_time_from_is_selected')];
         }
 
         if (count($weekDayCount) == 0) {
-            return ['status' => false, 'message' => 'Please select at least one day to proceed'];
+            return ['status' => false, 'message' => trans('srm_supplier_management.please_select_at_least_one_day_to_proceed')];
         }
 
         $input = $this->convertArrayToValue($input);
@@ -115,10 +114,10 @@ class SlotMasterRepository extends AppBaseController
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
         if($limitYN == 1){
             if(!isset($input['noofdeliveries'])){
-                return ['status' => false, 'message' => 'No of deliveries is required'];
+                return ['status' => false, 'message' => trans('srm_supplier_management.no_of_deliveries_is_required')];
             }
             if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
-                return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
+                return ['status' => false, 'message' => trans('srm_supplier_management.no_of_deliveries_cannot_be_less_than_or_equal_to_zero')];
             }
         }
 
@@ -174,7 +173,7 @@ class SlotMasterRepository extends AppBaseController
                         $input['wareHouse'], 0);
                 }
                 if (count($dateRangeExist) > 0) {
-                    return ['status' => false, 'message' => 'The slot is available for selected date range'];
+                    return ['status' => false, 'message' => trans('srm_supplier_management.the_slot_is_available_for_selected_date_range')];
                 }
             }
 
@@ -191,7 +190,7 @@ class SlotMasterRepository extends AppBaseController
                     $toTime
                 );
                 DB::commit();
-                return ['status' => true, 'message' => "Successfully Saved."];
+                return ['status' => true, 'message' => trans('srm_supplier_management.successfully_saved')];
             }
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -201,11 +200,11 @@ class SlotMasterRepository extends AppBaseController
     public function validateCalanderSlots($input)
     {
         $messages = [
-            'wareHouse.required' => 'Warehouse is required.',
-            'dateFrom.required' => 'From Date is required.',
-            'dateTo.required' => 'To Date is required.',
-            'dateFromTime.required' => 'Time From is required.',
-            'dateToTime.required' => 'Time To is required.',
+            'wareHouse.required' => trans('srm_supplier_management.warehouse_is_required'),
+            'dateFrom.required' => trans('srm_supplier_management.from_date_is_required'),
+            'dateTo.required' => trans('srm_supplier_management.to_date_is_required'),
+            'dateFromTime.required' => trans('srm_supplier_management.time_from_is_required'),
+            'dateToTime.required' => trans('srm_supplier_management.time_to_is_required'),
         ];
 
         $validator = \Validator::make($input, [
@@ -219,7 +218,7 @@ class SlotMasterRepository extends AppBaseController
         if ($validator->fails()) {
             return ['status' => false, 'code' => 422, 'message' => $validator->messages()];
         }
-        return ['status' => true, 'message' => "success"];
+        return ['status' => true, 'message' => trans('srm_supplier_management.success')];
     }
     public function insertCalanderScheduleDays($id, $weekDaysActive, $companyID, $fromDate, $toDate, $noOfDeliveries, $fromTime, $toTime)
     {
@@ -235,9 +234,9 @@ class SlotMasterRepository extends AppBaseController
         }
         if ($insertCalanderDays) {
             $this->insertCalanderSlotDetails($id, $fromDate, $toDate, $companyID, $noOfDeliveries, $fromTime, $toTime);
-            return ['status' => true, 'message' => "Successfully Saved."];
+            return ['status' => true, 'message' => trans('srm_supplier_management.successfully_saved')];
         } else {
-            return ['status' => false, 'message' => "Not Successfull"];
+            return ['status' => false, 'message' => trans('srm_supplier_management.not_successful')];
         }
     }
     public function insertCalanderSlotDetails($id, $fromDate, $toDate, $companyID, $noOfDeliveries, $fromTime, $toTime)
@@ -262,9 +261,9 @@ class SlotMasterRepository extends AppBaseController
             }
         }
         if ($insertCalanderDetails) {
-            return ['status' => true, 'message' => "Successfully Saved."];
+            return ['status' => true, 'message' => trans('srm_supplier_management.successfully_saved')];
         } else {
-            return ['status' => false, 'message' => "Not Successfull"];
+            return ['status' => false, 'message' => trans('srm_supplier_management.not_successful')];
         }
     }
     public function deleteSlot($slotMasterID)
@@ -272,9 +271,9 @@ class SlotMasterRepository extends AppBaseController
         $slotMaster =  SlotMaster::where('id', $slotMasterID)->delete();
         $slotdetail =  SlotDetails::where('slot_master_id', $slotMasterID)->delete();
         if ($slotMaster && $slotdetail) {
-            return ['status' => true, 'message' => "Successfully Deleted."];
+            return ['status' => true, 'message' => trans('srm_supplier_management.successfully_deleted')];
         } else {
-            return ['status' => false, 'message' => "Not Successfull"];
+            return ['status' => false, 'message' => trans('srm_supplier_management.not_successful')];
         }
     }
 

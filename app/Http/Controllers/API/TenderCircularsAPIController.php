@@ -329,7 +329,7 @@ class TenderCircularsAPIController extends AppBaseController
         if($editOrAmend && $requestType == 'Amend')
         {        
             if(!isset($input['attachment_id'])){
-                return ['success' => false, 'message' => 'Amendment is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.amendment_is_required')];
             } 
         }
    
@@ -340,10 +340,10 @@ class TenderCircularsAPIController extends AppBaseController
         if (($input['tenderTypeId'] ?? null) === 3) {
             if(isset($input['supplier_id'])){
                 if(sizeof($input['supplier_id' ]) == 0){
-                    return ['success' => false, 'message' => 'Supplier is required'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.supplier_is_required')];
                 }
             } else {
-                return ['success' => false, 'message' => 'Supplier is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.supplier_is_required')];
             }
         }
 
@@ -351,7 +351,7 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
-            return ['success' => false, 'message' => 'Description or Amendment is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.description_or_amendment_is_required')];
         }
 
         if($id > 0 || $amd_id > 0) {
@@ -360,7 +360,7 @@ class TenderCircularsAPIController extends AppBaseController
                 TenderCirculars::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID, $id);
 
             if(!empty($exist)){
-                return ['success' => false, 'message' => 'Circular name can not be duplicated'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.circular_name_cannot_be_duplicated')];
             }
         }else{
             $exist = $editOrAmend ?
@@ -368,7 +368,7 @@ class TenderCircularsAPIController extends AppBaseController
                 TenderCirculars::checkCircularNameExists($input['circular_name'], $tenderMasterID, $companySystemID);
 
             if(!empty($exist)){
-                return ['success' => false, 'message' => 'Circular name can not be duplicated'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.circular_name_cannot_be_duplicated')];
             }
         }
 
@@ -406,7 +406,7 @@ class TenderCircularsAPIController extends AppBaseController
                     CircularAmendmentsEditLog::getCircularAmendmentByID($amd_id, $versionID) :
                     CircularAmendments::getCircularAmendmentByID($id);
                 if (count($circulatAmends) == 0 && $editOrAmend && $input['requestType'] == 'Amend') {
-                    return ['success' => false, 'message' => 'Amendment is required'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.amendment_is_required')];
                 }
 
 
@@ -420,7 +420,7 @@ class TenderCircularsAPIController extends AppBaseController
                 $result = $tenderCircular->update($data);
                 if($result){
                     DB::commit();
-                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated'), 'data' => $result];
                 }
             }else{
                 $data['status'] = 0;
@@ -473,7 +473,7 @@ class TenderCircularsAPIController extends AppBaseController
                     }
 
                     DB::commit();
-                    return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
                 }
             }
         } catch (\Exception $e) {
@@ -485,7 +485,8 @@ class TenderCircularsAPIController extends AppBaseController
     public function getCircularMaster(Request $request)
     {
         $input = $request->all();
-        $editOrAmend = $input['enableChangeRequest'] ?? false;
+        $versionID = $input['versionID'] ?? 0;
+        $editOrAmend = $versionID > 0;
 
         return $editOrAmend ? TenderCircularsEditLog::find($input['id']) : TenderCirculars::find($input['id']);
     }
@@ -496,7 +497,7 @@ class TenderCircularsAPIController extends AppBaseController
             $input = $request->all();
             return $this->tenderCircularsRepository->deleteTenderCircular($input);
         } catch (\Exception $exception){
-            return ['success' => false, 'message' => trans('custom.unexpected_error') . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
 
@@ -551,9 +552,9 @@ class TenderCircularsAPIController extends AppBaseController
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
 
-                return ['success' => true, 'message' => 'Successfully Published'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_published')];
             } else {
-                return ['fail' => true, 'message' => 'Published failed'];
+                return ['fail' => true, 'message' => trans('srm_tender_rfx.published_failed')];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -604,7 +605,7 @@ class TenderCircularsAPIController extends AppBaseController
             $result = CircularSuppliers::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -629,7 +630,7 @@ class TenderCircularsAPIController extends AppBaseController
                 CircularAmendments::getAmendmentAttachment($attachmentID, $circularId, $tenderMasterId);
 
             if(empty($checkExist)){
-                return ['success' => false, 'message' => 'Attachment not found.'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.attachment_not_found')];
             }
             $id = $editOrAmend && $versionID > 0 ? $checkExist->amd_id : $checkExist->id;
             $model = $editOrAmend ?
@@ -644,7 +645,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -667,7 +668,7 @@ class TenderCircularsAPIController extends AppBaseController
             $result = CircularSuppliers::create($dataSupplier);
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_created'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -701,7 +702,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_created'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -718,8 +719,8 @@ class TenderCircularsAPIController extends AppBaseController
                 'amendmentId' => 'required',
                 'tenderMasterId' => 'required',
             ], [
-                'amendmentId.required' => 'Attachment ID is required',
-                'tenderMasterId.required' => 'Tender Master ID is required',
+                'amendmentId.required' => trans('srm_tender_rfx.attachment_id_required'),
+                'tenderMasterId.required' => trans('srm_tender_rfx.tender_master_id_required'),
             ]);
 
             if ($validator->fails()) {
@@ -730,10 +731,10 @@ class TenderCircularsAPIController extends AppBaseController
             if(!$amendmentResponse['success']){
                 return $this->sendError($amendmentResponse['message']);
             }
-            return $this->sendResponse([], trans('custom.this_document_attachment_can_be_deleted'));
+            return $this->sendResponse([], trans('srm_tender_rfx.document_attachment_can_be_deleted'));
 
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -750,7 +751,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully Deleted'];
+            return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }

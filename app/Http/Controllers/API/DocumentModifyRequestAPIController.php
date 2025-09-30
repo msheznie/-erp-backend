@@ -331,7 +331,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 return $this->sendError($response['message'], 500);
             }
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage(), 500);
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]), 500);
         }
     }
     public function getEditOrAmendHistory(Request $request)

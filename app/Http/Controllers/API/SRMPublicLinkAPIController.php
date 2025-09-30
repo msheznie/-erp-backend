@@ -316,7 +316,7 @@ class SRMPublicLinkAPIController extends AppBaseController
         try
         {
              $this->sRMPublicLinkRepository->saveSupplierPublicLink($request);
-            return $this->sendResponse([],trans('custom.link_successfully_created'));
+            return $this->sendResponse([],trans('srm_supplier_master.link_successfully_created'));
         }
         catch (Exception $e)
        {

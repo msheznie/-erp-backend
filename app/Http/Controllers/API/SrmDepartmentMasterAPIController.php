@@ -131,7 +131,9 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->where('description', '=', $input['description'])->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department Description \'' . $input['description'] . '\' already exists.');
+            return $this->sendError(trans('srm_masters.department_description_already_exists', [
+                'code' => $input['description'],
+            ]));
         }
 
         $input['created_at'] = Carbon::now();
@@ -140,7 +142,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
 
         $srmDepartmentMaster = $this->srmDepartmentMasterRepository->create($input);
 
-        return $this->sendResponse($srmDepartmentMaster->toArray(), trans('custom.department_saved_successfully'));
+        return $this->sendResponse($srmDepartmentMaster->toArray(), trans('srm_masters.department_saved_successfully'));
     }
 
     /**
@@ -257,7 +259,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError(trans('custom.department_not_found'));
+            return $this->sendError(trans('srm_masters.department_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -275,7 +277,9 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department Description \'' . $input['description'] . '\' already exists.');
+            return $this->sendError(trans('srm_masters.department_description_already_exists', [
+                'code' => $input['description'],
+            ]));
         }
 
         $tenderDepartmentExist = SrmTenderDepartment::where('department_id', $id)->first();
@@ -286,9 +290,9 @@ class SrmDepartmentMasterAPIController extends AppBaseController
 
             $srmDepartmentMaster = SrmDepartmentMaster::where('id', $id)->update($input);
 
-            return $this->sendResponse($srmDepartmentMaster, trans('custom.department_updated_successfully'));
+            return $this->sendResponse($srmDepartmentMaster, trans('srm_masters.department_updated_successfully'));
         }else{
-            return $this->sendError(trans('custom.department_is_already_pulled_to_tenderrfx'));
+            return $this->sendError(trans('srm_masters.department_is_already_pulled_to_tender_or_rfx'));
         }
 
 
@@ -377,7 +381,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($input['id']);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError(trans('custom.department_not_found'));
+            return $this->sendError(trans('srm_masters.department_not_found'));
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -386,9 +390,9 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::where('id', $input['id'])->update($input);
 
         if($srmDepartmentMaster){
-                return ['success' => true, 'message' => trans('custom.department_updated_successfully')];
+                return ['success' => true, 'message' => trans('srm_masters.department_updated_successfully')];
             } else {
-            return ['success' => false, 'message' => 'Unexpected Error'];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error')];
         }
 
     }

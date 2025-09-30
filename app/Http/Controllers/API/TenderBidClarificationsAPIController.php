@@ -343,7 +343,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
     {
         $input = $request->all();
         $messages = [
-            'comments.required' => 'Comment field is required.'
+            'comments.required' => trans('srm_faq.comment_field_is_required')
         ];
         $validator = \Validator::make($input, [
             'comments' => 'required'
@@ -391,7 +391,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 $result =  TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_faq.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -409,7 +409,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
         $tenderPreBidClarification = $this->tenderBidClarificationsRepository->findWithoutFail($id);
 
         if (empty($tenderPreBidClarification)) {
-            return $this->sendError(trans('custom.not_found_1'));
+            return $this->sendError(trans('srm_faq.not_found'));
         } 
 
         $isLastSupplierResponse = TenderBidClarifications::select('id')
@@ -441,7 +441,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 ->update($updateRec);
         }
 
-        return $this->sendResponse($id, trans('custom.file_deleted'));
+        return $this->sendResponse($id, trans('srm_faq.file_deleted'));
     }
     public function getPreBidEditData(Request $request)
     {
@@ -479,7 +479,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated'];
+            return ['success' => true, 'message' => trans('srm_faq.successfully_updated')];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -493,12 +493,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx','docx'];
 
             if (!in_array(strtolower($extension), $allowExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                return $this->sendError(trans('srm_faq.file_type_not_allowed'), 500);
             }
 
             if (isset($attachment['size'])) {
                 if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    return $this->sendError('srm_faq.file_size_exceeded', 500);
                 }
             }
             $file = $attachment['file'];
@@ -530,7 +530,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $data['is_closed'] = 1;
             $this->tenderBidClarificationsRepository->update($data, $id);
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully thread closed'];
+            return ['success' => true, 'message' => trans('srm_faq.successfully_thread_closed')];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -612,10 +612,10 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 }
             }
             $invalidEmailsString = implode(', ', $invalidEmails);
-            $errorMessage = "$invalidEmailsString not valid email/s. Please enter valid email/s.";
+            $errorMessage = $invalidEmailsString . ' ' . trans('srm_faq.not_valid_emails_enter_valid');
             return response()->json(['message' => $errorMessage, 'invalid_emails' => $invalidEmails], 422);
         }elseif (!empty($duplicateEmails)) {
-            $errorMessage = implode(', ', $duplicateEmails) . " email/s already exist.";
+            $errorMessage = implode(', ', $duplicateEmails) .' '.trans('srm_faq.emails_already_exist');
             return response()->json(['message' => $errorMessage,], 422);
         } else {
             foreach ($emailString as $email){
@@ -629,7 +629,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $sendEmail = \Email::sendEmailErp($dataEmail);
             }
         }
-        return ['success' => true, 'message' => 'Email/s sent successfully'];
+        return ['success' => true, 'message' => trans('srm_faq.emails_sent_successfully')];
 
     }
 

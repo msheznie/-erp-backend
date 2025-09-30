@@ -51,7 +51,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
                 return $this->sendResponse([], $response['message']);
             }
         } catch(\Exception $exception){
-            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()]));
         }
     }
 
@@ -83,7 +83,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
             if(!$response['success']){
                 return $this->sendError($response['message']);
             } else {
-                return $this->sendResponse([], trans('custom.user_access_details_deleted_successfully'));
+                return $this->sendResponse([], trans('srm_tender_rfx.user_access_details_deleted_successfully'));
             }
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage());

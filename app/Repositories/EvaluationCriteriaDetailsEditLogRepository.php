@@ -79,7 +79,7 @@ class EvaluationCriteriaDetailsEditLogRepository extends BaseRepository
                     self::saveEvacuationCriteriaScoreConfig($version_id, $record['id'], $masterData['amd_id']);
                 }
             }
-            return ['success' => false, 'message' => 'Success'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.success')];
         } catch (\Exception $ex){
             return ['success' => false, 'message' => $ex->getMessage()];
         }
@@ -101,7 +101,7 @@ class EvaluationCriteriaDetailsEditLogRepository extends BaseRepository
                         EvacuationCriteriaScoreConfigLog::create($recordData);
                     }
                 }
-                return ['success' => false, 'message' => 'Evaluation criteria score config created successfully'];
+                return ['success' => false, 'message' => trans('srm_approvals.evaluation_criteria_score_config_created_successfully')];
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];

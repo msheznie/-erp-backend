@@ -292,7 +292,7 @@ class SlotMasterAPIController extends AppBaseController
     {
         $calanderSlots = $this->slotMasterRepository->saveCalanderSlots($request);
         if ($calanderSlots['status']) {
-            return $this->sendResponse([], trans('custom.successfully_updated'));
+            return $this->sendResponse([], trans('srm_supplier_management.successfully_updated'));
         } else {
             $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
             return $this->sendError($calanderSlots['message'], $statusCode);
@@ -327,9 +327,9 @@ class SlotMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'wareHouse.required' => 'Warehouse is required.',
-            'dateFrom.required' => 'From Date is required.',
-            'dateTo.required' => 'To Date is required.'
+            'wareHouse.required' => trans('srm_supplier_management.warehouse_is_required'),
+            'dateFrom.required' => trans('srm_supplier_management.from_date_is_required'),
+            'dateTo.required' => trans('srm_supplier_management.to_date_is_required')
         ];
 
         $validator = \Validator::make($input, [
@@ -347,7 +347,7 @@ class SlotMasterAPIController extends AppBaseController
         $toDate =  new Carbon($input['dateTo']);
 
         if (isset($fromDate) && isset($toDate) && ($toDate->format('Y-m-d') < $fromDate->format('Y-m-d'))) {
-            return $this->sendError('To Date must be greater than the From Date');
+            return $this->sendError(trans('srm_supplier_management.to_date_must_be_greater_than_the_from'));
         }
 
         $begin = new DateTime($fromDate);
@@ -366,7 +366,7 @@ class SlotMasterAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($weekDayArr, trans('custom.record_retrieved_successfully_1'));
+        return $this->sendResponse($weekDayArr, trans('srm_supplier_management.record_retrieved_successfully'));
     }
 
 

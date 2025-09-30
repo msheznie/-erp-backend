@@ -70,9 +70,9 @@ class TenderNegotiationApprovalController extends AppBaseController
         }
 
         if($input['status'] == 1) {
-            $message = 'Tender negotiation approved successfully';
+            $message = trans('srm_ranking.tender_negotiation_approved');
         }else {
-            $message = 'Tender negotiation rejected successfully';   
+            $message = trans('srm_ranking.tender_negotiation_rejected');
         }
         
         return $this->sendResponse($tenderNegotiationApproval->toArray(),$message);
@@ -119,7 +119,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiatonApprovals)) {
-            return $this->sendError(trans('custom.tender_negotiation_approvals_not_found'));
+            return $this->sendError(trans('srm_ranking.tender_negotiation_approvals_not_found'));
         }
 
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->update($input, $id);
@@ -129,7 +129,7 @@ class TenderNegotiationApprovalController extends AppBaseController
             $tenderNegotiation->save();
         }
 
-        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), trans('custom.tender_negotiation_approvals_updated_successfully'));
+        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), trans('srm_ranking.tender_negotiation_approvals_updated'));
        
     }
 
@@ -192,7 +192,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderMaster->save();
 
         $this->sendEmailToSuppliers($input, $tenderMaster->tender_code, $tenderMaster->title);
-        return $this->sendResponse($tenderNegotiation->toArray(), trans('custom.tender_negotiation_published_successfully'));
+        return $this->sendResponse($tenderNegotiation->toArray(), trans('srm_ranking.tender_negotiation_published'));
     }
 
     public function sendEmailToSuppliers($input, $code, $title) {
