@@ -100,6 +100,12 @@ class BudgetReportController extends AppBaseController
                     $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
                         $sheet->setColumnFormat($excelColumnFormat);
                         $sheet->loadView('export_report.budget.budget_commitment_details_report', $outputData);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('xlsx');
             default;

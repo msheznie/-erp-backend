@@ -624,6 +624,12 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
             $excel->sheet('Firstsheet', function ($sheet) use ($data_obj) {
                 $sheet->fromArray($data_obj);
                 $sheet->setAutoSize(true);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('xls');
         

@@ -282,7 +282,11 @@ class CreateExcel
 
                     });
 
-
+                    if (app()->getLocale() == 'ar') {
+                        // Set right-to-left for the entire sheet
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
             }
 
@@ -394,6 +398,12 @@ class CreateExcel
                     }
 
                     $rowNum++;
+                }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
                 }
             });
         })->string('xlsx');
@@ -551,6 +561,12 @@ class CreateExcel
                        $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
                            $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
+                           
+                           // Set right-to-left for Arabic locale
+                           if (app()->getLocale() == 'ar') {
+                               $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                               $sheet->setRightToLeft(true);
+                           }
                        });
                    })->string($type);
 
@@ -642,6 +658,11 @@ class CreateExcel
                         $sheet->appendRow([]);
                     }
 
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
 
                 });
             
@@ -726,6 +747,12 @@ class CreateExcel
                     }
 
                     $rowNum++;
+                }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
                 }
             });
         })->string('xlsx');

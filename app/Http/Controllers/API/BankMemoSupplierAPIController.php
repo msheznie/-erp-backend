@@ -130,6 +130,12 @@ class BankMemoSupplierAPIController extends AppBaseController
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);

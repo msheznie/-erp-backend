@@ -564,6 +564,12 @@ class BankAccountAPIController extends AppBaseController
             $excel->sheet('Bank Accounts', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('xls');
 

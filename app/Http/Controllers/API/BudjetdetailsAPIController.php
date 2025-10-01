@@ -703,6 +703,12 @@ class BudjetdetailsAPIController extends AppBaseController
         \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('csv');
 

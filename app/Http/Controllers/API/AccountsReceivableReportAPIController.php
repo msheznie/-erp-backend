@@ -1146,6 +1146,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
+                            
+                            // Set right-to-left for Arabic locale
+                            if (app()->getLocale() == 'ar') {
+                                $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                $sheet->setRightToLeft(true);
+                            }
                         });
                     })->download('xlsx');
 
@@ -1182,6 +1188,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);
+                            
+                            // Set right-to-left for Arabic locale
+                            if (app()->getLocale() == 'ar') {
+                                $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                $sheet->setRightToLeft(true);
+                            }
                         });
                     })->download('xlsx');
                 }

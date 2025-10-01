@@ -1382,6 +1382,12 @@ GROUP BY
             return \Excel::create('sales_log', function ($excel) use ($reportData, $templateName) {
                 $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
             })->download('xlsx');
         }
@@ -1394,9 +1400,21 @@ GROUP BY
             return \Excel::create('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName,$templateName2) {
                 $excel->sheet('Overdue Payables', function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
                 $excel->sheet('Overdue Receivables', function ($sheet) use ($reportData, $templateName2) {
                     $sheet->loadView($templateName2, $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
             })->download('xlsx');
         }

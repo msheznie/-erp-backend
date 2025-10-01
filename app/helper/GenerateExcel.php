@@ -42,6 +42,12 @@ class GenerateExcel
                         $i++;
                     }
 
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+
                 });
 
                 $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array) {
@@ -73,6 +79,12 @@ class GenerateExcel
                                 'size'       => '12',
                             ));
                         });
+                    }
+
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
                     }
 
                 });
@@ -263,6 +275,11 @@ class GenerateExcel
 
                     });
 
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
 
                 });
             }
