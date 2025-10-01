@@ -2935,6 +2935,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                     
                 })->download('csv');
@@ -2958,6 +2964,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                     
                 })->download('xls');
@@ -2977,6 +2989,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                     
                 })->download('xls');
@@ -2997,6 +3015,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                     
                 })->download('xls');
@@ -3017,6 +3041,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3037,6 +3067,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3056,6 +3092,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                     
                 })->download('xls');
@@ -3080,6 +3122,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3100,6 +3148,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_with_po_detail', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3120,6 +3174,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3139,6 +3199,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3162,6 +3228,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }
@@ -3184,6 +3256,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('csv');
             }

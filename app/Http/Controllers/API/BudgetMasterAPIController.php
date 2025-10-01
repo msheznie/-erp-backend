@@ -837,6 +837,12 @@ class BudgetMasterAPIController extends AppBaseController
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('xlsx');
     }
@@ -2609,6 +2615,12 @@ class BudgetMasterAPIController extends AppBaseController
         \Excel::create('finance', function ($excel) use ($result, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('xlsx');
     }
@@ -2801,6 +2813,12 @@ class BudgetMasterAPIController extends AppBaseController
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->download('xlsx');
     }
@@ -4321,6 +4339,12 @@ class BudgetMasterAPIController extends AppBaseController
         return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
                      $excel->sheet('New sheet', function($sheet) use ($reportData) {
                         $sheet->loadView('export_report.budget_upload_template', $reportData);
+                        
+                        // Set right-to-left for Arabic locale
+                        if (app()->getLocale() == 'ar') {
+                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                            $sheet->setRightToLeft(true);
+                        }
                     });
                 })->download('xlsx');
 
