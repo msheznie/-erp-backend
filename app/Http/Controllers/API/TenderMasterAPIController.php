@@ -1978,7 +1978,6 @@ class TenderMasterAPIController extends AppBaseController
         if ($tenderMaster->confirmed_yn == 0) {
             return $this->sendError(trans('srm_tender_rfx.tender_reopen_not_confirmed'));
         }
-        }
 
         // updating fields
 
