@@ -9571,5 +9571,7 @@ return [
     'no_details_to_delete' => 'There are no details to delete',
     'asset_register_drilldown' => 'asset_register_drilldown',
     'asset_insurance_report' => 'asset_insurance_report',
-    'chart_of_account_inactive_with_accounts' => 'The Chart of Account/s :accounts are Inactive, update it as active/change the GL code to proceed.'
+    'chart_of_account_inactive_with_accounts' => 'The Chart of Account/s :accounts are Inactive, update it as active/change the GL code to proceed.',
+    'code_128' => 'Code 128',
+    'code_39' => 'Code 39',
   ];

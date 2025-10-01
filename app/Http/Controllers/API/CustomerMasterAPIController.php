@@ -2389,7 +2389,7 @@ class CustomerMasterAPIController extends AppBaseController
                             {
                                 $name = $value['supplier_name'];
                             }
-                            array_push($supplier_error['Register Expire'], $name.',line number '.$count.' null value');
+                            array_push($supplier_error['Register Expire'], $name.','.trans('custom.line_number').' '.$count.' '.trans('custom.null_value'));
                             $nullValue = true;
                         }
 
