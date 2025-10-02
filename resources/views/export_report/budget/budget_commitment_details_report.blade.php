@@ -1,7 +1,7 @@
 <html>
     <tr>
         <td colspan="3"> </td>
-        <td><h1>Budget Commitment Details Report</h1>  </td>
+        <td><h1>{{ trans('custom.budget_commitments_detail_report') }}</h1>  </td>
         <td colspan="3"> </td>
 
     <tr>
@@ -9,20 +9,20 @@
     <thead>
 
     <tr>
-        <td>Date: </td>
+        <td>{{ trans('custom.date') }}: </td>
         <td> {{ $fromDate }}</td>
         <td> </td>
         <td> </td>
     </tr>
     <tr>
-        <td>Segment:</td>
+        <td>{{ trans('custom.segment') }}:</td>
         <td> {{$serviceLines}}</td>
         <td> </td>
         <td> </td>
     </tr>
     <tr>
-        <td> Currency:   </td>
-        <td> @if($currency == 1) <span>Local Currency</span> @else <span>Reporting Currency</span> @endif</td>
+        <td> {{ trans('custom.currency') }}:   </td>
+        <td> @if($currency == 1) <span>{{ trans('custom.local_currency') }}</span> @else <span>{{ trans('custom.reporting_currency') }}</span> @endif</td>
         <td> </td>
         <td> </td>
     </tr>
@@ -46,17 +46,17 @@
         <th colspan="5"></th>
     </tr>
     <tr>
-        <th width="10">GL Code</th>
-        <th width="50">Account Description</th>
-        <th width="10">GL Type</th>
-        <th width="50">Budgeted Amount (Last Years)</th>
-        <th width="50">Commitments</th>
-        <th width="50">Total available budget</th>
-        <th width="50">Actutal amount spent till date (Current budget)</th>
-        <th width="50">Actutal amount spent till date (Previous year commitments)</th>
-        <th width="50">Commitments (All open POs for current year)</th>
-        <th width="50">Commitments (All open POs for Previous year)</th>
-        <th width="50">Balance</th>
+        <th width="10">{{ trans('custom.gl_code') }}</th>
+        <th width="50">{{ trans('custom.account_description') }}</th>
+        <th width="10">{{ trans('custom.gl_type') }}</th>
+        <th width="50">{{ trans('custom.budgeted_amount_last_years') }}</th>
+        <th width="50">{{ trans('custom.commitments') }}</th>
+        <th width="50">{{ trans('custom.total_available_budget') }}</th>
+        <th width="50">{{ trans('custom.actual_amount_spent_till_date_current_budget') }}</th>
+        <th width="50">{{ trans('custom.actual_amount_spent_till_date_previous_year_commitments') }}</th>
+        <th width="50">{{ trans('custom.commitments_all_open_pos_for_current_year') }}</th>
+        <th width="50">{{ trans('custom.commitments_all_open_pos_for_previous_year') }}</th>
+        <th width="50">{{ trans('custom.balance') }}</th>
 
     </tr>
     </thead>
@@ -79,7 +79,7 @@
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="3">Total</td>
+            <td colspan="3">{{ trans('custom.total') }}</td>
             <td>{{$total['totalBudgetAmount']}}</td>
             <td>{{$total['totalCommitments']}}</td>
             <td>{{$total['totalAvailableBudget']}}</td>
