@@ -120,7 +120,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = [
-            'catalogID.required' => 'catalog Code field is required'
+            'catalogID.required' => trans('custom.catalog_code_required')
         ];
 
         $validator = \Validator::make($request->all(), [
@@ -142,7 +142,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             ->exists();
 
         if($hasCatalogID){
-            return $this->sendError('Duplicate Catalog Code Found',500);
+            return $this->sendError(trans('custom.duplicate_catalog_code_found'),500);
         }
 
         if(isset($input['fromDate'])){
@@ -288,7 +288,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             ->exists();
 
         if($hasCatalogID){
-            return $this->sendError('Duplicate Catalog Code Found', 500);
+            return $this->sendError(trans('custom.duplicate_catalog_code_found'), 500);
         }
 
 
