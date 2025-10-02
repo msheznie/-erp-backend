@@ -44,6 +44,8 @@ class Unit extends Model
     public $fillable = [
         'UnitShortCode',
         'UnitDes',
+        'decimalPrecision',
+        'displayRoundOff',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
@@ -63,6 +65,8 @@ class Unit extends Model
         'UnitID' => 'integer',
         'UnitShortCode' => 'string',
         'UnitDes' => 'string',
+        'decimalPrecision',
+        'displayRoundOff',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',

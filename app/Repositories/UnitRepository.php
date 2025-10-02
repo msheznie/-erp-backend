@@ -22,6 +22,8 @@ class UnitRepository extends BaseRepository
     protected $fieldSearchable = [
         'UnitShortCode',
         'UnitDes',
+        'decimalPrecision',
+        'displayRoundOff',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
