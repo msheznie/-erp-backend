@@ -5188,8 +5188,6 @@ return [
     'supplier_name' => 'Supplier Name',
     'lcc' => 'LCC',
     'sme' => 'SME',
-    'jsrs_number' => 'JSRS Number',
-    'jsrs_expiry' => 'JSRS Expiry',
     'icv_category' => 'ICV Category',
     'icv_sub_category' => 'ICV Sub Category',
     'expected_delivery_date' => 'Expected Delivery Date',
@@ -9717,5 +9715,14 @@ return [
     'changed' => 'changed',
     'actions' => 'Actions',
     'vendor_file' => 'Vendor File',
-    'employee_file' => 'Employee File'
+    'employee_file' => 'Employee File',
+    'chart_of_account_inactive_with_accounts' => 'The Chart of Account/s :accounts are Inactive, update it as active/change the GL code to proceed.',
+    'to_date_must_be_greater_than_or_equal_to_from_date' => 'To Date must be greater than or equal to From Date.',
+    'open_requests' => 'Open Requests',
+    'po_analysis' => 'po_analysis',
+    'order_inquiry' => 'order_inquiry',
+    'open_requests_details_export_in_progress' => 'Open Request Detailed report Export in progress, you will be notified once ready !!',
+    'please_select_the_company' => 'Please select the company',
+    'please_select_date_range' => 'Please select date range',
+    'please_select_the_segment' => 'Please select the segments'
   ];

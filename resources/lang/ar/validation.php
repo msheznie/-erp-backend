@@ -347,6 +347,8 @@ return [
         'serviceLineSystemID' => 'القسم',
         'templateMasterID' => 'القالب',
         'contigencyAmount' => 'الميزانية المخصصة',
-        'budgetAmount' => 'الميزانية'
+        'budgetAmount' => 'الميزانية',
+        'assets' => 'الأصول',
+        'countries' => 'دول / الدول'
     ],
 ];

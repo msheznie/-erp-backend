@@ -134,7 +134,7 @@ class PoAnalysisService
             }
 
 
-            $fileName = 'po_analysis';
+            $fileName = trans('custom.po_analysis');
             $title = __('custom.po_analysis_item_detail_report');
             $path = 'procurement/report/po_analysis/excel/';
             $itemWisePoAnalysisReport = new ItemwisePoAnalysisReport();
@@ -346,7 +346,7 @@ class PoAnalysisService
 
 
 
-            $fileName = 'po_wise_analysis';
+            $fileName = trans('custom.po_wise_analysis_report');
             $title = __('custom.po_wise_analysis_report');
             $path = 'procurement/report/po_wise_analysis/excel/';
             $poWiseAnalysisReport = new PoWiseAnalysisReport();
@@ -437,7 +437,7 @@ class PoAnalysisService
                 array_push($data, collect($companyWisePoAnalysisReport)->toArray());
             }
 
-            $fileName = 'po_wise_analysis_company';
+            $fileName = trans('custom.po_wise_analysis_company_report');
             $path = 'procurement/report/po_wise_analysis_company/excel/';
             $title = __('custom.po_wise_analysis_company_report');
             $companyWisePoAnalysisReport = new CompanyWisePoAnalysisReport();
@@ -538,7 +538,7 @@ class PoAnalysisService
                 array_push($data, collect($report)->toArray());
             }
             $title = __('custom.po_wise_analysis_supplier_report');
-            $fileName = 'po_wise_analysis_supplier';
+            $fileName = trans('custom.po_wise_analysis_supplier_report');
             $path = 'procurement/report/po_wise_analysis_supplier/excel/';
             $supplierWisePoAnalysisReport = new SupplierWisePoAnalysisReport();
             $excelColumnFormat = $supplierWisePoAnalysisReport->getColumnFormat();

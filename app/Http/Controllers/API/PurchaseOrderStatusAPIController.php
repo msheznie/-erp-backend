@@ -579,7 +579,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Please select the company', 500);
+            return $this->sendError(trans('custom.please_select_the_company'), 500);
         }
 
 
@@ -587,14 +587,14 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
             $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
         } else {
-            return $this->sendError('Please select date range', 500);
+            return $this->sendError(trans('custom.please_select_date_ranges'), 500);
         }
         if (array_key_exists('suppliers', $input)) {
             $suppliers = (array)$input['suppliers'];
             $suppliers = collect($suppliers)->pluck('supplierCodeSystem');
 
             if (count($suppliers) == 0) {
-                return $this->sendError('Please select the suppliers', 500);
+                return $this->sendError(trans('custom.please_select_the_supplier'), 500);
             }
 
         }
@@ -604,7 +604,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $segment = collect($segment)->pluck('serviceLineSystemID');
 
             if (count($segment) == 0) {
-                return $this->sendError('Please select segments', 500);
+                return $this->sendError(trans('custom.please_select_the_segment'), 500);
             }
 
         }
