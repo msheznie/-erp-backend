@@ -57,10 +57,10 @@ class B2BResourceAPIController extends AppBaseController
         $paymentBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
 
         if (isset($paymentBankTransfer) && $paymentBankTransfer->fileType == 1) {
-            return $this->sendError("Cannot generate file for employee file type", 500, []);
+            return $this->sendError(trans('custom.cannot_generate_file_for_employee_file_type'), 500, []);
         }
         if (!$bankMaster)
-            return $this->sendError("The vendor file format is not available for the selected bank", 500, []);
+            return $this->sendError(trans('custom.vendor_file_format_not_available_for_selected_bank'), 500, []);
 
         $requestNew = new Request([
             'companyId' => $request->companyID,
@@ -72,7 +72,7 @@ class B2BResourceAPIController extends AppBaseController
         $result = $data->original['data'];
 
         if (collect($result)->where('pulledToBankTransferYN', -1)->isEmpty()) {
-            return $this->sendError("There is no payment voucher selected in the bank transfer list.", 500, []);
+            return $this->sendError(trans('custom.no_payment_voucher_selected_in_bank_transfer_list'), 500, []);
         }
 
 
@@ -242,7 +242,7 @@ class B2BResourceAPIController extends AppBaseController
         $this->vendorFile->setFooterData($footerDetails);
 
         if (!empty(array_flatten($this->vendorFile->detailsDataErros)) || !empty(array_flatten($this->vendorFile->headerErrors))) {
-            return $this->sendError("Validaiton failed on some documents", 500, [
+            return $this->sendError(trans('custom.validation_failed_on_some_documents'), 500, [
                 'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : [],
                 'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : []
             ]);
@@ -359,7 +359,7 @@ class B2BResourceAPIController extends AppBaseController
                     throw new \Exception("The vendor file format is not available for the selected bank");
 
                 if (!isset($pathDetails) || !isset($pathDetails->details[0]['upload_path']))
-                    throw new \Exception("Upload path not found!");
+                    throw new \Exception(trans('custom.upload_path_not_found'));
 
 
                 $remotePath = $pathDetails->details[0]['upload_path'] . "/" . $fileName;
@@ -383,7 +383,7 @@ class B2BResourceAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'File submitted');
+        return $this->sendResponse([], trans('custom.file_submitted'));
 
     }
 
@@ -393,12 +393,12 @@ class B2BResourceAPIController extends AppBaseController
         $getConfigDetails = BankConfig::where('slug', 'ahlibank')->where('bank_master_id', $supplierBankTransfer->bankMasterID)->first();
 
         if (!isset($getConfigDetails))
-            return $this->sendError("The vendor file format is not available for the selected bank!", 500, []);
+            return $this->sendError(trans('custom.vendor_file_format_not_available_for_selected_bank_exclamation'), 500, []);
 
         $supplierBankTransfer = PaymentBankTransfer::find($request->bankTransferID);
         $getConfigDetails = BankConfig::where('slug', 'ahlibank')->where('bank_master_id', $supplierBankTransfer->bankMasterID)->first();
         if (!isset($getConfigDetails))
-            return $this->sendError("The vendor file format is not available for the selected bank");
+            return $this->sendError(trans('custom.vendor_file_format_not_available_for_selected_bank'));
 
         $config = collect($getConfigDetails['details'])->where('fileType', 0)->first();
         if ($config['failure_path']) {

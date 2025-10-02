@@ -913,20 +913,20 @@ class PaymentBankTransferAPIController extends AppBaseController
                         }
                     }
                 }
-                $data[$x]['Beneficiary Account No (30)'] = $accountNo;
-                $data[$x]['AMOUNT (15)'] = number_format($val->payAmountBank, $decimalPlaces);
-                $data[$x]['Ben Bank SWIFT Code (12)'] = $benSwiftCode;
-                $data[$x]['Ben Name (35)'] = $benName;
-                $data[$x]['Ben Add1 (35)'] = $benAdd1;
-                $data[$x]['Ben Add2 (35)'] = ""; // blank
-                $data[$x]['Ben Add3 (35)'] = ""; // blank
-                $data[$x]['Ben Branch Name (20)'] = ""; // blank
-                $data[$x]['Payment Details (140)'] = $val->documentNarration;
-                $data[$x]['Narration1 (35)'] = str_replace('\\',"",$val->documentCode);
-                $data[$x]['Narration2 (35)'] = ""; // blank
-                $data[$x]['Narration3 (35)'] = ""; //blank
-                $data[$x]['Mobile No'] = ""; // blank
-                $data[$x]['EmailID'] = ""; // blank
+                $data[$x][trans('custom.beneficiary_account_no_30')] = $accountNo;
+                $data[$x][trans('custom.amount_15')] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x][trans('custom.ben_bank_swift_code_12')] = $benSwiftCode;
+                $data[$x][trans('custom.ben_name_35')] = $benName;
+                $data[$x][trans('custom.ben_add1_35')] = $benAdd1;
+                $data[$x][trans('custom.ben_add2_35')] = ""; // blank
+                $data[$x][trans('custom.ben_add3_35')] = ""; // blank
+                $data[$x][trans('custom.ben_branch_name_20')] = ""; // blank
+                $data[$x][trans('custom.payment_details_140')] = $val->documentNarration;
+                $data[$x][trans('custom.narration1_35')] = str_replace('\\',"",$val->documentCode);
+                $data[$x][trans('custom.narration2_35')] = ""; // blank
+                $data[$x][trans('custom.narration3_35')] = ""; //blank
+                $data[$x][trans('custom.mobile_no')] = ""; // blank
+                $data[$x][trans('custom.email_id')] = ""; // blank
             }
 
         }else if($input['type'] == 3){
@@ -1005,25 +1005,25 @@ class PaymentBankTransferAPIController extends AppBaseController
                     }
                 }
 
-                $data[$x]['Ben Bank SWIFT Code (12 chars)'] =  $benSwiftCode;
+                $data[$x][trans('custom.ben_bank_swift_code_12_chars')] =  $benSwiftCode;
 
                 if($IBANNumber){
-                    $data[$x]['Ben Account No(34)'] = str_replace(' ','', $IBANNumber);
+                    $data[$x][trans('custom.ben_account_no_34')] = str_replace(' ','', $IBANNumber);
                 }else{
-                    $data[$x]['Ben Account No(34)'] = str_replace(' ','', $accountNo);
+                    $data[$x][trans('custom.ben_account_no_34')] = str_replace(' ','', $accountNo);
                 }
-                $data[$x]['Beneficiary Name(35)'] = $benName;
-                $data[$x]['Amount (15)'] = number_format($val->payAmountBank, $decimalPlaces);
-                $data[$x]['Payment Details(140)'] = str_replace('\\',"",$val->documentCode);
-                $data[$x]['Beneficiary Address1 (35)'] = $benAdd1;
-                $data[$x]['BeneficiaryAddress2(35)'] = ''; // blank
-                $data[$x]['Beneficiary Address3(35)'] = ''; // blank
-                $data[$x]['IFSC Code(11)'] = $ifsc;
-                $data[$x]['Ben Bank Branch'] = ''; // blank
-                $data[$x]['Intermediatory Bank (SWIFT Code)'] = $intSwiftCode;
-                $data[$x]['Intermediatory AccountNumber'] = $intAccountNumber;
-                $data[$x]['Mobile No'] = ''; // blank
-                $data[$x]['EmailID'] = ''; // blank
+                $data[$x][trans('custom.beneficiary_name_35')] = $benName;
+                $data[$x][trans('custom.amount_15_alt')] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x][trans('custom.payment_details_140_alt')] = str_replace('\\',"",$val->documentCode);
+                $data[$x][trans('custom.beneficiary_address1_35')] = $benAdd1;
+                $data[$x][trans('custom.beneficiary_address2_35')] = ''; // blank
+                $data[$x][trans('custom.beneficiary_address3_35')] = ''; // blank
+                $data[$x][trans('custom.ifsc_code_11')] = $ifsc;
+                $data[$x][trans('custom.ben_bank_branch')] = ''; // blank
+                $data[$x][trans('custom.intermediatory_bank_swift_code')] = $intSwiftCode;
+                $data[$x][trans('custom.intermediatory_account_number')] = $intAccountNumber;
+                $data[$x][trans('custom.mobile_no')] = ''; // blank
+                $data[$x][trans('custom.email_id')] = ''; // blank
             }
         }else {
             $columnArray = array(
@@ -1070,17 +1070,17 @@ class PaymentBankTransferAPIController extends AppBaseController
                         }
                     }
                 }
-                $data[$x]['Account No(13)'] = $accountNo13;
-                $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
-                $data[$x]['Reference No (16)'] = str_replace('\\',"",$val->documentCode);
-                $data[$x]['Narration1 (35)'] = $narration135;
-                $data[$x]['Narration2 (35)'] = $val->documentNarration;
+                $data[$x][trans('custom.account_no_13')] = $accountNo13;
+                $data[$x][trans('custom.amount_15_alt2')] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x][trans('custom.reference_no_16')] = str_replace('\\',"",$val->documentCode);
+                $data[$x][trans('custom.narration1_35_alt')] = $narration135;
+                $data[$x][trans('custom.narration2_35_alt')] = $val->documentNarration;
                 if ($val['supplier_by']) {
-                    $data[$x]['Mobile No'] = $val['supplier_by']['telephone'];
-                    $data[$x]['EmailID'] = $val['supplier_by']['supEmail'];
+                    $data[$x][trans('custom.mobile_no')] = $val['supplier_by']['telephone'];
+                    $data[$x][trans('custom.email_id')] = $val['supplier_by']['supEmail'];
                 } else {
-                    $data[$x]['Mobile No'] = '';
-                    $data[$x]['EmailID'] = '';
+                    $data[$x][trans('custom.mobile_no')] = '';
+                    $data[$x][trans('custom.email_id')] = '';
                 }
             }
         }
@@ -1089,10 +1089,10 @@ class PaymentBankTransferAPIController extends AppBaseController
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
         $time = strtotime("now");
-        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
+        $fileName = trans('custom.payment_bank_transfer_prefix') . $input['paymentBankTransferID'] . '_' . $time;
 
          Excel::create($fileName, function ($excel) use ($data,$columnArray) {
-            $excel->sheet('Firstsheet', function ($sheet) use ($data,$columnArray) {
+            $excel->sheet(trans('custom.firstsheet'), function ($sheet) use ($data,$columnArray) {
                 $sheet->setColumnFormat($columnArray);
                 $sheet->fromArray($data, null, 'A1', true);
                 // $sheet->setAutoSize(true);

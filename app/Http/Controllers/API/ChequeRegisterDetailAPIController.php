@@ -386,16 +386,16 @@ class ChequeRegisterDetailAPIController extends AppBaseController
                 'cancel_narration' => 'required',
                 'new_cheque_id' => 'required',
             ], $messages);
-            $success_msg = 'Cheque cancellation process done successfully...';
-            $msg = 'cancelled';
+            $success_msg = trans('custom.cheque_cancellation_process_done_successfully');
+            $msg = trans('custom.cancelled');
         }else{
             $isChange = 1;
             $validator = \Validator::make($input, [
                 'id' => 'required',
                 'new_cheque_id' => 'required',
             ]);
-            $success_msg = 'Change cheques process done successfully...';
-            $msg = 'changed';
+            $success_msg = trans('custom.change_cheques_process_done_successfully');
+            $msg = trans('custom.changed');
         }
 
         if ($validator->fails()) {
