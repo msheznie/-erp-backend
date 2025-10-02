@@ -144,7 +144,7 @@ class EmployeeService
         }
 
         if ($this->postType != 'POST') {
-            if (empty($this->employeeData['id'])) {
+            if (empty($this->employeeData['Id'])) {
                 $error = 'Reference id not found';
                 return ['status' => false, 'message' => $error];
             }
@@ -224,11 +224,11 @@ class EmployeeService
          $this->employeeData = [
              "Code" => $data->ECode,
              "Name" => $data->Ename2,
-             "employeeStatus" => $data->empStatus,
-             "dateOfJoined" => $data->dateOfJoin,
-             "servicePeriod" => $data->servicePeriod,
-             "dateOfBirth" => $data->dateOfBirth,
-             "imageUrl" => $data->imageUrl,
+             "EmployeeStatus" => $data->empStatus,
+             "DateOfJoined" => $data->dateOfJoin,
+             "ServicePeriod" => $data->servicePeriod,
+             "DateOfBirth" => $data->dateOfBirth,
+             "ImageUrl" => $data->imageUrl,
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => false,
@@ -242,7 +242,7 @@ class EmployeeService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->employeeData['id'] = $this->masterUuId;
+            $this->employeeData['Id'] = $this->masterUuId;
         }
     }
 
