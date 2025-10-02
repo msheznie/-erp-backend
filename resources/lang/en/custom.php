@@ -8328,6 +8328,14 @@ return [
      'min_max_analysis' => 'Inventory Min & Max Analysis',
      'scrap_inventory_report' => 'Scrap Inventory Report',
 
+     // Inventory Report Filenames (max 31 chars)
+     'scrap_inventory_file' => 'scrap_inventory_report',
+     'inventory_summary_file' => 'inventory_summary_report',
+     'stock_transaction_file' => 'stock_transaction',
+     'stock_aging_file' => 'stock_aging_report',
+     'stock_details_file' => 'stock_details_report',
+     'min_max_analysis_file' => 'min_max_analysis',
+
      // Inventory Report Column Headers
      'doc_id' => 'Doc ID',
      'document_code' => 'Document Code',

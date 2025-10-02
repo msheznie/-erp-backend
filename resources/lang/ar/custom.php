@@ -8255,6 +8255,14 @@ return [
     'min_max_analysis' => 'تحليل الحد الأدنى والأقصى للمخزون',
     'scrap_inventory_report' => 'تقرير مخزون الخردة',
 
+    // Inventory Report Filenames (max 31 chars)
+    'scrap_inventory_file' => 'تقرير_مخزون_الخردة',
+    'inventory_summary_file' => 'ملخص_المخزون',
+    'stock_transaction_file' => 'معاملة_المخزون',
+    'stock_aging_file' => 'تقادم_المخزون',
+    'stock_details_file' => 'تفاصيل_المخزون',
+    'min_max_analysis_file' => 'تحليل_حد_المخزون',
+
     // Inventory Report Column Headers
     'doc_id' => 'رقم المستند',
     'document_code' => 'كود المستند',
