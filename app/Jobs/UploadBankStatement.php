@@ -97,7 +97,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => 'Statement values are missing for bank statement details'
+                                'importError' => trans('custom.statement_values_missing_bank_statement_details')
                             ]);
                         DB::commit();
                         return;
@@ -108,7 +108,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY'
+                                'importError' => trans('custom.wrong_date_format_transaction_date')
                             ]);
                         DB::commit();
                         return;
@@ -138,7 +138,7 @@ class UploadBankStatement implements ShouldQueue
                 BankStatementMaster::where('statementId', $statementMaster['statementId'])
                     ->update([
                         'importStatus' => 2,
-                        'importError' => 'Some detail columns are missing'
+                        'importError' => trans('custom.some_detail_columns_missing')
                     ]);
             }
             DB::commit();
@@ -148,7 +148,7 @@ class UploadBankStatement implements ShouldQueue
             BankStatementMaster::where('statementId', $statementMaster['statementId'])
                 ->update([
                     'importStatus' => 2,
-                    'importError' => "Statement upload failed. Please try re-uploading."
+                    'importError' => trans('custom.statement_upload_failed_try_reuploading')
                 ]);
         }
     }

@@ -120,6 +120,28 @@
         text-align: right !important;
     }
 
+    @page {
+        margin: 100px 25px 80px 25px; /* top, right, bottom, left */
+    }
+
+    body {
+        font-size: 9px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        margin: 0;
+        padding: 0;
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 10px;
+        padding: 5px 0;
+    }
+
 </style>
 <div style="width: 100%; text-align: center; font-size: 10px; margin-bottom: 20px;">
     <table style="width: 100%">
@@ -254,14 +276,17 @@
         </tfoot>
     </table>
 </div>
-<div style="width: 100%; text-align: center; font-size: 10px; padding-top: 20px; margin-top: 20px;">
+<div class="footer">
     <table style="width:100%;">
         <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom; @if(isset($lang) && $lang === 'ar') text-align: right; @endif">
-                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
+            <td style="width:50%; font-size:10px; vertical-align: bottom; @if(isset($lang) && $lang === 'ar') text-align:right; @endif">
+                <span>{{ trans('custom.printed_date') }} : {{ date("d-M-y", strtotime(now())) }}</span>
             </td>
-            <td class="@if(isset($lang) && $lang === 'ar') text-left-footer @else text-right-footer @endif" style="width:50%; font-size: 10px;vertical-align: bottom;">
-                <span style="@if(isset($lang) && $lang === 'ar') float: left !important; @else float: right !important; @endif">{{ trans('custom.page') }} <span>{PAGENO}</span></span><br>
+            <td class="@if(isset($lang) && $lang === 'ar') text-left-footer @else text-right-footer @endif"
+                style="width:50%; font-size:10px; vertical-align: bottom;">
+                <span style="@if(isset($lang) && $lang === 'ar') float:left !important; @else float:right !important; @endif">
+                    {{ trans('custom.page') }} <span>{PAGENO}</span>
+                </span>
             </td>
         </tr>
     </table>
