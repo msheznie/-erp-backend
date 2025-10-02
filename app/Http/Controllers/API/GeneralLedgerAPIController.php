@@ -7,7 +7,6 @@ use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
 use App\Jobs\ApprovePendingSegments;
 use App\Jobs\GeneralLedgerInsert;
-use App\Jobs\ProccessMissedAccumalatedDepreciation;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
