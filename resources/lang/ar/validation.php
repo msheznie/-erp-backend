@@ -340,6 +340,13 @@ return [
         'receivableAutoID' => 'حساب المستحقات',
         'expenseAutoID' => 'حساب المصروفات',
         'salesPersonCurrencyID' => 'عملة مندوب المبيعات',
-        'segmentID' => 'القطاع'
+        'segmentID' => 'القطاع',
+        'contingencyPercentage' => 'النسبة المئوية للميزانية المخصصة',
+        'companyFinanceYearID' => 'السنة المالية',
+        'comments' => 'التعليقات',
+        'serviceLineSystemID' => 'القسم',
+        'templateMasterID' => 'القالب',
+        'contigencyAmount' => 'الميزانية المخصصة',
+        'budgetAmount' => 'الميزانية'
     ],
 ];
