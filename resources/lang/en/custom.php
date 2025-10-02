@@ -9746,4 +9746,14 @@ return [
     'please_select_date_range' => 'Please select date range',
     'please_select_the_segment' => 'Please select the segments',
     'vendor_file_format_not_available_for_selected_bank' => 'The vendor file format is not available for the selected bank',
+    'open' => 'Open',
+    'deposited' => 'Deposited',
+    'returned' => 'Returned',
+    'done' => 'Done',
+    'conversion_created_still_not_approved_cannot_create' => 'There is conversion created and still not approved, therefore, you cannot create',
+    'error_occurred_creating_currency_conversion' => 'Error occurred while creating currency conversion',
+    'currency_conversion_master_updated_successfully' => 'Currency Conversion Master updated successfully',
+    'currency_conversion_master_deleted_successfully' => 'Currency Conversion Master deleted successfully',
+    'account_balance' => 'Account Balance',
+    'bank_ledger' => 'Bank Ledger'
   ];

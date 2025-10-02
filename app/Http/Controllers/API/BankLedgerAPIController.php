@@ -2776,15 +2776,15 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $x++;
-        $data[$x]['Company ID'] = "";
-        $data[$x]['Company Name'] = "";
-        $data[$x]['Bank'] = "";
-        $data[$x]['Account No'] = "";
-        $data[$x]['Account Description'] = "";
-        $data[$x]['Document Number'] = "";
-        $data[$x]['Document Type'] = "";
-        $data[$x]['Date'] = "";
-        $data[$x]['Document Narration'] = "";
+        $data[$x][trans('custom.company_id')] = "";
+        $data[$x][trans('custom.company_name')] = "";
+        $data[$x][trans('custom.bank')] = "";
+        $data[$x][trans('custom.account_no')] = "";
+        $data[$x][trans('custom.account_description')] = "";
+        $data[$x][trans('custom.document_number')] = "";
+        $data[$x][trans('custom.document_type')] = "";
+        $data[$x][trans('custom.date')] = "";
+        $data[$x][trans('custom.document_narration')] = "";
 
         if (in_array('confi_name', $extraColumns)) {
             $data[$x][trans('custom.confirmed_by')] = "";
@@ -2839,7 +2839,7 @@ class BankLedgerAPIController extends AppBaseController
                                 'cur'=>$cur,
                                 'title'=>$title,'company_code'=>$companyCode);
 
-        $fileName = 'bank_ledger';
+        $fileName = trans('custom.bank_ledger');
         $path = 'bank-ledger/report/bank_ledger/excel/';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 

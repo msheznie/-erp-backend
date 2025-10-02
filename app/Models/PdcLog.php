@@ -138,10 +138,10 @@ class PdcLog extends Model
     ];
 
     protected $statuses = array(
-        "0" => 'Open',
-        "1" => 'Deposited',
-        "2" => 'Returned',
-        "3" => 'Done'
+        "0" => 'open',
+        "1" => 'deposited',
+        "2" => 'returned',
+        "3" => 'done'
     );
 
     /**
@@ -154,7 +154,9 @@ class PdcLog extends Model
     ];
 
     public function getChequeStatusValueAttribute() {
-       return $this->statuses[$this->chequeStatus];
+       $status = $this->statuses[$this->chequeStatus];
+
+       return $status ? trans("custom.$status") : null;
     }
 
     public function currency()

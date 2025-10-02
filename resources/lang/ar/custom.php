@@ -9669,5 +9669,14 @@ return [
     'please_select_date_range' => 'يرجى اختيار نطاق التاريخ',
     'please_select_the_segment' => 'يرجى اختيار نطاق التاريخ',
     'vendor_file_format_not_available_for_selected_bank' => 'تنسيق ملف المورد غير متاح للبنك المحدد',
-
+    'open' => 'مفتوح',
+    'deposited' => 'مودع',
+    'returned' => 'مرتجع',
+    'done' => 'مكتمل',
+    'conversion_created_still_not_approved_cannot_create' => 'يوجد تحويل تم إنشاؤه ولم يتم الموافقة عليه بعد، لذلك لا يمكنك الإنشاء',
+    'error_occurred_creating_currency_conversion' => 'حدث خطأ أثناء إنشاء تحويل العملة',
+    'currency_conversion_master_updated_successfully' => 'تم تحديث سيد تحويل العملة بنجاح',
+    'currency_conversion_master_deleted_successfully' => 'تم حذف سيد تحويل العملة بنجاح',
+    'account_balance' => 'رصيد الحساب',
+    'bank_ledger' => 'دفتر الأستاذ البنكي'
   ];
