@@ -82,21 +82,18 @@ class VendorFile
         
         // Get field indices for email and amount fields
         $detailTitles = ['Section Index', 'Transfer Method', 'Credit Amount', 'Credit Currency', 'Exchange Rate', 'DealReferNo', 'ValueDate', 'Debit Account No', 'Credit Account No', 'TransactionReference', 'Debit Narrative', 'Debit Narrative 2', 'Credit Narrative', 'Payment Details 1', 'Payment Details 2', 'Payment Details 3', 'Payment Details 4', 'Beneficiary Name', 'Beneficiary Address 1', 'Beneficiary Address 2', 'Institution Name Address 1', 'Institution Name Address 2', 'Institution Name Address 3', 'Institution Name Address 4', 'Swift', 'Intermediary Account', 'Intermediary Swift', 'Intermediary Name', 'Intermediary Address 1', 'Intermediary Address 2', 'Intermediary Address 3', 'Charges Type', 'Sort Code of the beneficiary bank', 'IFSC', 'Fedwire', 'Email', 'Dispatch Mode', 'Transactor Code', 'Supporting Document Name'];
-        $emailFieldIndex = array_search('Email', $detailTitles);
-        $creditAmountIndex = array_search('Credit Amount', $detailTitles);
-        $exchangeRateIndex = array_search('Exchange Rate', $detailTitles);
         
         foreach ($this->detailsData as $rowIndex => $row) {
             $processedRow = [];
             foreach ($row as $columnIndex => $value) {
                 if (is_string($value)) {
                     // Skip special character removal for email and amount fields
-                    if ($columnIndex == $emailFieldIndex || $columnIndex == $creditAmountIndex || $columnIndex == $exchangeRateIndex) {
+                    if ($columnIndex == 'email' || $columnIndex == 'credit_amount' || $columnIndex == 'exchange_rate') {
                         // Keep email addresses and amounts as they are
                         $processedRow[$columnIndex] = $value;
                     } else {
                         // Remove special characters, keeping only alphanumeric characters and spaces
-                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9\s]/', '', $value);
+                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
                     }
                 } else {
                     // Keep non-string values as they are
@@ -116,18 +113,17 @@ class VendorFile
         // Get field indices for amount fields
         $footerTitles = ['Section Index', 'Num Of Records', 'Total Amount'];
         $totalAmountIndex = array_search('Total Amount', $footerTitles);
-        
         foreach ($this->footerData as $rowIndex => $row) {
             $processedRow = [];
             foreach ($row as $columnIndex => $value) {
                 if (is_string($value)) {
                     // Skip special character removal for amount fields
-                    if ($columnIndex == $totalAmountIndex) {
+                    if ($columnIndex == 2) {
                         // Keep amounts as they are
                         $processedRow[$columnIndex] = $value;
                     } else {
                         // Remove special characters, keeping only alphanumeric characters and spaces
-                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9\s]/', '', $value);
+                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
                     }
                 } else {
                     // Keep non-string values as they are
@@ -150,7 +146,7 @@ class VendorFile
             foreach ($row as $columnIndex => $value) {
                 if (is_string($value)) {
                     // Remove special characters, keeping only alphanumeric characters and spaces
-                    $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9\s]/', '', $value);
+                    $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
                 } else {
                     // Keep non-string values as they are
                     $processedRow[$columnIndex] = $value;
