@@ -136,7 +136,7 @@ namespace App\Services\OSOS_3_0;
              return ['status' =>false, 'message'=> $error];
          }
 
-         if(empty($this->fieldOfStudyData['id']) && $this->postType != 'POST'){
+         if(empty($this->fieldOfStudyData['Id']) && $this->postType != 'POST'){
              $error = 'Reference id not found';
              return ['status' =>false, 'message'=> $error];
          }
@@ -158,7 +158,7 @@ namespace App\Services\OSOS_3_0;
 
          if($this->postType != "POST") {
              $this->getReferenceId();
-             $this->fieldOfStudyData['id'] = $this->masterUuId;
+             $this->fieldOfStudyData['Id'] = $this->masterUuId;
          }
 
          if(empty($data)){

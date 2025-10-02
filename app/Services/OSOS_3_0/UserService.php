@@ -226,7 +226,7 @@ class UserService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->userData['id'] = $this->masterUuId;
+            $this->userData['Id'] = $this->masterUuId;
         }
     }
 

@@ -47,7 +47,7 @@ class DesignationService
 
     function execute(){
         try {
-
+            
             $valResp =$this->validateApiResponse();
 
             if(!$valResp['status']){
@@ -56,7 +56,7 @@ class DesignationService
             }
 
             $logData = [
-                'message' => "Designation about to trigger: " . $this->id. ' - '. $this->designationData['name'], 
+                'message' => "Designation about to trigger: " . $this->id. ' - '. $this->designationData['Name'], 
                 'id' => $this->id 
             ];
             $this->insertToLogTb($logData, 'info', 'Designation', $this->companyId);
@@ -139,13 +139,13 @@ class DesignationService
         }
 
         if($this->postType != 'POST'){
-            if(empty($this->designationData['id'])){
+            if(empty($this->designationData['Id'])){
                 $error = 'Reference id not found';
                 return ['status' =>false, 'message'=> $error];
             }
         }
 
-        if(empty($this->designationData['code'])){
+        if(empty($this->designationData['Code'])){
             $error = 'Designation code not found';
             return ['status' =>false, 'message'=> $error];
         }
@@ -168,10 +168,7 @@ class DesignationService
                     WHEN is_active = 0 THEN 1 
                     WHEN is_active = 1 THEN 0
                 END as Status, 
-                CASE 
-                    WHEN isDeleted = 1 THEN 'true'
-                    ELSE 'false'
-                END AS IsDeleted,
+                isDeleted,
                 Erp_companyID as companyId")
             ->where('DesignationID', $this->id)
             ->first();
@@ -181,17 +178,17 @@ class DesignationService
         }
 
         $this->designationData = [
-            "code" => $data->id,
-            "name" => $data->Name,
-            "description" => $data->Description,
-            "status" => $data->Status,
-            "isDeleted" => $data->IsDeleted,
-            "companyId" => $this->getOtherReferenceId($data->companyId, 5)
+            "Code" => (string)$data->id,
+            "Name" => $data->Name,
+            "Description" => $data->Description,
+            "Status" => $data->Status,
+            "IsDeleted" => ($data->isDeleted === 1) ,
+            "CompanyId" => $this->getOtherReferenceId($data->companyId, 5)
         ];
 
         if($this->postType != "POST"){
             $this->getReferenceId();
-            $this->designationData['id'] = $this->masterUuId;
+            $this->designationData['Id'] = $this->masterUuId;
         }
     }
 }
