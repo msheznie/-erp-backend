@@ -33,7 +33,7 @@ class DeliveryOrderServices
                 
                 foreach ($items as $item) {
                     if (isset($item->master->bookingInvCode)) {
-                        $codes[] = $item->master->bookingInvCode . ' - Customer Invoice';
+                        $codes[] = $item->master->bookingInvCode . ' - ' . trans('custom.customer_invoice');
                     }
                 }
         }
@@ -45,13 +45,13 @@ class DeliveryOrderServices
                 
                 foreach ($sales as $sale) {
                     if (isset($sale->master->salesReturnCode)) {
-                        $codes[] = $sale->master->salesReturnCode . ' - Sales Return';
+                        $codes[] = $sale->master->salesReturnCode . ' - ' . trans('custom.sales_return');
                     }
                 }
         }
 
         if (!empty($codes)) {
-            $message = 'The selected Delivery Order has been pulled into ' . implode(', ', $codes) . '.';
+            $message = trans('custom.selected_delivery_order_has_been_pulled_into', ['codes' => implode(', ', $codes)]);
             return ['status' => false, 'message' => $message];
         }
 
@@ -194,7 +194,7 @@ class DeliveryOrderServices
         $masterData->approvedDate = null;
         $masterData->save();
 
-        AuditTrial::createAuditTrial($masterData->documentSystemID,$orderId,$input['returnComment'],'returned back to amend');
+        AuditTrial::createAuditTrial($masterData->documentSystemID,$orderId,$input['returnComment'],trans('custom.returned_back_to_amend'));
         return true;
     }
 }

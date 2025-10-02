@@ -778,7 +778,7 @@ WHERE
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'SO quantity field is required.',
+                    'required' => trans('custom.so_quantity_field_is_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [

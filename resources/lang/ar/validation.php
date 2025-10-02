@@ -166,6 +166,24 @@ return [
         ],
         'assets' => [
             'required' => 'حقل الأصول مطلوب.'
+        ],
+        'SalesPersonName' => [
+            'required' => 'حقل اسم مندوب المبيعات مطلوب.'
+        ],
+        'empSystemID' => [
+            'required' => 'حقل الموظف مطلوب.'
+        ],
+        'receivableAutoID' => [
+            'required' => 'حقل حساب المستحقات مطلوب.'
+        ],
+        'expenseAutoID' => [
+            'required' => 'حقل حساب المصروفات مطلوب.'
+        ],
+        'salesPersonCurrencyID' => [
+            'required' => 'حقل عملة مندوب المبيعات مطلوب.'
+        ],
+        'segmentID' => [
+            'required' => 'حقل القطاع مطلوب.'
         ]
     ],
 
@@ -316,6 +334,19 @@ return [
         'year' => 'السنة',
         'month' => 'الشهر',
         'glAccounts' => 'حسابات دفتر الأستاذ',
-        'assets' => 'الأصول'
+        'assets' => 'الأصول',
+        'SalesPersonName' => 'اسم مندوب المبيعات',
+        'empSystemID' => 'الموظف',
+        'receivableAutoID' => 'حساب المستحقات',
+        'expenseAutoID' => 'حساب المصروفات',
+        'salesPersonCurrencyID' => 'عملة مندوب المبيعات',
+        'segmentID' => 'القطاع',
+        'contingencyPercentage' => 'النسبة المئوية للميزانية المخصصة',
+        'companyFinanceYearID' => 'السنة المالية',
+        'comments' => 'التعليقات',
+        'serviceLineSystemID' => 'القسم',
+        'templateMasterID' => 'القالب',
+        'contigencyAmount' => 'الميزانية المخصصة',
+        'budgetAmount' => 'الميزانية'
     ],
 ];
