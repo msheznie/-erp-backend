@@ -433,9 +433,9 @@ class QuotationMasterAPIController extends AppBaseController
 
         $tempName = '';
         if ($input['documentSystemID'] == 67) {
-            $tempName = 'quotation';
+            $tempName = trans('custom.quotation');
         } else if ($input['documentSystemID'] == 68) {
-            $tempName = 'order';
+            $tempName = trans('custom.order');
         }
 
         /** @var QuotationMaster $quotationMaster */
@@ -1254,7 +1254,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->first();
 
                 /*if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }*/
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1659,33 +1659,33 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.quotation_master_not_found'));
         }
 
-        $quotOrSales = ($masterData->documentSystemID == 68)?'Sales Order':'Quotation';
+        $quotOrSales = ($masterData->documentSystemID == 68)?trans('custom.sales_order'):trans('custom.quotation');
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', ' . trans('custom.it_is_not_confirmed'));
         }
 
         /*check order is already added to invoice or delivery order*/
 
         if(CustomerInvoiceItemDetails::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 2){
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a customer invoice',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. ' . trans('custom.it_is_added_to_a_customer_invoice'),500);
         }
 
         if(DeliveryOrderDetail::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 1){
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a delivery order',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. ' . trans('custom.it_is_added_to_a_delivery_order'),500);
         }
 
         if(QuotationDetails::where('soQuotationMasterID',$id)->exists() || $masterData->isInSO == 1){
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. It is added to a sales order',500);
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.'. ' . trans('custom.it_is_added_to_a_sales_order'),500);
         }
 
 
         if(QuotationMasterVersion::where('quotationMasterID',$id)->exists()){
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', versions created for it');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', ' . trans('custom.versions_created_for_it'));
         }
 
         if(AdvanceReceiptDetails::where('salesOrderID',$id)->exists()){
-            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', It is added to advance receipt voucher');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this').$quotOrSales.', ' . trans('custom.it_is_added_to_advance_receipt_voucher'));
         }
 
         $emailBody = __('email.quotation_returned_to_amend_body', [
@@ -1756,7 +1756,7 @@ class QuotationMasterAPIController extends AppBaseController
             $masterData->approvedDate = null;
             $masterData->save();
 
-            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],trans('custom.returned_back_to_amend'));
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), trans('custom.return_back_to_amend_saved_successfully'));
@@ -1784,11 +1784,11 @@ class QuotationMasterAPIController extends AppBaseController
 
         if($doc_id == 67)
         {
-            $order_type = 'Quotation';
+            $order_type = trans('custom.quotation');
         }
         else
         {
-            $order_type = 'Sales Order';
+            $order_type = trans('custom.sales_order');
             $is_return = $quotationMaster->is_return;
         }
 
@@ -1824,7 +1824,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
-        $msg = $order_type.' successfully canceled';
+        $msg = $order_type . ' ' . trans('custom.successfully_cancelled');
         
         $employee = \Helper::getEmployeeInfo();
 
@@ -1860,11 +1860,11 @@ class QuotationMasterAPIController extends AppBaseController
         $order_type = '';
         if($doc_id == 67)
         {
-            $order_type = 'Quotation';
+            $order_type = trans('custom.quotation');
         }   
         else
         {
-            $order_type = 'Sales Order';
+            $order_type = trans('custom.sales_order');
         }
 
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
@@ -1942,14 +1942,14 @@ class QuotationMasterAPIController extends AppBaseController
             $input['requestedQty'] = ($quotationRequestedCount - $count);
             $input['qtyIssued'] = ($quotationRequestedCount - $count);
             $input['qtyIssuedDefaultMeasure'] = ($quotationRequestedCount - $count);
-            return $this->sendResponse(['status' => false , 'data' => $input],'False');
+            return $this->sendResponse(['status' => false , 'data' => $input], trans('custom.false'));
         }
 
         if(isset($master)) {
-                return $this->sendResponse(['status' => true , 'data' => $input],'success');
+                return $this->sendResponse(['status' => true , 'data' => $input], trans('custom.success'));
 
         }else {
-                return $this->sendResponse(['status' => false , 'data' => $input],'False');
+                return $this->sendResponse(['status' => false , 'data' => $input], trans('custom.false'));
 
         }
     }
