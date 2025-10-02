@@ -330,7 +330,7 @@ class B2BResourceAPIController extends AppBaseController
 
 
         if (empty($getConfigDetails))
-            return $this->sendError("The vendor file format is not available for the selected bank", 500, []);
+            return $this->sendError(trans('custom.vendor_file_format_not_available_for_selected_bank'), 500, []);
 
 
         $isStored = true;
@@ -356,7 +356,7 @@ class B2BResourceAPIController extends AppBaseController
             try {
 
                 if (!isset($configDetails))
-                    throw new \Exception("The vendor file format is not available for the selected bank");
+                    throw new \Exception(trans('custom.vendor_file_format_not_available_for_selected_bank'));
 
                 if (!isset($pathDetails) || !isset($pathDetails->details[0]['upload_path']))
                     throw new \Exception(trans('custom.upload_path_not_found'));

@@ -9647,5 +9647,7 @@ return [
     'added_to_bank_transfer_you_cannot_return_back_to_a' => 'أضاف إلى التحويل البنكي. لا يمكنك العودة للتعديل.',
     'please_select_the_company' => 'يرجى اختيار الشركة',
     'please_select_date_range' => 'يرجى اختيار نطاق التاريخ',
-    'please_select_the_segment' => 'يرجى اختيار نطاق التاريخ'
+    'please_select_the_segment' => 'يرجى اختيار نطاق التاريخ',
+    'vendor_file_format_not_available_for_selected_bank' => 'تنسيق ملف المورد غير متاح للبنك المحدد',
+
   ];

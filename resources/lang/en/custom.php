@@ -9724,5 +9724,6 @@ return [
     'open_requests_details_export_in_progress' => 'Open Request Detailed report Export in progress, you will be notified once ready !!',
     'please_select_the_company' => 'Please select the company',
     'please_select_date_range' => 'Please select date range',
-    'please_select_the_segment' => 'Please select the segments'
+    'please_select_the_segment' => 'Please select the segments',
+    'vendor_file_format_not_available_for_selected_bank' => 'The vendor file format is not available for the selected bank',
   ];
