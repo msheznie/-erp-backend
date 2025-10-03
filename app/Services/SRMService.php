@@ -415,7 +415,7 @@ class SRMService
             return [
                 'success' => true,
                 'message' => 'Appointment saved successfully',
-                'data' => $data
+                'data' => []
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -666,7 +666,7 @@ class SRMService
         return [
             'success' => $confirm['success'],
             'message' => $confirm['message'],
-            'data' => $params
+            'data' => []
         ];
     }
 
@@ -1290,7 +1290,6 @@ class SRMService
             'brand' => $data['brand'],
             'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
-            'attachment' => $data['appointment']['attachment'],
             'transactioncurrency' => $data['getPoMaster']['transactioncurrency'],
         ];
     }
@@ -2426,7 +2425,7 @@ class SRMService
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
                 if ($result) {
-                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
                 Log::info("NO ATTACHMENT");
@@ -2782,7 +2781,10 @@ class SRMService
         $data['document_type'] = $tenderMaster['document_type'];
         $data['sequenceDate'] = $calendarDateMerge;
         $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date' ? 1 : 0);
-        $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId,$tenderMaster) {
+        $attachments = TenderDocumentTypes::select('id', 'document_type', 'srm_action', 'system_generated')
+            ->with(['attachments' => function ($q) use ($tenderMasterId,$tenderMaster) {
+                $q->select('attachmentID', 'companySystemID', 'documentID', 'documentSystemCode', 'attachmentDescription',
+                    'originalFileName', 'myFileName', 'attachmentType', 'timeStamp', 'path', 'envelopType');
             $q->where('documentSystemCode', $tenderMasterId);
             $q->where(function($query) use($tenderMaster){
                 if($tenderMaster->document_type == 0)
@@ -3837,7 +3839,7 @@ class SRMService
             return [
                 'success' => true,
                 'message' => 'Attached Successfully',
-                'data' => $att
+                'data' => []
             ];
         } catch (\Exception $e) {
             DB::rollback();
@@ -4443,7 +4445,15 @@ class SRMService
     {
         $mainWorkId = $request->input('extra.mainWorkId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $data['boqItems'] = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
+        $data['boqItems'] = TenderBoqItems::select('id', 'main_work_id', 'item_name', 'description', 'uom', 'qty',
+            'tender_ranking_line_item', 'item_primary_code')
+            ->with([
+                'unit' => function ($q) {
+                    $q->select('UnitID', 'UnitShortCode', 'UnitDes');
+                },
+                'bid_boq' => function ($q) use ($bidMasterId) {
+                $q->select('id', 'boq_id', 'bid_master_id', 'main_works_id', 'qty', 'unit_amount', 'total_amount',
+                    'remarks', 'supplier_registration_id');
             $q->where('bid_master_id', $bidMasterId);
         }])->where('main_work_id', $mainWorkId)->get();
 
@@ -5536,7 +5546,7 @@ class SRMService
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
                 if ($result) {
-                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
                 Log::info("NO ATTACHMENT");
@@ -5583,23 +5593,13 @@ class SRMService
         $query = DocumentAttachments::select(
             [
                 'attachmentID',
-                'companySystemID',
-                'documentSystemID',
-                'documentID',
-                'documentSystemCode',
                 'attachmentDescription',
                 'originalFileName',
-                'myFileName',
-                'docExpirtyDate',
                 'attachmentType',
-                'sizeInKbs',
                 'timeStamp',
-                'isUploaded',
                 'path',
-                'pullFromAnotherDocument',
                 'parent_id',
-                'envelopType',
-                'order_number'
+                'envelopType'
             ]
         )
             ->where('documentSystemID', $documentSystemID)
@@ -5784,8 +5784,6 @@ class SRMService
             'createdUserSystemID',
             'supplierTransCurrencyID',
             'BPVbankCurrency',
-            'expenseClaimOrPettyCash',
-            'payment_mode',
             'projectID',
             'BPVdate',
             'approvedDate',
@@ -5843,22 +5841,6 @@ class SRMService
                             "CurrencyName",
                             "CurrencyCode",
                             "DecimalPlaces"
-                        ]
-                    );
-                }
-                , 'expense_claim_type' => function ($q) {
-                    $q->select(
-                        [
-                            "expenseClaimTypeID",
-                            "expenseClaimTypeDescription"
-                        ]
-                    );
-                }
-                , 'paymentmode' => function ($q) {
-                    $q->select(
-                        [
-                            "id",
-                            "description"
                         ]
                     );
                 }
@@ -6321,7 +6303,7 @@ class SRMService
 
                 return $record;
             });
-            return $this->generateResponse(true, 'Payment proof attachment saved successfully', $result);
+            return $this->generateResponse(true, 'Payment proof attachment saved successfully', []);
         }
         catch (\Exception $e)
         {
