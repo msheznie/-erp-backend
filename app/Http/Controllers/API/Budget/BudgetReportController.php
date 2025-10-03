@@ -21,7 +21,7 @@ class BudgetReportController extends AppBaseController
         $checkIsGroup = Company::find($request->companySystemID);
 
         if(empty($reportID))
-            $this->sendError("Report Not Found!",401);
+            $this->sendError(trans('custom.report_not_found'),401);
 
         switch($reportID)
         {
@@ -29,7 +29,7 @@ class BudgetReportController extends AppBaseController
             // Budget commitmentes details report
                 $output = $budgetReportService->generateBudgetCommitmentDetailsReport($request);
             default;
-                $this->sendError("Report Not Found!",401);
+                $this->sendError(trans('custom.report_not_found'),401);
                 break;
         }
 
@@ -56,7 +56,7 @@ class BudgetReportController extends AppBaseController
         $exportReportToExcelService = new ExportReportToExcelService();
 
         if(empty($reportID))
-            $this->sendError("Report Not Found!",401);
+            $this->sendError(trans('custom.report_not_found'),401);
 
         switch($reportID)
         {
@@ -65,8 +65,8 @@ class BudgetReportController extends AppBaseController
                 $data = $budgetReportService->generateBudgetCommitmentDetailsReport($request);
                 $serviceLines =  collect($request->selectedServicelines)->pluck('ServiceLineCode')->toArray();
                 $currency = $request->currencyID[0];
-                $fileName = 'Budget Commitments Detail';
-                $title = 'Budget Commitments Detail Report';
+                $fileName = trans('custom.budget_commitments_detail');
+                $title = trans('custom.budget_commitments_detail_report');
                 $excelColumnFormat = [];
                 $path = "";
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
@@ -109,7 +109,7 @@ class BudgetReportController extends AppBaseController
                     });
                 })->download('xlsx');
             default;
-                $this->sendError("Report Not Found!",401);
+                $this->sendError(trans('custom.report_not_found'),401);
                 break;
         }
     }

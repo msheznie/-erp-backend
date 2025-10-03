@@ -855,7 +855,7 @@ class ReportAPIController extends AppBaseController
                 $detail_array = array(
                     'company_code'=>$companyCode,
                 );
-                $doc_name = 'order_inquiry';
+                $doc_name = trans('custom.order_inquiry');
                 $path = 'procurement/report/order_inquiry/excel/';
                 $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
         

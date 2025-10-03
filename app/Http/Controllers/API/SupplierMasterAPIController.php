@@ -346,7 +346,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -735,10 +735,10 @@ class SupplierMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
      
         if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
-            return $this->sendError('Please select liability account.');
+            return $this->sendError(trans('custom.please_select_liability_account'));
         }
         if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
-            return $this->sendError('Please select unbilled account.');
+            return $this->sendError(trans('custom.please_select_unbilled_account'));
         }
 
         if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
@@ -746,7 +746,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
-            return $this->sendError('Please select advance account.');
+            return $this->sendError(trans('custom.please_select_advance_account'));
         }
 
 
@@ -879,10 +879,10 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
-            return $this->sendError('Please select liability account.');
+            return $this->sendError(trans('custom.please_select_liability_account'));
         }
         if( !isset($input['UnbilledGRVAccountSystemID']) || (isset($input['UnbilledGRVAccountSystemID']) && $input['UnbilledGRVAccountSystemID'] == null)){
-            return $this->sendError('Please select unbilled account.');
+            return $this->sendError(trans('custom.please_select_unbilled_account'));
         }
 
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
@@ -890,7 +890,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if( !isset($input['advanceAccountSystemID']) || (isset($input['advanceAccountSystemID']) && $input['advanceAccountSystemID'] == null)){
-            return $this->sendError('Please select advance account.');
+            return $this->sendError(trans('custom.please_select_advance_account'));
         }
 
         if(isset($input['omanization']) && ($input['omanization'] > 100))
@@ -1041,8 +1041,8 @@ class SupplierMasterAPIController extends AppBaseController
 
                 if($company->companyCountry == $input['supplierCountryID']){
                     $validorMessages = [
-                        'isLCCYN.required' => 'LCC field is required.',
-                        'isSMEYN.required' => 'SME field is required.'
+                        'isLCCYN.required' => trans('custom.lcc_field_is_required'),
+                        'isSMEYN.required' => trans('custom.sme_field_is_required')
                     ];
 
                     $validator = \Validator::make($input, [
@@ -1057,7 +1057,7 @@ class SupplierMasterAPIController extends AppBaseController
 
                 if ($supplierMaster->isBlocked != $input['isBlocked'] && $input['isBlocked'] == 1) {
                     $validorMessages = [
-                        'blockedReason.required' => 'Blocked Comment is required.',
+                        'blockedReason.required' => trans('custom.blocked_comment_is_required'),
                     ];
 
                     $validator = \Validator::make($input, [
@@ -1116,8 +1116,8 @@ class SupplierMasterAPIController extends AppBaseController
 
             if($company->companyCountry == $input['supplierCountryID']){
                 $validorMessages = [
-                    'isLCCYN.required' => 'LCC field is required.',
-                    'isSMEYN.required' => 'SME field is required.'
+                    'isLCCYN.required' => trans('custom.lcc_field_is_required'),
+                    'isSMEYN.required' => trans('custom.sme_field_is_required')
                 ];
 
                 $validator = \Validator::make($input, [
@@ -1135,7 +1135,7 @@ class SupplierMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkDefaultCurrency == 0) {
-                return $this->sendError("Default currency is not assigned. Currency can be set up in currency", 500);
+                return $this->sendError(trans('custom.default_currency_is_not_assigned'), 500);
             }
 
 
@@ -1593,18 +1593,18 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['uid'])) {
-            return $this->sendError("Hash not found");
+            return $this->sendError(trans('custom.hash_not_found'));
         }
 
         $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])->first();
 
         if (!$checkHash) {
-            return $this->sendError("Hash not found");
+            return $this->sendError(trans('custom.hash_not_found'));
         }
 
         if (Carbon::parse($checkHash->expiredIn)->startOfDay() < Carbon::now()->startOfDay()) {
 
-            return $this->sendError('This link for Supplier Registration has expired. Obtain an active link to proceed with the registration');
+            return $this->sendError(trans('custom.this_link_for_supplier_registration_has_expired'));
 
         }
 
@@ -1643,30 +1643,30 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['uid'])) {
-            return $this->sendError("Hash not found");
+            return $this->sendError(trans('custom.hash_not_found'));
         }
 
         $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])->first();
 
         if (!$checkHash) {
-            return $this->sendError("Hash not found");
+            return $this->sendError(trans('custom.hash_not_found'));
         }
 
         if (Carbon::parse($checkHash->expiredIn) < Carbon::now()) {
-             return $this->sendError("Hash expired");
+            return $this->sendError(trans('custom.hash_expired'));
         }
 
 
         $validorMessages = [
-            'supplierName.required' => 'Name is required.',
-            'telephone.required' => 'Telephone Number is required.',
-            'supEmail.required' => 'Email is required.',
-            'supplierCountryID.required' => 'Country is required.',
-            'registrationExprity.required' => 'Registartion Expire date is required.',
-            'currency.required' => 'Currency is required.',
-            'nameOnPaymentCheque.required' => 'Name on payment cheque is required.',
-            'address.required' => 'Address is required.',
-            'registrationNumber.required' => 'Registartion Number is required.',
+            'supplierName.required' => trans('custom.name_is_required'),
+            'telephone.required' => trans('custom.telephone_number_is_required'),
+            'supEmail.required' => trans('custom.email_is_required'),
+            'supplierCountryID.required' => trans('custom.country_is_required'),
+            'registrationExprity.required' => trans('custom.registration_expire_date_is_required'),
+            'currency.required' => trans('custom.currency_is_required'),
+            'nameOnPaymentCheque.required' => trans('custom.name_on_payment_cheque_is_required'),
+            'address.required' => trans('custom.address_is_required'),
+            'registrationNumber.required' => trans('custom.registration_number_is_required'),
         ];
 
         $validator = \Validator::make($input, [
@@ -1791,14 +1791,14 @@ class SupplierMasterAPIController extends AppBaseController
                     if (in_array($extension, $blockExtensions))
                     {
                         DB::rollback();
-                        return $this->sendError('This type of file not allow to upload.',500);
+                        return $this->sendError(trans('custom.this_type_of_file_not_allow_to_upload'),500);
                     }
 
 
                     if(isset($fileData['size'])){
                         if ($fileData['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                             DB::rollback();
-                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
+                            return $this->sendError(trans('custom.maximum_allowed_file_size_is_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
                         }
                     }
 
@@ -1847,7 +1847,7 @@ class SupplierMasterAPIController extends AppBaseController
 
             $emails = [
                         'companySystemID' => $checkHash->companySystemID,
-                        'alertMessage' => "Supplier Registartion",
+                        'alertMessage' => trans('custom.supplier_registration'),
                         'empEmail' => $input['supEmail'],
                         'emailAlertMessage' => trans('email.supplier_registration_thank_you', ['companyName' => $companMaster->CompanyName])
                       ];
@@ -1855,7 +1855,7 @@ class SupplierMasterAPIController extends AppBaseController
             $sendEmail = \Email::sendEmailErp($emails);
 
             DB::commit();
-            return $this->sendResponse([], 'Thank you for registering with '.$companMaster->CompanyName.'. Your registration will be reviewed and notified via email');
+            return $this->sendResponse([], trans('custom.thank_you_for_registering_with').' '.$companMaster->CompanyName.'. '.trans('custom.your_registration_reviewed'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage().$e->getLine());
@@ -2065,7 +2065,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendReponseWithDetails([], 'Supplier updated successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails([], trans('custom.supplier_updated_successfully'),1,$confirm['data'] ?? null);
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage().$e->getLine());
@@ -2098,7 +2098,7 @@ class SupplierMasterAPIController extends AppBaseController
                 return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         }else{
-            return $this->sendError('Attachment is not attached', 404);
+            return $this->sendError(trans('custom.attachment_is_not_attached'), 404);
         }
     }
 
@@ -2248,7 +2248,7 @@ class SupplierMasterAPIController extends AppBaseController
         $companyId = $request->input('company_id');
         if (!empty($isExist)) {
             if($isExist['STATUS'] === 1){
-                return $this->sendError(trans('srm_supplier_master.supplier_registration_details_already_exist'),402);
+                return $this->sendError(trans('custom.supplier_registration_details_already_exist'),402);
             } else if ($isExist['STATUS'] === 0){
                 $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                 $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
@@ -2267,9 +2267,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                    return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
+                    return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
                 } else{
-                    return $this->sendError(trans('srm_supplier_master.supplier_registration_link_generation_failed'),500);
+                    return $this->sendError(trans('custom.supplier_registration_link_generation_failed'),500);
                 }
             }
         } else {
@@ -2288,9 +2288,9 @@ class SupplierMasterAPIController extends AppBaseController
                 $dataEmail['emailAlertMessage'] = $body;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
 
-                return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
+                return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
             } else {
-                return $this->sendError(trans('srm_supplier_master.supplier_registration_link_generation_failed'),500);
+                return $this->sendError(trans('custom.supplier_registration_link_generation_failed'),500);
             }
         }
     }
@@ -2332,9 +2332,9 @@ class SupplierMasterAPIController extends AppBaseController
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
-                    return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_resent_successfully'));
+                    return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_resent_successfully'));
                 } else{
-                    return $this->sendError(trans('srm_supplier_master.failed_to_resent_supplier_registration_link'),500);
+                    return $this->sendError(trans('custom.failed_to_resend_supplier_registration_link'),500);
                 }
             }
         }
@@ -2607,8 +2607,8 @@ class SupplierMasterAPIController extends AppBaseController
                 'blockFrom' => 'required_if:blockType,2|nullable|date',
                 'blockReason' => 'required',
                 'blockTo' => 'required_if:blockType,2|nullable|date|after_or_equal:blockFrom',
-            ],[ 'blockTo.required_if' => 'From Date must be grater than less than or equal to TO date' ]);
-    
+            ],[ 'blockTo.required_if' => trans('custom.from_date_must_be_grater_than_less_than_or_equal_to_to_date') ]);
+
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422, ['type' => 'validation']);
             }
@@ -2653,14 +2653,14 @@ class SupplierMasterAPIController extends AppBaseController
         $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
 
         if (in_array($email, $emails)) {
-            return ['status' => false, 'message' => trans('srm_supplier_master.email_already_exists')];
+            return ['status' => false, 'message' => trans('custom.email_already_exists')];
         }
 
         if (in_array($regNo, $registrationNumbers)) {
-            return ['status' => false, 'message' => trans('srm_supplier_master.registration_number_already_exists')];
+            return ['status' => false, 'message' => trans('custom.registration_number_already_exists')];
         }
 
-        return ['status' => true, 'message' => trans('srm_supplier_master.success')];
+        return ['status' => true, 'message' => 'Success'];
     }
 
 
@@ -2689,7 +2689,7 @@ class SupplierMasterAPIController extends AppBaseController
                     'success' => false,
                     'message' => $result->data == 0
                         ? $result->message
-                        : trans('srm_ranking.supplier_bid_status_update_failed')
+                        : "Something went wrong! Supplier Bid Tender status couldn't be updated."
                 ], 400);
             }
 
@@ -2705,19 +2705,19 @@ class SupplierMasterAPIController extends AppBaseController
             if ($kycResult) {
                 return response()->json([
                     'success' => true,
-                    'message' => trans('srm_ranking.kyc_enable_request_sent'),
+                    'message' => 'KYC Enable Request sent successfully',
                     'loginUrl' => $loginUrl
                 ], 200);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => trans('srm_ranking.unexpected_error_try_again'),
+                    'message' => 'An unexpected error occurred. Please try again later.',
                 ], 500);
             }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => trans('srm_ranking.unexpected_error'),
+                'message' => 'An unexpected error occurred.',
             ], 500);
         }
     }

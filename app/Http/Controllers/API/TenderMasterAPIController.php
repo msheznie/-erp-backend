@@ -165,7 +165,7 @@ class TenderMasterAPIController extends AppBaseController
         $this->tenderMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMasters = $this->tenderMasterRepository->all();
 
-        return $this->sendResponse($tenderMasters->toArray(), trans('custom.tender_masters_retrieved_successfully'));
+        return $this->sendResponse($tenderMasters->toArray(), 'Tender Masters retrieved successfully');
     }
 
     /**
@@ -212,7 +212,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster = $this->tenderMasterRepository->create($input);
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_master_saved_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'Tender Master saved successfully');
     }
 
     /**
@@ -266,10 +266,10 @@ class TenderMasterAPIController extends AppBaseController
         ])->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'Tender Master retrieved successfully');
     }
 
     /**
@@ -326,12 +326,12 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
         $tenderMaster = $this->tenderMasterRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tendermaster_updated_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'TenderMaster updated successfully');
     }
 
     /**
@@ -378,12 +378,12 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
         $tenderMaster->delete();
 
-        return $this->sendSuccess(trans('custom.tender_master_deleted_successfully'));
+        return $this->sendSuccess('Tender Master deleted successfully');
     }
 
     public function getTenderMasterList(Request $request)
@@ -1995,14 +1995,9 @@ class TenderMasterAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $tenderMaster->tender_code . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $tenderMaster->tender_code;
 
-        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
+        $subject = $cancelDocNameSubject . ' is reopened';
 
-        $body = trans('email.is_reopened_body', [
-            'attribute' => $cancelDocNameBody,
-            'empID' => $employee->empID,
-            'empName' => $employee->empFullName,
-            'reopenComments' => $input['reopenComments']
-        ]);
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $tenderMaster->company_id)
             ->where('documentSystemCode', $tenderMaster->id)
@@ -2145,7 +2140,7 @@ class TenderMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('procument_cat_id'));
         $tenderActivity = $this->tenderMasterRepository->loadTenderSubActivity($input);
 
-        return $this->sendResponse($tenderActivity, trans('custom.tender_sub_activity_retrieved_successfully'));
+        return $this->sendResponse($tenderActivity, 'Tender sub activity retrieved successfully');
     }
     public function sendSupplierInvitation(Request $request)
     {
@@ -2176,9 +2171,9 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 
-            return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
+            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
-            return $this->sendError(trans('custom.supplier_registration_link_generation_failed'), 500);
+            return $this->sendError('Supplier Registration Link Generation Failed', 500);
         }
     }
     public function getSupplierList(Request $request)
@@ -2515,7 +2510,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->where('stage', $filters['stage']);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2894,7 +2889,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['master_data'] = $master_data;
         $data['submission_master_data'] = $submission_master_data;
         $data['show_technical_criteria'] = $techniqal_wightage->show_technical_criteria;
-        return $this->sendResponse($data, trans('custom.tender_masters_retrieved_successfully'));
+        return $this->sendResponse($data, 'Tender Masters retrieved successfully');
     }
 
     public function getCommercialBidTenderList(Request $request)
@@ -3004,7 +2999,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->whereIn('commercial_verify_status', $ids);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -3570,7 +3565,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
         $items = $this->getPricingItems($bidMasterId, $tenderId);
         $data['items']  = $items;
-        return $this->sendResponse($data, trans('custom.data_retrieved_successfully_1'));
+        return $this->sendResponse($data, 'data retrieved successfully');
     }
 
     public function getPricingItems($bidMasterId, $tenderId)
@@ -4088,7 +4083,7 @@ class TenderMasterAPIController extends AppBaseController
             ]);
         }])->first();
 
-        return $this->sendResponse($tender, trans('custom.data_retrieved_successfully_1'));
+        return $this->sendResponse($tender, 'data retrieved successfully');
     }
 
     public function confirmFinalBidAwardComment(Request $request)
@@ -4113,7 +4108,7 @@ class TenderMasterAPIController extends AppBaseController
                 if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
                     $name = $mail->employee->empFullName;
                     $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
-                    $body = trans('email.hi') . " $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                    $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                     $dataEmail['empEmail'] = $mail->employee->empUserName;
                     $dataEmail['companySystemID'] = $request['companySystemID'];
                     $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -4123,7 +4118,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tender, trans('custom.successfully_confirmed'));
+            return $this->sendResponse($tender, 'successfully confirmed');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4196,10 +4191,10 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>" . trans('email.hi') . " " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
-                $body = trans('email.hi') . " $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br><br> Regards,<br>$company.";
             }
@@ -4233,7 +4228,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = trans('email.hi') . " $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
@@ -4245,7 +4240,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tender, trans('custom.email_send_successfully'));
+            return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4766,7 +4761,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->where('stage', $filters['stage']);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -5033,7 +5028,7 @@ class TenderMasterAPIController extends AppBaseController
             ->where('id',$input['tenderMasterId'])
             ->get();
 
-        return $this->sendResponse($tenderAmendHistory, trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($tenderAmendHistory, 'Tender Master retrieved successfully');
     }
     public function getTenderRfxAudit(Request $request){
         $input = $request->all();
@@ -5079,9 +5074,9 @@ class TenderMasterAPIController extends AppBaseController
         $data['modifyRequestList'] = DocumentModifyRequest::getModificationRequestList($input['id']);
 
         if (empty($data['tenderMaster'])) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
-        return $this->sendResponse($data, trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($data, 'Tender Master retrieved successfully');
     }
 
     public function getCompanyTenderList(Request $request){
@@ -5255,7 +5250,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5268,7 +5263,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5283,7 +5278,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5300,7 +5295,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5314,7 +5309,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5331,7 +5326,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5348,7 +5343,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5361,7 +5356,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 

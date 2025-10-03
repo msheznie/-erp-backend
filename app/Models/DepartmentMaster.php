@@ -158,6 +158,6 @@ class DepartmentMaster extends Model
         if ($translation && $translation->description) {
             return $translation->description;
         }
-        return $this->attributes['department_description'] ?? '';
+        return $this->attributes['DepartmentDescription'] ?? '';
     }
 }

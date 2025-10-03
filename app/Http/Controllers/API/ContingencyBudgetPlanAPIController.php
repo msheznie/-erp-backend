@@ -299,7 +299,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetPlan)) {
-            return $this->sendError(trans('custom.not_found', ['attribute' => 'Contingency Budget']));
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contingency_budget')]));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -355,7 +355,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->update(array_only($input, ['comments', 'year', 'serviceLineSystemID', 'templateMasterID', 'contingencyPercentage', 'budgetAmount', 'contigencyAmount', 'templateMasterID', 'contingencyPercentage', 'budgetID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
-        return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => 'Contingency Budget']),1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => trans('custom.contingency_budget')]),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -407,7 +407,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingencyBudgetPlan->delete();
 
-        return $this->sendSuccess('Contingency Budget Plan deleted successfully');
+        return $this->sendSuccess(trans('custom.contingency_budget_plan_deleted_successfully'));
     }
 
     public function get_contingency_budget(Request $request)
@@ -731,7 +731,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $msg = '';
 
         if (!empty($check_valid)) {
-            $msg = 'Contingency budget already exist.';
+            $msg = trans('custom.contingency_budget_already_exist');
         } else {
             $msg = 'success';
         }

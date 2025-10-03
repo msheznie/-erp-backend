@@ -74,7 +74,7 @@ class AppointmentAPIController extends AppBaseController
         $this->appointmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $appointments = $this->appointmentRepository->all();
 
-        return $this->sendResponse($appointments->toArray(), trans('custom.appointments_retrieved_successfully'));
+        return $this->sendResponse($appointments->toArray(), 'Appointments retrieved successfully');
     }
 
     /**
@@ -121,7 +121,7 @@ class AppointmentAPIController extends AppBaseController
 
         $appointment = $this->appointmentRepository->create($input);
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_saved_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment saved successfully');
     }
 
     /**
@@ -168,10 +168,10 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_retrieved_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment retrieved successfully');
     }
 
     /**
@@ -228,12 +228,12 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
         $appointment = $this->appointmentRepository->update($input, $id);
 
-        return $this->sendResponse($appointment->toArray(), trans('custom.appointment_updated_successfully'));
+        return $this->sendResponse($appointment->toArray(), 'Appointment updated successfully');
     }
 
     /**
@@ -280,7 +280,7 @@ class AppointmentAPIController extends AppBaseController
         $appointment = $this->appointmentRepository->findWithoutFail($id);
 
         if (empty($appointment)) {
-            return $this->sendError(trans('custom.appointment_not_found'));
+            return $this->sendError('Appointment not found');
         }
 
         $appointment->delete();

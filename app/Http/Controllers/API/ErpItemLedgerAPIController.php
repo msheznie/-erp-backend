@@ -838,7 +838,7 @@ WHERE
             'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
         ];
-        $fileName = 'stock_ledger_report';
+        $fileName = trans('custom.stock_ledger_report');
         $title = trans('custom.stock_ledger_report');
         $path = 'inventory/report/stock_ledger_report/excel/';
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
@@ -1250,7 +1250,7 @@ WHERE
             array_push($data,collect($stockValuationReport)->toArray());
         }
 
-        $fileName = 'stock_valuation_report';
+        $fileName = trans('custom.stock_valuation_report');
         $title = trans('custom.stock_valuation_report');
         $path = 'inventory/report/stock_valuation_report/excel/';
         $cur = NULL;
@@ -1738,7 +1738,7 @@ GROUP BY
         }
 
 
-        $fileName = 'stock_taking_report';
+        $fileName = trans('custom.stock_taking_report');
         $title = trans('custom.stock_taking_report');
         $path = 'inventory/report/stock_taking_report/excel/';
         $cur = NULL;

@@ -203,10 +203,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     return $this->sendError(trans('custom.warehouse_not_found'), 500);
                 }
                 if ($wareHouse->isActive == 0) {
-                    return $this->sendError('Please select an active warehouse.', 500);
+                    return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
                 }
             } else {
-                return $this->sendError('Please select a warehouse.', 500);
+                return $this->sendError(trans('custom.please_select_warehouse'), 500);
             }
         }
 
@@ -220,7 +220,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.please_select_active_department'), 500);
             }
         } else {
-            return $this->sendError('Please select a department.', 500);
+            return $this->sendError(trans('custom.please_select_department'), 500);
         }
 
         if (isset($input['issueType'])) {
@@ -686,7 +686,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        $message = 'Materiel Issue Details saved successfully';
+        $message = trans('custom.materiel_issue_details_saved_successfully');
         if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
             $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
                 ->where('companyPolicyCategoryID', 6)
@@ -694,7 +694,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if (!empty($minQtyPolicy)) {
                 if ($minQtyPolicy->isYesNO == 1) {
                     $itemIssueDetails->warningMsg = 1;
-                    $message = 'Quantity is falling below the minimum inventory level.';
+                    $message = trans('custom.quantity_falling_below_minimum');
                 }
             }
         }
@@ -717,7 +717,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
         if (empty($materielRequest)) {
-            return ['status' => false, 'message' => 'Materiel Request Details not found'];
+            return ['status' => false, 'message' => trans('custom.materiel_request_details_not_found')];
         }
 
 
@@ -747,7 +747,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-            return ['status' => false, 'message' => 'Finance Category not found'];
+            return ['status' => false, 'message' => trans('custom.finance_category_not_found')];
         }
 
         if ($item->financeCategoryMaster == 1) {
@@ -759,7 +759,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return ['status' => false, 'message' => 'Selected item is already added to above material request. Please check again'];
+                return ['status' => false, 'message' => trans('custom.selected_item_already_added_to_material_request')];
             }
         }
 
@@ -809,7 +809,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['quantityInHand']  = $quantityInHand;
 
         if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
-            return ['status' => false, 'message' => 'No stock Qty. Please check again'];
+            return ['status' => false, 'message' => trans('custom.no_stock_qty_please_check_again')];
         }
        
         return ['status' => true, 'data' => (object)$input];
@@ -1108,7 +1108,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if (!empty($minQtyPolicy)) {
                 if ($minQtyPolicy->isYesNO == 1) {
                     $itemIssueDetails->warningMsg = 1;
-                    $message = 'Quantity is falling below the minimum inventory level.';
+                    $message = trans('custom.quantity_falling_below_minimum');
                 }
             }
         }
@@ -1436,7 +1436,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                         return $this->sendResponse($temArray, trans('custom.data_retrieved_successfully'));
 
                     } else {
-                        return $this->sendError('Please select the Request', 500);
+                        return $this->sendError(trans('custom.please_select_request'), 500);
                     }
                 } else {
                     return $this->sendError('Please select the Request', 500);
@@ -1444,7 +1444,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
 
         } else {
-            return $this->sendError('Please select Issues Type', 500);
+            return $this->sendError(trans('custom.please_select_issues_type'), 500);
         }
     }
 
@@ -1495,10 +1495,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
                         return $this->sendError(trans('custom.warehouse_not_found'), 500);
                     }
                     if ($wareHouse->isActive == 0) {
-                        return $this->sendError('Please select an active warehouse.', 500);
+                        return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
                     }
                 } else {
-                    return $this->sendError('Please select a warehouse.', 500);
+                    return $this->sendError(trans('custom.please_select_warehouse'), 500);
                 }
             }
     
@@ -1512,7 +1512,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     return $this->sendError(trans('custom.please_select_active_department'), 500);
                 }
             } else {
-                return $this->sendError('Please select a department.', 500);
+                return $this->sendError(trans('custom.please_select_department'), 500);
             }
     
             if (isset($input['itemIssueAutoID'])) {
@@ -1618,11 +1618,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $allowedExtensions = ['xlsx','xls'];
 
             if (!in_array($extension, $allowedExtensions)) {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.this_type_of_file_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
             }
 
             $disk = 'local';
@@ -1686,7 +1686,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
 
             if ($materialIssue->approved == 1) {
-                return $this->sendError('This Material Issue fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.material_issue_fully_approved_cannot_add'), 500);
             }
 
             if (count($record) > 0) {
@@ -1698,7 +1698,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $db = isset($input['db']) ? $input['db'] : "";
                 AddMultipleItemsToMaterialIssue::dispatch(array_filter($record),($materialIssue->toArray()),$db);
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('custom.no_records_found'), 500);
             }
 
             Storage::disk($disk)->delete('app/' . $originalFileName);
