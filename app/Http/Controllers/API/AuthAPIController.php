@@ -131,7 +131,11 @@ class AuthAPIController extends PassportAccessTokenController
         try {
             $user->login_token = null;
             $user->save();
-            return  $user->createToken('personal');
+            // Create personal access token with 1 day expiration
+            $token = $user->createToken('personal');
+            $token->token->expires_at = now()->addDay();
+            $token->token->save();
+            return $token;
         } catch (OAuthServerException $exception) {
             return $this->withErrorHandling(function () use($exception) {
                 return response(["message" => trans('custom.error')], 401);

@@ -958,7 +958,11 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::post('getSupplierBusinessSubCategoriesByCategory', 'SupplierCategorySubAPIController@getSupplierBusinessSubCategoriesByCategory');
 
         Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-        Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
+
+        if (env('APP_ENV') == 'local') {
+            Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
+        }
+
         Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
         
         Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
