@@ -8974,6 +8974,10 @@ return
     'currency_conversion_master_deleted_successfully' => 'تم حذف سيد تحويل العملة بنجاح',
     'account_balance' => 'رصيد الحساب',
     'bank_ledger' => 'دفتر الأستاذ البنكي',
+    'currency_not_selected' => 'لم يتم اختيار العملة',
+    'please_select_request' => 'يرجى اختيار الطلب',
+    'please_select_issues_type' => 'يرجى اختيار نوع الإصدار',
+    'material_issue_fully_approved_cannot_add' => 'تم اعتماد إصدار المواد بالكامل. لا يمكنك الإضافة.',
     // Budget Transfer Form Detail API Controller translations
     'from_department_not_found' => 'القسم المصدر غير موجود',
     'please_select_active_from_department' => 'يرجى اختيار قسم مصدر نشط',

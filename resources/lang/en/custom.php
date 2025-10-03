@@ -9076,7 +9076,11 @@ return
     'currency_conversion_master_updated_successfully' => 'Currency Conversion Master updated successfully',
     'currency_conversion_master_deleted_successfully' => 'Currency Conversion Master deleted successfully',
     'account_balance' => 'Account Balance',
-    'bank_ledger' => 'Bank Ledger'
+    'bank_ledger' => 'Bank Ledger',
+    'currency_not_selected' => 'Currency not selected',
+    'please_select_request' => 'Please select the Request',
+    'please_select_issues_type' => 'Please select Issues Type',
+    'material_issue_fully_approved_cannot_add' => 'This Material Issue fully approved. You can not add.',
     // Budget Transfer Form Detail API Controller translations
     'from_department_not_found' => 'From Department not found',
     'please_select_active_from_department' => 'Please select an active from department',

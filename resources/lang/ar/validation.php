@@ -354,5 +354,7 @@ return [
         'bankAccount' => 'حساب مصرفي',
         'custPaymentReceiveDate' => 'تاريخ استلام دفعة العميل',
         'custTransactionCurrencyID' => 'معرف عملة معاملة العميل',
+        'catalogName' => 'اسم الكتالوج',
+        'catalogID' => 'معرّف الكتالوج',
     ],
 ];
