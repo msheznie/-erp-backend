@@ -145,7 +145,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         }
 
         if ($department->isActive == 0) {
-            return $this->sendError('Please select an active to department', 500);
+            return $this->sendError(trans('custom.please_select_an_active_department'), 500);
         }
 
         $companyData = Company::find($budgetAdditionMaster->companySystemID);

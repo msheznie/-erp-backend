@@ -125,7 +125,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
                                                     ->first();
 
         if ($checkNotApproved) {
-            return $this->sendError("There is conversion created and still not approved, therefore, you cannot create", 500);
+            return $this->sendError(trans('custom.conversion_created_still_not_approved_cannot_create'), 500);
         }
 
 
@@ -158,7 +158,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
                 }
             } else {
                 DB::rollback();
-                return $this->sendError("Error occured while creating currency conversion", 500);
+                return $this->sendError(trans('custom.error_occurred_creating_currency_conversion'), 500);
             }
 
             DB::commit();
@@ -292,7 +292,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         $currencyConversionMaster = $this->currencyConversionMasterRepository->update($updateData, $id);
 
-        return $this->sendReponseWithDetails($currencyConversionMaster->toArray(), 'CurrencyConversionMaster updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($currencyConversionMaster->toArray(), trans('custom.currency_conversion_master_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -344,7 +344,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         $currencyConversionMaster->delete();
 
-        return $this->sendSuccess('Currency Conversion Master deleted successfully');
+        return $this->sendSuccess(trans('custom.currency_conversion_master_deleted_successfully'));
     }
 
     public function getAllCurrencyConversions(Request $request)

@@ -58,7 +58,7 @@ class ConfigurationAPIController extends AppBaseController
             }
         }
 
-        $configuration = array('environment' => $environment, 'isLang' => 1, 'version' => $version, 'serverTime' => $serverTime, 'customRoute' => $customRoute);
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version, 'serverTime' => $serverTime, 'customRoute' => $customRoute);
 
         return $this->sendResponse($configuration, trans('custom.configurations_retrieved_successfully'));
 

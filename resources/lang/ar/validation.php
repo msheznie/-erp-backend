@@ -349,6 +349,10 @@ return [
         'contigencyAmount' => 'الميزانية المخصصة',
         'budgetAmount' => 'الميزانية',
         'assets' => 'الأصول',
-        'countries' => 'دول / الدول'
+        'countries' => 'دول / الدول',
+        'bankCurrency' => 'عملة البنك',
+        'bankAccount' => 'حساب مصرفي',
+        'custPaymentReceiveDate' => 'تاريخ استلام دفعة العميل',
+        'custTransactionCurrencyID' => 'معرف عملة معاملة العميل',
     ],
 ];
