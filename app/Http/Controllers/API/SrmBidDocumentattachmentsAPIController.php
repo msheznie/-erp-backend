@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\API;
-
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSrmBidDocumentattachmentsAPIRequest;
 use App\Http\Requests\API\UpdateSrmBidDocumentattachmentsAPIRequest;
 use App\Models\SrmBidDocumentattachments;
@@ -18,7 +18,6 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Finder\SplFileInfo;
-use App\helper\Helper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 /**
@@ -74,7 +73,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $this->srmBidDocumentattachmentsRepository->pushCriteria(new FilterTenderDocumentCriteria($request));
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->all();
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_retrieved_successfully'));
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments retrieved successfully');
     }
 
     /**
@@ -128,7 +127,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->create($input);
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_saved_successfully'));
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments saved successfully');
     }
 
     /**
@@ -176,10 +175,10 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
+            return $this->sendError('Srm Bid Documentattachments not found');
         }
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srm_bid_documentattachments_retrieved_successfully'));
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments retrieved successfully');
     }
 
     /**
@@ -245,12 +244,12 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
+            return $this->sendError('Srm Bid Documentattachments not found');
         }
 
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->update($input, $id);
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), trans('custom.srmbiddocumentattachments_updated_successfully'));
+        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'SrmBidDocumentattachments updated successfully');
     }
 
     /**
@@ -298,12 +297,12 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($id);
 
         if (empty($srmBidDocumentattachments)) {
-            return $this->sendError(trans('custom.srm_bid_documentattachments_not_found'));
+            return $this->sendError('Srm Bid Documentattachments not found');
         }
 
         $srmBidDocumentattachments->delete();
 
-        return $this->sendResponse(true, trans('custom.srm_bid_documentattachments_deleted_successfully'));
+        return $this->sendResponse(true, 'Srm Bid Documentattachments deleted successfully');
 
     }
 
@@ -325,7 +324,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         ->where('attachmentDescription',$attachmentDescription)
         ->count(); 
         if($isExist >= 1){ 
-           return ['status' => false, 'message' => 'Description already exists'];  
+           return ['status' => false, 'message' => trans('srm_ranking.document_attachments_saved_successfully')];
         }else {
             
 
@@ -342,13 +341,13 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
             ];
 
             if (in_array($extension, $blockExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
+                return $this->sendError(trans('srm_bid.max_file_type_not_allowed'), 500);
             }
 
 
             if (isset($input['sizeInKbs'])) {
                 if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
        
@@ -400,15 +399,15 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         
 
             $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
-        
             DB::commit();
-            return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_saved_successfully'));
+            Log::info(app()->getLocale());
+            return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
         }
             
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Unable to upload the attachment', 500);
+            return $this->sendError(trans('srm_ranking.unable_to_upload_the_attachment'), 500);
         }
 
       
@@ -427,14 +426,14 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $documentAttachments = $this->srmBidDocumentattachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError(trans('custom.document_attachments_not_found'));
+            return $this->sendError('Document Attachments not found');
         }
 
         if (!is_null($documentAttachments->path)) {
             if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
                 return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
-                return $this->sendError(trans('custom.attachments_not_found'), 500);
+                return $this->sendError('Attachments not found', 500);
             }
         } else {
             return $this->sendError('Attachment is not attached', 404);

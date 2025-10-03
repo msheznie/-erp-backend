@@ -9735,3 +9735,4 @@ return [
     'please_select_the_segment' => 'Please select the segments',
     'vendor_file_format_not_available_for_selected_bank' => 'The vendor file format is not available for the selected bank',
   ];
+

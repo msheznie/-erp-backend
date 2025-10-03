@@ -9657,5 +9657,4 @@ return [
     'please_select_date_range' => 'يرجى اختيار نطاق التاريخ',
     'please_select_the_segment' => 'يرجى اختيار نطاق التاريخ',
     'vendor_file_format_not_available_for_selected_bank' => 'تنسيق ملف المورد غير متاح للبنك المحدد',
-
-  ];
+];

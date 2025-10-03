@@ -73,8 +73,8 @@ class SupplierRegistrationController extends Controller
             $supplierKyc = $request->input('supplierKyc');
             $companyID = $request->input('companyID');
 
-            throw_unless($selectedSupplier, 'selected supplier must be passed');
-            throw_unless($supplierKyc, 'selected KYC details must be passed');
+            throw_unless($selectedSupplier, trans('srm_supplier_management.selected_supplier_must_be_passed'));
+            throw_unless($supplierKyc, trans('srm_supplier_management.selected_kyc_details_must_be_passed'));
 
             $linkSuppliers = $this->supplierRegistrationService->linkKYCWithSupplier(
                 $selectedSupplier, $supplierKyc, $selectedKYC, $companyID
@@ -82,7 +82,7 @@ class SupplierRegistrationController extends Controller
             if(!$linkSuppliers['success']){
                 return $this->sendError($linkSuppliers['message']);
             }
-            return $this->sendSuccessResponse('Supplier has been attached to the KYC');
+            return $this->sendSuccessResponse(trans('srm_supplier_management.supplier_has_been_attached_to_the_kyc'));
         } catch(\Exception $e){
             return $this->sendError($e->getMessage());
         }
@@ -96,7 +96,7 @@ class SupplierRegistrationController extends Controller
             }
             return $this->sendSuccessResponse($matchingData['message'], $matchingData['data']);
         } catch (\Exception $ex){
-            return $this->sendError(trans('custom.unexpected_error'). $ex->getMessage());
+            return $this->sendError(trans('srm_supplier_management.unexpected_error'). $ex->getMessage());
         }
     }
 

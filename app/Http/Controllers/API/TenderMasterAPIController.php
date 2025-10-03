@@ -165,7 +165,7 @@ class TenderMasterAPIController extends AppBaseController
         $this->tenderMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderMasters = $this->tenderMasterRepository->all();
 
-        return $this->sendResponse($tenderMasters->toArray(), trans('custom.tender_masters_retrieved_successfully'));
+        return $this->sendResponse($tenderMasters->toArray(), 'Tender Masters retrieved successfully');
     }
 
     /**
@@ -212,7 +212,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster = $this->tenderMasterRepository->create($input);
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_master_saved_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'Tender Master saved successfully');
     }
 
     /**
@@ -266,10 +266,10 @@ class TenderMasterAPIController extends AppBaseController
         ])->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'Tender Master retrieved successfully');
     }
 
     /**
@@ -326,12 +326,12 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
         $tenderMaster = $this->tenderMasterRepository->update($input, $id);
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tendermaster_updated_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), 'TenderMaster updated successfully');
     }
 
     /**
@@ -378,12 +378,12 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
 
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
 
         $tenderMaster->delete();
 
-        return $this->sendSuccess(trans('custom.tender_master_deleted_successfully'));
+        return $this->sendSuccess('Tender Master deleted successfully');
     }
 
     public function getTenderMasterList(Request $request)
@@ -536,9 +536,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($exist)) {
             if (isset($input['rfx']) && $input['rfx']) {
-                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_title_cannot_be_duplicated')];
             }
         }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -592,7 +592,7 @@ class TenderMasterAPIController extends AppBaseController
 
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => trans('custom.successfully_saved'), 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -612,7 +612,7 @@ class TenderMasterAPIController extends AppBaseController
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 DB::commit();
-                return ['success' => true, 'message' => trans('custom.successfully_deleted'), 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -781,68 +781,68 @@ class TenderMasterAPIController extends AppBaseController
         // vaidation lists
         if (!isset($input['document_sales_start_time'])) {
             if (isset($input['document_sales_start_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Document sales from time is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.document_sales_from_time_is_required')];
             } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'Document sales from time is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.document_sales_from_time_is_required')];
             }
         }
 
         if (!isset($input['document_sales_end_time'])) {
             if (isset($input['document_sales_end_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Document sales to time is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.document_sales_to_time_is_required')];
             } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'Document sales to time is required'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.document_sales_to_time_is_required')];
             }
         }
 
         if ((isset($document_sales_start_date) && isset($document_sales_end_date)) && (($document_sales_start_date > $document_sales_end_date))) {
-            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time_for_document_sales')];
         }
 
         if ((isset($pre_bid_clarification_start_date) && isset($pre_bid_clarification_end_date)) && (($pre_bid_clarification_start_date > $pre_bid_clarification_end_date))) {
-            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.From_date_and_time_cannot_be_greater_than_the_To_date_and_time_for_Pre_bid_Clarification')];
         }
 
         if (($site_visit_date > $site_visit_end_date)) {
             if (isset($input['site_visit_date']) && isset($input['site_visit_end_date'])) {
-                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time_for_site_visit')];
             } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time_for_site_visit')];
             }
         }
 
         if (!isset($input['bid_submission_opening_time'])) {
-            return ['success' => false, 'message' => 'Bid submission from time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_from_time_is_required')];
         }
 
 
         if (isset($input['pre_bid_clarification_start_date']) && !isset($input['pre_bid_clarification_start_time'])) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification from time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.pre_bid_clarification_from_time_is_required')];
         }
 
         if (isset($input['pre_bid_clarification_end_date']) && !isset($input['pre_bid_clarification_end_time'])) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification to time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.pre_bid_clarification_to_time_is_required')];
         }
 
         if (isset($input['site_visit_date']) && !isset($input['site_visit_start_time'])) {
-            return ['success' => false, 'message' => 'Site Visit from time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.site_visit_from_time_is_required')];
         }
 
         if (isset($input['site_visit_end_date']) && !isset($input['site_visit_end_time'])) {
-            return ['success' => false, 'message' => 'Site Visit to time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.site_visit_to_time_is_required')];
         }
 
         if (!isset($input['bid_submission_closing_time'])) {
-            return ['success' => false, 'message' => 'Bid submission to time is required'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_to_time_is_required')];
         }
 
         if ($bid_submission_opening_date > $bid_submission_closing_date) {
-            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time_for_bid_submission')];
         }
 
         if((isset($input['isProcessCompleteBeforeClosing']) && $input['isProcessCompleteBeforeClosing'] != 1)){
             if (isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate || isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate || isset($site_visit_date) && $site_visit_date < $currenctDate) {
-                return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.all_the_date_and_time_should_greater_than_current_date_and_time')];
             }
         }
 
@@ -853,19 +853,19 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if (isset($document_sales_start_date) && isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.pre_bid_clarification_from_date_and_time_should_greater_than_document_sale_from_date_and_time')];
         }
 
         if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.pre_bid_clarification_from_date_and_time_should_less_than_bid_submission_to_date_and_time')];
         }
 
         if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date >= $bid_submission_closing_date)) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.pre_bid_clarification_to_date_and_time_should_less_than_bid_submission_to_date_and_time')];
         }
 
         if (!$rfq && $document_sales_start_date > $bid_submission_opening_date) {
-            return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_from_date_and_time_should_greater_than_document_sales_from_date_and_time')];
         }
 
         if (!is_null($input['stage']) || $input['stage'] != 0) {
@@ -889,29 +889,29 @@ class TenderMasterAPIController extends AppBaseController
 
 
                 if (is_null($input['bid_submission_opening_date'])) {
-                    return ['success' => false, 'message' => 'Bid Submission date cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_date_cannot_be_empty')];
                 }
 
                 if (is_null($input['bid_opening_date_time'])) {
                     if ($input['bid_opening_date'] && $rfq) {
-                        return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_time_cannot_be_empty')];
                     } elseif (!$rfq) {
-                        return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_time_cannot_be_empty')];
                     }
                 }
 
 
                 if (is_null($bid_submission_closing_date)) {
                     if ($bid_sub_date > $bid_opening_date) {
-                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission from date and time'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_from_date_and_time_should_greater_than_bid_submission_from_date_and_time')];
                     }
                 } else {
 
                     if ($bid_sub_date >= $bid_opening_date) {
                         if (isset($bid_opening_date) && $rfq) {
-                            return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_from_date_and_time_should_greater_than_bid_submission_to_date_and_time')];
                         } elseif (!$rfq) {
-                            return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_from_date_and_time_should_greater_than_bid_submission_to_date_and_time')];
                         }
                     }
                 }
@@ -919,11 +919,11 @@ class TenderMasterAPIController extends AppBaseController
 
                 if (isset($bid_opeing_end_date)) {
                     if (is_null($input['bid_opening_end_date_time'])) {
-                        return ['success' => false, 'message' => 'Bid Opening to time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_to_time_cannot_be_empty')];
                     }
 
                     if ($bid_opening_date > $bid_opeing_end_date) {
-                        return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.bid_opening_to_date_and_time_should_greater_than_bid_opening_from_date_and_time')];
                     }
                 }
             }
@@ -933,14 +933,14 @@ class TenderMasterAPIController extends AppBaseController
             if ($input['stage'][0] == 2 || $input['stage'] == 2) {
 
                 if (is_null($input['technical_bid_opening_date']) && !$rfq) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_cannot_be_empty')];
                 }
 
                 if (is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_opening_date'])) {
                     if ($rfq && isset($input['technical_bid_opening_date'])) {
-                        return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_cannot_be_empty')];
                     } elseif (!$rfq) {
-                        return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_cannot_be_empty')];
                     }
                 }
 
@@ -952,7 +952,7 @@ class TenderMasterAPIController extends AppBaseController
 
                 if (isset($input['technical_bid_closing_date'])) {
                     if (is_null($input['technical_bid_closing_date_time'])) {
-                        return ['success' => false, 'message' => 'Technical bid opening to time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_to_time_cannot_be_empty')];
                     }
 
                     $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
@@ -969,13 +969,13 @@ class TenderMasterAPIController extends AppBaseController
                     $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d') . ' ' . $commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
 
                     if (is_null($input['commerical_bid_opening_date_time']) && $rfq) {
-                        return ['success' => false, 'message' => 'Commercial Bid Opening from time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_time_cannot_be_empty')];
                     }
                 }
 
                 if (isset($input['commerical_bid_closing_date'])) {
                     if (!(isset($input['commerical_bid_closing_date_time']))) {
-                        return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_to_time_cannot_be_empty')];
                     }
 
                     $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
@@ -988,46 +988,46 @@ class TenderMasterAPIController extends AppBaseController
 
                 if (!is_null($commerical_bid_closing_date)) {
                     if ($commerical_bid_opening_date > $commerical_bid_closing_date) {
-                        return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_to_date_and_time_should_greater_than_commercial_bid_opening_from_date_and_time')];
                     }
                 }
 
                 if (is_null($input['technical_bid_opening_date_time'])) {
                     if ($rfq && isset($input['technical_bid_opening_date'])) {
-                        return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_time_cannot_be_empty')];
                     } elseif (!$rfq) {
-                        return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_time_cannot_be_empty')];
                     }
                 } else {
 
 
                     if (is_null($bid_submission_closing_date)) {
                         if ($bid_sub_date > $technical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_and_time_should_greater_than_bid_submission_from_date_and_time')];
                         }
                     } else {
 
                         if ($bid_sub_date > $technical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission to date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_and_time_should_greater_than_bid_submission_to_date_and_time')];
                         }
                     }
 
 
                     if (is_null($input['commerical_bid_opening_date_time']) && !$rfq) {
-                        return ['success' => false, 'message' => 'Commercial Bid Opening Time cannot be empty'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_time_cannot_be_empty')];
                     }
 
                     if (is_null($technical_bid_closing_date)) {
                         if ($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_date_and_time_should_be_greater_than_technical_bid_from_date_and_time')];
                         } elseif (!is_null($input['commerical_bid_opening_date_time']) && ($technical_bid_opening_date > $commerical_bid_opening_date) && $rfq) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_date_and_time_should_be_greater_than_technical_bid_from_date_and_time')];
                         }
                     } else {
                         if (!$rfq && ($technical_bid_closing_date >= $commerical_bid_opening_date)) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_date_and_time_should_be_greater_than_technical_bid_to_date_and_time')];
                         } elseif ($rfq && !is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_date_and_time_should_be_greater_than_technical_bid_to_date_and_time')];
                         }
                     }
                 }
@@ -1035,7 +1035,7 @@ class TenderMasterAPIController extends AppBaseController
 
                 if (!empty($technical_bid_opening_date) && !empty($technical_bid_closing_date)) {
                     if ($technical_bid_opening_date > $technical_bid_closing_date) {
-                        return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
+                        return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_to_date_and_time_should_greater_than_technical_bid_opening_from_date_and_time')];
                     }
                 }
             }
@@ -1051,9 +1051,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!empty($existTndr)) {
             if ($rfq) {
-                return ['success' => false, 'message' => trans('custom.rfx_title_cannot_be_duplicated')];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.rfx_title_cannot_be_duplicated')];
             } else {
-                return ['success' => false, 'message' => trans('custom.tender_title_cannot_be_duplicated')];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_title_cannot_be_duplicated')];
             }
         }
 
@@ -1073,7 +1073,7 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if($input['estimated_value'] > $input['allocated_budget'] ){
-            return ['success' => false, 'message' => 'Estimated value cannot exceed the Allocated Budget Amount.'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.estimated_value_cannot_exceed_the_allocated_budget_amount_dot')];
         }
 
         DB::beginTransaction();
@@ -1145,12 +1145,12 @@ class TenderMasterAPIController extends AppBaseController
                         $allowExtensions = ['pdf', 'txt', 'xlsx', 'docx'];
 
                         if (!in_array($extension, $allowExtensions)) {
-                            return $this->sendError('This type of file not allow to upload.', 500);
+                            return $this->sendError(trans('srm_tender_rfx.this_type_of_file_not_allow_to_upload_dot'), 500);
                         }
 
                         if (isset($attachment['size'])) {
                             if ($attachment['size'] > 2097152) {
-                                return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                                return $this->sendError(trans('srm_tender_rfx.maximum_allowed_file_size_is_two_mb_dot_please_upload_lesser_than_two_mb_dot'), 500);
                             }
                         }
 
@@ -1172,16 +1172,16 @@ class TenderMasterAPIController extends AppBaseController
                     if ($input['confirmed_yn'] == 1) {
 
                         if (is_null($input['tender_type_id']) || $input['tender_type_id'] == 0) {
-                            return ['success' => false, 'message' => 'Selection is required'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
                         }
                         if (is_null($input['envelop_type_id']) || $input['envelop_type_id'] == 0) {
-                            return ['success' => false, 'message' => 'Envelop is required'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.envelop_is_required')];
                         }
                         if (is_null($input['evaluation_type_id']) || $input['evaluation_type_id'] == 0) {
-                            return ['success' => false, 'message' => 'Evaluation is required'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.evaluation_is_required')];
                         }
                         if (is_null($input['stage']) || $input['stage'] == 0) {
-                            return ['success' => false, 'message' => 'Stage is required'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.stage_is_required_dot')];
                         }
 
                         if (isset($input['requestType']) && $input['requestType'] == 'Amend') {
@@ -1316,17 +1316,32 @@ class TenderMasterAPIController extends AppBaseController
                                                         $weightage4 += $level4['weightage'];
                                                     }
                                                     if ($level3['weightage'] != $weightage4) {
-                                                        return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level3['description'] . ' is not equal to the parent criteria weightage'];
+                                                        return [
+                                                            'success' => false,
+                                                            'message' => trans('srm_tender_rfx.child_weightage_not_equal', [
+                                                                'criteria' => $level3['description']
+                                                            ])
+                                                        ];
                                                     }
                                                 }
                                             }
                                             if ($level2['weightage'] != $weightage3) {
-                                                return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level2['description'] . ' is not equal to the parent criteria weightage'];
+                                                return [
+                                                    'success' => false,
+                                                    'message' => trans('srm_tender_rfx.child_weightage_not_equal', [
+                                                        'criteria' => $level2['description']
+                                                    ])
+                                                ];
                                             }
                                         }
                                     }
                                     if ($level1['weightage'] != $weightage2) {
-                                        return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level1['description'] . ' is not equal to the parent criteria weightage'];
+                                        return [
+                                            'success' => false,
+                                            'message' => trans('srm_tender_rfx.child_weightage_not_equal', [
+                                                'criteria' => $level1['description']
+                                            ])
+                                        ];
                                     }
                                 }
                             }
@@ -1359,7 +1374,7 @@ class TenderMasterAPIController extends AppBaseController
                 }
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated'), 'data' => $input['addCalendarDates']];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1377,14 +1392,14 @@ class TenderMasterAPIController extends AppBaseController
             $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
 
             if (empty($fromTime)) {
-                return ['success' => false, 'message' => 'From time cannot be empty'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.from_time_cannot_be_empty')];
             }
 
             if (empty($toTime)) {
                 if (!empty($calDate['to_date']) && $rfq) {
-                    return ['success' => false, 'message' => 'To time cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.to_time_cannot_be_empty')];
                 } elseif (!$rfq) {
-                    return ['success' => false, 'message' => 'To time cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.to_time_cannot_be_empty')];
                 }
             }
 
@@ -1401,40 +1416,40 @@ class TenderMasterAPIController extends AppBaseController
                 $to_date = null;
             }
             if (!empty($to_date) && empty($frm_date)) {
-                return ['success' => false, 'message' => 'From date cannot be empty'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_cannot_be_empty')];
             }
 
             if (!empty($frm_date) && empty($to_date)) {
                 if (!empty($toTime) && $rfq) {
-                    return ['success' => false, 'message' => 'To date cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_cannot_be_empty')];
                 } elseif (!$rfq) {
-                    return ['success' => false, 'message' => 'To date cannot be empty'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_cannot_be_empty')];
                 }
             }
 
             if (!empty($frm_date) && !empty($to_date)) {
                 if ($frm_date > $to_date) {
-                    return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time')];
                 }
             }
 
             if (!empty($frm_date)) {
                 if ($frm_date < $currentDate) {
-                    return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_current_date_and_time')];
                 }
             }
 
             if (!empty($to_date)) {
                 if ($to_date < $currentDate) {
-                    return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_and_time_should_greater_than_current_date_and_time')];
                 }
             }
 
             if (!empty($to_date) || !empty($frm_date)) {
                 if (($frm_date > $to_date) && !empty($to_date) && $rfq) {
-                    return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_to_date_and_time')];
                 } elseif ($frm_date > $to_date && !$rfq) {
-                    return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_to_date_and_time')];
                 }
             }
         }
@@ -1453,7 +1468,7 @@ class TenderMasterAPIController extends AppBaseController
         $amd_id = $requestData['tenderMasterHistory']['amd_id'] ?? 0;
 
         if($editOrAmend && empty($requestData['tenderMasterHistory'])){
-            return ['success' => false, 'message' => 'Tender history data not found'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.tender_history_data_not_found')];
         }
 
         $currenctDate = Carbon::now();
@@ -1466,14 +1481,14 @@ class TenderMasterAPIController extends AppBaseController
                         $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
 
                         if (empty($fromTime)) {
-                            return ['success' => false, 'message' => 'From time cannot be empty'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.from_time_cannot_be_empty')];
                         }
 
                         if (empty($toTime)) {
                             if (!empty($calDate['to_date']) && $rfq) {
-                                return ['success' => false, 'message' => 'To time cannot be empty'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.to_time_cannot_be_empty')];
                             } elseif (!$rfq) {
-                                return ['success' => false, 'message' => 'To time cannot be empty'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.to_time_cannot_be_empty')];
                             }
                         }
 
@@ -1490,41 +1505,47 @@ class TenderMasterAPIController extends AppBaseController
                             $to_date = null;
                         }
                         if (!empty($to_date) && empty($frm_date)) {
-                            return ['success' => false, 'message' => 'From date cannot be empty'];
+                            return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_cannot_be_empty')];
                         }
 
                         if (!empty($frm_date) && empty($to_date)) {
                             if (!empty($toTime) && $rfq) {
-                                return ['success' => false, 'message' => 'To date cannot be empty'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_cannot_be_empty')];
                             } elseif (!$rfq) {
-                                return ['success' => false, 'message' => 'To date cannot be empty'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_cannot_be_empty')];
                             }
                         }
 
                         if (!empty($frm_date) && !empty($to_date)) {
                             if ($frm_date > $to_date) {
-                                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time'];
+                                return [
+                                    'success' => false,
+                                    'message' => trans('srm_tender_rfx.from_date_and_time_cannot_be_greater_than_the_to_date_and_time')
+                                ];
                             }
                         }
 
                         if (!empty($frm_date)) {
                             if ($frm_date < $currenctDate) {
-                                return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+                                return [
+                                    'success' => false,
+                                    'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_current_date_and_time')
+                                ];
                             }
                         }
 
                         if (!empty($to_date)) {
                             if ($to_date < $currenctDate) {
-                                return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_and_time_should_greater_than_current_date_and_time')];
                             }
                         }
 
 
                         if (!empty($to_date) || !empty($frm_date)) {
                             if (($frm_date > $to_date) && !empty($to_date) && $rfq) {
-                                return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_to_date_and_time')];
                             } elseif ($frm_date > $to_date && !$rfq) {
-                                return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                                return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_to_date_and_time')];
                             }
                         }
                     }
@@ -1593,7 +1614,7 @@ class TenderMasterAPIController extends AppBaseController
                     }
 
                 }
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated'), 'data' => $input['addCalendarDates']];
             } else {
                 return $this->tenderMasterRepository->deleteCalenderDetails($input['id'], $input['company_id'], $requestData);
             }
@@ -1607,16 +1628,16 @@ class TenderMasterAPIController extends AppBaseController
 
 
         $messages = [
-            'title.required' => 'Title is required.',
-            'currency_id.required' => 'Currency is required.',
-            'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-            'bid_submission_opening_date.required' => 'Bid Submission From Date.',
-            'tender_type_id.required' => 'Type is required.',
-            'evaluation_type_id.required' => 'Evaluation Type is required.',
-            'stage.required' => 'Stage is required.',
-            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+            'title.required' => trans('srm_tender_rfx.title_is_required_dot'),
+            'currency_id.required' => trans('srm_tender_rfx.currency_is_required_dot'),
+            'pre_bid_clarification_method.required' => trans('srm_tender_rfx.pre_bid_clarifications_method_dot'),
+            'bid_submission_opening_date.required' => trans('srm_tender_rfx.bid_submission_from_date_dot'),
+            'tender_type_id.required' => trans('srm_tender_rfx.type_is_required_dot'),
+            'evaluation_type_id.required' => trans('srm_tender_rfx.evaluation_type_is_required_dot'),
+            'stage.required' => trans('srm_tender_rfx.stage_is_required_dot'),
+            'no_of_alternative_solutions.required' => trans('srm_tender_rfx.number_of_alternative_solutions_is_required_dot'),
+            'commercial_weightage.required' => trans('srm_tender_rfx.commercial_criteria_weightage_is_required_dot'),
+            'technical_weightage.required' => trans('srm_tender_rfx.technical_criteria_weightage_is_required_dot'),
         ];
 
         $validator = \Validator::make($input, [
@@ -1634,18 +1655,18 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!isset($input['rfq'])) {
             $messages = [
-                'estimated_value.required' => 'Estimated Value is required.',
-                'bank_id.required' => 'Bank is required.',
-                'bank_account_id.required' => 'Bank Account is required.',
-                'document_sales_start_date.required' => 'Document Sales From Date is required.',
-                'document_sales_end_date.required' => 'Document Sales To Date is required.',
+                'estimated_value.required' => trans('srm_tender_rfx.estimated_value_is_required_dot'),
+                'bank_id.required' => trans('srm_tender_rfx.bank_is_required_dot'),
+                'bank_account_id.required' => trans('srm_tender_rfx.bank_account_is_required_dot'),
+                'document_sales_start_date.required' => trans('srm_tender_rfx.document_sales_from_date_is_required_dot'),
+                'document_sales_end_date.required' => trans('srm_tender_rfx.document_sales_to_date_is_required_dot'),
                 //'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
                 //'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
-                'bid_submission_closing_date.required' => 'Bid Submission To Date.',
+                'bid_submission_closing_date.required' => trans('srm_tender_rfx.bid_submission_to_date_dot'),
                 // 'site_visit_date.required' => 'Site Visit From Date.',
                 // 'site_visit_end_date.required' => 'Site Visit To Date.',
-                'envelop_type_id.required' => 'Envelop Type is required.',
-                'stage.required' => 'Stage is required.',
+                'envelop_type_id.required' => trans('srm_tender_rfx.envelop_type_is_required_dot'),
+                'stage.required' => trans('srm_tender_rfx.stage_is_required_dot'),
             ];
             $validator = \Validator::make($input, [
                 'estimated_value' => 'required',
@@ -1669,10 +1690,10 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if ($input['evaluation_type_id'] == 0) {
-            return ['status' => false, 'message' => 'Evaluation Type is required.'];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.evaluation_type_is_required_dot')];
         }
 
-        return ['status' => true, 'message' => "success"];
+        return ['status' => true, 'message' => "trans('srm_tender_rfx.success')"];
     }
 
     public function getFaqFormData(Request $request)
@@ -1943,19 +1964,19 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = TenderMaster::find($tenderMasterId);
         $emails = array();
         if (empty($tenderMaster)) {
-            return $this->sendError(trans('custom.tender_not_found'));
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
         }
 
         if ($tenderMaster->RollLevForApp_curr > 1) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_tender_it_is_already_partia'));
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_partial'));
         }
 
         if ($tenderMaster->approved == -1) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_tender_it_is_already_fully_'));
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_full'));
         }
 
         if ($tenderMaster->confirmed_yn == 0) {
-            return $this->sendError(trans('custom.you_cannot_reopen_this_tender_it_is_not_confirmed'));
+            return $this->sendError(trans('srm_tender_rfx.tender_reopen_not_confirmed'));
         }
 
         // updating fields
@@ -1974,14 +1995,9 @@ class TenderMasterAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $tenderMaster->tender_code . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $tenderMaster->tender_code;
 
-        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
+        $subject = $cancelDocNameSubject . ' is reopened';
 
-        $body = trans('email.is_reopened_body', [
-            'attribute' => $cancelDocNameBody,
-            'empID' => $employee->empID,
-            'empName' => $employee->empFullName,
-            'reopenComments' => $input['reopenComments']
-        ]);
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $tenderMaster->company_id)
             ->where('documentSystemCode', $tenderMaster->id)
@@ -1996,7 +2012,7 @@ class TenderMasterAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.policy_not_found')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -2040,7 +2056,7 @@ class TenderMasterAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($tenderMaster->document_system_id, $tenderMasterId, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_reopened_successfully'));
+        return $this->sendResponse($tenderMaster->toArray(), trans('srm_tender_rfx.tender_reopened_success'));
     }
 
     public function tenderMasterPublish(Request $request)
@@ -2073,7 +2089,7 @@ class TenderMasterAPIController extends AppBaseController
                 if ($tenderType == 1 && $documentType == 0) {
                     $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
                 }
-                return ['success' => true, 'message' => 'Successfully Published'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_published')];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -2124,7 +2140,7 @@ class TenderMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('procument_cat_id'));
         $tenderActivity = $this->tenderMasterRepository->loadTenderSubActivity($input);
 
-        return $this->sendResponse($tenderActivity, trans('custom.tender_sub_activity_retrieved_successfully'));
+        return $this->sendResponse($tenderActivity, 'Tender sub activity retrieved successfully');
     }
     public function sendSupplierInvitation(Request $request)
     {
@@ -2155,9 +2171,9 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 
-            return $this->sendResponse($loginUrl, trans('custom.supplier_registration_link_generated_successfully'));
+            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
-            return $this->sendError(trans('custom.supplier_registration_link_generation_failed'), 500);
+            return $this->sendError('Supplier Registration Link Generation Failed', 500);
         }
     }
     public function getSupplierList(Request $request)
@@ -2176,7 +2192,7 @@ class TenderMasterAPIController extends AppBaseController
                 return $this->sendResponse([], $response['message']);
             }
         } catch (\Exception $exception) {
-            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()]));
         }
     }
     public function getSupplierAssignedList(Request $request)
@@ -2207,16 +2223,16 @@ class TenderMasterAPIController extends AppBaseController
             $total = ((int)$commercialWeightage + (int)$technicalWeightage);
             $employee = \Helper::getEmployeeInfo();
             if ($total != 100) {
-                return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
+                return ['status' => false, 'message' => trans('srm_tender_rfx.the_total_evaluation_criteria_weightage_cannot_be_less_than_hundred')];
             }
 
             if (!isset($input['rfx'])) {
                 if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
-                    return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.commercial_passing_weightage_is_required_dot')];
                 }
 
                 if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
-                    return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.technical_passing_weightage_is_required_dot')];
                 }
             }
 
@@ -2230,12 +2246,12 @@ class TenderMasterAPIController extends AppBaseController
     public function validateTenderStrategy($input)
     {
         $messages = [
-            'tender_type_id.required' => 'Type is required.',
-            'evaluation_type_id.required' => 'Evaluation Type is required.',
-            'stage.required' => 'Stage is required.',
-            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.'
+            'tender_type_id.required' => trans('srm_tender_rfx.type_is_required_dot'),
+            'evaluation_type_id.required' => trans('srm_tender_rfx.evaluation_type_is_required_dot'),
+            'stage.required' => trans('srm_tender_rfx.stage_is_required_dot'),
+            'no_of_alternative_solutions.required' => trans('srm_tender_rfx.number_of_alternative_solutions_is_required_dot'),
+            'commercial_weightage.required' => trans('srm_tender_rfx.commercial_criteria_weightage_is_required_dot'),
+            'technical_weightage.required' => trans('srm_tender_rfx.technical_criteria_weightage_is_required_dot')
         ];
 
         $validator = \Validator::make($input, [
@@ -2249,9 +2265,9 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!isset($input['rfx'])) {
             $messages = [
-                'envelop_type_id.required' => 'Envelop Type is required.',
-                'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
-                'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+                'envelop_type_id.required' => trans('srm_tender_rfx.envelop_type_is_required_dot'),
+                'commercial_passing_weightage.required' => trans('srm_tender_rfx.commercial_passing_weightage_is_required_dot'),
+                'technical_passing_weightage.required' =>  trans('srm_tender_rfx.technical_passing_weightage_is_required_dot')
             ];
 
             $validator = \Validator::make($input, [
@@ -2265,10 +2281,10 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if ($input['evaluation_type_id'] == 0) {
-            return ['status' => false, 'message' => 'Evaluation Type is required.'];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.evaluation_type_is_required_dot')];
         }
 
-        return ['status' => true, 'message' => "success"];
+        return ['status' => true, 'message' => trans('srm_tender_rfx.success')];
     }
 
     public function removeCalenderDate(Request $request)
@@ -2323,27 +2339,33 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         if (!empty($to_date) && empty($frm_date)) {
-            return ['success' => false, 'message' => 'From date cannot be empty'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.from_date_cannot_be_empty')];
         }
         if (!empty($frm_date) && empty($to_date) && !$rfx) {
-            return ['success' => false, 'message' => 'To date cannot be empty'];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_cannot_be_empty')];
         }
 
         if (!empty($frm_date)) {
             if ($frm_date < $currentDate) {
-                return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.from_date_and_time_should_greater_than_current_date_and_time')
+                ];
             }
         }
 
         if (!empty($to_date)) {
             if ($to_date < $currentDate) {
-                return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.to_date_and_time_should_greater_than_current_date_and_time')];
             }
         }
 
         if (!empty($frm_date) && !empty($to_date)) {
             if ($frm_date > $to_date) {
-                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time'];
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.from_date_cannot_be_greater_than_to_date')
+                ];
             }
         }
 
@@ -2380,7 +2402,7 @@ class TenderMasterAPIController extends AppBaseController
                     }
 
                     DB::commit();
-                    return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated'), 'data' => $calendarDatesDetail];
                 }
             } else {
                 $calenderDates =  $editOrAmend ?
@@ -2407,7 +2429,7 @@ class TenderMasterAPIController extends AppBaseController
                 }
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_updated'), 'data' => $calendarDatesDetail];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -2488,7 +2510,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->where('stage', $filters['stage']);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2867,7 +2889,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['master_data'] = $master_data;
         $data['submission_master_data'] = $submission_master_data;
         $data['show_technical_criteria'] = $techniqal_wightage->show_technical_criteria;
-        return $this->sendResponse($data, trans('custom.tender_masters_retrieved_successfully'));
+        return $this->sendResponse($data, 'Tender Masters retrieved successfully');
     }
 
     public function getCommercialBidTenderList(Request $request)
@@ -2977,7 +2999,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->whereIn('commercial_verify_status', $ids);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -3543,7 +3565,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
         $items = $this->getPricingItems($bidMasterId, $tenderId);
         $data['items']  = $items;
-        return $this->sendResponse($data, trans('custom.data_retrieved_successfully_1'));
+        return $this->sendResponse($data, 'data retrieved successfully');
     }
 
     public function getPricingItems($bidMasterId, $tenderId)
@@ -4061,7 +4083,7 @@ class TenderMasterAPIController extends AppBaseController
             ]);
         }])->first();
 
-        return $this->sendResponse($tender, trans('custom.data_retrieved_successfully_1'));
+        return $this->sendResponse($tender, 'data retrieved successfully');
     }
 
     public function confirmFinalBidAwardComment(Request $request)
@@ -4086,7 +4108,7 @@ class TenderMasterAPIController extends AppBaseController
                 if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
                     $name = $mail->employee->empFullName;
                     $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
-                    $body = trans('email.hi') . " $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                    $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                     $dataEmail['empEmail'] = $mail->employee->empUserName;
                     $dataEmail['companySystemID'] = $request['companySystemID'];
                     $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -4096,7 +4118,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tender, trans('custom.successfully_confirmed'));
+            return $this->sendResponse($tender, 'successfully confirmed');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4169,10 +4191,10 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>" . trans('email.hi') . " " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
-                $body = trans('email.hi') . " $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
+                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br><br> Regards,<br>$company.";
             }
@@ -4206,7 +4228,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = trans('email.hi') . " $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
@@ -4218,7 +4240,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tender, trans('custom.email_send_successfully'));
+            return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4437,7 +4459,7 @@ class TenderMasterAPIController extends AppBaseController
             $tender->save();
 
             DB::commit();
-            return $this->sendResponse($tender, trans('custom.tender_negotiation_started_successfully'));
+            return $this->sendResponse($tender, trans('srm_ranking.tender_negotiation_started'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4451,7 +4473,7 @@ class TenderMasterAPIController extends AppBaseController
             $tenderId = $request['srm_tender_master_id'];
             TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1, 'negotiation_is_awarded' => 1]);
             DB::commit();
-            return $this->sendResponse('success', trans('custom.tender_negotiation_closed_successfully'));
+            return $this->sendResponse('success', trans('srm_ranking.tender_negotiation_closed'));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -4739,7 +4761,7 @@ class TenderMasterAPIController extends AppBaseController
             $query->where('stage', $filters['stage']);
         }
 
-        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -4945,11 +4967,11 @@ class TenderMasterAPIController extends AppBaseController
 
             $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderMasterId);
             if (empty($tenderMaster)) {
-                return $this->sendError(trans('custom.tender_master_not_found'));
+                return $this->sendError(trans('srm_tender_rfx.tender_master_not_found'));
             }
 
             if ($tenderMaster->refferedBackYN != -1) {
-                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
+                return $this->sendError(trans('srm_tender_rfx.cannot_amend_document'));
             }
 
 
@@ -4992,7 +5014,7 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($tenderMaster->toArray(), trans('custom.tender_amended_successfully'));
+            return $this->sendResponse($tenderMaster->toArray(), trans('srm_tender_rfx.tender_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -5006,7 +5028,7 @@ class TenderMasterAPIController extends AppBaseController
             ->where('id',$input['tenderMasterId'])
             ->get();
 
-        return $this->sendResponse($tenderAmendHistory, trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($tenderAmendHistory, 'Tender Master retrieved successfully');
     }
     public function getTenderRfxAudit(Request $request){
         $input = $request->all();
@@ -5052,9 +5074,9 @@ class TenderMasterAPIController extends AppBaseController
         $data['modifyRequestList'] = DocumentModifyRequest::getModificationRequestList($input['id']);
 
         if (empty($data['tenderMaster'])) {
-            return $this->sendError(trans('custom.tender_master_not_found'));
+            return $this->sendError('Tender Master not found');
         }
-        return $this->sendResponse($data, trans('custom.tender_master_retrieved_successfully'));
+        return $this->sendResponse($data, 'Tender Master retrieved successfully');
     }
 
     public function getCompanyTenderList(Request $request){
@@ -5114,7 +5136,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getBudgetItemTotalAmount(Request $request){
         $input = $request->all();
         $record = $this->tenderMasterRepository->getBudgetItemTotalAmount($input);
-        return $this->sendResponse($record, trans('custom.budget_item_amount_retrieved_successfully'));
+        return $this->sendResponse($record, trans('srm_tender_rfx.budget_item_amount_retrieved_successfully'));
     }
 
 
@@ -5140,7 +5162,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5153,7 +5175,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5169,7 +5191,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5185,7 +5207,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5198,7 +5220,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5215,7 +5237,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -5228,7 +5250,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5241,7 +5263,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5256,7 +5278,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5273,7 +5295,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5287,7 +5309,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5304,7 +5326,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5321,7 +5343,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 
@@ -5334,7 +5356,7 @@ class TenderMasterAPIController extends AppBaseController
         }
         catch(\Exception $e)
         {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
         }
     }
 

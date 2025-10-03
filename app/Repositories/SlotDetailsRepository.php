@@ -47,17 +47,17 @@ class SlotDetailsRepository extends BaseRepository
             $slotDetail = $this->findWithoutFail($slotDetailID);
 
             if (empty($slotDetail)) {
-                return ['success' => false, 'message' => 'Slot detail not found'];
+                return ['success' => false, 'message' => trans('srm_supplier_management.slot_detail_not_found')];
             }
 
             $confirmedAppointment = Appointment::checkConfirmedAppointment($slotDetailID);
             if ($confirmedAppointment) {
-                return ['success' => false, 'message' => 'Slot detail cannot be deleted because a confirmed or approved delivery appointment exists'];
+                return ['success' => false, 'message' => trans('srm_supplier_management.slot_detail_cannot_be_deleted_because_a_confirmed_or_approved_delivery_appointment_exists')];
             }
 
             $slotDetail->delete();
 
-            return ['success' => true, 'message' => 'Slot detail deleted successfully'];
+            return ['success' => true, 'message' => trans('srm_supplier_management.slot_detail_successfully_deleted')];
         });
     }
 
@@ -71,19 +71,19 @@ class SlotDetailsRepository extends BaseRepository
 
             $slotDetails = SlotDetails::getSlotDetails($formattedFromDate, $formattedToDate, $company_id, $warehouse_id);
             if ($slotDetails->isEmpty()) {
-                return ['status' => true, 'message' => 'Slots are not available for this date range.'];
+                return ['status' => true, 'message' => trans('srm_supplier_management.slots_are_not_available_for_this_date_range')];
             }
 
             if ($slotDetails->pluck('appointment')->flatten()->pluck('confirmed_yn')->contains(true)) {
                 return [
                     'status' => false,
-                    'message' => 'Cannot delete the slots because there are appointment/s pending for approval or approved.'
+                    'message' => trans('srm_supplier_management.cannot_delete_the_slots_because_there_are_appointments_pending_for_approval_or_approved')
                 ];
             }
 
             SlotDetails::whereIn('id', $slotDetails->pluck('id'))->delete();
 
-            return ['status' => true, 'message' => 'Slots deleted successfully'];
+            return ['status' => true, 'message' => trans('srm_supplier_management.slots_deleted_successfully')];
         });
     }
 

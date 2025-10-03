@@ -78,7 +78,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $this->tenderSupplierAssigneeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderSupplierAssignees = $this->tenderSupplierAssigneeRepository->all();
 
-        return $this->sendResponse($tenderSupplierAssignees->toArray(), trans('custom.tender_supplier_assignees_retrieved_successfully'));
+        return $this->sendResponse($tenderSupplierAssignees->toArray(), 'Tender Supplier Assignees retrieved successfully');
     }
 
     /**
@@ -125,7 +125,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->create($input);
 
-        return $this->sendResponse($tenderSupplierAssignee->toArray(), trans('custom.tender_supplier_assignee_saved_successfully'));
+        return $this->sendResponse($tenderSupplierAssignee->toArray(), 'Tender Supplier Assignee saved successfully');
     }
 
     /**
@@ -172,10 +172,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssignee)) {
-            return $this->sendError(trans('custom.tender_supplier_assignee_not_found'));
+            return $this->sendError('Tender Supplier Assignee not found');
         }
 
-        return $this->sendResponse($tenderSupplierAssignee->toArray(), trans('custom.tender_supplier_assignee_retrieved_successfully'));
+        return $this->sendResponse($tenderSupplierAssignee->toArray(), 'Tender Supplier Assignee retrieved successfully');
     }
 
     /**
@@ -232,12 +232,12 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssignee)) {
-            return $this->sendError(trans('custom.tender_supplier_assignee_not_found'));
+            return $this->sendError('Tender Supplier Assignee not found');
         }
 
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->update($input, $id);
 
-        return $this->sendResponse($tenderSupplierAssignee->toArray(), trans('custom.tendersupplierassignee_updated_successfully'));
+        return $this->sendResponse($tenderSupplierAssignee->toArray(), 'TenderSupplierAssignee updated successfully');
     }
 
     /**
@@ -284,7 +284,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssignee)) {
-            return $this->sendError(trans('custom.tender_supplier_assignee_not_found'));
+            return $this->sendError('Tender Supplier Assignee not found');
         }
 
         $tenderSupplierAssignee->delete();
@@ -303,7 +303,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         if(!$response['success']){
             return $this->sendError($response['message']);
         }
-        return $this->sendResponse([], trans('custom.file_deleted'));
+        return $this->sendResponse([], 'File Deleted');
     }
     public function supplierAssignCRUD(Request $request)
     {
@@ -395,9 +395,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         DB::commit();
                     }
                 }
-                return $this->sendResponse([], trans('custom.invitation_sent_successfully'));
+                return $this->sendResponse([], trans('srm_tender_rfx.invitation_sent_successfully'));
             } else {
-                return $this->sendError('No records found', 500);
+                return $this->sendError(trans('srm_tender_rfx.no_records_found'), 500);
             }
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -480,7 +480,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         DB::commit();
                 }  
             }
-            return $this->sendResponse([], trans('custom.invitation_resent_successfully'));
+            return $this->sendResponse([], trans('srm_tender_rfx.invitation_resent_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getLine() . $exception->getMessage());
@@ -569,10 +569,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->deleteAllAssignedSuppliers($input);
 
         if (empty($tenderSupplierAssignee)) {
-            return $this->sendError(trans('custom.not_found_1'));
+            return $this->sendError(trans('srm_tender_rfx.supplier_assignee_not_found'));
         }
 
-        return $this->sendResponse(0, trans('custom.file_deleted'));
+        return $this->sendResponse(0, trans('srm_tender_rfx.successfully_deleted'));
     }
 
     public function deleteSelectedSuppliers(Request $request)

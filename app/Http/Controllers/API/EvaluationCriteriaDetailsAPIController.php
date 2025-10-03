@@ -319,7 +319,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'selectedData' => 'required',
             ], [
-                'selectedData.required' => 'Technical evaluation criteria is required.',
+                'selectedData.required' => trans('srm_masters.technical_evaluation_criteria_is_required'),
             ]);
 
             if ($validator->fails()) {
@@ -354,18 +354,18 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             if($input['level'] == 1){
                 if($input['critera_type_id'] !=1) {
                     if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
-                        return ['success' => false, 'message' => 'Weightage is required'];
+                        return ['success' => false, 'message' => trans('srm_masters.weightage_is_required')];
                     }
 
                     if(!isset($input['passing_weightage']) || empty($input['passing_weightage']) || $input['passing_weightage']<= 0){
-                        return ['success' => false, 'message' => 'Passing weightage is required'];
+                        return ['success' => false, 'message' => trans('srm_masters.passing_weightage_is_required')];
                     }
                 }
             }
 
             if($is_final_level == 1){
                 if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
-                    return ['success' => false, 'message' => 'Answer Type is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.answer_type_is_required')];
                 }
             }
 
@@ -374,7 +374,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 EvaluationCriteriaDetails::checkForDescriptionDuplication($input['tenderMasterId'], $input['description'], $input['level']);
 
             if(!empty($chkDuplicate)){
-                return ['success' => false, 'message' => 'Description cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_masters.description_cannot_be_duplicated')];
             }
 
             DB::beginTransaction();
@@ -466,13 +466,13 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                 $x++;
                             }
                         }else{
-                            return ['success' => false, 'message' => 'At least one score configuration is required'];
+                            return ['success' => false, 'message' => trans('srm_masters.at_least_one_score_configuration_is_required')];
                         }
                     }
 
 
                     DB::commit();
-                    return ['success' => true, 'message' => 'Successfully created'];
+                    return ['success' => true, 'message' => trans('srm_masters.successfully_created')];
                 }
             }catch (\Exception $e) {
                 DB::rollback();
@@ -498,7 +498,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully created'];
+            return ['success' => true, 'message' => trans('srm_masters.successfully_created')];
         } catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => $e->getMessage()];
@@ -621,18 +621,18 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {
                 if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
-                    return ['success' => false, 'message' => 'Weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.weightage_is_required')];
                 }
 
                 if(!isset($input['passing_weightage']) || empty($input['passing_weightage']) || $input['passing_weightage']<= 0){
-                    return ['success' => false, 'message' => 'Passing weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.passing_weightage_is_required')];
                 }
             }
         }
 
         if($is_final_level == 1){
             if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
-                return ['success' => false, 'message' => 'Answer Type is required'];
+                return ['success' => false, 'message' => trans('srm_masters.answer_type_is_required')];
             }
         }
 
@@ -640,7 +640,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('description',$input['description'])->where('level',$input['level'])->first();
 
             if(!empty($chkDuplicate)){
-                return ['success' => false, 'message' => 'Description cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_masters.description_cannot_be_duplicated')];
             }
         }
 
@@ -728,13 +728,13 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                             $x++;
                         }
                     }else{
-                        return ['success' => false, 'message' => 'At least one score configuration is required'];
+                        return ['success' => false, 'message' => trans('srm_masters.at_least_one_score_configuration_is_required')];
                     }
                 }
 
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully created'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_created')];
             }
         }catch (\Exception $e) {
             DB::rollback();
@@ -751,7 +751,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
 
             if(!empty($chkDuplicateName)){
-                return ['success' => false, 'message' => 'Name cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_masters.name_cannot_be_duplicated')];
             }
         }
 
@@ -763,7 +763,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $data_master['created_by'] = $employee->employeeSystemID;
             EvaluationCriteriaMaster::create($data_master);
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully created'];
+            return ['success' => true, 'message' => trans('srm_masters.successfully_created')];
         }catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => $e->getMessage()];
@@ -932,7 +932,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -952,7 +952,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $result->delete();
             if($result){
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_deleted'), 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1001,16 +1001,16 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $tenderMasterPublishedCount = TenderMaster::select('id')->whereIn('id', $evaluationCriteriaMasterDetails)->where('confirmed_yn', 0)->count();
 
             if ($tenderMasterPublishedCount > 0) {
-                return ['success' => false, 'message' => 'Technical evaluation criteria already used'];
+                return ['success' => false, 'message' => trans('srm_masters.technical_evaluation_criteria_already_used')];
             }
 
             $dataMaster['is_active'] = $isChecked;
             $evaluationMaster = EvaluationCriteriaMaster::find($masterCriteriaId);
             $result = $evaluationMaster->update($dataMaster);
             if($result){
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated')];
             } else {
-                return ['success' => false, 'message' => 'Unexpected Error'];
+                return ['success' => false, 'message' => trans('srm_masters.unexpected_error')];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1027,9 +1027,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $tenderMasterPublishedCount = TenderMaster::select('id')->whereIn('id', $evaluationCriteriaMasterDetails)->where('confirmed_yn', 0)->count();
 
         if ($tenderMasterPublishedCount > 0) {
-            return ['success' => false, 'message' => 'Technical evaluation criteria already used'];
+            return ['success' => false, 'message' => trans('srm_masters.technical_evaluation_criteria_already_used')];
         } else {
-            return ['success' => true, 'message' => 'Technical evaluation criteria not used'];
+            return ['success' => true, 'message' => trans('srm_masters.technical_evaluation_criteria_not_used')];
         }
     }
 
@@ -1041,31 +1041,31 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {
                 if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
-                    return ['success' => false, 'message' => 'Weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.weightage_is_required')];
                 }
 
                 if(!isset($input['passing_weightage']) || empty($input['passing_weightage']) || $input['passing_weightage'] <= 0){
-                    return ['success' => false, 'message' => 'Passing weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.passing_weightage_is_required')];
                 }
             }
         }
 
         if($input['is_final_level'] == 1){
             if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
-                return ['success' => false, 'message' => 'Answer Type is required'];
+                return ['success' => false, 'message' => trans('srm_masters.answer_type_is_required')];
             }
         }
 
         $chkDuplicateName =  EvaluationCriteriaMaster::where('id','!=',$input['evaluation_criteria_master']['id'])->where('name',$input['evaluation_criteria_master']['name'])->first();
 
         if(!empty($chkDuplicateName)){
-            return ['success' => false, 'message' => 'Name cannot be duplicated'];
+            return ['success' => false, 'message' => trans('srm_masters.name_cannot_be_duplicated')];
         }
 
         $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])->where('id','!=',$input['id'])->where('description',$input['description'])->where('level',$input['level'])->first();
 
         if(!empty($chkDuplicate)){
-            return ['success' => false, 'message' => 'Description cannot be duplicated'];
+            return ['success' => false, 'message' => trans('srm_masters.description_cannot_be_duplicated')];
         }
 
         DB::beginTransaction();
@@ -1101,13 +1101,13 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
                     $config = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->first();
                     if(empty($config)){
-                        return ['success' => false, 'message' => 'At least one score configuration is required'];
+                        return ['success' => false, 'message' => trans('srm_masters.at_least_one_score_configuration_is_required')];
                     }
                 }
 
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_updated')];
             }
         }catch (\Exception $e) {
             DB::rollback();
@@ -1136,9 +1136,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('level',1)->sum('weightage');
             $total = $result + $weightage;
             if($total>100){
-                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+                return ['success' => false, 'message' => trans('srm_masters.total_weightage_cannot_exceed_100_percent')];
             } else {
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         } else {
             $result = EvaluationCriteriaMasterDetails::where('parent_id',$parentId)->where('level',$level)->sum('weightage');
@@ -1147,9 +1147,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $total = $result + $weightage;
 
             if($total>$parent['weightage']){
-                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+
+                return ['success' => false, 'message' => trans('srm_masters.total_child_weightage_cannot_exceed', [
+                    'code' => $parent['weightage'],
+                ])];
             }else{
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         }
 
@@ -1178,9 +1181,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
             $total = $result + $input['weightage'];
             if($total>100){
-                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+                return ['success' => false, 'message' => trans('srm_masters.total_weightage_cannot_exceed_100_percent')];
             } else {
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         } else {
             $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])
@@ -1193,9 +1196,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $total = $result + $input['weightage'];
 
             if($total>$parent['weightage']){
-                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+                return ['success' => false, 'message' => trans('srm_masters.total_child_weightage_cannot_exceed', [
+                    'code' => $parent['weightage'],
+                ])];
             }else{
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         }
 

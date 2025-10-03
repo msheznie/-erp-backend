@@ -75,7 +75,7 @@ class SrmDocumentModifyService
         if(!empty($documentModifyRequest) &&
             $documentModifyRequest->status == 1 &&
             $documentModifyRequest->confirmation_approved != -1){
-            return $documentModifyRequest->type == 1 ? 'Edit' : 'Amend';
+            return $documentModifyRequest->type == 1 ? trans('srm_tender_rfx.edit') : trans('srm_tender_rfx.amend');
         }
         return '';
     }
@@ -112,11 +112,11 @@ class SrmDocumentModifyService
         $requestType = self::getRequestType($documentModifyRequest);
         if ($documentModifyRequest->modify_type == 1) {
             return ($documentModifyRequest->approved == 0 && $documentModifyRequest->confirmation_approved == 0)
-                ? 'Requested for ' . $requestType . ' approval'
-                : 'Requested for ' . $requestType . ' approved';
+                ? trans('srm_tender_rfx.requested_for_request_type_approval', ['requestType' => $requestType])
+                : trans('srm_tender_rfx.requested_for_request_type_approved', ['requestType' => $requestType]);
         }
         if ($documentModifyRequest->modify_type != 1 && $documentModifyRequest->approved == 1 && $documentModifyRequest->confirmation_approved == 0) {
-            return 'Requested after ' . $requestType . ' approval';
+            return trans('srm_tender_rfx.requested_after_request_type_approval', ['requestType' => $requestType]);
         }
         return null;
     }
@@ -175,7 +175,7 @@ class SrmDocumentModifyService
             self::updateCirculars($tenderMasterID, $versionID);
             self::updateEvaluationCriteriaDetail($tenderMasterID, $versionID);
             self::updateEvaluationCriteriaScore($versionID);
-            return ['success' => true, 'message' => 'Record updated successfully'];
+            return ['success' => true, 'message' => trans('srm_approvals.record_updated_successfully')];
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
         }
@@ -188,7 +188,7 @@ class SrmDocumentModifyService
                 unset($attributes['id'], $attributes['created_at'], $attributes['updated_at'] , $attributes['level_no']);
                 $tenderMasterRecord = TenderMaster::find($tenderMasterID);
                 $tenderMasterRecord->update($attributes);
-                return ['success' => true, 'message' => 'Tender updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -226,7 +226,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender bid employee/s updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_bid_employees_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -263,7 +263,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender user access updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_user_access_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -298,7 +298,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -332,7 +332,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -367,7 +367,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -405,7 +405,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -440,7 +440,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -478,7 +478,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender department updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_department_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -521,7 +521,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->attachmentID;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Document attachment updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.document_attachment_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -560,7 +560,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender document type assign updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_document_type_assign_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -596,7 +596,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Document attachment updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.document_attachment_updated_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -640,7 +640,7 @@ class SrmDocumentModifyService
                     self::updateTenderPricingScheduleDetails($tenderMasterID, $versionID, $newRecord->id, $record->amd_id);
                 });
 
-                return ['success' => true, 'message' => 'Pricing Schedule updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.pricing_schedule_updated_successfully')];
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -699,7 +699,7 @@ class SrmDocumentModifyService
                     self::updateTenderBoqItems($versionID, $tenderMasterID, $newRecord->id, $record->amd_id);
 
                 });
-                return ['success' => true, 'message' => 'Pricing Schedule detail updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.pricing_schedule_detail_updated_successfully')];
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -745,7 +745,7 @@ class SrmDocumentModifyService
                     $record->save();
 
                 });
-                return ['success' => true, 'message' => 'Schedule bid format details updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.schedule_bid_format_details_updated_successfully')];
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -789,7 +789,7 @@ class SrmDocumentModifyService
                     $record->id = $newRecord->id;
                     $record->save();
                 });
-                return ['success' => true, 'message' => 'Tender Boq items updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_boq_items_updated_successfully')];
             });
         } catch(\Exception $exception){
             return ['success' => false, 'message' => $exception->getMessage()];
@@ -832,10 +832,10 @@ class SrmDocumentModifyService
                         self::updateCircularSuppliers($tenderMasterID, $versionID, $record->amd_id, $newRecord->id);
                     }
                 });
-                return ['success' => true, 'message' => 'Tender Circular updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.tender_circular_updated_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public static function updateCircularAmendment($tenderMasterID, $versionID, $circular_amd_id, $new_circularID){
@@ -861,10 +861,10 @@ class SrmDocumentModifyService
                         $record->save();
                     }
                 });
-                return ['success' => true, 'message' => 'Circular Amendment updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.circular_amendment_updated_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public static function updateCircularSuppliers($tenderMasterID, $versionID, $circular_amd_id, $new_circularID){
@@ -886,10 +886,10 @@ class SrmDocumentModifyService
                         $record->save();
                     }
                 });
-                return ['success' => true, 'message' => 'Circular Amendment updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.circular_amendment_updated_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public static function updateEvaluationCriteriaDetail($tenderMasterID, $versionID){
@@ -931,10 +931,10 @@ class SrmDocumentModifyService
                     }
                 });
 
-                return ['success' => true, 'message' => 'Evacuation Criteria updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.evacuation_criteria_updated_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public static function updateEvaluationCriteriaScore($versionID){
@@ -969,10 +969,10 @@ class SrmDocumentModifyService
                     }
                 });
 
-                return ['success' => true, 'message' => 'Evacuation Criteria updated successfully'];
+                return ['success' => true, 'message' => trans('srm_approvals.evacuation_criteria_updated_successfully')];
             });
         } catch(\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
     }
     public static function getFieldPermissions($tender_id, $tenderMaster): array{
