@@ -57,4 +57,6 @@ return [
     'budget_addition' => 'إضافة_الميزانية',
     'budget_master' => 'الميزانية_الرئيسية',
     'budget_transfer' => 'تحويل_الميزانية',
+
+    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل'
 ];
