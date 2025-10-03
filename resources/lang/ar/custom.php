@@ -8973,5 +8973,19 @@ return
     'currency_conversion_master_updated_successfully' => 'تم تحديث سيد تحويل العملة بنجاح',
     'currency_conversion_master_deleted_successfully' => 'تم حذف سيد تحويل العملة بنجاح',
     'account_balance' => 'رصيد الحساب',
-    'bank_ledger' => 'دفتر الأستاذ البنكي'
+    'bank_ledger' => 'دفتر الأستاذ البنكي',
+    // Budget Transfer Form Detail API Controller translations
+    'from_department_not_found' => 'القسم المصدر غير موجود',
+    'please_select_active_from_department' => 'يرجى اختيار قسم مصدر نشط',
+    'from_account_not_found' => 'الحساب المصدر غير موجود',
+    'selected_gl_code_already_added' => 'رمز الحساب المحدد مضاف بالفعل. يرجى التحقق مرة أخرى',
+    'budget_transfer_pending_approval' => 'يوجد تحويل ميزانية (:transferVoucherNo) في انتظار الموافقة لرمز الحساب الذي تحاول إضافته. يرجى التحقق مرة أخرى.',
+    'cannot_transfer_negative_balance' => 'لا يمكنك التحويل من مبلغ رصيد سالب أو صفر',
+    'cannot_transfer_more_than_balance' => 'لا يمكنك التحويل أكثر من مبلغ الرصيد، مبلغ الرصيد هو :balance',
+    'contingency_budget_details_not_found' => 'تفاصيل الميزانية الاحتياطية غير موجودة',
+    'cannot_transfer_same_account' => 'لا يمكنك التحويل إلى نفس الحساب، يرجى اختيار حساب مختلف',
+    'company_current_financial_year_not_found' => 'السنة المالية الحالية للشركة غير موجودة أو غير نشطة',
+    'no_budget_allocated_for_account' => 'لا توجد ميزانية مخصصة لـ :accountCode',
+    'selected_account_code_not_available_budget' => 'رمز الحساب المحدد غير متوفر في الميزانية. يرجى التخصيص والمحاولة مرة أخرى.',
+    'please_select_active_to_department' => 'يرجى اختيار قسم وجهة نشط',
   ];
