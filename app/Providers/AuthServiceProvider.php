@@ -26,5 +26,14 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+
+        if ($this->app->resolved(\League\OAuth2\Server\AuthorizationServer::class)) {
+            $server = $this->app->make(\League\OAuth2\Server\AuthorizationServer::class);
+            $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('P1D'));
+        } else {
+            $this->app->afterResolving(\League\OAuth2\Server\AuthorizationServer::class, function ($server) {
+                $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('P1D'));
+            });
+        }
     }
 }
