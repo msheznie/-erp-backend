@@ -9095,4 +9095,7 @@ return
     'no_budget_allocated_for_account' => 'There is no budget allocated for :accountCode',
     'selected_account_code_not_available_budget' => 'Selected account code is not available in the budget. Please allocate and try again.',
     'please_select_active_to_department' => 'Please select an active to department',
+    'supplier_currency_memos' => 'Supplier Currency Memos',
+    'bank_accounts_excel_tab' => 'Bank Accounts',
+    'items_by_warehouse' => 'Items by Warehouse',
   ];

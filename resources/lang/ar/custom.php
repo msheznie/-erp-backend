@@ -8992,4 +8992,7 @@ return
     'no_budget_allocated_for_account' => 'لا توجد ميزانية مخصصة لـ :accountCode',
     'selected_account_code_not_available_budget' => 'رمز الحساب المحدد غير متوفر في الميزانية. يرجى التخصيص والمحاولة مرة أخرى.',
     'please_select_active_to_department' => 'يرجى اختيار قسم وجهة نشط',
+    'supplier_currency_memos' => 'مذكرات عملة المورد',
+    'bank_accounts_excel_tab' => 'الحسابات البنكية',
+    'items_by_warehouse' => 'العناصر حسب المستودع',
   ];
