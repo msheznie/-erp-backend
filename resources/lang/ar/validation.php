@@ -356,5 +356,10 @@ return [
         'custTransactionCurrencyID' => 'معرف عملة معاملة العميل',
         'catalogName' => 'اسم الكتالوج',
         'catalogID' => 'معرّف الكتالوج',
+        'customerCategoryID' => 'معرف فئة العميل',
+        'mainCategory' => 'الفئة الرئيسية',
+        'subCategory' => 'الفئة الفرعية',
+        'customer' => 'العميل',
+
     ],
 ];
