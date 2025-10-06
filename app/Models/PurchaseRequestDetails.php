@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\HasUomQuantityFormatting;
 
 /**
  * Class PurchaseRequestDetails
@@ -60,6 +61,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PurchaseRequestDetails extends Model
 {
+    use HasUomQuantityFormatting;
     //use SoftDeletes;
 
     public $table = 'erp_purchaserequestdetails';
@@ -71,7 +73,7 @@ class PurchaseRequestDetails extends Model
 
     protected $dates = ['deleted_at'];
 
-
+//    protected $appends = ['quantityRequested'];
     public $fillable = [
         'purchaseRequestID',
         'materialReqeuestID',
@@ -192,6 +194,30 @@ class PurchaseRequestDetails extends Model
     public function uom(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
     }
+
+    /**
+     * Mutator for quantityRequested - formats using UOM decimal precision for saving
+     */
+    public function setQuantityRequestedAttribute($value)
+    {
+        $this->setQuantityAttribute('quantityRequested', $value);
+    }
+    /**
+     * Mutator for quantityRequested - formats using UOM decimal precision for saving
+     */
+    public function setAltUnitValueAttribute($value)
+    {
+        $this->setQuantityAttribute('altUnitValue', $value, $this->altUnit);
+    }
+
+    /**
+     * Accessor for quantityRequested - formats using UOM display round off for display
+     * Commented the function to check the frontend based calculations
+     */
+//    public function getQuantityRequestedAttribute($value)
+//    {
+//        return $this->getQuantityAttribute($this->attributes['quantityRequested'] ?? null, $this->UnitID);
+//    }
 
     public function altUom(){
         return $this->belongsTo('App\Models\Unit','altUnit','UnitID');
