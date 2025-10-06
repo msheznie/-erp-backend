@@ -345,6 +345,7 @@ return [
         'companyFinanceYearID' => 'السنة المالية',
         'comments' => 'التعليقات',
         'serviceLineSystemID' => 'القسم',
+        'glAutoID' => 'معرف الحساب',
         'templateMasterID' => 'القالب',
         'contigencyAmount' => 'الميزانية المخصصة',
         'budgetAmount' => 'الميزانية',
