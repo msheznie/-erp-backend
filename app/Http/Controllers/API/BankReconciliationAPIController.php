@@ -1631,8 +1631,9 @@ class BankReconciliationAPIController extends AppBaseController
     }
 
     public function uploadBankStatement(Request $request)
-    {
+    {   
         $input = $request->all();
+        $languageCode = app()->getLocale() ?: 'en';
         $validator = \Validator::make($input, [
             'companySystemID' => 'required',
             'uploadBank' => 'required',
@@ -1753,7 +1754,7 @@ class BankReconciliationAPIController extends AppBaseController
                 'statementMaster' => $bankStatementMaster->toArray(),
                 'transactionCount' => $input['transactionCount']
             ];
-            UploadBankStatement::dispatch($db, $uploadData);
+            UploadBankStatement::dispatch($db, $uploadData, $languageCode);
             return $this->sendResponse([], trans('custom.statement_upload_send_to_queue'));
         } else {
             return $this->sendError(trans('custom.bank_statement_master_not_created'), 500);
