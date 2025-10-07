@@ -367,6 +367,7 @@ return [
         'companyFinancePeriodID' => 'الفترة المالية',
         'serviceLineSystemID' => 'القسم',
         'wareHouseSystemCode' => 'المستودع',
-        'deliveryOrderDate' => 'تاريخ المستند'
+        'deliveryOrderDate' => 'تاريخ المستند',
+        'CurrencyCode' => 'رمز العملة',
     ],
 ];

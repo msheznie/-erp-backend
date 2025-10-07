@@ -9164,4 +9164,6 @@ return
     'policy_not_found_for_this_document' => 'Policy not found for this document',
     // Additional BudjetdetailsAPIController translations
     'excel_is_not_valid_template_fields_modified' => 'Excel is not valid, template default fields are modified',
+    'you_cannot_return_back_to_amend_this_bank_reconciliation_upcoming_months_bank_reconciliation_is_already_created' => 'You cannot return back to amend this bank reconciliation. Upcoming months bank reconciliation is already created',
+    'bank_ledger_report' => 'Bank Ledger Report',
   ];

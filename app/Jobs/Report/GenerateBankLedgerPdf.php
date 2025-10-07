@@ -124,7 +124,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
 
         $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
 
-        $fileName = 'bank_ledger_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
+        $fileName = trans('custom.bank_ledger').'_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
         $path = $rootPaths.'/'.$fileName;
 
         $result = Storage::disk('local_public')->put($path, $pdf_content);
@@ -141,7 +141,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
 
 
             $zip = new ZipArchive;
-            $fileName = $companyCode.'_'.'bank_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+            $fileName = $companyCode.'_'.trans('custom.bank_ledger_report').'_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
             if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
             {
                 foreach($files as $key => $value) {

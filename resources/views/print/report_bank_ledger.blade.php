@@ -126,10 +126,10 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -138,15 +138,15 @@
     <table style="width:100%;">
         <tr>
             <td style="width:100%;text-align: center;">
-                <span class="font-weight-bold" style="font-size: 14px">Bank Ledger</span>
+                <span class="font-weight-bold" style="font-size: 14px">{{ __('custom.bank_ledger') }}</span>
             </td>
         </tr>
     </table>
     <table style="width:100%;">
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Period From :{{ $fromDate }} |
-                    Period To : {{ $toDate }}</span>
+                <span class="font-weight-bold">{{ __('custom.period_from') }} :{{ $fromDate }} |
+                    {{ __('custom.period_to') }} : {{ $toDate }}</span>
             </td>
         </tr>
         <tr>
@@ -164,51 +164,51 @@
                 <th colspan="{{6 + count($extraColumns)}}">{{ $key  }}</th>
                  @if($isGroup == 0 && $currencyID == 3)
                     @if($accBalanceShow)
-                        <th colspan="3" style="text-align: center">Local Currency ({{$currencyCode}})</th>
+                        <th colspan="3" style="text-align: center">{{ __('custom.local_currency') }} ({{$currencyCode}})</th>
                     @else
-                        <th colspan="2" style="text-align: center">Local Currency ({{$currencyCode}})</th>
+                        <th colspan="2" style="text-align: center">{{ __('custom.local_currency') }} ({{$currencyCode}})</th>
                     @endif
                 @endif
                 @if($currencyID == 2)
                     @if($accBalanceShow)
-                        <th colspan="3" style="text-align: center">Reporting Currency ({{$currencyCode}})</th>
+                        <th colspan="3" style="text-align: center">{{ __('custom.reporting_currency') }} ({{$currencyCode}})</th>
                     @else
-                        <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyCode}})</th>
+                        <th colspan="2" style="text-align: center">{{ __('custom.reporting_currency') }} ({{$currencyCode}})</th>
                     @endif
                 @endif
                 @if($currencyID == 1)
                     @if($accBalanceShow)
-                        <th colspan="3" style="text-align: center">Bank Currency ({{ isset($det[0]->bankCurrency) ? $det[0]->bankCurrency : ""}})</th>
+                        <th colspan="3" style="text-align: center">{{ __('custom.bank_currency') }} ({{ isset($det[0]->bankCurrency) ? $det[0]->bankCurrency : ""}})</th>
                     @else
-                        <th colspan="2" style="text-align: center">Bank Currency ({{ isset($det[0]->bankCurrency) ? $det[0]->bankCurrency : ""}})</th>
+                        <th colspan="2" style="text-align: center">{{ __('custom.bank_currency') }} ({{ isset($det[0]->bankCurrency) ? $det[0]->bankCurrency : ""}})</th>
                     @endif
                 @endif
             </tr>
             <tr>
-                <th>Account Description</th>
-                <th>Document Number</th>
-                <th>Document Type</th>
-                <th>Date</th>
-                <th>Document Narration</th>
-                <th>Supplier/Customer</th>
+                <th>{{ __('custom.account_description') }}</th>
+                <th>{{ __('custom.document_number') }}</th>
+                <th>{{ __('custom.document_type') }}</th>
+                <th>{{ __('custom.date') }}</th>
+                <th>{{ __('custom.document_narration') }}</th>
+                <th>{{ __('custom.supplier_customer') }}</th>
                 @if(in_array('confi_name', $extraColumns))
-                    <th>Confirmed By</th>
+                    <th>{{ __('custom.confirmed_by') }}</th>
                 @endif
                 @if(in_array('confi_date', $extraColumns))
-                    <th>Confirmed Date</th>
+                    <th>{{ __('custom.confirmed_date') }}</th>
                 @endif
                 @if(in_array('app_name', $extraColumns))
-                    <th>Approved By</th>
+                    <th>{{ __('custom.approved_by') }}</th>
                 @endif
                 @if(in_array('app_date', $extraColumns))
-                    <th>Approved Date</th>
+                    <th>{{ __('custom.approved_date') }}</th>
                 @endif
                 @if(($isGroup == 0 && $currencyID == 3) || $currencyID == 2 || $currencyID == 1)
-                    <th style="text-align: center">Debit</th>
-                    <th style="text-align: center">Credit</th>
+                    <th style="text-align: center">{{ __('custom.debit') }}</th>
+                    <th style="text-align: center">{{ __('custom.credit') }}</th>
                 @endif
                 @if($accBalanceShow)
-                    <th style="text-align: center">Account Balance</th>
+                    <th style="text-align: center">{{ __('custom.account_balance') }}</th>
                 @endif
             </tr>
             {{$acLocalDebitTotal = 0}}
@@ -271,7 +271,7 @@
             @if(($currencyID == 1 && $accBalanceShow) || ($isGroup == 0 && $currencyID == 3) || $currencyID == 2)
                 <tr style="background-color: #E7E7E7">
                     <td colspan="{{6 + count($extraColumns)}}" class="text-right"
-                        style=""><b>Total Amount:</b>
+                        style=""><b>{{ __('custom.total_amount') }}:</b>
                     </td>
                     @if($isGroup == 0 && $currencyID == 3)
                         <td class="text-right">
@@ -306,7 +306,7 @@
                 <tr style="background-color: #E7E7E7">
                     <td colspan="{{6 + count($extraColumns)}}" class="text-right"
                         style="">
-                        <b>Net Amount</b>
+                        <b>{{ __('custom.net_amount') }}</b>
                     </td>
                     @if($isGroup == 0 && $currencyID == 3)
 

@@ -9061,4 +9061,6 @@ return
     'policy_not_found_for_this_document' => 'السياسة غير موجودة لهذا المستند',
     // Additional BudjetdetailsAPIController translations
     'excel_is_not_valid_template_fields_modified' => 'ملف إكسل غير صالح، تم تعديل الحقول الافتراضية للقالب',
+    'you_cannot_return_back_to_amend_this_bank_reconciliation_upcoming_months_bank_reconciliation_is_already_created' => 'لا يمكنك العودة للتعديل هذا التوازن البنكي. تم إنشاء توازن بنكي للشهر المقبل بالفعل',
+    'bank_ledger_report' => 'تقرير دفتر الأستاذ البنكي',
   ];
