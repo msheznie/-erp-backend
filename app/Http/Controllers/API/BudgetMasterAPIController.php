@@ -4340,11 +4340,6 @@ class BudgetMasterAPIController extends AppBaseController
                      $excel->sheet('New sheet', function($sheet) use ($reportData) {
                         $sheet->loadView('export_report.budget_upload_template', $reportData);
                         
-                        // Set right-to-left for Arabic locale
-                        if (app()->getLocale() == 'ar') {
-                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                            $sheet->setRightToLeft(true);
-                        }
                     });
                 })->download('xlsx');
 
