@@ -9104,6 +9104,29 @@ return
     'currency' => 'Currency',
     'send_notification_at_percent' => 'Send Notification at %',
     'note' => 'Note',
+    // Budget Consumed Data API Controller translations
+    'new_segment_required' => 'New Segment is required',
+    'new_year_required' => 'New Year is required',
+    'new_month_required' => 'New Month is required',
+    'amount_to_change_greater_than_zero' => 'Amount to change should be greater than zero',
+    'budget_not_configured_selected_segment_period' => 'Budget is not configured for selected segment and period',
+    'budget_consumed_data_not_found' => 'Budget consumed data not found',
+    'amount_cannot_be_greater_than_available' => 'Amount cannot be greater than available to change amount',
+    'new_year_not_found' => 'New Year not found',
+    // Budget Details Blade translations
+    'finance_year' => 'Finance Year',
+    'year' => 'Year',
+    'currency' => 'Currency',
+    'segment' => 'Segment',
+    'template' => 'Template',
+    'send_notification_at' => 'Send Notification at',
+    'number' => '#',
+    'category' => 'Category',
+    'total' => 'Total',
+    // Additional Budget Template Blade translations
+    'template_name' => 'Template Name',
+    'financial_year' => 'Financial Year',
+    'send_notification_at_percent' => 'Send Notification at %',
     'expense_gl_amounts_negative_value' => 'Please enter Expense GL Amounts in negative value. Eg : -1200.00',
     'do_not_amend_template_description' => 'Do not amend/modify the Template Description columns or rows. If amended the upload may not be successful.',
     'delete_segment_columns_not_applicable' => 'Delete segment columns which are not applicable for the upload',
@@ -9124,4 +9147,18 @@ return
     'unable_to_export_excel' => 'Unable to export excel',
     'file_type_not_allowed_upload' => 'This type of file not allow to upload.you can only upload .xlsx (or) .xls',
     'maximum_file_size_exceeded' => 'The maximum size allow to upload is 20 MB',
+    // Additional BudgetMasterAPIController translations
+    'every_budget_should_have_at_least_one_item' => 'Every budget should have at least one item',
+    'error_retrieving_budget_consumption_data' => 'Error occured while retrieving budget consumption data',
+    'maximum_file_size_exceeded' => 'The maximum size allow to upload is 20 MB',
+    // Sheet names and file-related translations
+    'new_sheet' => 'New Sheet',
+    'budget_template' => 'Budget Template',
+    'upload_budget_template' => 'Upload Budget Template',
+    'download_template_budget_template' => 'download_template.budget_template',
+    'general_ledger_transactions_budget_template_excel' => 'general-ledger/transactions/budget-template/excel/',
+    'finance' => 'Finance',
+    'policy_not_found_for_this_document' => 'Policy not found for this document',
+    // Additional BudjetdetailsAPIController translations
+    'excel_is_not_valid_template_fields_modified' => 'Excel is not valid, template default fields are modified',
   ];

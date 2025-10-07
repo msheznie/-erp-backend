@@ -3922,7 +3922,7 @@ class BudgetMasterAPIController extends AppBaseController
         $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($input['companySystemID'],12);
 
         if (!$cutOffUpdatePolicy) {
-            return $this->sendError(trans('custom.cannot_update_budget_cutoff_period'));
+            return $this->sendError(trans('custom.you_cannot_update_budget_cutoff_period'));
         }
 
         $input['cutOffPeriod'] = ($input['cutOffPeriod']) ? $input['cutOffPeriod'] : 0;
@@ -3999,7 +3999,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -4514,7 +4514,7 @@ class BudgetMasterAPIController extends AppBaseController
         ];
 
         $templateName = "download_template.budget_template";
-        $fileName = 'budget_template';
+        $fileName = trans('custom.budget_template');
         $path = 'general-ledger/transactions/budget-template/excel/';
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
@@ -4659,7 +4659,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         if (!in_array($extension, $allowedExtensions))
         {
-            return $this->sendError(trans('custom.file_type_not_allowed_upload'),500);
+            return $this->sendError(trans('custom.file_type_not_allowed_upload_xlsx_xls'),500);
         }
 
         if ($size > 20000000) {

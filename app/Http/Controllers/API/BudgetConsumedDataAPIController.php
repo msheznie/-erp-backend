@@ -500,19 +500,19 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['newSegment'])) {
-            return $this->sendError("New Segment is required", 500);
+            return $this->sendError(trans('custom.new_segment_required'), 500);
         }
 
         if (!isset($input['newYear'])) {
-            return $this->sendError("New Year is required", 500);
+            return $this->sendError(trans('custom.new_year_required'), 500);
         }
 
         if (!isset($input['newMonth'])) {
-            return $this->sendError("New Month is required", 500);
+            return $this->sendError(trans('custom.new_month_required'), 500);
         }
 
         if (!isset($input['amountToChange']) || (isset($input['amountToChange']) && $input['amountToChange'] == 0)) {
-            return $this->sendError("Amount to change should be greater than zero", 500);
+            return $this->sendError(trans('custom.amount_to_change_greater_than_zero'), 500);
         }
 
         $checkBudgetMaster = BudgetMaster::where('companySystemID', $input['companySystemID'])
@@ -529,7 +529,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
                                          ->first();
 
         if (!$checkBudgetMaster) {
-            return $this->sendError("Budget is not configured for selected segment and period", 500);
+            return $this->sendError(trans('custom.budget_not_configured_selected_segment_period'), 500);
         }
 
 
@@ -545,7 +545,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
                                           ->first();
 
         if (!$consumedData) {
-            return $this->sendError("Budget consumed data not found", 500);
+            return $this->sendError(trans('custom.budget_consumed_data_not_found'), 500);
         }
 
         $grvRecivedAmount = GRVDetails::selectRaw('(SUM(GRVcostPerUnitComRptCur*noQty) + SUM(VATAmountRpt*noQty)) as rptTotal')
@@ -567,7 +567,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $availableToChange = $balanceToReciveRpt + floatval($recivedAmountAfterCutOff->rptTotal);
 
         if (floatval($input['amountToChange']) > $availableToChange) {
-            return $this->sendError("Amount cannot be greater than available to change amount", 500);
+            return $this->sendError(trans('custom.amount_cannot_be_greater_than_available'), 500);
         }
 
         $consumedAmountCurrency = \Helper::currencyConversion($input['companySystemID'], $input['consumedRptCurrencyID'], $input['consumedRptCurrencyID'], $input['amountToChange']);
@@ -575,7 +575,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $companyFinanceYear = CompanyFinanceYear::find($input['newYear']);
 
         if (!$companyFinanceYear) {
-            return $this->sendError("New Year not found", 500);
+            return $this->sendError(trans('custom.new_year_not_found'), 500);
         }
 
         $data = [

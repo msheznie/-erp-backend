@@ -9001,6 +9001,29 @@ return
     'currency' => 'العملة',
     'send_notification_at_percent' => 'إرسال إشعار عند %',
     'note' => 'ملاحظة',
+    // Budget Consumed Data API Controller translations
+    'new_segment_required' => 'القطاع الجديد مطلوب',
+    'new_year_required' => 'السنة الجديدة مطلوبة',
+    'new_month_required' => 'الشهر الجديد مطلوب',
+    'amount_to_change_greater_than_zero' => 'المبلغ المراد تغييره يجب أن يكون أكبر من الصفر',
+    'budget_not_configured_selected_segment_period' => 'الميزانية غير مكونة للقطاع والفترة المحددة',
+    'budget_consumed_data_not_found' => 'بيانات استهلاك الميزانية غير موجودة',
+    'amount_cannot_be_greater_than_available' => 'لا يمكن أن يكون المبلغ أكبر من المبلغ المتاح للتغيير',
+    'new_year_not_found' => 'السنة الجديدة غير موجودة',
+    // Budget Details Blade translations
+    'finance_year' => 'السنة المالية',
+    'year' => 'السنة',
+    'currency' => 'العملة',
+    'segment' => 'القطاع',
+    'template' => 'القالب',
+    'send_notification_at' => 'إرسال إشعار عند',
+    'number' => '#',
+    'category' => 'الفئة',
+    'total' => 'المجموع',
+    // Additional Budget Template Blade translations
+    'template_name' => 'اسم القالب',
+    'financial_year' => 'السنة المالية',
+    'send_notification_at_percent' => 'إرسال إشعار عند %',
     'expense_gl_amounts_negative_value' => 'يرجى إدخال مبالغ حسابات المصروفات بقيمة سالبة. مثال: -1200.00',
     'do_not_amend_template_description' => 'لا تقم بتعديل أو تغيير أعمدة أو صفوف وصف القالب. إذا تم التعديل فقد لا يكون التحميل ناجحًا.',
     'delete_segment_columns_not_applicable' => 'احذف أعمدة القطاعات غير المناسبة للتحميل',
@@ -9021,4 +9044,18 @@ return
     'unable_to_export_excel' => 'غير قادر على تصدير Excel',
     'file_type_not_allowed_upload' => 'هذا النوع من الملفات غير مسموح بالتحميل. يمكنك تحميل ملفات .xlsx أو .xls فقط',
     'maximum_file_size_exceeded' => 'الحد الأقصى المسموح للتحميل هو 20 ميجابايت',
+    // Additional BudgetMasterAPIController translations
+    'every_budget_should_have_at_least_one_item' => 'كل ميزانية يجب أن تحتوي على عنصر واحد على الأقل',
+    'error_retrieving_budget_consumption_data' => 'حدث خطأ أثناء استرجاع بيانات استهلاك الميزانية',
+    'maximum_file_size_exceeded' => 'الحد الأقصى المسموح لرفع الملف هو 20 ميجابايت',
+    // Sheet names and file-related translations
+    'new_sheet' => 'ورقة جديدة',
+    'budget_template' => 'قالب الميزانية',
+    'upload_budget_template' => 'رفع قالب الميزانية',
+    'download_template_budget_template' => 'download_template.budget_template',
+    'general_ledger_transactions_budget_template_excel' => 'general-ledger/transactions/budget-template/excel/',
+    'finance' => 'المالية',
+    'policy_not_found_for_this_document' => 'السياسة غير موجودة لهذا المستند',
+    // Additional BudjetdetailsAPIController translations
+    'excel_is_not_valid_template_fields_modified' => 'ملف إكسل غير صالح، تم تعديل الحقول الافتراضية للقالب',
   ];
