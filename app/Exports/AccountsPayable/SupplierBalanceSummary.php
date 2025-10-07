@@ -17,14 +17,14 @@ class SupplierBalanceSummary
     public function getHeader()
     {
         return [
-          'Company ID',
-          'Company Name',
-          'Account',
-          'Supplier Code',
-          'Supplier Name',
-          'Supplier Group',
-          'Currency',
-          'Amount'
+          trans('custom.company_id'),
+          trans('custom.company_name'),
+          trans('custom.account'),
+          trans('custom.supplier_code'),
+          trans('custom.supplier_name'),
+          trans('custom.supplier_group'),
+          trans('custom.currency'),
+          trans('custom.amount')
         ];
     }
 

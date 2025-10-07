@@ -65,7 +65,7 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
         $this->debitNoteMasterRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $debitNoteMasterRefferedbacks = $this->debitNoteMasterRefferedbackRepository->all();
 
-        return $this->sendResponse($debitNoteMasterRefferedbacks->toArray(), 'Debit Note Master Refferedbacks retrieved successfully');
+        return $this->sendResponse($debitNoteMasterRefferedbacks->toArray(), trans('custom.debit_note_master_refferedbacks_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
 
         $debitNoteMasterRefferedbacks = $this->debitNoteMasterRefferedbackRepository->create($input);
 
-        return $this->sendResponse($debitNoteMasterRefferedbacks->toArray(), 'Debit Note Master Refferedback saved successfully');
+        return $this->sendResponse($debitNoteMasterRefferedbacks->toArray(), trans('custom.debit_note_master_refferedback_saved_successfully'));
     }
 
     /**
@@ -165,10 +165,10 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($debitNoteMasterRefferedback)) {
-            return $this->sendError('Debit Note Master Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_master_refferedback_not_found'));
         }
 
-        return $this->sendResponse($debitNoteMasterRefferedback->toArray(), 'Debit Note Master Refferedback retrieved successfully');
+        return $this->sendResponse($debitNoteMasterRefferedback->toArray(), trans('custom.debit_note_master_refferedback_retrieved_successfu'));
     }
 
     /**
@@ -225,12 +225,12 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
         $debitNoteMasterRefferedback = $this->debitNoteMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($debitNoteMasterRefferedback)) {
-            return $this->sendError('Debit Note Master Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_master_refferedback_not_found'));
         }
 
         $debitNoteMasterRefferedback = $this->debitNoteMasterRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($debitNoteMasterRefferedback->toArray(), 'DebitNoteMasterRefferedback updated successfully');
+        return $this->sendResponse($debitNoteMasterRefferedback->toArray(), trans('custom.debitnotemasterrefferedback_updated_successfully'));
     }
 
     /**
@@ -277,12 +277,12 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
         $debitNoteMasterRefferedback = $this->debitNoteMasterRefferedbackRepository->findWithoutFail($id);
 
         if (empty($debitNoteMasterRefferedback)) {
-            return $this->sendError('Debit Note Master Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_master_refferedback_not_found'));
         }
 
         $debitNoteMasterRefferedback->delete();
 
-        return $this->sendResponse($id, 'Debit Note Master Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.debit_note_master_refferedback_deleted_successfull'));
     }
 
     public function getDebitNoteAmendHistory(Request $request)
@@ -293,6 +293,6 @@ class DebitNoteMasterRefferedbackAPIController extends AppBaseController
             ->with(['created_by','confirmed_by','modified_by','supplier','approved_by', 'transactioncurrency'])
             ->get();
 
-        return $this->sendResponse($debitNoteAmendHistory, 'Debit note detail retrieved successfully');
+        return $this->sendResponse($debitNoteAmendHistory, trans('custom.debit_note_detail_retrieved_successfully'));
     }
 }

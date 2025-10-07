@@ -64,7 +64,7 @@ class SMEApprovalUserAPIController extends AppBaseController
         $this->sMEApprovalUserRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEApprovalUsers = $this->sMEApprovalUserRepository->all();
 
-        return $this->sendResponse($sMEApprovalUsers->toArray(), 'S M E Approval Users retrieved successfully');
+        return $this->sendResponse($sMEApprovalUsers->toArray(), trans('custom.s_m_e_approval_users_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SMEApprovalUserAPIController extends AppBaseController
 
         $sMEApprovalUser = $this->sMEApprovalUserRepository->create($input);
 
-        return $this->sendResponse($sMEApprovalUser->toArray(), 'S M E Approval User saved successfully');
+        return $this->sendResponse($sMEApprovalUser->toArray(), trans('custom.s_m_e_approval_user_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SMEApprovalUserAPIController extends AppBaseController
         $sMEApprovalUser = $this->sMEApprovalUserRepository->findWithoutFail($id);
 
         if (empty($sMEApprovalUser)) {
-            return $this->sendError('S M E Approval User not found');
+            return $this->sendError(trans('custom.s_m_e_approval_user_not_found'));
         }
 
-        return $this->sendResponse($sMEApprovalUser->toArray(), 'S M E Approval User retrieved successfully');
+        return $this->sendResponse($sMEApprovalUser->toArray(), trans('custom.s_m_e_approval_user_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SMEApprovalUserAPIController extends AppBaseController
         $sMEApprovalUser = $this->sMEApprovalUserRepository->findWithoutFail($id);
 
         if (empty($sMEApprovalUser)) {
-            return $this->sendError('S M E Approval User not found');
+            return $this->sendError(trans('custom.s_m_e_approval_user_not_found'));
         }
 
         $sMEApprovalUser = $this->sMEApprovalUserRepository->update($input, $id);
 
-        return $this->sendResponse($sMEApprovalUser->toArray(), 'SMEApprovalUser updated successfully');
+        return $this->sendResponse($sMEApprovalUser->toArray(), trans('custom.smeapprovaluser_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SMEApprovalUserAPIController extends AppBaseController
         $sMEApprovalUser = $this->sMEApprovalUserRepository->findWithoutFail($id);
 
         if (empty($sMEApprovalUser)) {
-            return $this->sendError('S M E Approval User not found');
+            return $this->sendError(trans('custom.s_m_e_approval_user_not_found'));
         }
 
         $sMEApprovalUser->delete();

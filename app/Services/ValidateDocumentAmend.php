@@ -39,7 +39,11 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
+
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -58,7 +62,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -73,7 +80,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -92,7 +102,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -107,7 +120,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -126,7 +142,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -145,7 +164,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -160,14 +182,17 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                                 $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                                $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_period_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
                     }
                 break;
             default:
-                return ['status' => false,'message'=>'Document ID not found'];
+                return ['status' => false,'message'=>trans('custom.document_id_not_found')];
 
         }
 
@@ -176,7 +201,7 @@ class ValidateDocumentAmend
 
     public static function validatePendingGlPost($documentAutoId, $documentSystemID, $matchingMasterID = null)
 	{
-        $message = 'You cannot amend this document now. The General Ledger posting is In-Progress';
+        $message = trans('custom.cannot_amend_document_progress');
         $isjobErrorLogExist = JobErrorLog::where('documentSystemCode',$documentAutoId)
                                             ->where('documentSystemID',$documentSystemID)                                               
                                             ->count();
@@ -389,7 +414,7 @@ class ValidateDocumentAmend
                     }
                     break;
             default:
-                return ['status' => false,'message'=>'Document ID not found'];
+                return ['status' => false,'message'=>trans('custom.document_id_not_found')];
 
         }
         return ['status' => true];
@@ -407,7 +432,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -426,7 +454,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -445,7 +476,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -461,7 +495,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -476,7 +513,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -494,8 +534,13 @@ class ValidateDocumentAmend
                             if($financeYear->isActive == 0 || $financeYear->isCurrent == 0){
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
-
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
+                                return ['status' => false,'message'=>$message];
+                                
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -514,7 +559,10 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
@@ -529,14 +577,17 @@ class ValidateDocumentAmend
                                 $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                                 $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                                $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted, needs to be active & current for this document to be reversed';
+                                $message = trans('custom.financial_year_inactive', [
+                                    'dateFrom' => $dateFrom,
+                                    'dateTo'   => $dateTo,
+                                ]);
                                 return ['status' => false,'message'=>$message];
                             }
                         }
                     }
                 break;
             default:
-                return ['status' => false,'message'=>'Document ID not found'];
+                return ['status' => false,'message'=>trans('custom.document_id_not_found')];
 
         }
 
@@ -556,7 +607,7 @@ class ValidateDocumentAmend
             if(isset($vatReturnFillingState) && $vatReturnFillingState->confirmedYN == 1) {
                 return [
                     'status' => false,
-                    'message' => 'pulled to VAT return filling ' . $vatReturnFillingState->returnFillingCode
+                    'message' => trans('custom.pulled_to_vat_return'). $vatReturnFillingState->returnFillingCode
                 ];
             }
         }
@@ -578,14 +629,17 @@ class ValidateDocumentAmend
                             $dateFrom = (new Carbon($financeYear->bigginingDate))->format('d/m/Y');
                             $dateTo = (new Carbon($financeYear->endingDate))->format('d/m/Y');
 
-                            $message = 'The Financial Year '.$dateFrom.' | '.$dateTo. ' on which this document was posted is closed, can’t refer back the matching';
+                            $message = trans('custom.financial_period_closed', [
+                                'dateFrom' => $dateFrom,
+                                'dateTo'   => $dateTo,
+                            ]);
                             return ['status' => false,'message'=>$message];
                         }
                     }
                 }
                 break;
             default:
-                return ['status' => false,'message'=>'Document ID not found'];
+                return ['status' => false,'message'=>trans('custom.document_id_not_found')];
         }
     }
 
@@ -602,14 +656,17 @@ class ValidateDocumentAmend
                             $dateFrom = (new Carbon($financePeriod->dateFrom))->format('d/m/Y');
                             $dateTo = (new Carbon($financePeriod->dateTo))->format('d/m/Y');
 
-                            $message = 'The Financial Period '.$dateFrom.' | '.$dateTo. ' on which this document was posted is closed, can’t refer back the matching';
+                            $message = trans('custom.financial_period_closed', [
+                                'dateFrom' => $dateFrom,
+                                'dateTo'   => $dateTo,
+                            ]);
                             return ['status' => false,'message'=>$message];
                         }
                     }
                 }
                 break;
             default:
-                return ['status' => false,'message'=>'Document ID not found'];
+                return ['status' => false,'message'=>trans('custom.document_id_not_found')];
         }
     }
 

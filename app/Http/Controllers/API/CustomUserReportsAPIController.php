@@ -1196,8 +1196,11 @@ class CustomUserReportsAPIController extends AppBaseController
             }
             
             if ($this->checkMasterColumn($report['columns'], 6, 'column_type')) {
-                foreach ($templateData['statusColumns'] as $column) {
-                    array_push($columns, $masterTable . '.' . $column);
+                if(isset($templateData['statusColumns']) && !empty($templateData['statusColumns']))
+                {
+                    foreach ($templateData['statusColumns'] as $column) {
+                        array_push($columns, $masterTable . '.' . $column);
+                    }
                 }
             }
           
@@ -3061,15 +3064,22 @@ class CustomUserReportsAPIController extends AppBaseController
                 }
             }
 
+
             \Excel::create('custom_report', function ($excel) use ($data) {
                 $excel->sheet('sheet name', function ($sheet) use ($data) {
                     $sheet->fromArray($data, null, 'A1', true);
                     $sheet->setAutoSize(true);
                     $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download($type);
+            })->download('xls');
         }
         return $this->sendError(trans('custom.no_records_found'), 500);
     }

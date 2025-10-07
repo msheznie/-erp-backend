@@ -81,7 +81,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $this->contingencyBudgetPlanRepository->pushCriteria(new LimitOffsetCriteria($request));
         $contingencyBudgetPlans = $this->contingencyBudgetPlanRepository->all();
 
-        return $this->sendResponse($contingencyBudgetPlans->toArray(), 'Contingency Budget Plans retrieved successfully');
+        return $this->sendResponse($contingencyBudgetPlans->toArray(), trans('custom.contingency_budget_plans_retrieved_successfully'));
     }
 
     /**
@@ -147,7 +147,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
@@ -188,7 +188,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->create($input);
 
-        return $this->sendResponse($contingencyBudgetPlan->toArray(), 'Contingency budget saved successfully');
+        return $this->sendResponse($contingencyBudgetPlan->toArray(), trans('custom.contingency_budget_saved_successfully'));
     }
 
     /**
@@ -235,10 +235,10 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->with(['confirmed_by', 'currency_by'])->findWithoutFail($id);
 
         if (empty($contingencyBudgetPlan)) {
-            return $this->sendError('Contingency Budget Plan not found');
+            return $this->sendError(trans('custom.contingency_budget_plan_not_found'));
         }
 
-        return $this->sendResponse($contingencyBudgetPlan->toArray(), 'Contingency Budget Plan retrieved successfully');
+        return $this->sendResponse($contingencyBudgetPlan->toArray(), trans('custom.contingency_budget_plan_retrieved_successfully'));
     }
 
     /**
@@ -299,7 +299,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetPlan)) {
-            return $this->sendError(trans('custom.not_found', ['attribute' => 'Contingency Budget']));
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contingency_budget')]));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -327,7 +327,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
@@ -355,7 +355,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->update(array_only($input, ['comments', 'year', 'serviceLineSystemID', 'templateMasterID', 'contingencyPercentage', 'budgetAmount', 'contigencyAmount', 'templateMasterID', 'contingencyPercentage', 'budgetID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
-        return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => 'Contingency Budget']),1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => trans('custom.contingency_budget')]),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -402,12 +402,12 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->findWithoutFail($id);
 
         if (empty($contingencyBudgetPlan)) {
-            return $this->sendError('Contingency Budget Plan not found');
+            return $this->sendError(trans('custom.contingency_budget_plan_not_found'));
         }
 
         $contingencyBudgetPlan->delete();
 
-        return $this->sendSuccess('Contingency Budget Plan deleted successfully');
+        return $this->sendSuccess(trans('custom.contingency_budget_plan_deleted_successfully'));
     }
 
     public function get_contingency_budget(Request $request)
@@ -731,7 +731,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $msg = '';
 
         if (!empty($check_valid)) {
-            $msg = 'Contingency budget already exist.';
+            $msg = trans('custom.contingency_budget_already_exist');
         } else {
             $msg = 'success';
         }
@@ -762,7 +762,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             ->get();
 
         if (empty($list)) {
-            return $this->sendResponse([], 'Contingency Budget not found for these filters');
+            return $this->sendResponse([], trans('custom.contingency_budget_not_found_for_these_filters'));
         }
 
         $list = $list->toArray();
@@ -804,7 +804,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             ];
         }
 
-        return $this->sendResponse($data, 'Contingency Budget list retrieved successfully');
+        return $this->sendResponse($data, trans('custom.contingency_budget_list_retrieved_successfully'));
     }
     public function amendContingencyBudget(Request $request)
     {
@@ -812,11 +812,11 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $contingencyBudgetID = $input['id'];
         $contingencyBudgetMasterData = ContingencyBudgetPlan::find($contingencyBudgetID);
         if (empty($contingencyBudgetMasterData)) {
-            return $this->sendError('Contingency Budget not found');
+            return $this->sendError(trans('custom.contingency_budget_not_found'));
         }
 
         if ($contingencyBudgetMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this contingency budget');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_contingency_budget'));
         }
 
         $contingencyBudgetArray = $contingencyBudgetMasterData->toArray();
@@ -853,6 +853,6 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             $contingencyBudgetMasterData->RollLevForApp_curr = 1;
             $contingencyBudgetMasterData->save();
         }
-        return $this->sendResponse($contingencyBudgetMasterData->toArray(), 'Contingency Budget amend successfully');
+        return $this->sendResponse($contingencyBudgetMasterData->toArray(), trans('custom.contingency_budget_amend_successfully'));
     }
 }

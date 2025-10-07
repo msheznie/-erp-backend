@@ -75,7 +75,7 @@ class SupplierMasterRefferedBackAPIController extends AppBaseController
         $this->supplierMasterRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierMasterRefferedBacks = $this->supplierMasterRefferedBackRepository->all();
 
-        return $this->sendResponse($supplierMasterRefferedBacks->toArray(), 'Supplier Master Reffered Backs retrieved successfully');
+        return $this->sendResponse($supplierMasterRefferedBacks->toArray(), trans('custom.supplier_master_reffered_backs_retrieved_successfu'));
     }
 
     /**
@@ -122,7 +122,7 @@ class SupplierMasterRefferedBackAPIController extends AppBaseController
 
         $supplierMasterRefferedBacks = $this->supplierMasterRefferedBackRepository->create($input);
 
-        return $this->sendResponse($supplierMasterRefferedBacks->toArray(), 'Supplier Master Reffered Back saved successfully');
+        return $this->sendResponse($supplierMasterRefferedBacks->toArray(), trans('custom.supplier_master_reffered_back_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class SupplierMasterRefferedBackAPIController extends AppBaseController
         $supplierMasterRefferedBack = $this->supplierMasterRefferedBackRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($supplierMasterRefferedBack)) {
-            return $this->sendError('Supplier Master Reffered Back not found');
+            return $this->sendError(trans('custom.supplier_master_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($supplierMasterRefferedBack->toArray(), 'Supplier Master Reffered Back retrieved successfully');
+        return $this->sendResponse($supplierMasterRefferedBack->toArray(), trans('custom.supplier_master_reffered_back_retrieved_successful'));
     }
 
     /**
@@ -229,12 +229,12 @@ class SupplierMasterRefferedBackAPIController extends AppBaseController
         $supplierMasterRefferedBack = $this->supplierMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($supplierMasterRefferedBack)) {
-            return $this->sendError('Supplier Master Reffered Back not found');
+            return $this->sendError(trans('custom.supplier_master_reffered_back_not_found'));
         }
 
         $supplierMasterRefferedBack = $this->supplierMasterRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($supplierMasterRefferedBack->toArray(), 'SupplierMasterRefferedBack updated successfully');
+        return $this->sendResponse($supplierMasterRefferedBack->toArray(), trans('custom.suppliermasterrefferedback_updated_successfully'));
     }
 
     /**
@@ -281,12 +281,12 @@ class SupplierMasterRefferedBackAPIController extends AppBaseController
         $supplierMasterRefferedBack = $this->supplierMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($supplierMasterRefferedBack)) {
-            return $this->sendError('Supplier Master Reffered Back not found');
+            return $this->sendError(trans('custom.supplier_master_reffered_back_not_found'));
         }
 
         $supplierMasterRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Supplier Master Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_master_reffered_back_deleted_successfully'));
     }
 
 

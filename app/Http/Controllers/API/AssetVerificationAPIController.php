@@ -206,7 +206,7 @@ class AssetVerificationAPIController extends AppBaseController
 
             $assetVerification = $this->assetVerificationRepository->create($input);
             DB::commit();
-            return $this->sendResponse($assetVerification->toArray(), 'Asset Verification saved successfully');
+            return $this->sendResponse($assetVerification->toArray(), trans('custom.asset_verification_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception);
@@ -257,10 +257,10 @@ class AssetVerificationAPIController extends AppBaseController
         $assetVerification = AssetVerification::with('assetVerificationDetail:id,verification_id,faID')->where('id', $id)->first();
 
         if (empty($assetVerification)) {
-            return $this->sendError('Asset Verification not found');
+            return $this->sendError(trans('custom.asset_verification_not_found'));
         }
 
-        return $this->sendResponse($assetVerification, 'Asset Verification retrieved successfully.');
+        return $this->sendResponse($assetVerification, trans('custom.asset_verification_retrieved_successfully'));
     }
 
     /**
@@ -319,7 +319,7 @@ class AssetVerificationAPIController extends AppBaseController
 
 
         if (empty($assetVerification)) {
-            return $this->sendError('Asset verification Master not found');
+            return $this->sendError(trans('custom.asset_verification_master_not_found'));
         }
 
 
@@ -327,7 +327,7 @@ class AssetVerificationAPIController extends AppBaseController
 
             $isDetailsExists = AssetVerificationDetail::where('verification_id', $id)->exists();
             if (!$isDetailsExists) {
-                return $this->sendError('Asset verification details not found');
+                return $this->sendError(trans('custom.asset_verification_details_not_found'));
             }
 
             $params = [
@@ -393,11 +393,11 @@ class AssetVerificationAPIController extends AppBaseController
         $assetVerification = $this->assetVerificationRepository->findWithoutFail($id);
 
         if ($assetVerification['approved']) {
-            return $this->sendError('You can\'t remove this asset');
+            return $this->sendError(trans('custom.cannot_remove_asset'));
         }
 
         if (empty($assetVerification)) {
-            return $this->sendError('Asset Verification not found');
+            return $this->sendError(trans('custom.asset_verification_not_found'));
         }
 
         $assetVerification->delete();
@@ -433,7 +433,7 @@ class AssetVerificationAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getVerificationApprovalByUser(Request $request)
@@ -646,11 +646,11 @@ class AssetVerificationAPIController extends AppBaseController
 
         $assetVerificationMasterData = AssetVerification::find($assetVerificationAutoID);
         if (empty($assetVerificationMasterData)) {
-            return $this->sendError('Asset Verification not found');
+            return $this->sendError(trans('custom.asset_verification_not_found'));
         }
 
         if ($assetVerificationMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this asset verification');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_asset_verification'));
         }
         $assetVerificationArray = $assetVerificationMasterData->toArray();
         $storeAssetVerificationHistory = ERPAssetVerificationReferredback::insert($assetVerificationArray);
@@ -697,6 +697,6 @@ class AssetVerificationAPIController extends AppBaseController
             $assetVerificationMasterData->save();
         } 
 
-        return $this->sendResponse($assetVerificationMasterData->toArray(), 'Asset Verification amend successfully');
+        return $this->sendResponse($assetVerificationMasterData->toArray(), trans('custom.asset_verification_amend_successfully'));
     }
 }

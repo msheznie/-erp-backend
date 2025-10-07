@@ -65,7 +65,7 @@ class NotificationUserDayCheckAPIController extends AppBaseController
         $this->notificationUserDayCheckRepository->pushCriteria(new LimitOffsetCriteria($request));
         $notificationUserDayChecks = $this->notificationUserDayCheckRepository->all();
 
-        return $this->sendResponse($notificationUserDayChecks->toArray(), 'Notification User Day Checks retrieved successfully');
+        return $this->sendResponse($notificationUserDayChecks->toArray(), trans('custom.notification_user_day_checks_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class NotificationUserDayCheckAPIController extends AppBaseController
 
         $notificationUserDayCheck = $this->notificationUserDayCheckRepository->create($input);
 
-        return $this->sendResponse($notificationUserDayCheck->toArray(), 'Notification User Day Check saved successfully');
+        return $this->sendResponse($notificationUserDayCheck->toArray(), trans('custom.notification_user_day_check_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class NotificationUserDayCheckAPIController extends AppBaseController
         $notificationUserDayCheck = $this->notificationUserDayCheckRepository->findWithoutFail($id);
 
         if (empty($notificationUserDayCheck)) {
-            return $this->sendError('Notification User Day Check not found');
+            return $this->sendError(trans('custom.notification_user_day_check_not_found'));
         }
 
-        return $this->sendResponse($notificationUserDayCheck->toArray(), 'Notification User Day Check retrieved successfully');
+        return $this->sendResponse($notificationUserDayCheck->toArray(), trans('custom.notification_user_day_check_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class NotificationUserDayCheckAPIController extends AppBaseController
         $notificationUserDayCheck = $this->notificationUserDayCheckRepository->findWithoutFail($id);
 
         if (empty($notificationUserDayCheck)) {
-            return $this->sendError('Notification User Day Check not found');
+            return $this->sendError(trans('custom.notification_user_day_check_not_found'));
         }
 
         $notificationUserDayCheck = $this->notificationUserDayCheckRepository->update($input, $id);
 
-        return $this->sendResponse($notificationUserDayCheck->toArray(), 'NotificationUserDayCheck updated successfully');
+        return $this->sendResponse($notificationUserDayCheck->toArray(), trans('custom.notificationuserdaycheck_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class NotificationUserDayCheckAPIController extends AppBaseController
         $notificationUserDayCheck = $this->notificationUserDayCheckRepository->findWithoutFail($id);
 
         if (empty($notificationUserDayCheck)) {
-            return $this->sendError('Notification User Day Check not found');
+            return $this->sendError(trans('custom.notification_user_day_check_not_found'));
         }
 
         $notificationUserDayCheck->delete();

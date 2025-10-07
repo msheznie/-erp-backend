@@ -76,7 +76,7 @@ class OutletUsersAPIController extends AppBaseController
         $this->outletUsersRepository->pushCriteria(new LimitOffsetCriteria($request));
         $outletUsers = $this->outletUsersRepository->all();
 
-        return $this->sendResponse($outletUsers->toArray(), 'Outlet Users retrieved successfully');
+        return $this->sendResponse($outletUsers->toArray(), trans('custom.outlet_users_retrieved_successfully'));
     }
 
     /**
@@ -142,7 +142,7 @@ class OutletUsersAPIController extends AppBaseController
             ->where('userID', $input['userID'])
             ->count();
         if ($checkAlreadyExist > 0) {
-            return $this->sendError('Selected user is already added to this outlet', 500);
+            return $this->sendError(trans('custom.selected_user_is_already_added_to_this_outlet'), 500);
         }
 
         $checkEmployee = Employee::where('employeeSystemID', $input['userID'])
@@ -151,7 +151,7 @@ class OutletUsersAPIController extends AppBaseController
             ->first();
 
         if (empty($checkEmployee)) {
-            return $this->sendError('User not Found', 500);
+            return $this->sendError(trans('custom.user_not_found_1'), 500);
         }
 
         $checkUserActive = OutletUsers::where('userID',$input['userID'])
@@ -160,7 +160,7 @@ class OutletUsersAPIController extends AppBaseController
                                         ->first();
 
         if(!empty($checkUserActive)){
-            return $this->sendError('Selected user is already active in outlet '.$checkUserActive->outlet->wareHouseCode,500);
+            return $this->sendError(trans('custom.selected_user_is_already_active_in_outlet').$checkUserActive->outlet->wareHouseCode,500);
         }
 
 
@@ -174,7 +174,7 @@ class OutletUsersAPIController extends AppBaseController
 
         $outletUsers = $this->outletUsersRepository->create($input);
 
-        return $this->sendResponse($outletUsers->toArray(), 'Outlet User created successfully');
+        return $this->sendResponse($outletUsers->toArray(), trans('custom.outlet_user_created_successfully'));
     }
 
     /**
@@ -221,10 +221,10 @@ class OutletUsersAPIController extends AppBaseController
         $outletUsers = $this->outletUsersRepository->findWithoutFail($id);
 
         if (empty($outletUsers)) {
-            return $this->sendError('Outlet Users not found');
+            return $this->sendError(trans('custom.outlet_users_not_found'));
         }
 
-        return $this->sendResponse($outletUsers->toArray(), 'Outlet Users retrieved successfully');
+        return $this->sendResponse($outletUsers->toArray(), trans('custom.outlet_users_retrieved_successfully'));
     }
 
     /**
@@ -297,7 +297,7 @@ class OutletUsersAPIController extends AppBaseController
         $outletUsers = $this->outletUsersRepository->findWithoutFail($id);
 
         if (empty($outletUsers)) {
-            return $this->sendError('Outlet User not found');
+            return $this->sendError(trans('custom.outlet_user_not_found'));
         }
 
         if (isset($input['isActive']) && $input['isActive']) {
@@ -310,7 +310,7 @@ class OutletUsersAPIController extends AppBaseController
                                            ->first();
 
             if(!empty($checkUserActive)){
-                return $this->sendError('User is already active in outlet '.$checkUserActive->outlet->wareHouseCode,500);
+                return $this->sendError(trans('custom.user_is_already_active_in_outlet').$checkUserActive->outlet->wareHouseCode,500);
             }
 
         } else {
@@ -322,7 +322,7 @@ class OutletUsersAPIController extends AppBaseController
                                     ->first();
 
             if(!empty($shift)){
-                return $this->sendError('Cannot deactivate, Selected user has on going shift.');
+                return $this->sendError(trans('custom.cannot_deactivate_selected_user_has_on_going_shift'));
             }
         }
 
@@ -336,7 +336,7 @@ class OutletUsersAPIController extends AppBaseController
 
         $outletUsers = $this->outletUsersRepository->update($input, $id);
 
-        return $this->sendResponse($outletUsers->toArray(), 'Outlet user updated successfully');
+        return $this->sendResponse($outletUsers->toArray(), trans('custom.outlet_user_updated_successfully'));
     }
 
     /**
@@ -383,7 +383,7 @@ class OutletUsersAPIController extends AppBaseController
         $outletUsers = $this->outletUsersRepository->findWithoutFail($id);
 
         if (empty($outletUsers)) {
-            return $this->sendError('Outlet User not found');
+            return $this->sendError(trans('custom.outlet_user_not_found'));
         }
 
         $shift = ShiftDetails::where('isClosed',0)
@@ -392,12 +392,12 @@ class OutletUsersAPIController extends AppBaseController
             ->first();
 
         if(!empty($shift)){
-            return $this->sendError('Cannot delete, Selected user has on going shift.');
+            return $this->sendError(trans('custom.cannot_delete_selected_user_has_on_going_shift'));
         }
 
         $outletUsers->delete();
 
-        return $this->sendResponse($id, 'Outlet Users deleted successfully');
+        return $this->sendResponse($id, trans('custom.outlet_users_deleted_successfully'));
     }
 
     public function getAssignedUsersOutlet(Request $request)
@@ -481,7 +481,7 @@ class OutletUsersAPIController extends AppBaseController
         }
 
         $users = $users->take(20)->get();
-        return $this->sendResponse($users->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($users->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 

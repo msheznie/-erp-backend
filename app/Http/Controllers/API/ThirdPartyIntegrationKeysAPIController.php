@@ -65,7 +65,7 @@ class ThirdPartyIntegrationKeysAPIController extends AppBaseController
         $this->thirdPartyIntegrationKeysRepository->pushCriteria(new LimitOffsetCriteria($request));
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->all();
 
-        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), 'Third Party Integration Keys retrieved successfully');
+        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), trans('custom.third_party_integration_keys_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ThirdPartyIntegrationKeysAPIController extends AppBaseController
 
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->create($input);
 
-        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), 'Third Party Integration Keys saved successfully');
+        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), trans('custom.third_party_integration_keys_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ThirdPartyIntegrationKeysAPIController extends AppBaseController
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->findWithoutFail($id);
 
         if (empty($thirdPartyIntegrationKeys)) {
-            return $this->sendError('Third Party Integration Keys not found');
+            return $this->sendError(trans('custom.third_party_integration_keys_not_found'));
         }
 
-        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), 'Third Party Integration Keys retrieved successfully');
+        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), trans('custom.third_party_integration_keys_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ThirdPartyIntegrationKeysAPIController extends AppBaseController
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->findWithoutFail($id);
 
         if (empty($thirdPartyIntegrationKeys)) {
-            return $this->sendError('Third Party Integration Keys not found');
+            return $this->sendError(trans('custom.third_party_integration_keys_not_found'));
         }
 
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->update($input, $id);
 
-        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), 'ThirdPartyIntegrationKeys updated successfully');
+        return $this->sendResponse($thirdPartyIntegrationKeys->toArray(), trans('custom.thirdpartyintegrationkeys_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ThirdPartyIntegrationKeysAPIController extends AppBaseController
         $thirdPartyIntegrationKeys = $this->thirdPartyIntegrationKeysRepository->findWithoutFail($id);
 
         if (empty($thirdPartyIntegrationKeys)) {
-            return $this->sendError('Third Party Integration Keys not found');
+            return $this->sendError(trans('custom.third_party_integration_keys_not_found'));
         }
 
         $thirdPartyIntegrationKeys->delete();

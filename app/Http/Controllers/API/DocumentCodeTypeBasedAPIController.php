@@ -64,7 +64,7 @@ class DocumentCodeTypeBasedAPIController extends AppBaseController
         $this->documentCodeTypeBasedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodeTypeBaseds = $this->documentCodeTypeBasedRepository->all();
 
-        return $this->sendResponse($documentCodeTypeBaseds->toArray(), 'Document Code Type Baseds retrieved successfully');
+        return $this->sendResponse($documentCodeTypeBaseds->toArray(), trans('custom.document_code_type_baseds_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentCodeTypeBasedAPIController extends AppBaseController
 
         $documentCodeTypeBased = $this->documentCodeTypeBasedRepository->create($input);
 
-        return $this->sendResponse($documentCodeTypeBased->toArray(), 'Document Code Type Based saved successfully');
+        return $this->sendResponse($documentCodeTypeBased->toArray(), trans('custom.document_code_type_based_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentCodeTypeBasedAPIController extends AppBaseController
         $documentCodeTypeBased = $this->documentCodeTypeBasedRepository->findWithoutFail($id);
 
         if (empty($documentCodeTypeBased)) {
-            return $this->sendError('Document Code Type Based not found');
+            return $this->sendError(trans('custom.document_code_type_based_not_found'));
         }
 
-        return $this->sendResponse($documentCodeTypeBased->toArray(), 'Document Code Type Based retrieved successfully');
+        return $this->sendResponse($documentCodeTypeBased->toArray(), trans('custom.document_code_type_based_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentCodeTypeBasedAPIController extends AppBaseController
         $documentCodeTypeBased = $this->documentCodeTypeBasedRepository->findWithoutFail($id);
 
         if (empty($documentCodeTypeBased)) {
-            return $this->sendError('Document Code Type Based not found');
+            return $this->sendError(trans('custom.document_code_type_based_not_found'));
         }
 
         $documentCodeTypeBased = $this->documentCodeTypeBasedRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeTypeBased->toArray(), 'DocumentCodeTypeBased updated successfully');
+        return $this->sendResponse($documentCodeTypeBased->toArray(), trans('custom.documentcodetypebased_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentCodeTypeBasedAPIController extends AppBaseController
         $documentCodeTypeBased = $this->documentCodeTypeBasedRepository->findWithoutFail($id);
 
         if (empty($documentCodeTypeBased)) {
-            return $this->sendError('Document Code Type Based not found');
+            return $this->sendError(trans('custom.document_code_type_based_not_found'));
         }
 
         $documentCodeTypeBased->delete();

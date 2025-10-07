@@ -84,7 +84,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $this->eRPAssetTransferRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetTransfers = $this->eRPAssetTransferRepository->all();
 
-        return $this->sendResponse($eRPAssetTransfers->toArray(), 'E R P Asset Transfers retrieved successfully');
+        return $this->sendResponse($eRPAssetTransfers->toArray(), trans('custom.e_r_p_asset_transfers_retrieved_successfully'));
     }
 
     /**
@@ -133,12 +133,12 @@ class ERPAssetTransferAPIController extends AppBaseController
         $company_id = $input['companyID'];
        
         $messages = [
-            'document_date.required' => 'Document date field is required.',
-            'narration.required' => 'Narration field is required.',
-            'type.required' => 'Type field is required.',
-            'reference_no.required' => 'Reference No is required.',
-            'location.required' => 'Location No is required.',
-            'serviceLineSystemID.required' => 'Segment is required.',
+            'document_date.required' => trans('custom.document_date_field_is_required'),
+            'narration.required' => trans('custom.narration_field_is_required'),
+            'type.required' => trans('custom.type_field_is_required'),
+            'reference_no.required' => trans('custom.reference_no_is_required'),
+            'location.required' => trans('custom.location_no_is_required'),
+            'serviceLineSystemID.required' => trans('custom.segment_is_required'),
         ];
 
         if(isset($input['type']) && $input['type'] == 4) {
@@ -218,10 +218,10 @@ class ERPAssetTransferAPIController extends AppBaseController
             $input['updated_user_id'] = \Helper::getEmployeeSystemID();
             $eRPAssetTransfer = $this->eRPAssetTransferRepository->create($input);
             DB::commit();
-            return $this->sendResponse($eRPAssetTransfer->toArray(), 'Asset Transfer saved successfully');
+            return $this->sendResponse($eRPAssetTransfer->toArray(), trans('custom.asset_transfer_saved_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error in  Asset Transfer create process');
+            return $this->sendError(trans('custom.error_in_asset_transfer_create_process'));
         }
     }
 
@@ -269,10 +269,10 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
 
-        return $this->sendResponse($eRPAssetTransfer->toArray(), 'E R P Asset Transfer retrieved successfully');
+        return $this->sendResponse($eRPAssetTransfer->toArray(), trans('custom.e_r_p_asset_transfer_retrieved_successfully'));
     }
 
     /**
@@ -330,17 +330,17 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
 
         
 
         $messages = [
-            'document_date.required' => 'Document date field is required.',
-            'narration.required' => 'Narration field is required.',
-            'type.required' => 'Type field is required.',
-            'reference_no.required' => 'Reference No is required.',
-            'location.required' => 'Location is required.',
+            'document_date.required' => trans('custom.document_date_field_is_required'),
+            'narration.required' => trans('custom.narration_field_is_required'),
+            'type.required' => trans('custom.type_field_is_required'),
+            'reference_no.required' => trans('custom.reference_no_is_required'),
+            'location.required' => trans('custom.location_is_required'),
         ];
 
         if(isset($input['type']) && $input['type'] == 4) {
@@ -374,11 +374,11 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         if(($input['type'] == 2  || $input['type'] == 1 || $input['type'] == 3) && $input['serviceLineSystemID'] == 0) {
-            return $this->sendError('Segment cannot be null. Select a segment and try again', 500);
+            return $this->sendError(trans('custom.segment_cannot_be_null_select_a_segment_and_try_ag'), 500);
         }
 
         if(($input['type'] == 2 || $input['type'] == 1) && $input['location'] == 0) {
-            return $this->sendError('Location required cannot be null. Select a location and try again', 500);
+            return $this->sendError(trans('custom.location_required_cannot_be_null_select_a_location'), 500);
         }
 
         if(isset( $input['serviceLineSystemID'])) {
@@ -406,7 +406,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             if ($eRPAssetTransfer->confirmed_yn == 0 && $input['confirmed_yn'] == 1) {
                 $checkRecordCount = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id', $id)->count();
                 if ($checkRecordCount <= 0) {
-                    return $this->sendError('Transfer should have at least one record', 500);
+                    return $this->sendError(trans('custom.transfer_should_have_at_least_one_record'), 500);
                 }
 
                 $params = array(
@@ -421,7 +421,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             }
         }
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->update($data, $id);
-        return $this->sendReponseWithDetails([], 'Asset Transfer updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails([], trans('custom.asset_transfer_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -468,13 +468,13 @@ class ERPAssetTransferAPIController extends AppBaseController
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 
         if (empty($eRPAssetTransfer)) {
-            return $this->sendError('E R P Asset Transfer not found');
+            return $this->sendError(trans('custom.e_r_p_asset_transfer_not_found'));
         }
         $eRPAssetTransfer->delete();
         $AssetTransferDetail = new ERPAssetTransferDetail();
         $AssetTransferDetail->where('erp_fa_fa_asset_transfer_id', $id)
             ->delete();
-        return $this->sendResponse($id, 'Asset Transfer  deleted successfully');
+        return $this->sendResponse($id, trans('custom.asset_transfer_deleted_successfully'));
     }
 
     public function getAllAssetTransferList(Request $request)
@@ -519,7 +519,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     function fetchAssetTransferMaster($id)
     {
         $assetTransfer = ERPAssetTransfer::with(['confirmed_by'])->where('id', $id)->first();
-        return $this->sendResponse($assetTransfer, 'Asset Request Transfer data');
+        return $this->sendResponse($assetTransfer, trans('custom.asset_request_transfer_data'));
     }
     public function getAssetTransferApprovalByUser(Request $request)
     {
@@ -635,7 +635,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $data['checkBudget'] = $checkBudget->isYesNO;
         }
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
     }
     public function getAssetDropPR(Request $request)
     {
@@ -743,10 +743,10 @@ class ERPAssetTransferAPIController extends AppBaseController
         $assetTransfer = $this->eRPAssetTransferRepository->getAudit($id);
 
         if (empty($assetTransfer)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
-        return $this->sendResponse($assetTransfer, 'Data retrieved successfully');
+        return $this->sendResponse($assetTransfer, trans('custom.data_retrieved_successfully'));
     }
     public function assetTransferReopen(Request $request)
     {
@@ -756,19 +756,19 @@ class ERPAssetTransferAPIController extends AppBaseController
         $assetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
         $emails = array();
         if (empty($assetTransfer)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
         if ($assetTransfer->approved_yn == 1) {
-            return $this->sendError('You cannot reopen this Asset Transfer it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_alread_1'));
         }
 
         if ($assetTransfer->current_level_no > 1) {
-            return $this->sendError('You cannot reopen this Asset Transfer it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_alread'));
         }
 
         if ($assetTransfer->confirmed_yn == 0) {
-            return $this->sendError('You cannot reopen this Asset Transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_asset_transfer_it_is_not_co'));
         }
 
         $updateInput = [
@@ -785,9 +785,9 @@ class ERPAssetTransferAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetTransfer->document_code . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $assetTransfer->document_code;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $document->companySystemID)
             ->where('documentSystemCode', $assetTransfer->id)
@@ -802,7 +802,7 @@ class ERPAssetTransferAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -840,9 +840,9 @@ class ERPAssetTransferAPIController extends AppBaseController
             ->delete();
 
         /*Audit entry*/
-        AuditTrial::createAuditTrial(103, $id, $input['reopenComments'], 'Reopened');
+        AuditTrial::createAuditTrial(103, $id, $input['reopenComments'], trans('custom.reopened'));
 
-        return $this->sendResponse($assetTransfer->toArray(), 'Asset Transfer reopened successfully');
+        return $this->sendResponse($assetTransfer->toArray(), trans('custom.asset_transfer_reopened_successfully'));
     }
 
     public function amendAssetTrasfer(Request $request)
@@ -853,15 +853,15 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         $assetTransferMasterData = ERPAssetTransfer::find($assetTransferAutoID);
         if (empty($assetTransferMasterData)) {
-            return $this->sendError('Asset Transfer not found');
+            return $this->sendError(trans('custom.asset_transfer_not_found'));
         }
 
         if ($assetTransferMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this asset transfer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_asset_transfer'));
         }
 
         $assetTransferArray = $assetTransferMasterData->toArray();
-        $assetTransferArray = \array_diff_key($assetTransferArray, ["transfer_type" => "Transfer Type", "document_date_formatted" => "Document Date Formatted"]);
+        $assetTransferArray = \array_diff_key($assetTransferArray, ['transfer_type' => trans('custom.transfer_type'), 'document_date_formatted' => trans('custom.document_date_formatted')]);
         $storeAssetTransferHistory = AssetTransferReferredback::insert($assetTransferArray);
 
         $assetTransferDetailRec = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id', $assetTransferAutoID)->get();
@@ -906,7 +906,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $assetTransferMasterData->current_level_no = 1;
             $assetTransferMasterData->save();
         }
-        return $this->sendResponse($assetTransferMasterData->toArray(), 'Asset Transfer amend successfully');
+        return $this->sendResponse($assetTransferMasterData->toArray(), trans('custom.asset_transfer_amend_successfully'));
     }
 
     public function assetStatus(Request $request)
@@ -949,7 +949,7 @@ class ERPAssetTransferAPIController extends AppBaseController
            return $this->requestForDepartmentValidation($assetID,$assetRequestMasterID,$assetRequest,$fixedAsset,$companyID);
         }
 
-        return ['success'=> false, 'message' => "Asset Request type not found"];
+        return ['success'=> false, 'message' => trans('custom.asset_request_type_not_found')];
 
     }
 
@@ -974,7 +974,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             if($assetRequestedAssigned) {
                 if($assetRequestedAssigned->type == 2) {
                     if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
-                        return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+                        return ['success'=> false, 'message' => trans('custom.asset_transferred_to_department_and_still_not_acknowledged'),'data' => $data];
                     }
                 }
             }
@@ -1011,7 +1011,7 @@ class ERPAssetTransferAPIController extends AppBaseController
                         ->where('to_emp_id',$assetRequest->emp_id)
                         ->where('receivedYN', 1)
                         ->get();
-                    return ['success'=> false, 'message' => "Asset transferred and acknowdged already for this employee",'data' => $data];
+                    return ['success'=> false, 'message' => trans('custom.asset_transferred_and_acknowledged_already_for_this_employee'),'data' => $data];
                 }else {
                     $data2 = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
                         $query->where('company_id', $companyID)
@@ -1027,7 +1027,7 @@ class ERPAssetTransferAPIController extends AppBaseController
                         ->where('to_emp_id',$assetRequest->emp_id)
                         ->where('receivedYN', 0)
                         ->get();
-                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged for this employee",'data' => $data2];
+                    return ['success'=> false, 'message' => trans('custom.asset_transferred_and_still_not_acknowledged_for_this_employee'),'data' => $data2];
                 }
             }
         }
@@ -1045,7 +1045,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
         if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
-            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
+            return ['success'=> false, 'message' => trans('custom.asset_transferred_and_still_not_acknowledged'),'data' => $data];
         }
 
         $isAssetAlreadyConfirmedToDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
@@ -1063,7 +1063,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
         }
 
-        return ['success'=> true, 'message' => "Asset transferred successfully"];
+        return ['success'=> true, 'message' => trans('custom.asset_transferred_successfully')];
 
         
     }
@@ -1087,7 +1087,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             if($assetRequestedAssigned) {
                 if($assetRequestedAssigned->type == 1) {
                     if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
-                        return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
+                        return ['success'=> false, 'message' => trans('custom.asset_transferred_to_employee_and_still_not_acknowledged'),'data' => $data];
                     }
                 }
             }
@@ -1113,9 +1113,9 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $dataDepartment = $this->getDataOfAssetNotAcknowldgedByDepartment($assetID,$companyID,$assetRequest->departmentSystemID,$isAssetAlreadyAssignedForDepartment->receivedYN);
 
                 if($isAssetAlreadyAssignedForDepartment->receivedYN == 1) {
-                    return ['success'=> false, 'message' => "Asset already transferred to this department",'data' => $dataDepartment];
+                    return ['success'=> false, 'message' => trans('custom.asset_already_transferred_to_this_department'),'data' => $dataDepartment];
                 }else {
-                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged to this department",'data' => $dataDepartment];
+                    return ['success'=> false, 'message' => trans('custom.asset_transferred_and_still_not_acknowledged_to_this_department'),'data' => $dataDepartment];
                 }
             }
         }
@@ -1133,7 +1133,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
         if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
-            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
+            return ['success'=> false, 'message' => trans('custom.asset_transferred_and_still_not_acknowledged'),'data' => $data];
         }
 
 
@@ -1152,7 +1152,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
         }
 
-        return ['success'=> true, 'message' => "Asset Transferred successfully"];
+        return ['success'=> true, 'message' => trans('custom.asset_transferred_successfully_caps')];
 
 
     }
@@ -1256,7 +1256,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             'from_employees' => $fromEmployeeList
         ];
 
-        return $this->sendResponse($data, 'Employee data reterived successfully');
+        return $this->sendResponse($data, trans('custom.employee_data_reterived_successfully'));
 
     }
 }

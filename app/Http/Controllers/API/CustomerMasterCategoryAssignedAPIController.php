@@ -71,7 +71,7 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
         $this->customerMasterCategoryAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerMasterCategoryAssigneds = $this->customerMasterCategoryAssignedRepository->all();
 
-        return $this->sendResponse($customerMasterCategoryAssigneds->toArray(), 'Customer Master Category Assigneds retrieved successfully');
+        return $this->sendResponse($customerMasterCategoryAssigneds->toArray(), trans('custom.customer_master_category_assigneds_retrieved_succe'));
     }
 
     /**
@@ -148,7 +148,7 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
             $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->create($createData);
         }
 
-        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), 'Customer Master Category Assigned saved successfully');
+        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), trans('custom.customer_master_category_assigned_saved_successful'));
     }
 
     /**
@@ -195,10 +195,10 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
         $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategoryAssigned)) {
-            return $this->sendError('Customer Master Category Assigned not found');
+            return $this->sendError(trans('custom.customer_master_category_assigned_not_found'));
         }
 
-        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), 'Customer Master Category Assigned retrieved successfully');
+        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), trans('custom.customer_master_category_assigned_retrieved_succes'));
     }
 
     /**
@@ -255,12 +255,12 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
         $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategoryAssigned)) {
-            return $this->sendError('Customer Master Category Assigned not found');
+            return $this->sendError(trans('custom.customer_master_category_assigned_not_found'));
         }
 
         $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), 'CustomerMasterCategoryAssigned updated successfully');
+        return $this->sendResponse($customerMasterCategoryAssigned->toArray(), trans('custom.customermastercategoryassigned_updated_successfull'));
     }
 
     /**
@@ -307,7 +307,7 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
         $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategoryAssigned)) {
-            return $this->sendError('Customer Master Category Assigned not found');
+            return $this->sendError(trans('custom.customer_master_category_assigned_not_found'));
         }
 
         $customerMasterCategoryAssigned->delete();
@@ -339,6 +339,6 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
             $customerCompanies = [];
         }
 
-        return $this->sendResponse($customerCompanies, 'customer category companies retrieved successfully');
+        return $this->sendResponse($customerCompanies, trans('custom.customer_category_companies_retrieved_successfully'));
     }
 }

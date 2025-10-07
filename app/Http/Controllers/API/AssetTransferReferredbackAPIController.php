@@ -65,7 +65,7 @@ class AssetTransferReferredbackAPIController extends AppBaseController
         $this->assetTransferReferredbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetTransferReferredbacks = $this->assetTransferReferredbackRepository->all();
 
-        return $this->sendResponse($assetTransferReferredbacks->toArray(), 'Asset Transfer Referredbacks retrieved successfully');
+        return $this->sendResponse($assetTransferReferredbacks->toArray(), trans('custom.asset_transfer_referredbacks_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class AssetTransferReferredbackAPIController extends AppBaseController
 
         $assetTransferReferredback = $this->assetTransferReferredbackRepository->create($input);
 
-        return $this->sendResponse($assetTransferReferredback->toArray(), 'Asset Transfer Referredback saved successfully');
+        return $this->sendResponse($assetTransferReferredback->toArray(), trans('custom.asset_transfer_referredback_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class AssetTransferReferredbackAPIController extends AppBaseController
         $assetTransferReferredback = $this->assetTransferReferredbackRepository->findWithoutFail($id);
 
         if (empty($assetTransferReferredback)) {
-            return $this->sendError('Asset Transfer Referredback not found');
+            return $this->sendError(trans('custom.asset_transfer_referredback_not_found'));
         }
 
-        return $this->sendResponse($assetTransferReferredback->toArray(), 'Asset Transfer Referredback retrieved successfully');
+        return $this->sendResponse($assetTransferReferredback->toArray(), trans('custom.asset_transfer_referredback_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class AssetTransferReferredbackAPIController extends AppBaseController
         $assetTransferReferredback = $this->assetTransferReferredbackRepository->findWithoutFail($id);
 
         if (empty($assetTransferReferredback)) {
-            return $this->sendError('Asset Transfer Referredback not found');
+            return $this->sendError(trans('custom.asset_transfer_referredback_not_found'));
         }
 
         $assetTransferReferredback = $this->assetTransferReferredbackRepository->update($input, $id);
 
-        return $this->sendResponse($assetTransferReferredback->toArray(), 'AssetTransferReferredback updated successfully');
+        return $this->sendResponse($assetTransferReferredback->toArray(), trans('custom.assettransferreferredback_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class AssetTransferReferredbackAPIController extends AppBaseController
         $assetTransferReferredback = $this->assetTransferReferredbackRepository->findWithoutFail($id);
 
         if (empty($assetTransferReferredback)) {
-            return $this->sendError('Asset Transfer Referredback not found');
+            return $this->sendError(trans('custom.asset_transfer_referredback_not_found'));
         }
 
         $assetTransferReferredback->delete();
@@ -284,7 +284,7 @@ class AssetTransferReferredbackAPIController extends AppBaseController
         $assetTransferAmendHistory = AssetTransferReferredback::with(['confirmed_by','approved_by','created_by', 'modified_by'])
         ->where('id',$assetTransferAutoID)
         ->get();
-        return $this->sendResponse($assetTransferAmendHistory, 'Asset Transfer retrieved successfully');
+        return $this->sendResponse($assetTransferAmendHistory, trans('custom.asset_transfer_retrieved_successfully'));
 
     }
     public function fetchAssetTransferMasterAmend($id){ 

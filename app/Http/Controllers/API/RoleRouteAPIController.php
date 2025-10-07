@@ -64,7 +64,7 @@ class RoleRouteAPIController extends AppBaseController
         $this->roleRouteRepository->pushCriteria(new LimitOffsetCriteria($request));
         $roleRoutes = $this->roleRouteRepository->all();
 
-        return $this->sendResponse($roleRoutes->toArray(), 'Role Routes retrieved successfully');
+        return $this->sendResponse($roleRoutes->toArray(), trans('custom.role_routes_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class RoleRouteAPIController extends AppBaseController
 
         $roleRoute = $this->roleRouteRepository->create($input);
 
-        return $this->sendResponse($roleRoute->toArray(), 'Role Route saved successfully');
+        return $this->sendResponse($roleRoute->toArray(), trans('custom.role_route_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class RoleRouteAPIController extends AppBaseController
         $roleRoute = $this->roleRouteRepository->findWithoutFail($id);
 
         if (empty($roleRoute)) {
-            return $this->sendError('Role Route not found');
+            return $this->sendError(trans('custom.role_route_not_found'));
         }
 
-        return $this->sendResponse($roleRoute->toArray(), 'Role Route retrieved successfully');
+        return $this->sendResponse($roleRoute->toArray(), trans('custom.role_route_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class RoleRouteAPIController extends AppBaseController
         $roleRoute = $this->roleRouteRepository->findWithoutFail($id);
 
         if (empty($roleRoute)) {
-            return $this->sendError('Role Route not found');
+            return $this->sendError(trans('custom.role_route_not_found'));
         }
 
         $roleRoute = $this->roleRouteRepository->update($input, $id);
 
-        return $this->sendResponse($roleRoute->toArray(), 'RoleRoute updated successfully');
+        return $this->sendResponse($roleRoute->toArray(), trans('custom.roleroute_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class RoleRouteAPIController extends AppBaseController
         $roleRoute = $this->roleRouteRepository->findWithoutFail($id);
 
         if (empty($roleRoute)) {
-            return $this->sendError('Role Route not found');
+            return $this->sendError(trans('custom.role_route_not_found'));
         }
 
         $roleRoute->delete();

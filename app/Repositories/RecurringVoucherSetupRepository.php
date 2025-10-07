@@ -104,23 +104,23 @@ class RecurringVoucherSetupRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['RRV Code'] = $val->RRVcode;
-                $data[$x]['Type'] = StatusService::getrrvType($val->documentType);
-                $data[$x]['Schedule'] = StatusService::getrrvSchedule($val->schedule);
-                $data[$x]['Start Date'] = \Helper::dateFormat($val->startDate);
-                $data[$x]['End Date'] = \Helper::dateFormat($val->endDate);
-                $data[$x]['No Of Day/Month/Year'] = $val->noOfDayMonthYear;
-                $data[$x]['Process Date'] = \Helper::dateFormat($val->processDate);
-                $data[$x]['Document Status'] = StatusService::getrrvStatus($val->documentStatus);
-                $data[$x]['Narration'] = $val->narration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
-                $data[$x]['Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.rrv_code')] = $val->RRVcode;
+                $data[$x][trans('custom.type')] = StatusService::getrrvType($val->documentType);
+                $data[$x][trans('custom.schedule')] = StatusService::getrrvSchedule($val->schedule);
+                $data[$x][trans('custom.start_date')] = \Helper::dateFormat($val->startDate);
+                $data[$x][trans('custom.end_date')] = \Helper::dateFormat($val->endDate);
+                $data[$x][trans('custom.no_of_day_month_year')] = $val->noOfDayMonthYear;
+                $data[$x][trans('custom.process_date')] = \Helper::dateFormat($val->processDate);
+                $data[$x][trans('custom.document_status')] = StatusService::getrrvStatus($val->documentStatus);
+                $data[$x][trans('custom.narration')] = $val->narration;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.currency')] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
+                $data[$x][trans('custom.debit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.credit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

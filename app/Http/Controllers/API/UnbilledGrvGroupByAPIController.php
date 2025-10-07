@@ -72,7 +72,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $this->unbilledGrvGroupByRepository->pushCriteria(new LimitOffsetCriteria($request));
         $unbilledGrvGroupBies = $this->unbilledGrvGroupByRepository->all();
 
-        return $this->sendResponse($unbilledGrvGroupBies->toArray(), 'Unbilled Grv Group Bies retrieved successfully');
+        return $this->sendResponse($unbilledGrvGroupBies->toArray(), trans('custom.unbilled_grv_group_bies_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 
         $unbilledGrvGroupBies = $this->unbilledGrvGroupByRepository->create($input);
 
-        return $this->sendResponse($unbilledGrvGroupBies->toArray(), 'Unbilled Grv Group By saved successfully');
+        return $this->sendResponse($unbilledGrvGroupBies->toArray(), trans('custom.unbilled_grv_group_by_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $unbilledGrvGroupBy = $this->unbilledGrvGroupByRepository->findWithoutFail($id);
 
         if (empty($unbilledGrvGroupBy)) {
-            return $this->sendError('Unbilled Grv Group By not found');
+            return $this->sendError(trans('custom.unbilled_grv_group_by_not_found'));
         }
 
-        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Unbilled Grv Group By retrieved successfully');
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), trans('custom.unbilled_grv_group_by_retrieved_successfully'));
     }
 
     /**
@@ -226,12 +226,12 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $unbilledGrvGroupBy = $this->unbilledGrvGroupByRepository->findWithoutFail($id);
 
         if (empty($unbilledGrvGroupBy)) {
-            return $this->sendError('Unbilled Grv Group By not found');
+            return $this->sendError(trans('custom.unbilled_grv_group_by_not_found'));
         }
 
         $unbilledGrvGroupBy = $this->unbilledGrvGroupByRepository->update($input, $id);
 
-        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'UnbilledGrvGroupBy updated successfully');
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), trans('custom.unbilledgrvgroupby_updated_successfully'));
     }
 
     /**
@@ -278,12 +278,12 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $unbilledGrvGroupBy = $this->unbilledGrvGroupByRepository->findWithoutFail($id);
 
         if (empty($unbilledGrvGroupBy)) {
-            return $this->sendError('Unbilled Grv Group By not found');
+            return $this->sendError(trans('custom.unbilled_grv_group_by_not_found'));
         }
 
         $unbilledGrvGroupBy->delete();
 
-        return $this->sendResponse($id, 'Unbilled Grv Group By deleted successfully');
+        return $this->sendResponse($id, trans('custom.unbilled_grv_group_by_deleted_successfully'));
     }
 
     public function getPurchaseOrderForSI(Request $request)
@@ -296,7 +296,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
@@ -329,7 +329,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
                                                     })
                                                     ->get();
 
-        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Masters retrieved successfully');
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), trans('custom.masters_retrieved_successfully'));
     }
 
 
@@ -345,12 +345,12 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if(isset($input['type']) &&  $input['type'] != $bookInvSuppMaster->documentType)
         {
-            return $this->sendError('The invoice type and details have already been modified by another user');
+            return $this->sendError(trans('custom.the_invoice_type_and_details_have_already_been_mod'));
 
         }
         $unbilledFilter = "";
@@ -562,7 +562,7 @@ HAVING ROUND(
             $unbilledData[] = $temp;
         }
 
-        return $this->sendResponse($unbilledData, 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($unbilledData, trans('custom.purchase_request_details_retrieved_successfully'));
 
     }
 }

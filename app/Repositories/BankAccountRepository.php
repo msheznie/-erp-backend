@@ -118,17 +118,17 @@ class BankAccountRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Short Code'] = $val->bankShortCode;
-                $data[$x]['Bank Name'] = $val->bankName;
-                $data[$x]['Currency'] = $val->currency? $val->currency->CurrencyCode : '';
-                $data[$x]['Account No'] = $val->AccountNo;
-                $data[$x]['GL Code'] = $val->glCodeLinked;
-                $data[$x]['Bank Branch'] = $val->bankBranch;
-                $data[$x]['Swift Code'] = $val->accountSwiftCode;
-                $data[$x]['Bank Balance'] = $val->amounts? number_format($val->amounts->bankBalance, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
-                $data[$x]['With Treasury Amount'] = $val->amounts? number_format($val->amounts->withTreasury, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
-                $data[$x]['Net Bank Balance'] = $val->amounts? number_format($val->amounts->netBankBalance, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
-                $data[$x]['Status'] = $val->isAccountActive == 1? 'Active' : 'Not Active';
+                $data[$x][trans('custom.short_code')] = $val->bankShortCode;
+                $data[$x][trans('custom.bank_name')] = $val->bankName;
+                $data[$x][trans('custom.currency')] = $val->currency? $val->currency->CurrencyCode : '';
+                $data[$x][trans('custom.account_no')] = $val->AccountNo;
+                $data[$x][trans('custom.gl_code')] = $val->glCodeLinked;
+                $data[$x][trans('custom.bank_branch')] = $val->bankBranch;
+                $data[$x][trans('custom.swift_code')] = $val->accountSwiftCode;
+                $data[$x][trans('custom.bank_balance')] = $val->amounts? number_format($val->amounts->bankBalance, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
+                $data[$x][trans('custom.with_treasury_amount')] = $val->amounts? number_format($val->amounts->withTreasury, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
+                $data[$x][trans('custom.net_bank_balance')] = $val->amounts? number_format($val->amounts->netBankBalance, $val->currency? $val->currency->DecimalPlaces : 2, ".", "") : 0;
+                $data[$x][trans('custom.status')] = $val->isAccountActive == 1? trans('custom.active') : trans('custom.not_active');
 
                 $x++;
             }

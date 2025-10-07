@@ -64,7 +64,7 @@ class PoCutoffJobDataAPIController extends AppBaseController
         $this->poCutoffJobDataRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poCutoffJobDatas = $this->poCutoffJobDataRepository->all();
 
-        return $this->sendResponse($poCutoffJobDatas->toArray(), 'Po Cutoff Job Datas retrieved successfully');
+        return $this->sendResponse($poCutoffJobDatas->toArray(), trans('custom.po_cutoff_job_datas_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PoCutoffJobDataAPIController extends AppBaseController
 
         $poCutoffJobData = $this->poCutoffJobDataRepository->create($input);
 
-        return $this->sendResponse($poCutoffJobData->toArray(), 'Po Cutoff Job Data saved successfully');
+        return $this->sendResponse($poCutoffJobData->toArray(), trans('custom.po_cutoff_job_data_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PoCutoffJobDataAPIController extends AppBaseController
         $poCutoffJobData = $this->poCutoffJobDataRepository->findWithoutFail($id);
 
         if (empty($poCutoffJobData)) {
-            return $this->sendError('Po Cutoff Job Data not found');
+            return $this->sendError(trans('custom.po_cutoff_job_data_not_found'));
         }
 
-        return $this->sendResponse($poCutoffJobData->toArray(), 'Po Cutoff Job Data retrieved successfully');
+        return $this->sendResponse($poCutoffJobData->toArray(), trans('custom.po_cutoff_job_data_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PoCutoffJobDataAPIController extends AppBaseController
         $poCutoffJobData = $this->poCutoffJobDataRepository->findWithoutFail($id);
 
         if (empty($poCutoffJobData)) {
-            return $this->sendError('Po Cutoff Job Data not found');
+            return $this->sendError(trans('custom.po_cutoff_job_data_not_found'));
         }
 
         $poCutoffJobData = $this->poCutoffJobDataRepository->update($input, $id);
 
-        return $this->sendResponse($poCutoffJobData->toArray(), 'PoCutoffJobData updated successfully');
+        return $this->sendResponse($poCutoffJobData->toArray(), trans('custom.pocutoffjobdata_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PoCutoffJobDataAPIController extends AppBaseController
         $poCutoffJobData = $this->poCutoffJobDataRepository->findWithoutFail($id);
 
         if (empty($poCutoffJobData)) {
-            return $this->sendError('Po Cutoff Job Data not found');
+            return $this->sendError(trans('custom.po_cutoff_job_data_not_found'));
         }
 
         $poCutoffJobData->delete();

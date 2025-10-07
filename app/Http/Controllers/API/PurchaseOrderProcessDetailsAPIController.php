@@ -49,7 +49,7 @@ class PurchaseOrderProcessDetailsAPIController extends AppBaseController
         $this->purchaseOrderProcessDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->all();
 
-        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), 'Purchase Order Process Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), trans('custom.purchase_order_process_details_retrieved_successfu'));
     }
 
     /**
@@ -66,7 +66,7 @@ class PurchaseOrderProcessDetailsAPIController extends AppBaseController
 
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), 'Purchase Order Process Details saved successfully');
+        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), trans('custom.purchase_order_process_details_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class PurchaseOrderProcessDetailsAPIController extends AppBaseController
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderProcessDetails)) {
-            return $this->sendError('Purchase Order Process Details not found');
+            return $this->sendError(trans('custom.purchase_order_process_details_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), 'Purchase Order Process Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), trans('custom.purchase_order_process_details_retrieved_successfu'));
     }
 
     /**
@@ -106,12 +106,12 @@ class PurchaseOrderProcessDetailsAPIController extends AppBaseController
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderProcessDetails)) {
-            return $this->sendError('Purchase Order Process Details not found');
+            return $this->sendError(trans('custom.purchase_order_process_details_not_found'));
         }
 
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), 'PurchaseOrderProcessDetails updated successfully');
+        return $this->sendResponse($purchaseOrderProcessDetails->toArray(), trans('custom.purchaseorderprocessdetails_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class PurchaseOrderProcessDetailsAPIController extends AppBaseController
         $purchaseOrderProcessDetails = $this->purchaseOrderProcessDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderProcessDetails)) {
-            return $this->sendError('Purchase Order Process Details not found');
+            return $this->sendError(trans('custom.purchase_order_process_details_not_found'));
         }
 
         $purchaseOrderProcessDetails->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Process Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_process_details_deleted_successfull'));
     }
 }

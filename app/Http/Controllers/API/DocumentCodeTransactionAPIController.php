@@ -64,7 +64,7 @@ class DocumentCodeTransactionAPIController extends AppBaseController
         $this->documentCodeTransactionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodeTransactions = $this->documentCodeTransactionRepository->all();
 
-        return $this->sendResponse($documentCodeTransactions->toArray(), 'Document Code Transactions retrieved successfully');
+        return $this->sendResponse($documentCodeTransactions->toArray(), trans('custom.document_code_transactions_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentCodeTransactionAPIController extends AppBaseController
 
         $documentCodeTransaction = $this->documentCodeTransactionRepository->create($input);
 
-        return $this->sendResponse($documentCodeTransaction->toArray(), 'Document Code Transaction saved successfully');
+        return $this->sendResponse($documentCodeTransaction->toArray(), trans('custom.document_code_transaction_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentCodeTransactionAPIController extends AppBaseController
         $documentCodeTransaction = $this->documentCodeTransactionRepository->findWithoutFail($id);
 
         if (empty($documentCodeTransaction)) {
-            return $this->sendError('Document Code Transaction not found');
+            return $this->sendError(trans('custom.document_code_transaction_not_found'));
         }
 
-        return $this->sendResponse($documentCodeTransaction->toArray(), 'Document Code Transaction retrieved successfully');
+        return $this->sendResponse($documentCodeTransaction->toArray(), trans('custom.document_code_transaction_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentCodeTransactionAPIController extends AppBaseController
         $documentCodeTransaction = $this->documentCodeTransactionRepository->findWithoutFail($id);
 
         if (empty($documentCodeTransaction)) {
-            return $this->sendError('Document Code Transaction not found');
+            return $this->sendError(trans('custom.document_code_transaction_not_found'));
         }
 
         $documentCodeTransaction = $this->documentCodeTransactionRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeTransaction->toArray(), 'DocumentCodeTransaction updated successfully');
+        return $this->sendResponse($documentCodeTransaction->toArray(), trans('custom.documentcodetransaction_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentCodeTransactionAPIController extends AppBaseController
         $documentCodeTransaction = $this->documentCodeTransactionRepository->findWithoutFail($id);
 
         if (empty($documentCodeTransaction)) {
-            return $this->sendError('Document Code Transaction not found');
+            return $this->sendError(trans('custom.document_code_transaction_not_found'));
         }
 
         $documentCodeTransaction->delete();

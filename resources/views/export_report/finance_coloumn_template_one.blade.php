@@ -11,19 +11,19 @@
 			<tr></tr>
 			@if ($month != null)
 				<tr>
-					<th>As of - {{$month}}</th>
+					<th>{{trans('custom.as_of')}} - {{$month}}</th>
 				</tr>
 			@endif
 
 			@if ($from_date != null && $to_date != null)
 				<tr>
-					<th>Period From - {{$from_date}}</th>
+					<th>{{trans('custom.period_from')}} - {{$from_date}}</th>
 				</tr>
 				<tr>
-					<th>Period To - {{$to_date}} </th>
+					<th>{{trans('custom.period_to')}} - {{$to_date}} </th>
 				</tr>
 			@endif
-			<tr><th>Currency: {{$currencyCode}}</th></tr>
+			<tr><th>{{trans('custom.currency_label')}}: {{$currencyCode}}</th></tr>
 			<tr></tr>
 			<tr></tr>
 			@if($columnTemplateID == 2)
@@ -74,15 +74,15 @@
             </tr>
             <tr>
                 @if($fourthLevel)
-	            	<th colspan="5">Description</th>
+	            	<th colspan="5">{{trans('custom.description')}}</th>
 	            @elseif($thirdLevel)
-	            	<th colspan="4">Description</th>
+	            	<th colspan="4">{{trans('custom.description')}}</th>
 	            @elseif($secondLevel)
-	            	<th colspan="3">Description</th>
+	            	<th colspan="3">{{trans('custom.description')}}</th>
 	            @elseif($firstLevel)
-	            	<th colspan="2">Description</th>
+	            	<th colspan="2">{{trans('custom.description')}}</th>
 	            @else
-	            	<th>Description</th>
+	            	<th>{{trans('custom.description')}}</th>
 	            @endif
 	            @foreach ($companyHeaderData as $company)
 	            	 @foreach ($columnHeader as $column)
@@ -90,7 +90,7 @@
 		            @endforeach
 	            @endforeach
 	            @if($columnTemplateID == 2)
-	            	<th>Total</th>
+	            	<th>{{trans('custom.total')}}</th>
         		@endif
             </tr>
         </thead>
@@ -549,7 +549,7 @@
 		        @endif
 		        @if($accountType == 3 && $loop->last)
 			        <tr>
-			            <td><strong>Opening Balance</strong></td>
+			            <td><strong>{{trans('custom.opening_balance')}}</strong></td>
 			            @if($firstLevel)
 			            <td></td>
 			            @endif
@@ -576,7 +576,7 @@
 		        		@endif
 			        </tr>
 			        <tr>
-			            <td><strong>Closing Balance</strong></td>
+			            <td><strong>{{trans('custom.closing_balance')}}</strong></td>
 			            @if($firstLevel)
 			            <td></td>
 			            @endif
@@ -605,7 +605,7 @@
 		        @endif
 		        @if($accountType == 2 && $loop->last && $isUncategorize)
 		        <tr>
-		            <td><strong>Uncategorized</strong></td>
+		            <td><strong>{{trans('custom.uncategorized')}}</strong></td>
 		            @if($firstLevel)
 		            <td></td>
 		            @endif
@@ -636,7 +636,7 @@
 		        @endif
 		        @if($accountType == 2 && $loop->last)
 		        <tr>
-		            <td><strong>Grand Total</strong></td>
+		            <td><strong>{{trans('custom.grand_total')}}</strong></td>
 		            @if($firstLevel)
 		            <td></td>
 		            @endif
@@ -663,7 +663,7 @@
 		        @endif
 		        @if($accountType == 1 && $loop->last)
 		        <tr>
-		            <td><strong>Uncategorized</strong></td>
+		            <td><strong>{{trans('custom.uncategorized')}}</strong></td>
 		            @if($firstLevel)
 		            <td></td>
 		            @endif
@@ -695,7 +695,7 @@
 	        @endforeach
             @if(sizeof($reportData) == 0)
 		        <tr>
-		            <td colspan="{{sizeof($columnHeader) + sizeof($companyHeaderData)}}">No Records Found</td>
+		            <td colspan="{{sizeof($columnHeader) + sizeof($companyHeaderData)}}">{{trans('custom.no_records_found')}}</td>
 		        </tr>
 	        @endif
         </tbody>

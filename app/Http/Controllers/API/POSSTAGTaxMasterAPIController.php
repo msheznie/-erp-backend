@@ -65,7 +65,7 @@ class POSSTAGTaxMasterAPIController extends AppBaseController
         $this->pOSSTAGTaxMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSTAGTaxMasters = $this->pOSSTAGTaxMasterRepository->all();
 
-        return $this->sendResponse($pOSSTAGTaxMasters->toArray(), 'P O S S T A G Tax Masters retrieved successfully');
+        return $this->sendResponse($pOSSTAGTaxMasters->toArray(), trans('custom.p_o_s_s_t_a_g_tax_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSTAGTaxMasterAPIController extends AppBaseController
 
         $pOSSTAGTaxMaster = $this->pOSSTAGTaxMasterRepository->create($input);
 
-        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), 'P O S S T A G Tax Master saved successfully');
+        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), trans('custom.p_o_s_s_t_a_g_tax_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSTAGTaxMasterAPIController extends AppBaseController
         $pOSSTAGTaxMaster = $this->pOSSTAGTaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxMaster)) {
-            return $this->sendError('P O S S T A G Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_master_not_found'));
         }
 
-        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), 'P O S S T A G Tax Master retrieved successfully');
+        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), trans('custom.p_o_s_s_t_a_g_tax_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSTAGTaxMasterAPIController extends AppBaseController
         $pOSSTAGTaxMaster = $this->pOSSTAGTaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxMaster)) {
-            return $this->sendError('P O S S T A G Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_master_not_found'));
         }
 
         $pOSSTAGTaxMaster = $this->pOSSTAGTaxMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), 'POSSTAGTaxMaster updated successfully');
+        return $this->sendResponse($pOSSTAGTaxMaster->toArray(), trans('custom.posstagtaxmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSTAGTaxMasterAPIController extends AppBaseController
         $pOSSTAGTaxMaster = $this->pOSSTAGTaxMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxMaster)) {
-            return $this->sendError('P O S S T A G Tax Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_master_not_found'));
         }
 
         $pOSSTAGTaxMaster->delete();

@@ -65,7 +65,7 @@ class POSMappingMasterAPIController extends AppBaseController
         $this->pOSMappingMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSMappingMasters = $this->pOSMappingMasterRepository->all();
 
-        return $this->sendResponse($pOSMappingMasters->toArray(), 'P O S Mapping Masters retrieved successfully');
+        return $this->sendResponse($pOSMappingMasters->toArray(), trans('custom.p_o_s_mapping_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSMappingMasterAPIController extends AppBaseController
 
         $pOSMappingMaster = $this->pOSMappingMasterRepository->create($input);
 
-        return $this->sendResponse($pOSMappingMaster->toArray(), 'P O S Mapping Master saved successfully');
+        return $this->sendResponse($pOSMappingMaster->toArray(), trans('custom.p_o_s_mapping_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSMappingMasterAPIController extends AppBaseController
         $pOSMappingMaster = $this->pOSMappingMasterRepository->findWithoutFail($id);
 
         if (empty($pOSMappingMaster)) {
-            return $this->sendError('P O S Mapping Master not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_master_not_found'));
         }
 
-        return $this->sendResponse($pOSMappingMaster->toArray(), 'P O S Mapping Master retrieved successfully');
+        return $this->sendResponse($pOSMappingMaster->toArray(), trans('custom.p_o_s_mapping_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSMappingMasterAPIController extends AppBaseController
         $pOSMappingMaster = $this->pOSMappingMasterRepository->findWithoutFail($id);
 
         if (empty($pOSMappingMaster)) {
-            return $this->sendError('P O S Mapping Master not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_master_not_found'));
         }
 
         $pOSMappingMaster = $this->pOSMappingMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSMappingMaster->toArray(), 'POSMappingMaster updated successfully');
+        return $this->sendResponse($pOSMappingMaster->toArray(), trans('custom.posmappingmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSMappingMasterAPIController extends AppBaseController
         $pOSMappingMaster = $this->pOSMappingMasterRepository->findWithoutFail($id);
 
         if (empty($pOSMappingMaster)) {
-            return $this->sendError('P O S Mapping Master not found');
+            return $this->sendError(trans('custom.p_o_s_mapping_master_not_found'));
         }
 
         $pOSMappingMaster->delete();

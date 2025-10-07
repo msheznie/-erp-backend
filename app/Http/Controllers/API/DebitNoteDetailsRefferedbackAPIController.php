@@ -65,7 +65,7 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
         $this->debitNoteDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $debitNoteDetailsRefferedbacks = $this->debitNoteDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($debitNoteDetailsRefferedbacks->toArray(), 'Debit Note Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($debitNoteDetailsRefferedbacks->toArray(), trans('custom.debit_note_details_refferedbacks_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
 
         $debitNoteDetailsRefferedbacks = $this->debitNoteDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($debitNoteDetailsRefferedbacks->toArray(), 'Debit Note Details Refferedback saved successfully');
+        return $this->sendResponse($debitNoteDetailsRefferedbacks->toArray(), trans('custom.debit_note_details_refferedback_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
         $debitNoteDetailsRefferedback = $this->debitNoteDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetailsRefferedback)) {
-            return $this->sendError('Debit Note Details Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_details_refferedback_not_found'));
         }
 
-        return $this->sendResponse($debitNoteDetailsRefferedback->toArray(), 'Debit Note Details Refferedback retrieved successfully');
+        return $this->sendResponse($debitNoteDetailsRefferedback->toArray(), trans('custom.debit_note_details_refferedback_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
         $debitNoteDetailsRefferedback = $this->debitNoteDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetailsRefferedback)) {
-            return $this->sendError('Debit Note Details Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_details_refferedback_not_found'));
         }
 
         $debitNoteDetailsRefferedback = $this->debitNoteDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($debitNoteDetailsRefferedback->toArray(), 'DebitNoteDetailsRefferedback updated successfully');
+        return $this->sendResponse($debitNoteDetailsRefferedback->toArray(), trans('custom.debitnotedetailsrefferedback_updated_successfully'));
     }
 
     /**
@@ -271,12 +271,12 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
         $debitNoteDetailsRefferedback = $this->debitNoteDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($debitNoteDetailsRefferedback)) {
-            return $this->sendError('Debit Note Details Refferedback not found');
+            return $this->sendError(trans('custom.debit_note_details_refferedback_not_found'));
         }
 
         $debitNoteDetailsRefferedback->delete();
 
-        return $this->sendResponse($id, 'Debit Note Details Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.debit_note_details_refferedback_deleted_successful'));
     }
 
 
@@ -291,6 +291,6 @@ class DebitNoteDetailsRefferedbackAPIController extends AppBaseController
             ->with(['segment'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Debit Note Details History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.debit_note_details_history_retrieved_successfully'));
     }
 }

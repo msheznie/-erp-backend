@@ -65,7 +65,7 @@ class POSSourceMenuSalesMasterAPIController extends AppBaseController
         $this->pOSSourceMenuSalesMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceMenuSalesMasters = $this->pOSSourceMenuSalesMasterRepository->all();
 
-        return $this->sendResponse($pOSSourceMenuSalesMasters->toArray(), 'P O S Source Menu Sales Masters retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesMasters->toArray(), trans('custom.p_o_s_source_menu_sales_masters_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceMenuSalesMasterAPIController extends AppBaseController
 
         $pOSSourceMenuSalesMaster = $this->pOSSourceMenuSalesMasterRepository->create($input);
 
-        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), 'P O S Source Menu Sales Master saved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), trans('custom.p_o_s_source_menu_sales_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceMenuSalesMasterAPIController extends AppBaseController
         $pOSSourceMenuSalesMaster = $this->pOSSourceMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesMaster)) {
-            return $this->sendError('P O S Source Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_master_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), 'P O S Source Menu Sales Master retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), trans('custom.p_o_s_source_menu_sales_master_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceMenuSalesMasterAPIController extends AppBaseController
         $pOSSourceMenuSalesMaster = $this->pOSSourceMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesMaster)) {
-            return $this->sendError('P O S Source Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_master_not_found'));
         }
 
         $pOSSourceMenuSalesMaster = $this->pOSSourceMenuSalesMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), 'POSSourceMenuSalesMaster updated successfully');
+        return $this->sendResponse($pOSSourceMenuSalesMaster->toArray(), trans('custom.possourcemenusalesmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceMenuSalesMasterAPIController extends AppBaseController
         $pOSSourceMenuSalesMaster = $this->pOSSourceMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesMaster)) {
-            return $this->sendError('P O S Source Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_master_not_found'));
         }
 
         $pOSSourceMenuSalesMaster->delete();

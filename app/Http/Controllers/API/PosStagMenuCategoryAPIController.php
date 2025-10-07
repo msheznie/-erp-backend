@@ -65,7 +65,7 @@ class PosStagMenuCategoryAPIController extends AppBaseController
         $this->posStagMenuCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $posStagMenuCategories = $this->posStagMenuCategoryRepository->all();
 
-        return $this->sendResponse($posStagMenuCategories->toArray(), 'Pos Stag Menu Categories retrieved successfully');
+        return $this->sendResponse($posStagMenuCategories->toArray(), trans('custom.pos_stag_menu_categories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PosStagMenuCategoryAPIController extends AppBaseController
 
         $posStagMenuCategory = $this->posStagMenuCategoryRepository->create($input);
 
-        return $this->sendResponse($posStagMenuCategory->toArray(), 'Pos Stag Menu Category saved successfully');
+        return $this->sendResponse($posStagMenuCategory->toArray(), trans('custom.pos_stag_menu_category_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PosStagMenuCategoryAPIController extends AppBaseController
         $posStagMenuCategory = $this->posStagMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posStagMenuCategory)) {
-            return $this->sendError('Pos Stag Menu Category not found');
+            return $this->sendError(trans('custom.pos_stag_menu_category_not_found'));
         }
 
-        return $this->sendResponse($posStagMenuCategory->toArray(), 'Pos Stag Menu Category retrieved successfully');
+        return $this->sendResponse($posStagMenuCategory->toArray(), trans('custom.pos_stag_menu_category_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PosStagMenuCategoryAPIController extends AppBaseController
         $posStagMenuCategory = $this->posStagMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posStagMenuCategory)) {
-            return $this->sendError('Pos Stag Menu Category not found');
+            return $this->sendError(trans('custom.pos_stag_menu_category_not_found'));
         }
 
         $posStagMenuCategory = $this->posStagMenuCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($posStagMenuCategory->toArray(), 'PosStagMenuCategory updated successfully');
+        return $this->sendResponse($posStagMenuCategory->toArray(), trans('custom.posstagmenucategory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PosStagMenuCategoryAPIController extends AppBaseController
         $posStagMenuCategory = $this->posStagMenuCategoryRepository->findWithoutFail($id);
 
         if (empty($posStagMenuCategory)) {
-            return $this->sendError('Pos Stag Menu Category not found');
+            return $this->sendError(trans('custom.pos_stag_menu_category_not_found'));
         }
 
         $posStagMenuCategory->delete();

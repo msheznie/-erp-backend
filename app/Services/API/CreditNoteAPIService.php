@@ -40,7 +40,7 @@ class CreditNoteAPIService extends AppBaseController
             if ($alreadyUsed) {
                 return [
                     'status' => false,
-                    'message' => "Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again",
+                    'message' => trans('custom.debit_note_already_used', ['creditNoteCode' => $alreadyUsed->creditNoteCode]),
                     'type' => []
                 ];
             }
@@ -51,7 +51,7 @@ class CreditNoteAPIService extends AppBaseController
         if ($input['creditNoteDate'] > $curentDate) {
             return [
                 'status' => false,
-                'message' => "Document date cannot be greater than current date",
+                'message' => trans('custom.document_date_greater_than_current'),
                 'type' => []
             ];
         }
@@ -100,7 +100,7 @@ class CreditNoteAPIService extends AppBaseController
         } else {
             return [
                 'status' => false,
-                'message' => "Document date is not within the financial period!",
+                'message' => trans('custom.document_date_not_within_period'),
                 'type' => []
             ];
         }
@@ -138,7 +138,7 @@ class CreditNoteAPIService extends AppBaseController
         return [
             'status' => true,
             'data' => $creditNotes->refresh()->toArray(),
-            'message' => 'Credit Note Master saved successfully'
+            'message' => trans('custom.master_saved_successfully')
         ];
     }
 
@@ -209,13 +209,13 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => $creditNoteDetails->refresh(),
-                'message' => "successfully created"
+                'message' => trans('custom.details_created_successfully')
             ];
         } catch (\Exception $exception) {
             DB::rollback();
             return [
                 'status' => false,
-                'message' => "Error Occured !"
+                'message' => trans('custom.error_occurred')
             ];
         }
     }
@@ -231,7 +231,7 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Credit note details not found'
+                'message' => trans('custom.details_not_found')
             ];
         }
 
@@ -348,13 +348,13 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => CreditNoteDetails::find($id),
-                'message' => "successfully Updated"
+                'message' => trans('custom.details_updated_successfully')
             ];
         } catch (\Exception $exception) {
             DB::rollback();
             return [
                 'status' => false,
-                'message' => "Error Occured !"
+                'message' => trans('custom.error_occurred')
             ];
         }
     }
@@ -369,7 +369,7 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => 'Credit note not found'
+                'message' => trans('custom.credit_note_not_found')
             ];
         }
 
@@ -386,7 +386,7 @@ class CreditNoteAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => "Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again"
+                    'message' => trans('custom.debit_note_already_used', ['creditNoteCode' => $alreadyUsed->creditNoteCode])
                 ];
             }
         }
@@ -487,7 +487,7 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => false,
                 'code' => 500,
-                'message' => "Document date cannot be greater than current date"
+                'message' => trans('custom.document_date_greater_than_current')
             ];
         }
 
@@ -523,7 +523,7 @@ class CreditNoteAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Document date is not within the selected financial period !'
+                    'message' => trans('custom.document_date_not_within_selected_period')
                 ];
             }
 
@@ -531,7 +531,7 @@ class CreditNoteAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'You cannot confirm. Credit note should have at least one item.'
+                    'message' => trans('custom.cannot_confirm_no_items')
                 ];
             }
 
@@ -556,7 +556,7 @@ class CreditNoteAPIService extends AppBaseController
                 return [
                     'status' => false,
                     'code' => 500,
-                    'message' => 'Credit note details not found.'
+                    'message' => trans('custom.details_not_found')
                 ];
             }
 
@@ -571,7 +571,7 @@ class CreditNoteAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Cannot confirm. Output VAT GL Account not configured.'
+                        'message' => trans('custom.output_vat_gl_not_configured')
                     ];
                 }
 
@@ -583,7 +583,7 @@ class CreditNoteAPIService extends AppBaseController
                     return [
                         'status' => false,
                         'code' => 500,
-                        'message' => 'Cannot confirm. Output VAT GL Account not assigned to company.'
+                        'message' => trans('custom.output_vat_gl_not_assigned')
                     ];
                 }
 
@@ -672,7 +672,7 @@ class CreditNoteAPIService extends AppBaseController
             return [
                 'status' => true,
                 'data' => CreditNote::find($id),
-                'message' => "Credit Note Updated Successfully"
+                'message' => trans('custom.updated_successfully')
             ];
         } catch (\Exception $exception) {
             DB::rollback();

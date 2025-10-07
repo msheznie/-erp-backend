@@ -75,7 +75,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         $this->notificationCompanyScenarioRepository->pushCriteria(new LimitOffsetCriteria($request));
         $notificationCompanyScenarios = $this->notificationCompanyScenarioRepository->all();
 
-        return $this->sendResponse($notificationCompanyScenarios->toArray(), 'Notification Company Scenarios retrieved successfully');
+        return $this->sendResponse($notificationCompanyScenarios->toArray(), trans('custom.notification_company_scenarios_retrieved_successfu'));
     }
 
     /**
@@ -122,7 +122,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
 
         $notificationCompanyScenario = $this->notificationCompanyScenarioRepository->create($input);
 
-        return $this->sendResponse($notificationCompanyScenario->toArray(), 'Notification Company Scenario saved successfully');
+        return $this->sendResponse($notificationCompanyScenario->toArray(), trans('custom.notification_company_scenario_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         $notificationCompanyScenario = $this->notificationCompanyScenarioRepository->findWithoutFail($id);
 
         if (empty($notificationCompanyScenario)) {
-            return $this->sendError('Notification Company Scenario not found');
+            return $this->sendError(trans('custom.notification_company_scenario_not_found'));
         }
 
-        return $this->sendResponse($notificationCompanyScenario->toArray(), 'Notification Company Scenario retrieved successfully');
+        return $this->sendResponse($notificationCompanyScenario->toArray(), trans('custom.notification_company_scenario_retrieved_successful'));
     }
 
     /**
@@ -229,12 +229,12 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         $notificationCompanyScenario = $this->notificationCompanyScenarioRepository->findWithoutFail($id);
 
         if (empty($notificationCompanyScenario)) {
-            return $this->sendError('Notification Company Scenario not found');
+            return $this->sendError(trans('custom.notification_company_scenario_not_found'));
         }
 
         $notificationCompanyScenario = $this->notificationCompanyScenarioRepository->update($input, $id);
 
-        return $this->sendResponse($notificationCompanyScenario->toArray(), 'NotificationCompanyScenario updated successfully');
+        return $this->sendResponse($notificationCompanyScenario->toArray(), trans('custom.notificationcompanyscenario_updated_successfully'));
     }
 
     /**
@@ -281,7 +281,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         $notificationCompanyScenario = $this->notificationCompanyScenarioRepository->findWithoutFail($id);
 
         if (empty($notificationCompanyScenario)) {
-            return $this->sendError('Notification Company Scenario not found');
+            return $this->sendError(trans('custom.notification_company_scenario_not_found'));
         }
 
         $notificationCompanyScenario->delete();

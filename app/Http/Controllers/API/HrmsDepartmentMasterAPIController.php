@@ -65,7 +65,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
         $this->hrmsDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrmsDepartmentMasters = $this->hrmsDepartmentMasterRepository->all();
 
-        return $this->sendResponse($hrmsDepartmentMasters->toArray(), 'Hrms Department Masters retrieved successfully');
+        return $this->sendResponse($hrmsDepartmentMasters->toArray(), trans('custom.hrms_department_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
 
         $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->create($input);
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master saved successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), trans('custom.hrms_department_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
         $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+            return $this->sendError(trans('custom.hrms_department_master_not_found'));
         }
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master retrieved successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), trans('custom.hrms_department_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
         $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+            return $this->sendError(trans('custom.hrms_department_master_not_found'));
         }
 
         $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'HrmsDepartmentMaster updated successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), trans('custom.hrmsdepartmentmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
         $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+            return $this->sendError(trans('custom.hrms_department_master_not_found'));
         }
 
         $hrmsDepartmentMaster->delete();
 
-        return $this->sendResponse($id, 'Hrms Department Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.hrms_department_master_deleted_successfully'));
     }
 }

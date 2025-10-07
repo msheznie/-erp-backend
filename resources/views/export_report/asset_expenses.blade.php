@@ -5,19 +5,19 @@
     <tr></tr>
     <tr>
         <td colspan="2"></td>
-        <td><h1>Asset Expenses Report</h1></td>
+        <td><h1>{{ trans('custom.asset_expenses_report') }}</h1></td>
     </tr>
     <tr>
         <td colspan="2"></td>
-        <th style="font-size:15px;">From {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - To {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
+        <th style="font-size:15px;">{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
     </tr>
     <tr>
         <td colspan="2"></td>
         @if($currencyID == 2)
-        <th style="font-size:15px;">Currency - {{$currency->localCurrency->CurrencyCode}}</th>
+        <th style="font-size:15px;">{{ trans('custom.currency_dash') }} {{$currency->localCurrency->CurrencyCode}}</th>
         @endif
         @if($currencyID == 3)
-        <th style="font-size:15px;">Currency - {{$currency->reportingcurrency->CurrencyCode}}</th>
+        <th style="font-size:15px;">{{ trans('custom.currency_dash') }} {{$currency->reportingcurrency->CurrencyCode}}</th>
         @endif
     </tr>
     <tr></tr>
@@ -31,13 +31,13 @@
     <tr><th><B>{{ $header[0]['AccountCode'] }} - {{ $header[0]['AccountDescription'] }}</B></th></tr>
 <table>
     <thead>
-    <tr>
-        <th>Asset Code</th>
-        <th>Asset Description</th>
-        <th>Document Code</th>
-        <th>Document Date</th>
-        <th>Amount</th>
-    </tr>
+        <tr>
+            <th>{{ trans('custom.asset_code') }}</th>
+            <th>{{ trans('custom.asset_description') }}</th>
+            <th>{{ trans('custom.document_code') }}</th>
+            <th>{{ trans('custom.document_date') }}</th>
+            <th>{{ trans('custom.amount') }}</th>
+        </tr>
     </thead>
     <tbody>
     @php $total = 0 @endphp
@@ -60,7 +60,7 @@
     <tfoot>
     <tr>
         <td colspan="3"></td>
-        <td>Total</td>
+        <td>{{ trans('custom.total') }}</td>
         <td>{{$total}}</td>
     </tr>
     @php $grandTotal += $total @endphp
@@ -70,6 +70,6 @@
 @endforeach
 <tr>
     <td colspan="3"></td>
-    <td>Grand Total</td>
+    <td>{{ trans('custom.grand_total') }}</td>
     <td>{{$grandTotal}}</td>
 </tr>

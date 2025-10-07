@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Minutes of Tender Awarding</title>
+    <title>{{ __('custom.minutes_of_tender_awarding') }}</title>
     <style>
         @page {
             margin-left: 30px;

@@ -63,18 +63,18 @@ class ClubManagementAPIController extends AppBaseController
                     $dt['companySystemID'] = $request->company_id;
                     $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
                     if (empty($financeYear)) {
-                        return $this->sendError('Finance Year not found');
+                        return $this->sendError(trans('custom.finance_year_not_found_1'));
                     }
 
 
                     $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
                     if (empty($financePeriod)) {
-                        return $this->sendError('Finance Period not found');
+                        return $this->sendError(trans('custom.finance_period_not_found'));
                     }
 
                     $customerCurr = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
                     if (empty($customerCurr)) {
-                        return $this->sendError('Customer currency not found');
+                        return $this->sendError(trans('custom.customer_currency_not_found_1'));
                     }
                     if ($customerCurr) {
                         $myCurr = $customerCurr->currencyID;
@@ -84,7 +84,7 @@ class ClubManagementAPIController extends AppBaseController
 
                     $segment = SegmentMaster::find($dt['serviceLineSystemID']);
                     if (empty($segment)) {
-                        return $this->sendError('Segment not found');
+                        return $this->sendError(trans('custom.segment_not_found'));
                     } else {
                         if($segment->approved_yn == 0) {
                             return $this->sendError('The segment is not approved');
@@ -106,13 +106,13 @@ class ClubManagementAPIController extends AppBaseController
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
                     $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
                     if (empty($customer)) {
-                        return $this->sendError('Customer not found');
+                        return $this->sendError(trans('custom.customer_not_found'));
                     }
                     $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
 
                     $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
-                        return $this->sendError('Company not found');
+                        return $this->sendError(trans('custom.company_not_found'));
                     }
 
                     $custInvoiceArray[] = array(
@@ -168,7 +168,7 @@ class ClubManagementAPIController extends AppBaseController
                 foreach ($input[1] as $dt) {
                     $custInvoice = StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt['custInvoiceDirectAutoID'])->first();
                     if (empty($custInvoice)) {
-                        return $this->sendError('Customer Invoice not found');
+                        return $this->sendError(trans('custom.customer_invoice_not_found'));
                     }
                     if ($custInvoice->isPerforma == 0) {
 
@@ -178,7 +178,7 @@ class ClubManagementAPIController extends AppBaseController
                         $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
                         $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
                         if (empty($customer)) {
-                            return $this->sendError('Customer not found');
+                            return $this->sendError(trans('custom.customer_not_found'));
                         }
                         if ($customer) {
                             $myCurr = $customer->currencyID;
@@ -189,7 +189,7 @@ class ClubManagementAPIController extends AppBaseController
                         $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
                         $company = Company::where('companySystemID', $custInvoice->companySystemID)->first();
                         if (empty($company)) {
-                            return $this->sendError('Company not found');
+                            return $this->sendError(trans('custom.company_not_found'));
                         }
 
                         $custInvoiceDetArray[] = array(
@@ -231,7 +231,7 @@ class ClubManagementAPIController extends AppBaseController
                         $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
                         $item = ItemAssigned::where('itemCodeSystem', $dt['itemCodeSystem'])->first();
                         if (empty($item)) {
-                            return $this->sendError('Item not found');
+                            return $this->sendError(trans('custom.item_not_found'));
                         }
 
                         $data = array('companySystemID' => $custInvoice->companySystemID,
@@ -334,7 +334,7 @@ class ClubManagementAPIController extends AppBaseController
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
 
                 if(!isset($dt['customerGLCodeSystemID'])){
-                    return $this->sendError('customerGLCodeSystemID is required');
+                    return $this->sendError(trans('custom.customerglcodesystemid_is_required'));
                 }
                 
             $customerGLCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['customerGLCodeSystemID'])->where('companySystemID', $dt['companySystemID'])->first();
@@ -342,12 +342,12 @@ class ClubManagementAPIController extends AppBaseController
 
 
             if (empty($customerGLCode)) {
-                    return $this->sendError('Customer GL Code not found');
+                    return $this->sendError(trans('custom.customer_gl_code_not_found'));
             }
 
 
             if (empty($customer)) {
-                return $this->sendError('Customer not found');
+                return $this->sendError(trans('custom.customer_not_found'));
             }
 
             if ($customer) {
@@ -355,11 +355,11 @@ class ClubManagementAPIController extends AppBaseController
             }
 
             if (empty($financeYear)) {
-                return $this->sendError('Company finance year not found');
+                return $this->sendError(trans('custom.company_finance_year_not_found_1'));
             }
 
             if (empty($financePeriod)) {
-                return $this->sendError('Company finance period not found');
+                return $this->sendError(trans('custom.company_finance_period_not_found'));
             }
 
 
@@ -371,7 +371,7 @@ class ClubManagementAPIController extends AppBaseController
 
             $company = Company::where('companySystemID', $dt['companySystemID'])->first();
             if (empty($company)) {
-                return $this->sendError('Company not found');
+                return $this->sendError(trans('custom.company_not_found'));
             }
 
             $custReceiptVoucherArray[] = array(
@@ -428,11 +428,11 @@ class ClubManagementAPIController extends AppBaseController
             foreach ($input[1] as $dt) {
                 $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['custReceivePaymentAutoID'])->first();
                 if (empty($master)) {
-                    return $this->sendError('Receipt voucher master not found');
+                    return $this->sendError(trans('custom.receipt_voucher_master_not_found_1'));
                 }
                 $company = Company::where('companySystemID', $master->companySystemID)->first();
                 if (empty($company)) {
-                    return $this->sendError('Company not found');
+                    return $this->sendError(trans('custom.company_not_found'));
                 }
                 $myCurr = $dt['custTransactionCurrencyID'];
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
@@ -441,7 +441,7 @@ class ClubManagementAPIController extends AppBaseController
                 $companyCurrencyConversionReceive = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['receiveAmountTrans']);
                 $arAutoID = AccountsReceivableLedger::where('documentCodeSystem', $dt['bookingInvCodeSystem'])->first();
                 if (empty($arAutoID)) {
-                    return $this->sendError('Customer Invoice not found');
+                    return $this->sendError(trans('custom.customer_invoice_not_found'));
                 }
 
 
@@ -485,7 +485,7 @@ class ClubManagementAPIController extends AppBaseController
                     ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
                     ->first();
                 if (empty($serviceLine)) {
-                    return $this->sendError('Segment not found');
+                    return $this->sendError(trans('custom.segment_not_found'));
                 } else {
                     if($serviceLine->approved_yn == 0) {
                         return $this->sendError('The segment is not approved');
@@ -503,17 +503,17 @@ class ClubManagementAPIController extends AppBaseController
 
                 $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['directReceiptAutoID'])->first();
                 if(empty($master)){
-                    return $this->sendError('Receipt voucher master not found');
+                    return $this->sendError(trans('custom.receipt_voucher_master_not_found_1'));
                 }
                 $company = Company::where('companySystemID', $master->companySystemID)->first();
                 if(empty($company)){
-                    return $this->sendError('Company not found');
+                    return $this->sendError(trans('custom.company_not_found'));
                 }
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
                     ->where('chartOfAccountSystemID', $dt['chartOfAccountSystemID'])
                     ->first();
                 if(empty($chartOfAccount)){
-                    return $this->sendError('Chart of account not found');
+                    return $this->sendError(trans('custom.chart_of_account_not_found_4'));
                 }
 
                 if($master){
@@ -608,7 +608,7 @@ class ClubManagementAPIController extends AppBaseController
             $input['primaryCompanySystemID'] = $request->company_id;
         }
         else {
-            return $this->sendError('Company System ID not found.');
+            return $this->sendError(trans('custom.company_system_id_not_found'));
         }
 
         if(key_exists('customerCountry',$input))
@@ -635,7 +635,7 @@ class ClubManagementAPIController extends AppBaseController
             $duplicateCustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
 
             if($duplicateCustomerShortCode){
-                return $this->sendError('Secondary code already exists.' ,500);
+                return $this->sendError(trans('custom.secondary_code_already_exists') ,500);
             }
 
             Log::useFiles(storage_path().'/logs/laravel.log');
@@ -653,7 +653,7 @@ class ClubManagementAPIController extends AppBaseController
             );
         }
 
-        return $this->sendResponse($customerMaster['data']->toArray(), 'Customer Master created successfully');
+        return $this->sendResponse($customerMaster['data']->toArray(), trans('custom.customer_master_created_successfully'));
     }
 
     private function updateCustomer($input)
@@ -688,7 +688,7 @@ class ClubManagementAPIController extends AppBaseController
                 return ['status' => false , 'message' => 'Secondary code cannot be empty!'];
 
             if($duplicateCustomerShortCode)
-                return ['status' => false , 'message' => 'Secondary code already exists.'];
+                return ['status' => false , 'message' => trans('custom.secondary_code_already_exists')];
 
         }
 
@@ -727,24 +727,24 @@ class ClubManagementAPIController extends AppBaseController
         try {
             $company = Company::where('companySystemID', $request->company_id)->first();
             if (empty($company)) {
-                return $this->sendError('Company not found');
+                return $this->sendError(trans('custom.company_not_found'));
             }
 
             if (empty($request->categoryDescription)){
-                return $this->sendError('Category Description cannot be empty',500);
+                return $this->sendError(trans('custom.category_description_cannot_be_empty'),500);
             }
 
             $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
 
             if ($duplicateCategoryDescription) {
-                return $this->sendError('Customer master category description already exists.', 500);
+                return $this->sendError(trans('custom.customer_master_category_description_already_exist'), 500);
             }
 
             $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
             $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
             DB::commit();
 
-            return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
+            return $this->sendResponse($customerMasterCategory->toArray(), trans('custom.customer_master_category_created_successfully'));
         }
         catch(\Exception $e){
             DB::rollback();
@@ -804,7 +804,7 @@ class ClubManagementAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($taxArray, 'Data retrieved successfully');
+            return $this->sendResponse($taxArray, trans('custom.data_retrieved_successfully'));
         }
         catch (\Exception $exception) {
             DB::rollBack();
@@ -840,7 +840,7 @@ class ClubManagementAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse($banks, 'Data Retrieved successfully');
+            return $this->sendResponse($banks, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

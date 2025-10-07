@@ -168,7 +168,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
@@ -204,7 +204,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $budgetTransferForms = $this->budgetTransferFormRepository->create($input);
 
-        return $this->sendResponse($budgetTransferForms->toArray(), 'Budget Transfer Form saved successfully');
+        return $this->sendResponse($budgetTransferForms->toArray(), trans('custom.budget_transfer_form_saved_successfully'));
     }
 
     /**
@@ -386,7 +386,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $budgetTransferForm, $debitNoteDetails);
             if (!$checkBudgetFromReview['status']) {
-                return $this->sendError("You cannot confirm this document.", 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -729,9 +729,9 @@ class BudgetTransferFormAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetTransfer->transferVoucherNo . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetTransfer->transferVoucherNo;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $budgetTransfer->companySystemID)
             ->where('documentSystemCode', $budgetTransfer->budgetTransferFormAutoID)
@@ -988,7 +988,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['type']) || (isset($input['type']) && $input['type'] == "")) {
-            return $this->sendError("Please choose budget create type", 500);
+            return $this->sendError(trans('custom.please_choose_budget_create_type'), 500);
         }
 
         if ($input['type'] == 1) {
@@ -1004,7 +1004,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $budgetYears = array_unique(collect($selectedPoPrs)->pluck('budgetYear')->toArray());
         if (count($budgetYears) != 1) {
-            return $this->sendError("Different Budget year cannot be selected", 500);
+            return $this->sendError(trans('custom.different_budget_year_cannot_be_selected'), 500);
         }
 
 
@@ -1029,7 +1029,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
             $templateIDs = array_unique(collect($consumptionData)->pluck('companyReportTemplateID')->toArray());
             if (count($templateIDs) == 0) {
-                return $this->sendError("Budget not found for this document", 500);
+                return $this->sendError(trans('custom.budget_not_found_for_this_document'), 500);
             }
 
             $budgetTransferCods = "";
@@ -1095,7 +1095,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], " Budget transfer(s) " . $budgetTransferCods . " is/are created for selected documents");
+            return $this->sendResponse([], trans('custom.budget_transfers_created_for_selected_documents', ['codes' => $budgetTransferCods]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1108,7 +1108,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $budgetYears = array_unique(collect($selectedPoPrs)->pluck('budgetYear')->toArray());
         if (count($budgetYears) != 1) {
-            return $this->sendError("Different Budget year cannot be selected", 500);
+            return $this->sendError(trans('custom.different_budget_year_cannot_be_selected'), 500);
         }
 
 
@@ -1133,7 +1133,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
             $templateIDs = array_unique(collect($consumptionData)->pluck('companyReportTemplateID')->toArray());
             if (count($templateIDs) == 0) {
-                return $this->sendError("Budget not found for this document", 500);
+                return $this->sendError(trans('custom.budget_not_found_for_this_document'), 500);
             }
 
             $budgetAdditionsCods = "";
@@ -1201,7 +1201,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], " Budget addition(s) " . $budgetAdditionsCods . " is/are created for selected documents");
+            return $this->sendResponse([], trans('custom.budget_additions_created_for_selected_documents', ['codes' => $budgetAdditionsCods]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1225,7 +1225,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $docName = ($type == 1) ? "transfer" : "addition";
 
-        return ['docs' => $docs, 'comment' => "Budget " . $docName . " created for " . $comment];
+        return ['docs' => $docs, 'comment' => trans('custom.budget_created_for', ['type' => $docName, 'comment' => $comment])];
     }
 
 
@@ -1254,11 +1254,11 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransferMasterData = BudgetTransferForm::find($budgetTransferID);
 
         if (empty($budgetTransferMasterData)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.budget_transfer_not_found'));
         }
 
         if ($budgetTransferMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this budget transfer');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_budget_transfer'));
         }
 
         $budgetTransferArray = $budgetTransferMasterData->toArray();
@@ -1304,7 +1304,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             $budgetTransferMasterData->RollLevForApp_curr = 1;
             $budgetTransferMasterData->save();
         }
-        return $this->sendResponse($budgetTransferMasterData->toArray(), 'Budget Transfer amend successfully');
+        return $this->sendResponse($budgetTransferMasterData->toArray(), trans('custom.budget_transfer_amend_successfully'));
     }
 
     public function printBudgetTransfer(Request $request)
@@ -1330,7 +1330,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
 
         if (empty($budgetTransfer)) {
-            return $this->sendError('Purchase Request not found');
+            return $this->sendError(trans('custom.purchase_request_not_found'));
         }
         $budgetTransfer['template'] = $masterTemplates;
         $budgetTransfer['years'] = $years;
@@ -1338,7 +1338,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $array = array('budget' => $budgetTransfer);
 
         if($isFromPortal){
-            return $this->sendResponse($array, 'Purchase Request print data');
+            return $this->sendResponse($array, trans('custom.budget_transfer_print_data'));
         }
 
         $time = strtotime("now");

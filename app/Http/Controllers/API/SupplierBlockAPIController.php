@@ -64,7 +64,7 @@ class SupplierBlockAPIController extends AppBaseController
         $this->supplierBlockRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierBlocks = $this->supplierBlockRepository->all();
 
-        return $this->sendResponse($supplierBlocks->toArray(), 'Supplier Blocks retrieved successfully');
+        return $this->sendResponse($supplierBlocks->toArray(), trans('custom.supplier_blocks_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SupplierBlockAPIController extends AppBaseController
 
         $supplierBlock = $this->supplierBlockRepository->create($input);
 
-        return $this->sendResponse($supplierBlock->toArray(), 'Supplier Block saved successfully');
+        return $this->sendResponse($supplierBlock->toArray(), trans('custom.supplier_block_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SupplierBlockAPIController extends AppBaseController
         $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
 
         if (empty($supplierBlock)) {
-            return $this->sendError('Supplier Block not found');
+            return $this->sendError(trans('custom.supplier_block_not_found'));
         }
 
-        return $this->sendResponse($supplierBlock->toArray(), 'Supplier Block retrieved successfully');
+        return $this->sendResponse($supplierBlock->toArray(), trans('custom.supplier_block_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SupplierBlockAPIController extends AppBaseController
         $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
 
         if (empty($supplierBlock)) {
-            return $this->sendError('Supplier Block not found');
+            return $this->sendError(trans('custom.supplier_block_not_found'));
         }
 
         $supplierBlock = $this->supplierBlockRepository->update($input, $id);
 
-        return $this->sendResponse($supplierBlock->toArray(), 'SupplierBlock updated successfully');
+        return $this->sendResponse($supplierBlock->toArray(), trans('custom.supplierblock_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SupplierBlockAPIController extends AppBaseController
         $supplierBlock = $this->supplierBlockRepository->findWithoutFail($id);
 
         if (empty($supplierBlock)) {
-            return $this->sendError('Supplier Block not found');
+            return $this->sendError(trans('custom.supplier_block_not_found'));
         }
 
         $supplierBlock->delete();

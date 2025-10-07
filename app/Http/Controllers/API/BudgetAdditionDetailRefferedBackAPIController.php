@@ -65,7 +65,7 @@ class BudgetAdditionDetailRefferedBackAPIController extends AppBaseController
         $this->budgetAdditionDetailRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetAdditionDetailRefferedBacks = $this->budgetAdditionDetailRefferedBackRepository->all();
 
-        return $this->sendResponse($budgetAdditionDetailRefferedBacks->toArray(), 'Budget Addition Detail Reffered Backs retrieved successfully');
+        return $this->sendResponse($budgetAdditionDetailRefferedBacks->toArray(), trans('custom.budget_addition_detail_reffered_backs_retrieved_su'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BudgetAdditionDetailRefferedBackAPIController extends AppBaseController
 
         $budgetAdditionDetailRefferedBack = $this->budgetAdditionDetailRefferedBackRepository->create($input);
 
-        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), 'Budget Addition Detail Reffered Back saved successfully');
+        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), trans('custom.budget_addition_detail_reffered_back_saved_success'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BudgetAdditionDetailRefferedBackAPIController extends AppBaseController
         $budgetAdditionDetailRefferedBack = $this->budgetAdditionDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionDetailRefferedBack)) {
-            return $this->sendError('Budget Addition Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_detail_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), 'Budget Addition Detail Reffered Back retrieved successfully');
+        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), trans('custom.budget_addition_detail_reffered_back_retrieved_suc'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BudgetAdditionDetailRefferedBackAPIController extends AppBaseController
         $budgetAdditionDetailRefferedBack = $this->budgetAdditionDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionDetailRefferedBack)) {
-            return $this->sendError('Budget Addition Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_detail_reffered_back_not_found'));
         }
 
         $budgetAdditionDetailRefferedBack = $this->budgetAdditionDetailRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), 'BudgetAdditionDetailRefferedBack updated successfully');
+        return $this->sendResponse($budgetAdditionDetailRefferedBack->toArray(), trans('custom.budgetadditiondetailrefferedback_updated_successfu'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BudgetAdditionDetailRefferedBackAPIController extends AppBaseController
         $budgetAdditionDetailRefferedBack = $this->budgetAdditionDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($budgetAdditionDetailRefferedBack)) {
-            return $this->sendError('Budget Addition Detail Reffered Back not found');
+            return $this->sendError(trans('custom.budget_addition_detail_reffered_back_not_found'));
         }
 
         $budgetAdditionDetailRefferedBack->delete();

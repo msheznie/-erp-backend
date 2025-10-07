@@ -35,6 +35,7 @@ class ControlAccount extends Model
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'supplierCodeSystem';
+    protected $appends = ['description'];
 
     protected $dates = ['timeStamp'];
 
@@ -68,5 +69,40 @@ class ControlAccount extends Model
 
     ];
 
+    /**
+     * Get the translations for the control account.
+     */
+    public function translations()
+    {
+        return $this->hasMany(ControlAccountTranslation::class, 'controlAccountsSystemID', 'controlAccountsSystemID');
+    }
+
+    /**
+     * Get the translation for a specific language.
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get the translated description attribute.
+     */
+    public function getDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->description;
+        }
+        
+        return $this->attributes['description'] ?? '';
+    }
 
 }
