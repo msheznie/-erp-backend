@@ -18,3 +18,4 @@ composer.lock
 /resources/views/print-templates/temp
 public/logos/
 package-lock.json
+.DS_Store
