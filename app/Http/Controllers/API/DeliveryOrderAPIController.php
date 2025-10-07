@@ -160,13 +160,13 @@ class DeliveryOrderAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = [
-            'transactionCurrencyID.required' => 'Currency field is required',
-            'customerID.required' => 'Customer field is required',
-            'companyFinanceYearID.required' => 'Finance Year field is required',
-            'companyFinancePeriodID.required' => 'Finance Period field is required',
-            'serviceLineSystemID.required' => 'Segment field is required',
-            'wareHouseSystemCode.required' => 'Warehouse field is required',
-            'deliveryOrderDate.required' => 'Document Date field is required',
+            'transactionCurrencyID.required' => trans('custom.currency_field_is_required'),
+            'customerID.required' => trans('custom.customer_field_is_required'),
+            'companyFinanceYearID.required' => trans('custom.finance_year_field_is_required'),
+            'companyFinancePeriodID.required' => trans('custom.finance_period_field_is_required'),
+            'serviceLineSystemID.required' => trans('custom.segment_field_is_required'),
+            'wareHouseSystemCode.required' => trans('custom.warehouse_field_is_required'),
+            'deliveryOrderDate.required' => trans('custom.document_date_required'),
         ];
 
         $validator = \Validator::make($input, [
@@ -251,7 +251,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         // check date within financial period
         if (!(($input['deliveryOrderDate'] >= $input['FYPeriodDateFrom']) && ($input['deliveryOrderDate'] <= $input['FYPeriodDateTo']))) {
-            return $this->sendError('Document date should be between financial period start date and end date',500);
+            return $this->sendError(trans('custom.document_date_should_be_between_financial_period_start_end'),500);
         }
 
         $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -701,7 +701,7 @@ class DeliveryOrderAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
-                return $this->sendReponseWithDetails($deliveryOrder->toArray(), 'Delivery order confirmed successfully',1,$confirm['data'] ?? null);
+                return $this->sendResponseWithDetails($deliveryOrder->toArray(), 'Delivery order confirmed successfully',1,$confirm['data'] ?? null);
             }
 
         }else{

@@ -1331,7 +1331,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                             $supplierStatementDetailsFooter = new SupplierStatementDetails();
 
-                            $supplierStatementDetailsFooter->setsupplierGroupName("Total");
+                            $supplierStatementDetailsFooter->setsupplierGroupName(trans('custom.total'));
                             $supplierStatementDetailsFooter->setOpenSupplierInvoices(CurrencyService::convertNumberFormatToNumber(number_format($totalInvoices,2)));
                             $supplierStatementDetailsFooter->setOpenAdvanceToSuppliers(CurrencyService::convertNumberFormatToNumber(number_format($totalAdvances,2)));
                             $supplierStatementDetailsFooter->setOpenDebitNotes(CurrencyService::convertNumberFormatToNumber(number_format($totalDebitNotes,2)));

@@ -419,9 +419,9 @@
                             {{$item->uom->UnitShortCode}}
                         @endif
                     </td>
-                    <td class="text-right" style="padding-right: 5px;">{{$item->quantityRequested}}</td>
-                    <td class="text-right" style="padding-right: 5px;">{{$item->estimatedCost}}</td>
-                    <td class="text-right" style="padding-right: 5px;">{{$item->totalCost}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->uom && $item->uom->displayRoundOff !== null ? number_format($item->quantityRequested, $item->uom->displayRoundOff, '.', '') : number_format($item->quantityRequested, 5, '.', '')}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->estimatedCost !== null ? number_format($item->estimatedCost, $item->uom->displayRoundOff, '.', '') : number_format($item->estimatedCost, 5, '.', '')}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->totalCost !== null ? number_format($item->totalCost, $item->uom->displayRoundOff, '.', '') : number_format($item->totalCost, 5, '.', '')}}</td>
                     @if($request->allowAltUom)
                         <td style="padding-left: 5px;">
                             @if($item->altUom)
@@ -429,13 +429,13 @@
                             @endif
                         </td>
                         <td class="text-right" style="padding-right: 5px;">
-                                {{$item->altUnitValue}}
+                                {{$item->altUnitValue !== null ? number_format($item->altUnitValue, $item->altUom->displayRoundOff, '.', '') : number_format($item->altUnitValue, 5, '.', '')}}
                         </td>
                     @endif    
-                    <td class="text-right" style="padding-right: 5px;">{{$item->quantityOnOrder}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->quantityOnOrder !== null ? number_format($item->quantityOnOrder, $item->uom->displayRoundOff, '.', '') : number_format($item->quantityOnOrder, 5, '.', '')}}</td>
                     @if($request->approved == -1)
                         <td class="text-right" style="padding-right: 5px;">
-                            <b>{{$item->poQuantity}} </b>
+                            <b>{{$item->poQuantity !== null ? number_format($item->poQuantity, $item->uom->displayRoundOff, '.', '') : number_format($item->poQuantity, 5, '.', '')}} </b>
                         </td>
                     @endif
                 </tr>

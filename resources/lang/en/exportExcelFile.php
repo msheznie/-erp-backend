@@ -57,4 +57,6 @@ return [
     'budget_addition' => 'budget_addition',
     'budget_master' => 'budget_master',
     'budget_transfer' => 'budget_transfer',
+
+    'customer_recipt_voucher' => 'customer_recipt_voucher'
 ];

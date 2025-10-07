@@ -92,7 +92,6 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping();
 
       /*  $schedule->command('sendTenderBidOpeningReminders')
->>>>>>> 75fdcb203 (chore(Tender): Tender calander dates cofiguration [GSUP-2213])
             ->timezone('Asia/Muscat')
             ->everyMinute()
             ->withoutOverlapping();*/

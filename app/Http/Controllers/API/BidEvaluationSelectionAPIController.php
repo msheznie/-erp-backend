@@ -272,7 +272,17 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             if($evaluation > 0)
             {
-                return $this->sendError(trans('srm_ranking.enter_remaining_user_values'),500);
+                $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+    
+                $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
+                    $q->where('critera_type_id',2);
+                })->count();
+    
+             
+                if($evaluation > 0)
+                {
+                    return $this->sendError(trans('srm_ranking.enter_remaining_user_values'),500);
+                }
             }
 
         }

@@ -54,6 +54,12 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
                  ->with(['segment', 'department'])
                  ->orderBy('departmentSegmentSystemID', $sort);

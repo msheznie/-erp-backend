@@ -166,6 +166,24 @@ return [
         ],
         'assets' => [
             'required' => 'The assets field is required.'
+        ],
+        'SalesPersonName' => [
+            'required' => 'The sales person name field is required.'
+        ],
+        'empSystemID' => [
+            'required' => 'The employee field is required.'
+        ],
+        'receivableAutoID' => [
+            'required' => 'The receivable account field is required.'
+        ],
+        'expenseAutoID' => [
+            'required' => 'The expense account field is required.'
+        ],
+        'salesPersonCurrencyID' => [
+            'required' => 'The sales person currency field is required.'
+        ],
+        'segmentID' => [
+            'required' => 'The segment field is required.'
         ]
     ],
 
@@ -298,7 +316,13 @@ return [
         'year' => 'Year',
         'month' => 'Month',
         'glAccounts' => 'GL Accounts',
-        'assets' => 'Assets'
+        'assets' => 'Assets',
+        'SalesPersonName' => 'Sales Person Name',
+        'empSystemID' => 'Employee',
+        'receivableAutoID' => 'Receivable Account',
+        'expenseAutoID' => 'Expense Account',
+        'salesPersonCurrencyID' => 'Sales Person Currency',
+        'segmentID' => 'Segment'
     ],
 
 ];

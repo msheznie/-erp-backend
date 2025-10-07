@@ -341,7 +341,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
             if (!$checkBudgetFromReview['status']) {
-                return $this->sendError("You cannot confirm this document.", 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
             }
 
             $params = array(
@@ -361,7 +361,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($erpBudgetAddition->toArray(), 'Budget Addition updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($erpBudgetAddition->toArray(), trans('custom.budget_addition_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     public function validateBudgetFormReview($budgetTransferFormAutoID, $budgetTransferForm, $details)
@@ -548,7 +548,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $erpBudgetAddition->delete();
 
-        return $this->sendSuccess('Erp Budget Addition deleted successfully');
+        return $this->sendSuccess(trans('custom.erp_budget_addition_deleted_successfully'));
     }
 
     public function getBudgetAdditionFormData(Request $request)
@@ -999,7 +999,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             return $this->sendError(trans('custom.budget_addition_not_found'));
         }
 
-        return $this->sendResponse($budgetAddition, 'Budget Addition audit detailed retrived');
+        return $this->sendResponse($budgetAddition, trans('custom.budget_addition_audit_detailed_retrieved'));
     }
     public function amendBudgetAddition(Request $request)
     {

@@ -286,10 +286,10 @@ class PaymentBankTransfer extends Model
     {
             switch ($this->fileType) {
                 case 0 :
-                    return "Vendor File";
+                    return  trans("custom.vendor_file");
                     break;
                 case 1 :
-                    return "Employee File";
+                    return  trans("custom.employee_file");
                     break;
                 default :
                     return null;

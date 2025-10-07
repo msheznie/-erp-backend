@@ -1057,7 +1057,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $request->all();
         $prID = $input['purchaseRequestID'];
 
-        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
+        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty,
+                                       units.decimalPrecision,	units.displayRoundOff,                         
+                                       altUnit.decimalPrecision as altDecimalPrecision, altUnit.displayRoundOff as altDisplayRoundOff
+                                FROM erp_purchaserequestdetails prdetails 
+                                LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID
+                                LEFT JOIN units ON units.UnitID = prdetails.unitOfMeasure
+                                LEFT JOIN units altUnit ON altUnit.UnitID = prdetails.altUnit
+                                WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
 
         return $this->sendResponse($detail, trans('custom.purchase_request_details_retrieved_successfully'));
 

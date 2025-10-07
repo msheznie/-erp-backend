@@ -117,8 +117,8 @@ class BankMemoSupplierAPIController extends AppBaseController
         if ($bankMemoSuppliers) {
             $x = 0;
             foreach ($bankMemoSuppliers as $val) {
-                $data[$x]['Header Text'] = $val->memoHeader;
-                $data[$x]['Detail Text'] = $val->memoDetail;
+                $data[$x][trans('custom.header_text')] = $val->memoHeader;
+                $data[$x][trans('custom.detail_text')] = $val->memoDetail;
                 $x++;
             }
         } else {
@@ -126,20 +126,17 @@ class BankMemoSupplierAPIController extends AppBaseController
         }
 
          \Excel::create('supplier_currency_memos', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.supplier_currency_memos'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
+
                 // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+         })->download('xls');
 
         return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_suppliers')]));
     }

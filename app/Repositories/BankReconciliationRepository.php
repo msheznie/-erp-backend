@@ -137,7 +137,7 @@ class BankReconciliationRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.brc_code')] = $val->bankRecPrimaryCode;
-                $data[$x][trans('custom.month')] = $val->month? date('M', strtotime($val->bankRecAsOf)) : '';
+                $data[$x][trans('custom.month')] = $val->month? $val->month_by->monthDes : '';
                 $data[$x][trans('custom.year')] = $val->year;
                 $data[$x][trans('custom.bank_name')] = $val->bank_account? $val->bank_account->bankName : '';
                 $data[$x][trans('custom.account_no')] = $val->bank_account? $val->bank_account->AccountNo : '';

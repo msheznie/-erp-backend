@@ -2726,7 +2726,7 @@ class PurchaseRequestAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
-        $messages = ['toDate.after_or_equal' => 'To Date must be greater than or equal to From Date.'];
+        $messages = ['toDate.after_or_equal' => trans('custom.to_date_must_be_greater_than_or_equal_to_from_date')];
         $validator = \Validator::make($request->all(), [
             'fromDate' => 'nullable|date',
             'toDate' => 'nullable|date|after_or_equal:fromDate',
@@ -2869,7 +2869,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $detail_array = array(
             'company_code'=>$companyCode,
         );
-        $doc_name = 'open_requests';
+        $doc_name = trans('custom.open_requests');
         $path = 'procurement/open_requests/excel/';
 
 
@@ -2878,7 +2878,7 @@ class PurchaseRequestAPIController extends AppBaseController
                $db = $input['db'] ?? "";
                $userId = Helper::getEmployeeSystemID();
                ExportDetailedORList::dispatch($db, $data,$companyCode, $userId);
-               return $this->sendResponse('', 'Open Request Detailed report Export in progress, you will be notified once ready !!');
+               return $this->sendResponse('', trans('custom.open_requests_details_export_in_progress'));
         }
 
         $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);

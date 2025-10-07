@@ -165,7 +165,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request);
 
         if($input['currencyId'] == null){
-            return $this->sendError('Currency not selected',500);
+            return $this->sendError(trans('custom.currency_not_selected'),500);
         }
         $supplierCurrencyCheck = SupplierCurrency::where('supplierCodeSystem',$request['supplierId'])
                                             ->where('currencyID',$request['currencyId'])

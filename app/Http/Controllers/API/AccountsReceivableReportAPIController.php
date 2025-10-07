@@ -7960,9 +7960,9 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
 
                 $db = isset($request->db) ? $request->db : "";
 
-
+                $languageCode = app()->getLocale() ?: 'en';
                 $employeeID = \Helper::getEmployeeSystemID();
-                AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
+                AccountsReceivablePdfJob::dispatch($db, $request, [$employeeID], $languageCode)->onQueue('reporting');
 
                 return $this->sendResponse([], trans('custom.account_receivable_customer_aging_pdf_report_has_been_sent_to_queue'));
                 break;
