@@ -783,10 +783,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 trans('custom.comments') => $comments,
             );
         }
-        $fileName = 'order_status';
+        $fileName = trans('custom.order_status');
         $path = 'procurement/report/order_status/excel/';
         $companyMaster = Company::find($selectedCompanyId);
-        $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+        $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : trans('custom.common');
         $detail_array = array(
             'company_code' => $companyCode,
         );
