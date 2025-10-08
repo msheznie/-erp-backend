@@ -65,7 +65,7 @@ class SMESystemEmployeeTypeAPIController extends AppBaseController
         $this->sMESystemEmployeeTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMESystemEmployeeTypes = $this->sMESystemEmployeeTypeRepository->all();
 
-        return $this->sendResponse($sMESystemEmployeeTypes->toArray(), 'S M E System Employee Types retrieved successfully');
+        return $this->sendResponse($sMESystemEmployeeTypes->toArray(), trans('custom.s_m_e_system_employee_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMESystemEmployeeTypeAPIController extends AppBaseController
 
         $sMESystemEmployeeType = $this->sMESystemEmployeeTypeRepository->create($input);
 
-        return $this->sendResponse($sMESystemEmployeeType->toArray(), 'S M E System Employee Type saved successfully');
+        return $this->sendResponse($sMESystemEmployeeType->toArray(), trans('custom.s_m_e_system_employee_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMESystemEmployeeTypeAPIController extends AppBaseController
         $sMESystemEmployeeType = $this->sMESystemEmployeeTypeRepository->findWithoutFail($id);
 
         if (empty($sMESystemEmployeeType)) {
-            return $this->sendError('S M E System Employee Type not found');
+            return $this->sendError(trans('custom.s_m_e_system_employee_type_not_found'));
         }
 
-        return $this->sendResponse($sMESystemEmployeeType->toArray(), 'S M E System Employee Type retrieved successfully');
+        return $this->sendResponse($sMESystemEmployeeType->toArray(), trans('custom.s_m_e_system_employee_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMESystemEmployeeTypeAPIController extends AppBaseController
         $sMESystemEmployeeType = $this->sMESystemEmployeeTypeRepository->findWithoutFail($id);
 
         if (empty($sMESystemEmployeeType)) {
-            return $this->sendError('S M E System Employee Type not found');
+            return $this->sendError(trans('custom.s_m_e_system_employee_type_not_found'));
         }
 
         $sMESystemEmployeeType = $this->sMESystemEmployeeTypeRepository->update($input, $id);
 
-        return $this->sendResponse($sMESystemEmployeeType->toArray(), 'SMESystemEmployeeType updated successfully');
+        return $this->sendResponse($sMESystemEmployeeType->toArray(), trans('custom.smesystememployeetype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMESystemEmployeeTypeAPIController extends AppBaseController
         $sMESystemEmployeeType = $this->sMESystemEmployeeTypeRepository->findWithoutFail($id);
 
         if (empty($sMESystemEmployeeType)) {
-            return $this->sendError('S M E System Employee Type not found');
+            return $this->sendError(trans('custom.s_m_e_system_employee_type_not_found'));
         }
 
         $sMESystemEmployeeType->delete();

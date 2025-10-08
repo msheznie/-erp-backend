@@ -124,11 +124,11 @@ class BudgetTransferFormRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Created Date'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Transfer Document Code'] = $val->transferVoucherNo;
-                $data[$x]['Narration'] = $val->comments;
-                $data[$x]['Submitted By'] = $val->confirmed_by? $val->confirmed_by->empName : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->timesReferred);
+                $data[$x][trans('custom.created_date')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.transfer_document_code')] = $val->transferVoucherNo;
+                $data[$x][trans('custom.narration')] = $val->comments;
+                $data[$x][trans('custom.submitted_by')] = $val->confirmed_by? $val->confirmed_by->empName : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->timesReferred);
 
                 $x++;
             }

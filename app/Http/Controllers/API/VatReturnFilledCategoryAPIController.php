@@ -65,7 +65,7 @@ class VatReturnFilledCategoryAPIController extends AppBaseController
         $this->vatReturnFilledCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFilledCategories = $this->vatReturnFilledCategoryRepository->all();
 
-        return $this->sendResponse($vatReturnFilledCategories->toArray(), 'Vat Return Filled Categories retrieved successfully');
+        return $this->sendResponse($vatReturnFilledCategories->toArray(), trans('custom.vat_return_filled_categories_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class VatReturnFilledCategoryAPIController extends AppBaseController
 
         $vatReturnFilledCategory = $this->vatReturnFilledCategoryRepository->create($input);
 
-        return $this->sendResponse($vatReturnFilledCategory->toArray(), 'Vat Return Filled Category saved successfully');
+        return $this->sendResponse($vatReturnFilledCategory->toArray(), trans('custom.vat_return_filled_category_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class VatReturnFilledCategoryAPIController extends AppBaseController
         $vatReturnFilledCategory = $this->vatReturnFilledCategoryRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategory)) {
-            return $this->sendError('Vat Return Filled Category not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFilledCategory->toArray(), 'Vat Return Filled Category retrieved successfully');
+        return $this->sendResponse($vatReturnFilledCategory->toArray(), trans('custom.vat_return_filled_category_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class VatReturnFilledCategoryAPIController extends AppBaseController
         $vatReturnFilledCategory = $this->vatReturnFilledCategoryRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategory)) {
-            return $this->sendError('Vat Return Filled Category not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_not_found'));
         }
 
         $vatReturnFilledCategory = $this->vatReturnFilledCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($vatReturnFilledCategory->toArray(), 'VatReturnFilledCategory updated successfully');
+        return $this->sendResponse($vatReturnFilledCategory->toArray(), trans('custom.vatreturnfilledcategory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class VatReturnFilledCategoryAPIController extends AppBaseController
         $vatReturnFilledCategory = $this->vatReturnFilledCategoryRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategory)) {
-            return $this->sendError('Vat Return Filled Category not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_not_found'));
         }
 
         $vatReturnFilledCategory->delete();

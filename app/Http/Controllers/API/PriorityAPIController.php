@@ -49,7 +49,7 @@ class PriorityAPIController extends AppBaseController
         $this->priorityRepository->pushCriteria(new LimitOffsetCriteria($request));
         $priorities = $this->priorityRepository->all();
 
-        return $this->sendResponse($priorities->toArray(), 'Priorities retrieved successfully');
+        return $this->sendResponse($priorities->toArray(), trans('custom.priorities_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class PriorityAPIController extends AppBaseController
 
         $priorities = $this->priorityRepository->create($input);
 
-        return $this->sendResponse($priorities->toArray(), 'Priority saved successfully');
+        return $this->sendResponse($priorities->toArray(), trans('custom.priority_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class PriorityAPIController extends AppBaseController
         $priority = $this->priorityRepository->findWithoutFail($id);
 
         if (empty($priority)) {
-            return $this->sendError('Priority not found');
+            return $this->sendError(trans('custom.priority_not_found'));
         }
 
-        return $this->sendResponse($priority->toArray(), 'Priority retrieved successfully');
+        return $this->sendResponse($priority->toArray(), trans('custom.priority_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class PriorityAPIController extends AppBaseController
         $priority = $this->priorityRepository->findWithoutFail($id);
 
         if (empty($priority)) {
-            return $this->sendError('Priority not found');
+            return $this->sendError(trans('custom.priority_not_found'));
         }
 
         $priority = $this->priorityRepository->update($input, $id);
 
-        return $this->sendResponse($priority->toArray(), 'Priority updated successfully');
+        return $this->sendResponse($priority->toArray(), trans('custom.priority_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class PriorityAPIController extends AppBaseController
         $priority = $this->priorityRepository->findWithoutFail($id);
 
         if (empty($priority)) {
-            return $this->sendError('Priority not found');
+            return $this->sendError(trans('custom.priority_not_found'));
         }
 
         $priority->delete();
 
-        return $this->sendResponse($id, 'Priority deleted successfully');
+        return $this->sendResponse($id, trans('custom.priority_deleted_successfully'));
     }
 }

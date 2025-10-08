@@ -71,7 +71,7 @@ class TaxLedgerAPIController extends AppBaseController
         $this->taxLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxLedgers = $this->taxLedgerRepository->all();
 
-        return $this->sendResponse($taxLedgers->toArray(), 'Tax Ledgers retrieved successfully');
+        return $this->sendResponse($taxLedgers->toArray(), trans('custom.tax_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TaxLedgerAPIController extends AppBaseController
 
         $taxLedger = $this->taxLedgerRepository->create($input);
 
-        return $this->sendResponse($taxLedger->toArray(), 'Tax Ledger saved successfully');
+        return $this->sendResponse($taxLedger->toArray(), trans('custom.tax_ledger_saved_successfully'));
     }
 
     /**
@@ -165,10 +165,10 @@ class TaxLedgerAPIController extends AppBaseController
         $taxLedger = $this->taxLedgerRepository->findWithoutFail($id);
 
         if (empty($taxLedger)) {
-            return $this->sendError('Tax Ledger not found');
+            return $this->sendError(trans('custom.tax_ledger_not_found'));
         }
 
-        return $this->sendResponse($taxLedger->toArray(), 'Tax Ledger retrieved successfully');
+        return $this->sendResponse($taxLedger->toArray(), trans('custom.tax_ledger_retrieved_successfully'));
     }
 
     /**
@@ -225,12 +225,12 @@ class TaxLedgerAPIController extends AppBaseController
         $taxLedger = $this->taxLedgerRepository->findWithoutFail($id);
 
         if (empty($taxLedger)) {
-            return $this->sendError('Tax Ledger not found');
+            return $this->sendError(trans('custom.tax_ledger_not_found'));
         }
 
         $taxLedger = $this->taxLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($taxLedger->toArray(), 'TaxLedger updated successfully');
+        return $this->sendResponse($taxLedger->toArray(), trans('custom.taxledger_updated_successfully'));
     }
 
     /**
@@ -277,7 +277,7 @@ class TaxLedgerAPIController extends AppBaseController
         $taxLedger = $this->taxLedgerRepository->findWithoutFail($id);
 
         if (empty($taxLedger)) {
-            return $this->sendError('Tax Ledger not found');
+            return $this->sendError(trans('custom.tax_ledger_not_found'));
         }
 
         $taxLedger->delete();
@@ -320,6 +320,6 @@ class TaxLedgerAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse([], 'Tax Ledger updated successfully');
+        return $this->sendResponse([], trans('custom.tax_ledger_updated_successfully'));
     }
 }

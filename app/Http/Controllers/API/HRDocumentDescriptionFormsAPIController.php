@@ -65,7 +65,7 @@ class HRDocumentDescriptionFormsAPIController extends AppBaseController
         $this->hRDocumentDescriptionFormsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->all();
 
-        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), 'H R Document Description Forms retrieved successfully');
+        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), trans('custom.h_r_document_description_forms_retrieved_successfu'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRDocumentDescriptionFormsAPIController extends AppBaseController
 
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->create($input);
 
-        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), 'H R Document Description Forms saved successfully');
+        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), trans('custom.h_r_document_description_forms_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRDocumentDescriptionFormsAPIController extends AppBaseController
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionForms)) {
-            return $this->sendError('H R Document Description Forms not found');
+            return $this->sendError(trans('custom.h_r_document_description_forms_not_found'));
         }
 
-        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), 'H R Document Description Forms retrieved successfully');
+        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), trans('custom.h_r_document_description_forms_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRDocumentDescriptionFormsAPIController extends AppBaseController
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionForms)) {
-            return $this->sendError('H R Document Description Forms not found');
+            return $this->sendError(trans('custom.h_r_document_description_forms_not_found'));
         }
 
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->update($input, $id);
 
-        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), 'HRDocumentDescriptionForms updated successfully');
+        return $this->sendResponse($hRDocumentDescriptionForms->toArray(), trans('custom.hrdocumentdescriptionforms_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HRDocumentDescriptionFormsAPIController extends AppBaseController
         $hRDocumentDescriptionForms = $this->hRDocumentDescriptionFormsRepository->findWithoutFail($id);
 
         if (empty($hRDocumentDescriptionForms)) {
-            return $this->sendError('H R Document Description Forms not found');
+            return $this->sendError(trans('custom.h_r_document_description_forms_not_found'));
         }
 
         $hRDocumentDescriptionForms->delete();

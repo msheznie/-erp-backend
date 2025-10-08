@@ -65,7 +65,7 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         $this->fixedAssetDepreciationPeriodRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fixedAssetDepreciationPeriods = $this->fixedAssetDepreciationPeriodRepository->all();
 
-        return $this->sendResponse($fixedAssetDepreciationPeriods->toArray(), 'Fixed Asset Depreciation Periods retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationPeriods->toArray(), trans('custom.fixed_asset_depreciation_periods_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
 
         $fixedAssetDepreciationPeriods = $this->fixedAssetDepreciationPeriodRepository->create($input);
 
-        return $this->sendResponse($fixedAssetDepreciationPeriods->toArray(), 'Fixed Asset Depreciation Period saved successfully');
+        return $this->sendResponse($fixedAssetDepreciationPeriods->toArray(), trans('custom.fixed_asset_depreciation_period_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         $fixedAssetDepreciationPeriod = $this->fixedAssetDepreciationPeriodRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationPeriod)) {
-            return $this->sendError('Fixed Asset Depreciation Period not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_period_not_found'));
         }
 
-        return $this->sendResponse($fixedAssetDepreciationPeriod->toArray(), 'Fixed Asset Depreciation Period retrieved successfully');
+        return $this->sendResponse($fixedAssetDepreciationPeriod->toArray(), trans('custom.fixed_asset_depreciation_period_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         $fixedAssetDepreciationPeriod = $this->fixedAssetDepreciationPeriodRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationPeriod)) {
-            return $this->sendError('Fixed Asset Depreciation Period not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_period_not_found'));
         }
 
         $fixedAssetDepreciationPeriod = $this->fixedAssetDepreciationPeriodRepository->update($input, $id);
 
-        return $this->sendResponse($fixedAssetDepreciationPeriod->toArray(), 'FixedAssetDepreciationPeriod updated successfully');
+        return $this->sendResponse($fixedAssetDepreciationPeriod->toArray(), trans('custom.fixedassetdepreciationperiod_updated_successfully'));
     }
 
     /**
@@ -271,12 +271,12 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         $fixedAssetDepreciationPeriod = $this->fixedAssetDepreciationPeriodRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationPeriod)) {
-            return $this->sendError('Fixed Asset Depreciation Period not found');
+            return $this->sendError(trans('custom.fixed_asset_depreciation_period_not_found'));
         }
 
         $fixedAssetDepreciationPeriod->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Depreciation Period deleted successfully');
+        return $this->sendResponse($id, trans('custom.fixed_asset_depreciation_period_deleted_successful'));
     }
 
 
@@ -375,11 +375,17 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        return $this->sendResponse(array(), trans('custom.success_export'));
     }
 }

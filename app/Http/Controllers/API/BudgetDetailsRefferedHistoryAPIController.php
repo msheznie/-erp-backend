@@ -77,7 +77,7 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
         $this->budgetDetailsRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetDetailsRefferedHistories = $this->budgetDetailsRefferedHistoryRepository->all();
 
-        return $this->sendResponse($budgetDetailsRefferedHistories->toArray(), 'Budget Details Reffered Histories retrieved successfully');
+        return $this->sendResponse($budgetDetailsRefferedHistories->toArray(), trans('custom.budget_details_reffered_histories_retrieved_succes'));
     }
 
     /**
@@ -124,7 +124,7 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
 
         $budgetDetailsRefferedHistory = $this->budgetDetailsRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), 'Budget Details Reffered History saved successfully');
+        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), trans('custom.budget_details_reffered_history_saved_successfully'));
     }
 
     /**
@@ -171,10 +171,10 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
         $budgetDetailsRefferedHistory = $this->budgetDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailsRefferedHistory)) {
-            return $this->sendError('Budget Details Reffered History not found');
+            return $this->sendError(trans('custom.budget_details_reffered_history_not_found'));
         }
 
-        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), 'Budget Details Reffered History retrieved successfully');
+        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), trans('custom.budget_details_reffered_history_retrieved_successf'));
     }
 
     /**
@@ -231,12 +231,12 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
         $budgetDetailsRefferedHistory = $this->budgetDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailsRefferedHistory)) {
-            return $this->sendError('Budget Details Reffered History not found');
+            return $this->sendError(trans('custom.budget_details_reffered_history_not_found'));
         }
 
         $budgetDetailsRefferedHistory = $this->budgetDetailsRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), 'BudgetDetailsRefferedHistory updated successfully');
+        return $this->sendResponse($budgetDetailsRefferedHistory->toArray(), trans('custom.budgetdetailsrefferedhistory_updated_successfully'));
     }
 
     /**
@@ -283,7 +283,7 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
         $budgetDetailsRefferedHistory = $this->budgetDetailsRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailsRefferedHistory)) {
-            return $this->sendError('Budget Details Reffered History not found');
+            return $this->sendError(trans('custom.budget_details_reffered_history_not_found'));
         }
 
         $budgetDetailsRefferedHistory->delete();
@@ -311,7 +311,7 @@ class BudgetDetailsRefferedHistoryAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Selected financial year is not found.', 500);
+            return $this->sendError(trans('custom.selected_financial_year_is_not_found'), 500);
         }
 
         $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);

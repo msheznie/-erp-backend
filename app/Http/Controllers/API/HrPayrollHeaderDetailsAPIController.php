@@ -65,7 +65,7 @@ class HrPayrollHeaderDetailsAPIController extends AppBaseController
         $this->hrPayrollHeaderDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->all();
 
-        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), 'Hr Payroll Header Details retrieved successfully');
+        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), trans('custom.hr_payroll_header_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrPayrollHeaderDetailsAPIController extends AppBaseController
 
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->create($input);
 
-        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), 'Hr Payroll Header Details saved successfully');
+        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), trans('custom.hr_payroll_header_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrPayrollHeaderDetailsAPIController extends AppBaseController
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollHeaderDetails)) {
-            return $this->sendError('Hr Payroll Header Details not found');
+            return $this->sendError(trans('custom.hr_payroll_header_details_not_found'));
         }
 
-        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), 'Hr Payroll Header Details retrieved successfully');
+        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), trans('custom.hr_payroll_header_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrPayrollHeaderDetailsAPIController extends AppBaseController
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollHeaderDetails)) {
-            return $this->sendError('Hr Payroll Header Details not found');
+            return $this->sendError(trans('custom.hr_payroll_header_details_not_found'));
         }
 
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), 'HrPayrollHeaderDetails updated successfully');
+        return $this->sendResponse($hrPayrollHeaderDetails->toArray(), trans('custom.hrpayrollheaderdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrPayrollHeaderDetailsAPIController extends AppBaseController
         $hrPayrollHeaderDetails = $this->hrPayrollHeaderDetailsRepository->findWithoutFail($id);
 
         if (empty($hrPayrollHeaderDetails)) {
-            return $this->sendError('Hr Payroll Header Details not found');
+            return $this->sendError(trans('custom.hr_payroll_header_details_not_found'));
         }
 
         $hrPayrollHeaderDetails->delete();

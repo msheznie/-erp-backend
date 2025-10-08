@@ -87,7 +87,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $this->reportTemplateDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->all();
 
-        return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+        return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_retrieved_successfully'));
     }
 
     /**
@@ -169,7 +169,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
             DB::commit();
-            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details saved successfully');
+            return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -220,10 +220,10 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDetails)) {
-            return $this->sendError('Report Template Details not found');
+            return $this->sendError(trans('custom.report_template_details_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+        return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_retrieved_successfully'));
     }
 
     /**
@@ -296,7 +296,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDetails)) {
-            return $this->sendError('Report Template Details not found');
+            return $this->sendError(trans('custom.report_template_details_not_found'));
         }
 
         
@@ -344,7 +344,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateDetails->toArray(), 'ReportTemplateDetails updated successfully');
+        return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.reporttemplatedetails_updated_successfully'));
     }
 
     /**
@@ -392,7 +392,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             /** @var ReportTemplateDetails $reportTemplateDetails */
             $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
             if (empty($reportTemplateDetails)) {
-                return $this->sendError('Report Template Details not found');
+                return $this->sendError(trans('custom.report_template_details_not_found'));
             }
 
             $checkIsAddedToGroupTotal = ReportTemplateLinks::where('subCategory', $id)
@@ -403,14 +403,14 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                            ->count();
 
             if ($checkIsAddedToGroupTotal > 0) {
-                return $this->sendError('Category cannot be deleted as it is added for total calculation');
+                return $this->sendError(trans('custom.category_cannot_be_deleted_as_it_is_added_for_tota'));
             }
 
 
             $columnLink = ReportTemplateColumnLink::whereRaw("formulaRowID LIKE '$id,%' OR formulaRowID LIKE '%,$id,%' OR formulaRowID LIKE '%,$id' OR formulaRowID = '$id'")->first();
 
             if ($columnLink) {
-                return $this->sendError('You cannot delete this record because already this record has been added to the formula');
+                return $this->sendError(trans('custom.you_cannot_delete_this_record_because_already_this'));
             }
 
 
@@ -424,7 +424,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                               ->first();
 
             if ($checkLinkInBudget) {
-                return $this->sendError('You cannot delete this record because chart of accounts under this category has been pulled to budget');
+                return $this->sendError(trans('custom.you_cannot_delete_this_record_because_chart_of_acc'));
             }
 
             $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
@@ -444,7 +444,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             }
             $reportTemplateDetails->delete();
             DB::commit();
-            return $this->sendResponse($id, 'Report Template Details deleted successfully');
+            return $this->sendResponse($id, trans('custom.report_template_details_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -455,13 +455,13 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     {
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($categoryID);
         if (empty($reportTemplateDetails)) {
-            return ['status'=> false, 'message' => 'Report Template Details not found'];
+            return ['status'=> false, 'message' => trans('custom.report_template_details_not_found')];
         }
 
         $columnLink = ReportTemplateColumnLink::whereRaw("formulaRowID LIKE '$categoryID,%' OR formulaRowID LIKE '%,$categoryID,%' OR formulaRowID LIKE '%,$categoryID' OR formulaRowID = '$categoryID'")->first();
 
         if ($columnLink) {
-            return ['status'=> false, 'message' => 'You cannot delete this record because already this record has been added to the formula'];
+            return ['status'=> false, 'message' => trans('custom.you_cannot_delete_this_record_because_already_this')];
         }
 
         $glCodes = ReportTemplateLinks::where('templateDetailID',$categoryID)
@@ -474,7 +474,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                           ->first();
 
         if ($checkLinkInBudget) {
-            return ['status'=> false, 'message' => 'You cannot delete this record because chart of accounts under this category has been pulled to budget'];
+            return ['status'=> false, 'message' => trans('custom.you_cannot_delete_this_record_because_chart_of_acc')];
         }
 
         $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
@@ -576,7 +576,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         $output = ['equity' => $reportTemplateEquity->toArray(),'template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount, 'columnTemplateID' => $reportTemplateMaster->columnTemplateID];
 
-        return $this->sendResponse($output, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.report_template_details_retrieved_successfully'));
     }
 
 
@@ -585,14 +585,14 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateDetails = '';
         if ($request->isHeader == 1) {
             $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
-            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+            return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_retrieved_successfully'));
         } else {
             $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('sortOrder', '<', $request->sortOrder)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
 
             $this->finalLevelSubCategories = [];
             $reportTemplateDetailsFinalLevels = $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, [2,4]);
 
-            return $this->sendResponse($reportTemplateDetailsFinalLevels, 'Report Template Details retrieved successfully');
+            return $this->sendResponse($reportTemplateDetailsFinalLevels, trans('custom.report_template_details_retrieved_successfully'));
         }
 
     }
@@ -689,7 +689,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse([], 'Report Template Details saved successfully');
+            return $this->sendResponse([], trans('custom.report_template_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -933,7 +933,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             }
             
             DB::commit();
-            return $this->sendResponse([], 'Report Template Details mirrored successfully');
+            return $this->sendResponse([], trans('custom.report_template_details_mirrored_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);
@@ -952,7 +952,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                ->where('isFinalLevel', 1)
                                                ->whereNotNull('masterID')
                                                ->get();
-        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+        return $this->sendResponse($reportTemplate, trans('custom.report_template_retrieved_successfully'));
     }
 
     public function getDefaultTemplateCategories(Request $request)
@@ -984,7 +984,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         } else {
             $reportTemplate = [];
         }
-        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+        return $this->sendResponse($reportTemplate, trans('custom.report_template_retrieved_successfully'));
     }
 
     public function linkPandLGLCodeValidation(Request $request)
@@ -1005,7 +1005,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                         ->where('catogaryBLorPL', 'PL')
                                         ->count();
       
-        return $this->sendResponse($chartofaccount, 'gl validated successfully');
+        return $this->sendResponse($chartofaccount, trans('custom.gl_validated_successfully'));
     }
 
     public function linkPandLGLCode(Request $request)
@@ -1048,7 +1048,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['detID'])->update(['isFinalLevel' => 1]);
         }
       
-        return $this->sendResponse([], 'gl synced successfully');
+        return $this->sendResponse([], trans('custom.gl_synced_successfully'));
     }
 
     public function getChartOfAccountCode(Request $request)
@@ -1061,6 +1061,6 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             return $this->sendError($reportCategoryDetail['message'], 500);
         }
 
-        return $this->sendResponse($reportCategoryDetail['data'], 'gl code retrieved successfully');
+        return $this->sendResponse($reportCategoryDetail['data'], trans('custom.gl_code_retrieved_successfully'));
     }
 }

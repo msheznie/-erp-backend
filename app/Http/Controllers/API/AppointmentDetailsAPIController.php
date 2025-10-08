@@ -65,7 +65,7 @@ class AppointmentDetailsAPIController extends AppBaseController
         $this->appointmentDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $appointmentDetails = $this->appointmentDetailsRepository->all();
 
-        return $this->sendResponse($appointmentDetails->toArray(), 'Appointment Details retrieved successfully');
+        return $this->sendResponse($appointmentDetails->toArray(), trans('custom.appointment_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class AppointmentDetailsAPIController extends AppBaseController
 
         $appointmentDetails = $this->appointmentDetailsRepository->create($input);
 
-        return $this->sendResponse($appointmentDetails->toArray(), 'Appointment Details saved successfully');
+        return $this->sendResponse($appointmentDetails->toArray(), trans('custom.appointment_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class AppointmentDetailsAPIController extends AppBaseController
         $appointmentDetails = $this->appointmentDetailsRepository->findWithoutFail($id);
 
         if (empty($appointmentDetails)) {
-            return $this->sendError('Appointment Details not found');
+            return $this->sendError(trans('custom.appointment_details_not_found'));
         }
 
-        return $this->sendResponse($appointmentDetails->toArray(), 'Appointment Details retrieved successfully');
+        return $this->sendResponse($appointmentDetails->toArray(), trans('custom.appointment_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class AppointmentDetailsAPIController extends AppBaseController
         $appointmentDetails = $this->appointmentDetailsRepository->findWithoutFail($id);
 
         if (empty($appointmentDetails)) {
-            return $this->sendError('Appointment Details not found');
+            return $this->sendError(trans('custom.appointment_details_not_found'));
         }
 
         $appointmentDetails = $this->appointmentDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($appointmentDetails->toArray(), 'AppointmentDetails updated successfully');
+        return $this->sendResponse($appointmentDetails->toArray(), trans('custom.appointmentdetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class AppointmentDetailsAPIController extends AppBaseController
         $appointmentDetails = $this->appointmentDetailsRepository->findWithoutFail($id);
 
         if (empty($appointmentDetails)) {
-            return $this->sendError('Appointment Details not found');
+            return $this->sendError(trans('custom.appointment_details_not_found'));
         }
 
         $appointmentDetails->delete();

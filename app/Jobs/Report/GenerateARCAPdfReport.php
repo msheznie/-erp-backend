@@ -28,12 +28,13 @@ class GenerateARCAPdfReport implements ShouldQueue
     public $outputData;
     public $rootPath;
     public $aging;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -48,6 +49,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         $this->outputData = $outputData;
         $this->rootPath = $rootPath;
         $this->aging = $aging;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -59,7 +61,9 @@ class GenerateARCAPdfReport implements ShouldQueue
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
+        Log::useFiles(storage_path() . '/logs/account_recivable_report.log');
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $db = $this->dispatch_db;
         $request = $this->requestData;
         $outputChunkCount = $this->outputChunkData;
@@ -99,13 +103,40 @@ class GenerateARCAPdfReport implements ShouldQueue
                         $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                     }
                 }
-        
-                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate));
-        
+
+                $lang = app()->getLocale();
+                $isRTL = ($lang === 'ar');
+
+                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
+
                 $html = view('print.customer_aging_summary', $dataArr);
-        
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
+                $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
+                $htmlFooter = view('print.customer_aging_summary_footer', $dataArr);
+
+                $mpdfConfig = [
+                    'tempDir' => public_path('tmp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4-L',
+                    'setAutoTopMargin' => 'stretch',
+                    'autoMarginPadding' => -10,
+                    'margin_left' => 15,
+                    'margin_right' => 15,
+                    'margin_top' => 30,
+                    'margin_bottom' => 16,
+                    'margin_header' => 9,
+                    'margin_footer' => 9
+                ];
+
+                if ($isRTL) {
+                    $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                }
+
+                $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                $pdf->SetHTMLHeader($htmlHeader);
+                $pdf->SetHTMLFooter($htmlFooter);
+                $pdf->AddPage('L');
+                $pdf->setAutoBottomMargin = 'stretch';
+                $pdf->WriteHTML($html);
             }
             elseif ($request->reportTypeID == 'CAD')
             {
@@ -140,15 +171,42 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $invoiceAmountTotal = collect($output)->pluck('invoiceAmount')->toArray();
                 $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+                $lang = app()->getLocale();
+                $isRTL = ($lang === 'ar');
+
+                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
 
                 $html = view('print.customer_aging_detail', $dataArr);
+                $htmlHeader = view('print.customer_aging_detail_header', $dataArr);
+                $htmlFooter = view('print.customer_aging_detail_footer', $dataArr);
 
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
+                $mpdfConfig = [
+                    'tempDir' => public_path('tmp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4-L',
+                    'setAutoTopMargin' => 'stretch',
+                    'autoMarginPadding' => -10,
+                    'margin_left' => 15,
+                    'margin_right' => 15,
+                    'margin_top' => 30,
+                    'margin_bottom' => 16,
+                    'margin_header' => 9,
+                    'margin_footer' => 9
+                ];
+
+                if ($isRTL) {
+                    $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+                }
+
+                $pdf = new \Mpdf\Mpdf($mpdfConfig);
+                $pdf->SetHTMLHeader($htmlHeader);
+                $pdf->SetHTMLFooter($htmlFooter);
+                $pdf->AddPage('L');
+                $pdf->setAutoBottomMargin = 'stretch';
+                $pdf->WriteHTML($html);
             }
 
-            $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
+            $pdf_content = $pdf->Output('', 'S');
             $fileName = $name.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
             $path = $rootPaths.'/'.$fileName;
 
@@ -185,7 +243,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                     }
                 }
 
-                $reportTitle = "Account receivable Report PDF has been generated";
+                $reportTitle = "account_receivable_report_pdf_generated";
 
                 $webPushData = [
                     'title' => $reportTitle,

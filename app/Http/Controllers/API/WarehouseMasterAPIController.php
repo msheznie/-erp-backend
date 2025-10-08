@@ -71,7 +71,7 @@ class WarehouseMasterAPIController extends AppBaseController
         $this->warehouseMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseMasters = $this->warehouseMasterRepository->all();
 
-        return $this->sendResponse($warehouseMasters->toArray(), 'Warehouse Masters retrieved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), trans('custom.warehouse_masters_retrieved_successfully'));
     }
 
     /**
@@ -86,16 +86,16 @@ class WarehouseMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists',
-            'wareHouseCode.required'   => 'The '.$entityName.' code field is required.',
-            'wareHouseLocation.unique'   => 'The location field is required.',
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName]),
+            'wareHouseCode.required'   => trans('custom.warehouse_code_required_with_entity', ['entityName' => $entityName]),
+            'wareHouseLocation.unique'   => trans('custom.warehouse_location_unique'),
         );
 
         $validator = \Validator::make($input, [
@@ -117,7 +117,7 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $warehouseMasters = $this->warehouseMasterRepository->create($input);
 
-        return $this->sendResponse($warehouseMasters->toArray(), $entityName.' saved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), $entityName.' '.trans('custom.saved_successfully'));
     }
 
     /**
@@ -138,10 +138,10 @@ class WarehouseMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError('Warehouse Master not found');
+            return $this->sendError(trans('custom.warehouse_master_not_found'));
         }
 
-        return $this->sendResponse($warehouseMaster->toArray(), 'Warehouse Master retrieved successfully');
+        return $this->sendResponse($warehouseMaster->toArray(), trans('custom.warehouse_master_retrieved_successfully'));
     }
 
     /**
@@ -165,16 +165,16 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $input = array_except($input, ['wareHouseImage']);
         $input = $this->convertArrayToValue($input);
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists',
-            'wareHouseCode.required'   => 'The '.$entityName.' code field is required.',
-            'wareHouseLocation.unique'   => 'The location field is required.',
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName]),
+            'wareHouseCode.required'   => trans('custom.warehouse_code_required_with_entity', ['entityName' => $entityName]),
+            'wareHouseLocation.unique'   => trans('custom.warehouse_location_unique'),
         );
 
         $validator = \Validator::make($input, [
@@ -192,7 +192,7 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMaster = $this->warehouseMasterRepository->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError($entityName.' not found');
+            return $this->sendError($entityName.' '.trans('custom.error_not_found'));
         }
         $input['companyID'] = $this->getCompanyById($input['companySystemID']);
         $employee = \Helper::getEmployeeInfo();
@@ -244,7 +244,7 @@ class WarehouseMasterAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($warehouseMaster->toArray(), $entityName.' updated successfully');
+        return $this->sendResponse($warehouseMaster->toArray(), $entityName.' '.trans('custom.updated_successfully'));
     }
 
     /**
@@ -261,12 +261,12 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMaster = $this->warehouseMasterRepository->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
-            return $this->sendError('Warehouse Master not found');
+            return $this->sendError(trans('custom.warehouse_master_not_found'));
         }
 
         $warehouseMaster->delete();
 
-        return $this->sendResponse($id, 'Warehouse Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_master_deleted_successfully'));
     }
 
     /**
@@ -300,7 +300,7 @@ class WarehouseMasterAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 
@@ -390,10 +390,10 @@ class WarehouseMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $entityName = 'Warehouse';
+        $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $entityName = 'Outlet';
+            $entityName = trans('custom.outlet');
         }
 
         if(isset($input['companySystemID']))
@@ -411,7 +411,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $input['wareHouseLocation'] = $input['wareHouseLocation'][0];
 
         $messages = array(
-            'wareHouseCode.unique'   => $entityName.' code already exists'
+            'wareHouseCode.unique'   => trans('custom.warehouse_code_unique', ['entityName' => $entityName])
         );
 
         $validator = \Validator::make($input, [
@@ -436,7 +436,7 @@ class WarehouseMasterAPIController extends AppBaseController
             ->where('isActive', 1)
             ->get();
 
-        return $this->sendResponse($warehouseMasters->toArray(), 'Record retrieved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -465,12 +465,12 @@ class WarehouseMasterAPIController extends AppBaseController
                     'file_size' => round($fileSize / 1024, 2),
                     'original_file_name' => $fileName
                 ];
-                return $this->sendResponse($response, 'Image uploaded successfully');
+                return $this->sendResponse($response, trans('custom.image_uploaded_successfully'));
             } else {
-                return $this->sendError('Image cannot be uploaded',500);
+                return $this->sendError(trans('custom.image_cannot_be_uploaded'),500);
             }
         } catch (\Exception $exception) {
-            return $this->sendError('Image cannot be uploaded',500);
+            return $this->sendError(trans('custom.image_cannot_be_uploaded'),500);
         }
     }
 

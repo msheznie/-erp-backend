@@ -33,7 +33,7 @@ class DeliveryOrderServices
                 
                 foreach ($items as $item) {
                     if (isset($item->master->bookingInvCode)) {
-                        $codes[] = $item->master->bookingInvCode . ' - Customer Invoice';
+                        $codes[] = $item->master->bookingInvCode . ' - ' . trans('custom.customer_invoice');
                     }
                 }
         }
@@ -45,13 +45,13 @@ class DeliveryOrderServices
                 
                 foreach ($sales as $sale) {
                     if (isset($sale->master->salesReturnCode)) {
-                        $codes[] = $sale->master->salesReturnCode . ' - Sales Return';
+                        $codes[] = $sale->master->salesReturnCode . ' - ' . trans('custom.sales_return');
                     }
                 }
         }
 
         if (!empty($codes)) {
-            $message = 'The selected Delivery Order has been pulled into ' . implode(', ', $codes) . '.';
+            $message = trans('custom.selected_delivery_order_has_been_pulled_into', ['codes' => implode(', ', $codes)]);
             return ['status' => false, 'message' => $message];
         }
 
@@ -117,12 +117,17 @@ class DeliveryOrderServices
         }
         if($isExist)
         {
-            return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
-                                        Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
+            return ['status' => false,'message' => trans('custom.cannot_amend_delivery_order_stock_out')];
         }
 
-        $emailBody = '<p>' . $masterData->deliveryOrderCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->deliveryOrderCode . ' has been return back to amend';
+        $emailBody = __('email.delivery_order_returned_to_amend_body', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.delivery_order_returned_to_amend', [
+            'deliveryOrderCode' => $masterData->deliveryOrderCode
+        ]);
 
 
         if ($masterData->confirmedYN == 1) {
@@ -189,7 +194,7 @@ class DeliveryOrderServices
         $masterData->approvedDate = null;
         $masterData->save();
 
-        AuditTrial::createAuditTrial($masterData->documentSystemID,$orderId,$input['returnComment'],'returned back to amend');
+        AuditTrial::createAuditTrial($masterData->documentSystemID,$orderId,$input['returnComment'],trans('custom.returned_back_to_amend'));
         return true;
     }
 }

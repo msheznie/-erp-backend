@@ -64,7 +64,7 @@ class ThirdPartyDomainAPIController extends AppBaseController
         $this->thirdPartyDomainRepository->pushCriteria(new LimitOffsetCriteria($request));
         $thirdPartyDomains = $this->thirdPartyDomainRepository->all();
 
-        return $this->sendResponse($thirdPartyDomains->toArray(), 'Third Party Domains retrieved successfully');
+        return $this->sendResponse($thirdPartyDomains->toArray(), trans('custom.third_party_domains_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ThirdPartyDomainAPIController extends AppBaseController
 
         $thirdPartyDomain = $this->thirdPartyDomainRepository->create($input);
 
-        return $this->sendResponse($thirdPartyDomain->toArray(), 'Third Party Domain saved successfully');
+        return $this->sendResponse($thirdPartyDomain->toArray(), trans('custom.third_party_domain_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ThirdPartyDomainAPIController extends AppBaseController
         $thirdPartyDomain = $this->thirdPartyDomainRepository->findWithoutFail($id);
 
         if (empty($thirdPartyDomain)) {
-            return $this->sendError('Third Party Domain not found');
+            return $this->sendError(trans('custom.third_party_domain_not_found'));
         }
 
-        return $this->sendResponse($thirdPartyDomain->toArray(), 'Third Party Domain retrieved successfully');
+        return $this->sendResponse($thirdPartyDomain->toArray(), trans('custom.third_party_domain_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ThirdPartyDomainAPIController extends AppBaseController
         $thirdPartyDomain = $this->thirdPartyDomainRepository->findWithoutFail($id);
 
         if (empty($thirdPartyDomain)) {
-            return $this->sendError('Third Party Domain not found');
+            return $this->sendError(trans('custom.third_party_domain_not_found'));
         }
 
         $thirdPartyDomain = $this->thirdPartyDomainRepository->update($input, $id);
 
-        return $this->sendResponse($thirdPartyDomain->toArray(), 'ThirdPartyDomain updated successfully');
+        return $this->sendResponse($thirdPartyDomain->toArray(), trans('custom.thirdpartydomain_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ThirdPartyDomainAPIController extends AppBaseController
         $thirdPartyDomain = $this->thirdPartyDomainRepository->findWithoutFail($id);
 
         if (empty($thirdPartyDomain)) {
-            return $this->sendError('Third Party Domain not found');
+            return $this->sendError(trans('custom.third_party_domain_not_found'));
         }
 
         $thirdPartyDomain->delete();

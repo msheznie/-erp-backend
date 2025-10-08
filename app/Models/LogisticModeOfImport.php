@@ -48,7 +48,7 @@ class LogisticModeOfImport extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'modeOfImportID';
-
+    protected $appends = ['modeImportDescription'];
 
     public $fillable = [
         'modeImportDescription',
@@ -79,5 +79,26 @@ class LogisticModeOfImport extends Model
         
     ];
 
-    
+    public function translations()
+    {
+        return $this->hasMany(LogisticModeOfImportTranslations::class, 'modeOfImportID', 'modeOfImportID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getModeImportDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['modeImportDescription'] ?? '';
+    }
 }

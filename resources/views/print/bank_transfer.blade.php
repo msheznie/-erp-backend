@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Bank Transfer</title>
+    <title>{{ __('custom.bank_transfer') }}</title>
     <style>
         @page {
             margin-left: 30px;

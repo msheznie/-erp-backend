@@ -86,7 +86,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         $this->salesPersonMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesPersonMasters = $this->salesPersonMasterRepository->all();
 
-        return $this->sendResponse($salesPersonMasters->toArray(), 'Sales Person Masters retrieved successfully');
+        return $this->sendResponse($salesPersonMasters->toArray(), trans('custom.sales_person_masters_retrieved_successfully'));
     }
 
     /**
@@ -134,7 +134,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
 
         if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '')) {
-            return $this->sendError('Sales person name is required');
+            return $this->sendError(trans('custom.sales_person_name_is_required'));
         }
 
         $wareHouseData = WarehouseMaster::find($input['wareHouseAutoID']);
@@ -199,7 +199,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         $input['createdUserName'] = $employee->empName;
         $salesPersonMasters = $this->salesPersonMasterRepository->create($input);
 
-        return $this->sendResponse($salesPersonMasters->toArray(), 'Sales Person Master saved successfully');
+        return $this->sendResponse($salesPersonMasters->toArray(), trans('custom.sales_person_master_saved_successfully'));
     }
 
     /**
@@ -246,10 +246,10 @@ class SalesPersonMasterAPIController extends AppBaseController
         $salesPersonMaster = $this->salesPersonMasterRepository->findWithoutFail($id);
 
         if (empty($salesPersonMaster)) {
-            return $this->sendError('Sales Person Master not found');
+            return $this->sendError(trans('custom.sales_person_master_not_found'));
         }
 
-        return $this->sendResponse($salesPersonMaster->toArray(), 'Sales Person Master retrieved successfully');
+        return $this->sendResponse($salesPersonMaster->toArray(), trans('custom.sales_person_master_retrieved_successfully'));
     }
 
     /**
@@ -309,11 +309,11 @@ class SalesPersonMasterAPIController extends AppBaseController
         $salesPersonMaster = $this->salesPersonMasterRepository->findWithoutFail($id);
 
         if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '')) {
-            return $this->sendError('Sales person name is required');
+            return $this->sendError(trans('custom.sales_person_name_is_required'));
         }
 
         if (empty($salesPersonMaster)) {
-            return $this->sendError('Sales Person Master not found');
+            return $this->sendError(trans('custom.sales_person_master_not_found'));
         }
 
         $wareHouseData = WarehouseMaster::find($input['wareHouseAutoID']);
@@ -364,7 +364,7 @@ class SalesPersonMasterAPIController extends AppBaseController
 
         $salesPersonMaster = $this->salesPersonMasterRepository->update($input, $id);
 
-        return $this->sendResponse($salesPersonMaster->toArray(), 'Sales person updated successfully');
+        return $this->sendResponse($salesPersonMaster->toArray(), trans('custom.sales_person_updated_successfully'));
     }
 
     /**
@@ -411,7 +411,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         $salesPersonMaster = $this->salesPersonMasterRepository->findWithoutFail($id);
 
         if (empty($salesPersonMaster)) {
-            return $this->sendError('Sales Person Master not found');
+            return $this->sendError(trans('custom.sales_person_master_not_found'));
         }
 
         $checkSalesPerson = QuotationMaster::where('companySystemID', $salesPersonMaster->companySystemID)
@@ -419,7 +419,7 @@ class SalesPersonMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkSalesPerson)) {
-            return $this->sendError('You cannot delete the sales person, Sales person all ready added to quotation');
+            return $this->sendError(trans('custom.you_cannot_delete_the_sales_person_sales_person_al'));
         }
         // deleting master record
         $salesPersonMaster->delete();
@@ -427,7 +427,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         // deleting detail records
         SalesPersonTarget::where('salesPersonID', $id)->delete();
 
-        return $this->sendResponse($id, 'Sales Person Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.sales_person_master_deleted_successfully'));
     }
 
     public function getAllSalesPersons(Request $request)
@@ -518,6 +518,6 @@ class SalesPersonMasterAPIController extends AppBaseController
             'locations' => $wareHouses,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

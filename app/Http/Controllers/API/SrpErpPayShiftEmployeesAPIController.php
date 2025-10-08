@@ -65,7 +65,7 @@ class SrpErpPayShiftEmployeesAPIController extends AppBaseController
         $this->srpErpPayShiftEmployeesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->all();
 
-        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), 'Srp Erp Pay Shift Employees retrieved successfully');
+        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), trans('custom.srp_erp_pay_shift_employees_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpErpPayShiftEmployeesAPIController extends AppBaseController
 
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->create($input);
 
-        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), 'Srp Erp Pay Shift Employees saved successfully');
+        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), trans('custom.srp_erp_pay_shift_employees_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpErpPayShiftEmployeesAPIController extends AppBaseController
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftEmployees)) {
-            return $this->sendError('Srp Erp Pay Shift Employees not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_employees_not_found'));
         }
 
-        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), 'Srp Erp Pay Shift Employees retrieved successfully');
+        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), trans('custom.srp_erp_pay_shift_employees_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpErpPayShiftEmployeesAPIController extends AppBaseController
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftEmployees)) {
-            return $this->sendError('Srp Erp Pay Shift Employees not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_employees_not_found'));
         }
 
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), 'SrpErpPayShiftEmployees updated successfully');
+        return $this->sendResponse($srpErpPayShiftEmployees->toArray(), trans('custom.srperppayshiftemployees_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpErpPayShiftEmployeesAPIController extends AppBaseController
         $srpErpPayShiftEmployees = $this->srpErpPayShiftEmployeesRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftEmployees)) {
-            return $this->sendError('Srp Erp Pay Shift Employees not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_employees_not_found'));
         }
 
         $srpErpPayShiftEmployees->delete();

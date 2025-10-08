@@ -67,7 +67,7 @@ class RouteAPIController extends AppBaseController
         $this->routeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $routes = $this->routeRepository->all();
 
-        return $this->sendResponse($routes->toArray(), 'Routes retrieved successfully');
+        return $this->sendResponse($routes->toArray(), trans('custom.routes_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class RouteAPIController extends AppBaseController
 
         $route = $this->routeRepository->create($input);
 
-        return $this->sendResponse($route->toArray(), 'Route saved successfully');
+        return $this->sendResponse($route->toArray(), trans('custom.route_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class RouteAPIController extends AppBaseController
         $route = $this->routeRepository->findWithoutFail($id);
 
         if (empty($route)) {
-            return $this->sendError('Route not found');
+            return $this->sendError(trans('custom.route_not_found'));
         }
 
-        return $this->sendResponse($route->toArray(), 'Route retrieved successfully');
+        return $this->sendResponse($route->toArray(), trans('custom.route_retrieved_successfully'));
     }
 
     /**
@@ -238,12 +238,12 @@ class RouteAPIController extends AppBaseController
         $route = $this->routeRepository->findWithoutFail($id);
 
         if (empty($route)) {
-            return $this->sendError('Route not found');
+            return $this->sendError(trans('custom.route_not_found'));
         }
 
         $route = $this->routeRepository->update($input, $id);
 
-        return $this->sendResponse($route->toArray(), 'Route updated successfully');
+        return $this->sendResponse($route->toArray(), trans('custom.route_updated_successfully'));
     }
 
     /**
@@ -291,7 +291,7 @@ class RouteAPIController extends AppBaseController
         $route = $this->routeRepository->findWithoutFail($id);
 
         if (empty($route)) {
-            return $this->sendError('Route not found');
+            return $this->sendError(trans('custom.route_not_found'));
         }
 
         $route->delete();

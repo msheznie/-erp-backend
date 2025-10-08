@@ -83,7 +83,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $this->reportTemplateLinksRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateLinks = $this->reportTemplateLinksRepository->all();
 
-        return $this->sendResponse($reportTemplateLinks->toArray(), 'Report Template Links retrieved successfully');
+        return $this->sendResponse($reportTemplateLinks->toArray(), trans('custom.report_template_links_retrieved_successfully'));
     }
 
     /**
@@ -196,7 +196,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Report Template Links saved successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_saved_successfully'));
     }
 
     /**
@@ -243,10 +243,10 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
 
         if (empty($reportTemplateLinks)) {
-            return $this->sendError('Report Template Links not found');
+            return $this->sendError(trans('custom.report_template_links_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateLinks->toArray(), 'Report Template Links retrieved successfully');
+        return $this->sendResponse($reportTemplateLinks->toArray(), trans('custom.report_template_links_retrieved_successfully'));
     }
 
     /**
@@ -304,12 +304,12 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
 
         if (empty($reportTemplateLinks)) {
-            return $this->sendError('Report Template Links not found');
+            return $this->sendError(trans('custom.report_template_links_not_found'));
         }
 
         $reportTemplateLinks = $this->reportTemplateLinksRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateLinks->toArray(), 'ReportTemplateLinks updated successfully');
+        return $this->sendResponse($reportTemplateLinks->toArray(), trans('custom.reporttemplatelinks_updated_successfully'));
     }
 
     /**
@@ -356,7 +356,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
 
         if (empty($reportTemplateLinks)) {
-            return $this->sendError('Report Template Links not found');
+            return $this->sendError(trans('custom.report_template_links_not_found'));
         }
 
         // $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
@@ -367,7 +367,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $checkLinkInBudget = BudgetMaster::where('templateMasterID',$templateMasterID)->first();
 
         if ($checkLinkInBudget) {
-             return $this->sendError('This chart Of Account cannot be deleted, since the Chart Of Account has been pulled to budget');
+             return $this->sendError(trans('custom.this_chart_of_account_cannot_be_deleted_since_the_'));
         }
 
 
@@ -379,7 +379,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
             $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateLinks->templateDetailID)->update(['isFinalLevel' => 0]);
         }
 
-        return $this->sendResponse($id, 'Report Template Links deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_links_deleted_successfully'));
     }
 
     public function reportTemplateDetailSubCatLink(Request $request)
@@ -425,7 +425,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
                 $reportTemplateLinks = $this->reportTemplateLinksRepository->update($data2, $val->linkID);
             }
         }
-        return $this->sendResponse([], 'Report Template Links saved successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_saved_successfully'));
     }
 
     public function deleteAllLinkedGLCodes(Request $request)
@@ -444,12 +444,12 @@ class ReportTemplateLinksAPIController extends AppBaseController
         $checkLinkInBudget = BudgetMaster::where('templateMasterID',$templateMasterID)->first();
 
         if ($checkLinkInBudget) {
-             return $this->sendError('Chart Of Accounts of this category cannot be deleted, since some of the Chart Of Accounts have been pulled to budget');
+             return $this->sendError(trans('custom.chart_of_accounts_of_this_category_cannot_be_delet'));
         }
 
         $reportTemplateLinks = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)->delete();
         $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $request->templateDetailID)->update(['isFinalLevel' => 0]);
-        return $this->sendResponse([], 'Report Template Links deleted successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_deleted_successfully'));
     }
 
     public function assignReportTemplateToGl(Request $request)
@@ -516,7 +516,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Report Template Links saved successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_saved_successfully'));
     }
 
     public function reAssignAndDeleteGlLink(Request $request)
@@ -533,7 +533,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
             $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
 
             if (empty($reportTemplateLinks)) {
-                return $this->sendError('Report Template Links not found');
+                return $this->sendError(trans('custom.report_template_links_not_found'));
             }
 
             // $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
@@ -561,7 +561,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($id, 'Report Template Links deleted successfully');
+            return $this->sendResponse($id, trans('custom.report_template_links_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);

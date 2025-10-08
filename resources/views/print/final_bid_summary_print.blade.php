@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Supplier Ranking Summary Report</title>
+    <title>{{ __('custom.supplier_ranking_summary') }}</title>
     <style>
         @page {
             margin-left: 30px;

@@ -66,7 +66,7 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
         $this->eRPAssetVerificationReferredbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetVerificationReferredbacks = $this->eRPAssetVerificationReferredbackRepository->all();
 
-        return $this->sendResponse($eRPAssetVerificationReferredbacks->toArray(), 'E R P Asset Verification Referredbacks retrieved successfully');
+        return $this->sendResponse($eRPAssetVerificationReferredbacks->toArray(), trans('custom.e_r_p_asset_verification_referredbacks_retrieved_s'));
     }
 
     /**
@@ -113,7 +113,7 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
 
         $eRPAssetVerificationReferredback = $this->eRPAssetVerificationReferredbackRepository->create($input);
 
-        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), 'E R P Asset Verification Referredback saved successfully');
+        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), trans('custom.e_r_p_asset_verification_referredback_saved_succes'));
     }
 
     /**
@@ -160,10 +160,10 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
         $eRPAssetVerificationReferredback = $this->eRPAssetVerificationReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationReferredback)) {
-            return $this->sendError('E R P Asset Verification Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_referredback_not_found'));
         }
 
-        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), 'E R P Asset Verification Referredback retrieved successfully');
+        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), trans('custom.e_r_p_asset_verification_referredback_retrieved_su'));
     }
 
     /**
@@ -220,12 +220,12 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
         $eRPAssetVerificationReferredback = $this->eRPAssetVerificationReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationReferredback)) {
-            return $this->sendError('E R P Asset Verification Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_referredback_not_found'));
         }
 
         $eRPAssetVerificationReferredback = $this->eRPAssetVerificationReferredbackRepository->update($input, $id);
 
-        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), 'ERPAssetVerificationReferredback updated successfully');
+        return $this->sendResponse($eRPAssetVerificationReferredback->toArray(), trans('custom.erpassetverificationreferredback_updated_successfu'));
     }
 
     /**
@@ -272,7 +272,7 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
         $eRPAssetVerificationReferredback = $this->eRPAssetVerificationReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationReferredback)) {
-            return $this->sendError('E R P Asset Verification Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_referredback_not_found'));
         }
 
         $eRPAssetVerificationReferredback->delete();
@@ -286,15 +286,15 @@ class ERPAssetVerificationReferredbackAPIController extends AppBaseController
         $assetVerificationAutoID = $input['assetVerificationID'];
         $assetTransferAmendHistory = ERPAssetVerificationReferredback::where('id', $assetVerificationAutoID)
             ->get();
-        return $this->sendResponse($assetTransferAmendHistory, 'Asset Verification retrieved successfully');
+        return $this->sendResponse($assetTransferAmendHistory, trans('custom.asset_verification_retrieved_successfully_1'));
     }
 
     public function fetchAssetVerification($id)
     {
         $assetVerification = ERPAssetVerificationReferredback::where('assetVerificationMasterRefferedBackID', $id)->first(); 
         if (empty($assetVerification)) {
-            return $this->sendError('Asset Verification not found');
+            return $this->sendError(trans('custom.asset_verification_not_found'));
         } 
-        return $this->sendResponse($assetVerification, 'Asset Verification retrieved successfully.');
+        return $this->sendResponse($assetVerification, trans('custom.asset_verification_retrieved_successfully'));
     }
 }

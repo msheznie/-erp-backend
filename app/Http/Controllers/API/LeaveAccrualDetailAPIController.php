@@ -65,7 +65,7 @@ class LeaveAccrualDetailAPIController extends AppBaseController
         $this->leaveAccrualDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveAccrualDetails = $this->leaveAccrualDetailRepository->all();
 
-        return $this->sendResponse($leaveAccrualDetails->toArray(), 'Leave Accrual Details retrieved successfully');
+        return $this->sendResponse($leaveAccrualDetails->toArray(), trans('custom.leave_accrual_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class LeaveAccrualDetailAPIController extends AppBaseController
 
         $leaveAccrualDetail = $this->leaveAccrualDetailRepository->create($input);
 
-        return $this->sendResponse($leaveAccrualDetail->toArray(), 'Leave Accrual Detail saved successfully');
+        return $this->sendResponse($leaveAccrualDetail->toArray(), trans('custom.leave_accrual_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class LeaveAccrualDetailAPIController extends AppBaseController
         $leaveAccrualDetail = $this->leaveAccrualDetailRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualDetail)) {
-            return $this->sendError('Leave Accrual Detail not found');
+            return $this->sendError(trans('custom.leave_accrual_detail_not_found'));
         }
 
-        return $this->sendResponse($leaveAccrualDetail->toArray(), 'Leave Accrual Detail retrieved successfully');
+        return $this->sendResponse($leaveAccrualDetail->toArray(), trans('custom.leave_accrual_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class LeaveAccrualDetailAPIController extends AppBaseController
         $leaveAccrualDetail = $this->leaveAccrualDetailRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualDetail)) {
-            return $this->sendError('Leave Accrual Detail not found');
+            return $this->sendError(trans('custom.leave_accrual_detail_not_found'));
         }
 
         $leaveAccrualDetail = $this->leaveAccrualDetailRepository->update($input, $id);
 
-        return $this->sendResponse($leaveAccrualDetail->toArray(), 'LeaveAccrualDetail updated successfully');
+        return $this->sendResponse($leaveAccrualDetail->toArray(), trans('custom.leaveaccrualdetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class LeaveAccrualDetailAPIController extends AppBaseController
         $leaveAccrualDetail = $this->leaveAccrualDetailRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualDetail)) {
-            return $this->sendError('Leave Accrual Detail not found');
+            return $this->sendError(trans('custom.leave_accrual_detail_not_found'));
         }
 
         $leaveAccrualDetail->delete();

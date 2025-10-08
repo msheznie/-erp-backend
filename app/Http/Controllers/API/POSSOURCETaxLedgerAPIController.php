@@ -65,7 +65,7 @@ class POSSOURCETaxLedgerAPIController extends AppBaseController
         $this->pOSSOURCETaxLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCETaxLedgers = $this->pOSSOURCETaxLedgerRepository->all();
 
-        return $this->sendResponse($pOSSOURCETaxLedgers->toArray(), 'P O S S O U R C E Tax Ledgers retrieved successfully');
+        return $this->sendResponse($pOSSOURCETaxLedgers->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_ledgers_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCETaxLedgerAPIController extends AppBaseController
 
         $pOSSOURCETaxLedger = $this->pOSSOURCETaxLedgerRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), 'P O S S O U R C E Tax Ledger saved successfully');
+        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_ledger_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCETaxLedgerAPIController extends AppBaseController
         $pOSSOURCETaxLedger = $this->pOSSOURCETaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxLedger)) {
-            return $this->sendError('P O S S O U R C E Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_ledger_not_found'));
         }
 
-        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), 'P O S S O U R C E Tax Ledger retrieved successfully');
+        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_tax_ledger_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCETaxLedgerAPIController extends AppBaseController
         $pOSSOURCETaxLedger = $this->pOSSOURCETaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxLedger)) {
-            return $this->sendError('P O S S O U R C E Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_ledger_not_found'));
         }
 
         $pOSSOURCETaxLedger = $this->pOSSOURCETaxLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), 'POSSOURCETaxLedger updated successfully');
+        return $this->sendResponse($pOSSOURCETaxLedger->toArray(), trans('custom.possourcetaxledger_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCETaxLedgerAPIController extends AppBaseController
         $pOSSOURCETaxLedger = $this->pOSSOURCETaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCETaxLedger)) {
-            return $this->sendError('P O S S O U R C E Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_tax_ledger_not_found'));
         }
 
         $pOSSOURCETaxLedger->delete();

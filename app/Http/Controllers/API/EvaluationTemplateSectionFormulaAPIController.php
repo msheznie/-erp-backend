@@ -64,7 +64,7 @@ class EvaluationTemplateSectionFormulaAPIController extends AppBaseController
         $this->evaluationTemplateSectionFormulaRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationTemplateSectionFormulas = $this->evaluationTemplateSectionFormulaRepository->all();
 
-        return $this->sendResponse($evaluationTemplateSectionFormulas->toArray(), 'Evaluation Template Section Formulas retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSectionFormulas->toArray(), trans('custom.evaluation_template_section_formulas_retrieved_suc'));
     }
 
     /**
@@ -118,7 +118,7 @@ class EvaluationTemplateSectionFormulaAPIController extends AppBaseController
 
         $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->create($input);
 
-        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), 'Evaluation Template Section Formula saved successfully');
+        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), trans('custom.evaluation_template_section_formula_saved_successf'));
     }
 
     public function getTemplateSectionFormula(Request $request)
@@ -201,10 +201,10 @@ class EvaluationTemplateSectionFormulaAPIController extends AppBaseController
         $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionFormula)) {
-            return $this->sendError('Evaluation Template Section Formula not found');
+            return $this->sendError(trans('custom.evaluation_template_section_formula_not_found'));
         }
 
-        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), 'Evaluation Template Section Formula retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), trans('custom.evaluation_template_section_formula_retrieved_succ'));
     }
 
     /**
@@ -270,12 +270,12 @@ class EvaluationTemplateSectionFormulaAPIController extends AppBaseController
         $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionFormula)) {
-            return $this->sendError('Evaluation Template Section Formula not found');
+            return $this->sendError(trans('custom.evaluation_template_section_formula_not_found'));
         }
 
         $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), 'EvaluationTemplateSectionFormula updated successfully');
+        return $this->sendResponse($evaluationTemplateSectionFormula->toArray(), trans('custom.evaluationtemplatesectionformula_updated_successfu'));
     }
 
     /**
@@ -323,11 +323,11 @@ class EvaluationTemplateSectionFormulaAPIController extends AppBaseController
         $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->findWithoutFail($id);
 
         if (empty($evaluationTemplateSectionFormula)) {
-            return $this->sendError('Evaluation Template Section Formula not found');
+            return $this->sendError(trans('custom.evaluation_template_section_formula_not_found'));
         }
 
         $evaluationTemplateSectionFormula->delete();
 
-        return $this->sendResponse($id,'Evaluation Template Section Formula deleted successfully');
+        return $this->sendResponse($id,trans('custom.evaluation_template_section_formula_deleted_succes'));
     }
 }

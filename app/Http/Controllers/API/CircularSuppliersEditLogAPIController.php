@@ -64,7 +64,7 @@ class CircularSuppliersEditLogAPIController extends AppBaseController
         $this->circularSuppliersEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $circularSuppliersEditLogs = $this->circularSuppliersEditLogRepository->all();
 
-        return $this->sendResponse($circularSuppliersEditLogs->toArray(), 'Circular Suppliers Edit Logs retrieved successfully');
+        return $this->sendResponse($circularSuppliersEditLogs->toArray(), trans('custom.circular_suppliers_edit_logs_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CircularSuppliersEditLogAPIController extends AppBaseController
 
         $circularSuppliersEditLog = $this->circularSuppliersEditLogRepository->create($input);
 
-        return $this->sendResponse($circularSuppliersEditLog->toArray(), 'Circular Suppliers Edit Log saved successfully');
+        return $this->sendResponse($circularSuppliersEditLog->toArray(), trans('custom.circular_suppliers_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CircularSuppliersEditLogAPIController extends AppBaseController
         $circularSuppliersEditLog = $this->circularSuppliersEditLogRepository->findWithoutFail($id);
 
         if (empty($circularSuppliersEditLog)) {
-            return $this->sendError('Circular Suppliers Edit Log not found');
+            return $this->sendError(trans('custom.circular_suppliers_edit_log_not_found'));
         }
 
-        return $this->sendResponse($circularSuppliersEditLog->toArray(), 'Circular Suppliers Edit Log retrieved successfully');
+        return $this->sendResponse($circularSuppliersEditLog->toArray(), trans('custom.circular_suppliers_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CircularSuppliersEditLogAPIController extends AppBaseController
         $circularSuppliersEditLog = $this->circularSuppliersEditLogRepository->findWithoutFail($id);
 
         if (empty($circularSuppliersEditLog)) {
-            return $this->sendError('Circular Suppliers Edit Log not found');
+            return $this->sendError(trans('custom.circular_suppliers_edit_log_not_found'));
         }
 
         $circularSuppliersEditLog = $this->circularSuppliersEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($circularSuppliersEditLog->toArray(), 'CircularSuppliersEditLog updated successfully');
+        return $this->sendResponse($circularSuppliersEditLog->toArray(), trans('custom.circularsupplierseditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CircularSuppliersEditLogAPIController extends AppBaseController
         $circularSuppliersEditLog = $this->circularSuppliersEditLogRepository->findWithoutFail($id);
 
         if (empty($circularSuppliersEditLog)) {
-            return $this->sendError('Circular Suppliers Edit Log not found');
+            return $this->sendError(trans('custom.circular_suppliers_edit_log_not_found'));
         }
 
         $circularSuppliersEditLog->delete();

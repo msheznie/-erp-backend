@@ -49,7 +49,7 @@ class ItemCategoryTypeMaster extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $appends = ['name'];
 
 
     public $fillable = [
@@ -88,5 +88,39 @@ class ItemCategoryTypeMaster extends Model
     public static function allItemTypes()
     {
         return [1,2];
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(ItemCategoryTypeMasterTranslation::class, 'typeId', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getNameAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation) {
+            return $translation->name;
+        }
+
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->name;
+            }
+        }
+
+        return $value;
     }
 }

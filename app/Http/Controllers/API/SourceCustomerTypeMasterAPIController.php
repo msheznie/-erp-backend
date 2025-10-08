@@ -65,7 +65,7 @@ class SourceCustomerTypeMasterAPIController extends AppBaseController
         $this->sourceCustomerTypeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sourceCustomerTypeMasters = $this->sourceCustomerTypeMasterRepository->all();
 
-        return $this->sendResponse($sourceCustomerTypeMasters->toArray(), 'Source Customer Type Masters retrieved successfully');
+        return $this->sendResponse($sourceCustomerTypeMasters->toArray(), trans('custom.source_customer_type_masters_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SourceCustomerTypeMasterAPIController extends AppBaseController
 
         $sourceCustomerTypeMaster = $this->sourceCustomerTypeMasterRepository->create($input);
 
-        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), 'Source Customer Type Master saved successfully');
+        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), trans('custom.source_customer_type_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SourceCustomerTypeMasterAPIController extends AppBaseController
         $sourceCustomerTypeMaster = $this->sourceCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($sourceCustomerTypeMaster)) {
-            return $this->sendError('Source Customer Type Master not found');
+            return $this->sendError(trans('custom.source_customer_type_master_not_found'));
         }
 
-        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), 'Source Customer Type Master retrieved successfully');
+        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), trans('custom.source_customer_type_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SourceCustomerTypeMasterAPIController extends AppBaseController
         $sourceCustomerTypeMaster = $this->sourceCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($sourceCustomerTypeMaster)) {
-            return $this->sendError('Source Customer Type Master not found');
+            return $this->sendError(trans('custom.source_customer_type_master_not_found'));
         }
 
         $sourceCustomerTypeMaster = $this->sourceCustomerTypeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), 'SourceCustomerTypeMaster updated successfully');
+        return $this->sendResponse($sourceCustomerTypeMaster->toArray(), trans('custom.sourcecustomertypemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SourceCustomerTypeMasterAPIController extends AppBaseController
         $sourceCustomerTypeMaster = $this->sourceCustomerTypeMasterRepository->findWithoutFail($id);
 
         if (empty($sourceCustomerTypeMaster)) {
-            return $this->sendError('Source Customer Type Master not found');
+            return $this->sendError(trans('custom.source_customer_type_master_not_found'));
         }
 
         $sourceCustomerTypeMaster->delete();

@@ -73,7 +73,7 @@ class ExportPODetailExcel {
         $this->sendNotification($basePath);
 
         if($basePath == '') {
-            return ['success' => false , 'message' => 'Unable to export excel'];
+            return ['success' => false , 'message' => trans('custom.unable_to_export_excel')];
         }
 
         return ['success' => true , 'message' =>  trans('custom.success_export')];
@@ -216,33 +216,33 @@ class ExportPODetailExcel {
 
     private function mainHeader($localCurrencyCode = '', $reportingCurrencyCode = '') {
         $this->data[] = [
-            '#' => '#',
-            'Company ID' => 'Company ID',
-            'Company Name' => 'Company Name',
-            'Order Code' => 'Order Code',
-            'Segment' => 'Segment',
-            'Created at' => 'Created at',
-            'Created By' => 'Created By',
-            'Category' => 'Category',
-            'Narration' => 'Narration',
-            'Supplier Code' => 'Supplier Code',
-            'Supplier Name' => 'Supplier Name',
-            'Credit Period' => 'Credit Period',
-            'Supplier Country' => 'Supplier Country',
-            'Expected Delivery Date' => 'Expected Delivery Date',
-            'Delivery Terms' => 'Delivery Terms',
-            'Penalty Terms' => 'Penalty Terms',
-            'Confirmed Status' => 'Confirmed Status',
-            'Confirmed Date' => 'Confirmed Date',
-            'Confirmed By' => 'Confirmed By',
-            'Approved Status' => 'Approved Status',
-            'Approved Date' => 'Approved Date',
-            'Transaction Currency' => 'Transaction Currency',
-            'Transaction Amount' => 'Transaction Amount',
-            'Local Amount' => 'Local Amount' . ($localCurrencyCode ? " ({$localCurrencyCode})" : ''),
-            'Reporting Amount' => 'Reporting Amount' . ($reportingCurrencyCode ? " ({$reportingCurrencyCode})" : ''),
-            'Advance Payment Available' => 'Advance Payment Available',
-            'Total Advance Payment Amount' => 'Total Advance Payment Amount',
+            '#' => trans('custom.hash'),
+            'Company ID' => trans('custom.company_id'),
+            'Company Name' => trans('custom.company_name'),
+            'Order Code' => trans('custom.order_code'),
+            'Segment' => trans('custom.segment'),
+            'Created at' => trans('custom.created_at'),
+            'Created By' => trans('custom.created_by'),
+            'Category' => trans('custom.category'),
+            'Narration' => trans('custom.narration'),
+            'Supplier Code' => trans('custom.supplier_code'),
+            'Supplier Name' => trans('custom.supplier_name'),
+            'Credit Period' => trans('custom.credit_period'),
+            'Supplier Country' => trans('custom.supplier_country'),
+            'Expected Delivery Date' => trans('custom.expected_delivery_date'),
+            'Delivery Terms' => trans('custom.delivery_terms'),
+            'Penalty Terms' => trans('custom.penalty_terms'),
+            'Confirmed Status' => trans('custom.confirmed_status'),
+            'Confirmed Date' => trans('custom.confirmed_date'),
+            'Confirmed By' => trans('custom.confirmed_by'),
+            'Approved Status' => trans('custom.approved_status'),
+            'Approved Date' => trans('custom.approved_date'),
+            'Transaction Currency' => trans('custom.transaction_currency'),
+            'Transaction Amount' => trans('custom.transaction_amount'),
+            'Local Amount' => trans('custom.local_amount') . ($localCurrencyCode ? " ({$localCurrencyCode})" : ''),
+            'Reporting Amount' => trans('custom.reporting_amount') . ($reportingCurrencyCode ? " ({$reportingCurrencyCode})" : ''),
+            'Advance Payment Available' => trans('custom.advance_payment_available'),
+            'Total Advance Payment Amount' => trans('custom.total_advance_payment_amount'),
         ];
     }
 
@@ -255,7 +255,7 @@ class ExportPODetailExcel {
             'Segment' => optional($val->segment)->ServiceLineDes,
             'Created at' => \Helper::dateFormat($val->createdDateTime),
             'Created By' => optional($val->created_by)->empName,
-            'Category' => optional($val->fcategory)->categoryDescription ?? 'Other',
+            'Category' => optional($val->fcategory)->categoryDescription ?? trans('custom.other'),
             'Narration' => $val->narration ?: '-',
             'Supplier Code' => $val->supplierPrimaryCode,
             'Supplier Name' => $val->supplierName,
@@ -264,16 +264,16 @@ class ExportPODetailExcel {
             'Expected Delivery Date' => \Helper::dateFormat($val->expectedDeliveryDate),
             'Delivery Terms' => $val->deliveryTerms,
             'Penalty Terms' => $val->panaltyTerms,
-            'Confirmed Status' => $val->poConfirmedYN == 1 ? 'Yes' : 'No',
+            'Confirmed Status' => $val->poConfirmedYN == 1 ? trans('custom.yes') : trans('custom.no'),
             'Confirmed Date' => \Helper::dateFormat($val->poConfirmedDate),
             'Confirmed By' => $val->poConfirmedByName,
-            'Approved Status' => $val->approved == -1 ? 'Yes' : 'No',
+            'Approved Status' => $val->approved == -1 ? trans('custom.yes') : trans('custom.no'),
             'Approved Date' => \Helper::dateFormat($val->approvedDate),
             'Transaction Currency' => optional($val->currency)->CurrencyCode,
             'Transaction Amount' => $val->poTotalSupplierTransactionCurrency,
             'Local Amount' => $val->poTotalLocalCurrency,
             'Reporting Amount' => $val->poTotalComRptCurrency,
-            'Advance Payment Available' => $val->advance_summary ? 'Yes' : 'No',
+            'Advance Payment Available' => $val->advance_summary ? trans('custom.yes') : trans('custom.no'),
             'Total Advance Payment Amount' => $val->advance_summary ? $val->advance_summary->advanceSum : 0
         ];
     }
@@ -283,24 +283,24 @@ class ExportPODetailExcel {
             $hasPR = $this->checkRequest($val);
 
             $headerOne [''] = '';
-            $headerOne ['Order Details'] = 'Order Details';
+            $headerOne ['Order Details'] = trans('custom.order_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            if ($hasPR) $header['PR Number'] = 'PR Number';
-            $header['item Code'] = 'Item Code';
-            $header['item Description'] = 'Item Description';
-            $header['comments'] = 'Comments';
-            if ($hasPR) $header['PR QTY'] = 'PR QTY';
-            $header['UOM'] = 'UOM';
-            $header['No qty'] = 'No Qty';
-            $header['Unit Cost'] = 'Unit Cost';
-            $header['Dis %'] = 'Discount %';
-            $header['Discount'] = 'Discount';
-            $header['VAT %'] = 'VAT %';
-            $header['VAT Amount'] = 'VAT Amount';
-            $header['Net Amount'] = 'Net Amount';
+            if ($hasPR) $header['PR Number'] = trans('custom.pr_number');
+            $header['item Code'] = trans('custom.item_code');
+            $header['item Description'] = trans('custom.item_description');
+            $header['comments'] = trans('custom.comments');
+            if ($hasPR) $header['PR QTY'] = trans('custom.pr_qty');
+            $header['UOM'] = trans('custom.uom');
+            $header['No qty'] = trans('custom.no_qty');
+            $header['Unit Cost'] = trans('custom.unit_cost');
+            $header['Dis %'] = trans('custom.discount_percentage');
+            $header['Discount'] = trans('custom.discount');
+            $header['VAT %'] = trans('custom.vat_percentage');
+            $header['VAT Amount'] = trans('custom.vat_amount');
+            $header['Net Amount'] = trans('custom.net_amount');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
@@ -332,23 +332,23 @@ class ExportPODetailExcel {
     private function logisticDetails($val) {
         if (!empty($val) && count($val) > 0) {
             $headerOne [''] = '';
-            $headerOne ['Logistics Details'] = 'Logistics Details';
+            $headerOne ['Logistics Details'] = trans('custom.logistics_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            $header['Category'] = 'Category';
-            $header['Supplier Code'] = 'Supplier Code';
-            $header['Supplier Name'] = 'Supplier Name';
-            $header['GRV Code'] = 'GRV Code';
-            $header['Currency'] = 'Currency';
-            $header['Amount'] = 'Amount';
-            $header['Local Amount'] = 'Local Amount';
-            $header['Reporting Amount'] = 'Reporting Amount';
-            $header['Add VAT On PO'] = 'Add VAT On PO';
-            $header['VAT Percentage'] = 'VAT Percentage';
-            $header['VAT Amount'] = 'VAT Amount';
-            $header['VAT Sub Category'] = 'VAT Sub Category';
+            $header['Category'] = trans('custom.category');
+            $header['Supplier Code'] = trans('custom.supplier_code');
+            $header['Supplier Name'] = trans('custom.supplier_name');
+            $header['GRV Code'] = trans('custom.grv_code');
+            $header['Currency'] = trans('custom.currency');
+            $header['Amount'] = trans('custom.amount');
+            $header['Local Amount'] = trans('custom.local_amount');
+            $header['Reporting Amount'] = trans('custom.reporting_amount');
+            $header['Add VAT On PO'] = trans('custom.add_vat_on_po');
+            $header['VAT Percentage'] = trans('custom.vat_percentage');
+            $header['VAT Amount'] = trans('custom.vat_amount');
+            $header['VAT Sub Category'] = trans('custom.vat_sub_category');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
@@ -362,7 +362,7 @@ class ExportPODetailExcel {
                 $row['Amount'] = $detail->reqAmount ?? '';
                 $row['Local Amount'] = $detail->reqAmountInPOLocalCur ?? '';
                 $row['Reporting Amount'] = $detail->reqAmountInPORptCur ?? '';
-                $row['Add VAT On PO'] = ($detail->addVatOnPO ?? false) ? 'Yes' : 'No';
+                $row['Add VAT On PO'] = ($detail->addVatOnPO ?? false) ? trans('custom.yes') : trans('custom.no');
                 $row['VAT Percentage'] = $detail->VATPercentage ?? '';
                 $row['VAT Amount'] = $detail->VATAmount ?? '';
                 $row['VAT Sub Category'] = $detail->vat_sub_category->subCategoryDescription ?? '';
@@ -375,13 +375,13 @@ class ExportPODetailExcel {
     private function addonDetails($val) {
         if (!empty($val) && count($val) > 0) {
             $headerOne [''] = '';
-            $headerOne ['Addon Details'] = 'Addon Details';
+            $headerOne ['Addon Details'] = trans('custom.addon_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            $header['Category'] = 'Category';
-            $header['Amount'] = 'Amount';
+            $header['Category'] = trans('custom.category');
+            $header['Amount'] = trans('custom.amount');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
@@ -429,7 +429,7 @@ class ExportPODetailExcel {
 
     private function sendNotification($basePath) {
         $webPushData = [
-            'title' => "Purchase Order Detailed Excel has been generated",
+            'title' => "purchase_order_detailed_excel_generated",
             'body' => '',
             'url' => '',
             'path' => $basePath,

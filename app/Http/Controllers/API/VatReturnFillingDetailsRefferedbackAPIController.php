@@ -65,7 +65,7 @@ class VatReturnFillingDetailsRefferedbackAPIController extends AppBaseController
         $this->vatReturnFillingDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFillingDetailsRefferedbacks = $this->vatReturnFillingDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($vatReturnFillingDetailsRefferedbacks->toArray(), 'Vat Return Filling Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($vatReturnFillingDetailsRefferedbacks->toArray(), trans('custom.vat_return_filling_details_refferedbacks_retrieved'));
     }
 
     /**
@@ -112,7 +112,7 @@ class VatReturnFillingDetailsRefferedbackAPIController extends AppBaseController
 
         $vatReturnFillingDetailsRefferedback = $this->vatReturnFillingDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), 'Vat Return Filling Details Refferedback saved successfully');
+        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), trans('custom.vat_return_filling_details_refferedback_saved_succ'));
     }
 
     /**
@@ -159,10 +159,10 @@ class VatReturnFillingDetailsRefferedbackAPIController extends AppBaseController
         $vatReturnFillingDetailsRefferedback = $this->vatReturnFillingDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetailsRefferedback)) {
-            return $this->sendError('Vat Return Filling Details Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_details_refferedback_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), 'Vat Return Filling Details Refferedback retrieved successfully');
+        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), trans('custom.vat_return_filling_details_refferedback_retrieved_'));
     }
 
     /**
@@ -219,12 +219,12 @@ class VatReturnFillingDetailsRefferedbackAPIController extends AppBaseController
         $vatReturnFillingDetailsRefferedback = $this->vatReturnFillingDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetailsRefferedback)) {
-            return $this->sendError('Vat Return Filling Details Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_details_refferedback_not_found'));
         }
 
         $vatReturnFillingDetailsRefferedback = $this->vatReturnFillingDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), 'VatReturnFillingDetailsRefferedback updated successfully');
+        return $this->sendResponse($vatReturnFillingDetailsRefferedback->toArray(), trans('custom.vatreturnfillingdetailsrefferedback_updated_succes'));
     }
 
     /**
@@ -271,7 +271,7 @@ class VatReturnFillingDetailsRefferedbackAPIController extends AppBaseController
         $vatReturnFillingDetailsRefferedback = $this->vatReturnFillingDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetailsRefferedback)) {
-            return $this->sendError('Vat Return Filling Details Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filling_details_refferedback_not_found'));
         }
 
         $vatReturnFillingDetailsRefferedback->delete();

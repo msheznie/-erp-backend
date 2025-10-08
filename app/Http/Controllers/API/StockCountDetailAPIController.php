@@ -72,7 +72,7 @@ class StockCountDetailAPIController extends AppBaseController
         $this->stockCountDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockCountDetails = $this->stockCountDetailRepository->all();
 
-        return $this->sendResponse($stockCountDetails->toArray(), 'Stock Count Details retrieved successfully');
+        return $this->sendResponse($stockCountDetails->toArray(), trans('custom.stock_count_details_retrieved_successfully'));
     }
 
     /**
@@ -120,7 +120,7 @@ class StockCountDetailAPIController extends AppBaseController
         $stockCount = StockCount::find($input['stockCountAutoID']);
 
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         $input['location'] = $stockCount->location;
@@ -133,7 +133,7 @@ class StockCountDetailAPIController extends AppBaseController
         $checkProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
 
         if (count($checkProducts['usedItems']) > 0) {
-            return $this->sendError('You cannot used this item, this items has been pulled in the following documents', 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
+            return $this->sendError(trans('custom.you_cannot_used_this_item_this_items_has_been_pull'), 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
         }
 
         DB::beginTransaction();
@@ -153,7 +153,7 @@ class StockCountDetailAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Stock Count Detail saved successfully');
+            return $this->sendResponse([], trans('custom.stock_count_detail_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());
@@ -204,10 +204,10 @@ class StockCountDetailAPIController extends AppBaseController
         $stockCountDetail = $this->stockCountDetailRepository->findWithoutFail($id);
 
         if (empty($stockCountDetail)) {
-            return $this->sendError('Stock Count Detail not found');
+            return $this->sendError(trans('custom.stock_count_detail_not_found'));
         }
 
-        return $this->sendResponse($stockCountDetail->toArray(), 'Stock Count Detail retrieved successfully');
+        return $this->sendResponse($stockCountDetail->toArray(), trans('custom.stock_count_detail_retrieved_successfully'));
     }
 
     /**
@@ -266,13 +266,13 @@ class StockCountDetailAPIController extends AppBaseController
         $stockCountDetail = $this->stockCountDetailRepository->findWithoutFail($id);
 
         if (empty($stockCountDetail)) {
-            return $this->sendError('Stock Count Detail not found');
+            return $this->sendError(trans('custom.stock_count_detail_not_found'));
         }
 
         $stockCount = StockCount::find($stockCountDetail->stockCountAutoID);
 
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
@@ -280,7 +280,7 @@ class StockCountDetailAPIController extends AppBaseController
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,
@@ -324,7 +324,7 @@ class StockCountDetailAPIController extends AppBaseController
 
         $stockCountDetail = $this->stockCountDetailRepository->update($input, $id);
 
-        return $this->sendResponse($stockCountDetail->toArray(), 'Stock Count Detail updated successfully');
+        return $this->sendResponse($stockCountDetail->toArray(), trans('custom.stock_count_detail_updated_successfully'));
     }
 
     /**
@@ -371,12 +371,12 @@ class StockCountDetailAPIController extends AppBaseController
         $stockCountDetail = $this->stockCountDetailRepository->findWithoutFail($id);
 
         if (empty($stockCountDetail)) {
-            return $this->sendError('Stock Count Detail not found');
+            return $this->sendError(trans('custom.stock_count_detail_not_found'));
         }
 
         $stockCountDetail->delete();
 
-        return $this->sendResponse($id, 'Stock Count Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_count_detail_deleted_successfully'));
     }
 
      public function getItemsByStockCount(Request $request)
@@ -392,7 +392,7 @@ class StockCountDetailAPIController extends AppBaseController
                                 })
                                 ->get();
 
-        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.request_details_retrieved_successfully'));
     }
  
 
@@ -409,6 +409,6 @@ class StockCountDetailAPIController extends AppBaseController
                                 })
                                 ->delete();
 
-        return $this->sendResponse([], 'Item deleted successfully');
+        return $this->sendResponse([], trans('custom.item_deleted_successfully_1'));
     }
 }

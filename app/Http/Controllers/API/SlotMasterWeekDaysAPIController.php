@@ -65,7 +65,7 @@ class SlotMasterWeekDaysAPIController extends AppBaseController
         $this->slotMasterWeekDaysRepository->pushCriteria(new LimitOffsetCriteria($request));
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->all();
 
-        return $this->sendResponse($slotMasterWeekDays->toArray(), 'Slot Master Week Days retrieved successfully');
+        return $this->sendResponse($slotMasterWeekDays->toArray(), trans('custom.slot_master_week_days_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SlotMasterWeekDaysAPIController extends AppBaseController
 
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->create($input);
 
-        return $this->sendResponse($slotMasterWeekDays->toArray(), 'Slot Master Week Days saved successfully');
+        return $this->sendResponse($slotMasterWeekDays->toArray(), trans('custom.slot_master_week_days_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SlotMasterWeekDaysAPIController extends AppBaseController
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->findWithoutFail($id);
 
         if (empty($slotMasterWeekDays)) {
-            return $this->sendError('Slot Master Week Days not found');
+            return $this->sendError(trans('custom.slot_master_week_days_not_found'));
         }
 
-        return $this->sendResponse($slotMasterWeekDays->toArray(), 'Slot Master Week Days retrieved successfully');
+        return $this->sendResponse($slotMasterWeekDays->toArray(), trans('custom.slot_master_week_days_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SlotMasterWeekDaysAPIController extends AppBaseController
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->findWithoutFail($id);
 
         if (empty($slotMasterWeekDays)) {
-            return $this->sendError('Slot Master Week Days not found');
+            return $this->sendError(trans('custom.slot_master_week_days_not_found'));
         }
 
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->update($input, $id);
 
-        return $this->sendResponse($slotMasterWeekDays->toArray(), 'SlotMasterWeekDays updated successfully');
+        return $this->sendResponse($slotMasterWeekDays->toArray(), trans('custom.slotmasterweekdays_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SlotMasterWeekDaysAPIController extends AppBaseController
         $slotMasterWeekDays = $this->slotMasterWeekDaysRepository->findWithoutFail($id);
 
         if (empty($slotMasterWeekDays)) {
-            return $this->sendError('Slot Master Week Days not found');
+            return $this->sendError(trans('custom.slot_master_week_days_not_found'));
         }
 
         $slotMasterWeekDays->delete();

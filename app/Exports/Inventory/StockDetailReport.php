@@ -18,24 +18,24 @@ class StockDetailReport
 
     public function getHeader() {
         return [
-            'Item Code',
-            'Item Description',
-            'UOM',
-            'Part No / Ref.Number',
-            'Sub Category',
-            'Stock Qty',
-            'Total Value (USD)',
-            'Last Receipt Date',
-            'Last Receipt Qty',
-            'Last Issued Date',
-            'Last Issued Qty'
+            trans('custom.item_code'),
+            trans('custom.item_description'),
+            trans('custom.uom'),
+            trans('custom.part_no_ref_number'),
+            trans('custom.sub_category'),
+            trans('custom.stock_qty'),
+            trans('custom.total_value_usd'),
+            trans('custom.last_receipt_date'),
+            trans('custom.last_receipt_qty'),
+            trans('custom.last_issued_date'),
+            trans('custom.last_issued_qty')
         ];
     }
 
     /**
      * @param mixed $itemCode
      */
-    public function setItemCode($itemCode): void
+    public function setItemCode($itemCode)
     {
         $this->itemCode = $itemCode;
     }
@@ -43,7 +43,7 @@ class StockDetailReport
     /**
      * @param mixed $itemDescription
      */
-    public function setItemDescription($itemDescription): void
+    public function setItemDescription($itemDescription)
     {
         $this->itemDescription = $itemDescription;
     }
@@ -51,7 +51,7 @@ class StockDetailReport
     /**
      * @param mixed $uom
      */
-    public function setUom($uom): void
+    public function setUom($uom)
     {
         $this->uom = $uom;
     }
@@ -59,7 +59,7 @@ class StockDetailReport
     /**
      * @param mixed $partNumber
      */
-    public function setPartNumber($partNumber): void
+    public function setPartNumber($partNumber)
     {
         $this->partNumber = $partNumber;
     }
@@ -67,7 +67,7 @@ class StockDetailReport
     /**
      * @param mixed $subCategory
      */
-    public function setSubCategory($subCategory): void
+    public function setSubCategory($subCategory)
     {
         $this->subCategory = $subCategory;
     }
@@ -75,7 +75,7 @@ class StockDetailReport
     /**
      * @param mixed $stockQty
      */
-    public function setStockQty($stockQty): void
+    public function setStockQty($stockQty)
     {
         $this->stockQty = $stockQty;
     }
@@ -83,7 +83,7 @@ class StockDetailReport
     /**
      * @param mixed $totalValueUSD
      */
-    public function setTotalValueUSD($totalValueUSD): void
+    public function setTotalValueUSD($totalValueUSD)
     {
         $this->totalValueUSD = $totalValueUSD;
     }
@@ -91,7 +91,7 @@ class StockDetailReport
     /**
      * @param mixed $lastReceiptDate
      */
-    public function setLastReceiptDate($lastReceiptDate): void
+    public function setLastReceiptDate($lastReceiptDate)
     {
         $this->lastReceiptDate = $lastReceiptDate;
     }
@@ -99,7 +99,7 @@ class StockDetailReport
     /**
      * @param mixed $lastReceiptQty
      */
-    public function setLastReceiptQty($lastReceiptQty): void
+    public function setLastReceiptQty($lastReceiptQty)
     {
         $this->lastReceiptQty = $lastReceiptQty;
     }
@@ -107,7 +107,7 @@ class StockDetailReport
     /**
      * @param mixed $lastIssuedDate
      */
-    public function setLastIssuedDate($lastIssuedDate): void
+    public function setLastIssuedDate($lastIssuedDate)
     {
         $this->lastIssuedDate = $lastIssuedDate;
     }
@@ -115,7 +115,7 @@ class StockDetailReport
     /**
      * @param mixed $lastIssuedQty
      */
-    public function setLastIssuedQty($lastIssuedQty): void
+    public function setLastIssuedQty($lastIssuedQty)
     {
         $this->lastIssuedQty = $lastIssuedQty;
     }

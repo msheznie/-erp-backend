@@ -337,7 +337,7 @@ class AddonCostCategoriesAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 }

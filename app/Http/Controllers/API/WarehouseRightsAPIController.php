@@ -71,7 +71,7 @@ class WarehouseRightsAPIController extends AppBaseController
         $this->warehouseRightsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseRights = $this->warehouseRightsRepository->all();
 
-        return $this->sendResponse($warehouseRights->toArray(), 'Warehouse Rights retrieved successfully');
+        return $this->sendResponse($warehouseRights->toArray(), trans('custom.warehouse_rights_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class WarehouseRightsAPIController extends AppBaseController
                 $i++;
             }
         } else {
-            return $this->sendError('Segment required', 500);
+            return $this->sendError(trans('custom.segment_required'), 500);
         }
         $finalArr = [];
 
@@ -179,14 +179,14 @@ class WarehouseRightsAPIController extends AppBaseController
                 }
             }
         } else {
-            return $this->sendError('Employee required', 500);
+            return $this->sendError(trans('custom.employee_required'), 500);
         }
 
         if(!empty($finalArr)){
             $segmentRights = WarehouseRights::insert($finalArr);
-            return $this->sendResponse('', 'Warehouse rights created successfully');
+            return $this->sendResponse('', trans('custom.warehouse_rights_created_successfully'));
         }else{
-            return $this->sendError( 'Employee already exist',500);
+            return $this->sendError( trans('custom.employee_already_exist'),500);
         }
     }
 
@@ -234,10 +234,10 @@ class WarehouseRightsAPIController extends AppBaseController
         $warehouseRights = $this->warehouseRightsRepository->findWithoutFail($id);
 
         if (empty($warehouseRights)) {
-            return $this->sendError('Warehouse Rights not found');
+            return $this->sendError(trans('custom.warehouse_rights_not_found'));
         }
 
-        return $this->sendResponse($warehouseRights->toArray(), 'Warehouse Rights retrieved successfully');
+        return $this->sendResponse($warehouseRights->toArray(), trans('custom.warehouse_rights_retrieved_successfully'));
     }
 
     /**
@@ -294,12 +294,12 @@ class WarehouseRightsAPIController extends AppBaseController
         $warehouseRights = $this->warehouseRightsRepository->findWithoutFail($id);
 
         if (empty($warehouseRights)) {
-            return $this->sendError('Warehouse Rights not found');
+            return $this->sendError(trans('custom.warehouse_rights_not_found'));
         }
 
         $warehouseRights = $this->warehouseRightsRepository->update($input, $id);
 
-        return $this->sendResponse($warehouseRights->toArray(), 'WarehouseRights updated successfully');
+        return $this->sendResponse($warehouseRights->toArray(), trans('custom.warehouserights_updated_successfully'));
     }
 
     /**
@@ -346,12 +346,12 @@ class WarehouseRightsAPIController extends AppBaseController
         $warehouseRights = $this->warehouseRightsRepository->findWithoutFail($id);
 
         if (empty($warehouseRights)) {
-            return $this->sendError('Warehouse Rights not found');
+            return $this->sendError(trans('custom.warehouse_rights_not_found'));
         }
 
         $warehouseRights->delete();
 
-        return $this->sendResponse($id, 'Warehouse Rights deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_rights_deleted_successfully'));
     }
 
     public function getWarehouseRightEmployees(Request $request)

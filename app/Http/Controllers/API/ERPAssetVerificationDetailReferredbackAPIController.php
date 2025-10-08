@@ -66,7 +66,7 @@ class ERPAssetVerificationDetailReferredbackAPIController extends AppBaseControl
         $this->eRPAssetVerificationDetailReferredbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPAssetVerificationDetailReferredbacks = $this->eRPAssetVerificationDetailReferredbackRepository->all();
 
-        return $this->sendResponse($eRPAssetVerificationDetailReferredbacks->toArray(), 'E R P Asset Verification Detail Referredbacks retrieved successfully');
+        return $this->sendResponse($eRPAssetVerificationDetailReferredbacks->toArray(), trans('custom.e_r_p_asset_verification_detail_referredbacks_retr'));
     }
 
     /**
@@ -113,7 +113,7 @@ class ERPAssetVerificationDetailReferredbackAPIController extends AppBaseControl
 
         $eRPAssetVerificationDetailReferredback = $this->eRPAssetVerificationDetailReferredbackRepository->create($input);
 
-        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), 'E R P Asset Verification Detail Referredback saved successfully');
+        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), trans('custom.e_r_p_asset_verification_detail_referredback_saved'));
     }
 
     /**
@@ -160,10 +160,10 @@ class ERPAssetVerificationDetailReferredbackAPIController extends AppBaseControl
         $eRPAssetVerificationDetailReferredback = $this->eRPAssetVerificationDetailReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationDetailReferredback)) {
-            return $this->sendError('E R P Asset Verification Detail Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_detail_referredback_not_f'));
         }
 
-        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), 'E R P Asset Verification Detail Referredback retrieved successfully');
+        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), trans('custom.e_r_p_asset_verification_detail_referredback_retri'));
     }
 
     /**
@@ -220,12 +220,12 @@ class ERPAssetVerificationDetailReferredbackAPIController extends AppBaseControl
         $eRPAssetVerificationDetailReferredback = $this->eRPAssetVerificationDetailReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationDetailReferredback)) {
-            return $this->sendError('E R P Asset Verification Detail Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_detail_referredback_not_f'));
         }
 
         $eRPAssetVerificationDetailReferredback = $this->eRPAssetVerificationDetailReferredbackRepository->update($input, $id);
 
-        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), 'ERPAssetVerificationDetailReferredback updated successfully');
+        return $this->sendResponse($eRPAssetVerificationDetailReferredback->toArray(), trans('custom.erpassetverificationdetailreferredback_updated_suc'));
     }
 
     /**
@@ -272,7 +272,7 @@ class ERPAssetVerificationDetailReferredbackAPIController extends AppBaseControl
         $eRPAssetVerificationDetailReferredback = $this->eRPAssetVerificationDetailReferredbackRepository->findWithoutFail($id);
 
         if (empty($eRPAssetVerificationDetailReferredback)) {
-            return $this->sendError('E R P Asset Verification Detail Referredback not found');
+            return $this->sendError(trans('custom.e_r_p_asset_verification_detail_referredback_not_f'));
         }
 
         $eRPAssetVerificationDetailReferredback->delete();

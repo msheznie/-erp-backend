@@ -64,7 +64,7 @@ class FinanceItemCategoryTypesAPIController extends AppBaseController
         $this->financeItemCategoryTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->all();
 
-        return $this->sendResponse($financeItemCategoryTypes->toArray(), 'Finance Item Category Types retrieved successfully');
+        return $this->sendResponse($financeItemCategoryTypes->toArray(), trans('custom.finance_item_category_types_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class FinanceItemCategoryTypesAPIController extends AppBaseController
 
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->create($input);
 
-        return $this->sendResponse($financeItemCategoryTypes->toArray(), 'Finance Item Category Types saved successfully');
+        return $this->sendResponse($financeItemCategoryTypes->toArray(), trans('custom.finance_item_category_types_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class FinanceItemCategoryTypesAPIController extends AppBaseController
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryTypes)) {
-            return $this->sendError('Finance Item Category Types not found');
+            return $this->sendError(trans('custom.finance_item_category_types_not_found'));
         }
 
-        return $this->sendResponse($financeItemCategoryTypes->toArray(), 'Finance Item Category Types retrieved successfully');
+        return $this->sendResponse($financeItemCategoryTypes->toArray(), trans('custom.finance_item_category_types_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class FinanceItemCategoryTypesAPIController extends AppBaseController
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryTypes)) {
-            return $this->sendError('Finance Item Category Types not found');
+            return $this->sendError(trans('custom.finance_item_category_types_not_found'));
         }
 
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->update($input, $id);
 
-        return $this->sendResponse($financeItemCategoryTypes->toArray(), 'FinanceItemCategoryTypes updated successfully');
+        return $this->sendResponse($financeItemCategoryTypes->toArray(), trans('custom.financeitemcategorytypes_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class FinanceItemCategoryTypesAPIController extends AppBaseController
         $financeItemCategoryTypes = $this->financeItemCategoryTypesRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryTypes)) {
-            return $this->sendError('Finance Item Category Types not found');
+            return $this->sendError(trans('custom.finance_item_category_types_not_found'));
         }
 
         $financeItemCategoryTypes->delete();
