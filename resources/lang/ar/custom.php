@@ -9095,6 +9095,6 @@ return
     'unable_to_update_description_is_empty' => 'غير قادر على التحديث. الوصف فارغ',
     'disposal_code' => 'رمز التخلص',
     'asset_code' => 'رمز الأصل',
-    'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة'
-
+    'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة',
+    'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت'
   ];

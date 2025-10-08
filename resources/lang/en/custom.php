@@ -9198,5 +9198,6 @@ return
     'unable_to_update_description_is_empty' => 'Unable to update. Description is empty',
     'disposal_code' => 'Disposal Code',
     'asset_code' => 'Asset Code',
-    'are_you_sure_you_want_to_proceed' => 'Are you sure you want to proceed'
+    'are_you_sure_you_want_to_proceed' => 'Are you sure you want to proceed',
+    'quotation_so_report' => 'quotation_so_report'
   ];

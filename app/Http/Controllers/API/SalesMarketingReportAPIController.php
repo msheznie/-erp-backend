@@ -947,7 +947,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'company_code'=>$companyCode,
                 );
 
-                $fileName = 'quotation_so_report';
+                $fileName = trans('custom.quotation_so_report');
                 $path = 'sales/report/quotation_so_report/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
