@@ -5489,7 +5489,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+            return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
         $validator = \Validator::make($input, [
@@ -5497,7 +5497,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+            return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
         $supplierID = $request['supplierID'];
@@ -5748,16 +5748,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         // return $this->sendResponse(array(), trans('custom.successfully_export'));
 
-        $doc_name = 'purchase_order';
+        $doc_name = trans('custom.purchase_order');
         $doc_name_path = 'purchase_order/';
         if($input['documentId'] == 52)
         {
-            $doc_name = 'purchase_direct_order';
+            $doc_name = trans('custom.purchase_direct_order');
             $doc_name_path = 'purchase_direct_order/';
         }
         else if($input['documentId'] == 5)
         {
-            $doc_name = 'purchase_work_order';
+            $doc_name = trans('custom.purchase_work_order');
             $doc_name_path = 'purchase_work_order/';
         }
         $companyID = isset($input['companyId']) ? $input['companyId']: null;
