@@ -65,7 +65,7 @@ class ReportTemplateDocumentAPIController extends AppBaseController
         $this->reportTemplateDocumentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateDocuments = $this->reportTemplateDocumentRepository->all();
 
-        return $this->sendResponse($reportTemplateDocuments->toArray(), 'Report Template Documents retrieved successfully');
+        return $this->sendResponse($reportTemplateDocuments->toArray(), trans('custom.report_template_documents_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ReportTemplateDocumentAPIController extends AppBaseController
 
         $reportTemplateDocuments = $this->reportTemplateDocumentRepository->create($input);
 
-        return $this->sendResponse($reportTemplateDocuments->toArray(), 'Report Template Document saved successfully');
+        return $this->sendResponse($reportTemplateDocuments->toArray(), trans('custom.report_template_document_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ReportTemplateDocumentAPIController extends AppBaseController
         $reportTemplateDocument = $this->reportTemplateDocumentRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDocument)) {
-            return $this->sendError('Report Template Document not found');
+            return $this->sendError(trans('custom.report_template_document_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateDocument->toArray(), 'Report Template Document retrieved successfully');
+        return $this->sendResponse($reportTemplateDocument->toArray(), trans('custom.report_template_document_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ReportTemplateDocumentAPIController extends AppBaseController
         $reportTemplateDocument = $this->reportTemplateDocumentRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDocument)) {
-            return $this->sendError('Report Template Document not found');
+            return $this->sendError(trans('custom.report_template_document_not_found'));
         }
 
         $reportTemplateDocument = $this->reportTemplateDocumentRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateDocument->toArray(), 'ReportTemplateDocument updated successfully');
+        return $this->sendResponse($reportTemplateDocument->toArray(), trans('custom.reporttemplatedocument_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ReportTemplateDocumentAPIController extends AppBaseController
         $reportTemplateDocument = $this->reportTemplateDocumentRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDocument)) {
-            return $this->sendError('Report Template Document not found');
+            return $this->sendError(trans('custom.report_template_document_not_found'));
         }
 
         $reportTemplateDocument->delete();
 
-        return $this->sendResponse($id, 'Report Template Document deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_document_deleted_successfully'));
     }
 }

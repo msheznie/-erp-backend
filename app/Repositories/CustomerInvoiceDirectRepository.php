@@ -374,29 +374,28 @@ class CustomerInvoiceDirectRepository extends BaseRepository
     }
 
     public function setExportExcelData($dataSet) {
-
         $dataSet = $dataSet->get();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Invoice Code'] = $val->bookingInvCode;
-                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
-                $data[$x]['Invoice Type'] = StatusService::getCustomerInvoiceType($val->isPerforma);
-                $data[$x]['Customer'] = $val->CustomerName;
-                $data[$x]['Invoice'] = $val->customerInvoiceNo;
-                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->customerInvoiceDate);
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->empName;
-                $data[$x]['Transaction Currency'] = $val->CurrencyCode;
-                $data[$x]['Transaction Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
+                $data[$x][trans('custom.invoice_code')] = $val->bookingInvCode;
+                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.invoice_type')] = StatusService::getCustomerInvoiceType($val->isPerforma);
+                $data[$x][trans('custom.customer')] = $val->CustomerName;
+                $data[$x][trans('custom.invoice')] = $val->customerInvoiceNo;
+                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($val->customerInvoiceDate);
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.created_by')] = $val->empName;
+                $data[$x][trans('custom.transaction_currency')] = $val->CurrencyCode;
+                $data[$x][trans('custom.transaction_amount')] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
 
-                $data[$x]['Local Currency'] = $val->LocalCurrencyCode? $val->LocalCurrencyCode : '';
-                $data[$x]['Local Amount'] = $val->LocalCurrencyCode? number_format($val->bookingAmountLocal + $val->VATAmountLocal,  $val->LocalCurrencyDecimalPlaces, ".", "") : '';
-                $data[$x]['Reporting Currency'] = $val->ReportingCurrencyCode? $val->ReportingCurrencyCode : '';
-                $data[$x]['Reporting Amount'] = $val->ReportingCurrencyCode? number_format($val->bookingAmountRpt + $val->VATAmountRpt,  $val->ReportingCurrencyDecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_currency')] = $val->LocalCurrencyCode? $val->LocalCurrencyCode : '';
+                $data[$x][trans('custom.local_amount')] = $val->LocalCurrencyCode? number_format($val->bookingAmountLocal + $val->VATAmountLocal,  $val->LocalCurrencyDecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->ReportingCurrencyCode? $val->ReportingCurrencyCode : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->ReportingCurrencyCode? number_format($val->bookingAmountRpt + $val->VATAmountRpt,  $val->ReportingCurrencyDecimalPlaces, ".", "") : '';
                 
-                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

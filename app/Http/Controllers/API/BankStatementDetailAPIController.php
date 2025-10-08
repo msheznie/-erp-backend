@@ -64,7 +64,7 @@ class BankStatementDetailAPIController extends AppBaseController
         $this->bankStatementDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankStatementDetails = $this->bankStatementDetailRepository->all();
 
-        return $this->sendResponse($bankStatementDetails->toArray(), 'Bank Statement Details retrieved successfully');
+        return $this->sendResponse($bankStatementDetails->toArray(), trans('custom.bank_statement_details_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class BankStatementDetailAPIController extends AppBaseController
 
         $bankStatementDetail = $this->bankStatementDetailRepository->create($input);
 
-        return $this->sendResponse($bankStatementDetail->toArray(), 'Bank Statement Detail saved successfully');
+        return $this->sendResponse($bankStatementDetail->toArray(), trans('custom.bank_statement_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class BankStatementDetailAPIController extends AppBaseController
         $bankStatementDetail = $this->bankStatementDetailRepository->findWithoutFail($id);
 
         if (empty($bankStatementDetail)) {
-            return $this->sendError('Bank Statement Detail not found');
+            return $this->sendError(trans('custom.bank_statement_detail_not_found'));
         }
 
-        return $this->sendResponse($bankStatementDetail->toArray(), 'Bank Statement Detail retrieved successfully');
+        return $this->sendResponse($bankStatementDetail->toArray(), trans('custom.bank_statement_detail_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class BankStatementDetailAPIController extends AppBaseController
         $bankStatementDetail = $this->bankStatementDetailRepository->findWithoutFail($id);
 
         if (empty($bankStatementDetail)) {
-            return $this->sendError('Bank Statement Detail not found');
+            return $this->sendError(trans('custom.bank_statement_detail_not_found'));
         }
 
         $bankStatementDetail = $this->bankStatementDetailRepository->update($input, $id);
 
-        return $this->sendResponse($bankStatementDetail->toArray(), 'BankStatementDetail updated successfully');
+        return $this->sendResponse($bankStatementDetail->toArray(), trans('custom.bankstatementdetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class BankStatementDetailAPIController extends AppBaseController
         $bankStatementDetail = $this->bankStatementDetailRepository->findWithoutFail($id);
 
         if (empty($bankStatementDetail)) {
-            return $this->sendError('Bank Statement Detail not found');
+            return $this->sendError(trans('custom.bank_statement_detail_not_found'));
         }
 
         $bankStatementDetail->delete();
@@ -304,11 +304,11 @@ class BankStatementDetailAPIController extends AppBaseController
             'matchTypeId' => 'required'
         ]);
         if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+            return $this->sendError(trans('custom.validation_error'), $validator->errors());
         }
 
         $updateMatchType = $this->bankStatementDetailRepository->updateMatchType($input);
-        return $this->sendResponse($updateMatchType, 'Match type updated successfully');
+        return $this->sendResponse($updateMatchType, trans('custom.match_type_updated_successfully'));
     }
 
     public function updateManualMatch(Request $request)
@@ -321,7 +321,7 @@ class BankStatementDetailAPIController extends AppBaseController
             'bankStatementSelected' => 'required'
         ]);
         if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+            return $this->sendError(trans('custom.validation_error'), $validator->errors());
         }
 
         $matchId = $this->bankStatementDetailRepository->where('statementId', $input['statementId'])->where('matchType', 1)->count() + 1;
@@ -332,6 +332,6 @@ class BankStatementDetailAPIController extends AppBaseController
             'matchedId' => $matchId
         ];
         $updateMatchType = $this->bankStatementDetailRepository->update($matchedDetails, $input['bankStatementSelected']);
-        return $this->sendResponse($updateMatchType, 'Document matched successfully');
+        return $this->sendResponse($updateMatchType, trans('custom.document_matched_successfully'));
     }
 }

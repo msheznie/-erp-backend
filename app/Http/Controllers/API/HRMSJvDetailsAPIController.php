@@ -65,7 +65,7 @@ class HRMSJvDetailsAPIController extends AppBaseController
         $this->hRMSJvDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->all();
 
-        return $this->sendResponse($hRMSJvDetails->toArray(), 'H R M S Jv Details retrieved successfully');
+        return $this->sendResponse($hRMSJvDetails->toArray(), trans('custom.h_r_m_s_jv_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HRMSJvDetailsAPIController extends AppBaseController
 
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->create($input);
 
-        return $this->sendResponse($hRMSJvDetails->toArray(), 'H R M S Jv Details saved successfully');
+        return $this->sendResponse($hRMSJvDetails->toArray(), trans('custom.h_r_m_s_jv_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HRMSJvDetailsAPIController extends AppBaseController
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->findWithoutFail($id);
 
         if (empty($hRMSJvDetails)) {
-            return $this->sendError('H R M S Jv Details not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_details_not_found'));
         }
 
-        return $this->sendResponse($hRMSJvDetails->toArray(), 'H R M S Jv Details retrieved successfully');
+        return $this->sendResponse($hRMSJvDetails->toArray(), trans('custom.h_r_m_s_jv_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HRMSJvDetailsAPIController extends AppBaseController
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->findWithoutFail($id);
 
         if (empty($hRMSJvDetails)) {
-            return $this->sendError('H R M S Jv Details not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_details_not_found'));
         }
 
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSJvDetails->toArray(), 'HRMSJvDetails updated successfully');
+        return $this->sendResponse($hRMSJvDetails->toArray(), trans('custom.hrmsjvdetails_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class HRMSJvDetailsAPIController extends AppBaseController
         $hRMSJvDetails = $this->hRMSJvDetailsRepository->findWithoutFail($id);
 
         if (empty($hRMSJvDetails)) {
-            return $this->sendError('H R M S Jv Details not found');
+            return $this->sendError(trans('custom.h_r_m_s_jv_details_not_found'));
         }
 
         $hRMSJvDetails->delete();
 
-        return $this->sendResponse($id, 'H R M S Jv Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_jv_details_deleted_successfully'));
     }
 }

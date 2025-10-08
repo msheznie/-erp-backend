@@ -101,7 +101,8 @@ class TenantEnforce
             'api/v1/validateWorkbookCreation',
             'api/v1/rematchWorkBook',
             'api/v1/generateBankReconciliation',
-            'api/v1/updateBudgetPlanningStatus'
+            'api/v1/updateBudgetPlanningStatus',
+            'api/v1/departmentBudgetTemplates/assign-gl'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

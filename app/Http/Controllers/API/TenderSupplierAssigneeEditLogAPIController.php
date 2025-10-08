@@ -64,7 +64,7 @@ class TenderSupplierAssigneeEditLogAPIController extends AppBaseController
         $this->tenderSupplierAssigneeEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderSupplierAssigneeEditLogs = $this->tenderSupplierAssigneeEditLogRepository->all();
 
-        return $this->sendResponse($tenderSupplierAssigneeEditLogs->toArray(), 'Tender Supplier Assignee Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderSupplierAssigneeEditLogs->toArray(), trans('custom.tender_supplier_assignee_edit_logs_retrieved_succe'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderSupplierAssigneeEditLogAPIController extends AppBaseController
 
         $tenderSupplierAssigneeEditLog = $this->tenderSupplierAssigneeEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), 'Tender Supplier Assignee Edit Log saved successfully');
+        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), trans('custom.tender_supplier_assignee_edit_log_saved_successful'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderSupplierAssigneeEditLogAPIController extends AppBaseController
         $tenderSupplierAssigneeEditLog = $this->tenderSupplierAssigneeEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssigneeEditLog)) {
-            return $this->sendError('Tender Supplier Assignee Edit Log not found');
+            return $this->sendError(trans('custom.tender_supplier_assignee_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), 'Tender Supplier Assignee Edit Log retrieved successfully');
+        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), trans('custom.tender_supplier_assignee_edit_log_retrieved_succes'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderSupplierAssigneeEditLogAPIController extends AppBaseController
         $tenderSupplierAssigneeEditLog = $this->tenderSupplierAssigneeEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssigneeEditLog)) {
-            return $this->sendError('Tender Supplier Assignee Edit Log not found');
+            return $this->sendError(trans('custom.tender_supplier_assignee_edit_log_not_found'));
         }
 
         $tenderSupplierAssigneeEditLog = $this->tenderSupplierAssigneeEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), 'TenderSupplierAssigneeEditLog updated successfully');
+        return $this->sendResponse($tenderSupplierAssigneeEditLog->toArray(), trans('custom.tendersupplierassigneeeditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderSupplierAssigneeEditLogAPIController extends AppBaseController
         $tenderSupplierAssigneeEditLog = $this->tenderSupplierAssigneeEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderSupplierAssigneeEditLog)) {
-            return $this->sendError('Tender Supplier Assignee Edit Log not found');
+            return $this->sendError(trans('custom.tender_supplier_assignee_edit_log_not_found'));
         }
 
         $tenderSupplierAssigneeEditLog->delete();

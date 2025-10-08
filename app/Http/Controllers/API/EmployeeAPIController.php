@@ -80,7 +80,7 @@ class EmployeeAPIController extends AppBaseController
         $this->employeeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employees = $this->employeeRepository->all();
 
-        return $this->sendResponse($employees->toArray(), 'Employees retrieved successfully');
+        return $this->sendResponse($employees->toArray(), trans('custom.employees_retrieved_successfully'));
     }
 
     /**
@@ -97,7 +97,7 @@ class EmployeeAPIController extends AppBaseController
 
         $employees = $this->employeeRepository->create($input);
 
-        return $this->sendResponse($employees->toArray(), 'Employee saved successfully');
+        return $this->sendResponse($employees->toArray(), trans('custom.employee_saved_successfully'));
     }
 
     /**
@@ -114,10 +114,10 @@ class EmployeeAPIController extends AppBaseController
         $employee = $this->employeeRepository->findWithoutFail($id);
 
         if (empty($employee)) {
-            return $this->sendError('Employee not found');
+            return $this->sendError(trans('custom.employee_not_found'));
         }
 
-        return $this->sendResponse($employee->toArray(), 'Employee retrieved successfully');
+        return $this->sendResponse($employee->toArray(), trans('custom.employee_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class EmployeeAPIController extends AppBaseController
         $employee = $this->employeeRepository->findWithoutFail($id);
 
         if (empty($employee)) {
-            return $this->sendError('Employee not found');
+            return $this->sendError(trans('custom.employee_not_found'));
         }
         if (isset($input['isBasicUser']) && $input['isBasicUser']) {
             $input['isBasicUser'] = -1;
@@ -167,7 +167,7 @@ class EmployeeAPIController extends AppBaseController
         if (isset($input['empUserName']) && $input['empUserName']) {
             $employeeCheck = Employee::where('empUserName',$input['empUserName'])->where('employeeSystemID','!=',$id)->first();
             if (!is_null($employeeCheck)) {
-                return $this->sendError('Employee user name already exists.');
+                return $this->sendError(trans('custom.employee_user_name_already_exists'));
             } else {
                 $validator = \Validator::make($input, [
                                     'empUserName' => 'required|email|max:255',
@@ -191,7 +191,7 @@ class EmployeeAPIController extends AppBaseController
 
         $employee = $this->employeeRepository->update($input, $id);
 
-        return $this->sendResponse($employee->toArray(), 'Employee updated successfully');
+        return $this->sendResponse($employee->toArray(), trans('custom.employee_updated_successfully'));
     }
 
     /**
@@ -208,12 +208,12 @@ class EmployeeAPIController extends AppBaseController
         $employee = $this->employeeRepository->findWithoutFail($id);
 
         if (empty($employee)) {
-            return $this->sendError('Employee not found');
+            return $this->sendError(trans('custom.employee_not_found'));
         }
 
         $employee->delete();
 
-        return $this->sendResponse($id, 'Employee deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_deleted_successfully'));
     }
 
     public function getAllEmployees(Request $request){
@@ -259,7 +259,7 @@ class EmployeeAPIController extends AppBaseController
         }
         
 
-        return $this->sendResponse($output->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($output->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -290,7 +290,7 @@ class EmployeeAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($employees->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getAllNotDishachargeEmployeesDropdown(Request $request) {
@@ -317,7 +317,7 @@ class EmployeeAPIController extends AppBaseController
             array_push($data,["employeeSystemID"  => $emp->employeeSystemID, "empName" => $emp->empID." | ".$emp->empFullName]);
         }
 
-        return $this->sendResponse($data, 'Data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
     }
 
     public function getEmployeeMasterView(Request $request)
@@ -468,7 +468,7 @@ class EmployeeAPIController extends AppBaseController
 
         $employeeMasterData = Employee::find($employeeSystemID);
         if (empty($employeeMasterData)) {
-            return $this->sendError('Employee not found');
+            return $this->sendError(trans('custom.employee_not_found'));
         }
 
         // updating fields
@@ -511,7 +511,7 @@ class EmployeeAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');
+        return $this->sendResponse($employeeMasterData->toArray(), trans('custom.employee_password_reset_successfully'));
     }
 
     public static function quickRandom($length = 9)
@@ -542,7 +542,7 @@ class EmployeeAPIController extends AppBaseController
 
         $output = array('companies' => $companies, 'yesNoSelection' => $yesNoSelection, 'yesNoSelectionForMinus' => $yesNoSelectionForMinus);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getProfileDetails()
@@ -589,9 +589,9 @@ class EmployeeAPIController extends AppBaseController
                 'resident_card'=>$resident_card,
                 'department'=>$department,
             ];
-            return $this->sendResponse($output, 'Employee profile details retrieved successfully');
+            return $this->sendResponse($output, trans('custom.employee_profile_details_retrieved_successfully'));
         }else{
-            return $this->sendError('Employee profile details not found');
+            return $this->sendError(trans('custom.employee_profile_details_not_found'));
         }
     }
 
@@ -660,7 +660,7 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
         $finalArray = array();
 
         array_push($finalArray,$output);
-        return $this->sendResponse($finalArray, 'User Count details retrieved successfully');
+        return $this->sendResponse($finalArray, trans('custom.user_count_details_retrieved_successfully'));
     }
 
     public function employeeDocumentStatus(Request $request)
@@ -668,7 +668,7 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
         $input = $request->all();
 
         if(!isset($input['empID'])){
-            return $this->sendError('Employee ID is required');
+            return $this->sendError(trans('custom.employee_id_is_required'));
         }
         
         $empID = $input['empID'];
@@ -678,7 +678,7 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
                             ->first();
 
         if(!$employee){
-            return $this->sendError('Employee not found');
+            return $this->sendError(trans('custom.employee_not_found'));
         }
         $documentDetails = [];
 
@@ -1046,7 +1046,7 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
 
 
 
-        return $this->sendResponse($output, 'Employee document status retrieved successfully');
+        return $this->sendResponse($output, trans('custom.employee_document_status_retrieved_successfully'));
 
     }
 

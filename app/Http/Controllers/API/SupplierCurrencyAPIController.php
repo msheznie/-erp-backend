@@ -50,7 +50,7 @@ class SupplierCurrencyAPIController extends AppBaseController
         $this->supplierCurrencyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCurrencies = $this->supplierCurrencyRepository->all();
 
-        return $this->sendResponse($supplierCurrencies->toArray(), 'Supplier Currencies retrieved successfully');
+        return $this->sendResponse($supplierCurrencies->toArray(), trans('custom.supplier_currencies_retrieved_successfully'));
     }
 
     /**
@@ -67,7 +67,7 @@ class SupplierCurrencyAPIController extends AppBaseController
 
         $supplierCurrencies = $this->supplierCurrencyRepository->create($input);
 
-        return $this->sendResponse($supplierCurrencies->toArray(), 'Supplier Currency saved successfully');
+        return $this->sendResponse($supplierCurrencies->toArray(), trans('custom.supplier_currency_saved_successfully'));
     }
 
     /**
@@ -84,10 +84,10 @@ class SupplierCurrencyAPIController extends AppBaseController
         $supplierCurrency = $this->supplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($supplierCurrency)) {
-            return $this->sendError('Supplier Currency not found');
+            return $this->sendError(trans('custom.supplier_currency_not_found'));
         }
 
-        return $this->sendResponse($supplierCurrency->toArray(), 'Supplier Currency retrieved successfully');
+        return $this->sendResponse($supplierCurrency->toArray(), trans('custom.supplier_currency_retrieved_successfully'));
     }
 
     /**
@@ -107,12 +107,12 @@ class SupplierCurrencyAPIController extends AppBaseController
         $supplierCurrency = $this->supplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($supplierCurrency)) {
-            return $this->sendError('Supplier Currency not found');
+            return $this->sendError(trans('custom.supplier_currency_not_found'));
         }
 
         $supplierCurrency = $this->supplierCurrencyRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCurrency->toArray(), 'SupplierCurrency updated successfully');
+        return $this->sendResponse($supplierCurrency->toArray(), trans('custom.suppliercurrency_updated_successfully'));
     }
 
     /**
@@ -129,12 +129,12 @@ class SupplierCurrencyAPIController extends AppBaseController
         $supplierCurrency = $this->supplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($supplierCurrency)) {
-            return $this->sendError('Supplier Currency not found');
+            return $this->sendError(trans('custom.supplier_currency_not_found'));
         }
 
         $supplierCurrency->delete();
 
-        return $this->sendResponse($id, 'Supplier Currency deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_currency_deleted_successfully'));
     }
 
     public function getCurrencyDetails(Request $request)
@@ -146,6 +146,6 @@ class SupplierCurrencyAPIController extends AppBaseController
             'reportingCurrency' => isset($input['reportingCurrencyID']) ? CurrencyMaster::find($input['reportingCurrencyID']) : null
         ];
 
-        return $this->sendResponse($resData, 'Currency details retrieved successfully');
+        return $this->sendResponse($resData, trans('custom.currency_details_retrieved_successfully'));
     }
 }

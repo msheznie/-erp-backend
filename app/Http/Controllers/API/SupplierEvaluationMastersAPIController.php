@@ -66,7 +66,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
         $this->supplierEvaluationMastersRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->all();
 
-        return $this->sendResponse($supplierEvaluationMasters->toArray(), 'Supplier Evaluation Masters retrieved successfully');
+        return $this->sendResponse($supplierEvaluationMasters->toArray(), trans('custom.supplier_evaluation_masters_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
         $input['created_by'] = $currentUserID;
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationMasters->toArray(), 'Supplier Evaluation Masters saved successfully');
+        return $this->sendResponse($supplierEvaluationMasters->toArray(), trans('custom.supplier_evaluation_masters_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasters)) {
-            return $this->sendError('Supplier Evaluation Masters not found');
+            return $this->sendError(trans('custom.supplier_evaluation_masters_not_found'));
         }
 
-        return $this->sendResponse($supplierEvaluationMasters->toArray(), 'Supplier Evaluation Masters retrieved successfully');
+        return $this->sendResponse($supplierEvaluationMasters->toArray(), trans('custom.supplier_evaluation_masters_retrieved_successfully'));
     }
 
     public function getAllSupplierEvaluationMasters(Request $request)
@@ -277,7 +277,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasters)) {
-            return $this->sendError('Supplier Evaluation Masters not found');
+            return $this->sendError(trans('custom.supplier_evaluation_masters_not_found'));
         }
 
         $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
@@ -287,7 +287,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
 
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->update($input, $id);
 
-        return $this->sendResponse($supplierEvaluationMasters->toArray(), 'Supplier Evaluation Masters updated successfully');
+        return $this->sendResponse($supplierEvaluationMasters->toArray(), trans('custom.supplier_evaluation_masters_updated_successfully'));
     }
 
     /**
@@ -335,7 +335,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationMasters)) {
-            return $this->sendError('Supplier Evaluation Masters not found');
+            return $this->sendError(trans('custom.supplier_evaluation_masters_not_found'));
         }
 
         $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
@@ -345,6 +345,6 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
 
         $supplierEvaluationMasters->delete();
 
-        return $this->sendResponse($id,'Supplier Evaluation Masters deleted successfully');
+        return $this->sendResponse($id,trans('custom.supplier_evaluation_masters_deleted_successfully'));
     }
 }

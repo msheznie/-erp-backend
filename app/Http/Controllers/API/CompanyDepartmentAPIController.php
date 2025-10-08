@@ -115,7 +115,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $this->companyDepartmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyDepartments = $this->companyDepartmentRepository->all();
 
-        return $this->sendResponse($companyDepartments->toArray(), 'Company Departments retrieved successfully');
+        return $this->sendResponse($companyDepartments->toArray(), trans('custom.company_departments_retrieved_successfully'));
     }
 
     /**
@@ -207,13 +207,13 @@ class CompanyDepartmentAPIController extends AppBaseController
                                                ->first();
         
         if ($existingDepartment) {
-            return $this->sendAPIError('The department code must be unique, and this code is already being used by another department', 422);
+            return $this->sendAPIError(trans('custom.department_code_must_be_unique'), 422);
         }
 
         // Check if trying to set as finance department when one already exists
         if (isset($createData['isFinance']) && $createData['isFinance'] == 1) {
             if ($this->companyDepartmentRepository->hasFinanceDepartment($createData['companySystemID'])) {
-                return $this->sendAPIError('The finance department already created', 422);
+                return $this->sendAPIError(trans('custom.finance_department_already_created'), 422);
             }
         }
 
@@ -228,7 +228,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $companyDepartment->departmentSystemID, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been created", "C", $companyDepartment->toArray(), []);
 
-        return $this->sendResponse($companyDepartment->toArray(), 'Company Department saved successfully');
+        return $this->sendResponse($companyDepartment->toArray(), trans('custom.company_department_saved_successfully'));
     }
 
     /**
@@ -244,12 +244,12 @@ class CompanyDepartmentAPIController extends AppBaseController
         $companyDepartment = $this->companyDepartmentRepository->findWithoutFail($id);
 
         if (empty($companyDepartment)) {
-            return $this->sendError('Company Department not found');
+            return $this->sendError(trans('custom.company_department_not_found'));
         }
 
         $companyDepartment->load(['company', 'parent', 'children', 'created_by', 'modified_by']);
 
-        return $this->sendResponse($companyDepartment->toArray(), 'Company Department retrieved successfully');
+        return $this->sendResponse($companyDepartment->toArray(), trans('custom.company_department_retrieved_successfully'));
     }
 
     /**
@@ -266,7 +266,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $companyDepartment = $this->companyDepartmentRepository->findWithoutFail($id);
 
         if (empty($companyDepartment)) {
-            return $this->sendError('Company Department not found');
+            return $this->sendError(trans('custom.company_department_not_found'));
         }
 
         $input = $request->all();
@@ -278,20 +278,20 @@ class CompanyDepartmentAPIController extends AppBaseController
         // Check if trying to change parent to final when has children
         if (isset($updateData['type']) && $updateData['type'] == 2 && $companyDepartment->type == 1) {
             if ($this->companyDepartmentRepository->hasChildren($id)) {
-                return $this->sendAPIError('Already child department created by using this department', 422);
+                return $this->sendAPIError(trans('custom.child_department_already_created'), 422);
             }
         }
 
         // Check if trying to set as finance department when one already exists
         if (isset($updateData['isFinance']) && $updateData['isFinance'] == 1 && $companyDepartment->isFinance != 1) {
             if ($this->companyDepartmentRepository->hasFinanceDepartment($updateData['companySystemID'], $id)) {
-                return $this->sendAPIError('The finance department already created', 422);
+                return $this->sendAPIError(trans('custom.finance_department_already_created'), 422);
             }
         }
 
         // same department cannot be set as parent department
         if (isset($updateData['parentDepartmentID']) && $updateData['parentDepartmentID'] == $id) {
-            return $this->sendAPIError('The department cannot be set as parent department', 422);
+            return $this->sendAPIError(trans('custom.department_cannot_be_parent'), 422);
         }
 
         // Check if department code is unique
@@ -301,7 +301,7 @@ class CompanyDepartmentAPIController extends AppBaseController
                                                ->first();
         
         if ($existingDepartment) {  
-            return $this->sendAPIError('The department code must be unique, and this code is already being used by another department', 422);
+            return $this->sendAPIError(trans('custom.department_code_must_be_unique'), 422);
         }
 
         $updateData['modifiedUserSystemID'] = Auth::id();
@@ -313,7 +313,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been updated", "U", $companyDepartment->toArray(), $oldValues);
 
-        return $this->sendResponse($companyDepartment->toArray(), 'CompanyDepartment updated successfully');
+        return $this->sendResponse($companyDepartment->toArray(), trans('custom.company_department_updated_successfully'));
     }
 
     /**
@@ -329,7 +329,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $companyDepartment = $this->companyDepartmentRepository->findWithoutFail($id);
 
         if (empty($companyDepartment)) {
-            return $this->sendError('Company Department not found');
+            return $this->sendError(trans('custom.company_department_not_found'));
         }
 
         // Check if department has employees assigned
@@ -340,7 +340,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         return $this->sendResponse([
             'hasEmployees' => $hasEmployees,
             'employeeCount' => $employeeCount
-        ], 'Finance team employees check completed');
+        ], trans('custom.finance_team_employees_check_completed'));
     }
 
     /**
@@ -356,32 +356,32 @@ class CompanyDepartmentAPIController extends AppBaseController
         $companyDepartment = $this->companyDepartmentRepository->findWithoutFail($id);
 
         if (empty($companyDepartment)) {
-            return $this->sendError('Company Department not found');
+            return $this->sendError(trans('custom.company_department_not_found'));
         }
 
         $previousValue = $companyDepartment->toArray();
 
         // Check if department has children
         if ($this->companyDepartmentRepository->hasChildren($id)) {
-            return $this->sendAPIError('Cannot delete department that has child departments', 422);
+            return $this->sendAPIError(trans('custom.cannot_delete_department_with_children'), 422);
         }
 
         // Check if department has employees assigned
         $employeeCount = \App\Models\CompanyDepartmentEmployee::where('departmentSystemID', $id)->count();
         if ($employeeCount > 0) {
-            return $this->sendAPIError('Cannot delete department that has employees assigned. Please remove employees first.', 422);
+            return $this->sendAPIError(trans('custom.cannot_delete_department_with_employees'), 422);
         }
 
         // Check if department has segments assigned
         $segmentCount = \App\Models\CompanyDepartmentSegment::where('departmentSystemID', $id)->count();
         if ($segmentCount > 0) {
-            return $this->sendAPIError('Cannot delete department that has segments assigned. Please remove segments first.', 422);
+            return $this->sendAPIError(trans('custom.cannot_delete_department_with_segments'), 422);
         }
 
         // Check if department has budget templates assigned
         $budgetTemplateCount = \App\Models\DepartmentBudgetTemplate::where('departmentSystemID', $id)->count();
         if ($budgetTemplateCount > 0) {
-            return $this->sendAPIError('Cannot delete department that has budget templates assigned. Please remove budget templates first.', 422);
+            return $this->sendAPIError(trans('custom.cannot_delete_department_with_budget_templates'), 422);
         }
 
         // Delete the department
@@ -392,7 +392,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been deleted", "D", [], $previousValue);
 
-        return $this->sendResponse($id, 'Company Department deleted successfully');
+        return $this->sendResponse($id, trans('custom.company_department_deleted_successfully'));
     }
 
     /**
@@ -424,8 +424,8 @@ class CompanyDepartmentAPIController extends AppBaseController
         $data = [
             'yesNoSelection' => YesNoSelection::all(),
             'typeSelection' => [
-                ['value' => 1, 'label' => 'Parent'],
-                ['value' => 2, 'label' => 'Final']
+                ['value' => 1, 'label' => trans('custom.parent')],
+                ['value' => 2, 'label' => trans('custom.final')]
             ],
             'company' => $company,
             'department' => $department,
@@ -433,7 +433,7 @@ class CompanyDepartmentAPIController extends AppBaseController
             'hods' => $hods
         ];
 
-        return $this->sendResponse($data, 'Form data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.form_data_retrieved_successfully'));
     }
 
 
@@ -459,10 +459,10 @@ class CompanyDepartmentAPIController extends AppBaseController
                             ->find($companyId);
 
         if (empty($orgStructure)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
-        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Department structure retrieved successfully');
+        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], trans('custom.department_structure_retrieved_successfully'));
     }
 
     /**
@@ -530,13 +530,13 @@ class CompanyDepartmentAPIController extends AppBaseController
         $x = 0;
         foreach ($departments as $val) {
             $x++;
-            $data[$x]['Department Code'] = $val->departmentCode;
-            $data[$x]['Department Description'] = $val->departmentDescription;
+            $data[$x][trans('custom.department_code')] = $val->departmentCode;
+            $data[$x][trans('custom.department_description')] = $val->departmentDescription;
             // $data[$x]['Type'] = ($val->type == 1) ? 'Parent' : 'Final';
-            $data[$x]['Parent Department'] = !is_null($val->parentDepartmentID) ? ($val->parent ? $val->parent->departmentDescription : '-') : $val->company->CompanyName;
+            $data[$x][trans('custom.parent_department')] = !is_null($val->parentDepartmentID) ? ($val->parent ? $val->parent->departmentDescription : '-') : $val->company->CompanyName;
             // $data[$x]['Is Finance'] = ($val->isFinance == 1) ? 'Yes' : 'No';
-            $data[$x]['HOD'] = $val->hod ? $val->hod->employee->empName : '-';
-            $data[$x]['Active Status'] = ($val->isActive == 1) ? 'Yes' : 'No';  
+            $data[$x][trans('custom.hod')] = $val->hod ? $val->hod->employee->empName : '-';
+            $data[$x][trans('custom.active_status')] = ($val->isActive == 1) ? trans('custom.yes') : trans('custom.no');
             // $data[$x]['Company'] = $val->company ? $val->company->companyName : '';
             // $data[$x]['Created Date'] = $val->created_at ? $val->created_at->format('d/m/Y') : '';
         }
@@ -553,7 +553,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
         if ($basePath == '') {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         } else {
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }

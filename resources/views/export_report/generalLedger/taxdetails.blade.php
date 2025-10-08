@@ -5,140 +5,140 @@
         <tr></tr>
         <tr>
             <td colspan="2"></td>
-            <td><h1>Tax Details Report</h1></td>
+            <td><h1>{{ __('custom.tax_details_report') }}</h1></td>
         </tr>
         <tr></tr>
         <tr style="font-weight: bold">
-            <td>Start Date : {{ $fromDate }} </td>
-            <td>End Date :  {{ $toDate }}</td>
+            <td>{{ __('custom.start_date') }} : {{ $fromDate }} </td>
+            <td>{{ __('custom.end_date') }} :  {{ $toDate }}</td>
         </tr>
         <tr></tr>
         <tr>
             @if(in_array(1, $selectedColumns))
-                <th>Company ID</th>
+                <th>{{ __('custom.company_id') }}</th>
             @endif
 
             @if(in_array(2, $selectedColumns))
-                <th>Document Code</th>
+                <th>{{ __('custom.document_code') }}</th>
             @endif
 
             @if(in_array(3, $selectedColumns))
-                <th>Document Date</th>
+                <th>{{ __('custom.document_date') }}</th>
             @endif
 
             @if(in_array(34, $selectedColumns))
-                <th>Document Type</th>
+                <th>{{ __('custom.document_type') }}</th>
             @endif
 
             @if(in_array(15, $selectedColumns))
-                <th>Reverse Charge Mechanism</th>
+                <th>{{ __('custom.reverse_charge_mechanism') }}</th>
             @endif
 
             @if(in_array(4, $selectedColumns))
-                <th>Invoice No</th>
+                <th>{{ __('custom.invoice_no') }}</th>
             @endif
 
             @if(in_array(5, $selectedColumns))
-                <th>Invoice Date</th>
+                <th>{{ __('custom.invoice_date') }}</th>
             @endif
 
             @if(in_array(11, $selectedColumns))
-                <th>Posted Date</th>
+                <th>{{ __('custom.posted_date') }}</th>
             @endif
 
             @if(in_array(6, $selectedColumns))
-                <th>Narration</th>
+                <th>{{ __('custom.narration') }}</th>
             @endif
 
             @if(in_array(7, $selectedColumns))
-                <th>Supplier Code</th>
+                <th>{{ __('custom.supplier_code') }}</th>
             @endif
 
             @if(in_array(8, $selectedColumns))
-                <th>Supplier Name</th>
+                <th>{{ __('custom.supplier_name') }}</th>
             @endif
 
             @if(in_array(33, $selectedColumns))
-                <th>Party Code</th>
+                <th>{{ __('custom.party_code') }}</th>
             @endif
 
             @if(in_array(32, $selectedColumns))
-                <th>Party Name</th>
+                <th>{{ __('custom.party_name') }}</th>
             @endif
 
             @if(in_array(12, $selectedColumns))
-                <th>Customer Code</th>
+                <th>{{ __('custom.customer_code') }}</th>
             @endif
 
             @if(in_array(13, $selectedColumns))
-                <th>Customer Short Code</th>
+                <th>{{ __('custom.customer_short_code') }}</th>
             @endif
 
             @if(in_array(14, $selectedColumns))
-                <th>Customer Name</th>
+                <th>{{ __('custom.customer_name') }}</th>
             @endif
 
             @if(in_array(16, $selectedColumns))
-                <th>VAT IN</th>
+                <th>{{ __('custom.vat_in') }}</th>
             @endif
 
             @if(in_array(17, $selectedColumns))
-                <th>Country</th>
+                <th>{{ __('custom.country') }}</th>
             @endif
 
             @if(in_array(26, $selectedColumns))
-                <th>Freezone</th>
+                <th>{{ __('custom.freezone') }}</th>
             @endif
 
             @if(in_array(28, $selectedColumns))
-                <th>Transaction</th>
+                <th>{{ __('custom.transaction') }}</th>
             @endif
 
             @if(in_array(27, $selectedColumns))
-                <th>Goods or Services</th>
+                <th>{{ __('custom.goods_or_services') }}</th>
             @endif
 
             @if(in_array(9, $selectedColumns))
-                <th>Currency</th>
+                <th>{{ __('custom.currency') }}</th>
             @endif
 
             @if(in_array(29, $selectedColumns))
-                <th>VAT Type</th>
+                <th>{{ __('custom.vat_type') }}</th>
             @endif
 
             @if(in_array(21, $selectedColumns))
-                <th>Line Item No</th>
+                <th>{{ __('custom.line_item_no') }}</th>
             @endif
 
             @if(in_array(23, $selectedColumns))
-                <th>VAT Category</th>
+                <th>{{ __('custom.vat_category') }}</th>
             @endif
 
             @if(in_array(30, $selectedColumns))
-                <th>VAT %</th>
+                <th>{{ __('custom.vat_percentage') }}</th>
             @endif
 
-            <th>Value</th>
-            <th>Discount</th>
-            <th>Net Value</th>
-            <th>VAT</th>
+            <th>{{ __('custom.value') }}</th>
+            <th>{{ __('custom.discount') }}</th>
+            <th>{{ __('custom.net_value') }}</th>
+            <th>{{ __('custom.vat') }}</th>
 
             @if(in_array(24, $selectedColumns))
-                <th>Exempt VAT Portion</th>
+                <th>{{ __('custom.exempt_vat_portion') }}</th>
             @endif
 
             @if(in_array(31, $selectedColumns))
-                <th>Retention Amount</th>
+                <th>{{ __('custom.retention_amount') }}</th>
             @endif
 
-            <th>Due Amount</th>
+            <th>{{ __('custom.due_amount') }}</th>
 
             @if(in_array(20, $selectedColumns))
-                <th>Amount In Reporting Currency ({{$reporingCurrencyCode}})</th>
+                <th>{{ __('custom.amount_in_reporting_currency') }} ({{$reporingCurrencyCode}})</th>
             @endif
 
             @if(in_array(19, $selectedColumns))
-                <th>Exchange Rate</th>
+                <th>{{ __('custom.exchange_rate') }}</th>
             @endif
 
 
@@ -152,7 +152,7 @@
                 @if(in_array(3, $selectedColumns)) <td>{{ $data->DocumentDate }}</td> @endif
                 @if(in_array(34, $selectedColumns)) <td>{{ $data->documentType }}</td> @endif
                 @if(in_array(15, $selectedColumns))
-                    <td>{{ (isset($data->rcmActivated) && $data->rcmActivated == 1) ? 'Yes' : 'No' }}</td>
+                    <td>{{ (isset($data->rcmActivated) && $data->rcmActivated == 1) ? __('custom.yes') : __('custom.no') }}</td>
                 @endif
                 @if(in_array(4, $selectedColumns)) <td>{{ $data->invoiceNo }}</td> @endif
                 @if(in_array(5, $selectedColumns)) <td>{{ $data->invoiceDate }}</td> @endif

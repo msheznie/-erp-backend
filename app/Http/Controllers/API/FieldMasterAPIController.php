@@ -65,7 +65,7 @@ class FieldMasterAPIController extends AppBaseController
         $this->fieldMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fieldMasters = $this->fieldMasterRepository->all();
 
-        return $this->sendResponse($fieldMasters->toArray(), 'Field Masters retrieved successfully');
+        return $this->sendResponse($fieldMasters->toArray(), trans('custom.field_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class FieldMasterAPIController extends AppBaseController
 
         $fieldMasters = $this->fieldMasterRepository->create($input);
 
-        return $this->sendResponse($fieldMasters->toArray(), 'Field Master saved successfully');
+        return $this->sendResponse($fieldMasters->toArray(), trans('custom.field_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class FieldMasterAPIController extends AppBaseController
         $fieldMaster = $this->fieldMasterRepository->findWithoutFail($id);
 
         if (empty($fieldMaster)) {
-            return $this->sendError('Field Master not found');
+            return $this->sendError(trans('custom.field_master_not_found'));
         }
 
-        return $this->sendResponse($fieldMaster->toArray(), 'Field Master retrieved successfully');
+        return $this->sendResponse($fieldMaster->toArray(), trans('custom.field_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class FieldMasterAPIController extends AppBaseController
         $fieldMaster = $this->fieldMasterRepository->findWithoutFail($id);
 
         if (empty($fieldMaster)) {
-            return $this->sendError('Field Master not found');
+            return $this->sendError(trans('custom.field_master_not_found'));
         }
 
         $fieldMaster = $this->fieldMasterRepository->update($input, $id);
 
-        return $this->sendResponse($fieldMaster->toArray(), 'FieldMaster updated successfully');
+        return $this->sendResponse($fieldMaster->toArray(), trans('custom.fieldmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class FieldMasterAPIController extends AppBaseController
         $fieldMaster = $this->fieldMasterRepository->findWithoutFail($id);
 
         if (empty($fieldMaster)) {
-            return $this->sendError('Field Master not found');
+            return $this->sendError(trans('custom.field_master_not_found'));
         }
 
         $fieldMaster->delete();
 
-        return $this->sendResponse($id, 'Field Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.field_master_deleted_successfully'));
     }
 }

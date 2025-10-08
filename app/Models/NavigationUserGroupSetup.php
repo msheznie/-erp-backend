@@ -45,6 +45,8 @@ class NavigationUserGroupSetup extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $appends = ['pageTitle'];
+
 
     public $fillable = [
         'userGroupID',
@@ -112,6 +114,31 @@ class NavigationUserGroupSetup extends Model
 
     }
 
+    public function translations()
+    {
+        return $this->hasMany(NavigationMenusLanguages::class, 'navigationMenuID', 'navigationMenuID');
+    }
 
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getPageTitleAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+
+        return  $this->attributes['pageTitle'] ?? '';
+    }
 
 }

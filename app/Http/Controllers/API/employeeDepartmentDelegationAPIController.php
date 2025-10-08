@@ -65,7 +65,7 @@ class employeeDepartmentDelegationAPIController extends AppBaseController
         $this->employeeDepartmentDelegationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeDepartmentDelegations = $this->employeeDepartmentDelegationRepository->all();
 
-        return $this->sendResponse($employeeDepartmentDelegations->toArray(), 'Employee Department Delegations retrieved successfully');
+        return $this->sendResponse($employeeDepartmentDelegations->toArray(), trans('custom.employee_department_delegations_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class employeeDepartmentDelegationAPIController extends AppBaseController
 
         $employeeDepartmentDelegation = $this->employeeDepartmentDelegationRepository->create($input);
 
-        return $this->sendResponse($employeeDepartmentDelegation->toArray(), 'Employee Department Delegation saved successfully');
+        return $this->sendResponse($employeeDepartmentDelegation->toArray(), trans('custom.employee_department_delegation_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class employeeDepartmentDelegationAPIController extends AppBaseController
         $employeeDepartmentDelegation = $this->employeeDepartmentDelegationRepository->findWithoutFail($id);
 
         if (empty($employeeDepartmentDelegation)) {
-            return $this->sendError('Employee Department Delegation not found');
+            return $this->sendError(trans('custom.employee_department_delegation_not_found'));
         }
 
-        return $this->sendResponse($employeeDepartmentDelegation->toArray(), 'Employee Department Delegation retrieved successfully');
+        return $this->sendResponse($employeeDepartmentDelegation->toArray(), trans('custom.employee_department_delegation_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class employeeDepartmentDelegationAPIController extends AppBaseController
         $employeeDepartmentDelegation = $this->employeeDepartmentDelegationRepository->findWithoutFail($id);
 
         if (empty($employeeDepartmentDelegation)) {
-            return $this->sendError('Employee Department Delegation not found');
+            return $this->sendError(trans('custom.employee_department_delegation_not_found'));
         }
 
         $employeeDepartmentDelegation = $this->employeeDepartmentDelegationRepository->update($input, $id);
 
-        return $this->sendResponse($employeeDepartmentDelegation->toArray(), 'employeeDepartmentDelegation updated successfully');
+        return $this->sendResponse($employeeDepartmentDelegation->toArray(), trans('custom.employeedepartmentdelegation_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class employeeDepartmentDelegationAPIController extends AppBaseController
         $employeeDepartmentDelegation = $this->employeeDepartmentDelegationRepository->findWithoutFail($id);
 
         if (empty($employeeDepartmentDelegation)) {
-            return $this->sendError('Employee Department Delegation not found');
+            return $this->sendError(trans('custom.employee_department_delegation_not_found'));
         }
 
         $employeeDepartmentDelegation->delete();
 
-        return $this->sendResponse($id, 'Employee Department Delegation deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_department_delegation_deleted_successfull'));
     }
 }

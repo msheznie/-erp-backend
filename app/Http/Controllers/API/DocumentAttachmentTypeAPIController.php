@@ -68,7 +68,7 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($documentAttachmentTypes->toArray(), 'Document Attachment Types retrieved successfully');
+        return $this->sendResponse($documentAttachmentTypes->toArray(), trans('custom.document_attachment_types_retrieved_successfully_1'));
     }
 
     /**
@@ -85,7 +85,7 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
 
         $documentAttachmentTypes = $this->documentAttachmentTypeRepository->create($input);
 
-        return $this->sendResponse($documentAttachmentTypes->toArray(), 'Document Attachment Type saved successfully');
+        return $this->sendResponse($documentAttachmentTypes->toArray(), trans('custom.document_attachment_type_saved_successfully'));
     }
 
     /**
@@ -102,10 +102,10 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
         $documentAttachmentType = $this->documentAttachmentTypeRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentType)) {
-            return $this->sendError('Document Attachment Type not found');
+            return $this->sendError(trans('custom.document_attachment_type_not_found'));
         }
 
-        return $this->sendResponse($documentAttachmentType->toArray(), 'Document Attachment Type retrieved successfully');
+        return $this->sendResponse($documentAttachmentType->toArray(), trans('custom.document_attachment_type_retrieved_successfully'));
     }
 
     /**
@@ -125,12 +125,12 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
         $documentAttachmentType = $this->documentAttachmentTypeRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentType)) {
-            return $this->sendError('Document Attachment Type not found');
+            return $this->sendError(trans('custom.document_attachment_type_not_found'));
         }
 
         $documentAttachmentType = $this->documentAttachmentTypeRepository->update($input, $id);
 
-        return $this->sendResponse($documentAttachmentType->toArray(), 'DocumentAttachmentType updated successfully');
+        return $this->sendResponse($documentAttachmentType->toArray(), trans('custom.documentattachmenttype_updated_successfully'));
     }
 
     /**
@@ -147,11 +147,11 @@ class DocumentAttachmentTypeAPIController extends AppBaseController
         $documentAttachmentType = $this->documentAttachmentTypeRepository->findWithoutFail($id);
 
         if (empty($documentAttachmentType)) {
-            return $this->sendError('Document Attachment Type not found');
+            return $this->sendError(trans('custom.document_attachment_type_not_found'));
         }
 
         $documentAttachmentType->delete();
 
-        return $this->sendResponse($id, 'Document Attachment Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_attachment_type_deleted_successfully'));
     }
 }

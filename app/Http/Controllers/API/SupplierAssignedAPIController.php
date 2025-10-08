@@ -54,7 +54,7 @@ class SupplierAssignedAPIController extends AppBaseController
         $this->supplierAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierAssigneds = $this->supplierAssignedRepository->all();
 
-        return $this->sendResponse($supplierAssigneds->toArray(), 'Supplier Assigneds retrieved successfully');
+        return $this->sendResponse($supplierAssigneds->toArray(), trans('custom.supplier_assigneds_retrieved_successfully'));
     }
 
     /**
@@ -125,7 +125,7 @@ class SupplierAssignedAPIController extends AppBaseController
                     $supplierAssigneds = SupplierAssigned::where('supplierAssignedID', $input['supplierAssignedID'])->first();
         
                     if (empty($supplierAssigneds)) {
-                        return $this->sendError('supplier Assigned not found');
+                        return $this->sendError(trans('custom.supplier_assigned_not_found_1'));
                     }
                     foreach ($input as $key => $value) {
                         $supplierAssigneds->$key = $value;
@@ -156,7 +156,7 @@ class SupplierAssignedAPIController extends AppBaseController
 
         
 
-        return $this->sendResponse($supplierAssigneds->toArray(), 'Supplier Assigned saved successfully');
+        return $this->sendResponse($supplierAssigneds->toArray(), trans('custom.supplier_assigned_saved_successfully'));
     }
 
     /**
@@ -173,10 +173,10 @@ class SupplierAssignedAPIController extends AppBaseController
         $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
 
         if (empty($supplierAssigned)) {
-            return $this->sendError('Supplier Assigned not found');
+            return $this->sendError(trans('custom.supplier_assigned_not_found'));
         }
 
-        return $this->sendResponse($supplierAssigned->toArray(), 'Supplier Assigned retrieved successfully');
+        return $this->sendResponse($supplierAssigned->toArray(), trans('custom.supplier_assigned_retrieved_successfully'));
     }
 
     /**
@@ -196,12 +196,12 @@ class SupplierAssignedAPIController extends AppBaseController
         $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
 
         if (empty($supplierAssigned)) {
-            return $this->sendError('Supplier Assigned not found');
+            return $this->sendError(trans('custom.supplier_assigned_not_found'));
         }
 
         $supplierAssigned = $this->supplierAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($supplierAssigned->toArray(), 'SupplierAssigned updated successfully');
+        return $this->sendResponse($supplierAssigned->toArray(), trans('custom.supplierassigned_updated_successfully'));
     }
 
     /**
@@ -218,12 +218,12 @@ class SupplierAssignedAPIController extends AppBaseController
         $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
 
         if (empty($supplierAssigned)) {
-            return $this->sendError('Supplier Assigned not found');
+            return $this->sendError(trans('custom.supplier_assigned_not_found'));
         }
 
         $supplierAssigned->delete();
 
-        return $this->sendResponse($id, 'Supplier Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_assigned_deleted_successfully'));
     }
 
     public function checkSelectedSupplierIsActive(Request $request)
@@ -236,7 +236,7 @@ class SupplierAssignedAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        return $this->sendResponse($supplierData, 'Record retrieved successfully');
+        return $this->sendResponse($supplierData, trans('custom.record_retrieved_successfully_1'));
     }
 
 }

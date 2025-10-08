@@ -65,7 +65,7 @@ class SalaryProcessDetailAPIController extends AppBaseController
         $this->salaryProcessDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salaryProcessDetails = $this->salaryProcessDetailRepository->all();
 
-        return $this->sendResponse($salaryProcessDetails->toArray(), 'Salary Process Details retrieved successfully');
+        return $this->sendResponse($salaryProcessDetails->toArray(), trans('custom.salary_process_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SalaryProcessDetailAPIController extends AppBaseController
 
         $salaryProcessDetail = $this->salaryProcessDetailRepository->create($input);
 
-        return $this->sendResponse($salaryProcessDetail->toArray(), 'Salary Process Detail saved successfully');
+        return $this->sendResponse($salaryProcessDetail->toArray(), trans('custom.salary_process_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SalaryProcessDetailAPIController extends AppBaseController
         $salaryProcessDetail = $this->salaryProcessDetailRepository->findWithoutFail($id);
 
         if (empty($salaryProcessDetail)) {
-            return $this->sendError('Salary Process Detail not found');
+            return $this->sendError(trans('custom.salary_process_detail_not_found'));
         }
 
-        return $this->sendResponse($salaryProcessDetail->toArray(), 'Salary Process Detail retrieved successfully');
+        return $this->sendResponse($salaryProcessDetail->toArray(), trans('custom.salary_process_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SalaryProcessDetailAPIController extends AppBaseController
         $salaryProcessDetail = $this->salaryProcessDetailRepository->findWithoutFail($id);
 
         if (empty($salaryProcessDetail)) {
-            return $this->sendError('Salary Process Detail not found');
+            return $this->sendError(trans('custom.salary_process_detail_not_found'));
         }
 
         $salaryProcessDetail = $this->salaryProcessDetailRepository->update($input, $id);
 
-        return $this->sendResponse($salaryProcessDetail->toArray(), 'SalaryProcessDetail updated successfully');
+        return $this->sendResponse($salaryProcessDetail->toArray(), trans('custom.salaryprocessdetail_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class SalaryProcessDetailAPIController extends AppBaseController
         $salaryProcessDetail = $this->salaryProcessDetailRepository->findWithoutFail($id);
 
         if (empty($salaryProcessDetail)) {
-            return $this->sendError('Salary Process Detail not found');
+            return $this->sendError(trans('custom.salary_process_detail_not_found'));
         }
 
         $salaryProcessDetail->delete();
 
-        return $this->sendResponse($id, 'Salary Process Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.salary_process_detail_deleted_successfully'));
     }
 }

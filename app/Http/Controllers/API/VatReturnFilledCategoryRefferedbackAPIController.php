@@ -65,7 +65,7 @@ class VatReturnFilledCategoryRefferedbackAPIController extends AppBaseController
         $this->vatReturnFilledCategoryRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFilledCategoryRefferedbacks = $this->vatReturnFilledCategoryRefferedbackRepository->all();
 
-        return $this->sendResponse($vatReturnFilledCategoryRefferedbacks->toArray(), 'Vat Return Filled Category Refferedbacks retrieved successfully');
+        return $this->sendResponse($vatReturnFilledCategoryRefferedbacks->toArray(), trans('custom.vat_return_filled_category_refferedbacks_retrieved'));
     }
 
     /**
@@ -112,7 +112,7 @@ class VatReturnFilledCategoryRefferedbackAPIController extends AppBaseController
 
         $vatReturnFilledCategoryRefferedback = $this->vatReturnFilledCategoryRefferedbackRepository->create($input);
 
-        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), 'Vat Return Filled Category Refferedback saved successfully');
+        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), trans('custom.vat_return_filled_category_refferedback_saved_succ'));
     }
 
     /**
@@ -159,10 +159,10 @@ class VatReturnFilledCategoryRefferedbackAPIController extends AppBaseController
         $vatReturnFilledCategoryRefferedback = $this->vatReturnFilledCategoryRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategoryRefferedback)) {
-            return $this->sendError('Vat Return Filled Category Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_refferedback_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), 'Vat Return Filled Category Refferedback retrieved successfully');
+        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), trans('custom.vat_return_filled_category_refferedback_retrieved_'));
     }
 
     /**
@@ -219,12 +219,12 @@ class VatReturnFilledCategoryRefferedbackAPIController extends AppBaseController
         $vatReturnFilledCategoryRefferedback = $this->vatReturnFilledCategoryRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategoryRefferedback)) {
-            return $this->sendError('Vat Return Filled Category Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_refferedback_not_found'));
         }
 
         $vatReturnFilledCategoryRefferedback = $this->vatReturnFilledCategoryRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), 'VatReturnFilledCategoryRefferedback updated successfully');
+        return $this->sendResponse($vatReturnFilledCategoryRefferedback->toArray(), trans('custom.vatreturnfilledcategoryrefferedback_updated_succes'));
     }
 
     /**
@@ -271,7 +271,7 @@ class VatReturnFilledCategoryRefferedbackAPIController extends AppBaseController
         $vatReturnFilledCategoryRefferedback = $this->vatReturnFilledCategoryRefferedbackRepository->findWithoutFail($id);
 
         if (empty($vatReturnFilledCategoryRefferedback)) {
-            return $this->sendError('Vat Return Filled Category Refferedback not found');
+            return $this->sendError(trans('custom.vat_return_filled_category_refferedback_not_found'));
         }
 
         $vatReturnFilledCategoryRefferedback->delete();

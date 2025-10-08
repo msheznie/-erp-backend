@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Travel Request</title>
+    <title>{{ __('custom.travel_request') }}</title>
     <style>
         @page {
             margin-left: 30px;

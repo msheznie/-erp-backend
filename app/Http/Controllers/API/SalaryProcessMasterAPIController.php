@@ -65,7 +65,7 @@ class SalaryProcessMasterAPIController extends AppBaseController
         $this->salaryProcessMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salaryProcessMasters = $this->salaryProcessMasterRepository->all();
 
-        return $this->sendResponse($salaryProcessMasters->toArray(), 'Salary Process Masters retrieved successfully');
+        return $this->sendResponse($salaryProcessMasters->toArray(), trans('custom.salary_process_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SalaryProcessMasterAPIController extends AppBaseController
 
         $salaryProcessMasters = $this->salaryProcessMasterRepository->create($input);
 
-        return $this->sendResponse($salaryProcessMasters->toArray(), 'Salary Process Master saved successfully');
+        return $this->sendResponse($salaryProcessMasters->toArray(), trans('custom.salary_process_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SalaryProcessMasterAPIController extends AppBaseController
         $salaryProcessMaster = $this->salaryProcessMasterRepository->findWithoutFail($id);
 
         if (empty($salaryProcessMaster)) {
-            return $this->sendError('Salary Process Master not found');
+            return $this->sendError(trans('custom.salary_process_master_not_found'));
         }
 
-        return $this->sendResponse($salaryProcessMaster->toArray(), 'Salary Process Master retrieved successfully');
+        return $this->sendResponse($salaryProcessMaster->toArray(), trans('custom.salary_process_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SalaryProcessMasterAPIController extends AppBaseController
         $salaryProcessMaster = $this->salaryProcessMasterRepository->findWithoutFail($id);
 
         if (empty($salaryProcessMaster)) {
-            return $this->sendError('Salary Process Master not found');
+            return $this->sendError(trans('custom.salary_process_master_not_found'));
         }
 
         $salaryProcessMaster = $this->salaryProcessMasterRepository->update($input, $id);
 
-        return $this->sendResponse($salaryProcessMaster->toArray(), 'SalaryProcessMaster updated successfully');
+        return $this->sendResponse($salaryProcessMaster->toArray(), trans('custom.salaryprocessmaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class SalaryProcessMasterAPIController extends AppBaseController
         $salaryProcessMaster = $this->salaryProcessMasterRepository->findWithoutFail($id);
 
         if (empty($salaryProcessMaster)) {
-            return $this->sendError('Salary Process Master not found');
+            return $this->sendError(trans('custom.salary_process_master_not_found'));
         }
 
         $salaryProcessMaster->delete();
 
-        return $this->sendResponse($id, 'Salary Process Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.salary_process_master_deleted_successfully'));
     }
 }

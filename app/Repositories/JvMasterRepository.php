@@ -147,20 +147,20 @@ class JvMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['JV Code'] = $val->JVcode;
-                $data[$x]['Type'] = StatusService::getjvType($val->jvType);
-                $data[$x]['JV Date'] = \Helper::dateFormat($val->JVdate);
-                $data[$x]['Narration'] = $val->JVNarration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Transaction Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
+                $data[$x][trans('custom.jv_code')] = $val->JVcode;
+                $data[$x][trans('custom.type')] = StatusService::getjvType($val->jvType);
+                $data[$x][trans('custom.jv_date')] = \Helper::dateFormat($val->JVdate);
+                $data[$x][trans('custom.narration')] = $val->JVNarration;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.transaction_currency')] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
 
 
 
-                $data[$x]['Transaction Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Transaction Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.transaction_debit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.transaction_credit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
 
 
                 $debitAmount = $val->detail->count() > 0? $val->detail[0]->debitSum : 0;
@@ -387,15 +387,15 @@ class JvMasterRepository extends BaseRepository
                 }
 
 
-                $data[$x]['Local Currency'] = $localCurrencyCode;
-                $data[$x]['Local Debit Amount'] = $debitLocalAmount > 0? number_format($debitLocalAmount, $localCurrencyDecimal, ".", "") : 0;
-                $data[$x]['Local Credit Amount'] = $creditLocalAmount > 0? number_format($creditLocalAmount, $localCurrencyDecimal, ".", "") : 0;
+                $data[$x][trans('custom.local_currency')] = $localCurrencyCode;
+                $data[$x][trans('custom.local_debit_amount')] = $debitLocalAmount > 0? number_format($debitLocalAmount, $localCurrencyDecimal, ".", "") : 0;
+                $data[$x][trans('custom.local_credit_amount')] = $creditLocalAmount > 0? number_format($creditLocalAmount, $localCurrencyDecimal, ".", "") : 0;
 
-                $data[$x]['Reporting Currency'] = $reportingCurrencyCode;
-                $data[$x]['Reporting Debit Amount'] = $debitRptAmount > 0? number_format($debitRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
-                $data[$x]['Reporting Credit Amount'] = $creditRptAmount > 0? number_format($creditRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
+                $data[$x][trans('custom.reporting_currency')] = $reportingCurrencyCode;
+                $data[$x][trans('custom.reporting_debit_amount')] = $debitRptAmount > 0? number_format($debitRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
+                $data[$x][trans('custom.reporting_credit_amount')] = $creditRptAmount > 0? number_format($creditRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
 
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

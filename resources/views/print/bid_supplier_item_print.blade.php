@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Supplier Item Summary</title>
+    <title>{{ __('custom.supplier_item_summary') }}</title>
     <style>
         .sup-item-summary-report, th, td{
             border: 1px solid black;

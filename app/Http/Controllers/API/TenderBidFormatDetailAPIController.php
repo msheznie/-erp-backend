@@ -65,7 +65,7 @@ class TenderBidFormatDetailAPIController extends AppBaseController
         $this->tenderBidFormatDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBidFormatDetails = $this->tenderBidFormatDetailRepository->all();
 
-        return $this->sendResponse($tenderBidFormatDetails->toArray(), 'Tender Bid Format Details retrieved successfully');
+        return $this->sendResponse($tenderBidFormatDetails->toArray(), trans('custom.tender_bid_format_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderBidFormatDetailAPIController extends AppBaseController
 
         $tenderBidFormatDetail = $this->tenderBidFormatDetailRepository->create($input);
 
-        return $this->sendResponse($tenderBidFormatDetail->toArray(), 'Tender Bid Format Detail saved successfully');
+        return $this->sendResponse($tenderBidFormatDetail->toArray(), trans('custom.tender_bid_format_detail_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderBidFormatDetailAPIController extends AppBaseController
         $tenderBidFormatDetail = $this->tenderBidFormatDetailRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatDetail)) {
-            return $this->sendError('Tender Bid Format Detail not found');
+            return $this->sendError(trans('custom.tender_bid_format_detail_not_found'));
         }
 
-        return $this->sendResponse($tenderBidFormatDetail->toArray(), 'Tender Bid Format Detail retrieved successfully');
+        return $this->sendResponse($tenderBidFormatDetail->toArray(), trans('custom.tender_bid_format_detail_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderBidFormatDetailAPIController extends AppBaseController
         $tenderBidFormatDetail = $this->tenderBidFormatDetailRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatDetail)) {
-            return $this->sendError('Tender Bid Format Detail not found');
+            return $this->sendError(trans('custom.tender_bid_format_detail_not_found'));
         }
 
         $tenderBidFormatDetail = $this->tenderBidFormatDetailRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBidFormatDetail->toArray(), 'TenderBidFormatDetail updated successfully');
+        return $this->sendResponse($tenderBidFormatDetail->toArray(), trans('custom.tenderbidformatdetail_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderBidFormatDetailAPIController extends AppBaseController
         $tenderBidFormatDetail = $this->tenderBidFormatDetailRepository->findWithoutFail($id);
 
         if (empty($tenderBidFormatDetail)) {
-            return $this->sendError('Tender Bid Format Detail not found');
+            return $this->sendError(trans('custom.tender_bid_format_detail_not_found'));
         }
 
         $tenderBidFormatDetail->delete();

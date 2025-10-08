@@ -55,7 +55,7 @@ class POUpdated
                 $temp = "Segment changed for " . $order['purchaseOrderCode'] . "<p> from ". $original['serviceLine'] ." to ". $order->serviceLine .  $footer;
                 $dataEmail['isEmailSend'] = 0;
                 $dataEmail['attachmentFileName'] = null;
-                $dataEmail['alertMessage'] = "Segment changed for " . $order['purchaseOrderCode'];
+                $dataEmail['alertMessage'] = trans('email.segment_changed_for', ['purchaseOrderCode' => $order['purchaseOrderCode']]);
                 $dataEmail['emailAlertMessage'] = $temp;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
                 Log::info('Email array:');

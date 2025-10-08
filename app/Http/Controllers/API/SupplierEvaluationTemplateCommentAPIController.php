@@ -64,7 +64,7 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
         $this->supplierEvaluationTemplateCommentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationTemplateComments = $this->supplierEvaluationTemplateCommentRepository->all();
 
-        return $this->sendResponse($supplierEvaluationTemplateComments->toArray(), 'Supplier Evaluation Template Comments retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComments->toArray(), trans('custom.supplier_evaluation_template_comments_retrieved_su'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
 
         $supplierEvaluationTemplateComment = $this->supplierEvaluationTemplateCommentRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), 'Supplier Evaluation Template Comment saved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), trans('custom.supplier_evaluation_template_comment_saved_success'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
         $supplierEvaluationTemplateComment = $this->supplierEvaluationTemplateCommentRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateComment)) {
-            return $this->sendError('Supplier Evaluation Template Comment not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_comment_not_found'));
         }
 
-        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), 'Supplier Evaluation Template Comment retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), trans('custom.supplier_evaluation_template_comment_retrieved_suc'));
     }
 
     public function getAllSupplierEvaluationTemplateComments(Request $request)
@@ -184,7 +184,7 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($supplierEvaluationTemplateComments, 'Supplier Evaluation Template Comments retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComments, trans('custom.supplier_evaluation_template_comments_retrieved_su'));
 
     }
 
@@ -198,7 +198,7 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($supplierEvaluationTemplateComments, 'Supplier Evaluation Template Comments retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComments, trans('custom.supplier_evaluation_template_comments_retrieved_su'));
 
     }
 
@@ -265,12 +265,12 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
         $supplierEvaluationTemplateComment = $this->supplierEvaluationTemplateCommentRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateComment)) {
-            return $this->sendError('Supplier Evaluation Template Comment not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_comment_not_found'));
         }
 
         $supplierEvaluationTemplateComment = $this->supplierEvaluationTemplateCommentRepository->update($input, $id);
 
-        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), 'SupplierEvaluationTemplateComment updated successfully');
+        return $this->sendResponse($supplierEvaluationTemplateComment->toArray(), trans('custom.supplierevaluationtemplatecomment_updated_successf'));
     }
 
     /**
@@ -318,7 +318,7 @@ class SupplierEvaluationTemplateCommentAPIController extends AppBaseController
         $supplierEvaluationTemplateComment = $this->supplierEvaluationTemplateCommentRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateComment)) {
-            return $this->sendError('Supplier Evaluation Template Comment not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_comment_not_found'));
         }
 
         $supplierEvaluationTemplateComment->delete();

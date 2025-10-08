@@ -62,7 +62,7 @@ class UserGroupAssignAPIController extends AppBaseController
         $this->userGroupAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userGroupAssigns = $this->userGroupAssignRepository->all();
 
-        return $this->sendResponse($userGroupAssigns->toArray(), 'User Group Assigns retrieved successfully');
+        return $this->sendResponse($userGroupAssigns->toArray(), trans('custom.user_group_assigns_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class UserGroupAssignAPIController extends AppBaseController
 
         UpdateRoleRouteJob::dispatch($dataBase, $input["userGroupID"]);
 
-        return $this->sendResponse(array(), 'User Group Assign saved successfully');
+        return $this->sendResponse(array(), trans('custom.user_group_assign_saved_successfully'));
     }
 
     /**
@@ -155,10 +155,10 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
-        return $this->sendResponse($userGroupAssign->toArray(), 'User Group Assign retrieved successfully');
+        return $this->sendResponse($userGroupAssign->toArray(), trans('custom.user_group_assign_retrieved_successfully'));
     }
 
     /**
@@ -178,12 +178,12 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
         $userGroupAssign = $this->userGroupAssignRepository->update($input, $id);
 
-        return $this->sendResponse($userGroupAssign->toArray(), 'UserGroupAssign updated successfully');
+        return $this->sendResponse($userGroupAssign->toArray(), trans('custom.usergroupassign_updated_successfully'));
     }
 
     /**
@@ -200,12 +200,12 @@ class UserGroupAssignAPIController extends AppBaseController
         $userGroupAssign = $this->userGroupAssignRepository->findWithoutFail($id);
 
         if (empty($userGroupAssign)) {
-            return $this->sendError('User Group Assign not found');
+            return $this->sendError(trans('custom.user_group_assign_not_found'));
         }
 
         $userGroupAssign->delete();
 
-        return $this->sendResponse($id, 'User Group Assign deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_group_assign_deleted_successfully'));
     }
 
     public function getUserGroupNavigation(Request $request)
@@ -214,7 +214,7 @@ class UserGroupAssignAPIController extends AppBaseController
         $companyID = $request['companyID'];
         $group = $request['group'];
         $emp = $request['emp'];
-
+        $languageCode = $request->header('Accept-Language');
         $userGroupID = null;
         if($group == 'false')
         {
@@ -239,11 +239,16 @@ class UserGroupAssignAPIController extends AppBaseController
         if(isset($userGroupID))
         {
             $navigationMenu = DB::table('srp_erp_companynavigationmenus')
-            ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll'))
+            ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll,srp_erp_navigationmenus_languages.description as secondaryLanguageDescription'))
             ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
                 $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
                     ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID)
                     ->orderBy('srp_erp_companynavigationmenus.sortOrder');
+            })
+            ->leftJoin('srp_erp_navigationmenus_languages', function ($join) use ($languageCode) {
+                $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationmenus_languages.navigationMenuID')
+                    ->where('srp_erp_navigationmenus_languages.languageCode', '=', $languageCode)
+                    ->orderBy('srp_erp_navigationmenus_languages.sortOrder');
             })
             ->orderBy('srp_erp_companynavigationmenus.sortOrder')
             ->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
@@ -269,13 +274,13 @@ class UserGroupAssignAPIController extends AppBaseController
 
             $array = array('mainMenus' => $tree,'subMenus' => $subMenus);
             //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-            return $this->sendResponse($array, 'Record retrieved successfully');
+            return $this->sendResponse($array, trans('custom.record_retrieved_successfully_1'));
         }
         else
         {
             $array = array('mainMenus' =>[],'subMenus' => []);
             //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-            return $this->sendResponse($array, 'Record retrieved successfully');
+            return $this->sendResponse($array, trans('custom.record_retrieved_successfully_1'));
         }
 
        
@@ -308,7 +313,7 @@ class UserGroupAssignAPIController extends AppBaseController
                 return $this->sendError('No access right found',401);
             }
         }else{
-            return $this->sendError('Company ID not found');
+            return $this->sendError(trans('custom.company_id_not_found'));
         }
 
 
@@ -337,14 +342,13 @@ class UserGroupAssignAPIController extends AppBaseController
             $accessRights = array('isDelegation' => $isDelegation,'R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
         }
 
-        return $this->sendResponse($accessRights, 'Record retrieved successfully');
+        return $this->sendResponse($accessRights, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function exportNavigationeport(Request $request)
         {   
             $input = $request->all();
-
-           
+            $languageCode = app()->getLocale() ?: 'en';
 
             $companyID = $input['companyID'];
             $group = $input['group'];
@@ -374,11 +378,16 @@ class UserGroupAssignAPIController extends AppBaseController
             if(isset($userGroupID))
             {
                 $navigationMenu = DB::table('srp_erp_companynavigationmenus')
-                ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll'))
+                ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll, srp_erp_navigationmenus_languages.description as secondaryLanguageDescription'))
                 ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
                     $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
                         ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID)
                         ->orderBy('srp_erp_companynavigationmenus.sortOrder');
+                })
+                ->leftJoin('srp_erp_navigationmenus_languages', function ($join) use ($languageCode) {
+                    $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationmenus_languages.navigationMenuID')
+                        ->where('srp_erp_navigationmenus_languages.languageCode', '=', $languageCode)
+                        ->orderBy('srp_erp_navigationmenus_languages.sortOrder');
                 })
                 ->orderBy('srp_erp_companynavigationmenus.sortOrder')
                 ->where('srp_erp_companynavigationmenus.isPortalYN',$cat)

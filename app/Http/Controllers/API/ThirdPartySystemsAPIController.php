@@ -65,7 +65,7 @@ class ThirdPartySystemsAPIController extends AppBaseController
         $this->thirdPartySystemsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $thirdPartySystems = $this->thirdPartySystemsRepository->all();
 
-        return $this->sendResponse($thirdPartySystems->toArray(), 'Third Party Systems retrieved successfully');
+        return $this->sendResponse($thirdPartySystems->toArray(), trans('custom.third_party_systems_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ThirdPartySystemsAPIController extends AppBaseController
 
         $thirdPartySystems = $this->thirdPartySystemsRepository->create($input);
 
-        return $this->sendResponse($thirdPartySystems->toArray(), 'Third Party Systems saved successfully');
+        return $this->sendResponse($thirdPartySystems->toArray(), trans('custom.third_party_systems_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ThirdPartySystemsAPIController extends AppBaseController
         $thirdPartySystems = $this->thirdPartySystemsRepository->findWithoutFail($id);
 
         if (empty($thirdPartySystems)) {
-            return $this->sendError('Third Party Systems not found');
+            return $this->sendError(trans('custom.third_party_systems_not_found'));
         }
 
-        return $this->sendResponse($thirdPartySystems->toArray(), 'Third Party Systems retrieved successfully');
+        return $this->sendResponse($thirdPartySystems->toArray(), trans('custom.third_party_systems_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ThirdPartySystemsAPIController extends AppBaseController
         $thirdPartySystems = $this->thirdPartySystemsRepository->findWithoutFail($id);
 
         if (empty($thirdPartySystems)) {
-            return $this->sendError('Third Party Systems not found');
+            return $this->sendError(trans('custom.third_party_systems_not_found'));
         }
 
         $thirdPartySystems = $this->thirdPartySystemsRepository->update($input, $id);
 
-        return $this->sendResponse($thirdPartySystems->toArray(), 'ThirdPartySystems updated successfully');
+        return $this->sendResponse($thirdPartySystems->toArray(), trans('custom.thirdpartysystems_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ThirdPartySystemsAPIController extends AppBaseController
         $thirdPartySystems = $this->thirdPartySystemsRepository->findWithoutFail($id);
 
         if (empty($thirdPartySystems)) {
-            return $this->sendError('Third Party Systems not found');
+            return $this->sendError(trans('custom.third_party_systems_not_found'));
         }
 
         $thirdPartySystems->delete();

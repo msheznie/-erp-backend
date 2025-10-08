@@ -65,7 +65,7 @@ class ExpenseClaimCategoriesMasterAPIController extends AppBaseController
         $this->expenseClaimCategoriesMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseClaimCategoriesMasters = $this->expenseClaimCategoriesMasterRepository->all();
 
-        return $this->sendResponse($expenseClaimCategoriesMasters->toArray(), 'Expense Claim Categories Masters retrieved successfully');
+        return $this->sendResponse($expenseClaimCategoriesMasters->toArray(), trans('custom.expense_claim_categories_masters_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ExpenseClaimCategoriesMasterAPIController extends AppBaseController
 
         $expenseClaimCategoriesMaster = $this->expenseClaimCategoriesMasterRepository->create($input);
 
-        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), 'Expense Claim Categories Master saved successfully');
+        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), trans('custom.expense_claim_categories_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ExpenseClaimCategoriesMasterAPIController extends AppBaseController
         $expenseClaimCategoriesMaster = $this->expenseClaimCategoriesMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategoriesMaster)) {
-            return $this->sendError('Expense Claim Categories Master not found');
+            return $this->sendError(trans('custom.expense_claim_categories_master_not_found'));
         }
 
-        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), 'Expense Claim Categories Master retrieved successfully');
+        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), trans('custom.expense_claim_categories_master_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ExpenseClaimCategoriesMasterAPIController extends AppBaseController
         $expenseClaimCategoriesMaster = $this->expenseClaimCategoriesMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategoriesMaster)) {
-            return $this->sendError('Expense Claim Categories Master not found');
+            return $this->sendError(trans('custom.expense_claim_categories_master_not_found'));
         }
 
         $expenseClaimCategoriesMaster = $this->expenseClaimCategoriesMasterRepository->update($input, $id);
 
-        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), 'ExpenseClaimCategoriesMaster updated successfully');
+        return $this->sendResponse($expenseClaimCategoriesMaster->toArray(), trans('custom.expenseclaimcategoriesmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ExpenseClaimCategoriesMasterAPIController extends AppBaseController
         $expenseClaimCategoriesMaster = $this->expenseClaimCategoriesMasterRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategoriesMaster)) {
-            return $this->sendError('Expense Claim Categories Master not found');
+            return $this->sendError(trans('custom.expense_claim_categories_master_not_found'));
         }
 
         $expenseClaimCategoriesMaster->delete();

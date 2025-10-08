@@ -65,7 +65,7 @@ class POSTransStatusAPIController extends AppBaseController
         $this->pOSTransStatusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSTransStatuses = $this->pOSTransStatusRepository->all();
 
-        return $this->sendResponse($pOSTransStatuses->toArray(), 'P O S Trans Statuses retrieved successfully');
+        return $this->sendResponse($pOSTransStatuses->toArray(), trans('custom.p_o_s_trans_statuses_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSTransStatusAPIController extends AppBaseController
 
         $pOSTransStatus = $this->pOSTransStatusRepository->create($input);
 
-        return $this->sendResponse($pOSTransStatus->toArray(), 'P O S Trans Status saved successfully');
+        return $this->sendResponse($pOSTransStatus->toArray(), trans('custom.p_o_s_trans_status_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSTransStatusAPIController extends AppBaseController
         $pOSTransStatus = $this->pOSTransStatusRepository->findWithoutFail($id);
 
         if (empty($pOSTransStatus)) {
-            return $this->sendError('P O S Trans Status not found');
+            return $this->sendError(trans('custom.p_o_s_trans_status_not_found'));
         }
 
-        return $this->sendResponse($pOSTransStatus->toArray(), 'P O S Trans Status retrieved successfully');
+        return $this->sendResponse($pOSTransStatus->toArray(), trans('custom.p_o_s_trans_status_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSTransStatusAPIController extends AppBaseController
         $pOSTransStatus = $this->pOSTransStatusRepository->findWithoutFail($id);
 
         if (empty($pOSTransStatus)) {
-            return $this->sendError('P O S Trans Status not found');
+            return $this->sendError(trans('custom.p_o_s_trans_status_not_found'));
         }
 
         $pOSTransStatus = $this->pOSTransStatusRepository->update($input, $id);
 
-        return $this->sendResponse($pOSTransStatus->toArray(), 'POSTransStatus updated successfully');
+        return $this->sendResponse($pOSTransStatus->toArray(), trans('custom.postransstatus_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSTransStatusAPIController extends AppBaseController
         $pOSTransStatus = $this->pOSTransStatusRepository->findWithoutFail($id);
 
         if (empty($pOSTransStatus)) {
-            return $this->sendError('P O S Trans Status not found');
+            return $this->sendError(trans('custom.p_o_s_trans_status_not_found'));
         }
 
         $pOSTransStatus->delete();

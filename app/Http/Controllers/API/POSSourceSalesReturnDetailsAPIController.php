@@ -65,7 +65,7 @@ class POSSourceSalesReturnDetailsAPIController extends AppBaseController
         $this->pOSSourceSalesReturnDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->all();
 
-        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), 'P O S Source Sales Return Details retrieved successfully');
+        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), trans('custom.p_o_s_source_sales_return_details_retrieved_succes'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceSalesReturnDetailsAPIController extends AppBaseController
 
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->create($input);
 
-        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), 'P O S Source Sales Return Details saved successfully');
+        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), trans('custom.p_o_s_source_sales_return_details_saved_successful'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceSalesReturnDetailsAPIController extends AppBaseController
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSourceSalesReturnDetails)) {
-            return $this->sendError('P O S Source Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_source_sales_return_details_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), 'P O S Source Sales Return Details retrieved successfully');
+        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), trans('custom.p_o_s_source_sales_return_details_retrieved_succes'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceSalesReturnDetailsAPIController extends AppBaseController
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSourceSalesReturnDetails)) {
-            return $this->sendError('P O S Source Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_source_sales_return_details_not_found'));
         }
 
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), 'POSSourceSalesReturnDetails updated successfully');
+        return $this->sendResponse($pOSSourceSalesReturnDetails->toArray(), trans('custom.possourcesalesreturndetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceSalesReturnDetailsAPIController extends AppBaseController
         $pOSSourceSalesReturnDetails = $this->pOSSourceSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSSourceSalesReturnDetails)) {
-            return $this->sendError('P O S Source Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_source_sales_return_details_not_found'));
         }
 
         $pOSSourceSalesReturnDetails->delete();

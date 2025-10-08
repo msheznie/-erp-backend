@@ -29,7 +29,7 @@ class Months extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $appends = ['monthDes'];
 
     protected $dates = ['deleted_at'];
 
@@ -59,5 +59,40 @@ class Months extends Model
         
     ];
 
+    /**
+     * Relationship to MonthsLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(MonthsLanguage::class, 'monthID', 'monthID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated month description
+     */
+    public function getMonthDesAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->monthDes) {
+            return $translation->monthDes;
+        }
+        
+        return $this->attributes['monthDes'] ?? '';
+    }
     
 }

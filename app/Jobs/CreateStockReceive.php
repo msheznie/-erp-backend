@@ -85,7 +85,11 @@ class CreateStockReceive implements ShouldQueue
                         ->where('isCurrent', -1)
                         ->first();
 
-                    $comment = "Inter Company Stock Transfer from " . $stMaster->companyFrom . " to " . $stMaster->companyTo . " " . $stMaster->stockTransferCode;
+                    $comment = trans('custom.inter_company_stock_transfer_from_to', [
+                        'from' => $stMaster->companyFrom,
+                        'to' => $stMaster->companyTo,
+                        'code' => $stMaster->stockTransferCode
+                    ]);
 
                     if (!empty($fromCompanyFinancePeriod)) {
                         $fromCompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
@@ -735,7 +739,7 @@ class CreateStockReceive implements ShouldQueue
 
 
                     } else {
-                        Log::error('Policy Disabled' . date('H:i:s'));
+                        Log::error(trans('custom.policy_disabled') . date('H:i:s'));
                     }
                 }
                 DB::commit();

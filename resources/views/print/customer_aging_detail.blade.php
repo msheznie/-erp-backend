@@ -1,29 +1,26 @@
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    .text-left {
+        text-align: right !important;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    .text-right {
+        text-align: left !important;
     }
 
-    #footer .page:after {
-        content: counter(page, upper-roman);
+    table {
+        direction: rtl;
     }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
 
     body {
         font-size: 10px;
@@ -114,49 +111,7 @@
         margin-top: 0 !important;
     }
 
-    .pagenum:after {
-        content: counter(page);
-    }
-
 </style>
-<div id="footer">
-    <table style="width:100%;">
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">Customer Invoice Aging Report</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         <?php $ageRangeGrandTotal = [] ?>
@@ -166,19 +121,19 @@
                 <td colspan="14"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <td><b>Credit Days</b></td>
+                <td><b>{{trans('custom.credit_days')}}</b></td>
                 <td colspan="13"><b>{{$customerCreditDays[$key]}}</b></td>
             </tr>
             <tr>
-                <th width="10%">Document Code</th>
-                <th width="10%">Posted Date</th>
-                <th width="5%">Invoice Number</th>
-                <th width="5%">PO Number</th>
-                <th width="5%">Invoice Date</th>
-                <th width="5%">Aged Days</th>
-                <th width="5%">Currency</th>
-                <th width="10%">Invoice Amount</th>
-                <th width="10%">Balance Amount</th>
+                <th width="10%">{{trans('custom.document_code')}}</th>
+                <th width="10%">{{trans('custom.posted_date')}}</th>
+                <th width="5%">{{trans('custom.invoice_number')}}</th>
+                <th width="5%">{{trans('custom.po_number')}}</th>
+                <th width="5%">{{trans('custom.invoice_date')}}</th>
+                <th width="5%">{{trans('custom.aged_days')}}</th>
+                <th width="5%">{{trans('custom.currency')}}</th>
+                <th width="10%">{{trans('custom.invoice_amount')}}</th>
+                <th width="10%">{{trans('custom.balance_amount')}}</th>
                 @foreach ($agingRange as $age)
                     <th>{{$age}}</th>
                 @endforeach
@@ -214,8 +169,8 @@
                     {{$invoiceTotal += $det2->invoiceAmount}}
                 @endforeach
                 <tr>
-                    <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Sub Total:</b></td>
+                    <td colspan="7" style="border-bottom: none; border-left: none;"
+                        class="text-right"><b>{{trans('custom.sub_total')}}:</b></td>
                     <td style="text-align: right"><b>{{ number_format($invoiceTotal) }}</b></td>
                     <td style="text-align: right">
                         <b>{{ number_format($ageSubTotal) }}</b></td>
@@ -232,8 +187,8 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+            <td colspan="7" style="border-bottom: none; border-left: none;"
+                class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             <td style="text-align: right"><b>{{ number_format($invoiceAmountTotal) }}</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>
             @foreach ($agingRange as $age)

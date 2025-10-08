@@ -65,7 +65,7 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
         $this->poBulkUploadErrorLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poBulkUploadErrorLogs = $this->poBulkUploadErrorLogRepository->all();
 
-        return $this->sendResponse($poBulkUploadErrorLogs->toArray(), 'Po Bulk Upload Error Logs retrieved successfully');
+        return $this->sendResponse($poBulkUploadErrorLogs->toArray(), trans('custom.po_bulk_upload_error_logs_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
 
         $poBulkUploadErrorLog = $this->poBulkUploadErrorLogRepository->create($input);
 
-        return $this->sendResponse($poBulkUploadErrorLog->toArray(), 'Po Bulk Upload Error Log saved successfully');
+        return $this->sendResponse($poBulkUploadErrorLog->toArray(), trans('custom.po_bulk_upload_error_log_saved_successfully'));
     }
 
     /**
@@ -167,10 +167,10 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
         $poBulkUploadErrorLog = $this->poBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($poBulkUploadErrorLog)) {
-            return $this->sendError('Po Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.po_bulk_upload_error_log_not_found'));
         }
 
-        return $this->sendResponse($poBulkUploadErrorLog->toArray(), 'Po Bulk Upload Error Log retrieved successfully');
+        return $this->sendResponse($poBulkUploadErrorLog->toArray(), trans('custom.po_bulk_upload_error_log_retrieved_successfully'));
     }
 
     /**
@@ -236,12 +236,12 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
         $poBulkUploadErrorLog = $this->poBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($poBulkUploadErrorLog)) {
-            return $this->sendError('Po Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.po_bulk_upload_error_log_not_found'));
         }
 
         $poBulkUploadErrorLog = $this->poBulkUploadErrorLogRepository->update($input, $id);
 
-        return $this->sendResponse($poBulkUploadErrorLog->toArray(), 'PoBulkUploadErrorLog updated successfully');
+        return $this->sendResponse($poBulkUploadErrorLog->toArray(), trans('custom.pobulkuploaderrorlog_updated_successfully'));
     }
 
     /**
@@ -289,12 +289,12 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
         $poBulkUploadErrorLog = $this->poBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($poBulkUploadErrorLog)) {
-            return $this->sendError('Po Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.po_bulk_upload_error_log_not_found'));
         }
 
         $poBulkUploadErrorLog->delete();
 
-        return $this->sendSuccess('Po Bulk Upload Error Log deleted successfully');
+        return $this->sendSuccess(trans('custom.po_bulk_upload_error_log_deleted_successfully'));
     }
 
     public function getItemBulkUploadError(Request $request)
@@ -302,11 +302,11 @@ class PoBulkUploadErrorLogAPIController extends AppBaseController
         $purchaseOrderID = $request['purchaseOrderID'];
         $errorMsg = $this->poBulkUploadErrorLogRepository->getBulkUploadErrors($purchaseOrderID);
 
-        return $this->sendResponse($errorMsg, 'Purchase order item upload error log status fetched successfully');
+        return $this->sendResponse($errorMsg, trans('custom.purchase_order_item_upload_error_log_status_fetche'));
     }
     public function deletePoItemUploadErrorLog($id)
     {
         PoBulkUploadErrorLog::where('documentSystemID', trim($id))->delete();
-        return $this->sendResponse([], 'Po Bulk Upload Error Log deleted successfully');
+        return $this->sendResponse([], trans('custom.po_bulk_upload_error_log_deleted_successfully'));
     }
 }
