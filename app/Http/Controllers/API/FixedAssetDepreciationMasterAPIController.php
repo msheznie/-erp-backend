@@ -222,8 +222,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th style="text-align: center;border: 1px solid black;">Disposal Code</th> 
-                            <th style="text-align: center;border: 1px solid black;">Asset Code</th>
+                            <th style="text-align: center;border: 1px solid black;">' . trans('custom.disposal_code') . '</th> 
+                            <th style="text-align: center;border: 1px solid black;">' . trans('custom.asset_code') . '</th>
                         </tr>
                     </thead>';
                     $body .= '<tbody>';
@@ -239,12 +239,12 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     </table>';
 
 
-                    return $this->sendError(trans('custom.assets_not_added_depreciation_linked_disposal') . ' </br></br>  $body  </br> Are you sure you want to proceed ?', 300,['type' => 'dispoasalAsset']);
+                    return $this->sendError(trans('custom.assets_not_added_depreciation_linked_disposal') . ' </br></br>  ' . $body . '  </br> ' . trans('custom.are_you_sure_you_want_to_proceed') . ' ?', 300,['type' => 'dispoasalAsset']);
 
                 }
 
                 $unconfirmedAssest = $this->getAssests($doc_date->dateTo,0,$input['companySystemID']);
-
+                
                 if(count($unconfirmedAssest) > 0 && $input['unConfirm'])
                 {
                     return $this->sendError(trans('custom.assets_to_be_approved_sure_proceed'), 300,['type' => 'UnconfirmAsset']);

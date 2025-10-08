@@ -2,10 +2,10 @@
 	<table>
 	    <thead>
 	    	<tr>
-			<th>{{ trans('custom.main_category') }}</th>
-			<th>{{ trans('custom.sub_category') }}</th>
-			<th>{{ trans('custom.account_code') }}</th>
-			<th>{{ trans('custom.account_description') }}</th>
+			<th>Main Category</th>
+			<th>Sub Category</th>
+			<th>Account Code</th>
+			<th>Account Description</th>
 	 			@foreach ($monthArray as $month)
 			    	<th>{{$month['monthName']}} - {{$month['year']}}</th>
 		    	@endforeach

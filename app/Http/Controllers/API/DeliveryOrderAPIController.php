@@ -509,18 +509,8 @@ class DeliveryOrderAPIController extends AppBaseController
 
 
             if ($deliveryOrderDetails == 0) {
-                return $this->sendError('Every order should have at least one item', 500);
+                return $this->sendError(trans('custom.every_order_should_have_at_least_one_item'), 500);
             }
-
-            $messages = [
-                'transactionCurrencyID.required' => 'Currency field is required',
-                'customerID.required' => 'Customer field is required',
-                'companyFinanceYearID.required' => 'Finance Year field is required',
-                'companyFinancePeriodID.required' => 'Finance Period field is required',
-                'serviceLineSystemID.required' => 'Segment field is required',
-                'wareHouseSystemCode.required' => 'Warehouse field is required',
-                'deliveryOrderDate.required' => 'Document Date field is required',
-            ];
 
             $validator = \Validator::make($input, [
                 'orderType' => 'required|numeric|min:1',
@@ -533,7 +523,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 'serviceLineSystemID' => 'required',
                 'wareHouseSystemCode' => 'required',
                 'deliveryOrderDate' => 'required|date'
-            ], $messages);
+            ]);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
@@ -542,7 +532,7 @@ class DeliveryOrderAPIController extends AppBaseController
             // check customer master unbilled gl account configured
             $customer = CustomerMaster::find($input['customerID']);
             if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
-                return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
+                return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'), 500);
             }
             $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
             $input['custGLAccountCode'] = $customer->custGLaccount;
@@ -567,7 +557,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 })
                 ->exists();
             if ($checkQuantity) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_minimum_qty_requested'), 500);
             }
 
 
@@ -637,25 +627,25 @@ class DeliveryOrderAPIController extends AppBaseController
                 $updateItem->save();
 
                 if ($updateItem->unitTransactionAmount == 0) {
-                    return $this->sendError('Item must not have zero cost', 500);
+                    return $this->sendError(trans('custom.item_must_not_have_zero_cost'), 500);
                 }
                 if ($updateItem->unitTransactionAmount < 0) {
-                    return $this->sendError('Item must not have negative cost', 500);
+                    return $this->sendError(trans('custom.item_must_not_have_negative_cost'), 500);
                 }
 
                 if($updateItem->itemFinanceCategoryID==1){
                     if ($updateItem->currentWareHouseStockQty <= 0) {
-                        return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                        return $this->sendError(trans('custom.warehouse_stock_qty_is_0_for_item', ['itemCode' => $updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription]), 500);
                     }
                     if ($updateItem->currentStockQty <= 0) {
-                        return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                        return $this->sendError(trans('custom.stock_qty_is_0_for_item', ['itemCode' => $updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription]), 500);
                     }
                     if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                        return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                        return $this->sendError(trans('custom.insufficient_stock_qty_for_item', ['itemCode' => $updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription]), 500);
                     }
 
                     if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                        return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                        return $this->sendError(trans('custom.insufficient_warehouse_qty_for_item', ['itemCode' => $updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription]), 500);
                     }
                 }
 
@@ -701,7 +691,7 @@ class DeliveryOrderAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
-                return $this->sendResponseWithDetails($deliveryOrder->toArray(), 'Delivery order confirmed successfully',1,$confirm['data'] ?? null);
+                return $this->sendResponseWithDetails($deliveryOrder->toArray(), trans('custom.delivery_order_confirmed_successfully'),1,$confirm['data'] ?? null);
             }
 
         }else{

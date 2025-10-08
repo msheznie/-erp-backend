@@ -361,6 +361,13 @@ return [
         'mainCategory' => 'الفئة الرئيسية',
         'subCategory' => 'الفئة الفرعية',
         'customer' => 'العميل',
-
+        'transactionCurrencyID' => 'معرف العملة',
+        'customerID' => 'العميل',
+        'companyFinanceYearID' => 'السنة المالية',
+        'companyFinancePeriodID' => 'الفترة المالية',
+        'serviceLineSystemID' => 'القسم',
+        'wareHouseSystemCode' => 'المستودع',
+        'deliveryOrderDate' => 'تاريخ المستند',
+        'CurrencyCode' => 'رمز العملة',
     ],
 ];

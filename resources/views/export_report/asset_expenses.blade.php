@@ -28,7 +28,7 @@
 @php $grandTotal = 0 @endphp
 
 @foreach($headers as $header)
-    <tr><th><B>{{ $header[0]['AccountCode'] }} - {{ $header[0]['AccountDescription'] }}</B></th></tr>
+    <tr><th><B>{{ $header[0][trans('custom.account_code')] }} - {{ $header[0][trans('custom.account_description')] }}</B></th></tr>
 <table>
     <thead>
         <tr>
@@ -42,16 +42,16 @@
     <tbody>
     @php $total = 0 @endphp
     @foreach($reportData as $item)
-        @if($item['AccountCode'] == $header[0]['AccountCode'])
+        @if($item[trans('custom.account_code')] == $header[0][trans('custom.account_code')])
         <tr>
-            <td>{{$item['AssetCode']}}</td>
-            <td>{{$item['AssetDescription']}}</td>
-            <td>{{$item['DocumentCode']}}</td>
-            <td>{{ \Carbon\Carbon::parse($item['DocumentDate'])->format("d/m/Y") }}</td>
-            <td>{{$item['Amount']}}</td>
+            <td>{{$item[trans('custom.asset_code')]}}</td>
+            <td>{{$item[trans('custom.asset_description')]}}</td>
+            <td>{{$item[trans('custom.document_code')]}}</td>
+            <td>{{ \Carbon\Carbon::parse($item[trans('custom.document_date')])->format("d/m/Y") }}</td>
+            <td>{{$item[trans('custom.amount')]}}</td>
         </tr>
 
-        @php $total += $item['Amount'] @endphp
+        @php $total += $item[trans('custom.amount')] @endphp
         @endif
 
     @endforeach

@@ -948,7 +948,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                         {
                             foreach ($QuoDetailExist as $row) {
-                                $itemDrt = $row['itemPrimaryCode'] . " already exist";
+                                $itemDrt = $row['itemPrimaryCode'] . trans('custom.already_exists');
                                 $itemExistArray[] = [$itemDrt];
                             }
                         }

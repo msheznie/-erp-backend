@@ -229,7 +229,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         $erpAttributes = $this->erpAttributesRepository->update($input, $id);
 
-        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erpattributes_updated_successfully'));
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_updated_successfully'));
         
     }
 
@@ -289,7 +289,7 @@ class ErpAttributesAPIController extends AppBaseController
             ->count();
 
         if($attributeActiveValidation > 0){
-            return $this->sendError('There are some pending assets awaiting approval', 500);
+            return $this->sendError(trans('custom.there_are_some_pending_assets_awaiting_approval'), 500);
         }
 
         if ($erpAttributes->document_id == "SUBCAT") {
@@ -384,7 +384,7 @@ class ErpAttributesAPIController extends AppBaseController
                 ->count();
 
             if($attributeActiveValidation > 0){
-                return $this->sendError('There are some pending assets awaiting approval', 500);
+                return $this->sendError(trans('custom.there_are_some_pending_assets_awaiting_approval'), 500);
             }
         }
 
@@ -406,14 +406,14 @@ class ErpAttributesAPIController extends AppBaseController
             if($erpAttributes->field_type_id == 3){
                 $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->count();
                  if($dropdownValues > 0){
-                     return $this->sendError('Unable to update. Dropdown value is added for the attribute', 500);
+                     return $this->sendError(trans('custom.unable_to_update_dropdown_value_is_added_for_the_attribute'), 500);
                  }
              }
         }
 
         if($erpAttributes->description != $input['description']){
             if(empty($input['description'])){
-                return $this->sendError('Unable to update. Description is empty', 500);
+                return $this->sendError(trans('custom.unable_to_update_description_is_empty'), 500);
             }
             $attributesValidateDescription = ErpAttributes::where('description', $input['description'])->count();
             if($attributesValidateDescription > 0){
@@ -505,7 +505,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         if($dropdownValues->description != $input['description']){
             if(empty($input['description'])){
-                return $this->sendError('Unable to update. Description is empty', 500);
+                return $this->sendError(trans('custom.unable_to_update_description_is_empty'), 500);
             }
             $dropdownValidateDescription = ErpAttributesDropdown::where('description', $input['description'])->count();
             if($dropdownValidateDescription > 0){
