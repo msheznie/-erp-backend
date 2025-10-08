@@ -9199,7 +9199,7 @@ return
     'disposal_code' => 'Disposal Code',
     'asset_code' => 'Asset Code',
     'are_you_sure_you_want_to_proceed' => 'Are you sure you want to proceed',
-    'quotation_so_report' => 'quotation_so_report'
+    'quotation_so_report' => 'quotation_so_report',
     
     // Additional translations for ProcumentOrderAPIController
     'invoice_payment' => 'Invoice Payment',
