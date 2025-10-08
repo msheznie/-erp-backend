@@ -29,10 +29,10 @@ class AuthServiceProvider extends ServiceProvider
 
         if ($this->app->resolved(\League\OAuth2\Server\AuthorizationServer::class)) {
             $server = $this->app->make(\League\OAuth2\Server\AuthorizationServer::class);
-            $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('P1D'));
+            $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('PT12H'));
         } else {
             $this->app->afterResolving(\League\OAuth2\Server\AuthorizationServer::class, function ($server) {
-                $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('P1D'));
+                $server->enableGrantType(new \Laravel\Passport\Bridge\PersonalAccessGrant(), new \DateInterval('PT12H'));
             });
         }
     }
