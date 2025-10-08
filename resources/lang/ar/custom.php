@@ -5751,7 +5751,7 @@ return
     'upload_customer_invoice_retrieved_successfully' => 'تم استرداد تحميل فاتورة العميل بنجاح',
     'upload_customer_invoice_saved_successfully' => 'تم حفظ تحميل فاتورة العميل بنجاح',
     'upload_customer_invoices_retrieved_successfully' => 'تم استرداد تحميلات فواتير العملاء بنجاح',
-    'upload_failed_due_to_changes_made_in_the_excel_tem' => 'فشل التحميل بسبب التغييرات التي تم إجراؤها في قالب Excel',
+    'upload_failed_due_to_changes_made_in_the_excel_tem' => 'فشل التحميل بسبب التغييرات التي تم إجراؤها في قالب',
     'upload_in_progress_cannot_be_deleted' => 'التحميل قيد التقدم. لا يمكن الحذف.',
     'uploadcustomerinvoice_updated_successfully' => 'تم تحديث تحميل فاتورة العميل بنجاح',
     'uploaded_data_format_is_invalid' => 'تنسيق البيانات المحملة غير صالح',
@@ -9097,4 +9097,11 @@ return
     'asset_code' => 'رمز الأصل',
     'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة',
     'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت'
+    
+    // Additional translations for ProcumentOrderAPIController
+    'invoice_payment' => 'دفع الفاتورة',
+    'expense_account_configuration_incorrect' => 'إعداد حساب المصروفات غير صحيح. يرجى تفعيل includePLforGRVYN للعنصر(ات) :items',
+    'finance_category_not_found' => 'فئة التمويل للعنصر :itemCode غير موجودة',
+    'finance_category_accounts_not_updated' => 'حسابات فئة التمويل غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة التمويل للعنصر :itemCode',
+    'finance_category_accounts_not_updated_multiple' => 'حسابات فئة التمويل غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة التمويل للعنصر(ات) :items',
   ];

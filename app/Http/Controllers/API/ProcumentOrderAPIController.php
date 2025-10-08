@@ -9149,11 +9149,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.file_type_not_allowed'), 500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.max_file_size_exceeded'), 500);
             }
 
             $disk = 'local';

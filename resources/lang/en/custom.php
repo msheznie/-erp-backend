@@ -9200,4 +9200,11 @@ return
     'asset_code' => 'Asset Code',
     'are_you_sure_you_want_to_proceed' => 'Are you sure you want to proceed',
     'quotation_so_report' => 'quotation_so_report'
+    
+    // Additional translations for ProcumentOrderAPIController
+    'invoice_payment' => 'Invoice Payment',
+    'expense_account_configuration_incorrect' => 'Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) :items',
+    'finance_category_not_found' => 'Finance category of :itemCode not found',
+    'finance_category_accounts_not_updated' => 'Finance category accounts are not updated correctly. Please check the finance category configurations for the item :itemCode',
+    'finance_category_accounts_not_updated_multiple' => 'Finance category accounts are not updated correctly. Please check the finance category configurations for the item(s) :items',
   ];
