@@ -9096,7 +9096,7 @@ return
     'disposal_code' => 'رمز التخلص',
     'asset_code' => 'رمز الأصل',
     'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة',
-    'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت'
+    'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت',
     
     // Additional translations for ProcumentOrderAPIController
     'invoice_payment' => 'دفع الفاتورة',
