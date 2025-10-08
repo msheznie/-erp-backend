@@ -65,7 +65,7 @@ class EmployeeProfileAPIController extends AppBaseController
         $this->employeeProfileRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeProfiles = $this->employeeProfileRepository->all();
 
-        return $this->sendResponse($employeeProfiles->toArray(), 'Employee Profiles retrieved successfully');
+        return $this->sendResponse($employeeProfiles->toArray(), trans('custom.employee_profiles_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmployeeProfileAPIController extends AppBaseController
 
         $employeeProfiles = $this->employeeProfileRepository->create($input);
 
-        return $this->sendResponse($employeeProfiles->toArray(), 'Employee Profile saved successfully');
+        return $this->sendResponse($employeeProfiles->toArray(), trans('custom.employee_profile_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmployeeProfileAPIController extends AppBaseController
         $employeeProfile = $this->employeeProfileRepository->findWithoutFail($id);
 
         if (empty($employeeProfile)) {
-            return $this->sendError('Employee Profile not found');
+            return $this->sendError(trans('custom.employee_profile_not_found'));
         }
 
-        return $this->sendResponse($employeeProfile->toArray(), 'Employee Profile retrieved successfully');
+        return $this->sendResponse($employeeProfile->toArray(), trans('custom.employee_profile_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmployeeProfileAPIController extends AppBaseController
         $employeeProfile = $this->employeeProfileRepository->findWithoutFail($id);
 
         if (empty($employeeProfile)) {
-            return $this->sendError('Employee Profile not found');
+            return $this->sendError(trans('custom.employee_profile_not_found'));
         }
 
         $employeeProfile = $this->employeeProfileRepository->update($input, $id);
 
-        return $this->sendResponse($employeeProfile->toArray(), 'EmployeeProfile updated successfully');
+        return $this->sendResponse($employeeProfile->toArray(), trans('custom.employeeprofile_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class EmployeeProfileAPIController extends AppBaseController
         $employeeProfile = $this->employeeProfileRepository->findWithoutFail($id);
 
         if (empty($employeeProfile)) {
-            return $this->sendError('Employee Profile not found');
+            return $this->sendError(trans('custom.employee_profile_not_found'));
         }
 
         $employeeProfile->delete();
 
-        return $this->sendResponse($id, 'Employee Profile deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_profile_deleted_successfully'));
     }
 }

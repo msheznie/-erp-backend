@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-md-6">
-        <p><b>Report Type :<span class="p-l-10"></span> Sales Detail </b></p>
-        <p><b>From Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }} </b></p>
-        <p><b>To Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </b></p>
+        <p><b>{{ __('custom.report_type') }} :<span class="p-l-10"></span> {{ __('custom.sales_detail') }} </b></p>
+        <p><b>{{ __('custom.from_date') }} :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }} </b></p>
+        <p><b>{{ __('custom.to_date') }} :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </b></p>
     </div>
 </div>
 <div class="row">
@@ -11,24 +11,24 @@
             <table class="table table-sm table-striped hover table-bordered" width="100%">
                 <thead>
                 <tr>
-                    <th>Location Code</th>
-                    <th>Location</th>
-                    <th>Segment</th>
-                    <th>Transaction Type</th>
-                    <th>Transaction Code</th>
-                    <th>Transaction Date</th>
-                    <th>Narration</th>
-                    <th>Item Code</th>
-                    <th>Item Description</th>
-                    <th>UOM</th>
-                    <th>Barcode</th>
-                    <th>Sub Category</th>
-                    <th>Revenue Acc Code</th>
-                    <th>Sold Qty</th>
-                    <th>Currency</th>
-                    <th>Sold Price</th>
-                    <th>Net Sales Amount</th>
-                    <th>Discount Amount</th>
+                    <th>{{ __('custom.location_code') }}</th>
+                    <th>{{ __('custom.location') }}</th>
+                    <th>{{ __('custom.segment') }}</th>
+                    <th>{{ __('custom.transaction_type') }}</th>
+                    <th>{{ __('custom.transaction_code') }}</th>
+                    <th>{{ __('custom.transaction_date') }}</th>
+                    <th>{{ __('custom.narration') }}</th>
+                    <th>{{ __('custom.item_code') }}</th>
+                    <th>{{ __('custom.item_description') }}</th>
+                    <th>{{ __('custom.uom') }}</th>
+                    <th>{{ __('custom.barcode') }}</th>
+                    <th>{{ __('custom.sub_category') }}</th>
+                    <th>{{ __('custom.revenue_acc_code') }}</th>
+                    <th>{{ __('custom.sold_qty') }}</th>
+                    <th>{{ __('custom.currency') }}</th>
+                    <th>{{ __('custom.sold_price') }}</th>
+                    <th>{{ __('custom.net_sales_amount') }}</th>
+                    <th>{{ __('custom.discount_amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>

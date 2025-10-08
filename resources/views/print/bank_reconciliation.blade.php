@@ -1,7 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Bank Reconciliation</title>
+    <title>{{ __('custom.bank_reconciliation') }}</title>
     <style>
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         @page {
             margin-left: 30px;
             margin-right: 30px;
@@ -179,7 +201,7 @@
                     </tr>
                     <tr>
                         <td colspan="3">
-                            <h6 style="font-size: 18px"> Bank Reconciliation </h6>
+                            <h6 style="font-size: 18px"> {{ __('custom.bank_reconciliation') }} </h6>
                         </td>
                     </tr>
                 </table>
@@ -207,10 +229,10 @@
                      </tr>--}}
                     <tr>
                         <td>
-                            <span class="font-weight-bold">Document Code</span>
+                            <span style="font-weight: bold;">{{ __('custom.document_code') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->bankRecPrimaryCode}}</span>
@@ -218,10 +240,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold">Currency</span>
+                            <span style="font-weight: bold;">{{ __('custom.currency') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -235,10 +257,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> As of</span>
+                            <span style="font-weight: bold;">{{ __('custom.as_of') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{ \App\helper\Helper::dateFormat($entity->bankRecAsOf)}}
@@ -246,10 +268,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold">Month</span>
+                            <span style="font-weight: bold;">{{ __('custom.month') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->month_by)
@@ -259,10 +281,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Year </span>
+                            <span style="font-weight: bold;">{{ __('custom.year') }}</span>
                         </td>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->year}}
@@ -270,9 +292,9 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Bank </span>
+                            <span style="font-weight: bold;">{{ __('custom.bank') }}</span>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->bank_account)
@@ -284,9 +306,9 @@
                     </tr>
                     <tr>
                         <td>
-                            <span class="font-weight-bold"> Account No. </span>
+                            <span style="font-weight: bold;">{{ __('custom.account_no') }}</span>
                         <td>
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             @if($entity->bank_account)
@@ -302,7 +324,7 @@
     <table width="100%">
         <tr width="100%">
             <td width="50%">
-                Closing Bank Balance
+                {{ __('custom.bank_balance') }}
             </td>
             <td width="50%" class="text-right">
                 <b>{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
@@ -310,17 +332,17 @@
         </tr>
     </table>
     <hr>
-    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px">Un-Cleared Receipt</div>
+    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px">{{ __('custom.uncleared_receipts') }}</div>
     <div>
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-left">Document Date</th>
-                <th class="text-left">Document code</th>
-                <th class="text-left">Payee Name</th>
-                <th class="text-left">Cheque No</th>
-                <th class="text-right">Amount</th>
+                <th class="text-left">{{ __('custom.document_date') }}</th>
+                <th class="text-left">{{ __('custom.document_code') }}</th>
+                <th class="text-left">{{ __('custom.payee_name') }}</th>
+                <th class="text-left">{{ __('custom.cheque_no') }}</th>
+                <th class="text-right">{{ __('custom.amount') }}</th>
                 <th class="text-left"></th>
             </tr>
             </thead>
@@ -337,24 +359,27 @@
                 </tr>
             @endforeach
             <tr>
-                <td colspan="5" class="text-right"><b>Total Un-Cleared Receipt</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                 <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
     </div>
-    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px"> Un-Cleared Payment</div>
+    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px"> {{ __('custom.uncleared_payments') }}</div>
     <div >
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
-                <th class="text-left">Document Date</th>
-                <th class="text-left">Document code</th>
-                <th class="text-left">Payee Name</th>
-                <th class="text-left">Cheque No</th>
-                <th class="text-right">Amount</th>
+                <th class="text-left">{{ __('custom.document_date') }}</th>
+                <th class="text-left">{{ __('custom.document_code') }}</th>
+                <th class="text-left">{{ __('custom.payee_name') }}</th>
+                <th class="text-left">{{ __('custom.cheque_no') }}</th>
+                <th class="text-right">{{ __('custom.amount') }}</th>
                 <th class="text-left"></th>
             </tr>
             </thead>
@@ -371,13 +396,19 @@
                 </tr>
             @endforeach
             <tr>
-                <td colspan="5" class="text-right"><b>Total Un-Cleared Payment</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                 <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
             <tr>
-                <td colspan="5" class="text-right"><b>Book Balance</b></td>
-                <td></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                <td  class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
                 <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
@@ -390,7 +421,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Confirmed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -407,7 +438,7 @@
                     <table>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                                <span style="font-weight: bold;">{{ __('custom.reviewed_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -419,7 +450,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold;">{{ __('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

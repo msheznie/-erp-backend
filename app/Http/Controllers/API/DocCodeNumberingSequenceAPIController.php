@@ -64,7 +64,7 @@ class DocCodeNumberingSequenceAPIController extends AppBaseController
         $this->docCodeNumberingSequenceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $docCodeNumberingSequences = $this->docCodeNumberingSequenceRepository->all();
 
-        return $this->sendResponse($docCodeNumberingSequences->toArray(), 'Doc Code Numbering Sequences retrieved successfully');
+        return $this->sendResponse($docCodeNumberingSequences->toArray(), trans('custom.doc_code_numbering_sequences_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocCodeNumberingSequenceAPIController extends AppBaseController
 
         $docCodeNumberingSequence = $this->docCodeNumberingSequenceRepository->create($input);
 
-        return $this->sendResponse($docCodeNumberingSequence->toArray(), 'Doc Code Numbering Sequence saved successfully');
+        return $this->sendResponse($docCodeNumberingSequence->toArray(), trans('custom.doc_code_numbering_sequence_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocCodeNumberingSequenceAPIController extends AppBaseController
         $docCodeNumberingSequence = $this->docCodeNumberingSequenceRepository->findWithoutFail($id);
 
         if (empty($docCodeNumberingSequence)) {
-            return $this->sendError('Doc Code Numbering Sequence not found');
+            return $this->sendError(trans('custom.doc_code_numbering_sequence_not_found'));
         }
 
-        return $this->sendResponse($docCodeNumberingSequence->toArray(), 'Doc Code Numbering Sequence retrieved successfully');
+        return $this->sendResponse($docCodeNumberingSequence->toArray(), trans('custom.doc_code_numbering_sequence_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocCodeNumberingSequenceAPIController extends AppBaseController
         $docCodeNumberingSequence = $this->docCodeNumberingSequenceRepository->findWithoutFail($id);
 
         if (empty($docCodeNumberingSequence)) {
-            return $this->sendError('Doc Code Numbering Sequence not found');
+            return $this->sendError(trans('custom.doc_code_numbering_sequence_not_found'));
         }
 
         $docCodeNumberingSequence = $this->docCodeNumberingSequenceRepository->update($input, $id);
 
-        return $this->sendResponse($docCodeNumberingSequence->toArray(), 'DocCodeNumberingSequence updated successfully');
+        return $this->sendResponse($docCodeNumberingSequence->toArray(), trans('custom.doccodenumberingsequence_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocCodeNumberingSequenceAPIController extends AppBaseController
         $docCodeNumberingSequence = $this->docCodeNumberingSequenceRepository->findWithoutFail($id);
 
         if (empty($docCodeNumberingSequence)) {
-            return $this->sendError('Doc Code Numbering Sequence not found');
+            return $this->sendError(trans('custom.doc_code_numbering_sequence_not_found'));
         }
 
         $docCodeNumberingSequence->delete();

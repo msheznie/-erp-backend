@@ -65,7 +65,7 @@ class PoCategoryAPIController extends AppBaseController
         $this->poCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poCategories = $this->poCategoryRepository->all();
 
-        return $this->sendResponse($poCategories->toArray(), 'Po Categories retrieved successfully');
+        return $this->sendResponse($poCategories->toArray(), trans('custom.po_categories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PoCategoryAPIController extends AppBaseController
 
         $poCategory = $this->poCategoryRepository->create($input);
 
-        return $this->sendResponse($poCategory->toArray(), 'Po Category saved successfully');
+        return $this->sendResponse($poCategory->toArray(), trans('custom.po_category_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PoCategoryAPIController extends AppBaseController
         $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
         if (empty($poCategory)) {
-            return $this->sendError('Po Category not found');
+            return $this->sendError(trans('custom.po_category_not_found'));
         }
 
-        return $this->sendResponse($poCategory->toArray(), 'Po Category retrieved successfully');
+        return $this->sendResponse($poCategory->toArray(), trans('custom.po_category_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PoCategoryAPIController extends AppBaseController
         $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
         if (empty($poCategory)) {
-            return $this->sendError('Po Category not found');
+            return $this->sendError(trans('custom.po_category_not_found'));
         }
 
         $poCategory = $this->poCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($poCategory->toArray(), 'PoCategory updated successfully');
+        return $this->sendResponse($poCategory->toArray(), trans('custom.pocategory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PoCategoryAPIController extends AppBaseController
         $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
         if (empty($poCategory)) {
-            return $this->sendError('Po Category not found');
+            return $this->sendError(trans('custom.po_category_not_found'));
         }
 
         $poCategory->delete();

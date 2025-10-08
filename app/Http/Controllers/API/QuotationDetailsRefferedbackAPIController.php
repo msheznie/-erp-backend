@@ -76,7 +76,7 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
         $this->quotationDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationDetailsRefferedbacks = $this->quotationDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($quotationDetailsRefferedbacks->toArray(), 'Quotation Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($quotationDetailsRefferedbacks->toArray(), trans('custom.quotation_details_refferedbacks_retrieved_successf'));
     }
 
     /**
@@ -123,7 +123,7 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
 
         $quotationDetailsRefferedbacks = $this->quotationDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($quotationDetailsRefferedbacks->toArray(), 'Quotation Details Refferedback saved successfully');
+        return $this->sendResponse($quotationDetailsRefferedbacks->toArray(), trans('custom.quotation_details_refferedback_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
         $quotationDetailsRefferedback = $this->quotationDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($quotationDetailsRefferedback)) {
-            return $this->sendError('Quotation Details Refferedback not found');
+            return $this->sendError(trans('custom.quotation_details_refferedback_not_found'));
         }
 
-        return $this->sendResponse($quotationDetailsRefferedback->toArray(), 'Quotation Details Refferedback retrieved successfully');
+        return $this->sendResponse($quotationDetailsRefferedback->toArray(), trans('custom.quotation_details_refferedback_retrieved_successfu'));
     }
 
     /**
@@ -230,12 +230,12 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
         $quotationDetailsRefferedback = $this->quotationDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($quotationDetailsRefferedback)) {
-            return $this->sendError('Quotation Details Refferedback not found');
+            return $this->sendError(trans('custom.quotation_details_refferedback_not_found'));
         }
 
         $quotationDetailsRefferedback = $this->quotationDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($quotationDetailsRefferedback->toArray(), 'QuotationDetailsRefferedback updated successfully');
+        return $this->sendResponse($quotationDetailsRefferedback->toArray(), trans('custom.quotationdetailsrefferedback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
         $quotationDetailsRefferedback = $this->quotationDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($quotationDetailsRefferedback)) {
-            return $this->sendError('Quotation Details Refferedback not found');
+            return $this->sendError(trans('custom.quotation_details_refferedback_not_found'));
         }
 
         $quotationDetailsRefferedback->delete();
 
-        return $this->sendResponse($id, 'Quotation Details Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_details_refferedback_deleted_successfull'));
     }
 
     public function getSQHDetailsHistory(Request $request)
@@ -300,6 +300,6 @@ class QuotationDetailsRefferedbackAPIController extends AppBaseController
             ->where('timesReferred', $timesReferred)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Quotation refferedback details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.quotation_refferedback_details_retrieved_successfu'));
     }
 }

@@ -1,29 +1,26 @@
 <style type="text/css">
-    @page {
-        margin: 100px 30px 40px;
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
     }
 
-    #header {
-        position: fixed;
-        left: 0px;
-        top: -100px;
-        right: 0px;
-        height: 50px;
-        text-align: center;
+    .text-left {
+        text-align: right !important;
     }
 
-    #footer {
-        position: fixed;
-        left: 0px;
-        bottom: 0px;
-        right: 0px;
-        height: 0px;
-        font-size: 10px;
+    .text-right {
+        text-align: left !important;
     }
 
-    #footer .page:after {
-        content: counter(page, upper-roman);
+    table {
+        direction: rtl;
     }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
 
     body {
         font-size: 10px;
@@ -114,54 +111,11 @@
         margin-top: 0 !important;
     }
 
-    .pagenum:after {
-        content: counter(page);
-    }
-
     .content {
         margin-bottom: 45px;
     }
 
 </style>
-<div id="footer">
-    <table style="width:100%;">
-        <tr>
-            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <br><br>
-                        <span class="font-weight-bold">Customer Invoice Aging Summary</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<br><br>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         <?php $ageRangeGrandTotal = [] ?>
@@ -171,11 +125,11 @@
                 <td colspan="9"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="10%">Customer Code</th>
-                <th width="20%">Customer Name</th>
-                <th width="7%">Credit Days</th>
-                <th width="10%">Currency</th>
-                <th width="10%">Amount</th>
+                <th width="10%">{{trans('custom.customer_code')}}</th>
+                <th width="20%">{{trans('custom.customer_name')}}</th>
+                <th width="7%">{{trans('custom.credit_days')}}</th>
+                <th width="10%">{{trans('custom.currency')}}</th>
+                <th width="10%">{{trans('custom.amount')}}</th>
                 @foreach ($agingRange as $age)
                     <th width="10%">{{$age}}</th>
                 @endforeach
@@ -205,8 +159,8 @@
                     {{$ageSubTotal += $ageTotal}}
                 @endforeach
                 <tr>
-                    <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Sub Total:</b></td>
+                    <td colspan="3" style="border-bottom: none; border-left: none;"
+                        class="text-right"><b>{{trans('custom.sub_total')}}:</b></td>
 
                      
                     <td style="text-align: left">
@@ -231,8 +185,8 @@
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+            <td colspan="3" style="border-bottom: none; border-left: none;"
+                class="text-right"><b>{{trans('custom.grand_total')}}:</b></td>
             <td style="text-align: left">
                 <b>N/A</b>
             </td>

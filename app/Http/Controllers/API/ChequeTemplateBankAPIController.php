@@ -65,7 +65,7 @@ class ChequeTemplateBankAPIController extends AppBaseController
         $this->chequeTemplateBankRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chequeTemplateBanks = $this->chequeTemplateBankRepository->with('template')->get();
 
-        return $this->sendResponse($chequeTemplateBanks->toArray(), 'Cheque Template Banks retrieved successfully');
+        return $this->sendResponse($chequeTemplateBanks->toArray(), trans('custom.cheque_template_banks_retrieved_successfully'));
     }
 
     /**
@@ -161,10 +161,10 @@ class ChequeTemplateBankAPIController extends AppBaseController
         $chequeTemplateBank = $this->chequeTemplateBankRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateBank)) {
-            return $this->sendError('Cheque Template Bank not found');
+            return $this->sendError(trans('custom.cheque_template_bank_not_found'));
         }
 
-        return $this->sendResponse($chequeTemplateBank->toArray(), 'Cheque Template Bank retrieved successfully');
+        return $this->sendResponse($chequeTemplateBank->toArray(), trans('custom.cheque_template_bank_retrieved_successfully'));
     }
 
     /**
@@ -221,12 +221,12 @@ class ChequeTemplateBankAPIController extends AppBaseController
         $chequeTemplateBank = $this->chequeTemplateBankRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateBank)) {
-            return $this->sendError('Cheque Template Bank not found');
+            return $this->sendError(trans('custom.cheque_template_bank_not_found'));
         }
 
         $chequeTemplateBank = $this->chequeTemplateBankRepository->update($input, $id);
 
-        return $this->sendResponse($chequeTemplateBank->toArray(), 'ChequeTemplateBank updated successfully');
+        return $this->sendResponse($chequeTemplateBank->toArray(), trans('custom.chequetemplatebank_updated_successfully'));
     }
 
     /**
@@ -273,7 +273,7 @@ class ChequeTemplateBankAPIController extends AppBaseController
         $chequeTemplateBank = $this->chequeTemplateBankRepository->findWithoutFail($id);
 
         if (empty($chequeTemplateBank)) {
-            return $this->sendError('Cheque Template Bank not found');
+            return $this->sendError(trans('custom.cheque_template_bank_not_found'));
         }
 
         $chequeTemplateBank->delete();
@@ -300,7 +300,7 @@ class ChequeTemplateBankAPIController extends AppBaseController
                                            ->where('bank_id','=',$bankId);
 
 
-        // return $this->sendResponse($itemCompanies, 'ChequeTemplateBank updated successfully');
+        // return $this->sendResponse($itemCompanies, trans('custom.chequetemplatebank_updated_successfully'));
         // die();
 
         return \DataTables::of($itemCompanies)

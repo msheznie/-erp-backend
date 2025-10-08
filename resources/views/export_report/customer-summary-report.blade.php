@@ -11,22 +11,22 @@
                     </tr>
                     <tr>
                         <td colspan="22"  style="text-align: center;">
-                            <h2>Customer Summary Report </h2> 
+                            <h2>{{ trans('custom.customer_summary_report') }} </h2>
                         </td>
                     </tr>
 
                     <tr></tr>
                     <tr>
-                        <th colspan="1" style="text-align:left;">As of </th>
+                        <th colspan="1" style="text-align:left;">{{ trans('custom.as_of') }} </th>
                         <th colspan="2" style="text-align:left;">{{\App\helper\Helper::dateFormat($fromDate) }}</th>
                     </tr>
                     <tr>
-                        <th colspan="1" style="text-align:left;">Year </th>
+                        <th colspan="1" style="text-align:left;">{{ trans('custom.year') }} </th>
                         <th colspan="2" style="text-align:left;">{{ $year }}</th>
 
                     </tr>
                     <tr>
-                        <th colspan="1" style="text-align:left;">Currency </th>
+                        <th colspan="1" style="text-align:left;">{{ trans('custom.currency') }} </th>
                         <th colspan="2" style="text-align:left;">{{ $currency }}</th>
 
                     </tr>
@@ -39,27 +39,27 @@
 
 <div class="row">
     <div class="col-md-12">
-        <h3>Revenue Summary</h3>
+        <h3>{{ trans('custom.revenue_summary') }}</h3>
     </div>
 </div>
 <div >
     <table>
         <thead>
             <tr style="background-color: #d6e6f4">
-                <th colspan="2">Customer</th>
-                <th colspan="1">Jan</th>
-                <th colspan="1">Feb</th>
-                <th colspan="1">Mar</th>
-                <th colspan="1">Apr</th>
-                <th colspan="1">May</th>
-                <th colspan="1">Jun</th>
-                <th colspan="1">Jul</th>
-                <th colspan="1">Aug</th>
-                <th colspan="1">Sep</th>
-                <th colspan="1">Oct</th>
-                <th colspan="1">Nov</th>
-                <th colspan="1">Dec</th>
-                <th colspan="7">Total</th>
+                <th colspan="2">{{ trans('custom.customer') }}</th>
+                <th colspan="1">{{ trans('custom.jan') }}</th>
+                <th colspan="1">{{ trans('custom.feb') }}</th>
+                <th colspan="1">{{ trans('custom.mar') }}</th>
+                <th colspan="1">{{ trans('custom.apr') }}</th>
+                <th colspan="1">{{ trans('custom.may') }}</th>
+                <th colspan="1">{{ trans('custom.jun') }}</th>
+                <th colspan="1">{{ trans('custom.jul') }}</th>
+                <th colspan="1">{{ trans('custom.aug') }}</th>
+                <th colspan="1">{{ trans('custom.sep') }}</th>
+                <th colspan="1">{{ trans('custom.oct') }}</th>
+                <th colspan="1">{{ trans('custom.nov') }}</th>
+                <th colspan="1">{{ trans('custom.dec') }}</th>
+                <th colspan="7">{{ trans('custom.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -86,7 +86,7 @@
             @if (!empty($revenueTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: right">
-                        <b style="text-align: right;"> Total:</b>
+                        <b style="text-align: right;"> {{ trans('custom.total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($revenueTotal['Jan']) ? number_format($revenueTotal['Jan'], $decimalPlace) : 0}}
@@ -138,27 +138,27 @@
 
 <div class="row">
     <div class="col-md-12">
-        <h3>Collection Summary</h3>
+        <h3>{{ trans('custom.collection_summary') }}</h3>
     </div>
 </div>
 <div >
     <table>
         <thead>
             <tr style="background-color: #d6e6f4">
-                <th colspan="2">Customer</th>
-                <th colspan="1">Jan</th>
-                <th colspan="1">Feb</th>
-                <th colspan="1">Mar</th>
-                <th colspan="1">Apr</th>
-                <th colspan="1">May</th>
-                <th colspan="1">Jun</th>
-                <th colspan="1">Jul</th>
-                <th colspan="1">Aug</th>
-                <th colspan="1">Sep</th>
-                <th colspan="1">Oct</th>
-                <th colspan="1">Nov</th>
-                <th colspan="1">Dec</th>
-                <th colspan="7">Total</th>
+                <th colspan="2">{{ trans('custom.customer') }}</th>
+                <th colspan="1">{{ trans('custom.jan') }}</th>
+                <th colspan="1">{{ trans('custom.feb') }}</th>
+                <th colspan="1">{{ trans('custom.mar') }}</th>
+                <th colspan="1">{{ trans('custom.apr') }}</th>
+                <th colspan="1">{{ trans('custom.may') }}</th>
+                <th colspan="1">{{ trans('custom.jun') }}</th>
+                <th colspan="1">{{ trans('custom.jul') }}</th>
+                <th colspan="1">{{ trans('custom.aug') }}</th>
+                <th colspan="1">{{ trans('custom.sep') }}</th>
+                <th colspan="1">{{ trans('custom.oct') }}</th>
+                <th colspan="1">{{ trans('custom.nov') }}</th>
+                <th colspan="1">{{ trans('custom.dec') }}</th>
+                <th colspan="7">{{ trans('custom.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -185,7 +185,7 @@
             @if (!empty($collectionTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: right">
-                        <b style="text-align: right;">Total:</b>
+                        <b style="text-align: right;">{{ trans('custom.total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($collectionTotal['Jan']) ? number_format($collectionTotal['Jan'], $decimalPlace) : 0}}
@@ -237,7 +237,7 @@
 
 <div class="row">
     <div class="col-md-12">
-        <h3>Summary</h3>
+        <h3>{{ trans('custom.summary') }}</h3>
     </div>
 </div>
 <div >
@@ -245,19 +245,19 @@
         <thead>
             <tr style="background-color: #d6e6f4">
                 <th colspan="2"></th>
-                <th colspan="1">Jan</th>
-                <th colspan="1">Feb</th>
-                <th colspan="1">Mar</th>
-                <th colspan="1">Apr</th>
-                <th colspan="1">May</th>
-                <th colspan="1">Jun</th>
-                <th colspan="1">Jul</th>
-                <th colspan="1">Aug</th>
-                <th colspan="1">Sep</th>
-                <th colspan="1">Oct</th>
-                <th colspan="1">Nov</th>
-                <th colspan="1">Dec</th>
-                <th colspan="7">Total</th>
+                <th colspan="1">{{ trans('custom.jan') }}</th>
+                <th colspan="1">{{ trans('custom.feb') }}</th>
+                <th colspan="1">{{ trans('custom.mar') }}</th>
+                <th colspan="1">{{ trans('custom.apr') }}</th>
+                <th colspan="1">{{ trans('custom.may') }}</th>
+                <th colspan="1">{{ trans('custom.jun') }}</th>
+                <th colspan="1">{{ trans('custom.jul') }}</th>
+                <th colspan="1">{{ trans('custom.aug') }}</th>
+                <th colspan="1">{{ trans('custom.sep') }}</th>
+                <th colspan="1">{{ trans('custom.oct') }}</th>
+                <th colspan="1">{{ trans('custom.nov') }}</th>
+                <th colspan="1">{{ trans('custom.dec') }}</th>
+                <th colspan="7">{{ trans('custom.total') }}</th>
             </tr>
         </thead>
 {{--        <tbody>--}}
@@ -285,7 +285,7 @@
             @if (!empty($serviceLineTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: left">
-                        <b style="text-align: right;">Revenue Total:</b>
+                        <b style="text-align: right;">{{ trans('custom.revenue_total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($revenueTotal['Jan']) ? number_format($revenueTotal['Jan'], $decimalPlace) : 0}}
@@ -331,7 +331,7 @@
             @if (!empty($collectionTotal) )
                 <tr style="background-color: #d6e6f4;">
                     <td  colspan="2"  style="text-align: right">
-                        <b style="text-align: right;">Collection  Total:</b>
+                        <b style="text-align: right;">{{ trans('custom.collection_total') }}:</b>
                     </td>
                     <td colspan="1"  style="text-align: right">
                             {{isset($collectionTotal['Jan']) ? number_format($collectionTotal['Jan'], $decimalPlace) : 0}}

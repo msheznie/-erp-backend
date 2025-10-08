@@ -75,7 +75,7 @@ class PaymentBankTransferDetailRefferedBackAPIController extends AppBaseControll
         $this->paymentBankTransferDetailRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentBankTransferDetailRefferedBacks = $this->paymentBankTransferDetailRefferedBackRepository->all();
 
-        return $this->sendResponse($paymentBankTransferDetailRefferedBacks->toArray(), 'Payment Bank Transfer Detail Reffered Backs retrieved successfully');
+        return $this->sendResponse($paymentBankTransferDetailRefferedBacks->toArray(), trans('custom.payment_bank_transfer_detail_reffered_backs_retrie'));
     }
 
     /**
@@ -122,7 +122,7 @@ class PaymentBankTransferDetailRefferedBackAPIController extends AppBaseControll
 
         $paymentBankTransferDetailRefferedBacks = $this->paymentBankTransferDetailRefferedBackRepository->create($input);
 
-        return $this->sendResponse($paymentBankTransferDetailRefferedBacks->toArray(), 'Payment Bank Transfer Detail Reffered Back saved successfully');
+        return $this->sendResponse($paymentBankTransferDetailRefferedBacks->toArray(), trans('custom.payment_bank_transfer_detail_reffered_back_saved_s'));
     }
 
     /**
@@ -169,10 +169,10 @@ class PaymentBankTransferDetailRefferedBackAPIController extends AppBaseControll
         $paymentBankTransferDetailRefferedBack = $this->paymentBankTransferDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransferDetailRefferedBack)) {
-            return $this->sendError('Payment Bank Transfer Detail Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_detail_reffered_back_not_fou'));
         }
 
-        return $this->sendResponse($paymentBankTransferDetailRefferedBack->toArray(), 'Payment Bank Transfer Detail Reffered Back retrieved successfully');
+        return $this->sendResponse($paymentBankTransferDetailRefferedBack->toArray(), trans('custom.payment_bank_transfer_detail_reffered_back_retriev'));
     }
 
     /**
@@ -229,12 +229,12 @@ class PaymentBankTransferDetailRefferedBackAPIController extends AppBaseControll
         $paymentBankTransferDetailRefferedBack = $this->paymentBankTransferDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransferDetailRefferedBack)) {
-            return $this->sendError('Payment Bank Transfer Detail Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_detail_reffered_back_not_fou'));
         }
 
         $paymentBankTransferDetailRefferedBack = $this->paymentBankTransferDetailRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($paymentBankTransferDetailRefferedBack->toArray(), 'PaymentBankTransferDetailRefferedBack updated successfully');
+        return $this->sendResponse($paymentBankTransferDetailRefferedBack->toArray(), trans('custom.paymentbanktransferdetailrefferedback_updated_succ'));
     }
 
     /**
@@ -281,11 +281,11 @@ class PaymentBankTransferDetailRefferedBackAPIController extends AppBaseControll
         $paymentBankTransferDetailRefferedBack = $this->paymentBankTransferDetailRefferedBackRepository->findWithoutFail($id);
 
         if (empty($paymentBankTransferDetailRefferedBack)) {
-            return $this->sendError('Payment Bank Transfer Detail Reffered Back not found');
+            return $this->sendError(trans('custom.payment_bank_transfer_detail_reffered_back_not_fou'));
         }
 
         $paymentBankTransferDetailRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Payment Bank Transfer Detail Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_bank_transfer_detail_reffered_back_deleted'));
     }
 }

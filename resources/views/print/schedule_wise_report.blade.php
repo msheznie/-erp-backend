@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Item - Supplier</title>
+    <title>{{ __('custom.item_supplier') }}</title>
     <style>
         table, th, td {
             border: 1px solid black;

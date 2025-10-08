@@ -65,7 +65,7 @@ class POSStagSalesReturnDetailsAPIController extends AppBaseController
         $this->pOSStagSalesReturnDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->all();
 
-        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), 'P O S Stag Sales Return Details retrieved successfully');
+        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), trans('custom.p_o_s_stag_sales_return_details_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagSalesReturnDetailsAPIController extends AppBaseController
 
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->create($input);
 
-        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), 'P O S Stag Sales Return Details saved successfully');
+        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), trans('custom.p_o_s_stag_sales_return_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagSalesReturnDetailsAPIController extends AppBaseController
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSStagSalesReturnDetails)) {
-            return $this->sendError('P O S Stag Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_stag_sales_return_details_not_found'));
         }
 
-        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), 'P O S Stag Sales Return Details retrieved successfully');
+        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), trans('custom.p_o_s_stag_sales_return_details_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagSalesReturnDetailsAPIController extends AppBaseController
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSStagSalesReturnDetails)) {
-            return $this->sendError('P O S Stag Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_stag_sales_return_details_not_found'));
         }
 
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), 'POSStagSalesReturnDetails updated successfully');
+        return $this->sendResponse($pOSStagSalesReturnDetails->toArray(), trans('custom.posstagsalesreturndetails_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagSalesReturnDetailsAPIController extends AppBaseController
         $pOSStagSalesReturnDetails = $this->pOSStagSalesReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($pOSStagSalesReturnDetails)) {
-            return $this->sendError('P O S Stag Sales Return Details not found');
+            return $this->sendError(trans('custom.p_o_s_stag_sales_return_details_not_found'));
         }
 
         $pOSStagSalesReturnDetails->delete();

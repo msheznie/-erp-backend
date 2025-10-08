@@ -64,7 +64,7 @@ class PdcLogPrintedHistoryAPIController extends AppBaseController
         $this->pdcLogPrintedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pdcLogPrintedHistories = $this->pdcLogPrintedHistoryRepository->all();
 
-        return $this->sendResponse($pdcLogPrintedHistories->toArray(), 'Pdc Log Printed Histories retrieved successfully');
+        return $this->sendResponse($pdcLogPrintedHistories->toArray(), trans('custom.pdc_log_printed_histories_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PdcLogPrintedHistoryAPIController extends AppBaseController
 
         $pdcLogPrintedHistory = $this->pdcLogPrintedHistoryRepository->create($input);
 
-        return $this->sendResponse($pdcLogPrintedHistory->toArray(), 'Pdc Log Printed History saved successfully');
+        return $this->sendResponse($pdcLogPrintedHistory->toArray(), trans('custom.pdc_log_printed_history_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PdcLogPrintedHistoryAPIController extends AppBaseController
         $pdcLogPrintedHistory = $this->pdcLogPrintedHistoryRepository->findWithoutFail($id);
 
         if (empty($pdcLogPrintedHistory)) {
-            return $this->sendError('Pdc Log Printed History not found');
+            return $this->sendError(trans('custom.pdc_log_printed_history_not_found'));
         }
 
-        return $this->sendResponse($pdcLogPrintedHistory->toArray(), 'Pdc Log Printed History retrieved successfully');
+        return $this->sendResponse($pdcLogPrintedHistory->toArray(), trans('custom.pdc_log_printed_history_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PdcLogPrintedHistoryAPIController extends AppBaseController
         $pdcLogPrintedHistory = $this->pdcLogPrintedHistoryRepository->findWithoutFail($id);
 
         if (empty($pdcLogPrintedHistory)) {
-            return $this->sendError('Pdc Log Printed History not found');
+            return $this->sendError(trans('custom.pdc_log_printed_history_not_found'));
         }
 
         $pdcLogPrintedHistory = $this->pdcLogPrintedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($pdcLogPrintedHistory->toArray(), 'PdcLogPrintedHistory updated successfully');
+        return $this->sendResponse($pdcLogPrintedHistory->toArray(), trans('custom.pdclogprintedhistory_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PdcLogPrintedHistoryAPIController extends AppBaseController
         $pdcLogPrintedHistory = $this->pdcLogPrintedHistoryRepository->findWithoutFail($id);
 
         if (empty($pdcLogPrintedHistory)) {
-            return $this->sendError('Pdc Log Printed History not found');
+            return $this->sendError(trans('custom.pdc_log_printed_history_not_found'));
         }
 
         $pdcLogPrintedHistory->delete();

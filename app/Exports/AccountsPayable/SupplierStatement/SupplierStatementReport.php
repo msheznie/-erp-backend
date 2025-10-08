@@ -169,22 +169,22 @@ class SupplierStatementReport
     public function getHeader()
     {
         return  [
-            'Company ID',
-            'Company Name',
-            'Supplier Code',
-            'Supplier Name',
-            'Supplier Group',
-            'Document ID',
-            'Document Code',
-            'Document Date',
-            'Account',
-            'Narration',
-            'Invoice Number',
-            'Invoice Date',
-            'Currency',
-            'Age Days',
-            'Doc Amount',
-            'Balance Amount'
+            trans('custom.company_id'),
+            trans('custom.company_name'),
+            trans('custom.supplier_code'),
+            trans('custom.supplier_name'),
+            trans('custom.supplier_group'),
+            trans('custom.document_id'),
+            trans('custom.document_code'),
+            trans('custom.document_date'),
+            trans('custom.account'),
+            trans('custom.narration'),
+            trans('custom.invoice_number'),
+            trans('custom.invoice_date'),
+            trans('custom.currency'),
+            trans('custom.age_days'),
+            trans('custom.doc_amount'),
+            trans('custom.balance_amount'),
         ];
     }
 }

@@ -65,7 +65,7 @@ class POSSTAGTaxLedgerAPIController extends AppBaseController
         $this->pOSSTAGTaxLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSTAGTaxLedgers = $this->pOSSTAGTaxLedgerRepository->all();
 
-        return $this->sendResponse($pOSSTAGTaxLedgers->toArray(), 'P O S S T A G Tax Ledgers retrieved successfully');
+        return $this->sendResponse($pOSSTAGTaxLedgers->toArray(), trans('custom.p_o_s_s_t_a_g_tax_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSTAGTaxLedgerAPIController extends AppBaseController
 
         $pOSSTAGTaxLedger = $this->pOSSTAGTaxLedgerRepository->create($input);
 
-        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), 'P O S S T A G Tax Ledger saved successfully');
+        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), trans('custom.p_o_s_s_t_a_g_tax_ledger_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSTAGTaxLedgerAPIController extends AppBaseController
         $pOSSTAGTaxLedger = $this->pOSSTAGTaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxLedger)) {
-            return $this->sendError('P O S S T A G Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_ledger_not_found'));
         }
 
-        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), 'P O S S T A G Tax Ledger retrieved successfully');
+        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), trans('custom.p_o_s_s_t_a_g_tax_ledger_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSTAGTaxLedgerAPIController extends AppBaseController
         $pOSSTAGTaxLedger = $this->pOSSTAGTaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxLedger)) {
-            return $this->sendError('P O S S T A G Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_ledger_not_found'));
         }
 
         $pOSSTAGTaxLedger = $this->pOSSTAGTaxLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), 'POSSTAGTaxLedger updated successfully');
+        return $this->sendResponse($pOSSTAGTaxLedger->toArray(), trans('custom.posstagtaxledger_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSTAGTaxLedgerAPIController extends AppBaseController
         $pOSSTAGTaxLedger = $this->pOSSTAGTaxLedgerRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGTaxLedger)) {
-            return $this->sendError('P O S S T A G Tax Ledger not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_tax_ledger_not_found'));
         }
 
         $pOSSTAGTaxLedger->delete();

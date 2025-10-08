@@ -52,7 +52,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         $departmentSystemID = $request->get('departmentSystemID');
         
         if (!$departmentSystemID) {
-            return $this->sendError('Department ID is required');
+            return $this->sendError(trans('custom.department_id_is_required'));
         }
 
         $query = CompanyDepartmentEmployee::where('departmentSystemID', $departmentSystemID)
@@ -105,7 +105,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             ], 'Form data retrieved successfully');
 
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving form data');
+            return $this->sendError(trans('custom.error_retrieving_form_data'));
         }
     }
 
@@ -134,13 +134,13 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                     if ($processedData['isHOD'] == 1) {
                         // Check if employee is already HOD in another department
                         if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'])) {
-                            $errorMessages[] = 'Employee ' . Employee::getEmployeeCode($processedData['employeeSystemID']) . ' is already HOD in another department';
+                            $errorMessages[] = trans('custom.employee_already_hod_in_another_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
                             continue;
                         }
 
                         // Check if department already has HOD
                         if ($this->companyDepartmentEmployeeRepository->departmentHasHOD($processedData['departmentSystemID'])) {
-                            $errorMessages[] = 'This department already has an HOD assigned';
+                            $errorMessages[] = trans('custom.this_department_already_has_an_hod_assigned');
                             continue;
                         }
                     }
@@ -150,7 +150,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                                                       ->where('employeeSystemID', $processedData['employeeSystemID'])
                                                       ->exists();
                     if ($exists) {
-                        $errorMessages[] = 'Employee ' . Employee::getEmployeeCode($processedData['employeeSystemID']) . ' is already assigned to this department';
+                        $errorMessages[] = trans('custom.employee_already_assigned_to_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
                         continue;
                     }
 
@@ -171,11 +171,11 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 
                 if (!empty($errorMessages)) {
                     DB::rollback();
-                    return $this->sendError('Some employees could not be assigned: ' . implode(', ', $errorMessages));
+                    return $this->sendError(trans('custom.some_employees_could_not_be_assigned') . implode(', ', $errorMessages));
                 }
                 DB::commit();
 
-                return $this->sendResponse($results, count($results) . ' employee(s) assigned to department successfully');
+                return $this->sendResponse($results, count($results) . ' ' . trans('custom.employees_assigned_to_department_successfully'));
             }
             else {
                 // Handle single employee assignment (backward compatibility)
@@ -185,12 +185,12 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                 if ($processedData['isHOD'] == 1) {
                     // Check if employee is already HOD in another department
                     if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'])) {
-                        return $this->sendError('This employee is already HOD in another department');
+                        return $this->sendError(trans('custom.this_employee_is_already_hod_in_another_department'));
                     }
 
                     // Check if department already has HOD
                     if ($this->companyDepartmentEmployeeRepository->departmentHasHOD($processedData['departmentSystemID'])) {
-                        return $this->sendError('This department already has an HOD assigned');
+                        return $this->sendError(trans('custom.this_department_already_has_an_hod_assigned'));
                     }
                 }
 
@@ -208,12 +208,12 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
                 DB::commit();
 
-                return $this->sendResponse($companyDepartmentEmployee->toArray(), 'Employee assigned to department successfully');
+                return $this->sendResponse($companyDepartmentEmployee->toArray(), trans('custom.employee_assigned_to_department_successfully'));
             }
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error assigning employee to department - '.$e->getMessage());
+            return $this->sendError(trans('custom.error_assigning_employee_to_department').$e->getMessage());
         }
     }
 
@@ -244,7 +244,6 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             DepBudgetPlDetEmpColumn::insert($insertData);
         }
     }
-
     /**
      * Update the specified department employee
      *
@@ -257,7 +256,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->find($id);
 
         if (empty($companyDepartmentEmployee)) {
-            return $this->sendError('Department Employee not found');
+            return $this->sendError(trans('custom.department_employee_not_found'));
         }
 
         $input = $request->all();
@@ -275,7 +274,16 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             if ($processedData['isHOD'] == 1) {
                 // Check if employee is already HOD in another department (excluding current)
                 if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'], $processedData['departmentSystemID'])) {
-                    return $this->sendError('This employee is already HOD in another department');
+                    return $this->sendError(trans('custom.this_employee_is_already_hod_in_another_department'));
+                }
+
+                $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->pluck('employeeSystemID')->toArray();
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
                 }
 
                 $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
@@ -310,11 +318,11 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($companyDepartmentEmployee->toArray(), 'Department Employee updated successfully');
+            return $this->sendResponse($companyDepartmentEmployee->toArray(), trans('custom.department_employee_updated_successfully'));
 
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error updating department employee', 404,['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_updating_department_employee'), 404,['error' => $e->getMessage()]);
         }
     }
 
@@ -329,7 +337,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->find($id);
 
         if (empty($companyDepartmentEmployee)) {
-            return $this->sendError('Department Employee not found');
+            return $this->sendError(trans('custom.department_employee_not_found'));
         }
 
         try {
@@ -350,10 +358,10 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
             $db = $request->get('db', '');
             $this->auditLog($db, $id, $uuid, "company_departments_employees", "Employee removed from department", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
 
-            return $this->sendResponse($id, 'Employee removed from department successfully');
+            return $this->sendResponse($id, trans('custom.employee_removed_from_department_successfully'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error removing employee from department', ['error' => $e->getMessage()]);
+            return $this->sendError(trans('custom.error_removing_employee_from_department'), ['error' => $e->getMessage()]);
         }
     }
 

@@ -46,7 +46,7 @@ class CustomReportType extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $appends = ['description'];
 
 
     public $fillable = [
@@ -77,5 +77,38 @@ class CustomReportType extends Model
 
     public function templates(){
         return $this->hasMany(CustomReportMaster::class ,'report_type_id');
+    }
+
+    /**
+     * Get the translations for the custom report type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(CustomReportTypeLanguage::class, 'erpCustomReportTypeID', 'id');
+    }
+
+    /**
+     * Get the translation for a specific language.
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        
+        return $this->attributes['description'] ?? '';
     }
 }

@@ -55,5 +55,36 @@ class VatSubCategoryType extends Model
         
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['type'];
+
+    /**
+     * Get the translations for the vat sub category type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(VatSubCategoryTypeTranslation::class, 'vat_sub_category_type_id');
+    }
+
+    /**
+     * Get the translated type attribute.
+     *
+     * @return string
+     */
+    public function getTypeAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->type : $this->attributes['type'];
+    }
+
     
 }

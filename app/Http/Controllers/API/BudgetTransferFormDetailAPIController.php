@@ -91,7 +91,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $this->budgetTransferFormDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->all();
 
-        return $this->sendResponse($budgetTransferFormDetails->toArray(), 'Budget Transfer Form Details retrieved successfully');
+        return $this->sendResponse($budgetTransferFormDetails->toArray(), trans('custom.budget_transfer_form_details_retrieved_successfull'));
     }
 
     /**
@@ -150,7 +150,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         }
 
         if (count($budgetTransferToData) == 0) {
-            return $this->sendError('Budget Transfer To data not found', 500);
+            return $this->sendError(trans('custom.budget_transfer_to_data_not_found'), 500);
         }
 
         foreach ($budgetTransferToData as $key => $value) {
@@ -171,7 +171,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $budgetTransferMaster = $this->budgetTransferFormRepository->find($input['budgetTransferFormAutoID']);
 
         if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Trasnfer is not created for selected segment and financial year');
+            return $this->sendError(trans('custom.budget_trasnfer_is_not_created_for_selected_segmen'));
         }
 
         $masterValidate = \Validator::make($budgetTransferMaster->toArray(), [
@@ -188,11 +188,11 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->first();
 
         if (empty($fromDepartment)) {
-            throw new \Exception("From Department not found", 500);
+            throw new \Exception(trans('custom.from_department_not_found'), 500);
         }
 
         if ($fromDepartment->isActive == 0) {
-            throw new \Exception("Please select an active from department", 500);
+            throw new \Exception(trans('custom.please_select_active_from_department'), 500);
         }
 
         $input['year'] = $budgetTransferMaster->year;
@@ -201,7 +201,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $companyData = Company::find($budgetTransferMaster->companySystemID);
 
         if (empty($companyData)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
 
@@ -212,7 +212,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                     ->first();
 
                 if (empty($fromChartOfAccount)) {
-                    return $this->sendError('From Account Code not found');
+                    return $this->sendError(trans('custom.from_account_code_not_found'));
                 }
 
                 $input['FromGLCode'] = $fromChartOfAccount->AccountCode;
@@ -237,7 +237,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                         ->first();
 
                     if(empty($toChartOfAccount)){
-                        return $this->sendError('To Account Not Found', 500);
+                        return $this->sendError(trans('custom.to_account_not_found'), 500);
                     }
 
                     $toDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
@@ -248,7 +248,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                         ->count();
 
                     if($toDataBudgetCheck == 0){
-                        return $this->sendError('There is no budget allocated for '.$toChartOfAccount->AccountCode, 500);
+                        return $this->sendError(trans('custom.no_budget_allocated_for_account', ['accountCode' => $toChartOfAccount->AccountCode]), 500);
                     }
             
                     $toDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
@@ -256,11 +256,11 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                         ->first();
 
                     if (empty($toDepartment)) {
-                        return $this->sendError('To Department not found');
+                        return $this->sendError(trans('custom.to_department_not_found'));
                     }
 
                     if ($toDepartment->isActive == 0) {
-                        return $this->sendError('Please select an active to department', 500);
+                        return $this->sendError(trans('custom.please_select_active_to_department'), 500);
                     }
                     
                     $input['toServiceLineCode'] = $toDepartment->ServiceLineCode;
@@ -269,7 +269,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                         ->where('chartOfAccountSystemID', $input['toChartOfAccountSystemID'])->first();
 
                     if (empty($toChartOfAccount)) {
-                        return $this->sendError('To Account Code not found');
+                        return $this->sendError(trans('custom.to_account_code_not_found'));
                     }
 
                     $input['toGLCode'] = $toChartOfAccount->AccountCode;
@@ -287,7 +287,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                 }
 
             DB::commit();
-            return $this->sendResponse([], 'Budget Transfer Form Detail saved successfully');
+            return $this->sendResponse([], trans('custom.budget_transfer_form_detail_saved_successfully'));
         }
         catch (\Exception $ex){
             $error_code = ($ex->getCode() == 422)? 422: 500;
@@ -314,7 +314,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->first();
 
         if(empty($fromChartOfAccount)){
-            throw new \Exception("From Account Not Found", 500);
+            throw new \Exception(trans('custom.from_account_not_found'), 500);
         }
 
         $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
@@ -325,8 +325,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->count();
 
         if($fromDataBudgetCheck == 0){
-            throw new \Exception("Selected account code is not available in the budget. 
-                            Please allocate and try again.", 500);
+            throw new \Exception(trans('custom.selected_account_code_not_available_budget'), 500);
         }
 
 
@@ -345,7 +344,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         ->count();
 
         if ($checkSameEntry > 0) {
-            throw new \Exception("Selected GL Code is already added. Please check again", 500);
+            throw new \Exception(trans('custom.selected_gl_code_already_added'), 500);
         }
 
 
@@ -369,8 +368,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         ->first();
 
         if (!empty($checkPendingFromGL)) {
-            $msg = "There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") pending for 
-                    approval for the GL Code you are trying to add. Please check again.";
+            $msg = trans('custom.budget_transfer_pending_approval', ['transferVoucherNo' => $checkPendingFromGL->master->transferVoucherNo]);
 
             throw new \Exception($msg, 500);
         }
@@ -427,12 +425,12 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
         if (!empty($checkBalance)) {
             if ($checkBalance->balance <= 0) {
-                $msg = "You cannot transfer from a negative balance amount or a zero balance amount";
+                $msg = trans('custom.cannot_transfer_negative_balance');
                 throw new \Exception($msg, 500);
             }
             if ($transferAmount > abs($checkBalance->balance) && $checkBalance->balance > 0) {
                 $balanceShow = abs($checkBalance->balance);
-                $msg = "You cannot transfer more than the balance amount, Balance amount is {$balanceShow}";
+                $msg = trans('custom.cannot_transfer_more_than_balance', ['balance' => $balanceShow]);
                 throw new \Exception($msg, 500);
             }
         }
@@ -452,7 +450,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $contingencyBudgetPlan = ContingencyBudgetPlan::find( $contingencyBudgetID );
 
         if( empty($contingencyBudgetPlan) ){
-            throw new \Exception("Contingency Budget details not found", 500);
+            throw new \Exception(trans('custom.contingency_budget_details_not_found'), 500);
         }
 
         $utilized = BudgetTransferFormDetail::where('isFromContingency', 1)
@@ -466,7 +464,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
             $balance = CurrencyValidation::convertToRptCurrencyDecimal($budgetTransferMaster->companySystemID, $balance);
 
-            $msg = "You cannot transfer more than the balance amount, Balance amount is {$balance}";
+            $msg = trans('custom.cannot_transfer_more_than_balance', ['balance' => $balance]);
             throw new \Exception($msg, 500);
         }
     }
@@ -480,7 +478,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->count();
 
         if ($checkSameEntry > 0) {
-            throw new \Exception("Selected GL Code is already added. Please check again", 500);
+            throw new \Exception(trans('custom.selected_gl_code_already_added'), 500);
         }
 
 
@@ -502,8 +500,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         ->first();
 
         if (!empty($checkPendingFromGL)) {
-            throw new \Exception("There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") 
-                        pending for approval for the GL Code you are trying to add. Please check again.", 500);
+            throw new \Exception(trans('custom.budget_transfer_pending_approval', ['transferVoucherNo' => $checkPendingFromGL->master->transferVoucherNo]), 500);
         }
        
         $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->create($input);
@@ -518,7 +515,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             && $input['fromChartOfAccountSystemID'] == $input['toChartOfAccountSystemID']
             && $input['fromServiceLineSystemID'] == $input['toServiceLineSystemID']
         ) {
-            throw new \Exception("You cannot transfer to the same account, Please select a different account", 500);
+            throw new \Exception(trans('custom.cannot_transfer_same_account'), 500);
         }
 
         $checkSameEntry = BudgetTransferFormDetail::where(function ($q) use($input){
@@ -536,7 +533,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         ->count();
 
         if ($checkSameEntry > 0) {
-            throw new \Exception("Selected GL Code is already added. Please check again", 500);
+            throw new \Exception(trans('custom.selected_gl_code_already_added'), 500);
         }
 
 
@@ -561,8 +558,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         ->first();
 
         if (!empty($checkPendingFromGL)) {
-            $msg = "There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") pending for 
-                    approval for the GL Code you are trying to add. Please check again.";
+            $msg = trans('custom.budget_transfer_pending_approval', ['transferVoucherNo' => $checkPendingFromGL->master->transferVoucherNo]);
 
             throw new \Exception($msg, 500);
         }
@@ -616,10 +612,10 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $budgetTransferFormDetail = $this->budgetTransferFormDetailRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetail)) {
-            return $this->sendError('Budget Transfer Form Detail not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_not_found'));
         }
 
-        return $this->sendResponse($budgetTransferFormDetail->toArray(), 'Budget Transfer Form Detail retrieved successfully');
+        return $this->sendResponse($budgetTransferFormDetail->toArray(), trans('custom.budget_transfer_form_detail_retrieved_successfully'));
     }
 
     /**
@@ -676,12 +672,12 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $budgetTransferFormDetail = $this->budgetTransferFormDetailRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetail)) {
-            return $this->sendError('Budget Transfer Form Detail not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_not_found'));
         }
 
         $budgetTransferFormDetail = $this->budgetTransferFormDetailRepository->update($input, $id);
 
-        return $this->sendResponse($budgetTransferFormDetail->toArray(), 'BudgetTransferFormDetail updated successfully');
+        return $this->sendResponse($budgetTransferFormDetail->toArray(), trans('custom.budgettransferformdetail_updated_successfully'));
     }
 
     /**
@@ -728,12 +724,12 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $budgetTransferFormDetail = $this->budgetTransferFormDetailRepository->findWithoutFail($id);
 
         if (empty($budgetTransferFormDetail)) {
-            return $this->sendError('Budget Transfer Form Detail not found');
+            return $this->sendError(trans('custom.budget_transfer_form_detail_not_found'));
         }
 
         $budgetTransferFormDetail->delete();
 
-        return $this->sendResponse($id, 'Budget Transfer Form Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.budget_transfer_form_detail_deleted_successfully'));
     }
 
     public function getDetailsByBudgetTransfer(Request $request)
@@ -748,7 +744,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.budget_transfer_form_detail_retrieved_successfully'));
     }
 
 
@@ -769,7 +765,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $companyFinanceYear = \Helper::companyFinanceYear($input['companySystemID'])->first();
         if(!isset($companyFinanceYear))
         {
-            return $this->sendError("Company Current Finanical year not found or not active", 422);
+            return $this->sendError(trans('custom.company_current_financial_year_not_found'), 422);
         }
 
         $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $input['companySystemID'])

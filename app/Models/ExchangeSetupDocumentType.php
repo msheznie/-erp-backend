@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class ExchangeSetupDocumentType extends Model
 {
 
+    protected $appends = ['name'];
+
     public $fillable = [
         'exchangeSetupDocumentId',
         'name',
@@ -46,5 +48,28 @@ class ExchangeSetupDocumentType extends Model
     public function document()
     {
         return $this->belongsTo('App\Models\ExchangeSetupDocument');
+    }
+
+    public function translations()
+    {
+        return $this->hasMany('App\Models\ExchangeSetupDocumentTypeTranslations', 'slug', 'slug');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getNameAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['name'] ?? '';
     }
 }

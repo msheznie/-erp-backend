@@ -79,7 +79,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $this->reportTemplateColumnLinkRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateColumnLinks = $this->reportTemplateColumnLinkRepository->all();
 
-        return $this->sendResponse($reportTemplateColumnLinks->toArray(), 'Report Template Column Links retrieved successfully');
+        return $this->sendResponse($reportTemplateColumnLinks->toArray(), trans('custom.report_template_column_links_retrieved_successfull'));
     }
 
     /**
@@ -156,7 +156,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Report Template Column Link saved successfully');
+        return $this->sendResponse([], trans('custom.report_template_column_link_saved_successfully'));
     }
 
     /**
@@ -203,10 +203,10 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWithoutFail($id);
 
         if (empty($reportTemplateColumnLink)) {
-            return $this->sendError('Report Template Column Link not found');
+            return $this->sendError(trans('custom.report_template_column_link_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateColumnLink->toArray(), 'Report Template Column Link retrieved successfully');
+        return $this->sendResponse($reportTemplateColumnLink->toArray(), trans('custom.report_template_column_link_retrieved_successfully'));
     }
 
     /**
@@ -263,7 +263,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWithoutFail($id);
 
         if (empty($reportTemplateColumnLink)) {
-            return $this->sendError('Report Template Column Link not found');
+            return $this->sendError(trans('custom.report_template_column_link_not_found'));
         }
 
         if (isset($input['formula'])) {
@@ -305,7 +305,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
 
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateColumnLink->toArray(), 'ReportTemplateColumnLink updated successfully');
+        return $this->sendResponse($reportTemplateColumnLink->toArray(), trans('custom.reporttemplatecolumnlink_updated_successfully'));
     }
 
     /**
@@ -355,11 +355,11 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $columnLink = ReportTemplateColumnLink::whereRaw("formulaColumnID LIKE '$id,%' OR formulaColumnID LIKE '%,$id,%' OR formulaColumnID LIKE '%,$id' OR formulaColumnID = '$id'")->first();
 
         if ($columnLink) {
-            return $this->sendError('You cannot delete this column because already this column has been added to the formula');
+            return $this->sendError(trans('custom.you_cannot_delete_this_column_because_already_this'));
         }
 
         if (empty($reportTemplateColumnLink)) {
-            return $this->sendError('Report Template Column Link not found');
+            return $this->sendError(trans('custom.report_template_column_link_not_found'));
         }
 
 
@@ -371,13 +371,13 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             ReportTemplate::where('companyReportTemplateID', $reportTemplateColumnLink->templateID)->update(['columnTemplateID' => null]);
         }
 
-        return $this->sendResponse($id, 'Report Template Column Link deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_column_link_deleted_successfully'));
     }
 
     public function getTemplateColumnLinks(Request $request)
     {
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->orderBy('sortOrder', 'asc')->findWhere(['templateID' => $request->templateID]);
-        return $this->sendResponse($reportTemplateColumnLink->toArray(), 'Report Template Column Link retrieved successfully');
+        return $this->sendResponse($reportTemplateColumnLink->toArray(), trans('custom.report_template_column_link_retrieved_successfully'));
     }
 
     public function reportTemplateFormulaColumn(Request $request)
@@ -385,7 +385,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWithoutFail($request->columnLinkID);
 
         if (empty($reportTemplateColumnLink)) {
-            return $this->sendError('Report Template Column Link not found');
+            return $this->sendError(trans('custom.report_template_column_link_not_found'));
         }
 
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWhereIn('columnLinkID', explode(',', $reportTemplateColumnLink->formulaColumnID));
@@ -394,7 +394,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
 
         $response = array('columns' => $reportTemplateColumnLink, 'rows' => $reportTemplateRows);
 
-        return $this->sendResponse($response, 'Tax Formula Detail retrieved successfully');
+        return $this->sendResponse($response, trans('custom.tax_formula_detail_retrieved_successfully'));
     }
 
     public function loadColumnTemplate(Request $request)
@@ -443,7 +443,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             ReportTemplate::where('companyReportTemplateID', $input['templateID'])->update(['columnTemplateID' => $input['columns']['reportColumnTemplateID']]);
 
             DB::commit();
-            return $this->sendResponse([], 'Report Template Column Link saved successfully');
+            return $this->sendResponse([], trans('custom.report_template_column_link_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);

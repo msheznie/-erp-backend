@@ -66,7 +66,7 @@ class AssetRequestAPIController extends AppBaseController
         $this->assetRequestRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetRequests = $this->assetRequestRepository->all();
 
-        return $this->sendResponse($assetRequests->toArray(), 'Asset Requests retrieved successfully');
+        return $this->sendResponse($assetRequests->toArray(), trans('custom.asset_requests_retrieved_successfully'));
     }
 
     /**
@@ -113,7 +113,7 @@ class AssetRequestAPIController extends AppBaseController
 
         $assetRequest = $this->assetRequestRepository->create($input);
 
-        return $this->sendResponse($assetRequest->toArray(), 'Asset Request saved successfully');
+        return $this->sendResponse($assetRequest->toArray(), trans('custom.asset_request_saved_successfully'));
     }
 
     /**
@@ -160,10 +160,10 @@ class AssetRequestAPIController extends AppBaseController
         $assetRequest = $this->assetRequestRepository->findWithoutFail($id);
 
         if (empty($assetRequest)) {
-            return $this->sendError('Asset Request not found');
+            return $this->sendError(trans('custom.asset_request_not_found'));
         }
 
-        return $this->sendResponse($assetRequest->toArray(), 'Asset Request retrieved successfully');
+        return $this->sendResponse($assetRequest->toArray(), trans('custom.asset_request_retrieved_successfully'));
     }
 
     /**
@@ -220,12 +220,12 @@ class AssetRequestAPIController extends AppBaseController
         $assetRequest = $this->assetRequestRepository->findWithoutFail($id);
 
         if (empty($assetRequest)) {
-            return $this->sendError('Asset Request not found');
+            return $this->sendError(trans('custom.asset_request_not_found'));
         }
 
         $assetRequest = $this->assetRequestRepository->update($input, $id);
 
-        return $this->sendResponse($assetRequest->toArray(), 'AssetRequest updated successfully');
+        return $this->sendResponse($assetRequest->toArray(), trans('custom.assetrequest_updated_successfully'));
     }
 
     /**
@@ -272,7 +272,7 @@ class AssetRequestAPIController extends AppBaseController
         $assetRequest = $this->assetRequestRepository->findWithoutFail($id);
 
         if (empty($assetRequest)) {
-            return $this->sendError('Asset Request not found');
+            return $this->sendError(trans('custom.asset_request_not_found'));
         }
 
         $assetRequest->delete();
@@ -335,7 +335,7 @@ class AssetRequestAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($itemMaster->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($itemMaster->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function mapLineItemAr(Request $request)
@@ -348,7 +348,7 @@ class AssetRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
         $input['itemCodeSystem'] = $input['itemCodeNew'];
@@ -356,7 +356,7 @@ class AssetRequestAPIController extends AppBaseController
 
         $input['detail'] = "$item->itemPrimaryCode - $item->itemDescription";
 
-        return $this->sendResponse($input, 'Asset Request item maped successfully');
+        return $this->sendResponse($input, trans('custom.asset_request_item_maped_successfully'));
 
     }
 

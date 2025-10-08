@@ -80,7 +80,7 @@ class LeaveMasterAPIController extends AppBaseController
         $this->leaveMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveMasters = $this->leaveMasterRepository->all();
 
-        return $this->sendResponse($leaveMasters->toArray(), 'Leave Masters retrieved successfully');
+        return $this->sendResponse($leaveMasters->toArray(), trans('custom.leave_masters_retrieved_successfully'));
     }
 
     /**
@@ -127,7 +127,7 @@ class LeaveMasterAPIController extends AppBaseController
 
         $leaveMaster = $this->leaveMasterRepository->create($input);
 
-        return $this->sendResponse($leaveMaster->toArray(), 'Leave Master saved successfully');
+        return $this->sendResponse($leaveMaster->toArray(), trans('custom.leave_master_saved_successfully'));
     }
 
     /**
@@ -174,10 +174,10 @@ class LeaveMasterAPIController extends AppBaseController
         $leaveMaster = $this->leaveMasterRepository->findWithoutFail($id);
 
         if (empty($leaveMaster)) {
-            return $this->sendError('Leave Master not found');
+            return $this->sendError(trans('custom.leave_master_not_found'));
         }
 
-        return $this->sendResponse($leaveMaster->toArray(), 'Leave Master retrieved successfully');
+        return $this->sendResponse($leaveMaster->toArray(), trans('custom.leave_master_retrieved_successfully'));
     }
 
     /**
@@ -234,12 +234,12 @@ class LeaveMasterAPIController extends AppBaseController
         $leaveMaster = $this->leaveMasterRepository->findWithoutFail($id);
 
         if (empty($leaveMaster)) {
-            return $this->sendError('Leave Master not found');
+            return $this->sendError(trans('custom.leave_master_not_found'));
         }
 
         $leaveMaster = $this->leaveMasterRepository->update($input, $id);
 
-        return $this->sendResponse($leaveMaster->toArray(), 'LeaveMaster updated successfully');
+        return $this->sendResponse($leaveMaster->toArray(), trans('custom.leavemaster_updated_successfully'));
     }
 
     /**
@@ -286,18 +286,18 @@ class LeaveMasterAPIController extends AppBaseController
         $leaveMaster = $this->leaveMasterRepository->findWithoutFail($id);
 
         if (empty($leaveMaster)) {
-            return $this->sendError('Leave Master not found');
+            return $this->sendError(trans('custom.leave_master_not_found'));
         }
 
         $leaveMaster->delete();
 
-        return $this->sendResponse($id, 'Leave Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.leave_master_deleted_successfully'));
     }
 
     public function getLeaveTypes()
     {
         $leaveMasters =LeaveMaster::select('leavemasterID','leavetype')->get();
-        return $this->sendResponse($leaveMasters->toArray(), 'Leave Type details retrieved successfully');
+        return $this->sendResponse($leaveMasters->toArray(), trans('custom.leave_type_details_retrieved_successfully'));
     }
 
 

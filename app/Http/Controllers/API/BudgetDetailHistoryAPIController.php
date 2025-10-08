@@ -65,7 +65,7 @@ class BudgetDetailHistoryAPIController extends AppBaseController
         $this->budgetDetailHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetDetailHistories = $this->budgetDetailHistoryRepository->all();
 
-        return $this->sendResponse($budgetDetailHistories->toArray(), 'Budget Detail Histories retrieved successfully');
+        return $this->sendResponse($budgetDetailHistories->toArray(), trans('custom.budget_detail_histories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BudgetDetailHistoryAPIController extends AppBaseController
 
         $budgetDetailHistory = $this->budgetDetailHistoryRepository->create($input);
 
-        return $this->sendResponse($budgetDetailHistory->toArray(), 'Budget Detail History saved successfully');
+        return $this->sendResponse($budgetDetailHistory->toArray(), trans('custom.budget_detail_history_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BudgetDetailHistoryAPIController extends AppBaseController
         $budgetDetailHistory = $this->budgetDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailHistory)) {
-            return $this->sendError('Budget Detail History not found');
+            return $this->sendError(trans('custom.budget_detail_history_not_found'));
         }
 
-        return $this->sendResponse($budgetDetailHistory->toArray(), 'Budget Detail History retrieved successfully');
+        return $this->sendResponse($budgetDetailHistory->toArray(), trans('custom.budget_detail_history_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BudgetDetailHistoryAPIController extends AppBaseController
         $budgetDetailHistory = $this->budgetDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailHistory)) {
-            return $this->sendError('Budget Detail History not found');
+            return $this->sendError(trans('custom.budget_detail_history_not_found'));
         }
 
         $budgetDetailHistory = $this->budgetDetailHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($budgetDetailHistory->toArray(), 'BudgetDetailHistory updated successfully');
+        return $this->sendResponse($budgetDetailHistory->toArray(), trans('custom.budgetdetailhistory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BudgetDetailHistoryAPIController extends AppBaseController
         $budgetDetailHistory = $this->budgetDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetDetailHistory)) {
-            return $this->sendError('Budget Detail History not found');
+            return $this->sendError(trans('custom.budget_detail_history_not_found'));
         }
 
         $budgetDetailHistory->delete();

@@ -81,7 +81,7 @@ class MobileMasterAPIController extends AppBaseController
         $this->mobileMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mobileMasters = $this->mobileMasterRepository->all();
 
-        return $this->sendResponse($mobileMasters->toArray(), 'Mobile Masters retrieved successfully');
+        return $this->sendResponse($mobileMasters->toArray(), trans('custom.mobile_masters_retrieved_successfully'));
     }
 
     /**
@@ -139,11 +139,11 @@ class MobileMasterAPIController extends AppBaseController
         }
 
         if($input['mobileNoPoolID'] == 0){
-            return $this->sendError('Mobile No not found',500);
+            return $this->sendError(trans('custom.mobile_no_not_found'),500);
         }
 
         if($input['employeeSystemID'] == 0){
-            return $this->sendError('Employee not found',500);
+            return $this->sendError(trans('custom.employee_not_found'),500);
         }
 
         $employee = Employee::find($input['employeeSystemID']);
@@ -174,7 +174,7 @@ class MobileMasterAPIController extends AppBaseController
 
             $mobileMaster = $this->mobileMasterRepository->findWithoutFail($input['mobilemasterID']);
             if (empty($mobileMaster)) {
-                return $this->sendError('Mobile Master not found');
+                return $this->sendError(trans('custom.mobile_master_not_found'));
             }
             $mobileMaster = $this->mobileMasterRepository->update($input, $input['mobilemasterID']);
 
@@ -185,7 +185,7 @@ class MobileMasterAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($mobileMaster->toArray(), 'Mobile Master saved successfully');
+        return $this->sendResponse($mobileMaster->toArray(), trans('custom.mobile_master_saved_successfully'));
     }
 
     /**
@@ -232,10 +232,10 @@ class MobileMasterAPIController extends AppBaseController
         $mobileMaster = $this->mobileMasterRepository->findWithoutFail($id);
 
         if (empty($mobileMaster)) {
-            return $this->sendError('Mobile Master not found');
+            return $this->sendError(trans('custom.mobile_master_not_found'));
         }
 
-        return $this->sendResponse($mobileMaster->toArray(), 'Mobile Master retrieved successfully');
+        return $this->sendResponse($mobileMaster->toArray(), trans('custom.mobile_master_retrieved_successfully'));
     }
 
     /**
@@ -292,12 +292,12 @@ class MobileMasterAPIController extends AppBaseController
         $mobileMaster = $this->mobileMasterRepository->findWithoutFail($id);
 
         if (empty($mobileMaster)) {
-            return $this->sendError('Mobile Master not found');
+            return $this->sendError(trans('custom.mobile_master_not_found'));
         }
 
         $mobileMaster = $this->mobileMasterRepository->update($input, $id);
 
-        return $this->sendResponse($mobileMaster->toArray(), 'MobileMaster updated successfully');
+        return $this->sendResponse($mobileMaster->toArray(), trans('custom.mobilemaster_updated_successfully'));
     }
 
     /**
@@ -344,12 +344,12 @@ class MobileMasterAPIController extends AppBaseController
         $mobileMaster = $this->mobileMasterRepository->findWithoutFail($id);
 
         if (empty($mobileMaster)) {
-            return $this->sendError('Mobile Master not found');
+            return $this->sendError(trans('custom.mobile_master_not_found'));
         }
 
         $mobileMaster->delete();
 
-        return $this->sendResponse($mobileMaster->toArray(), 'Mobile Master deleted successfully');
+        return $this->sendResponse($mobileMaster->toArray(), trans('custom.mobile_master_deleted_successfully'));
     }
 
     public function getAllMobileMaster(Request $request){
@@ -404,7 +404,7 @@ class MobileMasterAPIController extends AppBaseController
             'mobiles' => $mobiles
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 }

@@ -72,7 +72,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $this->expenseAssetAllocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseAssetAllocations = $this->expenseAssetAllocationRepository->all();
 
-        return $this->sendResponse($expenseAssetAllocations->toArray(), 'Expense Asset Allocations retrieved successfully');
+        return $this->sendResponse($expenseAssetAllocations->toArray(), trans('custom.expense_asset_allocations_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['documentSystemID'])) {
-            return $this->sendError("Document system ID not found");
+            return $this->sendError(trans('custom.document_system_id_not_found'));
         }
         
        
@@ -129,7 +129,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                       
 
         if ($checkForAssetDuplicate) {
-            return $this->sendError("This asset alreday allocated", 500);
+            return $this->sendError(trans('custom.asset_already_allocated'), 500);
         }
 
         $detailTotal = 0;
@@ -139,7 +139,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $directDetail = DirectInvoiceDetails::with(['supplier_invoice_master'])->find($input['documentDetailID']);
 
             if (!$directDetail) {
-                return $this->sendError("Supplier invoice detail not found");
+                return $this->sendError(trans('custom.supplier_invoice_detail_not_found'));
             }
 
             $detailTotal = $directDetail->netAmount;
@@ -157,7 +157,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
             
             if (!$directDetail) {
-                return $this->sendError("Payment voucher detail not found");
+                return $this->sendError(trans('custom.payment_voucher_detail_not_found'));
             }
 
             $detailTotal = $directDetail->DPAmount;
@@ -174,7 +174,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $grvDetail = GRVDetails::with(['master'])->find($input['documentDetailID']);
             
             if (!$grvDetail) {
-                return $this->sendError("GRV detail not found");
+                return $this->sendError(trans('custom.grv_detail_not_found'));
             }
 
             if(isset($grvDetail->itemFinanceCategorySubID))
@@ -212,7 +212,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             }
 
             if (!$jvDetail) {
-                return $this->sendError("GRV detail not found");
+                return $this->sendError(trans('custom.grv_detail_not_found'));
             }
 
             
@@ -230,7 +230,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         {
                 $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']); 
                 if (!$meterialissue) {
-                    return $this->sendError("Meterial issues detail not found");
+                    return $this->sendError(trans('custom.material_issues_detail_not_found'));
                 }
                 $detailTotal = round($meterialissue->issueCostRptTotal,2);
                 $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
@@ -250,18 +250,18 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
 
                     if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
-                        return $this->sendError("Allocated qty cannot be greater than detail qty.");
+                        return $this->sendError(trans('custom.allocated_qty_cannot_be_greater_than_detail_qty'));
                     }
                 }
                 
                 $input['amountRpt'] = $input['amount'];
 
                 if ($meterialissue->issueCostRptTotal == 0) {
-                    return $this->sendError("Total Value cannot be zero.");
+                    return $this->sendError(trans('custom.total_value_cannot_be_zero'));
                 }
 
                 if(is_numeric($input['amount']) != 1){
-                    return $this->sendError("Please enter a numeric value to the amount field.");
+                    return $this->sendError(trans('custom.enter_numeric_value_amount_field'));
                 }
 
                 $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
@@ -284,17 +284,17 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $newTotal = round($newTotal,2);
 
             if (($newTotal - $detailTotal) > 0.01) {
-                return $this->sendError("Allocated amount cannot be greater than detail amount.");
+                return $this->sendError(trans('custom.allocated_amount_cannot_be_greater_than_detail_amount'));
             }
         }else{
             if (($newTotal - $detailTotal) > 0.00001) {
-                return $this->sendError("Allocated amount cannot be greater than detail amount.");
+                return $this->sendError(trans('custom.allocated_amount_cannot_be_greater_than_detail_amount'));
             }
         }
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->create($input);
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'Expense Asset Allocation saved successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expense_asset_allocation_saved_successfully'));
     }
 
     /**
@@ -341,10 +341,10 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'Expense Asset Allocation retrieved successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expense_asset_allocation_retrieved_successfully'));
     }
 
     /**
@@ -401,12 +401,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->update($input, $id);
 
-        return $this->sendResponse($expenseAssetAllocation->toArray(), 'ExpenseAssetAllocation updated successfully');
+        return $this->sendResponse($expenseAssetAllocation->toArray(), trans('custom.expenseassetallocation_updated_successfully'));
     }
 
     /**
@@ -453,12 +453,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseAssetAllocation)) {
-            return $this->sendError('Expense Asset Allocation not found');
+            return $this->sendError(trans('custom.expense_asset_allocation_not_found'));
         }
 
         $expenseAssetAllocation->delete();
 
-        return $this->sendResponse([], 'Expense Asset Allocation deleted successfully');
+        return $this->sendResponse([], trans('custom.expense_asset_allocation_deleted_successfully'));
     }
 
      public function getCompanyAsset(Request $request)
@@ -483,7 +483,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             ->take(20)
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     } 
 
     public function getAllocatedAssetsForExpense(Request $request)
@@ -495,7 +495,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                   ->with(['asset'])
                                                   ->get();
 
-        return $this->sendResponse($allocatedAsssets, 'Data retrieved successfully');
+        return $this->sendResponse($allocatedAsssets, trans('custom.data_retrieved_successfully'));
     }
 
     public function checkAssetAllocation(Request $request)
@@ -558,7 +558,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $data['exit'] = false;
         }
 
-        return $this->sendResponse($data, 'Data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
     }
 
     public function validateDirectItemWithAssetExpense(Request $request)
@@ -578,11 +578,11 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             foreach($allocatedAsssets as $allocatedAssset) {
                 $total += $allocatedAssset->amount;
                 if($item['netAmount'] < $total) {
-                    return $this->sendError("Detail amount cannot be less than allocated amount.");
+                    return $this->sendError(trans('custom.detail_amount_cannot_be_less_than_allocated_amount'));
                 }
              }
         }
 
-        return $this->sendResponse($validationSuccess, 'Data retrieved successfully');
+        return $this->sendResponse($validationSuccess, trans('custom.data_retrieved_successfully'));
     }
 }

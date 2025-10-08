@@ -65,7 +65,7 @@ class PosSourceMenuMasterAPIController extends AppBaseController
         $this->posSourceMenuMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $posSourceMenuMasters = $this->posSourceMenuMasterRepository->all();
 
-        return $this->sendResponse($posSourceMenuMasters->toArray(), 'Pos Source Menu Masters retrieved successfully');
+        return $this->sendResponse($posSourceMenuMasters->toArray(), trans('custom.pos_source_menu_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PosSourceMenuMasterAPIController extends AppBaseController
 
         $posSourceMenuMaster = $this->posSourceMenuMasterRepository->create($input);
 
-        return $this->sendResponse($posSourceMenuMaster->toArray(), 'Pos Source Menu Master saved successfully');
+        return $this->sendResponse($posSourceMenuMaster->toArray(), trans('custom.pos_source_menu_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PosSourceMenuMasterAPIController extends AppBaseController
         $posSourceMenuMaster = $this->posSourceMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuMaster)) {
-            return $this->sendError('Pos Source Menu Master not found');
+            return $this->sendError(trans('custom.pos_source_menu_master_not_found'));
         }
 
-        return $this->sendResponse($posSourceMenuMaster->toArray(), 'Pos Source Menu Master retrieved successfully');
+        return $this->sendResponse($posSourceMenuMaster->toArray(), trans('custom.pos_source_menu_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PosSourceMenuMasterAPIController extends AppBaseController
         $posSourceMenuMaster = $this->posSourceMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuMaster)) {
-            return $this->sendError('Pos Source Menu Master not found');
+            return $this->sendError(trans('custom.pos_source_menu_master_not_found'));
         }
 
         $posSourceMenuMaster = $this->posSourceMenuMasterRepository->update($input, $id);
 
-        return $this->sendResponse($posSourceMenuMaster->toArray(), 'PosSourceMenuMaster updated successfully');
+        return $this->sendResponse($posSourceMenuMaster->toArray(), trans('custom.possourcemenumaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class PosSourceMenuMasterAPIController extends AppBaseController
         $posSourceMenuMaster = $this->posSourceMenuMasterRepository->findWithoutFail($id);
 
         if (empty($posSourceMenuMaster)) {
-            return $this->sendError('Pos Source Menu Master not found');
+            return $this->sendError(trans('custom.pos_source_menu_master_not_found'));
         }
 
         $posSourceMenuMaster->delete();

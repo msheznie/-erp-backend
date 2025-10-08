@@ -72,7 +72,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         $this->finalReturnIncomeTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeTemplates = $this->finalReturnIncomeTemplateRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeTemplates->toArray(), 'Final Return Income Templates retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplates->toArray(), trans('custom.final_return_income_templates_retrieved_successful'));
     }
 
     /**
@@ -155,7 +155,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->create($input);
             $this->updateDetailAndLinksOnCreate($finalReturnIncomeTemplate);
             DB::commit();
-            return $this->sendResponse($finalReturnIncomeTemplate->toArray(), 'Final Return Income Template saved successfully');
+            return $this->sendResponse($finalReturnIncomeTemplate->toArray(), trans('custom.final_return_income_template_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -207,10 +207,10 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplate)) {
-            return $this->sendError('Final Return Income Template not found');
+            return $this->sendError(trans('custom.final_return_income_template_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplate->toArray(), 'Final Return Income Template retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplate->toArray(), trans('custom.final_return_income_template_retrieved_successfull'));
     }
 
     /**
@@ -276,7 +276,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplate)) {
-            return $this->sendError('Final Return Income Template not found');
+            return $this->sendError(trans('custom.final_return_income_template_not_found'));
         }
 
         $rules = [];
@@ -312,7 +312,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->update($input, $id);
 
             DB::commit();
-            return $this->sendResponse($finalReturnIncomeTemplate->toArray(), 'Final Return Income Template updated successfully');
+            return $this->sendResponse($finalReturnIncomeTemplate->toArray(), trans('custom.final_return_income_template_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -364,7 +364,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplate)) {
-            return $this->sendError('Final Return Income Template not found');
+            return $this->sendError(trans('custom.final_return_income_template_not_found'));
         }
 
         $IsExits = FinalReturnIncomeReports::where('template_id', $finalReturnIncomeTemplate->id)
@@ -392,7 +392,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
 
         $finalReturnIncomeTemplate->delete();
 
-        return $this->sendResponse($finalReturnIncomeTemplate,'Final Return Income Template deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplate,trans('custom.final_return_income_template_deleted_successfully'));
     }
 
     public function getTemplateList(Request $request) {
@@ -457,10 +457,10 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             $details = FinalReturnIncomeTemplateDetails::create($detailData);
             
             $columns = [
-                ['description' => 'Appendix'],
-                ['description' => 'Row No.'],
-                ['description' => 'Taxable Income/ Deduction/ Tax Due'],
-                ['description' => 'Amount'],
+                ['description' => trans('custom.appendix')],
+                ['description' => trans('custom.row_no')],
+                ['description' => trans('custom.taxable_income_deduction_tax_due')],
+                ['description' => trans('custom.amount')],
             ];
 
             $columnRows = [];
@@ -545,6 +545,6 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
         $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($templateDetails));
         $items = $items->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

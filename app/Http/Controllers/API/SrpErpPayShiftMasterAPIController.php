@@ -65,7 +65,7 @@ class SrpErpPayShiftMasterAPIController extends AppBaseController
         $this->srpErpPayShiftMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpPayShiftMasters = $this->srpErpPayShiftMasterRepository->all();
 
-        return $this->sendResponse($srpErpPayShiftMasters->toArray(), 'Srp Erp Pay Shift Masters retrieved successfully');
+        return $this->sendResponse($srpErpPayShiftMasters->toArray(), trans('custom.srp_erp_pay_shift_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SrpErpPayShiftMasterAPIController extends AppBaseController
 
         $srpErpPayShiftMaster = $this->srpErpPayShiftMasterRepository->create($input);
 
-        return $this->sendResponse($srpErpPayShiftMaster->toArray(), 'Srp Erp Pay Shift Master saved successfully');
+        return $this->sendResponse($srpErpPayShiftMaster->toArray(), trans('custom.srp_erp_pay_shift_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SrpErpPayShiftMasterAPIController extends AppBaseController
         $srpErpPayShiftMaster = $this->srpErpPayShiftMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftMaster)) {
-            return $this->sendError('Srp Erp Pay Shift Master not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_master_not_found'));
         }
 
-        return $this->sendResponse($srpErpPayShiftMaster->toArray(), 'Srp Erp Pay Shift Master retrieved successfully');
+        return $this->sendResponse($srpErpPayShiftMaster->toArray(), trans('custom.srp_erp_pay_shift_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SrpErpPayShiftMasterAPIController extends AppBaseController
         $srpErpPayShiftMaster = $this->srpErpPayShiftMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftMaster)) {
-            return $this->sendError('Srp Erp Pay Shift Master not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_master_not_found'));
         }
 
         $srpErpPayShiftMaster = $this->srpErpPayShiftMasterRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpPayShiftMaster->toArray(), 'SrpErpPayShiftMaster updated successfully');
+        return $this->sendResponse($srpErpPayShiftMaster->toArray(), trans('custom.srperppayshiftmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SrpErpPayShiftMasterAPIController extends AppBaseController
         $srpErpPayShiftMaster = $this->srpErpPayShiftMasterRepository->findWithoutFail($id);
 
         if (empty($srpErpPayShiftMaster)) {
-            return $this->sendError('Srp Erp Pay Shift Master not found');
+            return $this->sendError(trans('custom.srp_erp_pay_shift_master_not_found'));
         }
 
         $srpErpPayShiftMaster->delete();

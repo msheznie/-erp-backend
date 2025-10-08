@@ -65,7 +65,7 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
         $this->budgetReviewTransferAdditionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetReviewTransferAdditions = $this->budgetReviewTransferAdditionRepository->all();
 
-        return $this->sendResponse($budgetReviewTransferAdditions->toArray(), 'Budget Review Transfer Additions retrieved successfully');
+        return $this->sendResponse($budgetReviewTransferAdditions->toArray(), trans('custom.budget_review_transfer_additions_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
 
         $budgetReviewTransferAddition = $this->budgetReviewTransferAdditionRepository->create($input);
 
-        return $this->sendResponse($budgetReviewTransferAddition->toArray(), 'Budget Review Transfer Addition saved successfully');
+        return $this->sendResponse($budgetReviewTransferAddition->toArray(), trans('custom.budget_review_transfer_addition_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
         $budgetReviewTransferAddition = $this->budgetReviewTransferAdditionRepository->findWithoutFail($id);
 
         if (empty($budgetReviewTransferAddition)) {
-            return $this->sendError('Budget Review Transfer Addition not found');
+            return $this->sendError(trans('custom.budget_review_transfer_addition_not_found'));
         }
 
-        return $this->sendResponse($budgetReviewTransferAddition->toArray(), 'Budget Review Transfer Addition retrieved successfully');
+        return $this->sendResponse($budgetReviewTransferAddition->toArray(), trans('custom.budget_review_transfer_addition_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
         $budgetReviewTransferAddition = $this->budgetReviewTransferAdditionRepository->findWithoutFail($id);
 
         if (empty($budgetReviewTransferAddition)) {
-            return $this->sendError('Budget Review Transfer Addition not found');
+            return $this->sendError(trans('custom.budget_review_transfer_addition_not_found'));
         }
 
         $budgetReviewTransferAddition = $this->budgetReviewTransferAdditionRepository->update($input, $id);
 
-        return $this->sendResponse($budgetReviewTransferAddition->toArray(), 'BudgetReviewTransferAddition updated successfully');
+        return $this->sendResponse($budgetReviewTransferAddition->toArray(), trans('custom.budgetreviewtransferaddition_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
         $budgetReviewTransferAddition = $this->budgetReviewTransferAdditionRepository->findWithoutFail($id);
 
         if (empty($budgetReviewTransferAddition)) {
-            return $this->sendError('Budget Review Transfer Addition not found');
+            return $this->sendError(trans('custom.budget_review_transfer_addition_not_found'));
         }
 
         $budgetReviewTransferAddition->delete();
@@ -299,6 +299,6 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
                     ->where('budgetBlockYN', -1);
             }])
             ->get();
-        return $this->sendResponse($budgetAddition->toArray(), 'Budget Review Transfer Addition retrieved successfully');
+        return $this->sendResponse($budgetAddition->toArray(), trans('custom.budget_review_transfer_addition_retrieved_successf'));
     }
 }

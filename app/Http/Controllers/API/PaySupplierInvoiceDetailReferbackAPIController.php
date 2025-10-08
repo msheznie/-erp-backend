@@ -64,7 +64,7 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
         $this->paySupplierInvoiceDetailReferbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paySupplierInvoiceDetailReferbacks = $this->paySupplierInvoiceDetailReferbackRepository->all();
 
-        return $this->sendResponse($paySupplierInvoiceDetailReferbacks->toArray(), 'Pay Supplier Invoice Detail Referbacks retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetailReferbacks->toArray(), trans('custom.pay_supplier_invoice_detail_referbacks_retrieved_s'));
     }
 
     /**
@@ -111,7 +111,7 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
 
         $paySupplierInvoiceDetailReferbacks = $this->paySupplierInvoiceDetailReferbackRepository->create($input);
 
-        return $this->sendResponse($paySupplierInvoiceDetailReferbacks->toArray(), 'Pay Supplier Invoice Detail Referback saved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetailReferbacks->toArray(), trans('custom.pay_supplier_invoice_detail_referback_saved_succes'));
     }
 
     /**
@@ -158,10 +158,10 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
         $paySupplierInvoiceDetailReferback = $this->paySupplierInvoiceDetailReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceDetailReferback)) {
-            return $this->sendError('Pay Supplier Invoice Detail Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_referback_not_found'));
         }
 
-        return $this->sendResponse($paySupplierInvoiceDetailReferback->toArray(), 'Pay Supplier Invoice Detail Referback retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceDetailReferback->toArray(), trans('custom.pay_supplier_invoice_detail_referback_retrieved_su'));
     }
 
     /**
@@ -218,12 +218,12 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
         $paySupplierInvoiceDetailReferback = $this->paySupplierInvoiceDetailReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceDetailReferback)) {
-            return $this->sendError('Pay Supplier Invoice Detail Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_referback_not_found'));
         }
 
         $paySupplierInvoiceDetailReferback = $this->paySupplierInvoiceDetailReferbackRepository->update($input, $id);
 
-        return $this->sendResponse($paySupplierInvoiceDetailReferback->toArray(), 'PaySupplierInvoiceDetailReferback updated successfully');
+        return $this->sendResponse($paySupplierInvoiceDetailReferback->toArray(), trans('custom.paysupplierinvoicedetailreferback_updated_successf'));
     }
 
     /**
@@ -270,17 +270,17 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
         $paySupplierInvoiceDetailReferback = $this->paySupplierInvoiceDetailReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceDetailReferback)) {
-            return $this->sendError('Pay Supplier Invoice Detail Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_detail_referback_not_found'));
         }
 
         $paySupplierInvoiceDetailReferback->delete();
 
-        return $this->sendResponse($id, 'Pay Supplier Invoice Detail Referback deleted successfully');
+        return $this->sendResponse($id, trans('custom.pay_supplier_invoice_detail_referback_deleted_succ'));
     }
 
     public function getPOPaymentHistoryDetails(Request $request)
     {
         $data = $this->paySupplierInvoiceDetailReferbackRepository->findWhere(['PayMasterAutoId' => $request->payMasterAutoId, 'timesReferred' => $request->timesReferred]);
-        return $this->sendResponse($data, 'Payment details retrieved successfully');
+        return $this->sendResponse($data, trans('custom.payment_details_retrieved_successfully'));
     }
 }

@@ -89,7 +89,7 @@ class LogisticAPIController extends AppBaseController
         $this->logisticRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logistics = $this->logisticRepository->all();
 
-        return $this->sendResponse($logistics->toArray(), 'Logistics retrieved successfully');
+        return $this->sendResponse($logistics->toArray(), trans('custom.logistics_retrieved_successfully'));
     }
 
     /**
@@ -160,10 +160,10 @@ class LogisticAPIController extends AppBaseController
         $checkInvoiceNo = Logistic::where('companySystemID',$input['companySystemID'])
                                     ->where('customInvoiceNo',$input['customInvoiceNo'])
                                     ->first();
-        $message = 'Logistic saved successfully';
+        $message = trans('custom.logistic_saved_successfully');
         if(!empty($checkInvoiceNo)){
             $warning = 1;
-            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+            $message = trans('custom.invoice_number_already_exists', ['docCode' => $checkInvoiceNo->logisticDocCode]);
         }
 
         if (isset($input['nextCustomDocRenewalDate']) && $input['nextCustomDocRenewalDate']) {
@@ -207,7 +207,7 @@ class LogisticAPIController extends AppBaseController
         $rptDecimal = 2;
 
         if (empty($company)) {
-            return $this->sendError('Company not found', 500);
+            return $this->sendError(trans('custom.company_not_found'), 500);
         }
         $input['companyID'] = $company->CompanyID;
 
@@ -316,10 +316,10 @@ class LogisticAPIController extends AppBaseController
         $logistic = $this->logisticRepository->with(['location','supplier_by'])->findWithoutFail($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
-        return $this->sendResponse($logistic->toArray(), 'Logistic retrieved successfully');
+        return $this->sendResponse($logistic->toArray(), trans('custom.logistic_retrieved_successfully'));
     }
 
     /**
@@ -377,7 +377,7 @@ class LogisticAPIController extends AppBaseController
         $logistic = $this->logisticRepository->with(['local_currency','reporting_currency'])->findWithoutFail($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
         if (isset($input['nextCustomDocRenewalDate']) && $input['nextCustomDocRenewalDate']) {
@@ -485,10 +485,10 @@ class LogisticAPIController extends AppBaseController
                                     ->where('logisticMasterID','!=',$logistic->logisticMasterID)
                                     ->where('customInvoiceNo',$input['customInvoiceNo'])
                                     ->first();
-        $message = 'Logistic updated successfully';
+        $message = trans('custom.logistic_updated_successfully');
         if(!empty($checkInvoiceNo)){
             $warning = 1;
-            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+            $message = trans('custom.invoice_number_already_exists', ['docCode' => $checkInvoiceNo->logisticDocCode]);
         }
 
         $logistic = $this->logisticRepository->update($input, $id);
@@ -542,12 +542,12 @@ class LogisticAPIController extends AppBaseController
         $logistic = $this->logisticRepository->findWithoutFail($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
         $logistic->delete();
 
-        return $this->sendResponse($id, 'Logistic deleted successfully');
+        return $this->sendResponse($id, trans('custom.logistic_deleted_successfully'));
     }
 
     /**
@@ -633,7 +633,7 @@ class LogisticAPIController extends AppBaseController
             'company' => $company,
             'status' => $status
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function exportLogisticsByCompanyReport(Request $request)
@@ -644,35 +644,35 @@ class LogisticAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Logistic Code'] = $value->logisticDocCode;
-                $data[$x]['Invoice No'] = $value->customInvoiceNo;
-                $data[$x]['Invoice Amount'] = $value->customInvoiceAmount;
-                $data[$x]['Invoice Date'] = \Helper::dateFormat($value->customInvoiceDate);
+                $data[$x][trans('custom.logistic_code')] = $value->logisticDocCode;
+                $data[$x][trans('custom.invoice_no')] = $value->customInvoiceNo;
+                $data[$x][trans('custom.invoice_amount')] = $value->customInvoiceAmount;
+                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($value->customInvoiceDate);
                 if ($value->shipping_mode) {
-                    $data[$x]['Mode'] = $value->shipping_mode->modeShippingDescription;
+                    $data[$x][trans('custom.mode')] = $value->shipping_mode->modeShippingDescription;
                 } else {
-                    $data[$x]['Mode'] = '';
+                    $data[$x][trans('custom.mode')] = '';
                 }
                 if ($value->supplier_by) {
-                    $data[$x]['Supplier'] = $value->supplier_by->supplierName;
+                    $data[$x][trans('custom.supplier')] = $value->supplier_by->supplierName;
                 } else {
-                    $data[$x]['Supplier'] = '';
+                    $data[$x][trans('custom.supplier')] = '';
                 }
-                $data[$x]['Comments '] = $value->comments;
+                $data[$x][trans('custom.comments')] = $value->comments;
 
-                $data[$x]['Renewal Date'] = \Helper::dateFormat($value->nextCustomDocRenewalDate);
-                $data[$x]['Arrival Date'] = \Helper::dateFormat($value->customeArrivalDate);
+                $data[$x][trans('custom.renewal_date')] = \Helper::dateFormat($value->nextCustomDocRenewalDate);
+                $data[$x][trans('custom.arrival_date')] = \Helper::dateFormat($value->customeArrivalDate);
                 if ($value->ftaOrDF) {
-                    $data[$x]['FTA/DF'] = $value->ftaOrDF;
+                    $data[$x][trans('custom.fta_df')] = $value->ftaOrDF;
                 } else {
-                    $data[$x]['FTA/DF'] = 'NA';
+                    $data[$x][trans('custom.fta_df')] = 'NA';
                 }
                 if ($value->created_by) {
-                    $data[$x]['Created By'] = $value->created_by->empName;
+                    $data[$x][trans('custom.created_by')] = $value->created_by->empName;
                 } else {
-                    $data[$x]['Created By'] = '';
+                    $data[$x][trans('custom.created_by')] = '';
                 }
-                $data[$x]['Created at'] = \Helper::dateFormat($value->createdDateTime);
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($value->createdDateTime);
                 $x++;
             }
         }
@@ -690,7 +690,7 @@ class LogisticAPIController extends AppBaseController
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+             return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -748,14 +748,14 @@ class LogisticAPIController extends AppBaseController
         $company = Company::find($input['companySystemID']);
 
         if(!$company) {
-            return $this->sendError("Company Not Found", 500);
+            return $this->sendError(trans('custom.company_not_found'), 500);
         }
         
 
 
         $data = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['amount']);
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
         
     }
 
@@ -774,12 +774,12 @@ class LogisticAPIController extends AppBaseController
         $logistic = $this->logisticRepository->getAudit($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
         $logistic->docRefNo = \Helper::getCompanyDocRefNo($logistic->companySystemID, $logistic->documentSystemID);
 
-        return $this->sendResponse($logistic->toArray(), 'Logistic retrieved successfully');
+        return $this->sendResponse($logistic->toArray(), trans('custom.logistic_retrieved_successfully'));
     }
 
     /**
@@ -798,7 +798,7 @@ class LogisticAPIController extends AppBaseController
             ->with(['status'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Logistic Status retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.logistic_status_retrieved_successfully'));
     }
 
     public function checkPullFromGrv(Request $request)
@@ -809,7 +809,7 @@ class LogisticAPIController extends AppBaseController
         $logistic = $this->logisticRepository->findWithoutFail($id);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found');
+            return $this->sendError(trans('custom.logistic_not_found'));
         }
 
         $validator = \Validator::make($logistic->toArray(), [
@@ -821,7 +821,7 @@ class LogisticAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($logistic->toArray(), 'Logistic retrieved successfully');
+        return $this->sendResponse($logistic->toArray(), trans('custom.logistic_retrieved_successfully'));
     }
 
 }

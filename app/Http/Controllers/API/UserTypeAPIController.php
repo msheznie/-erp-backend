@@ -64,7 +64,7 @@ class UserTypeAPIController extends AppBaseController
         $this->userTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userTypes = $this->userTypeRepository->all();
 
-        return $this->sendResponse($userTypes->toArray(), 'User Types retrieved successfully');
+        return $this->sendResponse($userTypes->toArray(), trans('custom.user_types_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class UserTypeAPIController extends AppBaseController
 
         $userType = $this->userTypeRepository->create($input);
 
-        return $this->sendResponse($userType->toArray(), 'User Type saved successfully');
+        return $this->sendResponse($userType->toArray(), trans('custom.user_type_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class UserTypeAPIController extends AppBaseController
         $userType = $this->userTypeRepository->findWithoutFail($id);
 
         if (empty($userType)) {
-            return $this->sendError('User Type not found');
+            return $this->sendError(trans('custom.user_type_not_found'));
         }
 
-        return $this->sendResponse($userType->toArray(), 'User Type retrieved successfully');
+        return $this->sendResponse($userType->toArray(), trans('custom.user_type_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class UserTypeAPIController extends AppBaseController
         $userType = $this->userTypeRepository->findWithoutFail($id);
 
         if (empty($userType)) {
-            return $this->sendError('User Type not found');
+            return $this->sendError(trans('custom.user_type_not_found'));
         }
 
         $userType = $this->userTypeRepository->update($input, $id);
 
-        return $this->sendResponse($userType->toArray(), 'UserType updated successfully');
+        return $this->sendResponse($userType->toArray(), trans('custom.usertype_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class UserTypeAPIController extends AppBaseController
         $userType = $this->userTypeRepository->findWithoutFail($id);
 
         if (empty($userType)) {
-            return $this->sendError('User Type not found');
+            return $this->sendError(trans('custom.user_type_not_found'));
         }
 
         $userType->delete();

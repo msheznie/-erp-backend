@@ -68,7 +68,7 @@ class SupplierCatalogDetailAPIController extends AppBaseController
         $this->supplierCatalogDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCatalogDetails = $this->supplierCatalogDetailRepository->all();
 
-        return $this->sendResponse($supplierCatalogDetails->toArray(), 'Supplier Catalog Details retrieved successfully');
+        return $this->sendResponse($supplierCatalogDetails->toArray(), trans('custom.supplier_catalog_details_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class SupplierCatalogDetailAPIController extends AppBaseController
         }
         $catalogMaster = SupplierCatalogMaster::find($input['supplierCatalogMasterID']);
         if(empty($catalogMaster)){
-            return $this->sendError('Catalog Master Not Found',500);
+            return $this->sendError(trans('custom.catalog_master_not_found'),500);
         }
 
         $isAlreadyAdded = SupplierCatalogDetail::where('supplierCatalogMasterID',$input['supplierCatalogMasterID'])
@@ -135,12 +135,12 @@ class SupplierCatalogDetailAPIController extends AppBaseController
             ->first();
 
         if(!empty($isAlreadyAdded)){
-            return $this->sendError('Item already added',500);
+            return $this->sendError(trans('custom.item_already_added'),500);
         }
 
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
-            return $this->sendError('Item not found',500);
+            return $this->sendError(trans('custom.item_not_found'),500);
         }
 
         $supplier = SupplierMaster::find($catalogMaster->supplierID);
@@ -152,7 +152,7 @@ class SupplierCatalogDetailAPIController extends AppBaseController
 
         $supplierCatalogDetail = $this->supplierCatalogDetailRepository->create($input);
 
-        return $this->sendResponse($supplierCatalogDetail->toArray(), 'Supplier Catalog Detail saved successfully');
+        return $this->sendResponse($supplierCatalogDetail->toArray(), trans('custom.supplier_catalog_detail_saved_successfully'));
     }
 
     /**
@@ -199,10 +199,10 @@ class SupplierCatalogDetailAPIController extends AppBaseController
         $supplierCatalogDetail = $this->supplierCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogDetail)) {
-            return $this->sendError('Supplier Catalog Detail not found');
+            return $this->sendError(trans('custom.supplier_catalog_detail_not_found'));
         }
 
-        return $this->sendResponse($supplierCatalogDetail->toArray(), 'Supplier Catalog Detail retrieved successfully');
+        return $this->sendResponse($supplierCatalogDetail->toArray(), trans('custom.supplier_catalog_detail_retrieved_successfully'));
     }
 
     /**
@@ -270,7 +270,7 @@ class SupplierCatalogDetailAPIController extends AppBaseController
 
         $catalogMaster = SupplierCatalogMaster::find($input['supplierCatalogMasterID']);
         if(empty($catalogMaster)){
-            return $this->sendError('Catalog Master Not Found',500);
+            return $this->sendError(trans('custom.catalog_master_not_found'),500);
         }
 
 
@@ -279,12 +279,12 @@ class SupplierCatalogDetailAPIController extends AppBaseController
         $supplierCatalogDetail = $this->supplierCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogDetail)) {
-            return $this->sendError('Supplier Catalog Detail not found');
+            return $this->sendError(trans('custom.supplier_catalog_detail_not_found'));
         }
 
         $supplierCatalogDetail = $this->supplierCatalogDetailRepository->update($input, $id);
 
-        return $this->sendResponse($supplierCatalogDetail->toArray(), 'SupplierCatalogDetail updated successfully');
+        return $this->sendResponse($supplierCatalogDetail->toArray(), trans('custom.suppliercatalogdetail_updated_successfully'));
     }
 
     /**
@@ -331,11 +331,11 @@ class SupplierCatalogDetailAPIController extends AppBaseController
         $supplierCatalogDetail = $this->supplierCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogDetail)) {
-            return $this->sendError('Supplier Catalog Detail not found');
+            return $this->sendError(trans('custom.supplier_catalog_detail_not_found'));
         }
 
 //        $supplierCatalogDetail->delete();
         $this->supplierCatalogDetailRepository->update(['isDeleted'=>1], $id);
-        return $this->sendResponse($id, 'Supplier Catalog Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_catalog_detail_deleted_successfully'));
     }
 }

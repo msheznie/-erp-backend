@@ -65,7 +65,7 @@ class ScheduleMasterAPIController extends AppBaseController
         $this->scheduleMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $scheduleMasters = $this->scheduleMasterRepository->all();
 
-        return $this->sendResponse($scheduleMasters->toArray(), 'Schedule Masters retrieved successfully');
+        return $this->sendResponse($scheduleMasters->toArray(), trans('custom.schedule_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ScheduleMasterAPIController extends AppBaseController
 
         $scheduleMaster = $this->scheduleMasterRepository->create($input);
 
-        return $this->sendResponse($scheduleMaster->toArray(), 'Schedule Master saved successfully');
+        return $this->sendResponse($scheduleMaster->toArray(), trans('custom.schedule_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ScheduleMasterAPIController extends AppBaseController
         $scheduleMaster = $this->scheduleMasterRepository->findWithoutFail($id);
 
         if (empty($scheduleMaster)) {
-            return $this->sendError('Schedule Master not found');
+            return $this->sendError(trans('custom.schedule_master_not_found'));
         }
 
-        return $this->sendResponse($scheduleMaster->toArray(), 'Schedule Master retrieved successfully');
+        return $this->sendResponse($scheduleMaster->toArray(), trans('custom.schedule_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ScheduleMasterAPIController extends AppBaseController
         $scheduleMaster = $this->scheduleMasterRepository->findWithoutFail($id);
 
         if (empty($scheduleMaster)) {
-            return $this->sendError('Schedule Master not found');
+            return $this->sendError(trans('custom.schedule_master_not_found'));
         }
 
         $scheduleMaster = $this->scheduleMasterRepository->update($input, $id);
 
-        return $this->sendResponse($scheduleMaster->toArray(), 'ScheduleMaster updated successfully');
+        return $this->sendResponse($scheduleMaster->toArray(), trans('custom.schedulemaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ScheduleMasterAPIController extends AppBaseController
         $scheduleMaster = $this->scheduleMasterRepository->findWithoutFail($id);
 
         if (empty($scheduleMaster)) {
-            return $this->sendError('Schedule Master not found');
+            return $this->sendError(trans('custom.schedule_master_not_found'));
         }
 
         $scheduleMaster->delete();
 
-        return $this->sendResponse($id, 'Schedule Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.schedule_master_deleted_successfully'));
     }
 }

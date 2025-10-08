@@ -113,6 +113,24 @@ class CustomUserReportColumns extends Model
         
     ];
 
+    /**
+     * Get the translated label attribute
+     *
+     * @return string
+     */
+    public function getLabelAttribute($value)
+    {
+        $translationKey = str_replace(' ', '_', strtolower(trim($value)));
+        
+        $translatedValue = __("custom.{$translationKey}");
+        
+        if ($translatedValue === "custom.{$translationKey}") {
+            return $value;
+        }
+        
+        return $translatedValue;
+    }
+
     public function column()
     {
         return $this->belongsTo(CustomReportColumns::class, 'column_id');

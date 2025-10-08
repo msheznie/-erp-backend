@@ -67,7 +67,7 @@ class CompanyDigitalStampAPIController extends AppBaseController
         $this->companyDigitalStampRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyDigitalStamps = $this->companyDigitalStampRepository->all();
 
-        return $this->sendResponse($companyDigitalStamps->toArray(), 'Company Digital Stamps retrieved successfully');
+        return $this->sendResponse($companyDigitalStamps->toArray(), trans('custom.company_digital_stamps_retrieved_successfully'));
     }
 
     /**
@@ -114,7 +114,7 @@ class CompanyDigitalStampAPIController extends AppBaseController
 
         $companyDigitalStamp = $this->companyDigitalStampRepository->create($input);
 
-        return $this->sendResponse($companyDigitalStamp->toArray(), 'Company Digital Stamp saved successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), trans('custom.company_digital_stamp_saved_successfully'));
     }
 
     /**
@@ -161,10 +161,10 @@ class CompanyDigitalStampAPIController extends AppBaseController
         $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
 
         if (empty($companyDigitalStamp)) {
-            return $this->sendError('Company Digital Stamp not found');
+            return $this->sendError(trans('custom.company_digital_stamp_not_found'));
         }
 
-        return $this->sendResponse($companyDigitalStamp->toArray(), 'Company Digital Stamp retrieved successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), trans('custom.company_digital_stamp_retrieved_successfully'));
     }
 
     /**
@@ -221,12 +221,12 @@ class CompanyDigitalStampAPIController extends AppBaseController
         $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
 
         if (empty($companyDigitalStamp)) {
-            return $this->sendError('Company Digital Stamp not found');
+            return $this->sendError(trans('custom.company_digital_stamp_not_found'));
         }
 
         $companyDigitalStamp = $this->companyDigitalStampRepository->update($input, $id);
 
-        return $this->sendResponse($companyDigitalStamp->toArray(), 'CompanyDigitalStamp updated successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), trans('custom.companydigitalstamp_updated_successfully'));
     }
 
     /**
@@ -276,11 +276,11 @@ class CompanyDigitalStampAPIController extends AppBaseController
         $re = Storage::disk($disk)->delete($companyDigitalStamp->path);
 
         if (empty($companyDigitalStamp)) {
-            return $this->sendError('Company Digital Stamp not found');
+            return $this->sendError(trans('custom.company_digital_stamp_not_found'));
         }
 
         $companyDigitalStamp->delete();
 
-        return $this->sendResponse($companyDigitalStamp,'Company Digital Stamp deleted successfully');
+        return $this->sendResponse($companyDigitalStamp,trans('custom.company_digital_stamp_deleted_successfully'));
     }
 }

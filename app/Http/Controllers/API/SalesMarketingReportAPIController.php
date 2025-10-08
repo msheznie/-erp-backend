@@ -310,7 +310,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'yes' => $yes,
                 );
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             case 'SARDS':
                 $customers = $request['Customer'];
@@ -470,7 +470,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 );
 
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
 
             case 'SARDVS':
@@ -659,7 +659,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'yes'=>$yes
                 );
 
-                return $this->sendResponse($output, 'Items retrieved successfully');
+                return $this->sendResponse($output, trans('custom.items_retrieved_successfully'));
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -923,19 +923,19 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                         $data[] = array(
-                            'Document Code' => $val['quotationCode'],
-                            'Document Date' => Helper::dateFormat($val['documentDate']),
-                            'Segment' => $val['serviceLine'],
-                            'Ref No' => $val['referenceNo'],
-                            'Customer' => $val['customer'],
-                            'Currency' => $val['currency'],
-                            'Expire Date' => Helper::dateFormat($val['documentExpDate']),
-                            'Document Status' => $doc_status,
-                            'Customer Status' => $val['customer_status'],
-                            'Document Amount' => round($val['document_amount'], $dp),
-                            'Delivery/Return Status' => $delivery_status.''.$return_status,
-                            'Invoice Amount' => round($val['invoice_amount'], $dp),
-                            'Paid Amount' => round($val['paid_amount'], $dp)
+                            trans('custom.document_code') => $val['quotationCode'],
+                            trans('custom.document_date') => Helper::dateFormat($val['documentDate']),
+                            trans('custom.segment') => $val['serviceLine'],
+                            trans('custom.ref_no') => $val['referenceNo'],
+                            trans('custom.customer') => $val['customer'],
+                            trans('custom.currency') => $val['currency'],
+                            trans('custom.expire_date') => Helper::dateFormat($val['documentExpDate']),
+                            trans('custom.document_status') => $doc_status,
+                            trans('custom.customer_status') => $val['customer_status'],
+                            trans('custom.document_amount') => round($val['document_amount'], $dp),
+                            trans('custom.delivery_return_status') => $delivery_status.''.$return_status,
+                            trans('custom.invoice_amount') => round($val['invoice_amount'], $dp),
+                            trans('custom.paid_amount') => round($val['paid_amount'], $dp)
                         );
                     }
 
@@ -1381,20 +1381,20 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
 
                         $data[] = array(
-                            'Customer Code' => $value->customerCode,
-                            'Customer Name' => $value->customerName,
-                            'Document System Code' => $value->documentCode,
-                            'Document Date' => Helper::dateFormat($value->documentDate),
-                            'Item Code' => $value->itemCode,
-                            'Item Description' => $value->itemDescription,
-                            'Sub Category' => $value->categoryDescription,
-                            'UOM' => $value->unitShortCode,
-                            'Quantity' => $value->quantity,
-                            'Total Sales Value ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
-                            'Total Cost ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
-                            'Profit ('.$currency->CurrencyCode.')' => round($profit, $currency->DecimalPlaces),
-                            'Profit Margin' => $profitMargin,
-                            'Average Cost ('.$currency->CurrencyCode.') Up to Date' => $this->getAverageCostUpToDate($value, $input, $currency)
+                            trans('custom.customer_code') => $value->customerCode,
+                            trans('custom.customer_name') => $value->customerName,
+                            trans('custom.document_system_code') => $value->documentCode,
+                            trans('custom.document_date') => Helper::dateFormat($value->documentDate),
+                            trans('custom.item_code') => $value->itemCode,
+                            trans('custom.item_description') => $value->itemDescription,
+                            trans('custom.sub_category') => $value->categoryDescription,
+                            trans('custom.uom') => $value->unitShortCode,
+                            trans('custom.quantity') => $value->quantity,
+                            trans('custom.total_sales_value') . ' (' . $currency->CurrencyCode . ')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
+                            trans('custom.total_cost') . ' (' . $currency->CurrencyCode . ')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
+                            trans('custom.profit') . ' (' . $currency->CurrencyCode . ')' => round($profit, $currency->DecimalPlaces),
+                            trans('custom.profit_margin') => $profitMargin,
+                            trans('custom.average_cost') . ' (' . $currency->CurrencyCode . ') ' . trans('custom.up_to_date') => $this->getAverageCostUpToDate($value, $input, $currency)
                            
                         );
                     }
@@ -1768,7 +1768,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             'wareHouses' => $wareHouses
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getSalesAnalysisFilterData(Request $request)
@@ -1811,7 +1811,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             'customer' => $customerMaster
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     function getQSOQRY($request, $search = "")
@@ -2244,7 +2244,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customers = $customers->take(15)->get(['companySystemID', 'CutomerCode', 'CustomerName', 'customerCodeSystem']);
         $output = array('customers' => $customers);
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
 
@@ -2265,41 +2265,41 @@ class SalesMarketingReportAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Company ID'] = $value->companyID;
-                $data[$x]['SO Number'] = $value->quotationCode;
-                $data[$x]['SO Approved Date'] = \Helper::dateFormat($value->approvedDate);
-                $data[$x]['Narration'] = $value->narration;
+                $data[$x][trans('custom.company_id')] = $value->companyID;
+                $data[$x][trans('custom.so_number')] = $value->quotationCode;
+                $data[$x][trans('custom.so_approved_date')] = \Helper::dateFormat($value->approvedDate);
+                $data[$x][trans('custom.narration')] = $value->narration;
                 if ($value->customer) {
-                    $data[$x]['Customer Code'] = $value->customer->CutomerCode;
-                    $data[$x]['Customer Name'] = $value->customer->CustomerName;
+                    $data[$x][trans('custom.customer_code')] = $value->customer->CutomerCode;
+                    $data[$x][trans('custom.customer_name')] = $value->customer->CustomerName;
                 } else {
-                    $data[$x]['Customer Code'] = '';
-                    $data[$x]['Customer Name'] = '';
+                    $data[$x][trans('custom.customer_code')] = '';
+                    $data[$x][trans('custom.customer_name')] = '';
                 }
-                $data[$x]['SO Amount'] = number_format($value->transactionAmount, 2);
+                $data[$x][trans('custom.so_amount')] = number_format($value->transactionAmount, 2);
 
                 if (count($value->deliveryOrders) > 0) {
                     $grvMasterCount = 0;
                     foreach ($value->deliveryOrders as $grv) {
                         if ($grvMasterCount != 0) {
                             $x++;
-                            $data[$x]['Company ID'] = '';
-                            $data[$x]['SO Number'] = '';
-                            $data[$x]['SO Approved Date'] = '';
-                            $data[$x]['Narration'] = '';
-                            $data[$x]['Customer Code'] = '';
-                            $data[$x]['Customer Name'] = '';
-                            $data[$x]['SO Amount'] = '';
+                            $data[$x][trans('custom.company_id')] = '';
+                            $data[$x][trans('custom.so_number')] = '';
+                            $data[$x][trans('custom.so_approved_date')] = '';
+                            $data[$x][trans('custom.narration')] = '';
+                            $data[$x][trans('custom.customer_code')] = '';
+                            $data[$x][trans('custom.customer_name')] = '';
+                            $data[$x][trans('custom.so_amount')] = '';
                         }
 
                         if (isset($grv['master'])) {
-                            $data[$x]['Delivery Code'] = $grv['master']['deliveryOrderCode'];
-                            $data[$x]['Delivery Date'] = \Helper::dateFormat($grv['master']['deliveryOrderDate']);
-                            $data[$x]['Delivery Amount'] = number_format($grv['rptAmount'], 2);
+                            $data[$x][trans('custom.delivery_code')] = $grv['master']['deliveryOrderCode'];
+                            $data[$x][trans('custom.delivery_date')] = \Helper::dateFormat($grv['master']['deliveryOrderDate']);
+                            $data[$x][trans('custom.delivery_amount')] = number_format($grv['rptAmount'], 2);
                         } else {
-                            $data[$x]['Delivery Code'] = '';
-                            $data[$x]['Delivery Date'] = '';
-                            $data[$x]['Delivery Amount'] = '';
+                            $data[$x][trans('custom.delivery_code')] = '';
+                            $data[$x][trans('custom.delivery_date')] = '';
+                            $data[$x][trans('custom.delivery_amount')] = '';
                         }
 
 
@@ -2308,90 +2308,90 @@ class SalesMarketingReportAPIController extends AppBaseController
                             foreach ($grv['invoices'] as $invoice) {
                                 if ($invoicesCount != 0) {
                                     $x++;
-                                    $data[$x]['Company ID'] = '';
-                                    $data[$x]['SO Number'] = '';
-                                    $data[$x]['SO Approved Date'] = '';
-                                    $data[$x]['Narration'] = '';
-                                    $data[$x]['Customer Code'] = '';
-                                    $data[$x]['Customer Name'] = '';
-                                    $data[$x]['PO Amount'] = '';
-                                    $data[$x]['Delivery Code'] = '';
-                                    $data[$x]['Delivery Date'] = '';
-                                    $data[$x]['Delivery Amount'] = '';
+                                    $data[$x][trans('custom.company_id')] = '';
+                                    $data[$x][trans('custom.so_number')] = '';
+                                    $data[$x][trans('custom.so_approved_date')] = '';
+                                    $data[$x][trans('custom.narration')] = '';
+                                    $data[$x][trans('custom.customer_code')] = '';
+                                    $data[$x][trans('custom.customer_name')] = '';
+                                    $data[$x][trans('custom.po_amount')] = '';
+                                    $data[$x][trans('custom.delivery_code')] = '';
+                                    $data[$x][trans('custom.delivery_date')] = '';
+                                    $data[$x][trans('custom.delivery_amount')] = '';
                                 }
 
                                 if ($invoice['master']) {
-                                    $data[$x]['Invoice Code'] = $invoice['master']['bookingInvCode'];
-                                    $data[$x]['Invoice Date'] = \Helper::dateFormat($invoice['master']['bookingDate']);
+                                    $data[$x][trans('custom.invoice_code')] = $invoice['master']['bookingInvCode'];
+                                    $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($invoice['master']['bookingDate']);
                                 } else {
-                                    $data[$x]['Invoice Code'] = '';
-                                    $data[$x]['Invoice Date'] = '';
+                                    $data[$x][trans('custom.invoice_code')] = '';
+                                    $data[$x][trans('custom.invoice_date')] = '';
                                 }
-                                $data[$x]['Invoice Amount'] = number_format($invoice['rptAmount'], 2);
+                                $data[$x][trans('custom.invoice_amount')] = number_format($invoice['rptAmount'], 2);
 
                                 if (count($invoice['payments']) > 0) {
                                     $paymentsCount = 0;
                                     foreach ($invoice['payments'] as $payment) {
                                         if ($paymentsCount != 0) {
                                             $x++;
-                                            $data[$x]['Company ID'] = '';
-                                            $data[$x]['SO Number'] = '';
-                                            $data[$x]['SO Approved Date'] = '';
-                                            $data[$x]['Narration'] = '';
-                                            $data[$x]['Customer Code'] = '';
-                                            $data[$x]['Customer Name'] = '';
-                                            $data[$x]['SO Amount'] = '';
-                                            $data[$x]['Delivery Code'] = '';
-                                            $data[$x]['Delivery Date'] = '';
-                                            $data[$x]['Delivery Amount'] = '';
-                                            $data[$x]['Invoice Code'] = '';
-                                            $data[$x]['Invoice Date'] = '';
-                                            $data[$x]['Invoice Amount'] = '';
+                                            $data[$x][trans('custom.company_id')] = '';
+                                            $data[$x][trans('custom.so_number')] = '';
+                                            $data[$x][trans('custom.so_approved_date')] = '';
+                                            $data[$x][trans('custom.narration')] = '';
+                                            $data[$x][trans('custom.customer_code')] = '';
+                                            $data[$x][trans('custom.customer_name')] = '';
+                                            $data[$x][trans('custom.so_amount')] = '';
+                                            $data[$x][trans('custom.delivery_code')] = '';
+                                            $data[$x][trans('custom.delivery_date')] = '';
+                                            $data[$x][trans('custom.delivery_amount')] = '';
+                                            $data[$x][trans('custom.invoice_code')] = '';
+                                            $data[$x][trans('custom.invoice_date')] = '';
+                                            $data[$x][trans('custom.invoice_amount')] = '';
                                         }
 
                                         if (!empty($payment['master'])) {
-                                            $data[$x]['Receipt Code'] = $payment['master']['custPaymentReceiveCode'];
-                                            $data[$x]['Receipt Date'] = \Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
-                                            $data[$x]['Receipt Posted Date'] = \Helper::dateFormat($payment['master']['postedDate']);
+                                            $data[$x][trans('custom.receipt_code')] = $payment['master']['custPaymentReceiveCode'];
+                                            $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
+                                            $data[$x][trans('custom.receipt_posted_date')] = \Helper::dateFormat($payment['master']['postedDate']);
                                         } else {
-                                            $data[$x]['Receipt Code'] = '';
-                                            $data[$x]['Receipt Date'] = '';
-                                            $data[$x]['Receipt Posted Date'] = '';
+                                            $data[$x][trans('custom.receipt_code')] = '';
+                                            $data[$x][trans('custom.receipt_date')] = '';
+                                            $data[$x][trans('custom.receipt_posted_date')] = '';
                                         }
                                        
-                                        $data[$x]['Paid Amount'] = number_format($payment['rptAmount'], 2);
+                                        $data[$x][trans('custom.paid_amount')] = number_format($payment['rptAmount'], 2);
                                         $paymentsCount++;
                                     }
                                 } else {
-                                    $data[$x]['Receipt Code'] = '';
-                                    $data[$x]['Receipt Date'] = '';
-                                    $data[$x]['Receipt Posted Date'] = '';
-                                    $data[$x]['Paid Amount'] = '';
+                                    $data[$x][trans('custom.receipt_code')] = '';
+                                    $data[$x][trans('custom.receipt_date')] = '';
+                                    $data[$x][trans('custom.receipt_posted_date')] = '';
+                                    $data[$x][trans('custom.paid_amount')] = '';
                                 }
                                 $invoicesCount++;
                             }
                         } else {
-                            $data[$x]['Invoice Code'] = '';
-                            $data[$x]['Invoice Date'] = '';
-                            $data[$x]['Invoice Amount'] = '';
-                            $data[$x]['Receipt Code'] = '';
-                            $data[$x]['Receipt Date'] = '';
-                            $data[$x]['Receipt Posted Date'] = '';
-                            $data[$x]['Paid Amount'] = '';
+                            $data[$x][trans('custom.invoice_code')] = '';
+                            $data[$x][trans('custom.invoice_date')] = '';
+                            $data[$x][trans('custom.invoice_amount')] = '';
+                            $data[$x][trans('custom.receipt_code')] = '';
+                            $data[$x][trans('custom.receipt_date')] = '';
+                            $data[$x][trans('custom.receipt_posted_date')] = '';
+                            $data[$x][trans('custom.paid_amount')] = '';
                         }
                         $grvMasterCount++;
                     }
                 } else {
-                    $data[$x]['Delivery Code'] = '';
-                    $data[$x]['Delivery Date'] = '';
-                    $data[$x]['Delivery Amount'] = '';
-                    $data[$x]['Invoice Code'] = '';
-                    $data[$x]['Invoice Date'] = '';
-                    $data[$x]['Invoice Amount'] = '';
-                    $data[$x]['Receipt Code'] = '';
-                    $data[$x]['Receipt Date'] = '';
-                    $data[$x]['Receipt Posted Date'] = '';
-                    $data[$x]['Paid Amount'] = '';
+                    $data[$x][trans('custom.delivery_code')] = '';
+                    $data[$x][trans('custom.delivery_date')] = '';
+                    $data[$x][trans('custom.delivery_amount')] = '';
+                    $data[$x][trans('custom.invoice_code')] = '';
+                    $data[$x][trans('custom.invoice_date')] = '';
+                    $data[$x][trans('custom.invoice_amount')] = '';
+                    $data[$x][trans('custom.receipt_code')] = '';
+                    $data[$x][trans('custom.receipt_date')] = '';
+                    $data[$x][trans('custom.receipt_posted_date')] = '';
+                    $data[$x][trans('custom.paid_amount')] = '';
                 }
                 $x++;
             }

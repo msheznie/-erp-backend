@@ -74,7 +74,7 @@ class ItemIssueTypeAPIController extends AppBaseController
         $this->itemIssueTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemIssueTypes = $this->itemIssueTypeRepository->all();
 
-        return $this->sendResponse($itemIssueTypes->toArray(), 'Item Issue Types retrieved successfully');
+        return $this->sendResponse($itemIssueTypes->toArray(), trans('custom.item_issue_types_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class ItemIssueTypeAPIController extends AppBaseController
 
         $itemIssueTypes = $this->itemIssueTypeRepository->create($input);
 
-        return $this->sendResponse($itemIssueTypes->toArray(), 'Item Issue Type saved successfully');
+        return $this->sendResponse($itemIssueTypes->toArray(), trans('custom.item_issue_type_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class ItemIssueTypeAPIController extends AppBaseController
         $itemIssueType = $this->itemIssueTypeRepository->findWithoutFail($id);
 
         if (empty($itemIssueType)) {
-            return $this->sendError('Item Issue Type not found');
+            return $this->sendError(trans('custom.item_issue_type_not_found'));
         }
 
-        return $this->sendResponse($itemIssueType->toArray(), 'Item Issue Type retrieved successfully');
+        return $this->sendResponse($itemIssueType->toArray(), trans('custom.item_issue_type_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class ItemIssueTypeAPIController extends AppBaseController
         $itemIssueType = $this->itemIssueTypeRepository->findWithoutFail($id);
 
         if (empty($itemIssueType)) {
-            return $this->sendError('Item Issue Type not found');
+            return $this->sendError(trans('custom.item_issue_type_not_found'));
         }
 
         $itemIssueType = $this->itemIssueTypeRepository->update($input, $id);
 
-        return $this->sendResponse($itemIssueType->toArray(), 'ItemIssueType updated successfully');
+        return $this->sendResponse($itemIssueType->toArray(), trans('custom.itemissuetype_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class ItemIssueTypeAPIController extends AppBaseController
         $itemIssueType = $this->itemIssueTypeRepository->findWithoutFail($id);
 
         if (empty($itemIssueType)) {
-            return $this->sendError('Item Issue Type not found');
+            return $this->sendError(trans('custom.item_issue_type_not_found'));
         }
 
         $itemIssueType->delete();
 
-        return $this->sendResponse($id, 'Item Issue Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_issue_type_deleted_successfully'));
     }
 }

@@ -2,7 +2,7 @@
 <center>
     <tr>
         <td colspan="3"> </td>
-        <td><h1>Report GL Code Wise</h1>  </td>
+        <td><h1>{{ trans('custom.report_gl_code_wise') }}</h1>  </td>
         <td colspan="3"> </td>
 
     <tr>
@@ -20,37 +20,37 @@
 
 
         @endphp
-        <td>Finance Year : {{ $bigginingDate }} - {{ $endingDate }}</td>
+        <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Year : {{ $entity['Year'] }}</td>
+        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
 
     </tr>
     <tr>
 
-        <td>Segment : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Template : {{ $entity['template_master']['description'] }}</td>
+        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
 
     </tr>
     <tr></tr>
     <tr></tr>
 
     <tr>
-        <th>Template Description</th>
-        <th>GL Code	</th>
-        <th>Account Description	</th>
-        <th>GL Type</th>
-        <th>Local Amount</th>
-        <th>Reporting Amount</th>
-        <th>Commited Budget</th>
-        <th>Actual Consumption</th>
-        <th>Pending Document Amount</th>
-        <th>Balance</th>
-        <th>Adjusted Amount</th>
+        <th>{{ trans('custom.template_description') }}</th>
+        <th>{{ trans('custom.gl_code') }}</th>
+        <th>{{ trans('custom.account_description') }}</th>
+        <th>{{ trans('custom.gl_type') }}</th>
+        <th>{{ trans('custom.local_amount') }}</th>
+        <th>{{ trans('custom.reporting_amount') }}</th>
+        <th>{{ trans('custom.commited_budget') }}</th>
+        <th>{{ trans('custom.actual_consumption') }}</th>
+        <th>{{ trans('custom.pending_document_amount') }}</th>
+        <th>{{ trans('custom.balance') }}</th>
+        <th>{{ trans('custom.adjusted_amount') }}</th>
 
     </tr>
     </thead>
@@ -77,7 +77,7 @@
     <tr>
         <td></td>
         <td></td>
-        <td colspan="2">Total Amount</td>
+        <td colspan="2">{{ trans('custom.total_amount') }}</td>
         <td>{{ number_format($total['totalLocal'],2) }}</td>
         <td>{{ number_format($total['totalRpt'],3) }}</td>
         <td>{{ number_format($total['committedAmount'],2) }}</td>

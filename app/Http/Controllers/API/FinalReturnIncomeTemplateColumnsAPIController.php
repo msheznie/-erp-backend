@@ -67,7 +67,7 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
         $this->finalReturnIncomeTemplateColumnsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->all();
 
-        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'Final Return Income Template Columns retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), trans('custom.final_return_income_template_columns_retrieved_suc'));
     }
 
     /**
@@ -142,7 +142,7 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
              $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->create($input);
            
             DB::commit();
-              return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'Final Return Income Template Columns saved successfully');
+              return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), trans('custom.final_return_income_template_columns_saved_success'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -194,10 +194,10 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateColumns)) {
-            return $this->sendError('Final Return Income Template Columns not found');
+            return $this->sendError(trans('custom.final_return_income_template_columns_not_found'));
         }
 
-        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'Final Return Income Template Columns retrieved successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), trans('custom.final_return_income_template_columns_retrieved_suc'));
     }
 
     /**
@@ -272,17 +272,17 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
         $isTemplateUsed = FinalReturnIncomeReports::where('template_id',  $finalReturnIncomeTemplateColumns->templateMasterID)->exists();
         
         if (empty($finalReturnIncomeTemplateColumns)) {
-            return $this->sendError('Final Return Income Template Columns not found');
+            return $this->sendError(trans('custom.final_return_income_template_columns_not_found'));
         }
 
         if($isTemplateUsed) {
-            return $this->sendError('Template already used in a report and cannot be updated', 500);
+            return $this->sendError(trans('custom.template_already_used_in_a_report_and_cannot_be_up'), 500);
         }
 
 
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->update($input, $id);
 
-        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), 'FinalReturnIncomeTemplateColumns updated successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateColumns->toArray(), trans('custom.finalreturnincometemplatecolumns_updated_successfu'));
     }
 
     /**
@@ -330,12 +330,12 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
         $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->findWithoutFail($id);
 
         if (empty($finalReturnIncomeTemplateColumns)) {
-            return $this->sendError('Final Return Income Template Columns not found');
+            return $this->sendError(trans('custom.final_return_income_template_columns_not_found'));
         }
 
         $finalReturnIncomeTemplateColumns->delete();
 
-        return $this->sendResponse($finalReturnIncomeTemplateColumns,'Final Return Income Template Columns deleted successfully');
+        return $this->sendResponse($finalReturnIncomeTemplateColumns,trans('custom.final_return_income_template_columns_deleted_succe'));
     }
 
     public function templateColumnsLink(Request $request) {
@@ -344,6 +344,6 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
                                             'companySystemID'   => $request->companyID,
                                         ]);
 
-        return $this->sendResponse($templateColumns->toArray(), 'Final Return Income Template Columns retrieved successfully');
+        return $this->sendResponse($templateColumns->toArray(), trans('custom.final_return_income_template_columns_retrieved_suc'));
     }
 }

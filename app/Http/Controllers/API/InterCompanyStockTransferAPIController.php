@@ -65,7 +65,7 @@ class InterCompanyStockTransferAPIController extends AppBaseController
         $this->interCompanyStockTransferRepository->pushCriteria(new LimitOffsetCriteria($request));
         $interCompanyStockTransfers = $this->interCompanyStockTransferRepository->all();
 
-        return $this->sendResponse($interCompanyStockTransfers->toArray(), 'Inter Company Stock Transfers retrieved successfully');
+        return $this->sendResponse($interCompanyStockTransfers->toArray(), trans('custom.inter_company_stock_transfers_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class InterCompanyStockTransferAPIController extends AppBaseController
 
         $interCompanyStockTransfer = $this->interCompanyStockTransferRepository->create($input);
 
-        return $this->sendResponse($interCompanyStockTransfer->toArray(), 'Inter Company Stock Transfer saved successfully');
+        return $this->sendResponse($interCompanyStockTransfer->toArray(), trans('custom.inter_company_stock_transfer_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class InterCompanyStockTransferAPIController extends AppBaseController
         $interCompanyStockTransfer = $this->interCompanyStockTransferRepository->findWithoutFail($id);
 
         if (empty($interCompanyStockTransfer)) {
-            return $this->sendError('Inter Company Stock Transfer not found');
+            return $this->sendError(trans('custom.inter_company_stock_transfer_not_found'));
         }
 
-        return $this->sendResponse($interCompanyStockTransfer->toArray(), 'Inter Company Stock Transfer retrieved successfully');
+        return $this->sendResponse($interCompanyStockTransfer->toArray(), trans('custom.inter_company_stock_transfer_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class InterCompanyStockTransferAPIController extends AppBaseController
         $interCompanyStockTransfer = $this->interCompanyStockTransferRepository->findWithoutFail($id);
 
         if (empty($interCompanyStockTransfer)) {
-            return $this->sendError('Inter Company Stock Transfer not found');
+            return $this->sendError(trans('custom.inter_company_stock_transfer_not_found'));
         }
 
         $interCompanyStockTransfer = $this->interCompanyStockTransferRepository->update($input, $id);
 
-        return $this->sendResponse($interCompanyStockTransfer->toArray(), 'InterCompanyStockTransfer updated successfully');
+        return $this->sendResponse($interCompanyStockTransfer->toArray(), trans('custom.intercompanystocktransfer_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class InterCompanyStockTransferAPIController extends AppBaseController
         $interCompanyStockTransfer = $this->interCompanyStockTransferRepository->findWithoutFail($id);
 
         if (empty($interCompanyStockTransfer)) {
-            return $this->sendError('Inter Company Stock Transfer not found');
+            return $this->sendError(trans('custom.inter_company_stock_transfer_not_found'));
         }
 
         $interCompanyStockTransfer->delete();
 
-        return $this->sendSuccess('Inter Company Stock Transfer deleted successfully');
+        return $this->sendSuccess(trans('custom.inter_company_stock_transfer_deleted_successfully'));
     }
 }

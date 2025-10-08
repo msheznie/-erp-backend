@@ -74,7 +74,7 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
         $this->reportTemplateEmployeesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->all();
 
-        return $this->sendResponse($reportTemplateEmployees->toArray(), 'Report Template Employees retrieved successfully');
+        return $this->sendResponse($reportTemplateEmployees->toArray(), trans('custom.report_template_employees_retrieved_successfully'));
     }
 
     /**
@@ -141,7 +141,7 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
             $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->create($data);
         }
 
-        return $this->sendResponse($reportTemplateEmployees->toArray(), 'Report Template Employees saved successfully');
+        return $this->sendResponse($reportTemplateEmployees->toArray(), trans('custom.report_template_employees_saved_successfully'));
     }
 
     /**
@@ -188,10 +188,10 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
         $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->findWithoutFail($id);
 
         if (empty($reportTemplateEmployees)) {
-            return $this->sendError('Report Template Employees not found');
+            return $this->sendError(trans('custom.report_template_employees_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateEmployees->toArray(), 'Report Template Employees retrieved successfully');
+        return $this->sendResponse($reportTemplateEmployees->toArray(), trans('custom.report_template_employees_retrieved_successfully'));
     }
 
     /**
@@ -248,12 +248,12 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
         $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->findWithoutFail($id);
 
         if (empty($reportTemplateEmployees)) {
-            return $this->sendError('Report Template Employees not found');
+            return $this->sendError(trans('custom.report_template_employees_not_found'));
         }
 
         $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateEmployees->toArray(), 'ReportTemplateEmployees updated successfully');
+        return $this->sendResponse($reportTemplateEmployees->toArray(), trans('custom.reporttemplateemployees_updated_successfully'));
     }
 
     /**
@@ -300,12 +300,12 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
         $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->findWithoutFail($id);
 
         if (empty($reportTemplateEmployees)) {
-            return $this->sendError('Report Template Employees not found');
+            return $this->sendError(trans('custom.report_template_employees_not_found'));
         }
 
         $reportTemplateEmployees->delete();
 
-        return $this->sendResponse($id, 'Report Template Employees deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_employees_deleted_successfully'));
     }
 
     public function getReportTemplateAssignedEmployee(Request $request){

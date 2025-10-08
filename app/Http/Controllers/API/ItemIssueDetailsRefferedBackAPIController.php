@@ -76,7 +76,7 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
         $this->itemIssueDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemIssueDetailsRefferedBacks = $this->itemIssueDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($itemIssueDetailsRefferedBacks->toArray(), 'Item Issue Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($itemIssueDetailsRefferedBacks->toArray(), trans('custom.item_issue_details_reffered_backs_retrieved_succes'));
     }
 
     /**
@@ -123,7 +123,7 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
 
         $itemIssueDetailsRefferedBacks = $this->itemIssueDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($itemIssueDetailsRefferedBacks->toArray(), 'Item Issue Details Reffered Back saved successfully');
+        return $this->sendResponse($itemIssueDetailsRefferedBacks->toArray(), trans('custom.item_issue_details_reffered_back_saved_successfull'));
     }
 
     /**
@@ -170,10 +170,10 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
         $itemIssueDetailsRefferedBack = $this->itemIssueDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetailsRefferedBack)) {
-            return $this->sendError('Item Issue Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_issue_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($itemIssueDetailsRefferedBack->toArray(), 'Item Issue Details Reffered Back retrieved successfully');
+        return $this->sendResponse($itemIssueDetailsRefferedBack->toArray(), trans('custom.item_issue_details_reffered_back_retrieved_success'));
     }
 
     /**
@@ -230,12 +230,12 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
         $itemIssueDetailsRefferedBack = $this->itemIssueDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetailsRefferedBack)) {
-            return $this->sendError('Item Issue Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_issue_details_reffered_back_not_found'));
         }
 
         $itemIssueDetailsRefferedBack = $this->itemIssueDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($itemIssueDetailsRefferedBack->toArray(), 'ItemIssueDetailsRefferedBack updated successfully');
+        return $this->sendResponse($itemIssueDetailsRefferedBack->toArray(), trans('custom.itemissuedetailsrefferedback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
         $itemIssueDetailsRefferedBack = $this->itemIssueDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetailsRefferedBack)) {
-            return $this->sendError('Item Issue Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_issue_details_reffered_back_not_found'));
         }
 
         $itemIssueDetailsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Item Issue Details Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_issue_details_reffered_back_deleted_successfu'));
     }
 
     public function getItemIssueDetailsReferBack(Request $request)
@@ -314,6 +314,6 @@ class ItemIssueDetailsRefferedBackAPIController extends AppBaseController
             $item->issueUnits = $issueUnits;
         }
 
-        return $this->sendResponse($items->toArray(), 'Stock Receive details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.stock_receive_details_retrieved_successfully_1'));
     }
 }

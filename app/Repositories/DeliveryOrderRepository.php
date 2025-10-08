@@ -163,25 +163,25 @@ class DeliveryOrderRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Document Code'] = $val->deliveryOrderCode;
-                $data[$x]['Type'] = StatusService::getDeliveryOrderType($val->orderType);
-                $data[$x]['Customer Name'] = $val->customer? $val->customer->CustomerName : '';
-                $data[$x]['Document Date'] = \Helper::dateFormat($val->deliveryOrderDate);
-                $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
-                $data[$x]['Comments'] = $val->narration;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
-                $data[$x]['Transaction Currency'] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
-                $data[$x]['Transaction Amount'] = $val->transactionAmount? number_format($val->transactionAmount + $val->VATAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.document_code')] = $val->deliveryOrderCode;
+                $data[$x][trans('custom.type')] = StatusService::getDeliveryOrderType($val->orderType);
+                $data[$x][trans('custom.customer_name')] = $val->customer? $val->customer->CustomerName : '';
+                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->deliveryOrderDate);
+                $data[$x][trans('custom.segment')] = $val->segment? $val->segment->ServiceLineDes : '';
+                $data[$x][trans('custom.comments')] = $val->narration;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.transaction_currency')] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
+                $data[$x][trans('custom.transaction_amount')] = $val->transactionAmount? number_format($val->transactionAmount + $val->VATAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "") : 0;
 
-                $data[$x]['Local Currency'] = $val->local_currency? $val->local_currency->CurrencyCode : '';
-                $data[$x]['Local Amount'] = $val->companyLocalAmount? number_format($val->companyLocalAmount + $val->VATAmountLocal, $val->local_currency? $val->local_currency->DecimalPlaces : '', ".", "") : 0;
-                $data[$x]['Reporting Currency'] = $val->reporting_currency? $val->reporting_currency->CurrencyCode : '';
-                $data[$x]['Reporting Amount'] = $val->companyReportingAmount? number_format($val->companyReportingAmount + $val->VATAmountRpt, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.local_currency')] = $val->local_currency? $val->local_currency->CurrencyCode : '';
+                $data[$x][trans('custom.local_amount')] = $val->companyLocalAmount? number_format($val->companyLocalAmount + $val->VATAmountLocal, $val->local_currency? $val->local_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x][trans('custom.reporting_currency')] = $val->reporting_currency? $val->reporting_currency->CurrencyCode : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->companyReportingAmount? number_format($val->companyReportingAmount + $val->VATAmountRpt, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "") : 0;
 
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

@@ -76,7 +76,7 @@ class StockReceiveRefferedBackAPIController extends AppBaseController
         $this->stockReceiveRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockReceiveRefferedBacks = $this->stockReceiveRefferedBackRepository->all();
 
-        return $this->sendResponse($stockReceiveRefferedBacks->toArray(), 'Stock Receive Reffered Backs retrieved successfully');
+        return $this->sendResponse($stockReceiveRefferedBacks->toArray(), trans('custom.stock_receive_reffered_backs_retrieved_successfull'));
     }
 
     /**
@@ -123,7 +123,7 @@ class StockReceiveRefferedBackAPIController extends AppBaseController
 
         $stockReceiveRefferedBacks = $this->stockReceiveRefferedBackRepository->create($input);
 
-        return $this->sendResponse($stockReceiveRefferedBacks->toArray(), 'Stock Receive Reffered Back saved successfully');
+        return $this->sendResponse($stockReceiveRefferedBacks->toArray(), trans('custom.stock_receive_reffered_back_saved_successfully'));
     }
 
     /**
@@ -174,10 +174,10 @@ class StockReceiveRefferedBackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($stockReceiveRefferedBack)) {
-            return $this->sendError('Stock Receive Reffered Back not found');
+            return $this->sendError(trans('custom.stock_receive_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($stockReceiveRefferedBack->toArray(), 'Stock Receive Reffered Back retrieved successfully');
+        return $this->sendResponse($stockReceiveRefferedBack->toArray(), trans('custom.stock_receive_reffered_back_retrieved_successfully'));
     }
 
     /**
@@ -234,12 +234,12 @@ class StockReceiveRefferedBackAPIController extends AppBaseController
         $stockReceiveRefferedBack = $this->stockReceiveRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockReceiveRefferedBack)) {
-            return $this->sendError('Stock Receive Reffered Back not found');
+            return $this->sendError(trans('custom.stock_receive_reffered_back_not_found'));
         }
 
         $stockReceiveRefferedBack = $this->stockReceiveRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($stockReceiveRefferedBack->toArray(), 'StockReceiveRefferedBack updated successfully');
+        return $this->sendResponse($stockReceiveRefferedBack->toArray(), trans('custom.stockreceiverefferedback_updated_successfully'));
     }
 
     /**
@@ -286,12 +286,12 @@ class StockReceiveRefferedBackAPIController extends AppBaseController
         $stockReceiveRefferedBack = $this->stockReceiveRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockReceiveRefferedBack)) {
-            return $this->sendError('Stock Receive Reffered Back not found');
+            return $this->sendError(trans('custom.stock_receive_reffered_back_not_found'));
         }
 
         $stockReceiveRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Stock Receive Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_receive_reffered_back_deleted_successfully'));
     }
 
     public function getReferBackHistoryByStockReceive(Request $request)
