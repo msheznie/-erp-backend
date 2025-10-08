@@ -6911,10 +6911,10 @@ return
     'prebid_clarifications' => 'التوضيحات قبل العطاء',
 
     // PO Analysis Report Titles
-    'po_analysis_item_detail_report' => 'تقرير تحليل أمر الشراء - تفاصيل الأصناف',
-    'po_wise_analysis_report' => 'تقرير تحليل أمر الشراء - حسب الأمر',
-    'po_wise_analysis_company_report' => 'تقرير تحليل أمر الشراء - حسب الشركة',
-    'po_wise_analysis_supplier_report' => 'تقرير تحليل أمر الشراء - حسب المورد',
+    'po_analysis_item_detail_report' => 'تحليل أمر الشراء (الأصناف)',
+    'po_wise_analysis_report' => 'تحليل أمر الشراء – حسب الأمر',
+    'po_wise_analysis_company_report' => 'تحليل أمر الشراء – حسب الشركة',
+    'po_wise_analysis_supplier_report' => 'تحليل أمر الشراء – حسب المورد',
 
     'template_description' => 'وصف القالب',
     'service_line' => 'خط الخدمة',
