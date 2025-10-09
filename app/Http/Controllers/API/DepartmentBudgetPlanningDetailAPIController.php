@@ -277,6 +277,39 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $data = $query->skip($offset)->take($pageSize)->get();
 
+            // Check financeTeamStatus and add isEnable field based on selectedGlSections
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+            $selectedGlSections = [];
+            $workflowMethod = null;
+            
+            if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3) {
+                if ($budgetPlanning->workflow) {
+                    $workflowMethod = $budgetPlanning->workflow->method;
+                }
+                $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                
+                if ($revision && $revision->selectedGlSections) {
+                    $selectedGlSections = json_decode($revision->selectedGlSections, true);
+                }
+            }
+            
+            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod) {
+                $isEnable = true;
+                
+                if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3 && !empty($selectedGlSections)) {
+                    if ($workflowMethod == 1) {
+                        $isEnable = in_array($item->id, $selectedGlSections);
+                    } else {
+                        $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+                    }
+                }
+                
+                $item->isEnable = $isEnable;
+                return $item;
+            });
+
             return response()->json([
                 'data' => $data,
                 'total' => $total,
