@@ -6729,7 +6729,7 @@ return
     'payment_suppliers_by_year' => "مدفوعات الموردين",
     'direct_payments_by_year' => "مدفوعات سنوية",
     'all_payments_by_year' => "جميع المدفوعات حسب السنة",
-    'payments_lists_status_by_year' => "قوائم المدفوعات مع الحالة حسب السنة",
+    'payments_lists_status_by_year' => "حالة المدفوعات سنويًا",
     'top_suppliers' => "أفضل_الموردين",
     'bank_cleared_by' => "مسوى من قبل",
     'bank_cleared_date' => "تاريخ التسوية",
@@ -9162,4 +9162,9 @@ return
     'purchase_order' => 'أمر الشراء',
     'purchase_direct_order' => 'أمر شراء مباشر',
     'purchase_work_order' => 'أمر عمل',
+    'statement_values_are_missing_for_bank_statement_details' => 'قيم البيانات مفقودة لتفاصيل البيانات البنكية',
+    'wrong_date_format_for_transaction_date_-_correct_format_dd/mm/yyyy' => 'تنسيق التاريخ خاطئ لتاريخ المعاملة - التنسيق الصحيح DD/MM/YYYY',
+    'some_detail_columns_are_missing' => 'بعض أعمدة التفاصيل مفقودة',
+    'statement_upload_failed._please_try_re-uploading' => 'فشل تحميل البيان. يرجى المحاولة مرة أخرى.',
+    'transaction_date_is_not_in_date_format' => 'تاريخ المعاملة غير في تنسيق التاريخ'
   ];

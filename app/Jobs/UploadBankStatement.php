@@ -101,7 +101,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => trans('custom.statement_values_missing_bank_statement_details')
+                                'importError' => 'Statement values are missing for bank statement details'
                             ]);
                         DB::commit();
                         return;
@@ -112,7 +112,7 @@ class UploadBankStatement implements ShouldQueue
                         BankStatementMaster::where('statementId', $statementMaster['statementId'])
                             ->update([
                                 'importStatus' => 2,
-                                'importError' => trans('custom.wrong_date_format_transaction_date')
+                                'importError' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY'
                             ]);
                         DB::commit();
                         return;
@@ -142,7 +142,7 @@ class UploadBankStatement implements ShouldQueue
                 BankStatementMaster::where('statementId', $statementMaster['statementId'])
                     ->update([
                         'importStatus' => 2,
-                        'importError' => trans('custom.some_detail_columns_missing')
+                        'importError' => 'Some detail columns are missing'
                     ]);
             }
             DB::commit();
@@ -152,7 +152,7 @@ class UploadBankStatement implements ShouldQueue
             BankStatementMaster::where('statementId', $statementMaster['statementId'])
                 ->update([
                     'importStatus' => 2,
-                    'importError' => trans('custom.statement_upload_failed_try_reuploading')
+                    'importError' => 'Statement upload failed. Please try re-uploading'
                 ]);
         }
     }

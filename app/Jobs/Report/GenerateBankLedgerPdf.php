@@ -27,13 +27,13 @@ class GenerateBankLedgerPdf implements ShouldQueue
     public $outputChunkData;
     public $outputData;
     public $rootPath;
-
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -47,6 +47,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
         $this->outputChunkData = $outputChunkData;
         $this->outputData = $outputData;
         $this->rootPath = $rootPath;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -63,7 +64,8 @@ class GenerateBankLedgerPdf implements ShouldQueue
         $outputChunkCount = $this->outputChunkData;
         $output = $this->outputData;
         $rootPaths = $this->rootPath;
-
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
 

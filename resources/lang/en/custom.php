@@ -103,7 +103,7 @@ return
     'no_record_found' => 'No record found',
     'statement_values_missing_bank_statement_details' => 'Statement values are missing for bank statement details',
     'wrong_date_format_transaction_date' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY',
-    'some_detail_columns_missing' => 'Some detail columns are missing',
+    'some_detail_columns_are_missing' => 'Some detail columns are missing',
     'statement_upload_failed_try_reuploading' => 'Statement upload failed. Please try re-uploading.',
     'beneficiary_account_no_30' => 'Beneficiary Account No (30)',
     'amount_15' => 'AMOUNT (15)',
@@ -9267,4 +9267,9 @@ return
     'purchase_order' => 'Purchase Order',
     'purchase_direct_order' => 'Direct Purchase Order',
     'purchase_work_order' => 'Work Order',
+    'statement_values_are_missing_for_bank_statement_details' => 'Statement values are missing for bank statement details',
+    'wrong_date_format_for_transaction_date_-_correct_format_dd/mm/yyyy' => 'Wrong date format for transaction date - Correct format DD/MM/YYYY',
+    'statement_upload_failed._please_try_re-uploading' => 'Statement upload failed. Please try re-uploading',
+    'some_detail_columns_are_missing' => 'Some detail columns are missing',
+    'transaction_date_is_not_in_date_format' => 'Transaction date is not in date format'
   ];
