@@ -155,7 +155,7 @@ class CustomerCurrencyAPIController extends AppBaseController
         } else {
             
             if($input['currencyID'] == null){
-                return $this->sendError('Currency not selected',500);
+                return $this->sendError(trans('custom.currency_not_selected'),500);
             }
             $customerCurrency = CustomerCurrency::where('customerCodeSystem',$request['customerCodeSystem'])
                                                 ->where('currencyID',$request['currencyID'])

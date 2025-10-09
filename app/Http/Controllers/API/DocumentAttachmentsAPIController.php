@@ -1397,5 +1397,4 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         return null;
     }
-
 }

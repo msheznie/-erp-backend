@@ -5492,6 +5492,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
         }
 
+        $validator = \Validator::make($input, [
+            'documentId' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+        }
+
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');

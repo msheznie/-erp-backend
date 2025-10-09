@@ -529,16 +529,9 @@ class TransactionsExportExcel extends AppBaseController
 
         $fileName = $input['docName'];
         $translatedFileName = trans('exportExcelFile.'.$input['docName']);
-        if($translatedFileName !== 'exportExcelFile'.$input['docName']) {
+        if($translatedFileName !== 'exportExcelFile.'.$input['docName']) {
             $fileName = $translatedFileName;
         } 
-
-        // //if the lanage is arabic then reverse the elements of the object of the data array
-        // if(app()->getLocale() == 'ar') {
-        //     $data = array_map(function($item) {
-        //         return array_reverse($item, true);
-        //     }, $data);
-        // }
 
         $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 

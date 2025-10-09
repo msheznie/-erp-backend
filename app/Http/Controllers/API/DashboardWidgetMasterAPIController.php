@@ -346,14 +346,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         $input = $request->all();
         $companyID = isset($input['companyId'])?$input['companyId']:0;
         $empSystemID = Helper::getEmployeeSystemID();
-        $departmentMasters = DepartmentMaster::selectRaw('DepartmentDescription,departmentSystemID,
-        CASE
-    WHEN departmentSystemID = 1 THEN 2
-    WHEN departmentSystemID = 3 THEN 3
-    WHEN departmentSystemID = 4 THEN 1
-    ELSE 0
-END AS sortDashboard')
-            ->whereHas('widget', function($query){
+        $departmentMasters = DepartmentMaster::whereHas('widget', function($query){
                 $query->where('isActive',1);
             })->whereHas('employees', function($query) use($empSystemID,$companyID){
                 $query->where('employeeSystemID',$empSystemID)
@@ -362,14 +355,42 @@ END AS sortDashboard')
                         $q->where('dischargedYN', 0);
                     });
             })
-            ->orderBy('sortDashboard', 'DESC')
             ->get();
 
         if(!empty($departmentMasters)){
-            $departmentMasters = $departmentMasters->toArray();
+            // Process the query data and apply sorting logic
+            $departmentMasters = $departmentMasters->map(function($department) {
+                // Calculate sortDashboard value based on departmentSystemID
+                $sortDashboard = 0;
+                switch($department->departmentSystemID) {
+                    case 1:
+                        $sortDashboard = 2;
+                        break;
+                    case 3:
+                        $sortDashboard = 3;
+                        break;
+                    case 4:
+                        $sortDashboard = 1;
+                        break;
+                    default:
+                        $sortDashboard = 0;
+                        break;
+                }
+                
+                return [
+                    'DepartmentDescription' => $department->department_description,
+                    'departmentSystemID' => $department->departmentSystemID,
+                    'sortDashboard' => $sortDashboard,
+                    'processed_at' => now()->toDateTimeString()
+                ];
+            })
+            ->sortByDesc('sortDashboard') // Sort by sortDashboard in descending order
+            ->values() // Reset array keys after sorting
+            ->toArray();
         }else{
             $departmentMasters = [];
         }
+        
         return $this->sendResponse($departmentMasters, trans('custom.data_retrieved_successfully'));
     }
 

@@ -345,8 +345,22 @@ return [
         'companyFinanceYearID' => 'السنة المالية',
         'comments' => 'التعليقات',
         'serviceLineSystemID' => 'القسم',
+        'glAutoID' => 'معرف الحساب',
         'templateMasterID' => 'القالب',
         'contigencyAmount' => 'الميزانية المخصصة',
-        'budgetAmount' => 'الميزانية'
+        'budgetAmount' => 'الميزانية',
+        'assets' => 'الأصول',
+        'countries' => 'دول / الدول',
+        'bankCurrency' => 'عملة البنك',
+        'bankAccount' => 'حساب مصرفي',
+        'custPaymentReceiveDate' => 'تاريخ استلام دفعة العميل',
+        'custTransactionCurrencyID' => 'معرف عملة معاملة العميل',
+        'catalogName' => 'اسم الكتالوج',
+        'catalogID' => 'معرّف الكتالوج',
+        'customerCategoryID' => 'معرف فئة العميل',
+        'mainCategory' => 'الفئة الرئيسية',
+        'subCategory' => 'الفئة الفرعية',
+        'customer' => 'العميل',
+
     ],
 ];

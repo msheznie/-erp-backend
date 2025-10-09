@@ -28,12 +28,13 @@ class GenerateARCAPdfReport implements ShouldQueue
     public $outputData;
     public $rootPath;
     public $aging;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -48,6 +49,7 @@ class GenerateARCAPdfReport implements ShouldQueue
         $this->outputData = $outputData;
         $this->rootPath = $rootPath;
         $this->aging = $aging;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -59,7 +61,9 @@ class GenerateARCAPdfReport implements ShouldQueue
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
+        Log::useFiles(storage_path() . '/logs/account_recivable_report.log');
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $db = $this->dispatch_db;
         $request = $this->requestData;
         $outputChunkCount = $this->outputChunkData;

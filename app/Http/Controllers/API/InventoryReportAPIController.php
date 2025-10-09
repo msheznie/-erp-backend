@@ -1180,7 +1180,7 @@ FROM
 
 
                 $file_type = $request->type;  
-                $fileName = 'scrap_inventory_report';
+                $fileName = str_replace(' ', '_', strtolower(trans('custom.scrap_inventory_file')));
                 $path = 'inventory/report/scrap-inventory/excel/';
                 $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
         
@@ -1223,7 +1223,7 @@ FROM
                 $reportData = ['scrapDetails' => $items, 'Title'=> trans('custom.scrap_inventory_report'), 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 $file_type = $request->type;  
-                $fileName = 'scrap_inventory_report';
+                $fileName = str_replace(' ', '_', strtolower(trans('custom.scrap_inventory_file')));
                 $path = 'inventory/report/scrap-inventory/excel/';
                 $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
         
@@ -1314,7 +1314,7 @@ FROM
 
                 $dataSorted->push($GrandTotal);
 
-                $fileName = 'inventory_summary_report';
+                $fileName = str_replace(' ', '_', strtolower(trans('custom.inventory_summary_file')));
                 $title = trans('custom.inventory_summary_report');
                 $path = 'inventory/report/inventory_summary_report/excel/';
                 $cur = NULL;
@@ -1471,7 +1471,7 @@ FROM
                     // })->download($type);
 
 
-                    $fileName = 'stock_transaction';
+                    $fileName = str_replace(' ', '_', strtolower(trans('custom.stock_transaction_file')));
                     $title = trans('custom.stock_transaction');
                     $path = 'inventory/report/stock_transaction/excel/';
                     $cur = NULL;
@@ -1666,7 +1666,7 @@ FROM
                         }
                     }
 
-                    $fileName = 'stock_aging';
+                    $fileName = str_replace(' ', '_', strtolower(trans('custom.stock_aging_file')));
                     $title = trans('custom.stock_aging_report');
                     $path = 'inventory/report/stock_aging/excel/';
                     $cur = NULL;
@@ -1755,7 +1755,7 @@ FROM
                     'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
-                $fileName = 'stock_detail';
+                $fileName = str_replace(' ', '_', strtolower(trans('custom.stock_details_file')));
                 $title = trans('custom.stock_details_report');
                 $path = 'inventory/report/stock_Detail/excel/';
                 $cur = NULL;
@@ -1822,7 +1822,7 @@ FROM
                 $company_name = $company->CompanyName;
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
 
-                $fileName = 'min_max_analysis';
+                $fileName = str_replace(' ', '_', strtolower(trans('custom.min_max_analysis_file')));
                 $title = trans('custom.min_max_analysis');
                 $path = 'inventory/report/min_max_analysis/excel/';
                 $cur = NULL;
