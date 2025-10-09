@@ -2886,7 +2886,8 @@ class FinancialReportAPIController extends AppBaseController
                                 $x++;
                             }
                         }
-                    } else {
+                    }
+                    else {
                         $output = $this->getTrialBalance($request);
 
                         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
@@ -2927,7 +2928,8 @@ class FinancialReportAPIController extends AppBaseController
                             }
                         }
                     }
-                } else if ($reportTypeID == 'FTBM') {
+                } else if ($reportTypeID == 'FTBM')
+                {
                     $result = $this->getTrialBalanceMonthWise($request);
                     $output = $result['data'];
                     $headers = $result['headers'];

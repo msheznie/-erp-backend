@@ -11,14 +11,19 @@ use App\Models\BudgetTemplate;
 use App\Models\BudgetTemplateColumn;
 use App\Models\BudgetTemplatePreColumn;
 use App\Models\CompanyDepartmentEmployee;
+use App\Models\CompanyDepartmentSegment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\ChartOfAccount;
 use App\Models\Employee;
 use App\Models\FixedAssetMaster;
 use App\Models\ItemMaster;
 use App\Models\Months;
+use App\Models\Revision;
+use App\Models\SegmentMaster;
 use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
+use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
 use App\User;
 use Carbon\Carbon;
@@ -39,10 +44,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
     /** @var  DepartmentBudgetPlanningDetailRepository */
     private $departmentBudgetPlanningDetailRepository;
+    
+    /** @var  ChartOfAccountService */
+    private $chartOfAccountService;
 
-    public function __construct(DepartmentBudgetPlanningDetailRepository $departmentBudgetPlanningDetailRepo)
+    public function __construct(DepartmentBudgetPlanningDetailRepository $departmentBudgetPlanningDetailRepo, ChartOfAccountService $chartOfAccountService)
     {
         $this->departmentBudgetPlanningDetailRepository = $departmentBudgetPlanningDetailRepo;
+        $this->chartOfAccountService = $chartOfAccountService;
     }
 
     /**
@@ -945,5 +954,97 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }else {
             return $this->sendError("Unable to update amount details",500);
         }
+    }
+
+    public function updateFinanceTeamStatus(Request $request)
+    {
+        $input = $request->validate([
+            'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
+            'financeTeamStatus' => 'required|integer|in:1,2,3,4'
+        ]);
+        $input = $request->input();
+        try {
+            $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningId']);
+            if(!isset($budgetPlanning))
+                return $this->sendError("Department Budget planning not found!",404);
+            
+            $currentStatus = $budgetPlanning->financeTeamStatus;
+            $newStatus = $input['financeTeamStatus'];
+
+            // if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
+            //     return $this->sendError("Status can only be changed forward.", 422);
+            // }
+
+            $budgetPlanning->financeTeamStatus = $newStatus;
+            $budgetPlanning->save();
+            return $this->sendResponse("Finance team status updated",200);
+
+        }catch (\Exception $exception)
+        {
+            return $this->sendError($exception->getMessage(),500);
+        }
+    }
+
+    /**
+     * Validate if status progression is allowed (forward only)
+     * 
+     * @param int $currentStatus
+     * @param int $newStatus
+     * @return bool
+     */
+    private function isValidStatusProgression($currentStatus, $newStatus)
+    {
+        // Status flow: 1 (Open) -> 2 (Under Review) -> 3 (Sent Back for Revision) -> 4 (Completed)
+        // Special case: From status 3 (Sent Back for Revision), can go back to 2 (Under Review)
+        
+        // Same status is always valid (no change)
+        if ($currentStatus == $newStatus) {
+            return true;
+        }
+        
+        // Define valid progressions
+        $validProgressions = [
+            1 => [2, 3, 4], // From Open: can go to Under Review, Sent Back for Revision, or Completed
+            2 => [3, 4],    // From Under Review: can go to Sent Back for Revision or Completed
+            3 => [4],       // From Sent Back for Revision: can go back to Completed
+            4 => []         // From Completed: no further changes allowed
+        ];
+        
+        return in_array($newStatus, $validProgressions[$currentStatus] ?? []);
+    }
+
+    public function getChartofAccountsByBudget(Request $request)
+    {
+        $input = $request->all();
+        
+        if (!isset($input['budgetPlanningId'])) {
+            return $this->sendError('Budget Planning ID is required');
+        }
+        
+        $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByBudgetPlanning($input['budgetPlanningId']);
+        
+        return $this->sendResponse($chartOfAccountSystemIDs, 'Chart of accounts retrieved successfully');
+    }
+
+    /**
+     * Get chart of accounts by revision GL sections
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getChartOfAccountsByRevisionGlSections(Request $request)
+    {
+        $input = $request->all();
+        
+        if (!isset($input['selectedGlSections']) || !isset($input['budgetPlanningId'])) {
+            return $this->sendError('Selected GL Sections and Budget Planning ID are required');
+        }
+        
+        $selectedGlSections = $input['selectedGlSections'];
+        $budgetPlanningId = $input['budgetPlanningId'];
+        
+        $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $budgetPlanningId);
+        
+        return $this->sendResponse($chartOfAccountSystemIDs, 'Chart of accounts retrieved successfully');
     }
 }

@@ -643,7 +643,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
                 
                 if ($isFinanceUser) {
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
                 } else {
@@ -663,7 +663,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -681,7 +681,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 //                            ->where('status',1)
                             ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);

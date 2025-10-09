@@ -284,6 +284,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         if (isset($input['departmentBudgetTemplateID']))
         {
             $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
+            dd($tempDetail);
         }else {
             $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
             $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
