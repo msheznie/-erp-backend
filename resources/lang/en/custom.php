@@ -4696,6 +4696,8 @@ return
     'sales_person_target_retrieved_successfully_1' => 'Sales person target retrieved successfully',
     'sales_person_target_saved_successfully' => 'Sales Person Target saved successfully',
     'sales_person_targets_retrieved_successfully' => 'Sales Person Targets retrieved successfully',
+    'sales_person_target_percentage_validation' => 'Percentage % should be between 0 - 100',
+    'sales_person_target_data_retrieved' => 'Data retrieved successfully',
     'sales_person_updated_successfully' => 'Sales person updated successfully',
     'sales_price' => 'Sales Price',
     'sales_quotation' => 'Sales Quotation',

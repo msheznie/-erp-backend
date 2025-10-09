@@ -4643,6 +4643,8 @@ return
     'sales_person_target_retrieved_successfully_1' => 'تم استرداد هدف مندوب المبيعات بنجاح',
     'sales_person_target_saved_successfully' => 'تم حفظ هدف مندوب المبيعات بنجاح',
     'sales_person_targets_retrieved_successfully' => 'تم استرداد أهداف مندوبي المبيعات بنجاح',
+    'sales_person_target_percentage_validation' => 'يجب أن تكون النسبة المئوية بين 0 - 100',
+    'sales_person_target_data_retrieved' => 'تم استرداد البيانات بنجاح',
     'sales_person_updated_successfully' => 'تم تحديث مندوب المبيعات بنجاح',
     'sales_price' => 'سعر البيع',
     'sales_quotation' => 'عرض أسعار مبيعات',
