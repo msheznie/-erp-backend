@@ -360,6 +360,8 @@ return [
         'customerCategoryID' => 'معرف فئة العميل',
         'mainCategory' => 'الفئة الرئيسية',
         'subCategory' => 'الفئة الفرعية',
+        'purchaseOrderID' => 'معرف الطلب',
+        'type' => 'النوع',
         'customer' => 'العميل',
         'transactionCurrencyID' => 'معرف العملة',
         'customerID' => 'العميل',

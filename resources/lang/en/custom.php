@@ -3422,6 +3422,8 @@ return
     'payment_term_config_updated_successfully' => 'Payment term config updated successfully',
     'logistic' => 'Logistic',
     'partially_grv_allowed' => 'Partially GRV Allowed',
+    'activated' => 'Activated',
+    'deactivated' => 'Deactivated',
     'selected_order_partially_grv_received' => 'Selected order partially grv received. Cannot be',
     'selected_order_fully_grv_received' => 'Selected order fully grv received. Cannot be',
     'successfully' => 'successfully',

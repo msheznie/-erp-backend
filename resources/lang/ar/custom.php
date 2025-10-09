@@ -3361,6 +3361,8 @@ return
     'payment_term_config_updated_successfully' => 'تم تحديث إعدادات شرط الدفع بنجاح',
     'logistic' => 'اللوجستية',
     'partially_grv_allowed' => 'مسموح بقسيمة استلام البضائع جزئياً',
+    'activated' => 'مفعل',
+    'deactivated' => 'معطل',
     'selected_order_partially_grv_received' => 'تم استلام الطلب المحدد جزئياً. لا يمكن أن يكون',
     'selected_order_fully_grv_received' => 'تم استلام الطلب المحدد بالكامل. لا يمكن أن يكون',
     'successfully' => 'بنجاح',
