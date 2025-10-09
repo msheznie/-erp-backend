@@ -428,7 +428,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         $exist = $editOrAmend ?
             TenderBoqItemsEditLog::checkItemNameExists($input['item_name'], $mainWorkID, $id) :
-            TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID);
+            TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID, $id);
 
         if(!empty($exist)){
             return ['success' => false, 'message' => trans('srm_tender_rfx.item_already_exists')];
