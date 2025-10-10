@@ -9275,5 +9275,12 @@ return
     'statement_upload_failed._please_try_re-uploading' => 'Statement upload failed. Please try re-uploading',
     'some_detail_columns_are_missing' => 'Some detail columns are missing',
     'transaction_date_is_not_in_date_format' => 'Transaction date is not in date format',
-    'po_employee_performance' => 'po_employee_performance'
+    'po_employee_performance' => 'po_employee_performance',
+    'purchaseHistory' => 'Purchase History',
+    'purchaseRequestHistory' => 'Purchase Request History',
+    'supplier_statement_' => 'supplier_statement_',
+    'department_master' => 'department_master',
+        'segment_already_assigned_to_department' => 'Segment :segmentCode is already assigned to this department',
+    'segments_could_not_be_assigned' => 'Some segments could not be assigned: :errorMessages',
+    'segments_assigned_successfully' => ':count segment(s) assigned to department successfully',
   ];

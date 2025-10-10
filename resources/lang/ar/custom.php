@@ -9170,5 +9170,12 @@ return
     'some_detail_columns_are_missing' => 'بعض أعمدة التفاصيل مفقودة',
     'statement_upload_failed._please_try_re-uploading' => 'فشل تحميل البيان. يرجى المحاولة مرة أخرى.',
     'transaction_date_is_not_in_date_format' => 'تاريخ المعاملة غير في تنسيق التاريخ',
-    'po_employee_performance' => 'أداء الموظفين لأوامر الشراء'
-  ];
+    'po_employee_performance' => 'أداء الموظفين لأوامر الشراء',
+    'purchaseHistory' => 'سجل المشتريات',
+    'purchaseRequestHistory' => 'سجل طلبات الشراء',
+    'supplier_statement_' => 'كشف_المورد_',
+    'department_master' => 'قسم_رئيسي',
+    'segment_already_assigned_to_department' => 'الشريحة :segmentCode مُعيّنة بالفعل لهذا القسم',
+    'segments_could_not_be_assigned' => 'لا يمكن تعيين بعض الشرائح: :errorMessages',
+    'segments_assigned_successfully' => 'تم تعيين :count شريحة للقسم بنجاح',
+    ];
