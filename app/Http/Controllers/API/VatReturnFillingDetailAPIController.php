@@ -68,7 +68,7 @@ class VatReturnFillingDetailAPIController extends AppBaseController
         $this->vatReturnFillingDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $vatReturnFillingDetails = $this->vatReturnFillingDetailRepository->all();
 
-        return $this->sendResponse($vatReturnFillingDetails->toArray(), 'Vat Return Filling Details retrieved successfully');
+        return $this->sendResponse($vatReturnFillingDetails->toArray(), trans('custom.vat_return_filling_details_retrieved_successfully'));
     }
 
     /**
@@ -115,7 +115,7 @@ class VatReturnFillingDetailAPIController extends AppBaseController
 
         $vatReturnFillingDetail = $this->vatReturnFillingDetailRepository->create($input);
 
-        return $this->sendResponse($vatReturnFillingDetail->toArray(), 'Vat Return Filling Detail saved successfully');
+        return $this->sendResponse($vatReturnFillingDetail->toArray(), trans('custom.vat_return_filling_detail_saved_successfully'));
     }
 
     /**
@@ -162,10 +162,10 @@ class VatReturnFillingDetailAPIController extends AppBaseController
         $vatReturnFillingDetail = $this->vatReturnFillingDetailRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetail)) {
-            return $this->sendError('Vat Return Filling Detail not found');
+            return $this->sendError(trans('custom.vat_return_filling_detail_not_found'));
         }
 
-        return $this->sendResponse($vatReturnFillingDetail->toArray(), 'Vat Return Filling Detail retrieved successfully');
+        return $this->sendResponse($vatReturnFillingDetail->toArray(), trans('custom.vat_return_filling_detail_retrieved_successfully'));
     }
 
     /**
@@ -222,7 +222,7 @@ class VatReturnFillingDetailAPIController extends AppBaseController
         $vatReturnFillingDetail = $this->vatReturnFillingDetailRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetail)) {
-            return $this->sendError('Vat Return Filling Detail not found');
+            return $this->sendError(trans('custom.vat_return_filling_detail_not_found'));
         }
 
         if (isset($input['category'])) {
@@ -233,7 +233,7 @@ class VatReturnFillingDetailAPIController extends AppBaseController
 
         $this->vatReturnFillingMasterRepository->updateFillingFormula($vatReturnFillingDetail->vatReturnFillingID);
 
-        return $this->sendResponse($vatReturnFillingDetail->toArray(), 'VatReturnFillingDetail updated successfully');
+        return $this->sendResponse($vatReturnFillingDetail->toArray(), trans('custom.vatreturnfillingdetail_updated_successfully'));
     }
 
     /**
@@ -280,7 +280,7 @@ class VatReturnFillingDetailAPIController extends AppBaseController
         $vatReturnFillingDetail = $this->vatReturnFillingDetailRepository->findWithoutFail($id);
 
         if (empty($vatReturnFillingDetail)) {
-            return $this->sendError('Vat Return Filling Detail not found');
+            return $this->sendError(trans('custom.vat_return_filling_detail_not_found'));
         }
 
         $vatReturnFillingDetail->delete();

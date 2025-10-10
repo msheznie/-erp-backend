@@ -4,7 +4,7 @@
         <tr></tr>
         <tr>
             <td colspan="2"></td>
-            <td style="text-align: center;"><h1>Tax Deductibility Report</h1></td>
+            <td style="text-align: center;"><h1>{{ __('custom.tax_deductibility_report') }}</h1></td>
         </tr>
         <tr>
             <td colspan="2"></td>
@@ -12,40 +12,40 @@
         </tr>
         <tr></tr>
         <tr style="font-weight: bold">
-            <td>Start Date : {{ $fromDate }} </td>
-            <td>End Date :  {{ $toDate }}</td>
-            <td>Currency : {{ $currencyRpt ?? '' }}</td>
+            <td>{{ __('custom.start_date') }} : {{ $fromDate }} </td>
+            <td>{{ __('custom.end_date') }} :  {{ $toDate }}</td>
+            <td>{{ __('custom.currency') }} : {{ $currencyRpt ?? '' }}</td>
         </tr>
         <tr></tr>
         <tr>
-            <th>Serial No</th>
-            <th>Supplier Name</th>
-            <th>Nature of Service Executed</th>
-            <th>Supplier Invoice Number</th>
+            <th>{{ __('custom.serial_no') }}</th>
+            <th>{{ __('custom.supplier_name') }}</th>
+            <th>{{ __('custom.nature_of_service_executed') }}</th>
+            <th>{{ __('custom.supplier_invoice_number') }}</th>
             @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'supplier_invoice_date')->count() > 0)
-                <th>Supplier Invoice Date</th>
+                <th>{{ __('custom.supplier_invoice_date') }}</th>
             @endif
             @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'supplier_invoice_amount')->count() > 0)
-                <th>Supplier Invoice Amount</th>
+                <th>{{ __('custom.supplier_invoice_amount') }}</th>
             @endif
             @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'currency')->count() > 0)
-                <th>Currency</th>
+                <th>{{ __('custom.currency') }}</th>
             @endif
             @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'payment_voucher_status')->count() > 0)
-                <th>Payment Voucher Status</th>
+                <th>{{ __('custom.payment_voucher_status') }}</th>
             @endif
             @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'wht_bears')->count() > 0)
-                <th>WHT bears</th>
+                <th>{{ __('custom.wht_bears') }}</th>
             @endif
-            <th>Payment Voucher Date</th>
-            <th>Due Date for Payment of Withholding Tax</th>
-            <th>Actual Date of Payment of Withholding Tax</th>
-            <th>Number of Months Delay</th>
-            <th>PO Amount</th>
-            <th>Withholding Tax %</th>
-            <th>Withholding Tax Amount</th>
-            <th>Additional Tax (1% per month)</th>
-            <th>Total</th>
+            <th>{{ __('custom.payment_voucher_date') }}</th>
+            <th>{{ __('custom.due_date_for_payment_of_withholding_tax') }}</th>
+            <th>{{ __('custom.actual_date_of_payment_of_withholding_tax') }}</th>
+            <th>{{ __('custom.number_of_months_delay') }}</th>
+            <th>{{ __('custom.po_amount') }}</th>
+            <th>{{ __('custom.withholding_tax_percentage') }}</th>
+            <th>{{ __('custom.withholding_tax_amount') }}</th>
+            <th>{{ __('custom.additional_tax') }}</th>
+            <th>{{ __('custom.total') }}</th>
         </tr>
         </thead>
         <tbody>
@@ -68,16 +68,16 @@
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'payment_voucher_status')->count() > 0)
                     <td class="text-center">
                         @if($data->paymentVoucherStatus === 1)
-                            <span>Paid</span>
+                            <span>{{ __('custom.paid') }}</span>
                         @elseif($data->paymentVoucherStatus === 2)
-                            <span>Not Paid</span>
+                            <span>{{ __('custom.not_paid') }}</span>
                         @else
                             {{ '' }}
                         @endif
                     </td>
                 @endif
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'wht_bears')->count() > 0)
-                    <td class="text-center">Vendor bears WHT</td>
+                    <td class="text-center">{{ __('custom.vendor_bears_wht') }}</td>
                 @endif
                 <td class="text-center">{{ $data->paymentVoucherDate ? \Helper::dateFormat($data->paymentVoucherDate) : '' }}</td>
                 <td class="text-center">{{ \Helper::dateFormat($data->dueDateForPaymentOfWithholdingTax) }}</td>

@@ -49,7 +49,7 @@ class SupplierImportanceAPIController extends AppBaseController
         $this->supplierImportanceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierImportances = $this->supplierImportanceRepository->all();
 
-        return $this->sendResponse($supplierImportances->toArray(), 'Supplier Importances retrieved successfully');
+        return $this->sendResponse($supplierImportances->toArray(), trans('custom.supplier_importances_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class SupplierImportanceAPIController extends AppBaseController
 
         $supplierImportances = $this->supplierImportanceRepository->create($input);
 
-        return $this->sendResponse($supplierImportances->toArray(), 'Supplier Importance saved successfully');
+        return $this->sendResponse($supplierImportances->toArray(), trans('custom.supplier_importance_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class SupplierImportanceAPIController extends AppBaseController
         $supplierImportance = $this->supplierImportanceRepository->findWithoutFail($id);
 
         if (empty($supplierImportance)) {
-            return $this->sendError('Supplier Importance not found');
+            return $this->sendError(trans('custom.supplier_importance_not_found'));
         }
 
-        return $this->sendResponse($supplierImportance->toArray(), 'Supplier Importance retrieved successfully');
+        return $this->sendResponse($supplierImportance->toArray(), trans('custom.supplier_importance_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class SupplierImportanceAPIController extends AppBaseController
         $supplierImportance = $this->supplierImportanceRepository->findWithoutFail($id);
 
         if (empty($supplierImportance)) {
-            return $this->sendError('Supplier Importance not found');
+            return $this->sendError(trans('custom.supplier_importance_not_found'));
         }
 
         $supplierImportance = $this->supplierImportanceRepository->update($input, $id);
 
-        return $this->sendResponse($supplierImportance->toArray(), 'SupplierImportance updated successfully');
+        return $this->sendResponse($supplierImportance->toArray(), trans('custom.supplierimportance_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class SupplierImportanceAPIController extends AppBaseController
         $supplierImportance = $this->supplierImportanceRepository->findWithoutFail($id);
 
         if (empty($supplierImportance)) {
-            return $this->sendError('Supplier Importance not found');
+            return $this->sendError(trans('custom.supplier_importance_not_found'));
         }
 
         $supplierImportance->delete();
 
-        return $this->sendResponse($id, 'Supplier Importance deleted successfully');
+        return $this->sendResponse($id, trans('custom.supplier_importance_deleted_successfully'));
     }
 }

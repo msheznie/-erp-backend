@@ -119,17 +119,17 @@ class SupplierWisePoAnalysisReport
     }
     public function getHeaders(){
         return [
-            'SupplierID',
-            'Supplier Name',
-            'Supplier Country',
-            'PO Capex Amount',
-            'PO Opex Amount',
-            'Total PO Amount',
-            'GRV Capex Amount',
-            'GRV Opex Amount',
-            'Total GRV Amount',
-            'Capex Balance',
-            'Opex Balance',
+            __('custom.supplier_id'),
+            __('custom.supplier_name'),
+            __('custom.supplier_country'),
+            __('custom.po_capex_amount'),
+            __('custom.po_opex_amount'),
+            __('custom.total_po_amount'),
+            __('custom.grv_capex_amount'),
+            __('custom.grv_opex_amount'),
+            __('custom.total_grv_amount'),
+            __('custom.capex_balance'),
+            __('custom.opex_balance'),
         ];
     }
 }

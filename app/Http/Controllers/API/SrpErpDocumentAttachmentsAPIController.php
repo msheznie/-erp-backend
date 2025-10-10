@@ -65,7 +65,7 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
         $this->srpErpDocumentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->all();
 
-        return $this->sendResponse($srpErpDocumentAttachments->toArray(), 'Srp Erp Document Attachments retrieved successfully');
+        return $this->sendResponse($srpErpDocumentAttachments->toArray(), trans('custom.srp_erp_document_attachments_retrieved_successfull'));
     }
 
     public function geDocumentAttachments(Request $request){
@@ -75,7 +75,7 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
                                                                 ->where('documentSystemCode',$documentSystemCode)
                                                                 ->get();
 
-        return $this->sendResponse($srpErpDocumentAttachments, 'Srp Erp Document Attachments retrieved successfully');
+        return $this->sendResponse($srpErpDocumentAttachments, trans('custom.srp_erp_document_attachments_retrieved_successfull'));
 
     }
 
@@ -123,7 +123,7 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
 
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->create($input);
 
-        return $this->sendResponse($srpErpDocumentAttachments->toArray(), 'Srp Erp Document Attachments saved successfully');
+        return $this->sendResponse($srpErpDocumentAttachments->toArray(), trans('custom.srp_erp_document_attachments_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($srpErpDocumentAttachments)) {
-            return $this->sendError('Srp Erp Document Attachments not found');
+            return $this->sendError(trans('custom.srp_erp_document_attachments_not_found'));
         }
 
-        return $this->sendResponse($srpErpDocumentAttachments->toArray(), 'Srp Erp Document Attachments retrieved successfully');
+        return $this->sendResponse($srpErpDocumentAttachments->toArray(), trans('custom.srp_erp_document_attachments_retrieved_successfull'));
     }
 
     /**
@@ -230,12 +230,12 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($srpErpDocumentAttachments)) {
-            return $this->sendError('Srp Erp Document Attachments not found');
+            return $this->sendError(trans('custom.srp_erp_document_attachments_not_found'));
         }
 
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->update($input, $id);
 
-        return $this->sendResponse($srpErpDocumentAttachments->toArray(), 'SrpErpDocumentAttachments updated successfully');
+        return $this->sendResponse($srpErpDocumentAttachments->toArray(), trans('custom.srperpdocumentattachments_updated_successfully'));
     }
 
     /**
@@ -282,7 +282,7 @@ class SrpErpDocumentAttachmentsAPIController extends AppBaseController
         $srpErpDocumentAttachments = $this->srpErpDocumentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($srpErpDocumentAttachments)) {
-            return $this->sendError('Srp Erp Document Attachments not found');
+            return $this->sendError(trans('custom.srp_erp_document_attachments_not_found'));
         }
 
         $srpErpDocumentAttachments->delete();

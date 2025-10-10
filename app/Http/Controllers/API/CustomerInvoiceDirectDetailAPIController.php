@@ -85,7 +85,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $this->customerInvoiceDirectDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceDirectDetails = $this->customerInvoiceDirectDetailRepository->all();
 
-        return $this->sendResponse($customerInvoiceDirectDetails->toArray(), 'Customer Invoice Direct Details retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetails->toArray(), trans('custom.customer_invoice_direct_details_retrieved_successf'));
     }
 
     /**
@@ -132,7 +132,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $customerInvoiceDirectDetails = $this->customerInvoiceDirectDetailRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceDirectDetails->toArray(), 'Customer Invoice Direct Detail saved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetails->toArray(), trans('custom.customer_invoice_direct_detail_saved_successfully'));
     }
 
     /**
@@ -179,10 +179,10 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $customerInvoiceDirectDetail = $this->customerInvoiceDirectDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetail)) {
-            return $this->sendError('Customer Invoice Direct Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_direct_detail_not_found'));
         }
 
-        return $this->sendResponse($customerInvoiceDirectDetail->toArray(), 'Customer Invoice Direct Detail retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetail->toArray(), trans('custom.customer_invoice_direct_detail_retrieved_successfu'));
     }
 
     /**
@@ -239,12 +239,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $customerInvoiceDirectDetail = $this->customerInvoiceDirectDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetail)) {
-            return $this->sendError('Customer Invoice Direct Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_direct_detail_not_found'));
         }
 
         $customerInvoiceDirectDetail = $this->customerInvoiceDirectDetailRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceDirectDetail->toArray(), 'CustomerInvoiceDirectDetail updated successfully');
+        return $this->sendResponse($customerInvoiceDirectDetail->toArray(), trans('custom.customerinvoicedirectdetail_updated_successfully'));
     }
 
     /**
@@ -293,7 +293,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $customerInvoiceDirectDetail = $this->customerInvoiceDirectDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetail)) {
-            return $this->sendError('Customer Invoice Direct Detail not found');
+            return $this->sendError(trans('custom.customer_invoice_direct_detail_not_found'));
         }
         $masterID = $customerInvoiceDirectDetail->custInvoiceDirectID;
         $customerInvoiceDirectDetail->delete();
@@ -312,7 +312,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_invoice_direct_detail_deleted_successfull'));
     }
 
     public function addDirectInvoiceDetails(Request $request)

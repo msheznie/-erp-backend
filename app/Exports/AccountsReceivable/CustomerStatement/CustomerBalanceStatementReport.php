@@ -126,18 +126,18 @@ class CustomerBalanceStatementReport
 
     public function getHeader() {
         return  [
-            'Company ID',
-            'Company Name',
-            'Customer Name',
-            'Document Code',
-            'Posted Date',
-            'Narration',
-            'Contract',
-            'PO Number',
-            'Invoice Number',
-            'Invoice Date',
-            'Currency',
-            'Balance Amount'
+            trans('custom.company_id'),
+            trans('custom.company_name'),
+            trans('custom.customer_name'),
+            trans('custom.document_code'),
+            trans('custom.posted_date'),
+            trans('custom.narration'),
+            trans('custom.contract'),
+            trans('custom.po_number'),
+            trans('custom.invoice_number'),
+            trans('custom.invoice_date'),
+            trans('custom.currency'),
+            trans('custom.balance_amount')
         ];
     }
 }

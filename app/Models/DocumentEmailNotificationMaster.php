@@ -31,6 +31,7 @@ class DocumentEmailNotificationMaster extends Model
 
     protected $primaryKey = 'emailNotificationID';
 
+    protected $appends = ['description'];
     public $fillable = [
         'description'
     ];
@@ -60,5 +61,28 @@ class DocumentEmailNotificationMaster extends Model
     public function erpDocumentemailnotificationdetails()
     {
         return $this->hasMany(\App\Models\ErpDocumentemailnotificationdetail::class);
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(DocumentEmailNotificationMasterTranslations::class, 'emailNotificationID', 'emailNotificationID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['description'] ?? '';
     }
 }

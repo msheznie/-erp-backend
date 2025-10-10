@@ -64,7 +64,7 @@ class EvacuationCriteriaScoreConfigLogAPIController extends AppBaseController
         $this->evacuationCriteriaScoreConfigLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evacuationCriteriaScoreConfigLogs = $this->evacuationCriteriaScoreConfigLogRepository->all();
 
-        return $this->sendResponse($evacuationCriteriaScoreConfigLogs->toArray(), 'Evacuation Criteria Score Config Logs retrieved successfully');
+        return $this->sendResponse($evacuationCriteriaScoreConfigLogs->toArray(), trans('custom.evacuation_criteria_score_config_logs_retrieved_su'));
     }
 
     /**
@@ -118,7 +118,7 @@ class EvacuationCriteriaScoreConfigLogAPIController extends AppBaseController
 
         $evacuationCriteriaScoreConfigLog = $this->evacuationCriteriaScoreConfigLogRepository->create($input);
 
-        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), 'Evacuation Criteria Score Config Log saved successfully');
+        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), trans('custom.evacuation_criteria_score_config_log_saved_success'));
     }
 
     /**
@@ -166,10 +166,10 @@ class EvacuationCriteriaScoreConfigLogAPIController extends AppBaseController
         $evacuationCriteriaScoreConfigLog = $this->evacuationCriteriaScoreConfigLogRepository->findWithoutFail($id);
 
         if (empty($evacuationCriteriaScoreConfigLog)) {
-            return $this->sendError('Evacuation Criteria Score Config Log not found');
+            return $this->sendError(trans('custom.evacuation_criteria_score_config_log_not_found'));
         }
 
-        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), 'Evacuation Criteria Score Config Log retrieved successfully');
+        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), trans('custom.evacuation_criteria_score_config_log_retrieved_suc'));
     }
 
     /**
@@ -235,12 +235,12 @@ class EvacuationCriteriaScoreConfigLogAPIController extends AppBaseController
         $evacuationCriteriaScoreConfigLog = $this->evacuationCriteriaScoreConfigLogRepository->findWithoutFail($id);
 
         if (empty($evacuationCriteriaScoreConfigLog)) {
-            return $this->sendError('Evacuation Criteria Score Config Log not found');
+            return $this->sendError(trans('custom.evacuation_criteria_score_config_log_not_found'));
         }
 
         $evacuationCriteriaScoreConfigLog = $this->evacuationCriteriaScoreConfigLogRepository->update($input, $id);
 
-        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), 'EvacuationCriteriaScoreConfigLog updated successfully');
+        return $this->sendResponse($evacuationCriteriaScoreConfigLog->toArray(), trans('custom.evacuationcriteriascoreconfiglog_updated_successfu'));
     }
 
     /**
@@ -288,7 +288,7 @@ class EvacuationCriteriaScoreConfigLogAPIController extends AppBaseController
         $evacuationCriteriaScoreConfigLog = $this->evacuationCriteriaScoreConfigLogRepository->findWithoutFail($id);
 
         if (empty($evacuationCriteriaScoreConfigLog)) {
-            return $this->sendError('Evacuation Criteria Score Config Log not found');
+            return $this->sendError(trans('custom.evacuation_criteria_score_config_log_not_found'));
         }
 
         $evacuationCriteriaScoreConfigLog->delete();

@@ -65,7 +65,7 @@ class SMELaveTypeAPIController extends AppBaseController
         $this->sMELaveTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMELaveTypes = $this->sMELaveTypeRepository->all();
 
-        return $this->sendResponse($sMELaveTypes->toArray(), 'S M E Lave Types retrieved successfully');
+        return $this->sendResponse($sMELaveTypes->toArray(), trans('custom.s_m_e_lave_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMELaveTypeAPIController extends AppBaseController
 
         $sMELaveType = $this->sMELaveTypeRepository->create($input);
 
-        return $this->sendResponse($sMELaveType->toArray(), 'S M E Lave Type saved successfully');
+        return $this->sendResponse($sMELaveType->toArray(), trans('custom.s_m_e_lave_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMELaveTypeAPIController extends AppBaseController
         $sMELaveType = $this->sMELaveTypeRepository->findWithoutFail($id);
 
         if (empty($sMELaveType)) {
-            return $this->sendError('S M E Lave Type not found');
+            return $this->sendError(trans('custom.s_m_e_lave_type_not_found'));
         }
 
-        return $this->sendResponse($sMELaveType->toArray(), 'S M E Lave Type retrieved successfully');
+        return $this->sendResponse($sMELaveType->toArray(), trans('custom.s_m_e_lave_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMELaveTypeAPIController extends AppBaseController
         $sMELaveType = $this->sMELaveTypeRepository->findWithoutFail($id);
 
         if (empty($sMELaveType)) {
-            return $this->sendError('S M E Lave Type not found');
+            return $this->sendError(trans('custom.s_m_e_lave_type_not_found'));
         }
 
         $sMELaveType = $this->sMELaveTypeRepository->update($input, $id);
 
-        return $this->sendResponse($sMELaveType->toArray(), 'SMELaveType updated successfully');
+        return $this->sendResponse($sMELaveType->toArray(), trans('custom.smelavetype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMELaveTypeAPIController extends AppBaseController
         $sMELaveType = $this->sMELaveTypeRepository->findWithoutFail($id);
 
         if (empty($sMELaveType)) {
-            return $this->sendError('S M E Lave Type not found');
+            return $this->sendError(trans('custom.s_m_e_lave_type_not_found'));
         }
 
         $sMELaveType->delete();

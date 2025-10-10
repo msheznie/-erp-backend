@@ -64,7 +64,7 @@ class ScheduleBidFormatDetailsLogAPIController extends AppBaseController
         $this->scheduleBidFormatDetailsLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $scheduleBidFormatDetailsLogs = $this->scheduleBidFormatDetailsLogRepository->all();
 
-        return $this->sendResponse($scheduleBidFormatDetailsLogs->toArray(), 'Schedule Bid Format Details Logs retrieved successfully');
+        return $this->sendResponse($scheduleBidFormatDetailsLogs->toArray(), trans('custom.schedule_bid_format_details_logs_retrieved_success'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ScheduleBidFormatDetailsLogAPIController extends AppBaseController
 
         $scheduleBidFormatDetailsLog = $this->scheduleBidFormatDetailsLogRepository->create($input);
 
-        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), 'Schedule Bid Format Details Log saved successfully');
+        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), trans('custom.schedule_bid_format_details_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ScheduleBidFormatDetailsLogAPIController extends AppBaseController
         $scheduleBidFormatDetailsLog = $this->scheduleBidFormatDetailsLogRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetailsLog)) {
-            return $this->sendError('Schedule Bid Format Details Log not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_log_not_found'));
         }
 
-        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), 'Schedule Bid Format Details Log retrieved successfully');
+        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), trans('custom.schedule_bid_format_details_log_retrieved_successf'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ScheduleBidFormatDetailsLogAPIController extends AppBaseController
         $scheduleBidFormatDetailsLog = $this->scheduleBidFormatDetailsLogRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetailsLog)) {
-            return $this->sendError('Schedule Bid Format Details Log not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_log_not_found'));
         }
 
         $scheduleBidFormatDetailsLog = $this->scheduleBidFormatDetailsLogRepository->update($input, $id);
 
-        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), 'ScheduleBidFormatDetailsLog updated successfully');
+        return $this->sendResponse($scheduleBidFormatDetailsLog->toArray(), trans('custom.schedulebidformatdetailslog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ScheduleBidFormatDetailsLogAPIController extends AppBaseController
         $scheduleBidFormatDetailsLog = $this->scheduleBidFormatDetailsLogRepository->findWithoutFail($id);
 
         if (empty($scheduleBidFormatDetailsLog)) {
-            return $this->sendError('Schedule Bid Format Details Log not found');
+            return $this->sendError(trans('custom.schedule_bid_format_details_log_not_found'));
         }
 
         $scheduleBidFormatDetailsLog->delete();

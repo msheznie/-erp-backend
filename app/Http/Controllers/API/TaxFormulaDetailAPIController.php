@@ -51,7 +51,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $this->taxFormulaDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxFormulaDetails = $this->taxFormulaDetailRepository->all();
 
-        return $this->sendResponse($taxFormulaDetails->toArray(), 'Tax Formula Details retrieved successfully');
+        return $this->sendResponse($taxFormulaDetails->toArray(), trans('custom.tax_formula_details_retrieved_successfully'));
     }
 
     /**
@@ -68,7 +68,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $taxFormulaDetails = $this->taxFormulaDetailRepository->create($input);
 
-        return $this->sendResponse($taxFormulaDetails->toArray(), 'Tax Formula Detail saved successfully');
+        return $this->sendResponse($taxFormulaDetails->toArray(), trans('custom.tax_formula_detail_saved_successfully'));
     }
 
     /**
@@ -85,7 +85,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $taxFormulaDetail = $this->taxFormulaDetailRepository->findWithoutFail($id);
 
         if (empty($taxFormulaDetail)) {
-            return $this->sendError('Tax Formula Detail not found');
+            return $this->sendError(trans('custom.tax_formula_detail_not_found'));
         }
 
         $taxMasters = TaxFormulaDetail::with(['taxmaster' => function ($query) {
@@ -93,7 +93,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
         }])->whereIn('formulaDetailID', explode(',', $taxFormulaDetail->taxMasters))->select('formulaDetailID', 'taxMasterAutoID')->get();
         $response = array('taxFormulaDetail' => $taxFormulaDetail, 'taxMasters' => $taxMasters);
 
-        return $this->sendResponse($response, 'Tax Formula Detail retrieved successfully');
+        return $this->sendResponse($response, trans('custom.tax_formula_detail_retrieved_successfully'));
     }
 
     /**
@@ -131,12 +131,12 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $taxFormulaDetail = $this->taxFormulaDetailRepository->findWithoutFail($id);
 
         if (empty($taxFormulaDetail)) {
-            return $this->sendError('Tax Formula Detail not found');
+            return $this->sendError(trans('custom.tax_formula_detail_not_found'));
         }
 
         $taxFormulaDetail = $this->taxFormulaDetailRepository->update($input, $id);
 
-        return $this->sendResponse($taxFormulaDetail->toArray(), 'Tax Formula Detail updated successfully');
+        return $this->sendResponse($taxFormulaDetail->toArray(), trans('custom.tax_formula_detail_updated_successfully'));
     }
 
     /**
@@ -153,12 +153,12 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $taxFormulaDetail = $this->taxFormulaDetailRepository->findWithoutFail($id);
 
         if (empty($taxFormulaDetail)) {
-            return $this->sendError('Tax Formula Detail not found');
+            return $this->sendError(trans('custom.tax_formula_detail_not_found'));
         }
 
         $taxFormulaDetail->delete();
 
-        return $this->sendResponse($id, 'Tax Formula Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.tax_formula_detail_deleted_successfully'));
     }
 
     public function getTaxFormulaDetailDatatable(Request $request)
@@ -181,11 +181,11 @@ class TaxFormulaDetailAPIController extends AppBaseController
     public function getOtherTax(Request $request)
     {
         $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID', $request->taxCalculationformulaID)->where('sortOrder', '<', $request->sortOrder)->get();
-        return $this->sendResponse($formulaDetail, 'Tax Formula Detail deleted successfully');
+        return $this->sendResponse($formulaDetail, trans('custom.tax_formula_detail_deleted_successfully'));
     }
 
     public function test(){
         $result = \Formula::taxFormulaDecode(15,1000);
-        return $this->sendResponse($result, 'Tax Formula Detail deleted successfully');
+        return $this->sendResponse($result, trans('custom.tax_formula_detail_deleted_successfully'));
     }
 }

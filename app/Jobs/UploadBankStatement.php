@@ -21,12 +21,13 @@ class UploadBankStatement implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $db;
     protected $uploadData;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $uploadData)
+    public function __construct($db, $uploadData, $languageCode)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -39,6 +40,7 @@ class UploadBankStatement implements ShouldQueue
         }
         $this->db = $db;
         $this->uploadData = $uploadData;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -50,9 +52,11 @@ class UploadBankStatement implements ShouldQueue
     {
         $uploadData = $this->uploadData;
         $db = $this->db;
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path().'/logs/upload_bank_statement.log');
-
+       
         DB::beginTransaction();
         try {
             $uploadedCompany = $uploadData['uploadedCompany'];
@@ -148,7 +152,7 @@ class UploadBankStatement implements ShouldQueue
             BankStatementMaster::where('statementId', $statementMaster['statementId'])
                 ->update([
                     'importStatus' => 2,
-                    'importError' => "Statement upload failed. Please try re-uploading."
+                    'importError' => 'Statement upload failed. Please try re-uploading'
                 ]);
         }
     }

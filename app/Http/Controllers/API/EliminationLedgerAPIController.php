@@ -65,7 +65,7 @@ class EliminationLedgerAPIController extends AppBaseController
         $this->eliminationLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eliminationLedgers = $this->eliminationLedgerRepository->all();
 
-        return $this->sendResponse($eliminationLedgers->toArray(), 'Elimination Ledgers retrieved successfully');
+        return $this->sendResponse($eliminationLedgers->toArray(), trans('custom.elimination_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EliminationLedgerAPIController extends AppBaseController
 
         $eliminationLedger = $this->eliminationLedgerRepository->create($input);
 
-        return $this->sendResponse($eliminationLedger->toArray(), 'Elimination Ledger saved successfully');
+        return $this->sendResponse($eliminationLedger->toArray(), trans('custom.elimination_ledger_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EliminationLedgerAPIController extends AppBaseController
         $eliminationLedger = $this->eliminationLedgerRepository->findWithoutFail($id);
 
         if (empty($eliminationLedger)) {
-            return $this->sendError('Elimination Ledger not found');
+            return $this->sendError(trans('custom.elimination_ledger_not_found'));
         }
 
-        return $this->sendResponse($eliminationLedger->toArray(), 'Elimination Ledger retrieved successfully');
+        return $this->sendResponse($eliminationLedger->toArray(), trans('custom.elimination_ledger_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EliminationLedgerAPIController extends AppBaseController
         $eliminationLedger = $this->eliminationLedgerRepository->findWithoutFail($id);
 
         if (empty($eliminationLedger)) {
-            return $this->sendError('Elimination Ledger not found');
+            return $this->sendError(trans('custom.elimination_ledger_not_found'));
         }
 
         $eliminationLedger = $this->eliminationLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($eliminationLedger->toArray(), 'EliminationLedger updated successfully');
+        return $this->sendResponse($eliminationLedger->toArray(), trans('custom.eliminationledger_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EliminationLedgerAPIController extends AppBaseController
         $eliminationLedger = $this->eliminationLedgerRepository->findWithoutFail($id);
 
         if (empty($eliminationLedger)) {
-            return $this->sendError('Elimination Ledger not found');
+            return $this->sendError(trans('custom.elimination_ledger_not_found'));
         }
 
         $eliminationLedger->delete();
@@ -285,7 +285,7 @@ class EliminationLedgerAPIController extends AppBaseController
         $generalLedger = $this->eliminationLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
 
         if (empty($generalLedger)) {
-            return $this->sendError('Elimination Ledger not found');
+            return $this->sendError(trans('custom.elimination_ledger_not_found'));
         }
 
 
@@ -296,6 +296,6 @@ class EliminationLedgerAPIController extends AppBaseController
                 'companyCurrency' => $companyCurrency
             ];
 
-        return $this->sendResponse($generalLedger, 'Elimination Ledger retrieved successfully');
+        return $this->sendResponse($generalLedger, trans('custom.elimination_ledger_retrieved_successfully'));
     }
 }

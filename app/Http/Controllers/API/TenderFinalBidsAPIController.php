@@ -75,7 +75,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         $this->tenderFinalBidsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderFinalBids = $this->tenderFinalBidsRepository->all();
 
-        return $this->sendResponse($tenderFinalBids->toArray(), 'Tender Final Bids retrieved successfully');
+        return $this->sendResponse($tenderFinalBids->toArray(), trans('custom.tender_final_bids_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class TenderFinalBidsAPIController extends AppBaseController
 
         $tenderFinalBids = $this->tenderFinalBidsRepository->create($input);
 
-        return $this->sendResponse($tenderFinalBids->toArray(), 'Tender Final Bids saved successfully');
+        return $this->sendResponse($tenderFinalBids->toArray(), trans('custom.tender_final_bids_saved_successfully'));
     }
 
     /**
@@ -177,10 +177,10 @@ class TenderFinalBidsAPIController extends AppBaseController
         $tenderFinalBids = $this->tenderFinalBidsRepository->findWithoutFail($id);
 
         if (empty($tenderFinalBids)) {
-            return $this->sendError('Tender Final Bids not found');
+            return $this->sendError(trans('custom.tender_final_bids_not_found'));
         }
 
-        return $this->sendResponse($tenderFinalBids->toArray(), 'Tender Final Bids retrieved successfully');
+        return $this->sendResponse($tenderFinalBids->toArray(), trans('custom.tender_final_bids_retrieved_successfully'));
     }
 
     /**
@@ -246,12 +246,12 @@ class TenderFinalBidsAPIController extends AppBaseController
         $tenderFinalBids = $this->tenderFinalBidsRepository->findWithoutFail($id);
 
         if (empty($tenderFinalBids)) {
-            return $this->sendError('Tender Final Bids not found');
+            return $this->sendError(trans('custom.tender_final_bids_not_found'));
         }
 
         $tenderFinalBids = $this->tenderFinalBidsRepository->update($input, $id);
 
-        return $this->sendResponse($tenderFinalBids->toArray(), 'TenderFinalBids updated successfully');
+        return $this->sendResponse($tenderFinalBids->toArray(), trans('custom.tenderfinalbids_updated_successfully'));
     }
 
     /**
@@ -299,7 +299,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         $tenderFinalBids = $this->tenderFinalBidsRepository->findWithoutFail($id);
 
         if (empty($tenderFinalBids)) {
-            return $this->sendError('Tender Final Bids not found');
+            return $this->sendError(trans('custom.tender_final_bids_not_found'));
         }
 
         $tenderFinalBids->delete();

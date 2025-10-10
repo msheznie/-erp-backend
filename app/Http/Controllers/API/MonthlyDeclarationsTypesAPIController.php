@@ -65,7 +65,7 @@ class MonthlyDeclarationsTypesAPIController extends AppBaseController
         $this->monthlyDeclarationsTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->all();
 
-        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), 'Monthly Declarations Types retrieved successfully');
+        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), trans('custom.monthly_declarations_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class MonthlyDeclarationsTypesAPIController extends AppBaseController
 
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->create($input);
 
-        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), 'Monthly Declarations Types saved successfully');
+        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), trans('custom.monthly_declarations_types_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class MonthlyDeclarationsTypesAPIController extends AppBaseController
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->findWithoutFail($id);
 
         if (empty($monthlyDeclarationsTypes)) {
-            return $this->sendError('Monthly Declarations Types not found');
+            return $this->sendError(trans('custom.monthly_declarations_types_not_found'));
         }
 
-        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), 'Monthly Declarations Types retrieved successfully');
+        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), trans('custom.monthly_declarations_types_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class MonthlyDeclarationsTypesAPIController extends AppBaseController
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->findWithoutFail($id);
 
         if (empty($monthlyDeclarationsTypes)) {
-            return $this->sendError('Monthly Declarations Types not found');
+            return $this->sendError(trans('custom.monthly_declarations_types_not_found'));
         }
 
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->update($input, $id);
 
-        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), 'MonthlyDeclarationsTypes updated successfully');
+        return $this->sendResponse($monthlyDeclarationsTypes->toArray(), trans('custom.monthlydeclarationstypes_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class MonthlyDeclarationsTypesAPIController extends AppBaseController
         $monthlyDeclarationsTypes = $this->monthlyDeclarationsTypesRepository->findWithoutFail($id);
 
         if (empty($monthlyDeclarationsTypes)) {
-            return $this->sendError('Monthly Declarations Types not found');
+            return $this->sendError(trans('custom.monthly_declarations_types_not_found'));
         }
 
         $monthlyDeclarationsTypes->delete();

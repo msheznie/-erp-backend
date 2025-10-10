@@ -7,6 +7,7 @@ use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\FixedAssetDepreciationMaster;
+use App\Services\BudgetPermissionService;
 use App\Observers\CapitalizationDetailObserver;
 use App\Observers\CapitalizationObserver;
 use App\Observers\DepreciationObserver;
@@ -57,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind('exchangeSetupConfig', function ($app) {
             return new ExchangeSetupConfig();
+        });
+        
+        $this->app->singleton(BudgetPermissionService::class, function ($app) {
+            return new BudgetPermissionService();
         });
     }
     /**

@@ -64,7 +64,7 @@ class RegisterSupplierBusinessCategoryAssignAPIController extends AppBaseControl
         $this->registerSupplierBusinessCategoryAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registerSupplierBusinessCategoryAssigns = $this->registerSupplierBusinessCategoryAssignRepository->all();
 
-        return $this->sendResponse($registerSupplierBusinessCategoryAssigns->toArray(), 'Register Supplier Business Category Assigns retrieved successfully');
+        return $this->sendResponse($registerSupplierBusinessCategoryAssigns->toArray(), trans('custom.register_supplier_business_category_assigns_retrie'));
     }
 
     /**
@@ -118,7 +118,7 @@ class RegisterSupplierBusinessCategoryAssignAPIController extends AppBaseControl
 
         $registerSupplierBusinessCategoryAssign = $this->registerSupplierBusinessCategoryAssignRepository->create($input);
 
-        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), 'Register Supplier Business Category Assign saved successfully');
+        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), trans('custom.register_supplier_business_category_assign_saved_s'));
     }
 
     /**
@@ -166,10 +166,10 @@ class RegisterSupplierBusinessCategoryAssignAPIController extends AppBaseControl
         $registerSupplierBusinessCategoryAssign = $this->registerSupplierBusinessCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierBusinessCategoryAssign)) {
-            return $this->sendError('Register Supplier Business Category Assign not found');
+            return $this->sendError(trans('custom.register_supplier_business_category_assign_not_fou'));
         }
 
-        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), 'Register Supplier Business Category Assign retrieved successfully');
+        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), trans('custom.register_supplier_business_category_assign_retriev'));
     }
 
     /**
@@ -235,12 +235,12 @@ class RegisterSupplierBusinessCategoryAssignAPIController extends AppBaseControl
         $registerSupplierBusinessCategoryAssign = $this->registerSupplierBusinessCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierBusinessCategoryAssign)) {
-            return $this->sendError('Register Supplier Business Category Assign not found');
+            return $this->sendError(trans('custom.register_supplier_business_category_assign_not_fou'));
         }
 
         $registerSupplierBusinessCategoryAssign = $this->registerSupplierBusinessCategoryAssignRepository->update($input, $id);
 
-        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), 'RegisterSupplierBusinessCategoryAssign updated successfully');
+        return $this->sendResponse($registerSupplierBusinessCategoryAssign->toArray(), trans('custom.registersupplierbusinesscategoryassign_updated_suc'));
     }
 
     /**
@@ -288,7 +288,7 @@ class RegisterSupplierBusinessCategoryAssignAPIController extends AppBaseControl
         $registerSupplierBusinessCategoryAssign = $this->registerSupplierBusinessCategoryAssignRepository->findWithoutFail($id);
 
         if (empty($registerSupplierBusinessCategoryAssign)) {
-            return $this->sendError('Register Supplier Business Category Assign not found');
+            return $this->sendError(trans('custom.register_supplier_business_category_assign_not_fou'));
         }
 
         $registerSupplierBusinessCategoryAssign->delete();

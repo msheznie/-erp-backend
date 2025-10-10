@@ -99,13 +99,13 @@ class PdcLogRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Document Code'] = ($input['docName'] != "Recevied Cheques") ? $val->pay_supplier->BPVcode:$val->customer_receive->custPaymentReceiveCode;
-                $data[$x]['Bank Name'] = $val->bank->bankName;
-                $data[$x]['Cheque No'] = $val->chequeNo;
-                $data[$x]['Cheque Date'] =  Helper::dateFormat($val->chequeDate);
-                $data[$x]['Currency'] = $val->currency->CurrencyCode;
-                $data[$x]['Amount'] = $val->amount;
-                $data[$x]['Status'] = $val->chequeStatusValue;
+                $data[$x][trans('custom.document_code')] = ($input['docName'] != "Recevied Cheques") ? $val->pay_supplier->BPVcode:$val->customer_receive->custPaymentReceiveCode;
+                $data[$x][trans('custom.bank_name')] = $val->bank->bankName;
+                $data[$x][trans('custom.cheque_no')] = $val->chequeNo;
+                $data[$x][trans('custom.cheque_date')] =  Helper::dateFormat($val->chequeDate);
+                $data[$x][trans('custom.currency')] = $val->currency->CurrencyCode;
+                $data[$x][trans('custom.amount')] = $val->amount;
+                $data[$x][trans('custom.status')] = $val->chequeStatusValue;
                 $x++;
             }
         } else {

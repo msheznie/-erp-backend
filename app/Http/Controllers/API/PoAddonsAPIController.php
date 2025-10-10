@@ -77,7 +77,7 @@ class PoAddonsAPIController extends AppBaseController
         $this->poAddonsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poAddons = $this->poAddonsRepository->all();
 
-        return $this->sendResponse($poAddons->toArray(), 'Po Addons retrieved successfully');
+        return $this->sendResponse($poAddons->toArray(), trans('custom.po_addons_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class PoAddonsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $input['supplierID'] =  $purchaseOrder->supplierID;
@@ -137,7 +137,7 @@ class PoAddonsAPIController extends AppBaseController
 
         $poAddons = $this->poAddonsRepository->create($input);
 
-        return $this->sendResponse($poAddons->toArray(), 'Po Addon saved successfully');
+        return $this->sendResponse($poAddons->toArray(), trans('custom.po_addon_saved_successfully'));
     }
 
     /**
@@ -184,10 +184,10 @@ class PoAddonsAPIController extends AppBaseController
         $poAddons = $this->poAddonsRepository->findWithoutFail($id);
 
         if (empty($poAddons)) {
-            return $this->sendError('Po Addons not found');
+            return $this->sendError(trans('custom.po_addons_not_found'));
         }
 
-        return $this->sendResponse($poAddons->toArray(), 'Po Addons retrieved successfully');
+        return $this->sendResponse($poAddons->toArray(), trans('custom.po_addons_retrieved_successfully'));
     }
 
     /**
@@ -254,14 +254,14 @@ class PoAddonsAPIController extends AppBaseController
         $poAddons = $this->poAddonsRepository->findWithoutFail($id);
 
         if (empty($poAddons)) {
-            return $this->sendError('Po Addons not found');
+            return $this->sendError(trans('custom.po_addons_not_found'));
         }
         
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['poId'])
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -298,7 +298,7 @@ class PoAddonsAPIController extends AppBaseController
         $poAddons = $this->poAddonsRepository->update($input, $id);
 
         DB::commit();
-        return $this->sendResponse($poAddons->toArray(), 'PoAddons updated successfully');
+        return $this->sendResponse($poAddons->toArray(), trans('custom.poaddons_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -364,12 +364,12 @@ class PoAddonsAPIController extends AppBaseController
             $purchaseOrder->update();
      
             if (empty($poAddons)) {
-                return $this->sendError('Po Addons not found');
+                return $this->sendError(trans('custom.po_addons_not_found'));
             }
     
             $poAddons->delete();
             DB::commit();
-            return $this->sendResponse($id, 'Po Addons deleted successfully');
+            return $this->sendResponse($id, trans('custom.po_addons_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -387,6 +387,6 @@ class PoAddonsAPIController extends AppBaseController
             ->orderBy('idpoAddons', 'DESC')
             ->get();
 
-        return $this->sendResponse($orderAddons->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($orderAddons->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

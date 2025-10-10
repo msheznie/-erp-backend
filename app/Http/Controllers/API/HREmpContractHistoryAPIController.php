@@ -65,7 +65,7 @@ class HREmpContractHistoryAPIController extends AppBaseController
         $this->hREmpContractHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hREmpContractHistories = $this->hREmpContractHistoryRepository->all();
 
-        return $this->sendResponse($hREmpContractHistories->toArray(), 'H R Emp Contract Histories retrieved successfully');
+        return $this->sendResponse($hREmpContractHistories->toArray(), trans('custom.h_r_emp_contract_histories_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HREmpContractHistoryAPIController extends AppBaseController
 
         $hREmpContractHistory = $this->hREmpContractHistoryRepository->create($input);
 
-        return $this->sendResponse($hREmpContractHistory->toArray(), 'H R Emp Contract History saved successfully');
+        return $this->sendResponse($hREmpContractHistory->toArray(), trans('custom.h_r_emp_contract_history_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HREmpContractHistoryAPIController extends AppBaseController
         $hREmpContractHistory = $this->hREmpContractHistoryRepository->findWithoutFail($id);
 
         if (empty($hREmpContractHistory)) {
-            return $this->sendError('H R Emp Contract History not found');
+            return $this->sendError(trans('custom.h_r_emp_contract_history_not_found'));
         }
 
-        return $this->sendResponse($hREmpContractHistory->toArray(), 'H R Emp Contract History retrieved successfully');
+        return $this->sendResponse($hREmpContractHistory->toArray(), trans('custom.h_r_emp_contract_history_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HREmpContractHistoryAPIController extends AppBaseController
         $hREmpContractHistory = $this->hREmpContractHistoryRepository->findWithoutFail($id);
 
         if (empty($hREmpContractHistory)) {
-            return $this->sendError('H R Emp Contract History not found');
+            return $this->sendError(trans('custom.h_r_emp_contract_history_not_found'));
         }
 
         $hREmpContractHistory = $this->hREmpContractHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($hREmpContractHistory->toArray(), 'HREmpContractHistory updated successfully');
+        return $this->sendResponse($hREmpContractHistory->toArray(), trans('custom.hrempcontracthistory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HREmpContractHistoryAPIController extends AppBaseController
         $hREmpContractHistory = $this->hREmpContractHistoryRepository->findWithoutFail($id);
 
         if (empty($hREmpContractHistory)) {
-            return $this->sendError('H R Emp Contract History not found');
+            return $this->sendError(trans('custom.h_r_emp_contract_history_not_found'));
         }
 
         $hREmpContractHistory->delete();

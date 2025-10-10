@@ -46,9 +46,9 @@ class SupplierGroupConfigurationController extends AppBaseController
         $storeSupplierGroup =  SupplierGroup::create($input);
 
         if($storeSupplierGroup) {
-            return $this->sendResponse($storeSupplierGroup->toArray(), "Supplier Group Created");
+            return $this->sendResponse($storeSupplierGroup->toArray(), trans('custom.supplier_group_created'));
         }else {
-            return $this->sendError("Cannot create supplier group");
+            return $this->sendError(trans('custom.cannot_create_supplier_group'));
         }
     }
 
@@ -87,9 +87,9 @@ class SupplierGroupConfigurationController extends AppBaseController
         $data = SupplierGroup::find($input['id'])->update($input);
        
         if($data) {
-          return $this->sendResponse($data, "Supplier Group Updated");
+          return $this->sendResponse($data, trans('custom.supplier_group_updated'));
         }else {
-            return $this->sendError("Cannot find supplier group");
+            return $this->sendError(trans('custom.cannot_find_supplier_group'));
         }
     }
 
@@ -119,7 +119,7 @@ class SupplierGroupConfigurationController extends AppBaseController
         $data = SupplierGroup::notDeleted();
 
          return \DataTables::of($data)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn(trans('custom.actions'), trans('custom.actions'), "Actions")
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
@@ -134,7 +134,7 @@ class SupplierGroupConfigurationController extends AppBaseController
 
         if(isset($is_exit))
         {
-            return $this->sendError("Cannot delete,this group already assigned to one of the supplier");
+            return $this->sendError(trans('custom.cannot_delete_group_assigned_to_supplier'));
         }
       
 
@@ -145,9 +145,9 @@ class SupplierGroupConfigurationController extends AppBaseController
             $data->is_deleted = true;
             $data ->deleted_by = ($user) ? $user->employee_id : 0;
             $data->save();
-            return $this->sendResponse($data->toArray(), "Supplier Group Deleted");
+            return $this->sendResponse($data->toArray(), trans('custom.supplier_group_deleted'));
         }else {
-            return $this->sendError("Cannot find supplier group");
+            return $this->sendError(trans('custom.cannot_find_supplier_group'));
         }
 
     }

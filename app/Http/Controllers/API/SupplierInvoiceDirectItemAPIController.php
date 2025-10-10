@@ -82,7 +82,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $this->supplierInvoiceDirectItemRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierInvoiceDirectItems = $this->supplierInvoiceDirectItemRepository->all();
 
-        return $this->sendResponse($supplierInvoiceDirectItems->toArray(), 'Supplier Invoice Direct Items retrieved successfully');
+        return $this->sendResponse($supplierInvoiceDirectItems->toArray(), trans('custom.supplier_invoice_direct_items_retrieved_successful'));
     }
 
     /**
@@ -134,12 +134,12 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
         $invoice = $this->bookInvSuppMasterRepository->findWithoutFail($bookingSuppMasInvAutoID);
         if (empty($invoice)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
         
         if(isset($input['type']) &&  $input['type'] != $invoice->documentType)
         {
-            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+             return $this->sendError(trans('custom.the_supplier_invoice_type_has_changed'));
         }
 
         if (empty($invoice->supplierTransactionCurrencyID)) {
@@ -169,7 +169,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
            if ($item->financeCategoryMaster == 1) {
                if ($sameItem) {
-                   return $this->sendError('Selected item is already added from the same supplier invoice.', 422);
+                   return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_suppl'), 422);
                }
            }
  
@@ -231,10 +231,10 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $item = $this->supplierInvoiceDirectItemRepository->create($detailArray);
 
             DB::commit();
-            return $this->sendResponse('', 'Supplier Invoice Item details saved successfully');
+            return $this->sendResponse('', trans('custom.supplier_invoice_item_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 
@@ -282,10 +282,10 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $supplierInvoiceDirectItem = $this->supplierInvoiceDirectItemRepository->findWithoutFail($id);
 
         if (empty($supplierInvoiceDirectItem)) {
-            return $this->sendError('Supplier Invoice Direct Item not found');
+            return $this->sendError(trans('custom.supplier_invoice_direct_item_not_found'));
         }
 
-        return $this->sendResponse($supplierInvoiceDirectItem->toArray(), 'Supplier Invoice Direct Item retrieved successfully');
+        return $this->sendResponse($supplierInvoiceDirectItem->toArray(), trans('custom.supplier_invoice_direct_item_retrieved_successfull'));
     }
 
     /**
@@ -350,14 +350,14 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $itemDetail = $this->supplierInvoiceDirectItemRepository->findWithoutFail($id);
 
         if (empty($itemDetail)) {
-            return $this->sendError('Supplier Invoice Details not found');
+            return $this->sendError(trans('custom.supplier_invoice_details_not_found'));
         }
 
         $supplierInvoice = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])
                                           ->first();
 
         if (empty($supplierInvoice)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         DB::beginTransaction();
@@ -420,7 +420,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             \Helper::updateSupplierRetentionAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
             \Helper::updateSupplierItemWhtAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
             DB::commit();
-            return $this->sendResponse($suppItemDetails->toArray(), 'Supplier Invoice Details updated successfully');
+            return $this->sendResponse($suppItemDetails->toArray(), trans('custom.supplier_invoice_details_updated_successfully'));
         } catch (\Exception $ex) {
             DB::rollback();
             return $this->sendError($ex->getMessage(), 500);
@@ -474,7 +474,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         ->first();
         
         if (empty($supplierInvoiceDirectItem)) {
-            return $this->sendError('Supplier Invoice Direct Item not found');
+            return $this->sendError(trans('custom.supplier_invoice_direct_item_not_found'));
         }
 
         $supplierInvoiceDirectItem->delete();
@@ -483,7 +483,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         \Helper::updateSupplierRetentionAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
         \Helper::updateSupplierItemWhtAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
 
-        return $this->sendResponse([], 'Supplier Invoice Direct Item deleted successfully');
+        return $this->sendResponse([], trans('custom.supplier_invoice_direct_item_deleted_successfully'));
     }
 
     public function getSupplierInvDirectItems(Request $request)
@@ -504,7 +504,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             }, 'vat_sub_category'])->get();
         }
         
-        return $this->sendResponse($items->toArray(), 'Item Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.item_details_retrieved_successfully'));
     }
 
     public function deleteAllSIDirectItemDetail(Request $request)
@@ -516,11 +516,11 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $supInvoice = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($supInvoice)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if($supInvoice->confirmedYN){
-            return $this->sendError('You cannot delete Supplier Invoice Details , this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_supplier_invoice_details_this_do'),500);
         }
 
 
@@ -537,7 +537,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
         \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
         \Helper::updateSupplierItemWhtAmount($bookingSuppMasInvAutoID,$supInvoice);
-        return $this->sendResponse($bookingSuppMasInvAutoID, 'Details deleted successfully');
+        return $this->sendResponse($bookingSuppMasInvAutoID, trans('custom.details_deleted_successfully'));
     }
 
     public function supplierInvoiceValidateItem(Request $request) {
@@ -558,7 +558,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
             $supplierInvoice = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['supplierInvoiceId'])->first();
             if (empty($supplierInvoice)) {
-                return $this->sendError('Supplier Invoice not found', 500);
+                return $this->sendError(trans('custom.supplier_invoice_not_found'), 500);
             }
 
             $data['isBulkItemJobRun'] = 1;
@@ -582,7 +582,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
                     }
                 }
                 DB::commit();
-                return $this->sendResponse('', 'Supplier Invoice Items saved successfully');
+                return $this->sendResponse('', trans('custom.supplier_invoice_items_saved_successfully'));
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return $this->sendError($exception->getMessage(), 500);

@@ -66,7 +66,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
         $this->cashFlowTemplateLinkRepository->pushCriteria(new LimitOffsetCriteria($request));
         $cashFlowTemplateLinks = $this->cashFlowTemplateLinkRepository->all();
 
-        return $this->sendResponse($cashFlowTemplateLinks->toArray(), 'Cash Flow Template Links retrieved successfully');
+        return $this->sendResponse($cashFlowTemplateLinks->toArray(), trans('custom.cash_flow_template_links_retrieved_successfully'));
     }
 
     /**
@@ -171,7 +171,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Cash Flow Template Link saved successfully');
+        return $this->sendResponse([], trans('custom.cash_flow_template_link_saved_successfully'));
     }
 
     /**
@@ -218,10 +218,10 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
         $cashFlowTemplateLink = $this->cashFlowTemplateLinkRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplateLink)) {
-            return $this->sendError('Cash Flow Template Link not found');
+            return $this->sendError(trans('custom.cash_flow_template_link_not_found'));
         }
 
-        return $this->sendResponse($cashFlowTemplateLink->toArray(), 'Cash Flow Template Link retrieved successfully');
+        return $this->sendResponse($cashFlowTemplateLink->toArray(), trans('custom.cash_flow_template_link_retrieved_successfully'));
     }
 
     /**
@@ -278,12 +278,12 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
         $cashFlowTemplateLink = $this->cashFlowTemplateLinkRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplateLink)) {
-            return $this->sendError('Cash Flow Template Link not found');
+            return $this->sendError(trans('custom.cash_flow_template_link_not_found'));
         }
 
         $cashFlowTemplateLink = $this->cashFlowTemplateLinkRepository->update($input, $id);
 
-        return $this->sendResponse($cashFlowTemplateLink->toArray(), 'CashFlowTemplateLink updated successfully');
+        return $this->sendResponse($cashFlowTemplateLink->toArray(), trans('custom.cashflowtemplatelink_updated_successfully'));
     }
 
     /**
@@ -330,7 +330,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
         $reportTemplateLinks = $this->cashFlowTemplateLinkRepository->findWithoutFail($id);
 
         if (empty($reportTemplateLinks)) {
-            return $this->sendError('Template Links not found');
+            return $this->sendError(trans('custom.template_links_not_found'));
         }
 
         $reportTemplateLinks->delete();
@@ -341,7 +341,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
             $updateTemplateDetailAsFinal = CashFlowTemplateDetail::where('id', $reportTemplateLinks->templateDetailID)->update(['isFinalLevel' => 0]);
         }
 
-        return $this->sendResponse($id, 'Report Template Links deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_links_deleted_successfully'));
     }
 
     public function deleteAllLinkedGLCodesCashFlow(Request $request)
@@ -350,7 +350,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
 
         $reportTemplateLinks = CashFlowTemplateLink::where('templateDetailID',$request->templateDetailID)->delete();
         $updateTemplateDetailAsFinal = CashFlowTemplateDetail::where('id', $request->templateDetailID)->update(['isFinalLevel' => 0]);
-        return $this->sendResponse([], 'Report Template Links deleted successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_deleted_successfully'));
     }
 
 
@@ -390,6 +390,6 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                 $reportTemplateLinks = $this->cashFlowTemplateLinkRepository->update($data2, $val->id);
             }
         }
-        return $this->sendResponse([], 'Report Template Links saved successfully');
+        return $this->sendResponse([], trans('custom.report_template_links_saved_successfully'));
     }
 }

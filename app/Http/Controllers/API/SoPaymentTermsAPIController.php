@@ -73,7 +73,7 @@ class SoPaymentTermsAPIController extends AppBaseController
         $this->soPaymentTermsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $soPaymentTerms = $this->soPaymentTermsRepository->all();
 
-        return $this->sendResponse($soPaymentTerms->toArray(), 'So Payment Terms retrieved successfully');
+        return $this->sendResponse($soPaymentTerms->toArray(), trans('custom.so_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class SoPaymentTermsAPIController extends AppBaseController
         $salesOrder = QuotationMaster::with(['customer'])->find($salesOrderID);
 
         if (empty($salesOrder)) {
-            return $this->sendError('Sales Order not found');
+            return $this->sendError(trans('custom.sales_order_not_found'));
         }
 
         $input['inDays'] = (isset($salesOrder->customer->creditDays) && $salesOrder->customer->creditDays > 0) ? $salesOrder->customer->creditDays : 0;
@@ -160,7 +160,7 @@ class SoPaymentTermsAPIController extends AppBaseController
 
         $soPaymentTerms = $this->soPaymentTermsRepository->create($input);
 
-        return $this->sendResponse($soPaymentTerms->toArray(), 'Payment Terms saved successfully');
+        return $this->sendResponse($soPaymentTerms->toArray(), trans('custom.payment_terms_saved_successfully'));
     }
 
     /**
@@ -207,10 +207,10 @@ class SoPaymentTermsAPIController extends AppBaseController
         $soPaymentTerms = $this->soPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($soPaymentTerms)) {
-            return $this->sendError('So Payment Terms not found');
+            return $this->sendError(trans('custom.so_payment_terms_not_found'));
         }
 
-        return $this->sendResponse($soPaymentTerms->toArray(), 'So Payment Terms retrieved successfully');
+        return $this->sendResponse($soPaymentTerms->toArray(), trans('custom.so_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -267,7 +267,7 @@ class SoPaymentTermsAPIController extends AppBaseController
         $soPaymentTerms = $this->soPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($soPaymentTerms)) {
-            return $this->sendError('Payment Terms not found');
+            return $this->sendError(trans('custom.payment_terms_not_found'));
         }
 
         $input = $this->convertArrayToValue($input);
@@ -277,7 +277,7 @@ class SoPaymentTermsAPIController extends AppBaseController
         $salesOrder = QuotationMaster::find($salesOrderID);
 
         if (empty($salesOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $daysIn = $input['inDays'];
@@ -294,7 +294,7 @@ class SoPaymentTermsAPIController extends AppBaseController
 
         $soPaymentTerms = $this->soPaymentTermsRepository->update($input, $id);
 
-        return $this->sendResponse($soPaymentTerms->toArray(), 'PaymentTerms updated successfully');
+        return $this->sendResponse($soPaymentTerms->toArray(), trans('custom.paymentterms_updated_successfully'));
     }
 
     /**
@@ -341,14 +341,14 @@ class SoPaymentTermsAPIController extends AppBaseController
         $soPaymentTerms = $this->soPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($soPaymentTerms)) {
-            return $this->sendError('Payment Terms not found');
+            return $this->sendError(trans('custom.payment_terms_not_found'));
         }
 
         $soPaymentTerms->delete();
 
         SalesOrderAdvPayment::where('soTermID', $id)->delete();
 
-        return $this->sendResponse([],'Payment Terms deleted successfully');
+        return $this->sendResponse([],trans('custom.payment_terms_deleted_successfully'));
     }
 
     public function getSalesOrderPaymentTerms(Request $request)
@@ -360,6 +360,6 @@ class SoPaymentTermsAPIController extends AppBaseController
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 
-        return $this->sendResponse($soAdvancePaymentType->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($soAdvancePaymentType->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

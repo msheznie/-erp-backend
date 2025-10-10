@@ -69,7 +69,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
         $this->segmentAllocatedItemRepository->pushCriteria(new LimitOffsetCriteria($request));
         $segmentAllocatedItems = $this->segmentAllocatedItemRepository->all();
 
-        return $this->sendResponse($segmentAllocatedItems->toArray(), 'Segment Allocated Items retrieved successfully');
+        return $this->sendResponse($segmentAllocatedItems->toArray(), trans('custom.segment_allocated_items_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
 
         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->create($input);
 
-        return $this->sendResponse($segmentAllocatedItem->toArray(), 'Segment Allocated Item saved successfully');
+        return $this->sendResponse($segmentAllocatedItem->toArray(), trans('custom.segment_allocated_item_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class SegmentAllocatedItemAPIController extends AppBaseController
         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->findWithoutFail($id);
 
         if (empty($segmentAllocatedItem)) {
-            return $this->sendError('Segment Allocated Item not found');
+            return $this->sendError(trans('custom.segment_allocated_item_not_found'));
         }
 
-        return $this->sendResponse($segmentAllocatedItem->toArray(), 'Segment Allocated Item retrieved successfully');
+        return $this->sendResponse($segmentAllocatedItem->toArray(), trans('custom.segment_allocated_item_retrieved_successfully'));
     }
 
     /**
@@ -223,7 +223,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->findWithoutFail($id);
 
         if (empty($segmentAllocatedItem)) {
-            return $this->sendError('Segment Allocated Item not found');
+            return $this->sendError(trans('custom.segment_allocated_item_not_found'));
         }
         
         $segmentAllocatedItemRes = $this->segmentAllocatedItemRepository->updateAlllocationValidation($input);
@@ -253,7 +253,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
             $segmentAllocatedItem->delete();
         }
 
-        return $this->sendResponse($segmentAllocatedItem->toArray(), 'SegmentAllocatedItem updated successfully');
+        return $this->sendResponse($segmentAllocatedItem->toArray(), trans('custom.segmentallocateditem_updated_successfully'));
     }
 
     /**
@@ -300,7 +300,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->findWithoutFail($id);
 
         if (empty($segmentAllocatedItem)) {
-            return $this->sendError('Segment Allocated Item not found');
+            return $this->sendError(trans('custom.segment_allocated_item_not_found'));
         }
 
         if (!is_null($segmentAllocatedItem->pulledDocumentDetailID)) {
@@ -317,7 +317,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
 
         $segmentAllocatedItem->delete();
 
-        return $this->sendResponse([], 'Segment Allocated Item deleted successfully');
+        return $this->sendResponse([], trans('custom.segment_allocated_item_deleted_successfully'));
     }
 
     public function allocateSegmentWiseItem(Request $request)
@@ -330,7 +330,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
             return $this->sendError($segmentAllocatedItem['message']);
         }
         
-        return $this->sendResponse([], 'Segment Allocated Item updated successfully');
+        return $this->sendResponse([], trans('custom.segment_allocated_item_updated_successfully'));
     }
 
     public function getSegmentAllocatedItems(Request $request)
@@ -344,7 +344,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
                                              ->get();
         
         
-        return $this->sendResponse($allocatedItems, 'Segment Allocated Item updated successfully');
+        return $this->sendResponse($allocatedItems, trans('custom.segment_allocated_item_updated_successfully'));
     } 
 
     public function getSegmentAllocatedFormData(Request $request)
@@ -376,6 +376,6 @@ class SegmentAllocatedItemAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($segments, 'Segment form data retrieved successfully');
+        return $this->sendResponse($segments, trans('custom.segment_form_data_retrieved_successfully'));
     }
 }

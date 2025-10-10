@@ -38,6 +38,7 @@ class PurchaseOrderCategory extends Model
     const CREATED_AT = NULL;
     const UPDATED_AT = NULL;
     protected $primaryKey  = 'POCategoryID';
+    protected $appends = ['description'];
 
 
     public $fillable = [
@@ -63,5 +64,40 @@ class PurchaseOrderCategory extends Model
         
     ];
 
+    /**
+     * Relationship to PurchaseOrderCategoryLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(PurchaseOrderCategoryLanguage::class, 'POCategoryID', 'POCategoryID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated description
+     */
+    public function getDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        
+        return $this->attributes['description'] ?? '';
+    }
     
 }

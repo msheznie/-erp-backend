@@ -65,7 +65,7 @@ class LeaveApplicationTypeAPIController extends AppBaseController
         $this->leaveApplicationTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveApplicationTypes = $this->leaveApplicationTypeRepository->all();
 
-        return $this->sendResponse($leaveApplicationTypes->toArray(), 'Leave Application Types retrieved successfully');
+        return $this->sendResponse($leaveApplicationTypes->toArray(), trans('custom.leave_application_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class LeaveApplicationTypeAPIController extends AppBaseController
 
         $leaveApplicationType = $this->leaveApplicationTypeRepository->create($input);
 
-        return $this->sendResponse($leaveApplicationType->toArray(), 'Leave Application Type saved successfully');
+        return $this->sendResponse($leaveApplicationType->toArray(), trans('custom.leave_application_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class LeaveApplicationTypeAPIController extends AppBaseController
         $leaveApplicationType = $this->leaveApplicationTypeRepository->findWithoutFail($id);
 
         if (empty($leaveApplicationType)) {
-            return $this->sendError('Leave Application Type not found');
+            return $this->sendError(trans('custom.leave_application_type_not_found'));
         }
 
-        return $this->sendResponse($leaveApplicationType->toArray(), 'Leave Application Type retrieved successfully');
+        return $this->sendResponse($leaveApplicationType->toArray(), trans('custom.leave_application_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class LeaveApplicationTypeAPIController extends AppBaseController
         $leaveApplicationType = $this->leaveApplicationTypeRepository->findWithoutFail($id);
 
         if (empty($leaveApplicationType)) {
-            return $this->sendError('Leave Application Type not found');
+            return $this->sendError(trans('custom.leave_application_type_not_found'));
         }
 
         $leaveApplicationType = $this->leaveApplicationTypeRepository->update($input, $id);
 
-        return $this->sendResponse($leaveApplicationType->toArray(), 'LeaveApplicationType updated successfully');
+        return $this->sendResponse($leaveApplicationType->toArray(), trans('custom.leaveapplicationtype_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class LeaveApplicationTypeAPIController extends AppBaseController
         $leaveApplicationType = $this->leaveApplicationTypeRepository->findWithoutFail($id);
 
         if (empty($leaveApplicationType)) {
-            return $this->sendError('Leave Application Type not found');
+            return $this->sendError(trans('custom.leave_application_type_not_found'));
         }
 
         $leaveApplicationType->delete();
 
-        return $this->sendResponse($id, 'Leave Application Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.leave_application_type_deleted_successfully'));
     }
 }

@@ -64,7 +64,7 @@ class EvaluationCriteriaDetailsEditLogAPIController extends AppBaseController
         $this->evaluationCriteriaDetailsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationCriteriaDetailsEditLogs = $this->evaluationCriteriaDetailsEditLogRepository->all();
 
-        return $this->sendResponse($evaluationCriteriaDetailsEditLogs->toArray(), 'Evaluation Criteria Details Edit Logs retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaDetailsEditLogs->toArray(), trans('custom.evaluation_criteria_details_edit_logs_retrieved_su'));
     }
 
     /**
@@ -118,7 +118,7 @@ class EvaluationCriteriaDetailsEditLogAPIController extends AppBaseController
 
         $evaluationCriteriaDetailsEditLog = $this->evaluationCriteriaDetailsEditLogRepository->create($input);
 
-        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), 'Evaluation Criteria Details Edit Log saved successfully');
+        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), trans('custom.evaluation_criteria_details_edit_log_saved_success'));
     }
 
     /**
@@ -166,10 +166,10 @@ class EvaluationCriteriaDetailsEditLogAPIController extends AppBaseController
         $evaluationCriteriaDetailsEditLog = $this->evaluationCriteriaDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetailsEditLog)) {
-            return $this->sendError('Evaluation Criteria Details Edit Log not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_edit_log_not_found'));
         }
 
-        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), 'Evaluation Criteria Details Edit Log retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), trans('custom.evaluation_criteria_details_edit_log_retrieved_suc'));
     }
 
     /**
@@ -235,12 +235,12 @@ class EvaluationCriteriaDetailsEditLogAPIController extends AppBaseController
         $evaluationCriteriaDetailsEditLog = $this->evaluationCriteriaDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetailsEditLog)) {
-            return $this->sendError('Evaluation Criteria Details Edit Log not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_edit_log_not_found'));
         }
 
         $evaluationCriteriaDetailsEditLog = $this->evaluationCriteriaDetailsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), 'EvaluationCriteriaDetailsEditLog updated successfully');
+        return $this->sendResponse($evaluationCriteriaDetailsEditLog->toArray(), trans('custom.evaluationcriteriadetailseditlog_updated_successfu'));
     }
 
     /**
@@ -288,7 +288,7 @@ class EvaluationCriteriaDetailsEditLogAPIController extends AppBaseController
         $evaluationCriteriaDetailsEditLog = $this->evaluationCriteriaDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetailsEditLog)) {
-            return $this->sendError('Evaluation Criteria Details Edit Log not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_edit_log_not_found'));
         }
 
         $evaluationCriteriaDetailsEditLog->delete();

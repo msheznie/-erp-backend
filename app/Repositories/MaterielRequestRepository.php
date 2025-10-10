@@ -152,13 +152,13 @@ class MaterielRequestRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Request Code'] = $val->RequestCode;
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Location'] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
-                $data[$x]['Requested Date'] = \Helper::dateFormat($val->RequestedDate);
-                $data[$x]['Priority'] = $val->priority_by? $val->priority_by->priorityDescription : '';
-                $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.request_code')] = $val->RequestCode;
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
+                $data[$x][trans('custom.requested_date')] = \Helper::dateFormat($val->RequestedDate);
+                $data[$x][trans('custom.priority')] = $val->priority_by? $val->priority_by->priorityDescription : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

@@ -65,7 +65,7 @@ class ErpAttributesFieldTypeAPIController extends AppBaseController
         $this->erpAttributesFieldTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpAttributesFieldTypes = $this->erpAttributesFieldTypeRepository->all();
 
-        return $this->sendResponse($erpAttributesFieldTypes->toArray(), 'Erp Attributes Field Types retrieved successfully');
+        return $this->sendResponse($erpAttributesFieldTypes->toArray(), trans('custom.erp_attributes_field_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ErpAttributesFieldTypeAPIController extends AppBaseController
 
         $erpAttributesFieldType = $this->erpAttributesFieldTypeRepository->create($input);
 
-        return $this->sendResponse($erpAttributesFieldType->toArray(), 'Erp Attributes Field Type saved successfully');
+        return $this->sendResponse($erpAttributesFieldType->toArray(), trans('custom.erp_attributes_field_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ErpAttributesFieldTypeAPIController extends AppBaseController
         $erpAttributesFieldType = $this->erpAttributesFieldTypeRepository->findWithoutFail($id);
 
         if (empty($erpAttributesFieldType)) {
-            return $this->sendError('Erp Attributes Field Type not found');
+            return $this->sendError(trans('custom.erp_attributes_field_type_not_found'));
         }
 
-        return $this->sendResponse($erpAttributesFieldType->toArray(), 'Erp Attributes Field Type retrieved successfully');
+        return $this->sendResponse($erpAttributesFieldType->toArray(), trans('custom.erp_attributes_field_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ErpAttributesFieldTypeAPIController extends AppBaseController
         $erpAttributesFieldType = $this->erpAttributesFieldTypeRepository->findWithoutFail($id);
 
         if (empty($erpAttributesFieldType)) {
-            return $this->sendError('Erp Attributes Field Type not found');
+            return $this->sendError(trans('custom.erp_attributes_field_type_not_found'));
         }
 
         $erpAttributesFieldType = $this->erpAttributesFieldTypeRepository->update($input, $id);
 
-        return $this->sendResponse($erpAttributesFieldType->toArray(), 'ErpAttributesFieldType updated successfully');
+        return $this->sendResponse($erpAttributesFieldType->toArray(), trans('custom.erpattributesfieldtype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ErpAttributesFieldTypeAPIController extends AppBaseController
         $erpAttributesFieldType = $this->erpAttributesFieldTypeRepository->findWithoutFail($id);
 
         if (empty($erpAttributesFieldType)) {
-            return $this->sendError('Erp Attributes Field Type not found');
+            return $this->sendError(trans('custom.erp_attributes_field_type_not_found'));
         }
 
         $erpAttributesFieldType->delete();

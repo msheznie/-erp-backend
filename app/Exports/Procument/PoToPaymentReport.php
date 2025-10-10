@@ -46,25 +46,25 @@ class PoToPaymentReport
 
     public function getHeader() {
         return [
-            "Company ID",
-            "PO Number",
-            "Category",
-            "PO Approved Date",
-            "Narration",
-            "Supplier Code",
-            "Supplier Name",
-            "PO Amount",
-            "Logistic Amount",
-            "GRV Code",
-            "GRV Date",
-            "GRV Amount",
-            "Invoice Code",
-            "Invoice Date",
-            "Invoice Amount",
-            "Payment Code",
-            "Payment Date",
-            "Payment Posted Date",
-            "Paid Amount"
+            __('custom.company_id'),
+            __('custom.po_number'),
+            __('custom.category'),
+            __('custom.po_approved_date'),
+            __('custom.narration'),
+            __('custom.supplier_code'),
+            __('custom.supplier_name'),
+            __('custom.po_amount'),
+            __('custom.logistic_amount'),
+            __('custom.grv_code'),
+            __('custom.grv_date'),
+            __('custom.grv_amount'),
+            __('custom.invoice_code'),
+            __('custom.invoice_date'),
+            __('custom.invoice_amount'),
+            __('custom.payment_code'),
+            __('custom.payment_date'),
+            __('custom.payment_posted_date'),
+            __('custom.paid_amount')
         ];
     }
 

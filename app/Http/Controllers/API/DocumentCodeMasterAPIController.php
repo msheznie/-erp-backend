@@ -71,7 +71,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $this->documentCodeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodeMasters = $this->documentCodeMasterRepository->all();
 
-        return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Masters retrieved successfully');
+        return $this->sendResponse($documentCodeMasters->toArray(), trans('custom.document_code_masters_retrieved_successfully'));
     }
 
     /**
@@ -125,7 +125,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
 
         $documentCodeMaster = $this->documentCodeMasterRepository->create($input);
 
-        return $this->sendResponse($documentCodeMaster->toArray(), 'Document Code Master saved successfully');
+        return $this->sendResponse($documentCodeMaster->toArray(), trans('custom.document_code_master_saved_successfully'));
     }
 
     /**
@@ -173,10 +173,10 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMaster = $this->documentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($documentCodeMaster)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
 
-        return $this->sendResponse($documentCodeMaster->toArray(), 'Document Code Master retrieved successfully');
+        return $this->sendResponse($documentCodeMaster->toArray(), trans('custom.document_code_master_retrieved_successfully'));
     }
 
     /**
@@ -242,12 +242,12 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMaster = $this->documentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($documentCodeMaster)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
 
         $documentCodeMaster = $this->documentCodeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeMaster->toArray(), 'DocumentCodeMaster updated successfully');
+        return $this->sendResponse($documentCodeMaster->toArray(), trans('custom.documentcodemaster_updated_successfully'));
     }
 
     /**
@@ -295,7 +295,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMaster = $this->documentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($documentCodeMaster)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
 
         $documentCodeMaster->delete();
@@ -350,7 +350,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Masters retrieved successfully');
+        return $this->sendResponse($documentCodeMasters->toArray(), trans('custom.document_code_masters_retrieved_successfully'));
 
     }
 
@@ -374,7 +374,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
             $documentCodeMasters->document_code_transactions->update($data);
         }
 
-        return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Masters retrieved successfully');
+        return $this->sendResponse($documentCodeMasters->toArray(), trans('custom.document_code_masters_retrieved_successfully'));
 
     }
 
@@ -395,7 +395,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
             $documentCodeMasters->document_code_transactions->update(['isGettingEdited' => 0]);
         }
 
-        return $this->sendResponse($documentCodeMasters->toArray(), 'Document Code Transaction updated successfully');
+        return $this->sendResponse($documentCodeMasters->toArray(), trans('custom.document_code_transaction_updated_successfully'));
 
     }
 
@@ -410,14 +410,14 @@ class DocumentCodeMasterAPIController extends AppBaseController
                                                     ->first();
 
         if (!$isGettingEdited) {
-            return $this->sendError('Document Code Transaction not found', 404);
+            return $this->sendError(trans('custom.document_code_transaction_not_found'), 404);
         }
 
         if ($isGettingEdited && $isGettingEdited->isGettingEdited == 1) {
             return $this->sendError('Document code configuration in progress', 500);
         }
 
-        return $this->sendResponse($isGettingEdited->toArray(), 'Document Code Transaction isGettingEdited retrieved successfully');
+        return $this->sendResponse($isGettingEdited->toArray(), trans('custom.document_code_transaction_isgettingedited_retrieve'));
 
     }
 
@@ -435,7 +435,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
         $documentCodeMaster = $this->documentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($documentCodeMaster)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
 
         if($input['formatCount'] < $documentCodeMaster->formatCount){
@@ -499,7 +499,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
 
         $documentCodeMaster = $this->documentCodeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeMaster->toArray(), 'DocumentCodeMaster updated successfully');
+        return $this->sendResponse($documentCodeMaster->toArray(), trans('custom.documentcodemaster_updated_successfully'));
     }
 
     public function updateDocumentCode(Request $request)
@@ -679,10 +679,10 @@ class DocumentCodeMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($documentCodeMaster, 'Document code configured successfully');
+            return $this->sendResponse($documentCodeMaster, trans('custom.document_code_configured_successfully'));
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error occurred in document code configuration',500);
+            return $this->sendError(trans('custom.error_occurred_in_document_code_configuration'),500);
         }
 
     }

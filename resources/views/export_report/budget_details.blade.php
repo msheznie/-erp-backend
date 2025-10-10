@@ -11,27 +11,27 @@
 
 
         @endphp
-        <td>Finance Year : {{ $bigginingDate }} - {{ $endingDate }}</td>
+        <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Year : {{ $entity['Year'] }}</td>
+        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Currency : {{ $currency['reportingcurrency']['CurrencyCode'] }}</td>
+        <td>{{ trans('custom.currency') }} : {{ $currency['reportingcurrency']['CurrencyCode'] }}</td>
     </tr>
     <tr>
 
-        <td>Segment : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Template : {{ $entity['template_master']['description'] }}</td>
+        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>Send Notification at {{ $entity['sentNotificationAt'] }}%</td>
+        <td>{{ trans('custom.send_notification_at') }} {{ $entity['sentNotificationAt'] }}%</td>
     </tr>
     <tr></tr>
     <tr></tr>
@@ -41,12 +41,12 @@
 
 
     <tr>
-        <th>#</th>
-        <th>Category</th>
+        <th>{{ trans('custom.number') }}</th>
+        <th>{{ trans('custom.category') }}</th>
         @foreach ($months as $month)
             <th>{{$month['monthName']}} - {{$month['year']}}</th>
         @endforeach
-        <th>Total	</th>
+        <th>{{ trans('custom.total') }}	</th>
 
     </tr>
     </thead>

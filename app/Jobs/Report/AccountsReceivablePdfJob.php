@@ -24,13 +24,13 @@ class AccountsReceivablePdfJob implements ShouldQueue
     public $dispatch_db;
     public $requestData;
     public $userIds;
-
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $userId)
+    public function __construct($dispatch_db, $request, $userId, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -40,6 +40,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
         $this->userIds = $userId;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -58,14 +59,15 @@ class AccountsReceivablePdfJob implements ShouldQueue
 
         $currentDate = strtotime(date("Y-m-d H:i:s"));
         $root = "account-recivable-pdf/".$currentDate;
-
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $output = $this->getCustomerAgingForPDF($request);
         $outputChunkData = collect($output['data'])->chunk(100);
         $aging = $output['aging'];
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
-            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root,$aging)->onQueue('single');
+            GenerateARCAPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root,$aging,$languageCode)->onQueue('single');
             $reportCount++;
         }
     }

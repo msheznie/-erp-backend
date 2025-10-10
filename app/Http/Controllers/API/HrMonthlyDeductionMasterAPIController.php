@@ -65,7 +65,7 @@ class HrMonthlyDeductionMasterAPIController extends AppBaseController
         $this->hrMonthlyDeductionMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrMonthlyDeductionMasters = $this->hrMonthlyDeductionMasterRepository->all();
 
-        return $this->sendResponse($hrMonthlyDeductionMasters->toArray(), 'Hr Monthly Deduction Masters retrieved successfully');
+        return $this->sendResponse($hrMonthlyDeductionMasters->toArray(), trans('custom.hr_monthly_deduction_masters_retrieved_successfull'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrMonthlyDeductionMasterAPIController extends AppBaseController
 
         $hrMonthlyDeductionMaster = $this->hrMonthlyDeductionMasterRepository->create($input);
 
-        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), 'Hr Monthly Deduction Master saved successfully');
+        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), trans('custom.hr_monthly_deduction_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrMonthlyDeductionMasterAPIController extends AppBaseController
         $hrMonthlyDeductionMaster = $this->hrMonthlyDeductionMasterRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionMaster)) {
-            return $this->sendError('Hr Monthly Deduction Master not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_master_not_found'));
         }
 
-        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), 'Hr Monthly Deduction Master retrieved successfully');
+        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), trans('custom.hr_monthly_deduction_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrMonthlyDeductionMasterAPIController extends AppBaseController
         $hrMonthlyDeductionMaster = $this->hrMonthlyDeductionMasterRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionMaster)) {
-            return $this->sendError('Hr Monthly Deduction Master not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_master_not_found'));
         }
 
         $hrMonthlyDeductionMaster = $this->hrMonthlyDeductionMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), 'HrMonthlyDeductionMaster updated successfully');
+        return $this->sendResponse($hrMonthlyDeductionMaster->toArray(), trans('custom.hrmonthlydeductionmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrMonthlyDeductionMasterAPIController extends AppBaseController
         $hrMonthlyDeductionMaster = $this->hrMonthlyDeductionMasterRepository->findWithoutFail($id);
 
         if (empty($hrMonthlyDeductionMaster)) {
-            return $this->sendError('Hr Monthly Deduction Master not found');
+            return $this->sendError(trans('custom.hr_monthly_deduction_master_not_found'));
         }
 
         $hrMonthlyDeductionMaster->delete();

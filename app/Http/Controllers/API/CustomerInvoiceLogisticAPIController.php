@@ -65,7 +65,7 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
         $this->customerInvoiceLogisticRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceLogistics = $this->customerInvoiceLogisticRepository->all();
 
-        return $this->sendResponse($customerInvoiceLogistics->toArray(), 'Customer Invoice Logistics retrieved successfully');
+        return $this->sendResponse($customerInvoiceLogistics->toArray(), trans('custom.customer_invoice_logistics_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
 
         $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceLogistic->toArray(), 'Customer Invoice Logistic saved successfully');
+        return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customer_invoice_logistic_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
         $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceLogistic)) {
-            return $this->sendError('Customer Invoice Logistic not found');
+            return $this->sendError(trans('custom.customer_invoice_logistic_not_found'));
         }
 
-        return $this->sendResponse($customerInvoiceLogistic->toArray(), 'Customer Invoice Logistic retrieved successfully');
+        return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customer_invoice_logistic_retrieved_successfully'));
     }
 
     /**
@@ -222,18 +222,18 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
             $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->findWithoutFail($invoiceLogistic['id']);
 
             if (empty($customerInvoiceLogistic)) {
-                return $this->sendError('Customer Invoice Logistic not found');
+                return $this->sendError(trans('custom.customer_invoice_logistic_not_found'));
             }
             $input = $this->convertArrayToSelectedValue($input, array('port_of_discharge', 'port_of_loading'));
 
             $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->update($input, $invoiceLogistic['id']);
 
-            return $this->sendResponse($customerInvoiceLogistic->toArray(), 'CustomerInvoiceLogistic updated successfully');
+            return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customerinvoicelogistic_updated_successfully'));
             
         } else {
             $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->create($input);
 
-            return $this->sendResponse($customerInvoiceLogistic->toArray(), 'Customer Invoice Logistic saved successfully');        
+            return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customer_invoice_logistic_saved_successfully'));        
         }
 
 
@@ -251,17 +251,17 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
                 $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->findWithoutFail($invoiceLogistic['id']);
 
                 if (empty($customerInvoiceLogistic)) {
-                    return $this->sendError('Customer Invoice Logistic not found');
+                    return $this->sendError(trans('custom.customer_invoice_logistic_not_found'));
                 }
 
                 $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->update($input, $invoiceLogistic['id']);
 
-                return $this->sendResponse($customerInvoiceLogistic->toArray(), 'CustomerInvoiceLogistic updated successfully');
+                return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customerinvoicelogistic_updated_successfully'));
                 
             } else {
                 $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->create($input);
 
-                return $this->sendResponse($customerInvoiceLogistic->toArray(), 'Customer Invoice Logistic saved successfully');        
+                return $this->sendResponse($customerInvoiceLogistic->toArray(), trans('custom.customer_invoice_logistic_saved_successfully'));        
             }
     }
 
@@ -309,7 +309,7 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
         $customerInvoiceLogistic = $this->customerInvoiceLogisticRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceLogistic)) {
-            return $this->sendError('Customer Invoice Logistic not found');
+            return $this->sendError(trans('custom.customer_invoice_logistic_not_found'));
         }
 
         $customerInvoiceLogistic->delete();
@@ -324,7 +324,7 @@ class CustomerInvoiceLogisticAPIController extends AppBaseController
         $invoiceLogistic = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
             ->first();
 
-        return $this->sendResponse($invoiceLogistic, 'Invoice Logistic details retrieved successfully');
+        return $this->sendResponse($invoiceLogistic, trans('custom.invoice_logistic_details_retrieved_successfully'));
 
     }
 }

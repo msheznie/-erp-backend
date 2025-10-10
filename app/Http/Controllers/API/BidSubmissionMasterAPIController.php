@@ -90,7 +90,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $this->bidSubmissionMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidSubmissionMasters = $this->bidSubmissionMasterRepository->all();
 
-        return $this->sendResponse($bidSubmissionMasters->toArray(), 'Bid Submission Masters retrieved successfully');
+        return $this->sendResponse($bidSubmissionMasters->toArray(), trans('custom.bid_submission_masters_retrieved_successfully'));
     }
 
     /**
@@ -137,7 +137,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->create($input);
 
-        return $this->sendResponse($bidSubmissionMaster->toArray(), 'Bid Submission Master saved successfully');
+        return $this->sendResponse($bidSubmissionMaster->toArray(), trans('custom.bid_submission_master_saved_successfully'));
     }
 
     /**
@@ -184,10 +184,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->with(['SupplierRegistrationLink','tender'])->findWithoutFail($id);
 
         if (empty($bidSubmissionMaster)) {
-            return $this->sendError('Bid Submission Master not found');
+            return $this->sendError(trans('custom.bid_submission_master_not_found'));
         }
 
-        return $this->sendResponse($bidSubmissionMaster->toArray(), 'Bid Submission Master retrieved successfully');
+        return $this->sendResponse($bidSubmissionMaster->toArray(), trans('custom.bid_submission_master_retrieved_successfully'));
     }
 
     /**
@@ -245,7 +245,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
 
         if (empty($bidSubmissionMaster)) {
-            return $this->sendError('Bid Submission Master not found');
+            return $this->sendError(trans('custom.bid_submission_master_not_found'));
         }
 
         if(isset($input['meth']))
@@ -353,7 +353,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($bidSubmissionMaster->toArray(), 'BidSubmissionMaster updated successfully');
+        return $this->sendResponse($bidSubmissionMaster->toArray(), trans('custom.bidsubmissionmaster_updated_successfully'));
     }
 
     /**
@@ -400,7 +400,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
 
         if (empty($bidSubmissionMaster)) {
-            return $this->sendError('Bid Submission Master not found');
+            return $this->sendError(trans('custom.bid_submission_master_not_found'));
         }
 
         $bidSubmissionMaster->delete();
@@ -721,7 +721,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $is_verified = false;
         }
 
-        return $this->sendResponse($is_verified, 'Data retrived successfully');
+        return $this->sendResponse($is_verified, trans('custom.data_retrived_successfully'));
     }
 
     public function getVerifieddBids(Request $request)
@@ -779,7 +779,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         }
         $result =  array_values($query);
-        return $this->sendResponse($result, 'Data retrived successfully');
+        return $this->sendResponse($result, trans('custom.data_retrived_successfully'));
     }
 
 
@@ -1152,7 +1152,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('is_disabled', 0)
             ->get()
             ->toArray();
-        return $this->sendResponse(['supplierList'=> $queryResultArray, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], 'Data retrieved successfully');
+        return $this->sendResponse(['supplierList'=> $queryResultArray, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], trans('custom.data_retrieved_successfully'));
     }
 
     public function generateSupplierItemReportTableView(Request $request)
@@ -1239,14 +1239,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
             'item_list' => $data,
             'totalItemsCount' => $itemsArrayCount];
 
-        return $this->sendResponse($result, 'Data retrieved successfully');
+        return $this->sendResponse($result, trans('custom.data_retrieved_successfully'));
 
     }
 
     public function SupplierSheduleWiseReport(Request $request) {
 
 
-        return $this->sendResponse($this->getScheduleWiseData($request), 'Data retrieved successfully');
+        return $this->sendResponse($this->getScheduleWiseData($request), trans('custom.data_retrieved_successfully'));
 
 
     }

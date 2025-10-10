@@ -65,7 +65,7 @@ class POSTransErrorLogAPIController extends AppBaseController
         $this->pOSTransErrorLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSTransErrorLogs = $this->pOSTransErrorLogRepository->all();
 
-        return $this->sendResponse($pOSTransErrorLogs->toArray(), 'P O S Trans Error Logs retrieved successfully');
+        return $this->sendResponse($pOSTransErrorLogs->toArray(), trans('custom.p_o_s_trans_error_logs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSTransErrorLogAPIController extends AppBaseController
 
         $pOSTransErrorLog = $this->pOSTransErrorLogRepository->create($input);
 
-        return $this->sendResponse($pOSTransErrorLog->toArray(), 'P O S Trans Error Log saved successfully');
+        return $this->sendResponse($pOSTransErrorLog->toArray(), trans('custom.p_o_s_trans_error_log_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSTransErrorLogAPIController extends AppBaseController
         $pOSTransErrorLog = $this->pOSTransErrorLogRepository->findWithoutFail($id);
 
         if (empty($pOSTransErrorLog)) {
-            return $this->sendError('P O S Trans Error Log not found');
+            return $this->sendError(trans('custom.p_o_s_trans_error_log_not_found'));
         }
 
-        return $this->sendResponse($pOSTransErrorLog->toArray(), 'P O S Trans Error Log retrieved successfully');
+        return $this->sendResponse($pOSTransErrorLog->toArray(), trans('custom.p_o_s_trans_error_log_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSTransErrorLogAPIController extends AppBaseController
         $pOSTransErrorLog = $this->pOSTransErrorLogRepository->findWithoutFail($id);
 
         if (empty($pOSTransErrorLog)) {
-            return $this->sendError('P O S Trans Error Log not found');
+            return $this->sendError(trans('custom.p_o_s_trans_error_log_not_found'));
         }
 
         $pOSTransErrorLog = $this->pOSTransErrorLogRepository->update($input, $id);
 
-        return $this->sendResponse($pOSTransErrorLog->toArray(), 'POSTransErrorLog updated successfully');
+        return $this->sendResponse($pOSTransErrorLog->toArray(), trans('custom.postranserrorlog_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSTransErrorLogAPIController extends AppBaseController
         $pOSTransErrorLog = $this->pOSTransErrorLogRepository->findWithoutFail($id);
 
         if (empty($pOSTransErrorLog)) {
-            return $this->sendError('P O S Trans Error Log not found');
+            return $this->sendError(trans('custom.p_o_s_trans_error_log_not_found'));
         }
 
         $pOSTransErrorLog->delete();

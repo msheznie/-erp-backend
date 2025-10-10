@@ -59,7 +59,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
                                                 ->paginate(20);
 
-        return $this->sendResponse($navigationUserGroupSetups->toArray(), 'Navigation User Group Setups retrieved successfully');
+        return $this->sendResponse($navigationUserGroupSetups->toArray(), trans('custom.navigation_user_group_setups_retrieved_successfull'));
     }
 
 
@@ -104,7 +104,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
             }  
              else
              {
-                return $this->sendResponse([],'not found any menu');
+                return $this->sendResponse([],trans('custom.not_found_any_menu'));
              }                          
            
         }
@@ -144,10 +144,10 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                                                 ->select('navigationMenuID','pageTitle','url')
                                                 ->get();
 
-            return $this->sendResponse($menus,'successfully retrieved menus');
+            return $this->sendResponse($menus,trans('custom.successfully_retrieved_menus'));
 
         }else{
-            return $this->sendResponse([],'not found any menu');
+            return $this->sendResponse([],trans('custom.not_found_any_menu'));
         }
     }
 
@@ -166,7 +166,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
 
         $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->create($input);
 
-        return $this->sendResponse($navigationUserGroupSetups->toArray(), 'Navigation User Group Setup saved successfully');
+        return $this->sendResponse($navigationUserGroupSetups->toArray(), trans('custom.navigation_user_group_setup_saved_successfully'));
     }
 
     /**
@@ -183,10 +183,10 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $navigationUserGroupSetup = $this->navigationUserGroupSetupRepository->findWithoutFail($id);
 
         if (empty($navigationUserGroupSetup)) {
-            return $this->sendError('Navigation User Group Setup not found');
+            return $this->sendError(trans('custom.navigation_user_group_setup_not_found'));
         }
 
-        return $this->sendResponse($navigationUserGroupSetup->toArray(), 'Navigation User Group Setup retrieved successfully');
+        return $this->sendResponse($navigationUserGroupSetup->toArray(), trans('custom.navigation_user_group_setup_retrieved_successfully'));
     }
 
     /**
@@ -206,12 +206,12 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $navigationUserGroupSetup = $this->navigationUserGroupSetupRepository->findWithoutFail($id);
 
         if (empty($navigationUserGroupSetup)) {
-            return $this->sendError('Navigation User Group Setup not found');
+            return $this->sendError(trans('custom.navigation_user_group_setup_not_found'));
         }
 
         $navigationUserGroupSetup = $this->navigationUserGroupSetupRepository->update($input, $id);
 
-        return $this->sendResponse($navigationUserGroupSetup->toArray(), 'NavigationUserGroupSetup updated successfully');
+        return $this->sendResponse($navigationUserGroupSetup->toArray(), trans('custom.navigationusergroupsetup_updated_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $navigationUserGroupSetup = $this->navigationUserGroupSetupRepository->findWithoutFail($id);
 
         if (empty($navigationUserGroupSetup)) {
-            return $this->sendError('Navigation User Group Setup not found');
+            return $this->sendError(trans('custom.navigation_user_group_setup_not_found'));
         }
 
         $navigationUserGroupSetup->delete();
 
-        return $this->sendResponse($id, 'Navigation User Group Setup deleted successfully');
+        return $this->sendResponse($id, trans('custom.navigation_user_group_setup_deleted_successfully'));
     }
 
 }
