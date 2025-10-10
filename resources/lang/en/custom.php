@@ -3884,6 +3884,7 @@ return
     'periodmaster_updated_successfully' => 'PeriodMaster updated successfully',
     'phone' => 'Phone',
     'please_select_a_active_gl_code' => 'Please select a active GL Code',
+    'please_select_a_gl_code' => 'Please select a GL code',
     'please_select_an_active_disposal_type' => 'Please select an active Disposal Type',
     'please_select_an_item_to_print' => 'Please select an item to print',
     'po_addon_saved_successfully' => 'Po Addon saved successfully',

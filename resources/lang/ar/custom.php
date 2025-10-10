@@ -3835,6 +3835,7 @@ return
     'periodmaster_updated_successfully' => 'تم تحديث السجل الرئيسي للفترة بنجاح',
     'phone' => 'الهاتف',
     'please_select_a_active_gl_code' => 'يرجى تحديد رمز حساب أستاذ عام نشط',
+    'please_select_a_gl_code' => 'يرجى تحديد رمز حساب أستاذ عام',
     'please_select_an_active_disposal_type' => 'يرجى تحديد نوع تخلص نشط',
     'please_select_an_item_to_print' => 'يرجى تحديد عنصر للطباعة',
     'po_addon_saved_successfully' => 'تم حفظ إضافة أمر الشراء بنجاح',
