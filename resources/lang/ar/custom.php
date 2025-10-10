@@ -9168,5 +9168,6 @@ return
     'wrong_date_format_for_transaction_date_-_correct_format_dd/mm/yyyy' => 'تنسيق التاريخ خاطئ لتاريخ المعاملة - التنسيق الصحيح DD/MM/YYYY',
     'some_detail_columns_are_missing' => 'بعض أعمدة التفاصيل مفقودة',
     'statement_upload_failed._please_try_re-uploading' => 'فشل تحميل البيان. يرجى المحاولة مرة أخرى.',
-    'transaction_date_is_not_in_date_format' => 'تاريخ المعاملة غير في تنسيق التاريخ'
+    'transaction_date_is_not_in_date_format' => 'تاريخ المعاملة غير في تنسيق التاريخ',
+    'po_employee_performance' => 'أداء الموظفين لأوامر الشراء'
   ];

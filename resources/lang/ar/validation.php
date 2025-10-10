@@ -371,5 +371,8 @@ return [
         'wareHouseSystemCode' => 'المستودع',
         'deliveryOrderDate' => 'تاريخ المستند',
         'CurrencyCode' => 'رمز العملة',
+        'categories' => 'الفئات',
+        'subCategories' => 'الفئات الفرعية',
+        'years' => 'السنوات'
     ],
 ];
