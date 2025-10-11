@@ -1457,7 +1457,7 @@ class GRVMasterAPIController extends AppBaseController
                 $query->with('employee')
                     ->where('documentSystemID', 3);
             }, 'details'=> function ($query) {
-                $query->with('po_master');
+                $query->with(['po_master', 'unit']);
             }, 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
             }, 'location_by', 'audit_trial.modified_by'])->findWithoutFail($id);
@@ -1688,7 +1688,7 @@ class GRVMasterAPIController extends AppBaseController
                 $query->with('employee')
                     ->where('documentSystemID', 3);
             }, 'details'=> function ($query) {
-                $query->with('po_master');
+                $query->with(['po_master', 'unit']);
             }, 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
             }])->findWithoutFail($id);

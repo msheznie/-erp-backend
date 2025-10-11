@@ -1175,9 +1175,9 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError($validateAllocatedEDD['message'], 500);
             }
 
-            if ($checkQuantity > 0) {
-                return $this->sendError(trans('custom.item_should_have_minimum_qty'), 500);
-            }
+//            if ($checkQuantity > 0) {
+//                return $this->sendError('Every item should have at least one minimum qty requested', 500);
+//            }
 
             //check unit cost should be greater than zero
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
