@@ -4589,7 +4589,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 $templateName = "export_report.generalLedger.taxdetails";
-                $fileName = 'tax_details';
+                $fileName = trans('custom.tax_details');
                 $path = 'general-ledger/report/tax_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [

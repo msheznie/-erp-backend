@@ -7176,9 +7176,6 @@ return
     'segments' => 'القطاعات',
 
     // VAT Report Translations
-    'output_vat_summary' => 'ملخص ضريبة القيمة المضافة الناتجة',
-    'input_vat_summary' => 'ملخص ضريبة القيمة المضافة المدخلة',
-    'vat_summary_report' => 'تقرير ملخص ضريبة القيمة المضافة',
     'details_of_outward_supply' => 'تفاصيل العرض الخارجي',
     'details_of_inward_supply' => 'تفاصيل العرض الداخلي',
     'details_of_capital_asset_purchase' => 'تفاصيل شراء الأصول الرأسمالية',
@@ -9178,4 +9175,22 @@ return
     'segment_already_assigned_to_department' => 'الشريحة :segmentCode مُعيّنة بالفعل لهذا القسم',
     'segments_could_not_be_assigned' => 'لا يمكن تعيين بعض الشرائح: :errorMessages',
     'segments_assigned_successfully' => 'تم تعيين :count شريحة للقسم بنجاح',
-    ];
+    'please_select_a_gl_code' => 'يرجى تحديد رمز حساب أستاذ عام',
+    'po_code' => 'رمز أمر الشراء',
+    'department' => 'القسم',
+    'po_expected_delivery_date' => 'تاريخ التسليم المتوقع لأمر الشراء',
+    'po_approved' => 'تم الموافقة على أمر الشراء',
+    'gl_code' => 'رمز الحساب',
+    'po_total_cost' => 'تكلفة أمر الشراء',
+    'grv_total_cost' => 'تكلفة استلام البضائع',
+    'balance' => 'الرصيد',
+    'tax_details' => 'القيمة المضافة',
+    'common' => 'شائع',
+    'party_code' => 'كود المورد',
+    'output_vat_summary' => 'ملخص ضريبة المخرجات',
+    'input_vat_summary'  => 'ملخص ضريبة المدخلات',
+    'vat_summary_report' => 'تقرير ملخص الضريبة',
+    'please_configure_po_accrual_account_for_this_company' => 'يرجى تكوين حساب القيمة المضافة للشركة',
+    'gl_code_scenario_not_found_for_po_accrual' => 'لم يتم العثور على سيناريو رمز الحساب للقيمة المضافة',
+    'no_items_selected_to_add' => 'لم يتم اختيار أي عناصر للإضافة',
+  ];

@@ -873,7 +873,7 @@ GROUP BY
         }
 
         if (empty($input['detailTable'])) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $jvMasterData = JvMaster::find($jvMasterAutoId);
@@ -890,10 +890,10 @@ GROUP BY
 
             if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
             {
-                return $this->sendError("Please configure PO accrual account for this company.");
+                return $this->sendError(trans('custom.please_configure_po_accrual_account_for_this_company'));
             }
         }else {
-            return $this->sendError("Gl Code scenario not found for PO Accrual");
+            return $this->sendError(trans('custom.gl_code_scenario_not_found_for_po_accrual'));
         }
 
         foreach ($input['detailTable'] as $new) {
@@ -1090,9 +1090,9 @@ GROUP BY
                     $data[$x][trans('custom.project')] = '';
                 }       
             }
-            $data[$x][trans('custom.e_department')] = $item->segment?$item->segment->ServiceLineDes:'-';
+            $data[$x][trans('custom.department')] = $item->segment?$item->segment->ServiceLineDes:'-';
             $data[$x][trans('custom.contract')] = $item->clientContractID;
-            $data[$x][trans('custom.e_comment')] = $item->comments;
+            $data[$x][trans('custom.comment')] = $item->comments;
             $data[$x][trans('custom.currency')] = $item->currency_by?$item->currency_by->CurrencyCode:'-';
             $data[$x][trans('custom.debit')] = sprintf("%.".$decimal."f", $item->debitAmount);
             $data[$x][trans('custom.credit')] = sprintf("%.".$decimal."f", $item->creditAmount);
@@ -1107,7 +1107,7 @@ GROUP BY
 
 
         $path = 'general-ledger/journal-voucher/excel/';
-        $basePath = CreateExcel::process($data,$type,'jv_details',$path, $detail_array);
+        $basePath = CreateExcel::process($data,$type, trans('custom.jv_details'),$path, $detail_array);
         
         if($basePath == ''){     
             return $this->sendError(trans('custom.failed_export'));

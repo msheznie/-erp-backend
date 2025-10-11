@@ -294,7 +294,7 @@ class CreateExcel
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->string($type);
         $disk = 's3';
-        $companyCode = isset($array['company_code'])?$array['company_code']:'common';
+        $companyCode = isset($array['company_code'])?$array['company_code']:trans('custom.common');
 
         $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
         $path = $companyCode.'/'.$path_dir.$full_name;
@@ -556,6 +556,18 @@ class CreateExcel
 
     public static function loadView($data,$type,$fileName,$path_dir,$templateName, $excelColumnFormat = [])
     {
+        // Sanitize data to prevent Excel formula errors by removing '=' characters
+        if (isset($data['reportData']) && is_array($data['reportData'])) {
+            foreach ($data['reportData'] as &$record) {
+                if (is_object($record)) {
+                    foreach ($record as $key => &$value) {
+                        if (is_string($value)) {
+                            $value = str_replace(['='], '', $value);
+                        }
+                    }
+                }
+            }
+        }
 
         $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
                        $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
@@ -572,7 +584,7 @@ class CreateExcel
 
 
        $disk = 's3';
-       $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
+       $companyCode = isset($data['companyCode'])?$data['companyCode']:trans('custom.common');
 
        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
        $path = $companyCode.'/'.$path_dir.$full_name;
