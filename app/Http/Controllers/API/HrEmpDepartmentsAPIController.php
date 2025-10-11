@@ -64,7 +64,7 @@ class HrEmpDepartmentsAPIController extends AppBaseController
         $this->hrEmpDepartmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->all();
 
-        return $this->sendResponse($hrEmpDepartments->toArray(), 'Hr Emp Departments retrieved successfully');
+        return $this->sendResponse($hrEmpDepartments->toArray(), trans('custom.hr_emp_departments_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class HrEmpDepartmentsAPIController extends AppBaseController
 
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->create($input);
 
-        return $this->sendResponse($hrEmpDepartments->toArray(), 'Hr Emp Departments saved successfully');
+        return $this->sendResponse($hrEmpDepartments->toArray(), trans('custom.hr_emp_departments_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class HrEmpDepartmentsAPIController extends AppBaseController
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->findWithoutFail($id);
 
         if (empty($hrEmpDepartments)) {
-            return $this->sendError('Hr Emp Departments not found');
+            return $this->sendError(trans('custom.hr_emp_departments_not_found'));
         }
 
-        return $this->sendResponse($hrEmpDepartments->toArray(), 'Hr Emp Departments retrieved successfully');
+        return $this->sendResponse($hrEmpDepartments->toArray(), trans('custom.hr_emp_departments_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class HrEmpDepartmentsAPIController extends AppBaseController
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->findWithoutFail($id);
 
         if (empty($hrEmpDepartments)) {
-            return $this->sendError('Hr Emp Departments not found');
+            return $this->sendError(trans('custom.hr_emp_departments_not_found'));
         }
 
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->update($input, $id);
 
-        return $this->sendResponse($hrEmpDepartments->toArray(), 'HrEmpDepartments updated successfully');
+        return $this->sendResponse($hrEmpDepartments->toArray(), trans('custom.hrempdepartments_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class HrEmpDepartmentsAPIController extends AppBaseController
         $hrEmpDepartments = $this->hrEmpDepartmentsRepository->findWithoutFail($id);
 
         if (empty($hrEmpDepartments)) {
-            return $this->sendError('Hr Emp Departments not found');
+            return $this->sendError(trans('custom.hr_emp_departments_not_found'));
         }
 
         $hrEmpDepartments->delete();

@@ -181,7 +181,7 @@ class GenerateGlPdfReport implements ShouldQueue
                 }
             }
 
-            $reportTitle = "Financial General Ledger Report PDF has been generated";
+            $reportTitle = "general_ledger_report_pdf_generated";
 
             $webPushData = [
                 'title' => $reportTitle,

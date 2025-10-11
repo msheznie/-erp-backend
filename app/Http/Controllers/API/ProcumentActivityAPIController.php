@@ -65,7 +65,7 @@ class ProcumentActivityAPIController extends AppBaseController
         $this->procumentActivityRepository->pushCriteria(new LimitOffsetCriteria($request));
         $procumentActivities = $this->procumentActivityRepository->all();
 
-        return $this->sendResponse($procumentActivities->toArray(), 'Procument Activities retrieved successfully');
+        return $this->sendResponse($procumentActivities->toArray(), trans('custom.procument_activities_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ProcumentActivityAPIController extends AppBaseController
 
         $procumentActivity = $this->procumentActivityRepository->create($input);
 
-        return $this->sendResponse($procumentActivity->toArray(), 'Procument Activity saved successfully');
+        return $this->sendResponse($procumentActivity->toArray(), trans('custom.procument_activity_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ProcumentActivityAPIController extends AppBaseController
         $procumentActivity = $this->procumentActivityRepository->findWithoutFail($id);
 
         if (empty($procumentActivity)) {
-            return $this->sendError('Procument Activity not found');
+            return $this->sendError(trans('custom.procument_activity_not_found'));
         }
 
-        return $this->sendResponse($procumentActivity->toArray(), 'Procument Activity retrieved successfully');
+        return $this->sendResponse($procumentActivity->toArray(), trans('custom.procument_activity_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ProcumentActivityAPIController extends AppBaseController
         $procumentActivity = $this->procumentActivityRepository->findWithoutFail($id);
 
         if (empty($procumentActivity)) {
-            return $this->sendError('Procument Activity not found');
+            return $this->sendError(trans('custom.procument_activity_not_found'));
         }
 
         $procumentActivity = $this->procumentActivityRepository->update($input, $id);
 
-        return $this->sendResponse($procumentActivity->toArray(), 'ProcumentActivity updated successfully');
+        return $this->sendResponse($procumentActivity->toArray(), trans('custom.procumentactivity_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ProcumentActivityAPIController extends AppBaseController
         $procumentActivity = $this->procumentActivityRepository->findWithoutFail($id);
 
         if (empty($procumentActivity)) {
-            return $this->sendError('Procument Activity not found');
+            return $this->sendError(trans('custom.procument_activity_not_found'));
         }
 
         $procumentActivity->delete();

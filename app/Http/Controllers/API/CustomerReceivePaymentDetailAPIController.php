@@ -94,7 +94,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $this->customerReceivePaymentDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerReceivePaymentDetails = $this->customerReceivePaymentDetailRepository->all();
 
-        return $this->sendResponse($customerReceivePaymentDetails->toArray(), 'Customer Receive Payment Details retrieved successfully');
+        return $this->sendResponse($customerReceivePaymentDetails->toArray(), trans('custom.customer_receive_payment_details_retrieved_success'));
     }
 
     /**
@@ -148,11 +148,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['id'])->first();
 
         if(empty($master)){
-            return $this->sendError('Receipt Voucher not found.');
+            return $this->sendError(trans('custom.receipt_voucher_not_found_1'));
         }
 
         if($master->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         $detail = CustomerReceivePaymentDetail::select('bookingInvCode')
@@ -162,7 +162,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         if (count($detail) > 0) {
             $names = array_pluck($detail->toArray(), 'bookingInvCode');
-            return $this->sendError('<b>Below listed invoices are already added to the current receipt.</b> <br>' . join(' <br> ', $names), 500);
+            return $this->sendError(trans('custom.bbelow_listed_invoices_are_already_added_to_the_cu') . join(' <br> ', $names), 500);
         } else {
 
             $error['settled'] = [];
@@ -244,7 +244,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->update(array('selectedToPaymentInv' => -1));
 
 
-        return $this->sendResponse($customerReceivePaymentDetails, 'Customer Receive Payment Detail added successfully');
+        return $this->sendResponse($customerReceivePaymentDetails, trans('custom.customer_receive_payment_detail_added_successfully'));
     }
 
     /**
@@ -291,10 +291,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->findWithoutFail($id);
 
         if (empty($customerReceivePaymentDetail)) {
-            return $this->sendError('Customer Receive Payment Detail not found');
+            return $this->sendError(trans('custom.customer_receive_payment_detail_not_found'));
         }
 
-        return $this->sendResponse($customerReceivePaymentDetail->toArray(), 'Customer Receive Payment Detail retrieved successfully');
+        return $this->sendResponse($customerReceivePaymentDetail->toArray(), trans('custom.customer_receive_payment_detail_retrieved_successf'));
     }
 
     /**
@@ -351,12 +351,12 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->findWithoutFail($id);
 
         if (empty($customerReceivePaymentDetail)) {
-            return $this->sendError('Customer Receive Payment Detail not found');
+            return $this->sendError(trans('custom.customer_receive_payment_detail_not_found'));
         }
 
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($input, $id);
 
-        return $this->sendResponse($customerReceivePaymentDetail->toArray(), 'CustomerReceivePaymentDetail updated successfully');
+        return $this->sendResponse($customerReceivePaymentDetail->toArray(), trans('custom.customerreceivepaymentdetail_updated_successfully'));
     }
 
     /**
@@ -403,22 +403,22 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->findWithoutFail($id);
 
         if (empty($customerReceivePaymentDetail)) {
-            return $this->sendError('Customer Receive Payment Detail not found');
+            return $this->sendError(trans('custom.customer_receive_payment_detail_not_found'));
         }
 
         if($customerReceivePaymentDetail->matchingDocID == 0 && $customerReceivePaymentDetail->master && $customerReceivePaymentDetail->master->confirmedYN){
-            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_delete_detail_this_document_already_con'), 500);
         }
 
         if($customerReceivePaymentDetail->matchingDocID != 0 && $customerReceivePaymentDetail->matching_master
             && $customerReceivePaymentDetail->matching_master->matchingConfirmedYN){
-            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_delete_detail_this_document_already_con'), 500);
         }
 
         AccountsReceivableLedger::where('arAutoID', $customerReceivePaymentDetail->arAutoID)->update(array('selectedToPaymentInv' => 0, 'fullyInvoiced' => 1));
         $customerReceivePaymentDetail->delete();
 
-        return $this->sendResponse($id, 'Customer Receive Payment Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.customer_receive_payment_detail_deleted_successful'));
     }
 
     public function saveReceiptVoucherUnAllocationsDetails(Request $request)
@@ -431,15 +431,15 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
 
         if(empty($output)){
-            return $this->sendError('Receipt Voucher not found.');
+            return $this->sendError(trans('custom.receipt_voucher_not_found_1'));
         }
 
         if($output->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         if (empty($input['receiveAmountTrans']) || $input['receiveAmountTrans'] == 0 || $input['receiveAmountTrans'] == '' || $input['receiveAmountTrans'] < 0) {
-            return $this->sendError('Amount cannot be 0 or null');
+            return $this->sendError(trans('custom.amount_cannot_be_0_or_null'));
         }
 
         $receiveAmountTrans = $input['receiveAmountTrans'];
@@ -469,7 +469,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $customerReceivePaymentDetails = $this->customerReceivePaymentDetailRepository->create($data);
 
-        return $this->sendResponse('', 'Unallocation amount added successfully');
+        return $this->sendResponse('', trans('custom.unallocation_amount_added_successfully'));
     }
 
     public function updateCustomerReciept(Request $request)
@@ -488,11 +488,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
 
         if(empty($detail)){
-            return $this->sendError('Receipt Voucher Detail not found.');
+            return $this->sendError(trans('custom.receipt_voucher_detail_not_found_2'));
         }
 
         if($detail->master && $detail->master->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         if ($detail->comments != $input['comments']) {
@@ -579,11 +579,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         
         if ($input['addedDocumentSystemID'] == 20) {
             if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon || $allocationDifferent > $epsilon) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
             if ($input["receiveAmountTrans"] < round($totReceiveAmountDetail,$decimalPlaces)) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500);
             }
         }
 
@@ -677,7 +677,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $arLedgerUpdate->save();
 
-        return $this->sendResponse('', 'Unallocation amount added successfully');
+        return $this->sendResponse('', trans('custom.unallocation_amount_added_successfully'));
     }
 
 
@@ -685,7 +685,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $data = CustomerReceivePaymentDetail::with(['ar_data'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
-        return $this->sendResponse($data, 'Details saved successfully');
+        return $this->sendResponse($data, trans('custom.details_saved_successfully'));
     }
 
     public function addReceiptVoucherMatchDetails(Request $request)
@@ -699,11 +699,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching document not found');
+            return $this->sendError(trans('custom.matching_document_not_found'));
         }
 
         if ($matchDocumentMasterData->matchingConfirmedYN) {
-            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'), 500);
         }
 
         $vatTotal = 0;
@@ -883,10 +883,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             
 
             DB::commit();
-            return $this->sendResponse('', 'Details saved successfully');
+            return $this->sendResponse('', trans('custom.details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
 
     }
@@ -911,16 +911,16 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->findWithoutFail($input['custRecivePayDetAutoID']);
 
         if (empty($receiptVoucherDetails)) {
-            return $this->sendError('Receipt Voucher Detail not found');
+            return $this->sendError(trans('custom.receipt_voucher_detail_not_found_1'));
         }
 
         $matchDocumentMasterData = MatchDocumentMaster::find($input['matchingDocID']);
         if (empty($matchDocumentMasterData)) {
-            return $this->sendError('Matching document not found');
+            return $this->sendError(trans('custom.matching_document_not_found'));
         }
 
         if ($matchDocumentMasterData->matchingConfirmedYN) {
-            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_update_detail_this_document_already_con'), 500);
         }
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
@@ -929,7 +929,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         }
 
         if (round($input['receiveAmountTrans'], $documentCurrencyDecimalPlace) > round($matchDocumentMasterData->matchBalanceAmount, $documentCurrencyDecimalPlace)) {
-            return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+            return $this->sendError(trans('custom.matching_amount_cannot_be_greater_than_balance_amo'), 500, ['type' => 'amountmismatch']);
         }
 
         // checking payment amount greater than balance amount
@@ -977,11 +977,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $epsilon = 0.00001;
 
             if ($compareValue > $epsilon) {
-                return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.matching_amount_cannot_be_greater_than_balance_amo'), 500, ['type' => 'amountmismatch']);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
             if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
-                return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.matching_amount_cannot_be_greater_than_balance_amo'), 500, ['type' => 'amountmismatch']);
             }
         }
         
@@ -1085,7 +1085,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $matchDocumentMasterData->matchRptAmount = \Helper::roundValue($detailAmountTotRpt);
         $matchDocumentMasterData->save();
 
-        return $this->sendResponse($receiptVoucherDetails->toArray(), 'Detail updated successfully');
+        return $this->sendResponse($receiptVoucherDetails->toArray(), trans('custom.detail_updated_successfully'));
     }
 
 

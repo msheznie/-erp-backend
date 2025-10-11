@@ -64,7 +64,7 @@ class SrmTenderMasterEditLogAPIController extends AppBaseController
         $this->srmTenderMasterEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srmTenderMasterEditLogs = $this->srmTenderMasterEditLogRepository->all();
 
-        return $this->sendResponse($srmTenderMasterEditLogs->toArray(), 'Srm Tender Master Edit Logs retrieved successfully');
+        return $this->sendResponse($srmTenderMasterEditLogs->toArray(), trans('custom.srm_tender_master_edit_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SrmTenderMasterEditLogAPIController extends AppBaseController
 
         $srmTenderMasterEditLog = $this->srmTenderMasterEditLogRepository->create($input);
 
-        return $this->sendResponse($srmTenderMasterEditLog->toArray(), 'Srm Tender Master Edit Log saved successfully');
+        return $this->sendResponse($srmTenderMasterEditLog->toArray(), trans('custom.srm_tender_master_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SrmTenderMasterEditLogAPIController extends AppBaseController
         $srmTenderMasterEditLog = $this->srmTenderMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderMasterEditLog)) {
-            return $this->sendError('Srm Tender Master Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_master_edit_log_not_found'));
         }
 
-        return $this->sendResponse($srmTenderMasterEditLog->toArray(), 'Srm Tender Master Edit Log retrieved successfully');
+        return $this->sendResponse($srmTenderMasterEditLog->toArray(), trans('custom.srm_tender_master_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SrmTenderMasterEditLogAPIController extends AppBaseController
         $srmTenderMasterEditLog = $this->srmTenderMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderMasterEditLog)) {
-            return $this->sendError('Srm Tender Master Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_master_edit_log_not_found'));
         }
 
         $srmTenderMasterEditLog = $this->srmTenderMasterEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($srmTenderMasterEditLog->toArray(), 'SrmTenderMasterEditLog updated successfully');
+        return $this->sendResponse($srmTenderMasterEditLog->toArray(), trans('custom.srmtendermastereditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SrmTenderMasterEditLogAPIController extends AppBaseController
         $srmTenderMasterEditLog = $this->srmTenderMasterEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderMasterEditLog)) {
-            return $this->sendError('Srm Tender Master Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_master_edit_log_not_found'));
         }
 
         $srmTenderMasterEditLog->delete();

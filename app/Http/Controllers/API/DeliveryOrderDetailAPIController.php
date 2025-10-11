@@ -87,7 +87,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $this->deliveryOrderDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $deliveryOrderDetails = $this->deliveryOrderDetailRepository->all();
 
-        return $this->sendResponse($deliveryOrderDetails->toArray(), 'Delivery Order Details retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetails->toArray(), trans('custom.delivery_order_details_retrieved_successfully_1'));
     }
 
     /**
@@ -134,12 +134,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
-            return $this->sendError('Item not found',500);
+            return $this->sendError(trans('custom.item_not_found'),500);
         }
 
         $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
         $category = $item->financeCategoryMaster;
 
@@ -152,12 +152,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if(($category != 2 )&& ($category != 4 ))
             {
                 if ($alreadyAdded) {
-                    return $this->sendError("Selected item is already added. Please check again", 500);
+                    return $this->sendError(trans('custom.selected_item_is_already_added_please_check_again'), 500);
                 }
             }
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
-            return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
+            return $this->sendError(trans('custom.different_finance_category_order'),500);
         }
 
         if($item->financeCategoryMaster==1){
@@ -179,7 +179,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 ->where('approvedYN', 0)
                 ->first();
             if (!empty($checkWhether)) {
-                return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.delivery_order_pending_approval', ['orderCode' => $checkWhether->deliveryOrderCode]), 500);
             }
 
 
@@ -208,7 +208,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.materiel_issue_pending_approval', ['issueCode' => $checkWhetherItemIssueMaster->itemIssueCode]), 500);
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -235,7 +235,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherStockTransfer)) {
-                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.stock_transfer_pending_approval', ['transferCode' => $checkWhetherStockTransfer->stockTransferCode]), 500);
             }
 
             $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
@@ -261,8 +261,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherInvoice)) {
-                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
             }
+
 
             /*Check in purchase return*/
             $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
@@ -284,7 +285,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkWhetherPR)) {
-                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.purchase_return_pending_approval', ['returnCode' => $checkWhetherPR->purchaseReturnCode]), 500);
             }
         }
 
@@ -314,23 +315,23 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
             $input['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
         } else {
-            return $this->sendError("Finance Item category sub assigned not found", 500);
+            return $this->sendError(trans('custom.finance_item_category_sub_assigned_not_found'), 500);
         }
 
         if((!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
-            return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.bs_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
-            return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.cost_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeCogsGLcodePL'] || !$input['financeCogsGLcodePLSystemID']){
-            return $this->sendError('COGS gl account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.cogs_gl_account_cannot_be_null_for_2') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }elseif (!$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']){
-            return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+            return $this->sendError(trans('custom.revenue_account_cannot_be_null_for') . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
         }
 
         /*if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']
             || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }*/
         $input['convertionMeasureVal'] = 1;
 
@@ -354,19 +355,19 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         if($item->financeCategoryMaster==1){
             if ($input['currentStockQty'] <= 0) {
-                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ($input['currentWareHouseStockQty'] <= 0) {
-                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.warehouse_stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ($input['wacValueLocal'] == 0 || $input['wacValueReporting'] == 0) {
-                return $this->sendError("Cost is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.cost_is_0_you_cannot_issue_1'), 500);
             }
 
             if ($input['wacValueLocal'] < 0 || $input['wacValueReporting'] < 0) {
-                return $this->sendError("Cost is negative. You cannot issue.", 500);
+                return $this->sendError(trans('custom.cost_is_negative_you_cannot_issue_1'), 500);
             }
         }
 
@@ -431,7 +432,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail saved successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.delivery_order_detail_saved_successfully'));
     }
 
     /**
@@ -478,10 +479,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail retrieved successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.delivery_order_detail_retrieved_successfully'));
     }
 
     /**
@@ -540,12 +541,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
 
         $deliveryOrderMaster = DeliveryOrder::find($deliveryOrderDetail->deliveryOrderID);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
 
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
@@ -562,22 +563,22 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if($deliveryOrderDetail->itemFinanceCategoryID == 1){
             if ($deliveryOrderDetail->currentStockQty <= 0) {
                 $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
-                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ($deliveryOrderDetail->currentWareHouseStockQty <= 0) {
                 $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
-                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+                return $this->sendError(trans('custom.warehouse_stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentStockQty) {
                 $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
-                return $this->sendError("Current stock Qty is: " . $deliveryOrderDetail->currentStockQty . " .You cannot issue more than the current stock qty.", 500);
+                return $this->sendError(trans('custom.current_stock_qty_insufficient', ['currentStockQty' => $deliveryOrderDetail->currentStockQty]), 500);
             }
 
             if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentWareHouseStockQty) {
                 $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
-                return $this->sendError("Current warehouse stock Qty is: " . $deliveryOrderDetail->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500);
+                return $this->sendError(trans('custom.current_warehouse_stock_qty_insufficient', ['currentWareHouseStockQty' => $deliveryOrderDetail->currentWareHouseStockQty]), 500);
             }
         }
         // discount calculation
@@ -676,7 +677,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
 
-        return $this->sendResponse($deliveryOrderDetail->toArray(), 'DeliveryOrderDetail updated successfully');
+        return $this->sendResponse($deliveryOrderDetail->toArray(), trans('custom.deliveryorderdetail_updated_successfully'));
     }
 
     /**
@@ -723,12 +724,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
         if (empty($deliveryOrderDetail)) {
-            return $this->sendError('Delivery Order Detail not found');
+            return $this->sendError(trans('custom.delivery_order_detail_not_found'));
         }
         $deliveryOrder = DeliveryOrder::find($deliveryOrderDetail->deliveryOrderID);
         if(!empty($deliveryOrder)){
             if($deliveryOrder->confirmedYN == 1){
-                return $this->sendError('Order was already confirmed. you cannot delete',500);
+                return $this->sendError(trans('custom.order_was_already_confirmed_you_cannot_delete'),500);
             }
 
             // $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
@@ -748,7 +749,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                                              ->first();
 
                 if ($validateSubProductSold) {
-                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                    return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
                 }
 
                 $subProduct = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
@@ -849,7 +850,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse([],'Delivery Order Detail deleted successfully');
+        return $this->sendResponse([],trans('custom.delivery_order_detail_deleted_successfully'));
     }
 
     private function updateAmountsByTransactionAmount($input,$deliveryOrder){
@@ -884,21 +885,21 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $inputDetails = $input['detailTable'];
         $inputDetails = collect($inputDetails)->where('isChecked',1)->toArray();
         $financeCategories = collect($inputDetails)->pluck('itemCategory')->toArray();
         if (count(array_unique($financeCategories)) > 1) {
-            return $this->sendError('Multiple finance category cannot be added. Different finance category found on selected details.',500);
+            return $this->sendError(trans('custom.multiple_finance_category_cannot_be_added_differen_1'),500);
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'DO quantity field is required.',
+                    'required' => trans('custom.do_quantity_field_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -971,7 +972,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $qoMaster = QuotationMaster::find($itemExist['quotationMasterID']);
 
                 if($deliveryOrder->serviceLineSystemID != $qoMaster->serviceLineSystemID){
-                    return $this->sendError("Segment is different from order");
+                    return $this->sendError(trans('custom.segment_is_different_from_order'));
                 }
             }
         }*/
@@ -996,27 +997,27 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                 if($row['itemCategory'] == 1){
                     if ($currentStockQty <= 0) {
-                        return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.stock_qty_is_0_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($currentWareHouseStockQty <= 0) {
-                        return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.warehouse_stock_qty_is_0_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($wacValueLocal == 0 || $wacValueReporting == 0) {
-                        return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.wac_cost_is_0_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($wacValueLocal < 0 || $wacValueReporting < 0) {
-                        return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                        return $this->sendError(trans('custom.wac_cost_is_negative_for_item', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($row['noQty'] > $currentStockQty) {
-                        return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
+                        return $this->sendError(trans('custom.insufficient_stock_qty_for', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     if ($row['noQty'] > $currentWareHouseStockQty) {
-                        return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
+                        return $this->sendError(trans('custom.insufficient_warehouse_qty_for', ['itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     /*pending approval checking*/
@@ -1039,7 +1040,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         ->first();
 
                     if (!empty($checkWhether)) {
-                        return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhether->deliveryOrderCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
 
@@ -1068,7 +1069,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     /* approved=0*/
 
                     if (!empty($checkWhetherItemIssueMaster)) {
-                        return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.materiel_issue_pending_approval_for_item', ['code' => $checkWhetherItemIssueMaster->itemIssueCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
@@ -1095,7 +1096,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     /* approved=0*/
 
                     if (!empty($checkWhetherStockTransfer)) {
-                        return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.stock_transfer_pending_approval_for_item', ['code' => $checkWhetherStockTransfer->stockTransferCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $row['companySystemID'])
@@ -1121,7 +1122,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     /* approved=0*/
 
                     if (!empty($checkWhetherInvoice)) {
-                        return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                        return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhetherInvoice->bookingInvCode, 'itemCode' => $row['itemSystemCode']]), 500);
                     }
 
                     /*Check in purchase return*/
@@ -1144,7 +1145,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         ->first();
 
                     if (!empty($checkWhetherPR)) {
-                        return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                        return $this->sendError(trans('custom.purchase_return_pending_approval', ['returnCode' => $checkWhetherPR->purchaseReturnCode]), 500);
                     }
                 }
 
@@ -1238,7 +1239,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             $item = ItemMaster::find($new['itemAutoID']);
                             if(empty($item)){
-                                return $this->sendError('Item not found',500);
+                                return $this->sendError(trans('custom.item_not_found'),500);
                             }
 
                             $DODetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -1260,23 +1261,23 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $DODetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $DODetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Finance Item category sub assigned not found", 500);
+                                return $this->sendError(trans('custom.finance_item_category_sub_assigned_not_found'), 500);
                             }
 
                             if((!$DODetail_arr['financeGLcodebBS'] || !$DODetail_arr['financeGLcodebBSSystemID']) && $item->financeCategoryMaster != 2){
-                                return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.bs_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodePL'] || !$DODetail_arr['financeGLcodePLSystemID']){
-                                return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.cost_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeCogsGLcodePL'] || !$DODetail_arr['financeCogsGLcodePLSystemID']){
-                                return $this->sendError('COGS gl account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.cogs_gl_account_cannot_be_null_for_2') . $new['itemSystemCode'], 500);
                             }elseif (!$DODetail_arr['financeGLcodeRevenueSystemID'] || !$DODetail_arr['financeGLcodeRevenue']){
-                                return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
+                                return $this->sendError(trans('custom.revenue_account_cannot_be_null_for') . $new['itemSystemCode'], 500);
                             }
 
                             /*if (!$DODetail_arr['financeGLcodebBS'] || !$DODetail_arr['financeGLcodebBSSystemID']
                                 || !$DODetail_arr['financeGLcodePL'] || !$DODetail_arr['financeGLcodePLSystemID']
                                 || !$DODetail_arr['financeGLcodeRevenueSystemID'] || !$DODetail_arr['financeGLcodeRevenue']) {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError(trans('custom.account_code_not_updated_for') . $new['itemSystemCode'], 500);
                             }*/
 
 
@@ -1361,10 +1362,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             } 
 
             DB::commit();
-            return $this->sendResponse([], 'Delivery Order Details saved successfully');
+            return $this->sendResponse([], trans('custom.delivery_order_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }
@@ -1445,13 +1446,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
 
         if (empty($master)) {
-            return ['status' => false, 'message' => 'Delivery Order not found.'];
+            return ['status' => false, 'message' => trans('custom.delivery_order_not_found_3')];
         }
 
         $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
       
         if (empty($invoiceDetail)) {
-            return ['status' => false, 'message' => 'Delivery Order Details not found.'];
+            return ['status' => false, 'message' => trans('custom.delivery_order_details_not_found')];
         }
 
         $totalAmount = 0;
@@ -1475,7 +1476,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 ->first();
 
         if (!empty($Taxdetail)) {
-            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+            return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
@@ -1593,12 +1594,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
 
         if (empty($master)) {
-            return $this->sendResponse('e', 'Delivery Order not found.');
+            return $this->sendResponse('e', trans('custom.delivery_order_not_found_3'));
         }
 
         $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
         if (empty($invoiceDetail)) {
-            return $this->sendResponse('e', 'Delivery Details not found.');
+            return $this->sendResponse('e', trans('custom.delivery_details_not_found'));
         }
 
         $totalAmount = 0;
@@ -1618,7 +1619,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 ->first();
 
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'VAT Detail Already exist');
+            return $this->sendResponse('e', trans('custom.vat_detail_already_exist_1'));
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
@@ -1701,7 +1702,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
 
             DB::commit();
-            return $this->sendResponse('s', 'Successfully Added');
+            return $this->sendResponse('s', trans('custom.successfully_added'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
@@ -1727,7 +1728,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
             if (empty($masterData)) {
-                return $this->sendError('Delivery Order not found', 500);
+                return $this->sendError(trans('custom.delivery_order_not_found'), 500);
             }
 
 
@@ -1735,11 +1736,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.this_type_of_file_not_allowed'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
             }
 
             $disk = 'local';
@@ -1763,7 +1764,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             foreach ($uniqueData as $key => $value) {
 
                 if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('qty',$value)) {
-                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                     return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
                 }
 
 
@@ -1790,7 +1791,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
             if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
 
@@ -1799,11 +1800,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if ($masterData->cancelledYN == -1) {
-                return $this->sendError('This Quotation already closed. You can not add.', 500);
+                return $this->sendError(trans('custom.this_quotation_already_closed_you_can_not_add'), 500);
             }
 
             if ($masterData->approvedYN == 1) {
-                return $this->sendError('This Quotation fully approved. You can not add.', 500);
+                return $this->sendError(trans('custom.quotation_fully_approved_cannot_add'), 500);
             }
 
             $finalItems = [];
@@ -2017,7 +2018,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
 
         if(count($finalItems) == 0) {
-             return $this->sendError('No Records to upload!', 500);
+             return $this->sendError(trans('custom.no_records_to_upload'), 500);
         }
 
         $count = count($finalItems);
@@ -2027,13 +2028,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $db = isset($input['db']) ? $input['db'] : ""; 
                 AddMultipleItemsToDeliveryOrder::dispatch(array_filter($finalItems),($masterData->toArray()),$db,Auth::id());
             } else {
-                return $this->sendError('No Records found!', 500);
+                return $this->sendError(trans('custom.no_records_found_caps'), 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Out of '.$totalRecords.' , '.$count.' Items uploaded Successfully!!');
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully', ['count' => $count, 'total' => $totalRecords]));
         }else {
-            return $this->sendError("Unit Transcation amount is zero",500);
+            return $this->sendError(trans('custom.unit_transaction_amount_is_zero'),500);
         }
         
         } catch (\Exception $exception) {
@@ -2057,7 +2058,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
         if(empty($deliveryOrderMaster)){
-            return $this->sendError('Delivery order not found',500);
+            return $this->sendError(trans('custom.delivery_order_not_found_1'),500);
         }
 
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
@@ -2067,7 +2068,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             ->exists();
 
         if ($alreadyAdded) {
-            return $this->sendError("Selected item is already added. Please check again", 500);
+            return $this->sendError(trans('custom.selected_item_is_already_added_please_check_again'), 500);
         }
 
         $data = array(
@@ -2080,17 +2081,17 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         if ($item->financeCategoryMaster == 1) {
             if (isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0)) {
-                return $this->sendError('Stock Qty is 0. You cannot issue.', 500);
+                return $this->sendError(trans('custom.stock_qty_is_0_you_cannot_issue'), 500);
             }
 
             if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
-                return $this->sendError('Cost is 0. You cannot issue.', 500);
+                return $this->sendError(trans('custom.cost_is_0_you_cannot_issue_1'), 500);
             }
         }
 
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
-            return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
+            return $this->sendError(trans('custom.different_finance_category_order'),500);
         }
 
         if($item->financeCategoryMaster==1){
@@ -2112,7 +2113,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 ->where('approvedYN', 0)
                 ->first();
             if (!empty($checkWhether)) {
-                return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.delivery_order_pending_approval', ['orderCode' => $checkWhether->deliveryOrderCode]), 500);
             }
 
 
@@ -2141,7 +2142,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.materiel_issue_pending_approval', ['issueCode' => $checkWhetherItemIssueMaster->itemIssueCode]), 500);
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -2168,7 +2169,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherStockTransfer)) {
-                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.stock_transfer_pending_approval', ['transferCode' => $checkWhetherStockTransfer->stockTransferCode]), 500);
             }
 
             $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
@@ -2194,7 +2195,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherInvoice)) {
-                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
             }
 
             /*Check in purchase return*/
@@ -2217,7 +2218,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkWhetherPR)) {
-                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.purchase_return_pending_approval', ['returnCode' => $checkWhetherPR->purchaseReturnCode]), 500);
             }
         }
 
@@ -2227,17 +2228,17 @@ class DeliveryOrderDetailAPIController extends AppBaseController
     public function deleteAllItemsFromDeliveryOrder(Request $request)
     {
         if(!isset($request->deliveryOrderID))
-            return $this->sendError("Delivery Order Not Found!");
+            return $this->sendError(trans('custom.delivery_order_not_found_2'));
 
         $deliveryOrder = DeliveryOrder::where('deliveryOrderID',$request->deliveryOrderID)->first();
 
         if(!$deliveryOrder)
-            return $this->sendError("Delivery Order Not Found!");
+            return $this->sendError(trans('custom.delivery_order_not_found_2'));
 
 
         DeliveryOrderDetail::where('deliveryOrderID',$request->deliveryOrderID)->delete();
 
-        return $this->sendResponse([],"Item deleted Successfully");
+        return $this->sendResponse([],trans('custom.item_deleted_successfully'));
 
     }
 }

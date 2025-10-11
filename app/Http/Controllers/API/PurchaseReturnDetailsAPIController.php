@@ -91,7 +91,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $this->purchaseReturnDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->all();
 
-        return $this->sendResponse($purchaseReturnDetails->toArray(), 'Purchase Return Details retrieved successfully');
+        return $this->sendResponse($purchaseReturnDetails->toArray(), trans('custom.purchase_return_details_retrieved_successfully'));
     }
 
     /**
@@ -138,7 +138,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->create($input);
 
-        return $this->sendResponse($purchaseReturnDetails->toArray(), 'Purchase Return Details saved successfully');
+        return $this->sendResponse($purchaseReturnDetails->toArray(), trans('custom.purchase_return_details_saved_successfully'));
     }
 
     /**
@@ -185,10 +185,10 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetails)) {
-            return $this->sendError('Purchase Return Details not found');
+            return $this->sendError(trans('custom.purchase_return_details_not_found'));
         }
 
-        return $this->sendResponse($purchaseReturnDetails->toArray(), 'Purchase Return Details retrieved successfully');
+        return $this->sendResponse($purchaseReturnDetails->toArray(), trans('custom.purchase_return_details_retrieved_successfully'));
     }
 
     /**
@@ -245,24 +245,24 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetails)) {
-            return $this->sendError('Purchase Return Details not found');
+            return $this->sendError(trans('custom.purchase_return_details_not_found'));
         }
 
         $grvDetails = GRVDetails::find($purchaseReturnDetails->grvDetailsID);
 
         if (!$grvDetails) {
-            return $this->sendError('GRV Details not found');
+            return $this->sendError(trans('custom.grv_details_not_found'));
         }
 
         $purchaseReturn = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
 
         if ($input['noQty'] > ($grvDetails->noQty - $grvDetails->returnQty)) {
-             return $this->sendError("GRV balance Qty is ".($grvDetails->noQty - $grvDetails->returnQty).". You cannot return more than balance Qty.", 500,$qtyError);
+             return $this->sendError(trans('custom.grv_balance_qty_cannot_return_more', ['qty' => ($grvDetails->noQty - $grvDetails->returnQty)]), 500,$qtyError);
         }
 
 
@@ -273,25 +273,25 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Warehouse stock Qty is 0. You cannot return.", 500,$qtyError);
+            return $this->sendError(trans('custom.warehouse_stock_qty_zero_cannot_return'), 500,$qtyError);
         }
         if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Stock Qty is 0. You cannot return.", 500,$qtyError);
+            return $this->sendError(trans('custom.stock_qty_zero_cannot_return'), 500,$qtyError);
         }
         if ($input['noQty'] > $itemCurrentCostAndQty['currentStockQty']) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Current stock Qty is: " . $itemCurrentCostAndQty['currentStockQty'] . " .You cannot return more than the current stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_stock_qty_cannot_return_more', ['qty' => $itemCurrentCostAndQty['currentStockQty']]), 500, $qtyError);
         }
 
         if ($input['noQty'] > $itemCurrentCostAndQty['currentWareHouseStockQty']) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Current warehouse stock Qty is: " . $itemCurrentCostAndQty['currentWareHouseStockQty'] . " .You cannot return more than the current warehouse stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_warehouse_stock_qty_cannot_return_more', ['qty' => $itemCurrentCostAndQty['currentWareHouseStockQty']]), 500, $qtyError);
         }
 
         if ($input['noQty'] > $purchaseReturnDetails->GRVQty) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
-            return $this->sendError("Return qty cannot be greater than GRV qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.return_qty_cannot_greater_grv_qty'), 500, $qtyError);
         }
 
         $input['netAmount'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitSupTransCur;
@@ -325,10 +325,10 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($purchaseReturnDetails->toArray(), 'PurchaseReturnDetails updated successfully');
+            return $this->sendResponse($purchaseReturnDetails->toArray(), trans('custom.purchasereturndetails_updated_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error Occurred', 500);
+            return $this->sendError(trans('custom.error_occurred'), 500);
         }
 
     }
@@ -377,13 +377,13 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetails)) {
-            return $this->sendError('Purchase Return Details not found');
+            return $this->sendError(trans('custom.purchase_return_details_not_found'));
         }
 
         $purchaseReturn = PurchaseReturn::where('purhaseReturnAutoID', $purchaseReturnDetails->purhaseReturnAutoID)->first();
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         if ($purchaseReturnDetails->trackingType == 2) {
@@ -393,7 +393,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                          ->first();
 
             if ($validateSubProductSold) {
-                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
             }
 
             $subProduct = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
@@ -429,14 +429,14 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             $masterData = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);  
 
             if (!$masterData) {
-                return $this->sendError('Purchase Return not found');
+                return $this->sendError(trans('custom.purchase_return_not_found'));
             } 
 
             $masterData->isInvoiceCreatedForGrv = 0;     
             $masterData->save();
         } 
 
-        return $this->sendResponse($id, 'Purchase Return Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_return_details_deleted_successfully'));
     }
 
     public function getItemsByPurchaseReturnMaster(Request $request)
@@ -447,12 +447,12 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($input['id']);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return  not found');
+            return $this->sendError(trans('custom.purchase_return_not_found_1'));
         }
 
         $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['id'])->with(['unit', 'grv_master', 'grv_detail_master', 'item_by'])->get();
 
-        return $this->sendResponse($purchaseReturnDetails, 'Purchase Return Details retrieved successfully');
+        return $this->sendResponse($purchaseReturnDetails, trans('custom.purchase_return_details_retrieved_successfully'));
     }
 
     public function storePurchaseReturnDetailsFromGRV(Request $request)
@@ -466,7 +466,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($input['purhaseReturnAutoID']);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return  not found');
+            return $this->sendError(trans('custom.purchase_return_not_found_1'));
         }
 
 
@@ -481,7 +481,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         }
 
         if ($checkDuplicateGrv) {
-            return $this->sendError('Different GRV cannot be added to Purchase Return');
+            return $this->sendError(trans('custom.different_grv_cannot_be_added_to_purchase_return'));
         }
 
 
@@ -496,13 +496,13 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                ->first();
 
         if ($checkOtherPrns) {
-            return $this->sendError("There is a Purchase Return (" . $checkOtherPrns->master->purchaseReturnCode . ") pending for approval for the GRV you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.purchase_return_pending_approval_grv', ['code' => $checkOtherPrns->master->purchaseReturnCode]), 500);
         }
 
         $grv = GRVMaster::find($input['grvAutoID']);
 
         if (empty($grv)) {
-            return $this->sendError('GRV not found');
+            return $this->sendError(trans('custom.grv_not_found'));
         }
 
 
@@ -515,7 +515,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         if ($checkGrvAddedToIncoice) {
             $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
-            return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+            return $this->sendError(trans('custom.grv_added_to_draft_supplier_invoice', ['code' => $supInvCode]), 500);
         }
 
         $finalError = array('cost_zero' => array(),
@@ -541,12 +541,12 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                     ->count();
 
                 if ($detailExistSameItem > 0) {
-                    // return $this->sendError('Same inventory item cannot be added more than once', 500);
+                    // return $this->sendError(trans('custom.same_inventory_item_cannot_be_added_more_than_once'), 500);
                     array_push($finalError['same_item'], $new['itemPrimaryCode']);
                     $error_count++;
                 }
                 if ($new['rnoQty'] <= 0) {
-                    // return $this->sendError('Cannot add item without qty', 500);
+                    // return $this->sendError(trans('custom.cannot_add_item_without_qty'), 500);
                     array_push($finalError['qty_zero'], $new['itemPrimaryCode']);
                     $error_count++;
                 }
@@ -601,7 +601,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhether)) {
-                    return $this->sendError("There is a Purchase Return (" . $checkWhether->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.purchase_return_pending_approval_item', ['code' => $checkWhether->purchaseReturnCode]), 500);
                 }
                 /*check item Stock Transfer*/
                 $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $purchaseReturn->companySystemID)
@@ -628,7 +628,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherStockTransfer)) {
-                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.stock_transfer_pending_approval_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
                 }
 
                 /*check item sales invoice*/
@@ -655,7 +655,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherInvoice)) {
-                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.customer_invoice_pending_approval_item', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
                 }
 
                 // check in delivery order
@@ -675,7 +675,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($checkWhetherDeliveryOrder)) {
-                    return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.delivery_order_pending_approval_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]), 500);
                 }
 
                 // check in Material Issue
@@ -702,7 +702,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 /* approved=0*/
 
                 if (!empty($checkWhetherItemIssueMaster)) {
-                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError(trans('custom.material_issue_pending_approval_item', ['code' => $checkWhetherItemIssueMaster->itemIssueCode]), 500);
                 }
 
 
@@ -791,7 +791,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
 
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.cannot_confirm_document'), 500, $confirm_error);
             } else {
                 foreach ($createArray as $item) {
                     $resPrDetail = $this->purchaseReturnDetailsRepository->create($item);
@@ -807,10 +807,10 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             $this->updateGrvInvoiceStatus($input['purhaseReturnAutoID'], $input['grvAutoID']);
 
             DB::commit();
-            return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
+            return $this->sendResponse($purchaseReturn, trans('custom.purchase_return_details_added_successfully'));
         } catch (\Exception $e) {
             DB::rollback();
-            return $this->sendError('Error Occurred', 500);
+            return $this->sendError(trans('custom.error_occurred'), 500);
         }
     }
 
@@ -850,13 +850,13 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $detailExistAll = PurchaseReturnDetails::where('purhaseReturnAutoID', $purchaseReturnAutoID)->get();
 
         if (count($detailExistAll) == 0) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.no_details_to_delete'));
         }
 
         $purchaseReturn = PurchaseReturn::find($input['purhaseReturnAutoID']);
 
         if (!$purchaseReturn) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         if (!empty($detailExistAll)) {
@@ -869,7 +869,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                                  ->first();
 
                     if ($validateSubProductSold) {
-                        return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                        return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
                     }
 
                     $subProduct = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
@@ -901,7 +901,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 PurchaseReturnLogistic::where('purchaseReturnID', $cvDetail['purhaseReturnAutoID'])->delete();
             }
         }
-        return $this->sendResponse($purchaseReturnAutoID, 'Purchase Return details deleted successfully');
+        return $this->sendResponse($purchaseReturnAutoID, trans('custom.purchase_return_details_deleted_successfully_1'));
     }
 
     public function grvReturnDetails(Request $request)
@@ -919,7 +919,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                })
                                                ->get();
 
-        return $this->sendResponse($detailExistAll, 'Purchase Return details deleted successfully');
+        return $this->sendResponse($detailExistAll, trans('custom.purchase_return_details_deleted_successfully_1'));
     }
 
 }

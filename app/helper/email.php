@@ -95,9 +95,8 @@ class email
     public static function sendEmail($array)
     {
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox.</font>";
+        $footer = "<font size='1.5'><i><p><br><br><br>" . trans('email.footer_save_paper') .
+            "<br>" . trans('email.footer_auto_generated') . "</font>";
         $empInfoSkip = array(106, 107);
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
@@ -123,7 +122,7 @@ class email
                         continue;
                         // return ['success' => true, 'message' => 'Successfully Inserted'];
                     }
-                    return ['success' => false, 'message' => 'Employee Not Found'];
+                    return ['success' => false, 'message' => trans('email.employee_not_found')];
                 }
 
                 $company = Company::where('companySystemID', $data['companySystemID'])->first();
@@ -131,7 +130,7 @@ class email
                 if (!empty($company)) {
                     $data['companyID'] = $company->CompanyID;
                 } else {
-                    return ['success' => false, 'message' => 'Company Not Found'];
+                    return ['success' => false, 'message' => trans('email.company_not_found')];
                 }
 
                 $document = DocumentMaster::where('documentSystemID', $data['docSystemID'])->first();
@@ -139,7 +138,7 @@ class email
                 if (!empty($document)) {
                     $data['docID'] = $document->documentID;
                 } else {
-                    return ['success' => false, 'message' => 'Document Not Found'];
+                    return ['success' => false, 'message' => trans('email.document_not_found')];
                 }
 
                 switch ($data['docSystemID']) { // check the document id and set relevant parameters
@@ -541,12 +540,12 @@ class email
                         }
                         break;
                     default:
-                        return ['success' => false, 'message' => 'Document ID not found'];
+                        return ['success' => false, 'message' => trans('email.document_id_not_found')];
                 }
 
 
                 $data['isEmailSend'] = 0;
-                $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
+                $temp = trans('email.hi') . " " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
                 $data['emailAlertMessage'] = $temp;
 
@@ -586,7 +585,7 @@ class email
                             }
 
                             if ($data['empEmail'] && $data['isEmailVerified']) {
-                                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
+                                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName, app()->getLocale()));
                                 $count = $count + 1;
                             }
                         }
@@ -599,7 +598,7 @@ class email
         }
 
 
-        return ['success' => true, 'message' => 'Successfully Inserted','unverifiedEmail' => ($hasPolicy) ? count($unverifiedEmailArray) > 0 : 0, 'unverifiedEmailMsg' => ($hasPolicy && count($unverifiedEmailArray) > 0) ? 'Notification cannot be sent to the following approvers regarding pending approval due to unverified email addresses.  <br/><br/> <ul>'. implode('',array_unique($unverifiedEmailArray)).'</ul>' : null];
+        return ['success' => true, 'message' => trans('email.successfully_inserted'),'unverifiedEmail' => ($hasPolicy) ? count($unverifiedEmailArray) > 0 : 0, 'unverifiedEmailMsg' => ($hasPolicy && count($unverifiedEmailArray) > 0) ? trans('email.unverified_email_message') . '  <br/><br/> <ul>'. implode('',array_unique($unverifiedEmailArray)).'</ul>' : null];
 
 
     }
@@ -632,14 +631,14 @@ class email
             if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName, app()->getLocale()));
                 }
             }
         } else {
             Alert::create($data);
         }
 
-        return ['success' => true, 'message' => 'Successfully Inserted'];
+        return ['success' => true, 'message' => trans('email.successfully_inserted')];
     }
 
     public static function emailAddressFormat($email)
@@ -686,13 +685,13 @@ class email
                 if ($data['empEmail']) {
                     Mail::to($data['empEmail'])
                         ->cc(isset($data['ccEmail']) ? $data['ccEmail'] : [])
-                        ->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName));
+                        ->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text,$fromName, app()->getLocale()));
                 }
             }
         } else {
             Alert::create($data);
         }
 
-        return ['success' => true, 'message' => 'Successfully Inserted'];
+        return ['success' => true, 'message' => trans('email.successfully_inserted')];
     }
 }

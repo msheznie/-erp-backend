@@ -13,7 +13,7 @@ class StockCountService
 	{
 		$stockCount = StockCount::find($input['stockCountAutoID']);
 		if (!$stockCount) {
-			return ['status' => false, 'message' => "Stock Count not found"];
+			return ['status' => false, 'message' => trans('custom.stock_count_not_found')];
 		}
 
 		$stockCountDetails = StockCountDetail::where('stockCountAutoID', $stockCount->stockCountAutoID)

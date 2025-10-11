@@ -74,7 +74,7 @@ class HRMSPersonalDocumentsAPIController extends AppBaseController
         $this->hRMSPersonalDocumentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->all();
 
-        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents retrieved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), trans('custom.h_r_m_s_personal_documents_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class HRMSPersonalDocumentsAPIController extends AppBaseController
 
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->create($input);
 
-        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents saved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), trans('custom.h_r_m_s_personal_documents_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class HRMSPersonalDocumentsAPIController extends AppBaseController
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
         if (empty($hRMSPersonalDocuments)) {
-            return $this->sendError('H R M S Personal Documents not found');
+            return $this->sendError(trans('custom.h_r_m_s_personal_documents_not_found'));
         }
 
-        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents retrieved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), trans('custom.h_r_m_s_personal_documents_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class HRMSPersonalDocumentsAPIController extends AppBaseController
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
         if (empty($hRMSPersonalDocuments)) {
-            return $this->sendError('H R M S Personal Documents not found');
+            return $this->sendError(trans('custom.h_r_m_s_personal_documents_not_found'));
         }
 
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'HRMSPersonalDocuments updated successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), trans('custom.hrmspersonaldocuments_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class HRMSPersonalDocumentsAPIController extends AppBaseController
         $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
         if (empty($hRMSPersonalDocuments)) {
-            return $this->sendError('H R M S Personal Documents not found');
+            return $this->sendError(trans('custom.h_r_m_s_personal_documents_not_found'));
         }
 
         $hRMSPersonalDocuments->delete();
 
-        return $this->sendResponse($id, 'H R M S Personal Documents deleted successfully');
+        return $this->sendResponse($id, trans('custom.h_r_m_s_personal_documents_deleted_successfully'));
     }
 }

@@ -64,7 +64,7 @@ class PricingScheduleDetailEditLogAPIController extends AppBaseController
         $this->pricingScheduleDetailEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pricingScheduleDetailEditLogs = $this->pricingScheduleDetailEditLogRepository->all();
 
-        return $this->sendResponse($pricingScheduleDetailEditLogs->toArray(), 'Pricing Schedule Detail Edit Logs retrieved successfully');
+        return $this->sendResponse($pricingScheduleDetailEditLogs->toArray(), trans('custom.pricing_schedule_detail_edit_logs_retrieved_succes'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PricingScheduleDetailEditLogAPIController extends AppBaseController
 
         $pricingScheduleDetailEditLog = $this->pricingScheduleDetailEditLogRepository->create($input);
 
-        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), 'Pricing Schedule Detail Edit Log saved successfully');
+        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), trans('custom.pricing_schedule_detail_edit_log_saved_successfull'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PricingScheduleDetailEditLogAPIController extends AppBaseController
         $pricingScheduleDetailEditLog = $this->pricingScheduleDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetailEditLog)) {
-            return $this->sendError('Pricing Schedule Detail Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_edit_log_not_found'));
         }
 
-        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), 'Pricing Schedule Detail Edit Log retrieved successfully');
+        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), trans('custom.pricing_schedule_detail_edit_log_retrieved_success'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PricingScheduleDetailEditLogAPIController extends AppBaseController
         $pricingScheduleDetailEditLog = $this->pricingScheduleDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetailEditLog)) {
-            return $this->sendError('Pricing Schedule Detail Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_edit_log_not_found'));
         }
 
         $pricingScheduleDetailEditLog = $this->pricingScheduleDetailEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), 'PricingScheduleDetailEditLog updated successfully');
+        return $this->sendResponse($pricingScheduleDetailEditLog->toArray(), trans('custom.pricingscheduledetaileditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PricingScheduleDetailEditLogAPIController extends AppBaseController
         $pricingScheduleDetailEditLog = $this->pricingScheduleDetailEditLogRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetailEditLog)) {
-            return $this->sendError('Pricing Schedule Detail Edit Log not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_edit_log_not_found'));
         }
 
         $pricingScheduleDetailEditLog->delete();

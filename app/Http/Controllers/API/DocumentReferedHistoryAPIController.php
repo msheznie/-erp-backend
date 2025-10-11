@@ -77,7 +77,7 @@ class DocumentReferedHistoryAPIController extends AppBaseController
         $this->documentReferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentReferedHistories = $this->documentReferedHistoryRepository->all();
 
-        return $this->sendResponse($documentReferedHistories->toArray(), 'Document Refered Histories retrieved successfully');
+        return $this->sendResponse($documentReferedHistories->toArray(), trans('custom.document_refered_histories_retrieved_successfully'));
     }
 
     /**
@@ -124,7 +124,7 @@ class DocumentReferedHistoryAPIController extends AppBaseController
 
         $documentReferedHistories = $this->documentReferedHistoryRepository->create($input);
 
-        return $this->sendResponse($documentReferedHistories->toArray(), 'Document Refered History saved successfully');
+        return $this->sendResponse($documentReferedHistories->toArray(), trans('custom.document_refered_history_saved_successfully'));
     }
 
     /**
@@ -171,10 +171,10 @@ class DocumentReferedHistoryAPIController extends AppBaseController
         $documentReferedHistory = $this->documentReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($documentReferedHistory)) {
-            return $this->sendError('Document Refered History not found');
+            return $this->sendError(trans('custom.document_refered_history_not_found'));
         }
 
-        return $this->sendResponse($documentReferedHistory->toArray(), 'Document Refered History retrieved successfully');
+        return $this->sendResponse($documentReferedHistory->toArray(), trans('custom.document_refered_history_retrieved_successfully'));
     }
 
     /**
@@ -231,12 +231,12 @@ class DocumentReferedHistoryAPIController extends AppBaseController
         $documentReferedHistory = $this->documentReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($documentReferedHistory)) {
-            return $this->sendError('Document Refered History not found');
+            return $this->sendError(trans('custom.document_refered_history_not_found'));
         }
 
         $documentReferedHistory = $this->documentReferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($documentReferedHistory->toArray(), 'DocumentReferedHistory updated successfully');
+        return $this->sendResponse($documentReferedHistory->toArray(), trans('custom.documentreferedhistory_updated_successfully'));
     }
 
     /**
@@ -283,12 +283,12 @@ class DocumentReferedHistoryAPIController extends AppBaseController
         $documentReferedHistory = $this->documentReferedHistoryRepository->findWithoutFail($id);
 
         if (empty($documentReferedHistory)) {
-            return $this->sendError('Document Refered History not found');
+            return $this->sendError(trans('custom.document_refered_history_not_found'));
         }
 
         $documentReferedHistory->delete();
 
-        return $this->sendResponse($id, 'Document Refered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_refered_history_deleted_successfully'));
     }
 
     public function getReferBackApprovedDetails(Request $request)
@@ -315,7 +315,7 @@ class DocumentReferedHistoryAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return $this->sendError('Policy not found');
+                    return $this->sendError(trans('custom.policy_not_found'));
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
@@ -334,6 +334,6 @@ class DocumentReferedHistoryAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($approveDetails, 'Record retrieved successfully');
+        return $this->sendResponse($approveDetails, trans('custom.record_retrieved_successfully_1'));
     }
 }

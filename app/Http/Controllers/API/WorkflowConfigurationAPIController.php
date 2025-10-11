@@ -70,7 +70,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $this->workflowConfigurationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $workflowConfigurations = $this->workflowConfigurationRepository->all();
 
-        return $this->sendResponse($workflowConfigurations->toArray(), 'Workflow Configurations retrieved successfully');
+        return $this->sendResponse($workflowConfigurations->toArray(), trans('custom.workflow_configurations_retrieved_successfully'));
     }
 
     /**
@@ -141,7 +141,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             ->exists();
 
         if ($existingWorkflow) {
-            return $this->sendError('Workflow name already exists. Please enter a unique name.', 500);
+            return $this->sendError(trans('custom.workflow_name_already_exists_please_enter_a_unique'), 500);
         }
 
         $data = array_except($input, ['hodActions']);
@@ -200,7 +200,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             );
         }
 
-        return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration saved successfully');
+        return $this->sendResponse($workflowConfiguration->toArray(), trans('custom.workflow_configuration_saved_successfully'));
     }
 
     /**
@@ -248,10 +248,10 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration = $this->workflowConfigurationRepository->with('hodActions')->findWithoutFail($id);
 
         if (empty($workflowConfiguration)) {
-            return $this->sendError('Workflow Configuration not found');
+            return $this->sendError(trans('custom.workflow_configuration_not_found'));
         }
 
-        return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration retrieved successfully');
+        return $this->sendResponse($workflowConfiguration->toArray(), trans('custom.workflow_configuration_retrieved_successfully'));
     }
 
     /**
@@ -332,7 +332,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             ->first();
 
         if ($existingWorkflow) {
-            return $this->sendError('Workflow name already exists. Please enter a unique name.', 500);
+            return $this->sendError(trans('custom.workflow_name_already_exists_please_enter_a_unique'), 500);
         }
 
         $data = array_except($input, ['hodActions']);
@@ -342,7 +342,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration = $this->workflowConfigurationRepository->findWithoutFail($id);
 
         if (empty($workflowConfiguration)) {
-            return $this->sendError('Workflow Configuration not found');
+            return $this->sendError(trans('custom.workflow_configuration_not_found'));
         }
 
         // Store old values for audit log
@@ -418,7 +418,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $oldValues
         );
 
-        return $this->sendResponse($workflowConfiguration->toArray(), 'Workflow Configuration updated successfully');
+        return $this->sendResponse($workflowConfiguration->toArray(), trans('custom.workflow_configuration_updated_successfully'));
     }
 
     /**
@@ -466,7 +466,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration = $this->workflowConfigurationRepository->findWithoutFail($id);
 
         if (empty($workflowConfiguration)) {
-            return $this->sendError('Workflow Configuration not found');
+            return $this->sendError(trans('custom.workflow_configuration_not_found'));
         }
 
         // Store old values for audit log
@@ -509,7 +509,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $oldValues
         );
 
-        return $this->sendResponse(null,'Workflow Configuration deleted successfully');
+        return $this->sendResponse(null,trans('custom.workflow_configuration_deleted_successfully'));
     }
 
     public function getWorkflowConfiguration(Request $request) {
@@ -554,7 +554,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration = $this->workflowConfigurationRepository->findWithoutFail($input['id']);
 
         if (empty($workflowConfiguration)) {
-            return $this->sendError('Workflow Configuration not found');
+            return $this->sendError(trans('custom.workflow_configuration_not_found'));
         }
 
         $oldValue = $workflowConfiguration->toArray();
@@ -578,6 +578,6 @@ class WorkflowConfigurationAPIController extends AppBaseController
             $oldValue
         );
 
-        return $this->sendResponse($newValue, 'WorkflowConfiguration updated successfully');
+        return $this->sendResponse($newValue, trans('custom.workflowconfiguration_updated_successfully'));
     }
 }

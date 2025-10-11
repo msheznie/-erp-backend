@@ -65,7 +65,7 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
         $this->supplierEvaluationTableDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->all();
 
-        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), 'Supplier Evaluation Table Details retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), trans('custom.supplier_evaluation_table_details_retrieved_succes'));
     }
 
     /**
@@ -119,7 +119,7 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
 
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), 'Supplier Evaluation Table Details saved successfully');
+        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), trans('custom.supplier_evaluation_table_details_saved_successful'));
     }
 
     /**
@@ -167,10 +167,10 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTableDetails)) {
-            return $this->sendError('Supplier Evaluation Table Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_table_details_not_found'));
         }
 
-        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), 'Supplier Evaluation Table Details retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), trans('custom.supplier_evaluation_table_details_retrieved_succes'));
     }
 
     /**
@@ -236,12 +236,12 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTableDetails)) {
-            return $this->sendError('Supplier Evaluation Table Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_table_details_not_found'));
         }
 
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), 'SupplierEvaluationTableDetails updated successfully');
+        return $this->sendResponse($supplierEvaluationTableDetails->toArray(), trans('custom.supplierevaluationtabledetails_updated_successfull'));
     }
 
     /**
@@ -289,7 +289,7 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
         $supplierEvaluationTableDetails = $this->supplierEvaluationTableDetailsRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTableDetails)) {
-            return $this->sendError('Supplier Evaluation Table Details not found');
+            return $this->sendError(trans('custom.supplier_evaluation_table_details_not_found'));
         }
 
         $supplierEvaluationTableDetails->delete();
@@ -331,6 +331,6 @@ class SupplierEvaluationTableDetailsAPIController extends AppBaseController
                 }
             }
         }
-        return $this->sendResponse($array, 'Supplier Evaluation Details Updated Successfully');
+        return $this->sendResponse($array, trans('custom.supplier_evaluation_details_updated_successfully'));
     }
 }

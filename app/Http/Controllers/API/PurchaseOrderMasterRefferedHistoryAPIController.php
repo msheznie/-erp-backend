@@ -76,7 +76,7 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
         $this->purchaseOrderMasterRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderMasterRefferedHistories = $this->purchaseOrderMasterRefferedHistoryRepository->all();
 
-        return $this->sendResponse($purchaseOrderMasterRefferedHistories->toArray(), 'Purchase Order Master Reffered Histories retrieved successfully');
+        return $this->sendResponse($purchaseOrderMasterRefferedHistories->toArray(), trans('custom.purchase_order_master_reffered_histories_retrieved'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
 
         $purchaseOrderMasterRefferedHistories = $this->purchaseOrderMasterRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderMasterRefferedHistories->toArray(), 'Purchase Order Master Reffered History saved successfully');
+        return $this->sendResponse($purchaseOrderMasterRefferedHistories->toArray(), trans('custom.purchase_order_master_reffered_history_saved_succe'));
     }
 
     /**
@@ -170,10 +170,10 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($purchaseOrderMasterRefferedHistory)) {
-            return $this->sendError('Purchase Order Master Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_master_reffered_history_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderMasterRefferedHistory->toArray(), 'Purchase Order Master Reffered History retrieved successfully');
+        return $this->sendResponse($purchaseOrderMasterRefferedHistory->toArray(), trans('custom.purchase_order_master_reffered_history_retrieved_s'));
     }
 
     /**
@@ -230,12 +230,12 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderMasterRefferedHistory)) {
-            return $this->sendError('Purchase Order Master Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_master_reffered_history_not_found'));
         }
 
         $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderMasterRefferedHistory->toArray(), 'PurchaseOrderMasterRefferedHistory updated successfully');
+        return $this->sendResponse($purchaseOrderMasterRefferedHistory->toArray(), trans('custom.purchaseordermasterrefferedhistory_updated_success'));
     }
 
     /**
@@ -282,12 +282,12 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
         $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderMasterRefferedHistory)) {
-            return $this->sendError('Purchase Order Master Reffered History not found');
+            return $this->sendError(trans('custom.purchase_order_master_reffered_history_not_found'));
         }
 
         $purchaseOrderMasterRefferedHistory->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Master Reffered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_master_reffered_history_deleted_suc'));
     }
 
     public function getPoMasterAmendHistory(Request $request)
@@ -298,7 +298,7 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
             ->with(['created_by','location','supplier','currency','fcategory','segment','approved_by'])
             ->get();
 
-        return $this->sendResponse($procumentOrderHistory, 'Purchase Order Master retrieved successfully');
+        return $this->sendResponse($procumentOrderHistory, trans('custom.purchase_order_master_retrieved_successfully'));
     }
 
 }

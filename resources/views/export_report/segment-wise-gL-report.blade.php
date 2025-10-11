@@ -17,11 +17,11 @@
 <table>
     <thead>
     <tr>
-        <td><B>Period From: </B></td>
+        <td><B>{{ __('custom.period_from') }}: </B></td>
         <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
-        <td><B>Period To:</B></td>
+        <td><B>{{ __('custom.period_to') }}:</B></td>
         <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
-        <td><B>Currency:</B></td>
+        <td><B>{{ __('custom.currency') }}:</B></td>
         <td><B>{{ $currency }}</B></td>
     </tr>
     </thead>
@@ -32,12 +32,12 @@
     <thead> 
         <tr>
             <th colspan="12" ></th>
-            <th  colspan="{{$length}}" class="text-center">Segments</th>
+            <th  colspan="{{$length}}" class="text-center">{{ __('custom.segments') }}</th>
             <th rowspan="2" ></th>
         </tr>
         <tr>
-            <th colspan="2" class="border_rem text-center">Account Code</th>
-            <th colspan="3" class="border_rem text-center">Account Description</th>
+            <th colspan="2" class="border_rem text-center">{{ __('custom.account_code') }}</th>
+            <th colspan="3" class="border_rem text-center">{{ __('custom.account_description') }}</th>
             @foreach($segment as $data1)
 
                 <th colspan="3" >
@@ -83,7 +83,7 @@
     <tfoot>
         <tr >
                 <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b> Total:</b></td>
+                    class="text-right"><b> {{ __('custom.total') }}:</b></td>
                     @foreach($segment as $key=>$val)
                         <td>
                         @php

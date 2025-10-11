@@ -65,7 +65,7 @@ class HrPayrollMasterAPIController extends AppBaseController
         $this->hrPayrollMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $hrPayrollMasters = $this->hrPayrollMasterRepository->all();
 
-        return $this->sendResponse($hrPayrollMasters->toArray(), 'Hr Payroll Masters retrieved successfully');
+        return $this->sendResponse($hrPayrollMasters->toArray(), trans('custom.hr_payroll_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class HrPayrollMasterAPIController extends AppBaseController
 
         $hrPayrollMaster = $this->hrPayrollMasterRepository->create($input);
 
-        return $this->sendResponse($hrPayrollMaster->toArray(), 'Hr Payroll Master saved successfully');
+        return $this->sendResponse($hrPayrollMaster->toArray(), trans('custom.hr_payroll_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class HrPayrollMasterAPIController extends AppBaseController
         $hrPayrollMaster = $this->hrPayrollMasterRepository->findWithoutFail($id);
 
         if (empty($hrPayrollMaster)) {
-            return $this->sendError('Hr Payroll Master not found');
+            return $this->sendError(trans('custom.hr_payroll_master_not_found'));
         }
 
-        return $this->sendResponse($hrPayrollMaster->toArray(), 'Hr Payroll Master retrieved successfully');
+        return $this->sendResponse($hrPayrollMaster->toArray(), trans('custom.hr_payroll_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class HrPayrollMasterAPIController extends AppBaseController
         $hrPayrollMaster = $this->hrPayrollMasterRepository->findWithoutFail($id);
 
         if (empty($hrPayrollMaster)) {
-            return $this->sendError('Hr Payroll Master not found');
+            return $this->sendError(trans('custom.hr_payroll_master_not_found'));
         }
 
         $hrPayrollMaster = $this->hrPayrollMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hrPayrollMaster->toArray(), 'HrPayrollMaster updated successfully');
+        return $this->sendResponse($hrPayrollMaster->toArray(), trans('custom.hrpayrollmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class HrPayrollMasterAPIController extends AppBaseController
         $hrPayrollMaster = $this->hrPayrollMasterRepository->findWithoutFail($id);
 
         if (empty($hrPayrollMaster)) {
-            return $this->sendError('Hr Payroll Master not found');
+            return $this->sendError(trans('custom.hr_payroll_master_not_found'));
         }
 
         $hrPayrollMaster->delete();

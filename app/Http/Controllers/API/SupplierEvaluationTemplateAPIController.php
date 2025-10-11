@@ -67,7 +67,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         $this->supplierEvaluationTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationTemplates = $this->supplierEvaluationTemplateRepository->all();
 
-        return $this->sendResponse($supplierEvaluationTemplates->toArray(), 'Supplier Evaluation Templates retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplates->toArray(), trans('custom.supplier_evaluation_templates_retrieved_successful'));
     }
 
     /**
@@ -122,7 +122,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
 
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->create($input);
 
-        return $this->sendResponse($supplierEvaluationTemplate->toArray(), 'Supplier Evaluation Template saved successfully');
+        return $this->sendResponse($supplierEvaluationTemplate->toArray(), trans('custom.supplier_evaluation_template_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         $supplierEvaluationTemplate = SupplierEvaluationTemplate::with(['company'])->where('id', $id)->first();
 
         if (empty($supplierEvaluationTemplate)) {
-            return $this->sendError('Supplier Evaluation Template not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_not_found'));
         }
 
-        return $this->sendResponse($supplierEvaluationTemplate->toArray(), 'Supplier Evaluation Template retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplate->toArray(), trans('custom.supplier_evaluation_template_retrieved_successfull'));
     }
 
     public function getAllSupplierEvaluationTemplates(Request $request)
@@ -284,7 +284,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplate)) {
-            return $this->sendError('Supplier Evaluation Template not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_not_found'));
         }
 
         if($supplierEvaluationTemplate['is_confirmed'] == 0 && $input['is_confirmed'] == 1){
@@ -329,7 +329,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
 
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->update($input, $id);
 
-        return $this->sendResponse($supplierEvaluationTemplate->toArray(), 'SupplierEvaluationTemplate updated successfully');
+        return $this->sendResponse($supplierEvaluationTemplate->toArray(), trans('custom.supplierevaluationtemplate_updated_successfully'));
     }
 
     public function getEvaluationTemplateData(Request $request)  {
@@ -355,7 +355,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
             'evaluationTemplateSection' => $evaluationTemplateSection,
         ];
 
-        return $this->sendResponse($data, 'Evaluation template retrieved successfully');
+        return $this->sendResponse($data, trans('custom.evaluation_template_retrieved_successfully'));
 
     }
 
@@ -368,7 +368,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         $evaluationTemplate = SupplierEvaluationTemplate::with(['company'])->where('id', $id)->first();
 
         if (empty($evaluationTemplate)) {
-            return $this->sendError('Evalution template not found');
+            return $this->sendError(trans('custom.evalution_template_not_found'));
         }
 
         $evaluationTemplateComment = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id', $id)->get();
@@ -451,11 +451,11 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         $supplierEvaluationTemplate = $this->supplierEvaluationTemplateRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplate)) {
-            return $this->sendError('Supplier Evaluation Template not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_not_found'));
         }
 
         $supplierEvaluationTemplate->delete();
 
-        return $this->sendResponse($id,'Supplier Evaluation Template deleted successfully');
+        return $this->sendResponse($id,trans('custom.supplier_evaluation_template_deleted_successfully'));
     }
 }

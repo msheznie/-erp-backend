@@ -9,10 +9,10 @@
         </tr>
         <tr></tr>
         <tr>
-            <th>Period From : {{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }}</th>
+            <th>{{ __('custom.period_from') }} : {{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }}</th>
         </tr>
         <tr>
-            <th>Period To : {{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </th>
+            <th>{{ __('custom.period_to') }} : {{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </th>
         </tr>
     </thead>
 </table>
@@ -56,24 +56,24 @@
                 <td><B>{{ $employee->employeeName}} - {{ $employee->empID }}</B></td>
             </tr>
             <tr>
-                <th>Document Date</th>
-                <th>Document Code</th>
-                <th>Description</th>
+                <th>{{ __('custom.document_date') }}</th>
+                <th>{{ __('custom.document_code') }}</th>
+                <th>{{ __('custom.description') }}</th>
                 @if($currencyID == 1)
-                    <th>Amount ({{$currencyCodeLocal}})</th>
+                    <th>{{ __('custom.amount') }} ({{$currencyCodeLocal}})</th>
                 @endif
                 @if($currencyID == 2)
-                    <th>Amount ({{$currencyCodeRpt}})</th>
+                    <th>{{ __('custom.amount') }} ({{$currencyCodeRpt}})</th>
                 @endif
-                <th>Reference Doc</th>
-                <th>Ref.Doc.Date</th>
+                <th>{{ __('custom.reference_doc') }}</th>
+                <th>{{ __('custom.ref_doc_date') }}</th>
                 @if($currencyID == 1)
-                    <th>Ref.Amount ({{$currencyCodeLocal}})</th>
-                    <th>Balance ({{$currencyCodeLocal}})</th>
+                    <th>{{ __('custom.ref_amount') }} ({{$currencyCodeLocal}})</th>
+                    <th>{{ __('custom.balance') }} ({{$currencyCodeLocal}})</th>
                 @endif
                 @if($currencyID == 2)
-                    <th>Ref.Amount ({{$currencyCodeRpt}})</th>
-                    <th>Balance ({{$currencyCodeRpt}})</th>
+                    <th>{{ __('custom.ref_amount') }} ({{$currencyCodeRpt}})</th>
+                    <th>{{ __('custom.balance') }} ({{$currencyCodeRpt}})</th>
                 @endif
             </tr>
         </thead>
@@ -81,7 +81,7 @@
             @if($employee->openingBalanceLocal != 0 || $employee->openingBalanceLocal != 0)
                 <tr>
                     <td>-</td>
-                    <td>Opening Balance</td>
+                    <td>{{ __('custom.opening_balance') }}</td>
                     <td>-</td>
                     @if($currencyID == 1)
                         <td style="text-align: right">{{number_format($employee->openingBalanceLocal,$currencyDecimalLocal)}}</td>
@@ -169,14 +169,14 @@
             @endforeach
             @if($employee->totalSumLocal != 0 || $employee->totalSumRpt != 0)
                 <tr>
-                    <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>Total</b></td>
+                    <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>{{ __('custom.total') }}</b></td>
                     @if($currencyID == 1)
                         <td style="text-align: right"><b>{{number_format($employee->totalSumLocal,$currencyDecimalLocal)}}</b></td>
                     @endif
                     @if($currencyID == 2)
                         <td style="text-align: right"><b>{{number_format($employee->totalSumRpt,$currencyDecimalRpt)}}</b></td>
                     @endif
-                    <td colspan="2" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>Total</b></td>
+                    <td colspan="2" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>{{ __('custom.total') }}</b></td>
                     @if($currencyID == 1)
                         <td style="text-align: right"><b>{{number_format((isset($employee->totalSumRefReferenceAmountLocal) ? $employee->totalSumRefReferenceAmountLocal : 0),$currencyDecimalLocal)}}</b></td>
                     @endif
@@ -209,27 +209,27 @@
         <table>
             <thead>
                 <tr>
-                    <td><B>Direct Payment Voucher</B></td>
+                    <td><B>{{ __('custom.direct_payment_voucher') }}</B></td>
                 </tr>
                 <tr>
-                    <th>Document Date</th>
-                    <th>Document Code</th>
-                    <th>Description</th>
+                    <th>{{ __('custom.document_date') }}</th>
+                    <th>{{ __('custom.document_code') }}</th>
+                    <th>{{ __('custom.description') }}</th>
                     @if($currencyID == 1)
-                        <th>Amount ({{$currencyCodeLocal}})</th>
+                        <th>{{ __('custom.amount') }} ({{$currencyCodeLocal}})</th>
                     @endif
                     @if($currencyID == 2)
-                        <th>Amount ({{$currencyCodeRpt}})</th>
+                        <th>{{ __('custom.amount') }} ({{$currencyCodeRpt}})</th>
                     @endif
-                    <th>Reference Doc</th>
-                    <th>Ref.Doc.Date</th>
+                    <th>{{ __('custom.reference_doc') }}</th>
+                    <th>{{ __('custom.ref_doc_date') }}</th>
                     @if($currencyID == 1)
-                        <th>Ref.Amount ({{$currencyCodeLocal}})</th>
-                        <th>Balance ({{$currencyCodeLocal}})</th>
+                        <th>{{ __('custom.ref_amount') }} ({{$currencyCodeLocal}})</th>
+                        <th>{{ __('custom.balance') }} ({{$currencyCodeLocal}})</th>
                     @endif
                     @if($currencyID == 2)
-                        <th>Ref.Amount ({{$currencyCodeRpt}})</th>
-                        <th>Balance ({{$currencyCodeRpt}})</th>
+                        <th>{{ __('custom.ref_amount') }} ({{$currencyCodeRpt}})</th>
+                        <th>{{ __('custom.balance') }} ({{$currencyCodeRpt}})</th>
                     @endif
                 </tr>
             </thead>
@@ -303,7 +303,7 @@
 <table>
     <tbody>
     <tr>
-        <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>Grand Total</b></td>
+        <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>{{ __('custom.grand_total') }}</b></td>
         @if($currencyID == 1)
             <td style="text-align: right"><b>{{number_format($grandSumData['grandSumLocal'],$currencyDecimalLocal)}}</b></td>
         @endif

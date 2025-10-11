@@ -6,6 +6,66 @@
         margin-top: 4%;
     }
 
+    /* RTL Support for Arabic */
+    @if(app()->getLocale() == 'ar')
+    body {
+        direction: rtl;
+        text-align: right;
+    }
+    
+    .rtl-text-left {
+        text-align: right !important;
+    }
+    
+    .rtl-text-right {
+        text-align: left !important;
+    }
+    
+    .rtl-float-left {
+        float: right !important;
+    }
+    
+    .rtl-float-right {
+        float: left !important;
+    }
+    
+    .rtl-margin-left {
+        margin-right: 0 !important;
+        margin-left: auto !important;
+    }
+    
+    .rtl-margin-right {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
+    
+    .rtl-padding-left {
+        padding-right: 0 !important;
+        padding-left: auto !important;
+    }
+    
+    .rtl-padding-right {
+        padding-left: 0 !important;
+        padding-right: auto !important;
+    }
+    
+    table {
+        direction: rtl;
+    }
+    
+    .table th, .table td {
+        text-align: right;
+    }
+    
+    .text-right {
+        text-align: left !important;
+    }
+    
+    .text-left {
+        text-align: right !important;
+    }
+    @endif
+
     .footer {
         position: absolute;
     }

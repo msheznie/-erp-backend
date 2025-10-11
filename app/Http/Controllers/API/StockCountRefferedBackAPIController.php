@@ -65,7 +65,7 @@ class StockCountRefferedBackAPIController extends AppBaseController
         $this->stockCountRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockCountRefferedBacks = $this->stockCountRefferedBackRepository->all();
 
-        return $this->sendResponse($stockCountRefferedBacks->toArray(), 'Stock Count Reffered Backs retrieved successfully');
+        return $this->sendResponse($stockCountRefferedBacks->toArray(), trans('custom.stock_count_reffered_backs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class StockCountRefferedBackAPIController extends AppBaseController
 
         $stockCountRefferedBack = $this->stockCountRefferedBackRepository->create($input);
 
-        return $this->sendResponse($stockCountRefferedBack->toArray(), 'Stock Count Reffered Back saved successfully');
+        return $this->sendResponse($stockCountRefferedBack->toArray(), trans('custom.stock_count_reffered_back_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class StockCountRefferedBackAPIController extends AppBaseController
         },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($stockCountRefferedBack)) {
-            return $this->sendError('Stock Count Reffered Back not found');
+            return $this->sendError(trans('custom.stock_count_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($stockCountRefferedBack->toArray(), 'Stock Count Reffered Back retrieved successfully');
+        return $this->sendResponse($stockCountRefferedBack->toArray(), trans('custom.stock_count_reffered_back_retrieved_successfully'));
     }
 
     /**
@@ -223,12 +223,12 @@ class StockCountRefferedBackAPIController extends AppBaseController
         $stockCountRefferedBack = $this->stockCountRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockCountRefferedBack)) {
-            return $this->sendError('Stock Count Reffered Back not found');
+            return $this->sendError(trans('custom.stock_count_reffered_back_not_found'));
         }
 
         $stockCountRefferedBack = $this->stockCountRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($stockCountRefferedBack->toArray(), 'StockCountRefferedBack updated successfully');
+        return $this->sendResponse($stockCountRefferedBack->toArray(), trans('custom.stockcountrefferedback_updated_successfully'));
     }
 
     /**
@@ -275,12 +275,12 @@ class StockCountRefferedBackAPIController extends AppBaseController
         $stockCountRefferedBack = $this->stockCountRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockCountRefferedBack)) {
-            return $this->sendError('Stock Count Reffered Back not found');
+            return $this->sendError(trans('custom.stock_count_reffered_back_not_found'));
         }
 
         $stockCountRefferedBack->delete();
 
-        return $this->sendSuccess('Stock Count Reffered Back deleted successfully');
+        return $this->sendSuccess(trans('custom.stock_count_reffered_back_deleted_successfully'));
     }
 
 

@@ -177,19 +177,19 @@ class CreateExcel
                             }
                             
                            
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                         }
                         else if(($array['type']) == 2)
                         {
                             if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
                                 $i = $i - 0;
-                                self::branch($array, $sheet, 'Branch ');
-                                self::selectedCurrency($array, $sheet, 'Currency');
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::branch($array, $sheet, __('custom.branch').' ');
+                                self::selectedCurrency($array, $sheet, trans('custom.currency'));
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             } else {
                                 $i = $i - 2;
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             }
                         }
                         else if(($array['type']) == 3)
@@ -199,7 +199,7 @@ class CreateExcel
                         }
                         else if(($array['type']) == 4)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             self::currency($array,$sheet,'A5');
 
@@ -207,13 +207,13 @@ class CreateExcel
                         else if(($array['type']) == 5)
                         {
                             $i = $i - 1;
-                            self::fromDate($array,$sheet,'As of Date');
+                            self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             self::currency($array,$sheet,'A4');
 
                         }
                         else if(($array['type']) == 6)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             $sheet->cell('A5', function($cell) use($array)
                             {
@@ -222,7 +222,7 @@ class CreateExcel
                     
                                 {
                     
-                                    $cell->setValue('Company VAT Registration No - '.$array['company_vat_registration_number']);  
+                                    $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);  
                     
                                     $cell->setFont(array(
                     
@@ -282,7 +282,11 @@ class CreateExcel
 
                     });
 
-
+                    if (app()->getLocale() == 'ar') {
+                        // Set right-to-left for the entire sheet
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
             }
 
@@ -395,6 +399,12 @@ class CreateExcel
 
                     $rowNum++;
                 }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->string('xlsx');
 
@@ -464,7 +474,7 @@ class CreateExcel
         {
             if(isset($array))
             {
-                $cell->setValue('To Date - '.$array['to_date']);
+                $cell->setValue(__('custom.to_date').' - '.$array['to_date']);
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -485,7 +495,7 @@ class CreateExcel
         {
             if(isset($array['cur']))
             {
-                $cell->setValue('Currency - '.$array['cur']);  
+                $cell->setValue(__('custom.currency').' - '.$array['cur']);  
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -551,6 +561,12 @@ class CreateExcel
                        $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
                            $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
+                           
+                           // Set right-to-left for Arabic locale
+                           if (app()->getLocale() == 'ar') {
+                               $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                               $sheet->setRightToLeft(true);
+                           }
                        });
                    })->string($type);
 
@@ -642,6 +658,11 @@ class CreateExcel
                         $sheet->appendRow([]);
                     }
 
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
 
                 });
             
@@ -726,6 +747,12 @@ class CreateExcel
                     }
 
                     $rowNum++;
+                }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
                 }
             });
         })->string('xlsx');

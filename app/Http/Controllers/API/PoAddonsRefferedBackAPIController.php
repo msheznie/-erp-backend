@@ -76,7 +76,7 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
         $this->poAddonsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poAddonsRefferedBacks = $this->poAddonsRefferedBackRepository->all();
 
-        return $this->sendResponse($poAddonsRefferedBacks->toArray(), 'Po Addons Reffered Backs retrieved successfully');
+        return $this->sendResponse($poAddonsRefferedBacks->toArray(), trans('custom.po_addons_reffered_backs_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
 
         $poAddonsRefferedBacks = $this->poAddonsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($poAddonsRefferedBacks->toArray(), 'Po Addons Reffered Back saved successfully');
+        return $this->sendResponse($poAddonsRefferedBacks->toArray(), trans('custom.po_addons_reffered_back_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
         $poAddonsRefferedBack = $this->poAddonsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($poAddonsRefferedBack)) {
-            return $this->sendError('Po Addons Reffered Back not found');
+            return $this->sendError(trans('custom.po_addons_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($poAddonsRefferedBack->toArray(), 'Po Addons Reffered Back retrieved successfully');
+        return $this->sendResponse($poAddonsRefferedBack->toArray(), trans('custom.po_addons_reffered_back_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
         $poAddonsRefferedBack = $this->poAddonsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($poAddonsRefferedBack)) {
-            return $this->sendError('Po Addons Reffered Back not found');
+            return $this->sendError(trans('custom.po_addons_reffered_back_not_found'));
         }
 
         $poAddonsRefferedBack = $this->poAddonsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($poAddonsRefferedBack->toArray(), 'PoAddonsRefferedBack updated successfully');
+        return $this->sendResponse($poAddonsRefferedBack->toArray(), trans('custom.poaddonsrefferedback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
         $poAddonsRefferedBack = $this->poAddonsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($poAddonsRefferedBack)) {
-            return $this->sendError('Po Addons Reffered Back not found');
+            return $this->sendError(trans('custom.po_addons_reffered_back_not_found'));
         }
 
         $poAddonsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Po Addons Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.po_addons_reffered_back_deleted_successfully'));
     }
 
 
@@ -300,6 +300,6 @@ class PoAddonsRefferedBackAPIController extends AppBaseController
             ->where('timesReferred', $timesReferred)
             ->get();
 
-        return $this->sendResponse($orderAddons->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($orderAddons->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

@@ -75,7 +75,7 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
         $this->paySupplierInvoiceMasterReferbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paySupplierInvoiceMasterReferbacks = $this->paySupplierInvoiceMasterReferbackRepository->all();
 
-        return $this->sendResponse($paySupplierInvoiceMasterReferbacks->toArray(), 'Pay Supplier Invoice Master Referbacks retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceMasterReferbacks->toArray(), trans('custom.pay_supplier_invoice_master_referbacks_retrieved_s'));
     }
 
     /**
@@ -122,7 +122,7 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
 
         $paySupplierInvoiceMasterReferbacks = $this->paySupplierInvoiceMasterReferbackRepository->create($input);
 
-        return $this->sendResponse($paySupplierInvoiceMasterReferbacks->toArray(), 'Pay Supplier Invoice Master Referback saved successfully');
+        return $this->sendResponse($paySupplierInvoiceMasterReferbacks->toArray(), trans('custom.pay_supplier_invoice_master_referback_saved_succes'));
     }
 
     /**
@@ -169,10 +169,10 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
         $paySupplierInvoiceMasterReferback = $this->paySupplierInvoiceMasterReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMasterReferback)) {
-            return $this->sendError('Pay Supplier Invoice Master Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_referback_not_found'));
         }
 
-        return $this->sendResponse($paySupplierInvoiceMasterReferback->toArray(), 'Pay Supplier Invoice Master Referback retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceMasterReferback->toArray(), trans('custom.pay_supplier_invoice_master_referback_retrieved_su'));
     }
 
     /**
@@ -229,12 +229,12 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
         $paySupplierInvoiceMasterReferback = $this->paySupplierInvoiceMasterReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMasterReferback)) {
-            return $this->sendError('Pay Supplier Invoice Master Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_referback_not_found'));
         }
 
         $paySupplierInvoiceMasterReferback = $this->paySupplierInvoiceMasterReferbackRepository->update($input, $id);
 
-        return $this->sendResponse($paySupplierInvoiceMasterReferback->toArray(), 'PaySupplierInvoiceMasterReferback updated successfully');
+        return $this->sendResponse($paySupplierInvoiceMasterReferback->toArray(), trans('custom.paysupplierinvoicemasterreferback_updated_successf'));
     }
 
     /**
@@ -281,12 +281,12 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
         $paySupplierInvoiceMasterReferback = $this->paySupplierInvoiceMasterReferbackRepository->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMasterReferback)) {
-            return $this->sendError('Pay Supplier Invoice Master Referback not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_referback_not_found'));
         }
 
         $paySupplierInvoiceMasterReferback->delete();
 
-        return $this->sendResponse($id, 'Pay Supplier Invoice Master Referback deleted successfully');
+        return $this->sendResponse($id, trans('custom.pay_supplier_invoice_master_referback_deleted_succ'));
     }
 
     public function getAllPaymentVoucherAmendHistory(Request $request)
@@ -345,10 +345,10 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
         }])->find($request->PayMasterAutoId);
 
         if (empty($paySupplierInvoiceMaster)) {
-            return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
-        return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
+        return $this->sendResponse($paySupplierInvoiceMaster->toArray(), trans('custom.pay_supplier_invoice_master_retrieved_successfully'));
     }
 
 

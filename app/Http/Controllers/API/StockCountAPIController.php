@@ -100,7 +100,7 @@ class StockCountAPIController extends AppBaseController
         $this->stockCountRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockCounts = $this->stockCountRepository->all();
 
-        return $this->sendResponse($stockCounts->toArray(), 'Stock Counts retrieved successfully');
+        return $this->sendResponse($stockCounts->toArray(), trans('custom.stock_counts_retrieved_successfully'));
     }
 
     /**
@@ -199,7 +199,7 @@ class StockCountAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             DB::rollBack();
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+            return $this->sendError(trans('custom.document_date_not_within_financial_period_stock_count'), 500);
         }
 
         $input['documentSystemID'] = 97;
@@ -223,23 +223,23 @@ class StockCountAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
             DB::rollBack();
-            return $this->sendError('Segment not found',500);
+            return $this->sendError(trans('custom.segment_not_found'),500);
         }
 
         if ($segment->isActive == 0) {
             DB::rollBack();
-            return $this->sendError('Please select a active Segment', 500);
+            return $this->sendError(trans('custom.please_select_active_segment_stock_count'), 500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
         if (empty($warehouse)) {
             DB::rollBack();
-            return $this->sendError('Location not found',500);
+            return $this->sendError(trans('custom.location_not_found'),500);
         }
 
         if ($warehouse->isActive == 0) {
             DB::rollBack();
-            return $this->sendError('Please select a active location.', 500);
+            return $this->sendError(trans('custom.please_select_active_location_stock_count'), 500);
         }
 
         $items = ItemAssigned::where('companySystemID', $input['companySystemID'])
@@ -253,7 +253,7 @@ class StockCountAPIController extends AppBaseController
 
             if (count($checkProducts['usedItems']) > 0) {
                 DB::rollBack();
-                return $this->sendError('You cannot used these items, these items have been pulled in the following documents', 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
+                return $this->sendError(trans('custom.you_cannot_used_these_items_these_items_have_been_'), 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
             }
         } else {
             $skipProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
@@ -314,7 +314,7 @@ class StockCountAPIController extends AppBaseController
             }
         
             DB::commit();
-            return $this->sendResponse(['stockCount' => $stockCount->toArray(), 'errorMessage' => $errorMessage], 'Stock Count saved successfully');
+            return $this->sendResponse(['stockCount' => $stockCount->toArray(), trans('custom.errormessage') => $errorMessage], trans('custom.stock_count_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());
@@ -370,10 +370,10 @@ class StockCountAPIController extends AppBaseController
         },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
-        return $this->sendResponse($stockCount->toArray(), 'Stock Count retrieved successfully');
+        return $this->sendResponse($stockCount->toArray(), trans('custom.stock_count_retrieved_successfully'));
     }
 
     /**
@@ -438,18 +438,18 @@ class StockCountAPIController extends AppBaseController
             $stockCount = $this->stockCountRepository->findWithoutFail($id);
 
             if (empty($stockCount)) {
-                return $this->sendError('Stock Count not found');
+                return $this->sendError(trans('custom.stock_count_not_found'));
             }
 
             if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Segment not found');
+                    return $this->sendError(trans('custom.segment_not_found'));
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->stockCountRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
-                    return $this->sendError('Please select a active Segment', 500,$serviceLineError);
+                    return $this->sendError(trans('custom.please_select_active_segment_stock_count'), 500,$serviceLineError);
                 }
 
                 $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -458,12 +458,12 @@ class StockCountAPIController extends AppBaseController
             if ($input['location']) {
                 $checkWareHouseActive = WarehouseMaster::find($input['location']);
                 if (empty($checkWareHouseActive)) {
-                    return $this->sendError('Location not found', 500, $wareHouseError);
+                    return $this->sendError(trans('custom.location_not_found'), 500, $wareHouseError);
                 }
 
                 if ($checkWareHouseActive->isActive == 0) {
                     $this->stockCountRepository->update(["location" => null],$id);
-                    return $this->sendError('Please select a active location', 500, $wareHouseError);
+                    return $this->sendError(trans('custom.please_select_active_location_stock_count'), 500, $wareHouseError);
                 }
             }
 
@@ -512,13 +512,13 @@ class StockCountAPIController extends AppBaseController
                 $monthEnd = $input['FYEnd'];
                 if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
                 } else {
-                    return $this->sendError('Document  date is not within the selected financial period !', 500);
+                    return $this->sendError(trans('custom.document_date_not_within_financial_period_stock_count'), 500);
                 }
 
                 $checkItems = StockCountDetail::where('stockCountAutoID', $id)
                     ->count();
                 if ($checkItems == 0) {
-                    return $this->sendError('Every document should have at least one item', 500);
+                    return $this->sendError(trans('custom.every_document_should_have_at_least_one_item'), 500);
                 }
 
                 $deleteNotUpdatedItems = StockCountDetail::where('stockCountAutoID', $id)
@@ -551,7 +551,7 @@ class StockCountAPIController extends AppBaseController
             $stockCount = $this->stockCountRepository->update($input, $id);
 
             DB::commit();
-            return $this->sendReponseWithDetails($stockCount->toArray(), 'Stock Count updated successfully',1,$confirm['data'] ?? null);
+            return $this->sendReponseWithDetails($stockCount->toArray(), trans('custom.stock_count_updated_successfully'),1,$confirm['data'] ?? null);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());
@@ -642,12 +642,12 @@ class StockCountAPIController extends AppBaseController
         $stockCount = $this->stockCountRepository->findWithoutFail($id);
 
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         $stockCount->delete();
 
-        return $this->sendSuccess('Stock Count deleted successfully');
+        return $this->sendSuccess(trans('custom.stock_count_deleted_successfully'));
     }
 
     public function getAllStockCountsByCompany(Request $request)
@@ -697,19 +697,19 @@ class StockCountAPIController extends AppBaseController
         $stockCount = $this->stockCountRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         if ($stockCount->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Count it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_count_it_is_already_f'));
         }
 
         if ($stockCount->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Count it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_count_it_is_already_p'));
         }
 
         if ($stockCount->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Count, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_stock_count_it_is_not_confi'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -724,9 +724,14 @@ class StockCountAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockCount->stockCountCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $stockCount->stockCountCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $stockCount->companySystemID)
             ->where('documentSystemCode', $stockCount->stockCountAutoID)
@@ -741,7 +746,7 @@ class StockCountAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -783,7 +788,7 @@ class StockCountAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($stockCount->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($stockCount->toArray(), 'Stock Count reopened successfully');
+        return $this->sendResponse($stockCount->toArray(), trans('custom.stock_count_reopened_successfully'));
     }
 
     public function getStockCountAudit(Request $request)
@@ -792,12 +797,12 @@ class StockCountAPIController extends AppBaseController
         $stockCount = $this->stockCountRepository->getAudit($id);
 
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         $stockCount->docRefNo = \Helper::getCompanyDocRefNo($stockCount->companySystemID, $stockCount->documentSystemID);
 
-        return $this->sendResponse($stockCount->toArray(), 'Stock Count retrieved successfully');
+        return $this->sendResponse($stockCount->toArray(), trans('custom.stock_count_retrieved_successfully'));
     }
 
      public function getStockCountApprovedByUser(Request $request)
@@ -988,11 +993,11 @@ class StockCountAPIController extends AppBaseController
 
         $stockCount = $this->stockCountRepository->find($id);
         if (empty($stockCount)) {
-            return $this->sendError('Stock Count not found');
+            return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
         if ($stockCount->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this stock Count');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_stock_count'));
         }
 
         $stockCountArray = $stockCount->toArray();
@@ -1039,6 +1044,6 @@ class StockCountAPIController extends AppBaseController
             $this->stockCountRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($stockCount->toArray(), 'Stock Count Amend successfully');
+        return $this->sendResponse($stockCount->toArray(), trans('custom.stock_count_amend_successfully'));
     }
 }

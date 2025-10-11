@@ -50,7 +50,7 @@ class DepartmentMasterAPIController extends AppBaseController
         $this->departmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $departmentMasters = $this->departmentMasterRepository->all();
 
-        return $this->sendResponse($departmentMasters->toArray(), 'Department Masters retrieved successfully');
+        return $this->sendResponse($departmentMasters->toArray(), trans('custom.department_masters_retrieved_successfully'));
     }
 
     /**
@@ -67,7 +67,7 @@ class DepartmentMasterAPIController extends AppBaseController
 
         $departmentMasters = $this->departmentMasterRepository->create($input);
 
-        return $this->sendResponse($departmentMasters->toArray(), 'Department Master saved successfully');
+        return $this->sendResponse($departmentMasters->toArray(), trans('custom.department_master_saved_successfully'));
     }
 
     /**
@@ -84,10 +84,10 @@ class DepartmentMasterAPIController extends AppBaseController
         $departmentMaster = $this->departmentMasterRepository->findWithoutFail($id);
 
         if (empty($departmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError(trans('custom.department_master_not_found'));
         }
 
-        return $this->sendResponse($departmentMaster->toArray(), 'Department Master retrieved successfully');
+        return $this->sendResponse($departmentMaster->toArray(), trans('custom.department_master_retrieved_successfully'));
     }
 
     /**
@@ -107,12 +107,12 @@ class DepartmentMasterAPIController extends AppBaseController
         $departmentMaster = $this->departmentMasterRepository->findWithoutFail($id);
 
         if (empty($departmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError(trans('custom.department_master_not_found'));
         }
 
         $departmentMaster = $this->departmentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($departmentMaster->toArray(), 'DepartmentMaster updated successfully');
+        return $this->sendResponse($departmentMaster->toArray(), trans('custom.departmentmaster_updated_successfully'));
     }
 
     /**
@@ -129,11 +129,11 @@ class DepartmentMasterAPIController extends AppBaseController
         $departmentMaster = $this->departmentMasterRepository->findWithoutFail($id);
 
         if (empty($departmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError(trans('custom.department_master_not_found'));
         }
 
         $departmentMaster->delete();
 
-        return $this->sendResponse($id, 'Department Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.department_master_deleted_successfully'));
     }
 }

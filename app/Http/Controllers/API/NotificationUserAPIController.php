@@ -65,7 +65,7 @@ class NotificationUserAPIController extends AppBaseController
         $this->notificationUserRepository->pushCriteria(new LimitOffsetCriteria($request));
         $notificationUsers = $this->notificationUserRepository->all();
 
-        return $this->sendResponse($notificationUsers->toArray(), 'Notification Users retrieved successfully');
+        return $this->sendResponse($notificationUsers->toArray(), trans('custom.notification_users_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class NotificationUserAPIController extends AppBaseController
 
         $notificationUser = $this->notificationUserRepository->create($input);
 
-        return $this->sendResponse($notificationUser->toArray(), 'Notification User saved successfully');
+        return $this->sendResponse($notificationUser->toArray(), trans('custom.notification_user_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class NotificationUserAPIController extends AppBaseController
         $notificationUser = $this->notificationUserRepository->findWithoutFail($id);
 
         if (empty($notificationUser)) {
-            return $this->sendError('Notification User not found');
+            return $this->sendError(trans('custom.notification_user_not_found'));
         }
 
-        return $this->sendResponse($notificationUser->toArray(), 'Notification User retrieved successfully');
+        return $this->sendResponse($notificationUser->toArray(), trans('custom.notification_user_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class NotificationUserAPIController extends AppBaseController
         $notificationUser = $this->notificationUserRepository->findWithoutFail($id);
 
         if (empty($notificationUser)) {
-            return $this->sendError('Notification User not found');
+            return $this->sendError(trans('custom.notification_user_not_found'));
         }
 
         $notificationUser = $this->notificationUserRepository->update($input, $id);
 
-        return $this->sendResponse($notificationUser->toArray(), 'NotificationUser updated successfully');
+        return $this->sendResponse($notificationUser->toArray(), trans('custom.notificationuser_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class NotificationUserAPIController extends AppBaseController
         $notificationUser = $this->notificationUserRepository->findWithoutFail($id);
 
         if (empty($notificationUser)) {
-            return $this->sendError('Notification User not found');
+            return $this->sendError(trans('custom.notification_user_not_found'));
         }
 
         $notificationUser->delete();

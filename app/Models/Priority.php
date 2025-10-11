@@ -29,7 +29,7 @@ class Priority extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $appends = ['priorityDescription'];
 
     protected $dates = ['deleted_at'];
 
@@ -57,5 +57,41 @@ class Priority extends Model
         
     ];
 
+    /**
+     * Relationship to PriorityLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(PriorityLanguage::class, 'priorityID', 'priorityID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated priority description
+     */
+    public function getPriorityDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->priorityDescription) {
+            return $translation->priorityDescription;
+        }
+        
+        
+        return $this->attributes['priorityDescription'] ?? '';
+    }
     
 }

@@ -65,7 +65,7 @@ class SystemJobsAPIController extends AppBaseController
         $this->systemJobsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $systemJobs = $this->systemJobsRepository->all();
 
-        return $this->sendResponse($systemJobs->toArray(), 'System Jobs retrieved successfully');
+        return $this->sendResponse($systemJobs->toArray(), trans('custom.system_jobs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SystemJobsAPIController extends AppBaseController
 
         $systemJobs = $this->systemJobsRepository->create($input);
 
-        return $this->sendResponse($systemJobs->toArray(), 'System Jobs saved successfully');
+        return $this->sendResponse($systemJobs->toArray(), trans('custom.system_jobs_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SystemJobsAPIController extends AppBaseController
         $systemJobs = $this->systemJobsRepository->findWithoutFail($id);
 
         if (empty($systemJobs)) {
-            return $this->sendError('System Jobs not found');
+            return $this->sendError(trans('custom.system_jobs_not_found'));
         }
 
-        return $this->sendResponse($systemJobs->toArray(), 'System Jobs retrieved successfully');
+        return $this->sendResponse($systemJobs->toArray(), trans('custom.system_jobs_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SystemJobsAPIController extends AppBaseController
         $systemJobs = $this->systemJobsRepository->findWithoutFail($id);
 
         if (empty($systemJobs)) {
-            return $this->sendError('System Jobs not found');
+            return $this->sendError(trans('custom.system_jobs_not_found'));
         }
 
         $systemJobs = $this->systemJobsRepository->update($input, $id);
 
-        return $this->sendResponse($systemJobs->toArray(), 'SystemJobs updated successfully');
+        return $this->sendResponse($systemJobs->toArray(), trans('custom.systemjobs_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SystemJobsAPIController extends AppBaseController
         $systemJobs = $this->systemJobsRepository->findWithoutFail($id);
 
         if (empty($systemJobs)) {
-            return $this->sendError('System Jobs not found');
+            return $this->sendError(trans('custom.system_jobs_not_found'));
         }
 
         $systemJobs->delete();

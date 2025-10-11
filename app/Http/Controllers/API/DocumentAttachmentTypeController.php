@@ -93,10 +93,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($id);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Document Type not found');
+            return $this->sendError(trans('custom.document_type_not_found'));
         }
 
-        return $this->sendResponse($attachmentType->toArray(), 'Document Type retrieved successfully');
+        return $this->sendResponse($attachmentType->toArray(), trans('custom.document_type_retrieved_successfully'));
     }
 
     /**

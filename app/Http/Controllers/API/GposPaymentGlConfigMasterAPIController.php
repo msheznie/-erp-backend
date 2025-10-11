@@ -75,7 +75,7 @@ class GposPaymentGlConfigMasterAPIController extends AppBaseController
         $this->gposPaymentGlConfigMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gposPaymentGlConfigMasters = $this->gposPaymentGlConfigMasterRepository->all();
 
-        return $this->sendResponse($gposPaymentGlConfigMasters->toArray(), 'Gpos Payment Gl Config Masters retrieved successfully');
+        return $this->sendResponse($gposPaymentGlConfigMasters->toArray(), trans('custom.gpos_payment_gl_config_masters_retrieved_successfu'));
     }
 
     /**
@@ -122,7 +122,7 @@ class GposPaymentGlConfigMasterAPIController extends AppBaseController
 
         $gposPaymentGlConfigMasters = $this->gposPaymentGlConfigMasterRepository->create($input);
 
-        return $this->sendResponse($gposPaymentGlConfigMasters->toArray(), 'Gpos Payment Gl Config Master saved successfully');
+        return $this->sendResponse($gposPaymentGlConfigMasters->toArray(), trans('custom.gpos_payment_gl_config_master_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class GposPaymentGlConfigMasterAPIController extends AppBaseController
         $gposPaymentGlConfigMaster = $this->gposPaymentGlConfigMasterRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigMaster)) {
-            return $this->sendError('Gpos Payment Gl Config Master not found');
+            return $this->sendError(trans('custom.gpos_payment_gl_config_master_not_found'));
         }
 
-        return $this->sendResponse($gposPaymentGlConfigMaster->toArray(), 'Gpos Payment Gl Config Master retrieved successfully');
+        return $this->sendResponse($gposPaymentGlConfigMaster->toArray(), trans('custom.gpos_payment_gl_config_master_retrieved_successful'));
     }
 
     /**
@@ -229,12 +229,12 @@ class GposPaymentGlConfigMasterAPIController extends AppBaseController
         $gposPaymentGlConfigMaster = $this->gposPaymentGlConfigMasterRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigMaster)) {
-            return $this->sendError('Gpos Payment Gl Config Master not found');
+            return $this->sendError(trans('custom.gpos_payment_gl_config_master_not_found'));
         }
 
         $gposPaymentGlConfigMaster = $this->gposPaymentGlConfigMasterRepository->update($input, $id);
 
-        return $this->sendResponse($gposPaymentGlConfigMaster->toArray(), 'GposPaymentGlConfigMaster updated successfully');
+        return $this->sendResponse($gposPaymentGlConfigMaster->toArray(), trans('custom.gpospaymentglconfigmaster_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class GposPaymentGlConfigMasterAPIController extends AppBaseController
         $gposPaymentGlConfigMaster = $this->gposPaymentGlConfigMasterRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigMaster)) {
-            return $this->sendError('Gpos Payment Gl Config Master not found');
+            return $this->sendError(trans('custom.gpos_payment_gl_config_master_not_found'));
         }
 
         $gposPaymentGlConfigMaster->delete();
 
-        return $this->sendResponse($id, 'Gpos Payment Gl Config Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.gpos_payment_gl_config_master_deleted_successfully'));
     }
 }

@@ -75,7 +75,7 @@ class ExpenseClaimCategoriesAPIController extends AppBaseController
         $this->expenseClaimCategoriesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->all();
 
-        return $this->sendResponse($expenseClaimCategories->toArray(), 'Expense Claim Categories retrieved successfully');
+        return $this->sendResponse($expenseClaimCategories->toArray(), trans('custom.expense_claim_categories_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class ExpenseClaimCategoriesAPIController extends AppBaseController
 
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->create($input);
 
-        return $this->sendResponse($expenseClaimCategories->toArray(), 'Expense Claim Categories saved successfully');
+        return $this->sendResponse($expenseClaimCategories->toArray(), trans('custom.expense_claim_categories_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class ExpenseClaimCategoriesAPIController extends AppBaseController
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategories)) {
-            return $this->sendError('Expense Claim Categories not found');
+            return $this->sendError(trans('custom.expense_claim_categories_not_found'));
         }
 
-        return $this->sendResponse($expenseClaimCategories->toArray(), 'Expense Claim Categories retrieved successfully');
+        return $this->sendResponse($expenseClaimCategories->toArray(), trans('custom.expense_claim_categories_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class ExpenseClaimCategoriesAPIController extends AppBaseController
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategories)) {
-            return $this->sendError('Expense Claim Categories not found');
+            return $this->sendError(trans('custom.expense_claim_categories_not_found'));
         }
 
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->update($input, $id);
 
-        return $this->sendResponse($expenseClaimCategories->toArray(), 'ExpenseClaimCategories updated successfully');
+        return $this->sendResponse($expenseClaimCategories->toArray(), trans('custom.expenseclaimcategories_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class ExpenseClaimCategoriesAPIController extends AppBaseController
         $expenseClaimCategories = $this->expenseClaimCategoriesRepository->findWithoutFail($id);
 
         if (empty($expenseClaimCategories)) {
-            return $this->sendError('Expense Claim Categories not found');
+            return $this->sendError(trans('custom.expense_claim_categories_not_found'));
         }
 
         $expenseClaimCategories->delete();
 
-        return $this->sendResponse($id, 'Expense Claim Categories deleted successfully');
+        return $this->sendResponse($id, trans('custom.expense_claim_categories_deleted_successfully'));
     }
 }

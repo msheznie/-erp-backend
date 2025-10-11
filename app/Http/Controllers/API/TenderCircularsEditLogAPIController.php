@@ -64,7 +64,7 @@ class TenderCircularsEditLogAPIController extends AppBaseController
         $this->tenderCircularsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderCircularsEditLogs = $this->tenderCircularsEditLogRepository->all();
 
-        return $this->sendResponse($tenderCircularsEditLogs->toArray(), 'Tender Circulars Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderCircularsEditLogs->toArray(), trans('custom.tender_circulars_edit_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderCircularsEditLogAPIController extends AppBaseController
 
         $tenderCircularsEditLog = $this->tenderCircularsEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderCircularsEditLog->toArray(), 'Tender Circulars Edit Log saved successfully');
+        return $this->sendResponse($tenderCircularsEditLog->toArray(), trans('custom.tender_circulars_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderCircularsEditLogAPIController extends AppBaseController
         $tenderCircularsEditLog = $this->tenderCircularsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderCircularsEditLog)) {
-            return $this->sendError('Tender Circulars Edit Log not found');
+            return $this->sendError(trans('custom.tender_circulars_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderCircularsEditLog->toArray(), 'Tender Circulars Edit Log retrieved successfully');
+        return $this->sendResponse($tenderCircularsEditLog->toArray(), trans('custom.tender_circulars_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderCircularsEditLogAPIController extends AppBaseController
         $tenderCircularsEditLog = $this->tenderCircularsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderCircularsEditLog)) {
-            return $this->sendError('Tender Circulars Edit Log not found');
+            return $this->sendError(trans('custom.tender_circulars_edit_log_not_found'));
         }
 
         $tenderCircularsEditLog = $this->tenderCircularsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderCircularsEditLog->toArray(), 'TenderCircularsEditLog updated successfully');
+        return $this->sendResponse($tenderCircularsEditLog->toArray(), trans('custom.tendercircularseditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderCircularsEditLogAPIController extends AppBaseController
         $tenderCircularsEditLog = $this->tenderCircularsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderCircularsEditLog)) {
-            return $this->sendError('Tender Circulars Edit Log not found');
+            return $this->sendError(trans('custom.tender_circulars_edit_log_not_found'));
         }
 
         $tenderCircularsEditLog->delete();

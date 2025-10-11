@@ -202,7 +202,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
 
             if ($newCounterValue == $totalSegments) {
                 $webPushData = [
-                    'title' => "Upload Budget Successfully Completed",
+                    'title' => "upload_budget_successfully_completed",
                     'body' => "",
                     'url' => "general-ledger/budget-upload",
                     'path' => "",

@@ -65,7 +65,7 @@ class EnvelopTypeAPIController extends AppBaseController
         $this->envelopTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $envelopTypes = $this->envelopTypeRepository->all();
 
-        return $this->sendResponse($envelopTypes->toArray(), 'Envelop Types retrieved successfully');
+        return $this->sendResponse($envelopTypes->toArray(), trans('custom.envelop_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EnvelopTypeAPIController extends AppBaseController
 
         $envelopType = $this->envelopTypeRepository->create($input);
 
-        return $this->sendResponse($envelopType->toArray(), 'Envelop Type saved successfully');
+        return $this->sendResponse($envelopType->toArray(), trans('custom.envelop_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EnvelopTypeAPIController extends AppBaseController
         $envelopType = $this->envelopTypeRepository->findWithoutFail($id);
 
         if (empty($envelopType)) {
-            return $this->sendError('Envelop Type not found');
+            return $this->sendError(trans('custom.envelop_type_not_found'));
         }
 
-        return $this->sendResponse($envelopType->toArray(), 'Envelop Type retrieved successfully');
+        return $this->sendResponse($envelopType->toArray(), trans('custom.envelop_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EnvelopTypeAPIController extends AppBaseController
         $envelopType = $this->envelopTypeRepository->findWithoutFail($id);
 
         if (empty($envelopType)) {
-            return $this->sendError('Envelop Type not found');
+            return $this->sendError(trans('custom.envelop_type_not_found'));
         }
 
         $envelopType = $this->envelopTypeRepository->update($input, $id);
 
-        return $this->sendResponse($envelopType->toArray(), 'EnvelopType updated successfully');
+        return $this->sendResponse($envelopType->toArray(), trans('custom.enveloptype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EnvelopTypeAPIController extends AppBaseController
         $envelopType = $this->envelopTypeRepository->findWithoutFail($id);
 
         if (empty($envelopType)) {
-            return $this->sendError('Envelop Type not found');
+            return $this->sendError(trans('custom.envelop_type_not_found'));
         }
 
         $envelopType->delete();

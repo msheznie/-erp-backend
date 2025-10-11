@@ -76,7 +76,7 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
         $this->stockTransferDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockTransferDetailsRefferedBacks = $this->stockTransferDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($stockTransferDetailsRefferedBacks->toArray(), 'Stock Transfer Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($stockTransferDetailsRefferedBacks->toArray(), trans('custom.stock_transfer_details_reffered_backs_retrieved_su'));
     }
 
     /**
@@ -123,7 +123,7 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
 
         $stockTransferDetailsRefferedBacks = $this->stockTransferDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($stockTransferDetailsRefferedBacks->toArray(), 'Stock Transfer Details Reffered Back saved successfully');
+        return $this->sendResponse($stockTransferDetailsRefferedBacks->toArray(), trans('custom.stock_transfer_details_reffered_back_saved_success'));
     }
 
     /**
@@ -170,10 +170,10 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
         $stockTransferDetailsRefferedBack = $this->stockTransferDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockTransferDetailsRefferedBack)) {
-            return $this->sendError('Stock Transfer Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_transfer_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($stockTransferDetailsRefferedBack->toArray(), 'Stock Transfer Details Reffered Back retrieved successfully');
+        return $this->sendResponse($stockTransferDetailsRefferedBack->toArray(), trans('custom.stock_transfer_details_reffered_back_retrieved_suc'));
     }
 
     /**
@@ -230,12 +230,12 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
         $stockTransferDetailsRefferedBack = $this->stockTransferDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockTransferDetailsRefferedBack)) {
-            return $this->sendError('Stock Transfer Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_transfer_details_reffered_back_not_found'));
         }
 
         $stockTransferDetailsRefferedBack = $this->stockTransferDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($stockTransferDetailsRefferedBack->toArray(), 'StockTransferDetailsRefferedBack updated successfully');
+        return $this->sendResponse($stockTransferDetailsRefferedBack->toArray(), trans('custom.stocktransferdetailsrefferedback_updated_successfu'));
     }
 
     /**
@@ -282,12 +282,12 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
         $stockTransferDetailsRefferedBack = $this->stockTransferDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockTransferDetailsRefferedBack)) {
-            return $this->sendError('Stock Transfer Details Reffered Back not found');
+            return $this->sendError(trans('custom.stock_transfer_details_reffered_back_not_found'));
         }
 
         $stockTransferDetailsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Stock Transfer Details Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_transfer_details_reffered_back_deleted_succe'));
     }
 
     public function getStockTransferDetailsReferBack(Request $request)
@@ -302,7 +302,7 @@ class StockTransferDetailsRefferedBackAPIController extends AppBaseController
             ->with(['unit_by'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Stock Transfer details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.stock_transfer_details_retrieved_successfully'));
     }
 
 }

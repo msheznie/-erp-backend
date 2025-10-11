@@ -65,7 +65,7 @@ class TaxMasterAPIController extends AppBaseController
         $this->taxMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxMasters = $this->taxMasterRepository->all();
 
-        return $this->sendResponse($taxMasters->toArray(), 'VAT Masters retrieved successfully');
+        return $this->sendResponse($taxMasters->toArray(), trans('custom.vat_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TaxMasterAPIController extends AppBaseController
 
         $taxMaster = $this->taxMasterRepository->create($input);
 
-        return $this->sendResponse($taxMaster->toArray(), 'VAT Master saved successfully');
+        return $this->sendResponse($taxMaster->toArray(), trans('custom.vat_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('VAT Master not found');
+            return $this->sendError(trans('custom.vat_master_not_found'));
         }
 
-        return $this->sendResponse($taxMaster->toArray(), 'VAT Master retrieved successfully');
+        return $this->sendResponse($taxMaster->toArray(), trans('custom.vat_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('VAT Master not found');
+            return $this->sendError(trans('custom.vat_master_not_found'));
         }
 
         $taxMaster = $this->taxMasterRepository->update($input, $id);
 
-        return $this->sendResponse($taxMaster->toArray(), 'TaxMaster updated successfully');
+        return $this->sendResponse($taxMaster->toArray(), trans('custom.taxmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('VAT Master not found');
+            return $this->sendError(trans('custom.vat_master_not_found'));
         }
 
         $taxMaster->delete();

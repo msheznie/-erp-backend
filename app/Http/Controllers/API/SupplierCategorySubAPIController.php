@@ -59,13 +59,13 @@ class SupplierCategorySubAPIController extends AppBaseController
         $this->supplierCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierCategorySubs = $this->supplierCategorySubRepository->all();
 
-        return $this->sendResponse($supplierCategorySubs->toArray(), 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($supplierCategorySubs->toArray(), trans('custom.supplier_category_subs_retrieved_successfully'));
     }
 
     public function getSubCategoriesByMasterCategory(Request $request){
         $businessCategoryID = $request['businessCategoryID'];
         $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->where('isActive',1)->get();
-        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
+        return $this->sendResponse($businessSubCategories, trans('custom.sub_category_retrieved_successfully'));
     }
 
     /**
@@ -92,12 +92,12 @@ class SupplierCategorySubAPIController extends AppBaseController
 
         $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
         if($subCategoriesByMaster){
-            return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
+            return $this->sendError(trans('custom.sub_category_code') . ' ' . trans('custom.already_exists'),422);
         }
 
         $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
         if($subCategoriesByMaster){
-            return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
+            return $this->sendError(trans('custom.sub_category_name') . ' ' . trans('custom.already_exists'),422);
         }
 
         $id = Auth::id();
@@ -158,14 +158,14 @@ class SupplierCategorySubAPIController extends AppBaseController
         if($supplierCategorySub->subCategoryCode != $request->subCategoryCode){
             $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
             if($subCategoriesByMaster){
-                return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
+                return $this->sendError(trans('custom.sub_category_code') . ' ' . trans('custom.already_exists'),422);
             }
         }
 
         if($supplierCategorySub->categoryName != $request->categoryName){
             $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
             if($subCategoriesByMaster){
-                return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
+                return $this->sendError(trans('custom.sub_category_name') . ' ' . trans('custom.already_exists'),422);
             }
         }
 
@@ -218,10 +218,10 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign= SupplierSubCategoryAssign::where('supSubCategoryID', $id)->first();
 
         if ($subCategoryAssign) {
-            return $this->sendError("This sub category has already been pulled to Supplier Master, cannot be deleted");
+            return $this->sendError(trans('custom.this_category_has_already_been_pulled_to_supplier_'));
         }
 
-        return $this->sendResponse($id,"This sub category can be delete");
+        return $this->sendResponse($id,trans('custom.this_category_can_be_delete'));
     }
 
     public function getAllSupplierBusinessSubCategories(Request $request){
@@ -255,7 +255,7 @@ class SupplierCategorySubAPIController extends AppBaseController
 
     public function getSupplierBusinessSubCategoryFormData(Request $request)
     {
-        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $yesNoSelection = YesNoSelection::all();
 
         $output = array('yesNoSelection' => $yesNoSelection);
 
@@ -279,10 +279,10 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign = SupplierSubCategoryAssign::where('supSubCategoryID', $input['id'])->first();
 
         if ($subCategoryAssign) {
-            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
+            $errorMessages = trans('custom.cannot_be_amended');
             $amendable = false;
         } else {
-            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $successMessages = trans('custom.supplier_checking_note');
             $amendable = true;
         }
 
@@ -293,7 +293,7 @@ class SupplierCategorySubAPIController extends AppBaseController
     public function getSubCategoriesByMultipleMasterCategory(Request $request){
         $input = $request->all();
         $businessSubCategories = SupplierCategorySub::whereIn('supMasterCategoryID',$input)->where('isActive',1)->get();
-        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
+        return $this->sendResponse($businessSubCategories, trans('custom.sub_category_retrieved_successfully'));
     }
 
 
@@ -301,7 +301,7 @@ class SupplierCategorySubAPIController extends AppBaseController
         $categories = $request->input('categories');
 
         if(empty($categories)) {
-            $this->sendError("Categories not found");
+            $this->sendError(trans('custom.categories_not_found'));
         }
 
         $categories = collect($categories)->pluck('id')->toArray();

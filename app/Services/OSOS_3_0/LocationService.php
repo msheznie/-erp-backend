@@ -58,7 +58,7 @@ class LocationService
             }
 
             $logData = [
-                'message' => "Location about to trigger: " . $this->id . ' - ' . $this->locationData['name'], 
+                'message' => "Location about to trigger: " . $this->id . ' - ' . $this->locationData['Name'], 
                 'id' => $this->id 
             ];
             $this->insertToLogTb($logData, 'info', 'Location', $this->companyId);
@@ -67,7 +67,7 @@ class LocationService
             $headers = [
                 'content-type' => 'application/json',
                 'auth-key' => $this->apiExternalKey,
-                'menu-id' => 'defualt'
+                'menu-id' => 'default'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -143,13 +143,13 @@ class LocationService
         }
 
         if ($this->postType != 'POST') {
-            if (empty($this->locationData['id'])) {
+            if (empty($this->locationData['Id'])) {
                 $error = 'Reference id not found';
                 return ['status' => false, 'message' => $error];
             }
         }
 
-        if (empty($this->locationData['code'])) {
+        if (empty($this->locationData['Code'])) {
             $error = 'Location code not found';
             return ['status' => false, 'message' => $error];
         }
@@ -180,17 +180,17 @@ class LocationService
         }
 
         $this->locationData = [
-            "code" => $data->Code,
-            "name" => $data->Name,
-            "description" => $data->Description,
-            "countryId" => $data->CountryId,
-            "status" => $data->Status,
-            "isDeleted" => $data->IsDeleted,
+            "Code" => $data->Code,
+            "Name" => $data->Name,
+            "Description" => $data->Description,
+            "CountryId" => $data->CountryId,
+            "Status" => $data->Status,
+            "IsDeleted" => $data->IsDeleted,
         ];
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->locationData['id'] = $this->masterUuId;
+            $this->locationData['Id'] = $this->masterUuId;
         }
     }
 }

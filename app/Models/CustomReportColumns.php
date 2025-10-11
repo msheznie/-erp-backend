@@ -150,5 +150,23 @@ class CustomReportColumns extends Model
         
     ];
 
+    /**
+     * Get the translated label attribute
+     *
+     * @return string
+     */
+    public function getLabelAttribute($value)
+    {
+        $translationKey = str_replace(' ', '_', strtolower(trim($value)));
+        
+        $translatedValue = __("custom.{$translationKey}");
+        
+        if ($translatedValue === "custom.{$translationKey}") {
+            return $value;
+        }
+        
+        return $translatedValue;
+    }
+
     
 }

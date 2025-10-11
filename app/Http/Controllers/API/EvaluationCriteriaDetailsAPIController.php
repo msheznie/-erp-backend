@@ -76,7 +76,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $this->evaluationCriteriaDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->all();
 
-        return $this->sendResponse($evaluationCriteriaDetails->toArray(), 'Evaluation Criteria Details retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaDetails->toArray(), trans('custom.evaluation_criteria_details_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->create($input);
 
-        return $this->sendResponse($evaluationCriteriaDetails->toArray(), 'Evaluation Criteria Details saved successfully');
+        return $this->sendResponse($evaluationCriteriaDetails->toArray(), trans('custom.evaluation_criteria_details_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetails)) {
-            return $this->sendError('Evaluation Criteria Details not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_not_found'));
         }
 
-        return $this->sendResponse($evaluationCriteriaDetails->toArray(), 'Evaluation Criteria Details retrieved successfully');
+        return $this->sendResponse($evaluationCriteriaDetails->toArray(), trans('custom.evaluation_criteria_details_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetails)) {
-            return $this->sendError('Evaluation Criteria Details not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_not_found'));
         }
 
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationCriteriaDetails->toArray(), 'EvaluationCriteriaDetails updated successfully');
+        return $this->sendResponse($evaluationCriteriaDetails->toArray(), trans('custom.evaluationcriteriadetails_updated_successfully'));
     }
 
     /**
@@ -282,7 +282,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $evaluationCriteriaDetails = $this->evaluationCriteriaDetailsRepository->findWithoutFail($id);
 
         if (empty($evaluationCriteriaDetails)) {
-            return $this->sendError('Evaluation Criteria Details not found');
+            return $this->sendError(trans('custom.evaluation_criteria_details_not_found'));
         }
 
         $evaluationCriteriaDetails->delete();

@@ -57,5 +57,33 @@ class suppliernature extends Model
         
     ];
 
-    
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['natureDescription'];
+
+    /**
+     * Get the translations for the suppliernature.
+     */
+    public function translations()
+    {
+        return $this->hasMany(SuppliernatureTranslation::class, 'supplierNatureID', 'supplierNatureID');
+    }
+
+    /**
+     * Get the nature description based on current language.
+     */
+    public function getNatureDescriptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->natureDescription : $this->attributes['natureDescription'];
+    }
+
 }

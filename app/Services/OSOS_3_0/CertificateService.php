@@ -63,7 +63,7 @@ class CertificateService{
             $headers = [
                 'content-type' => 'application/json',
                 'auth-key' =>  $this->apiExternalKey,
-                'menu-id' =>  'defualt'
+                'menu-id' =>  'default'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -180,7 +180,7 @@ class CertificateService{
                 "gpa" => empty($gpa) ? null : $gpa,
                 "institution" => $data->institution,
                 "employeeId" => $this->empRefId,
-                "status" => 1
+                "status" => 0
             ],
             !empty($data->awardedDate) ? ["awardedDate" => $data->awardedDate] : [],
             $this->certificateData
