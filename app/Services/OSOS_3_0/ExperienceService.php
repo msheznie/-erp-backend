@@ -63,7 +63,7 @@ class ExperienceService{
             $headers = [
                 'content-type' => 'application/json',
                 'auth-key' =>  $this->apiExternalKey,
-                'menu-id' =>  'defualt'
+                'menu-id' =>  'default'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -181,7 +181,7 @@ class ExperienceService{
             "toDate" => $data->dateTo,
             "isCurrent" => $isCurrent,
             "employeeId" => $this->empRefId,
-            "status" => 1
+            "status" => 0
         ], $this->experienceData);
     }
 
