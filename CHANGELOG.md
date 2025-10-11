@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.86.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.0...v10.86.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* decrease token expire to 12h [GCP-15714] ([#9059](https://github.com/pbsgears/Gears_BackEnd/issues/9059)) ([ef23819](https://github.com/pbsgears/Gears_BackEnd/commit/ef238197415a35c1fbacd147ed2056974d760d19))
+
 ## [10.86.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.85.0...v10.86.0) (2025-09-26)
 
 
