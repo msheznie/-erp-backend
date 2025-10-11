@@ -9300,4 +9300,6 @@ return
     'gl_code_scenario_not_found_for_po_accrual' => 'Gl Code scenario not found for PO Accrual',
     'no_items_selected_to_add' => 'No items selected to add.',
     'please_select_a_gl_code' => 'Please select a GL code',
+    'customer_master' => 'customer_master',
+    'chart_of_accounts_' => 'chart_of_accounts_',
   ];

@@ -1132,7 +1132,7 @@ class ChartOfAccountAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'chart_of_accounts_';
+        $fileName = trans('custom.chart_of_accounts_');
         $path = 'system/chart_of_accounts_/excel/';
         $basePath = CreateExcel::process($data,$request->exte_type,$fileName,$path,$detail_array);
 
