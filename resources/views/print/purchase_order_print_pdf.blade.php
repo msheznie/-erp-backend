@@ -743,7 +743,7 @@
                         <td>{{$det->comment}}</td>
                     @endif
                     <td>{{$det->unit->UnitShortCode}}</td>
-                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit->displayRoundOff) ? number_format($det->noQty, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit) && !is_null($det->unit->displayRoundOff) ? number_format($det->noQty, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
                     @if(isset($allowAltUom))
                     <td>
                        @if($det->altUom)
@@ -752,15 +752,15 @@
                             -
                         @endif
                     </td>
-                    <td>{{!is_null($det->altUnitValue) ? number_format($det->altUnitValue, $det->altUom->displayRoundOff, '.', '') : number_format($det->altUnitValue, 5, '.', '')}}</td>
+                    <td>{{!is_null($det->altUnitValue) && !is_null($det->altUom) && !is_null($det->altUom->displayRoundOff) ? number_format($det->altUnitValue, $det->altUom->displayRoundOff, '.', '') : number_format($det->altUnitValue, 5, '.', '')}}</td>
                     @endif
-                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit->displayRoundOff) ? number_format($det->unitCost, $det->unit->displayRoundOff, '.', '') : number_format($det->unitCost, 5, '.', '')}}</td>
-                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit->displayRoundOff) ? number_format($det->discountAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->discountAmount, 5, '.', '')}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit) && !is_null($det->unit->displayRoundOff) ? number_format($det->unitCost, $det->unit->displayRoundOff, '.', '') : number_format($det->unitCost, 5, '.', '')}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit) && !is_null($det->unit->displayRoundOff) ? number_format($det->discountAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->discountAmount, 5, '.', '')}}</td>
                     @if ($podata->isVatEligible)
                         <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">@if($podata->rcmActivated) {{number_format(0, $numberFormatting)}}@else{{number_format($det->VATAmount, $numberFormatting)}} @endif</td>
                     @endif
-                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit->displayRoundOff) ? number_format($netUnitCost, $det->unit->displayRoundOff, '.', '') : number_format($netUnitCost, 5, '.', '')}}</td>
-                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit->displayRoundOff) ? number_format($det->netAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->netAmount, 5, '.', '')}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit) && !is_null($det->unit->displayRoundOff) ? number_format($netUnitCost, $det->unit->displayRoundOff, '.', '') : number_format($netUnitCost, 5, '.', '')}}</td>
+                    <td class="text-right @if(app()->getLocale() == 'ar') rtl-text-right @endif">{{!is_null($det->unit) && !is_null($det->unit->displayRoundOff) ? number_format($det->netAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->netAmount, 5, '.', '')}}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
