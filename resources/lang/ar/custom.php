@@ -9193,4 +9193,6 @@ return
     'please_configure_po_accrual_account_for_this_company' => 'يرجى تكوين حساب القيمة المضافة للشركة',
     'gl_code_scenario_not_found_for_po_accrual' => 'لم يتم العثور على سيناريو رمز الحساب للقيمة المضافة',
     'no_items_selected_to_add' => 'لم يتم اختيار أي عناصر للإضافة',
+    'customer_master' => 'العميل_الرئيسي',
+    'chart_of_accounts_' => 'مخطط_الحسابات_',
   ];

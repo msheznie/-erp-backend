@@ -917,7 +917,7 @@ class CustomerMasterAPIController extends AppBaseController
         $detail_array = array(
             'company_code'=>$companyCode,
         );
-        $fileName = 'customer_master';
+        $fileName = trans('custom.customer_master');
         $path = 'system/customer_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
