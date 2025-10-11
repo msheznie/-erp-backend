@@ -7428,7 +7428,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $tracingData = [];
 
-
         if (!is_array($purchaseOrderID) || (is_array($purchaseOrderID) && sizeof($purchaseOrderID) == 1)) {
             $poID = is_array($purchaseOrderID) ? $purchaseOrderID[0] : $purchaseOrderID;
 
@@ -7470,9 +7469,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $trData = [];
                 foreach ($prIDS as $key => $value) {
-                    $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
+                    if(!empty($value))
+                    {   
+                        $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
+                    }
                 }
-
                 return $trData;
             } else {
                 $procumentOrderData = ProcumentOrder::with(['currency'])

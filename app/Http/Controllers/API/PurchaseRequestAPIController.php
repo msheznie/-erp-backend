@@ -3210,7 +3210,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $sorted_mrDatas =  $mrDatas->sortBy('RequestID');
 
         $filtered = $sorted_mrDatas->filter(function ($value, $key) {
-         return $value->materialIssueStatusValue == trans('custom.pending');
+         return $value->materialIssueStatusValue == "Pending";
         });
 
         $filtered->all();
