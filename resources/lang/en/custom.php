@@ -9302,4 +9302,7 @@ return
     'please_select_a_gl_code' => 'Please select a GL code',
     'customer_master' => 'customer_master',
     'chart_of_accounts_' => 'chart_of_accounts_',
+    'item_master' => 'item_master',
+    'supplier_master' => 'supplier_master',
+    'segment_master' => 'segment_master',
   ];

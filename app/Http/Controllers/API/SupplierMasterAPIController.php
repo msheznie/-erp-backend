@@ -339,7 +339,7 @@ class SupplierMasterAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'supplier_master';
+        $fileName = trans('custom.supplier_master');
         $path = 'system/supplier_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);

@@ -9195,4 +9195,7 @@ return
     'no_items_selected_to_add' => 'لم يتم اختيار أي عناصر للإضافة',
     'customer_master' => 'العميل_الرئيسي',
     'chart_of_accounts_' => 'مخطط_الحسابات_',
-  ];
+    'item_master' => 'العنصر_الرئيسي',
+    'supplier_master' => 'رئيسي_المورد',
+    'segment_master' => 'رئيسي_القطاع',
+    ];

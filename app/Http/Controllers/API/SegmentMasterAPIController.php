@@ -1312,7 +1312,7 @@ class SegmentMasterAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'segment_master';
+        $fileName = trans('custom.segment_master');
         $path = 'system/segment_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
