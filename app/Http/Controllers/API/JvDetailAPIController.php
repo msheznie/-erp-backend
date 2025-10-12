@@ -172,7 +172,7 @@ class JvDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $messages = [
-            'currencyID' => 'Currency is required',
+            'currencyID' => trans('custom.currency_required'),
         ];
         $jvMaster = JvMaster::find($input['jvMasterAutoId']);
         $validator = \Validator::make($jvMaster->toArray(), [
@@ -467,7 +467,7 @@ class JvDetailAPIController extends AppBaseController
         }
 
         if (empty($input['detailTable'])) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $jvMasterData = JvMaster::find($jvMasterAutoId);
@@ -514,7 +514,10 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
             $detail_arr['glAccount'] = $new['GlCode'];
             $detail_arr['glAccountDescription'] = $new['AccountDescription'];
-            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ' - '.$payrollCode;
+            $detail_arr['comments'] = trans('custom.staff_cost_salary_job_bonus_social_insurance_for_month', [
+                'monthYear' => date('F Y', strtotime($jvMasterData->JVdate)),
+                'payrollCode' => $payrollCode
+            ]);
             $detail_arr['currencyID'] = $jvMasterData->currencyID;
             $detail_arr['currencyER'] = $jvMasterData->currencyER;
             $detail_arr['createdPcID'] = gethostname();
@@ -550,7 +553,10 @@ class JvDetailAPIController extends AppBaseController
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ' - ' .$payrollCode
+                'JVNarration' => trans('custom.staff_cost_salary_job_bonus_social_insurance_for_month', [
+                    'monthYear' => date('F Y', strtotime($jvMasterData->JVdate)),
+                    'payrollCode' => $payrollCode
+                ])
             ]);
 
         return $this->sendResponse('', trans('custom.jv_details_saved_successfully'));
@@ -573,7 +579,7 @@ class JvDetailAPIController extends AppBaseController
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
 
         $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($jvMasterAutoId, $jvMaster->documentSystemID);
@@ -608,7 +614,7 @@ class JvDetailAPIController extends AppBaseController
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
         $accruvalMasterID = 0;
         DB::beginTransaction();
@@ -743,7 +749,7 @@ GROUP BY
                 $detail_arr['chartOfAccountSystemID'] = $rowData->chartOfAccountSystemID;
                 $detail_arr['glAccount'] = $rowData->GlCode;
                 $detail_arr['glAccountDescription'] = $rowData->AccountDescription;
-                $detail_arr['comments'] = 'Revenue Accrual for the month of ' . $formattedDate . '';
+                $detail_arr['comments'] = trans('custom.revenue_accrual_for_month', ['monthYear' => $formattedDate]);
                 $detail_arr['contractUID'] = $rowData->contractSystemID;
                 $detail_arr['clientContractID'] = $rowData->accrualNarration;
                 $detail_arr['currencyID'] = $jvMasterData->currencyID;
@@ -781,8 +787,8 @@ GROUP BY
             $detail_debitArr['companyID'] = $jvMasterData->companyID;
             $detail_debitArr['chartOfAccountSystemID'] = 112;
             $detail_debitArr['glAccount'] = 21011;
-            $detail_debitArr['glAccountDescription'] = 'Accrued Income';
-            $detail_debitArr['comments'] = 'Revenue Accrual for the month of ' . $formattedDate . '';
+            $detail_debitArr['glAccountDescription'] = trans('custom.accrued_income');
+            $detail_debitArr['comments'] = trans('custom.revenue_accrual_for_month', ['monthYear' => $formattedDate]);
             $detail_debitArr['currencyID'] = $jvMasterData->currencyID;
             $detail_debitArr['currencyER'] = $jvMasterData->currencyER;
             $detail_debitArr['debitAmount'] = $totalRevenueAmount;
@@ -805,7 +811,7 @@ GROUP BY
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Revenue Accrual for the month of '.$formattedDate
+                'JVNarration' => trans('custom.revenue_accrual_for_month', ['monthYear' => $formattedDate])
             ]);
 
         return $this->sendResponse('', trans('custom.jv_details_saved_successfully'));
@@ -828,7 +834,7 @@ GROUP BY
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
         $accruvalMasterID = 0;
 
@@ -874,6 +880,7 @@ GROUP BY
 
         if (empty($input['detailTable'])) {
             return $this->sendError(trans('custom.no_items_selected_to_add'));
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         $jvMasterData = JvMaster::find($jvMasterAutoId);
@@ -890,9 +897,10 @@ GROUP BY
 
             if(!$glCodeScenarioDetails || ($glCodeScenarioDetails && is_null($glCodeScenarioDetails->chartOfAccountSystemID)) || ($glCodeScenarioDetails && $glCodeScenarioDetails->chartOfAccountSystemID == 0))
             {
-                return $this->sendError(trans('custom.please_configure_po_accrual_account_for_this_company'));
+                return $this->sendError(trans('custom.configure_po_accrual_account'));
             }
         }else {
+            return $this->sendError(trans('custom.gl_code_scenario_not_found_for_po_accrual'));
             return $this->sendError(trans('custom.gl_code_scenario_not_found_for_po_accrual'));
         }
 
@@ -992,11 +1000,17 @@ GROUP BY
         $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
         if(!strpos(JvMaster::find($jvMasterAutoId)->JVNarration,'Accrual for the month of'))
         {
-            $narration = (JvMaster::find($jvMasterAutoId)) ? 'PO Accrual for the month of '.$formattedDate.' ^ ('.JvMaster::find($jvMasterAutoId)->JVNarration.')' : null;
+            $narration = (JvMaster::find($jvMasterAutoId)) ? trans('custom.po_accrual_for_month_with_narration', [
+                'monthYear' => $formattedDate,
+                'narration' => JvMaster::find($jvMasterAutoId)->JVNarration
+            ]) : null;
         }else {
             $data = $this->explodeByFirst('- ',JvMaster::find($jvMasterAutoId)->JVNarration);
             if(!empty($data))
-                $narration = 'PO Accrual for the month of '.$formattedDate.' - '.$data[1];
+                $narration = trans('custom.po_accrual_for_month_with_data', [
+                    'monthYear' => $formattedDate,
+                    'data' => $data[1]
+                ]);
         }
 
         //updating JV master
@@ -1040,7 +1054,7 @@ GROUP BY
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
         $accruvalMasterID = 0;
 
@@ -1130,7 +1144,7 @@ GROUP BY
             return $this->sendError(trans('custom.journal_voucher_not_found'));
         }
         $messages = [
-            'currencyID' => 'Currency is required',
+            'currencyID' => trans('custom.currency_required'),
         ];
         $validator = \Validator::make($jvMaster->toArray(), [
             'jvType' => 'required|numeric',
