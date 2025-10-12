@@ -5046,6 +5046,9 @@ return
     'expected_delivery_date' => 'تاريخ التسليم المتوقع',
     'manually_closed' => 'مغلق يدوياً',
     'actions' => 'الإجراءات',
+    'input_fields_header_empty' => 'لا يمكن أن تكون حقول الإدخال في الرأس فارغة',
+    'add_atleast_one_comment' => 'يرجى إضافة تعليق واحد على الأقل في قسم التعليقات',
+    'section_table_text_fields_empty' => 'لا يمكن أن تكون حقول النص في جدول القسم فارغة',
     'not_released' => 'غير مُحرر',
     'released' => 'مُحرر',
     'fully_received' => 'مستلم بالكامل',
@@ -9256,4 +9259,11 @@ return
     'asset_category_not_assigned' => 'فئة الأصول غير مخصصة للعنصر المحدد',
     'session_expired' => 'انتهت الجلسة! يرجى تسجيل الدخول مرة أخرى',
     'itemTransactionHistory' => 'سجل_معاملات_العناصر',
-    ];
+    'input_fields_header_empty' => 'لا يمكن أن تكون حقول الإدخال في الرأس فارغة',
+    'add_atleast_one_comment' => 'يرجى إضافة تعليق واحد على الأقل في قسم التعليقات',
+    'section_table_text_fields_empty' => 'لا يمكن أن تكون حقول النص في جدول القسم فارغة',
+    'auto_increment_column_can_not_be_multiple' => 'لا يمكن أن يكون عمود الزيادة التلقائي متعدد',
+    'can_not_delete_minimum_1_column_should_be_in_the_table' => 'لا يمكن حذف. يجب أن يكون هناك عمود واحد على الأقل في الجدول',
+    'can_not_edit_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن التحرير. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
+    'can_not_delete_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن الحذف. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
+];

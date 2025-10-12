@@ -282,7 +282,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
 
         $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
         if($columnCounts > 0){
-            return $this->sendError('Can not edit!. Supplier evaluation master is used in supplier evaluation template');
+            return $this->sendError(trans('custom.can_not_edit_supplier_evaluation_master_is_used_in_supplier_evaluation_template'));
         }
 
         $supplierEvaluationMasters = $this->supplierEvaluationMastersRepository->update($input, $id);
@@ -340,7 +340,7 @@ class SupplierEvaluationMastersAPIController extends AppBaseController
 
         $columnCounts = SupplierEvaluationTemplateSectionTableColumn::where('evaluationMasterId',$supplierEvaluationMasters['id'])->count();
         if($columnCounts > 0){
-            return $this->sendError('Can not delete!. Supplier evaluation master is used in supplier evaluation template');
+            return $this->sendError(trans('custom.can_not_delete_supplier_evaluation_master_is_used_in_supplier_evaluation_template'));
         }
 
         $supplierEvaluationMasters->delete();

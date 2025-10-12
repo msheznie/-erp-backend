@@ -82,7 +82,7 @@
         }
 
         tr td {
-            padding: 0 0;
+            padding: 5px;
         }
 
         .table thead th {
