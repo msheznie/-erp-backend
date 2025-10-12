@@ -9267,3 +9267,22 @@ return
     'can_not_edit_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن التحرير. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
     'can_not_delete_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن الحذف. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
 ];
+    'selected_segment_is_not_active_please_select_an_active_segment' => 'القطاع المحدد غير نشط. يرجى اختيار قطاع نشط',
+    'internal_notes_should_be_less_than_or_equal_to_250_characters' => 'يجب أن تكون الملاحظات الداخلية أقل من أو تساوي 250 حرف',
+    'every_request_should_have_at_least_one_item' => 'يجب أن يحتوي كل طلب على عنصر واحد على الأقل',
+    'every_item_should_have_at_least_one_minimum_qty_requested' => 'يجب أن يحتوي كل عنصر على كمية طلبية دنيا واحدة على الأقل',
+    'every_alternative_uom_should_have_alternative_uom_qty' => 'يجب أن يحتوي كل وحدة قياس بديلة على كمية وحدة القياس البديلة',
+    'purchase_request_updated_successfully' => 'تم تحديث طلب الشراء بنجاح',
+    'purchase_request_print_data' => 'بيانات طباعة طلب الشراء',
+    'success' => 'نجح',
+    'pr_po_available_for_these_items' => 'طلب الشراء / أمر الشراء متاح لهذه العناصر',
+    'parameter_document_system_id_is_missing' => 'معرف نظام المستند مفقود',
+    'parameter_company_is_missing' => 'معامل الشركة مفقود',
+    'parameter_document_is_missing' => 'معامل المستند مفقود',
+    'requested_quantity_can_not_be_greater_than_materiel_requested_quantity' => 'لا يمكن أن تكون الكمية المطلوبة أكبر من كمية المواد المطلوبة',
+    'data_found' => 'تم العثور على البيانات!',
+    'an_error_occurred_while_retrieving_notification_message' => 'حدث خطأ أثناء استرداد رسالة الإشعار',
+    'is_manually_closed_due_to_below_reason' => 'تم إغلاقه يدوياً للأسباب التالية.',
+    'comment' => 'تعليق',
+    'is_closed' => 'مغلق'
+  ];

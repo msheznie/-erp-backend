@@ -1373,7 +1373,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError(trans('custom.selected_segment_not_active'));
+            return $this->sendError(trans('custom.selected_segment_is_not_active_please_select_an_active_segment'));
         }
 
         $policy = 1;
@@ -2031,7 +2031,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (!empty($input['internalNotes']) && strlen($input['internalNotes']) > 250) {
-            return $this->sendError(trans('custom.internal_notes_max_length'), 500);
+            return $this->sendError(trans('custom.internal_notes_should_be_less_than_or_equal_to_250_characters'), 500);
         }
 
         $input['modifiedPc'] = gethostname();
@@ -2086,7 +2086,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->count();
 
             if ($checkItems == 0) {
-                return $this->sendError(trans('custom.request_must_have_item'), 500);
+                return $this->sendError(trans('custom.every_request_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID', $id)
@@ -2095,7 +2095,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
             if ($checkQuantity > 0) {
-                return $this->sendError(trans('custom.item_minimum_qty_required'), 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_requested'), 500);
             }
 
             $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->whereNull('altUnitValue')->count();
@@ -2106,7 +2106,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
       
             if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
-                return $this->sendError(trans('custom.alternative_uom_qty_required'), 500);
+                return $this->sendError(trans('custom.every_alternative_uom_should_have_alternative_uom_qty'), 500);
             }
 
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
@@ -2149,7 +2149,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($purchaseRequest->toArray(), 'PurchaseRequest updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($purchaseRequest->toArray(), trans('custom.purchase_request_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -2566,8 +2566,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is closed';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('custom.is_manually_closed_due_to_below_reason') . '</p><p>' . trans('custom.comment') . ' : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('custom.is_closed');
 
         if ($purchaseRequest->PRConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
@@ -3089,7 +3089,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $output['is_limit'] =  count($result) > 10?true:false;
         $output['count'] =  count($result);
 
-        return $this->sendResponse($output,'Success');
+        return $this->sendResponse($output, trans('custom.success'));
     }
 
     public function getPurchaseRequestTotal(Request $request)
@@ -3149,7 +3149,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     "status" => true,
                     "data" => $fetchDetails,
                     "policy" => true,
-                    "message" =>  trans('custom.pr_po_available_items')
+                    "message" =>  trans('custom.pr_po_available_for_these_items')
                 ];
                 return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
             }else {
@@ -3159,7 +3159,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         "policy" => true,
                         "po" => $checkPOPending,
                         "data" => $fetchDetails,
-                        "message" => trans('custom.pr_po_available_items')
+                        "message" => trans('custom.pr_po_available_for_these_items')
                     ];
                     return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
     
@@ -3250,15 +3250,15 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['autoID'])) {
-            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_missing')];
+            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_is_missing')];
         }
 
         if (!isset($input['company'])) {
-            return ['success' => false, 'message' => trans('custom.parameter_company_missing')];
+            return ['success' => false, 'message' => trans('custom.parameter_company_is_missing')];
         }
 
         if (!isset($input['document'])) {
-            return ['success' => false, 'message' => trans('custom.parameter_document_missing')];
+            return ['success' => false, 'message' => trans('custom.parameter_document_is_missing')];
         }
 
         $params =  array(
@@ -3290,7 +3290,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if(isset($total_requested_qnty)) {
             if($requestedQnty >  $total_requested_qnty->sum) {
-                return  $this->sendError(trans('custom.requested_qty_greater_than_material'));
+                return  $this->sendError(trans('custom.requested_quantity_can_not_be_greater_than_materiel_requested_quantity'));
             }
         }
 
@@ -3671,7 +3671,7 @@ class PurchaseRequestAPIController extends AppBaseController
         try{
             $notifyPR = $this->purchaseRequestRepository->notifyPRFinancialYear($companySystemID);
             if(!$notifyPR['success']){
-                return $this->sendError($notifyPR['message'] ?? trans('custom.error_retrieving_notification'));
+                return $this->sendError($notifyPR['message'] ?? trans('custom.an_error_occurred_while_retrieving_notification_message'));
             }
             return $this->sendResponse($notifyPR['data'], $notifyPR['message']);
         } catch (\Exception $ex) {
