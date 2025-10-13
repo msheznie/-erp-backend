@@ -118,13 +118,29 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), $decimalPlace),
         );
 
+        // Check if Arabic language for RTL support
+        $isRTL = ($languageCode === 'ar');
+
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-L', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
 
         $html = view('print.report_bank_ledger', $dataArr);
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        $pdf_content = $mpdf->Output('', 'S');
 
         $fileName = trans('custom.bank_ledger').'_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
         $path = $rootPaths.'/'.$fileName;
