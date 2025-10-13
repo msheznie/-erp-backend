@@ -9266,7 +9266,6 @@ return
     'can_not_delete_minimum_1_column_should_be_in_the_table' => 'لا يمكن حذف. يجب أن يكون هناك عمود واحد على الأقل في الجدول',
     'can_not_edit_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن التحرير. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
     'can_not_delete_supplier_evaluation_master_is_used_in_supplier_evaluation_template' => 'لا يمكن الحذف. المعيار التقييمي للمورد مستخدم في قالب تقييم المورد',
-];
     'selected_segment_is_not_active_please_select_an_active_segment' => 'القطاع المحدد غير نشط. يرجى اختيار قطاع نشط',
     'internal_notes_should_be_less_than_or_equal_to_250_characters' => 'يجب أن تكون الملاحظات الداخلية أقل من أو تساوي 250 حرف',
     'every_request_should_have_at_least_one_item' => 'يجب أن يحتوي كل طلب على عنصر واحد على الأقل',
