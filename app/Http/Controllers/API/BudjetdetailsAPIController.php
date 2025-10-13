@@ -701,7 +701,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
         \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
                 
                 // Set right-to-left for Arabic locale

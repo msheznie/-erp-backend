@@ -9390,5 +9390,8 @@ return
     'an_error_occurred_while_retrieving_notification_message' => 'An error occurred while retrieving notification message',
     'is_manually_closed_due_to_below_reason' => 'is manually closed due to below reason.',
     'comment' => 'Comment',
-    'is_closed' => 'is closed'
+    'is_closed' => 'is closed',
+    'profit_and_loss_gl' => 'Profit and Loss GL',
+    'balance_sheet' => 'Balance Sheet',
+    'new_sheet' => 'New Sheet'
   ];

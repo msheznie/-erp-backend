@@ -2054,7 +2054,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $name = trans('custom.finance');
 
                 return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                         
                         // Set right-to-left for Arabic locale
@@ -2077,7 +2077,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $name = trans('custom.finance');
 
                     return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                        $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                             $sheet->loadView($templateName, $reportData);
                         });
                     })->download('xlsx');

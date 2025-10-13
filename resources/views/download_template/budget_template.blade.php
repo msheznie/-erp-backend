@@ -1,18 +1,18 @@
 <div class="row">
     <table class="table table-sm table-striped hover table-bordered">
         <tr>
-        <td><b>{{ trans('custom.template_name') }} :</b></td> <td> {{ $templateMaster->description }} </td>
-        <td><b>{{ trans('custom.financial_year') }} :</b></td> <td>{{ $beginDate }} - {{ $endDate }}</td>
+        <td><b>Template Name :</b></td> <td> {{ $templateMaster->description }} </td>
+        <td><b>Financial Year :</b></td> <td>{{ $beginDate }} - {{ $endDate }}</td>
         </tr>
         <tr>
-        <td><b>{{ trans('custom.currency') }} :</b> </td> <td> {{ $company->reportingcurrency->CurrencyCode }} </td>
-        <td><b>{{ trans('custom.send_notification_at_percent') }} :</b> </td> <td>  {{ $sentNotificationAt }}</td>
+        <td><b>Currency :</b> </td> <td> {{ $company->reportingcurrency->CurrencyCode }} </td>
+        <td><b>Send Notification At Percent :</b> </td> <td>  {{ $sentNotificationAt }}</td>
         </tr>
     </table>
 </div>
 <div class="row">
     <div class="col-md-12">
-        <p><b>{{ trans('custom.note') }}<span class="p-l-10"></span> {{ trans('custom.expense_gl_amounts_negative_value') }} <br/><b> {{ trans('custom.do_not_amend_template_description') }}</b> <br/> {{ trans('custom.delete_segment_columns_not_applicable') }}</b></p>
+        <p><b>Note<span class="p-l-10"></span> Expense GL amounts negative value <br/><b> Do not amend template description</b> <br/> Delete segment columns not applicable</b></p>
     </div>
 </div>
 <div class="row">
@@ -21,10 +21,10 @@
             <table class="table table-sm table-striped hover table-bordered">
                 <thead>
                 <tr>
-                    <th>{{ trans('custom.template_description_1') }}</th>
-                    <th>{{ trans('custom.template_description_2') }}</th>
-                    <th>{{ trans('custom.gl_code') }}</th>
-                    <th>{{ trans('custom.gl_description') }}</th>
+                    <th>Template Description 1</th>
+                    <th>Template Description 2</th>
+                    <th>GL Code</th>
+                    <th>GL Description</th>
                     @foreach($segments as $segment)
                         <th>{{ $segment->ServiceLineDes }}</th>
                     @endforeach

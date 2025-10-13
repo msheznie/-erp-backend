@@ -570,15 +570,17 @@ class CreateExcel
         }
 
         $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
-                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
+                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName) {
                            $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
                            
                            // Set right-to-left for Arabic locale
-                           if (app()->getLocale() == 'ar') {
-                               $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                               $sheet->setRightToLeft(true);
-                           }
+                            if($fileName != trans('custom.budget_template')) { 
+                                if (app()->getLocale() == 'ar') {
+                                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                    $sheet->setRightToLeft(true);
+                                }
+                            }
                        });
                    })->string($type);
 

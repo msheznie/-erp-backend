@@ -9286,4 +9286,7 @@ return
     'is_closed' => 'مغلق',
     'amend_saved_successfully' => 'تم حفظ التعديل بنجاح',
     'is_already_amended_cannot_amend_again' => 'تم تعديله بالفعل. لا يمكنك تعديله مرة أخرى.',
-    ];
+    'profit_and_loss_gl' => 'قائمة الدخل',
+    'balance_sheet' => 'الميزانية العمومية',
+    'new_sheet' => 'ورقة جديدة',
+  ];

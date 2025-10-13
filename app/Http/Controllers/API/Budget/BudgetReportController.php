@@ -97,7 +97,7 @@ class BudgetReportController extends AppBaseController
                 ];
 
                 return \Excel::create('budget_commitment_details_report', function ($excel) use ($outputData,$excelColumnFormat) {
-                    $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
                         $sheet->setColumnFormat($excelColumnFormat);
                         $sheet->loadView('export_report.budget.budget_commitment_details_report', $outputData);
                         

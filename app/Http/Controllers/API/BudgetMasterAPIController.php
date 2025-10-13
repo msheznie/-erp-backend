@@ -835,7 +835,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_gl_code_wise";
 
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
                 
                 // Set right-to-left for Arabic locale
@@ -2613,7 +2613,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_details";
 
         \Excel::create('finance', function ($excel) use ($result, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($result, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
                 
                 // Set right-to-left for Arabic locale
@@ -2811,7 +2811,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_category_wise";
 
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
                 
                 // Set right-to-left for Arabic locale
@@ -4337,7 +4337,7 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData['monthArray'] = $monthArray;
 
         return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
-                     $excel->sheet('New sheet', function($sheet) use ($reportData) {
+                     $excel->sheet(trans('custom.new_sheet'), function($sheet) use ($reportData) {
                         $sheet->loadView('export_report.budget_upload_template', $reportData);
                         
                     });
