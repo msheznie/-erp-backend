@@ -9289,4 +9289,10 @@ return
     'profit_and_loss_gl' => 'قائمة الدخل',
     'balance_sheet' => 'الميزانية العمومية',
     'new_sheet' => 'ورقة جديدة',
+    'tel' => 'هاتف',
+    'customer_vatin' => 'رقم ضريبة القيمة المضافة للعميل',
+    'dis_percent' => 'نسبة الخصم %',
+    'subtotal_excluding_vat' => 'المجموع الفرعي (باستثناء ضريبة القيمة المضافة)',
+    'remittance_details' => 'تفاصيل التحويل',
+    'image_not_found' => 'الصورة غير موجودة'
   ];

@@ -3056,11 +3056,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             
             if($type == 1)
             {
+
+                $lang = $request->get('lang', 'en');
+                $array = array(
+                    'type' => $type,
+                    'request' => $customerInvoice,
+                    'secondaryBankAccount' => $secondaryBankAccount,
+                    'lang' => $lang
+                );
+                $isRTL = ($lang === 'ar');
+                $mpdfConfig = [
+                    'tempDir' => public_path('tmp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4-L',
+                    'setAutoTopMargin' => 'stretch',
+                    'autoMarginPadding' => -10
+                ];
+                if ($isRTL) {
+                    $mpdfConfig['direction'] = 'rtl';
+                }
                 $html = view('print.customer_invoice_tax', $array);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-    
-                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
             }
             else if($type == 2)
             {

@@ -9393,5 +9393,11 @@ return
     'is_closed' => 'is closed',
     'profit_and_loss_gl' => 'Profit and Loss GL',
     'balance_sheet' => 'Balance Sheet',
-    'new_sheet' => 'New Sheet'
+    'new_sheet' => 'New Sheet',
+    'tel' => 'Tel',
+    'customer_vatin' => 'Customer VATIN',
+    'dis_percent' => 'Dis %',
+    'subtotal_excluding_vat' => 'Subtotal (Excluding VAT)',
+    'remittance_details' => 'Remittance Details',
+    'image_not_found' => 'image not found'
   ];
