@@ -183,7 +183,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
 
             $webPushData = [
                 'title' => $reportTitle,
-                'body' => 'Period : '.$fromDate.' - '.$toDate,
+                'body' => trans('custom.period') . ' : ' . $fromDate . ' - ' . $toDate,
                 'url' => "",
                 'path' => $zipPath,
             ];

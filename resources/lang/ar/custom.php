@@ -2240,6 +2240,10 @@ return
     'final_return_income_template_saved_successfully' => 'تم حفظ قالب دخل الإقرار النهائي بنجاح',
     'final_return_income_template_updated_successfully' => 'تم تحديث قالب دخل الإقرار النهائي بنجاح',
     'final_return_income_templates_retrieved_successful' => 'تم استرداد قوالب دخل الإقرار النهائي بنجاح',
+    'final_return_income_template_name_already_exists' => 'اسم القالب موجود بالفعل',
+    'final_return_income_reports_exist_for_template' => 'توجد تقارير دخل الإقرار النهائي لهذا القالب',
+    'net_profit_or_loss_description' => 'صافي الربح أو الخسارة (حسب حساب الربح/الخسارة)',
+    'actions' => 'الإجراءات',
     'finalreturnincomereportdetails_updated_successfull' => 'تم تحديث تفاصيل تقرير دخل الإقرار النهائي بنجاح',
     'finalreturnincomereportdetailvalues_updated_succes' => 'تم تحديث قيم تفاصيل تقرير دخل الإقرار النهائي بنجاح',
     'finalreturnincomereports_updated_successfully' => 'تم تحديث تقارير دخل الإقرار النهائي بنجاح',
@@ -9294,5 +9298,7 @@ return
     'dis_percent' => 'نسبة الخصم %',
     'subtotal_excluding_vat' => 'المجموع الفرعي (باستثناء ضريبة القيمة المضافة)',
     'remittance_details' => 'تفاصيل التحويل',
-    'image_not_found' => 'الصورة غير موجودة'
-  ];
+    'image_not_found' => 'الصورة غير موجودة',
+    'net_profit_or_loss_(as_per_profit/loss_account)' => 'صافي الربح أو الخسارة (حسب حساب الأرباح والخسائر)',
+    'supplier_statement_' => 'كشف_المورد_',
+    ];

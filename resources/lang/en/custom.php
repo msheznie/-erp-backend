@@ -2269,6 +2269,10 @@ return
     'final_return_income_template_saved_successfully' => 'Final Return Income Template saved successfully',
     'final_return_income_template_updated_successfully' => 'Final Return Income Template updated successfully',
     'final_return_income_templates_retrieved_successful' => 'Final Return Income Templates retrieved successfully',
+    'final_return_income_template_name_already_exists' => 'The template name already existing',
+    'final_return_income_reports_exist_for_template' => 'Final Return Income Reports exist for this template',
+    'net_profit_or_loss_description' => 'Net profit or loss (as per Profit/Loss account)',
+    'actions' => 'Actions',
     'finalreturnincomereportdetails_updated_successfull' => 'FinalReturnIncomeReportDetails updated successfully',
     'finalreturnincomereportdetailvalues_updated_succes' => 'FinalReturnIncomeReportDetailValues updated successfully',
     'finalreturnincomereports_updated_successfully' => 'FinalReturnIncomeReports updated successfully',
@@ -9325,7 +9329,7 @@ return
     'po_employee_performance' => 'po_employee_performance',
     'purchaseHistory' => 'Purchase History',
     'purchaseRequestHistory' => 'Purchase Request History',
-    'supplier_statement_' => 'supplier_statement_',
+    'supplier_statement' => 'supplier_statement_',
     'department_master' => 'department_master',
     'segment_already_assigned_to_department' => 'Segment :segmentCode is already assigned to this department',
     'segments_could_not_be_assigned' => 'Some segments could not be assigned: :errorMessages',
@@ -9399,5 +9403,7 @@ return
     'dis_percent' => 'Dis %',
     'subtotal_excluding_vat' => 'Subtotal (Excluding VAT)',
     'remittance_details' => 'Remittance Details',
-    'image_not_found' => 'image not found'
+    'image_not_found' => 'image not found',
+    'net_profit_or_loss_(as_per_profit/loss_account)' => 'Net profit or loss (as per Profit/Loss account)',
+    'supplier_statement_' => 'supplier_statement_',
   ];

@@ -69,7 +69,7 @@ class SupplierStatementJob implements ShouldQueue
         $nowTime = time();
 
         $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-        $fileName = 'supplier_statement_' . $nowTime.$supplierID. '.pdf';
+        $fileName = trans('custom.supplier_statement') . $nowTime.$supplierID. '.pdf';
         $filePath = $path . '/' . $fileName;
 
         // Configure mPDF for landscape A4 format

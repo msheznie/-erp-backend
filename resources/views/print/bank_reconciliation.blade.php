@@ -180,7 +180,6 @@
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
-    <div class="text-right" style="font-size: 10px">{{\App\helper\Helper::dateFormat($date) }}</div>
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
@@ -363,8 +362,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
-                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @if(isset($lang) && $lang === 'ar')
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                    <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
+                @else
+                    <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @endif
                 <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
@@ -401,8 +405,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
-                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @if(isset($lang) && $lang === 'ar')
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                    <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
+                @else
+                    <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @endif
                 <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
             <tr>
@@ -410,8 +419,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                <td  class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
-                <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @if(isset($lang) && $lang === 'ar')
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                    <td class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
+                @else
+                    <td class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
+                    <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
+                @endif
                 <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>

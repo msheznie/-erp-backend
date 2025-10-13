@@ -107,7 +107,7 @@ class GeneratePdfJob implements ShouldQueue
         ];
 
         $rootPaths = $this->rootPath;
-        $fileName = 'supplier_statement_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$this->reportCount.'.pdf';
+        $fileName = trans('custom.supplier_statement_') . strtotime(date("Y-m-d H:i:s")).'_Part_'.$this->reportCount.'.pdf';
         $path = $rootPaths.'/'.$fileName;
 
         try {
@@ -136,7 +136,7 @@ class GeneratePdfJob implements ShouldQueue
 
 
                 $zip = new ZipArchive;
-                $fileName = $companyCode . '_' . 'supplier_statement(' . $fromDate . '_' . $toDate . ')_' . strtotime(date("Y-m-d H:i:s")) . '.zip';
+                $fileName = $companyCode . '_' . trans('custom.supplier_statement').'(' . $fromDate . '_' . $toDate . ')_' . strtotime(date("Y-m-d H:i:s")) . '.zip';
                 if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE) {
                     foreach ($files as $key => $value) {
                         $relativeNameInZipFile = basename($value);
@@ -159,7 +159,7 @@ class GeneratePdfJob implements ShouldQueue
 
                 $webPushData = [
                     'title' => $reportTitle,
-                    'body' => 'Period : ' . $fromDate . ' - ' . $toDate,
+                    'body' => trans('custom.period') . ' : ' . $fromDate . ' - ' . $toDate,
                     'url' => "",
                     'path' => $zipPath,
                 ];
