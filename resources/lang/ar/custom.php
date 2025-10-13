@@ -9283,5 +9283,7 @@ return
     'an_error_occurred_while_retrieving_notification_message' => 'حدث خطأ أثناء استرداد رسالة الإشعار',
     'is_manually_closed_due_to_below_reason' => 'تم إغلاقه يدوياً للأسباب التالية.',
     'comment' => 'تعليق',
-    'is_closed' => 'مغلق'
-  ];
+    'is_closed' => 'مغلق',
+    'amend_saved_successfully' => 'تم حفظ التعديل بنجاح',
+    'is_already_amended_cannot_amend_again' => 'تم تعديله بالفعل. لا يمكنك تعديله مرة أخرى.',
+    ];

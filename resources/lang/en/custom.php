@@ -9352,6 +9352,8 @@ return
     'item_master' => 'item_master',
     'supplier_master' => 'supplier_master',
     'segment_master' => 'segment_master',
+    'amend_saved_successfully' => 'amend saved successfully',
+    'is_already_amended_cannot_amend_again' => 'is already amended. You cannot amend again.',
     'internal_notes_max_length' => 'Internal notes should be less than or equal to 250 characters',
     'request_must_have_item' => 'Every request should have at least one item',
     'item_minimum_qty_required' => 'Every Item should have at least one minimum Qty Requested',

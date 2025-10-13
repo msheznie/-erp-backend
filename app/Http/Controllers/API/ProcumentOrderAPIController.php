@@ -6407,7 +6407,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $masterData->poCancelledYN == 0 && $masterData->grvRecieved == 0 &&
             $masterData->WO_amendYN == -1 && $masterData->WO_confirmedYN != 1
         ) {
-            return $this->sendError($documentName . ' is already amended. You cannot amend again.');
+            return $this->sendError($documentName . ' ' . trans('custom.is_already_amended_cannot_amend_again'));
         }
 
         if (
@@ -6430,7 +6430,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), $documentName . ' amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), $documentName . ' ' . trans('custom.amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
