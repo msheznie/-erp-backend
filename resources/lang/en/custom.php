@@ -9427,4 +9427,5 @@ return
     'gl_codes_not_assigned_budget' => 'Some GL codes are not assigned for budget with relevant segment and finance period',
     'budget_check_not_set_document' => 'Budget check is not set for this document',
     'budget_consumption_not_set_document' => 'Budget consumption is not set for this document',
+    'warehouse_required' => 'The warehouse field is required'
   ];

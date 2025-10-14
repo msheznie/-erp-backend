@@ -1320,7 +1320,7 @@ class QuotationMasterAPIController extends AppBaseController
         $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinSO = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->exists();
-        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
+        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?trans('custom.sales_order'):trans('custom.quotation');
 
         if($existsinCI || $quotationMasterData->isInDOorCI == 2){
             return $this->sendError(trans('custom.document_added_to_customer_invoice', ['type' => $quotOrSales]),500);

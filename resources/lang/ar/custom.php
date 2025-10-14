@@ -9322,4 +9322,5 @@ return
     'gl_codes_not_assigned_budget' => 'بعض أكواد دفتر الأستاذ غير مخصصة للميزانية مع القطاع وفترة المالية ذات الصلة',
     'budget_check_not_set_document' => 'لم يتم تعيين فحص الميزانية لهذا المستند',
     'budget_consumption_not_set_document' => 'لم يتم تعيين استهلاك الميزانية لهذا المستند',
+    'warehouse_required' => 'حقل المستودع مطلوب'
   ];

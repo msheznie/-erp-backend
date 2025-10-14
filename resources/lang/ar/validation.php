@@ -375,6 +375,7 @@ return [
         'subCategories' => 'الفئات الفرعية',
         'years' => 'السنوات',
         'endingDate' => 'تاريخ الانتهاء',
-        'bigginingDate' => 'تاريخ البداية'
+        'bigginingDate' => 'تاريخ البداية',
+        'items' => 'المواد'
     ],
 ];
