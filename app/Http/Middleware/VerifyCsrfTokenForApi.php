@@ -94,7 +94,7 @@ class VerifyCsrfTokenForApi
             
             //body data
             $data = json_decode($request->getContent(), true) ?: '{}';
-            $normalizedJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $normalizedJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
             //params data
             $params = $request->query() ?: '{}';
             $normalizedParams = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
