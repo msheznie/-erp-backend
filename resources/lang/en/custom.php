@@ -8296,6 +8296,10 @@ return
     'every_return_should_have_at_least_one_item' => 'Every return should have at least one item',
     'unit_cost_should_be_greater_than_zero_for_every_items' => 'Unit Cost should be greater than 0 for every items',
     'return_quantity_should_not_be_greater_than_issues_quantity' => 'Return quantity should not be greater than issues quantity. Please check again.',
+    'return_quantity_field_required' => 'Return quantity field is required.',
+    'return_quantity_greater_than_zero' => 'Return Quantity should be greater than zero',
+    'sales_return_pending_approval' => 'There is a Sales Return (:salesReturnCode) pending for approval for the Delivery Order you are trying to add. Please check again.',
+    'sales_return_pending_approval_sales_invoice' => 'There is a Sales Return (:salesReturnCode) pending for approval for the Sales Invoice you are trying to add. Please check again.',
     'material_return_master_updated_successfully' => 'Material Return Master Updated Successfully',
     // Purchase Return translations
     'selected_grv_is_been_added_to_draft_supplier_invoice' => 'Selected GRV is been added to a draft supplier invoice',

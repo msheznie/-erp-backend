@@ -144,13 +144,13 @@ class SalesReturnAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = [
-            'transactionCurrencyID.required' => 'Currency field is required',
-            'customerID.required' => 'Customer field is required',
-            'companyFinanceYearID.required' => 'Finance Year field is required',
-            'companyFinancePeriodID.required' => 'Finance Period field is required',
-            'serviceLineSystemID.required' => 'Segment field is required',
-            'wareHouseSystemCode.required' => 'Warehouse field is required',
-            'salesReturnDate.required' => 'Document Date field is required',
+            'transactionCurrencyID.required' => trans('custom.currency_field_is_required'),
+            'customerID.required' => trans('custom.customer_field_is_required'),
+            'companyFinanceYearID.required' => trans('custom.finance_year_field_is_required'),
+            'companyFinancePeriodID.required' => trans('custom.finance_period_field_is_required'),
+            'serviceLineSystemID.required' => trans('custom.segment_field_is_required'),
+            'wareHouseSystemCode.required' => trans('custom.warehouse_field_is_required'),
+            'salesReturnDate.required' => trans('custom.document_date_field_is_required'),
         ];
 
         $validator = \Validator::make($input, [
@@ -184,11 +184,11 @@ class SalesReturnAPIController extends AppBaseController
         }
 
         if(!$customer->custGLAccountSystemID){
-            return $this->sendError('GL account is not configured for this customer',500);
+            return $this->sendError(trans('custom.gl_account_not_configured_for_this_customer'),500);
         }
 
         if(!$customer->custUnbilledAccountSystemID){
-            return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+            return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'),500);
         }
 
         $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
@@ -223,7 +223,7 @@ class SalesReturnAPIController extends AppBaseController
 
         // check date within financial period
         if (!(($input['salesReturnDate'] >= $input['FYPeriodDateFrom']) && ($input['salesReturnDate'] <= $input['FYPeriodDateTo']))) {
-            return $this->sendError('Document date should be between financial period start date and end date',500);
+            return $this->sendError(trans('custom.document_date_should_be_between_financial_period_start_end'),500);
         }
 
         $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -841,14 +841,14 @@ class SalesReturnAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'Return quantity field is required.',
+                    'required' => trans('custom.return_quantity_field_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -861,7 +861,7 @@ class SalesReturnAPIController extends AppBaseController
                 }
 
                 if($newValidation['noQty'] == 0){
-                    return $this->sendError('Return Quantity should be greater than zero', 500);
+                    return $this->sendError(trans('custom.return_quantity_greater_than_zero'), 500);
                 }
             }
         }
@@ -878,7 +878,7 @@ class SalesReturnAPIController extends AppBaseController
 
                 if (!empty($doDetailExist)) {
                     foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                        $itemDrt = $row['itemPrimaryCode'] . ' ' . trans('custom.item_already_added');
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -915,7 +915,7 @@ class SalesReturnAPIController extends AppBaseController
                                                ->first();
 
         if ($checkOtherPrns) {
-            return $this->sendError("There is a Sales Return (" . $checkOtherPrns->master->salesReturnCode . ") pending for approval for the Delivery Order you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.sales_return_pending_approval', ['salesReturnCode' => $checkOtherPrns->master->salesReturnCode]), 500);
         }
 
 
@@ -1014,14 +1014,14 @@ class SalesReturnAPIController extends AppBaseController
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Account code not updated for ".$new['itemPrimaryCode'].".", 500);
+                                return $this->sendError(trans('custom.account_code_not_updated_for') . $new['itemPrimaryCode'] . '.', 500);
                             }
 
                             if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
                                 || !$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']
                                 || !$invDetail_arr['financeCogsGLcodePL'] || !$invDetail_arr['financeCogsGLcodePLSystemID']
                                 || !$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']) {
-                                return $this->sendError("Account code not updated for ".$new['itemPrimaryCode'].".", 500);
+                                return $this->sendError(trans('custom.account_code_not_updated_for') . $new['itemPrimaryCode'] . '.', 500);
                             }
 
 
@@ -1310,14 +1310,14 @@ class SalesReturnAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
                 $messages = [
-                    'required' => 'Return quantity field is required.',
+                    'required' => trans('custom.return_quantity_field_required'),
                 ];
 
                 $validator = \Validator::make($newValidation, [
@@ -1330,7 +1330,7 @@ class SalesReturnAPIController extends AppBaseController
                 }
 
                 if($newValidation['noQty'] == 0){
-                    return $this->sendError('Return Quantity should be greater than zero', 500);
+                    return $this->sendError(trans('custom.return_quantity_greater_than_zero'), 500);
                 }
             }
         }
@@ -1347,7 +1347,7 @@ class SalesReturnAPIController extends AppBaseController
 
                 if (!empty($doDetailExist)) {
                     foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                        $itemDrt = $row['itemPrimaryCode'] . ' ' . trans('custom.item_already_added');
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -1372,7 +1372,7 @@ class SalesReturnAPIController extends AppBaseController
                                                ->first();
 
         if ($checkOtherPrns) {
-            return $this->sendError("There is a Sales Return (" . $checkOtherPrns->master->salesReturnCode . ") pending for approval for the Sales Invoice you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.sales_return_pending_approval_sales_invoice', ['salesReturnCode' => $checkOtherPrns->master->salesReturnCode]), 500);
         }
 
         DB::beginTransaction();
@@ -1466,14 +1466,14 @@ class SalesReturnAPIController extends AppBaseController
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError(trans('custom.account_code_not_updated_for') . $new['itemSystemCode'] . '.', 500);
                             }
 
                             if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
                                 || !$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']
                                 || !$invDetail_arr['financeCogsGLcodePL'] || !$invDetail_arr['financeCogsGLcodePLSystemID']
                                 || !$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']) {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError(trans('custom.account_code_not_updated_for') . $new['itemSystemCode'] . '.', 500);
                             }
 
 

@@ -373,6 +373,8 @@ return [
         'CurrencyCode' => 'رمز العملة',
         'categories' => 'الفئات',
         'subCategories' => 'الفئات الفرعية',
-        'years' => 'السنوات'
+        'years' => 'السنوات',
+        'endingDate' => 'تاريخ الانتهاء',
+        'bigginingDate' => 'تاريخ البداية'
     ],
 ];

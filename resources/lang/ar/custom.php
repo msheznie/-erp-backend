@@ -8198,6 +8198,10 @@ return
     'every_return_should_have_at_least_one_item' => 'يجب أن يحتوي كل إرجاع على عنصر واحد على الأقل',
     'unit_cost_should_be_greater_than_zero_for_every_items' => 'يجب أن تكون تكلفة الوحدة أكبر من 0 لكل العناصر',
     'return_quantity_should_not_be_greater_than_issues_quantity' => 'كمية الإرجاع يجب ألا تكون أكبر من كمية الإصدار. يرجى التحقق مرة أخرى.',
+    'return_quantity_field_required' => 'حقل كمية الإرجاع مطلوب.',
+    'return_quantity_greater_than_zero' => 'كمية الإرجاع يجب أن تكون أكبر من الصفر',
+    'sales_return_pending_approval' => 'يوجد مرتجع مبيعات (:salesReturnCode) في انتظار الموافقة لأمر التسليم الذي تحاول إضافته. يرجى التحقق مرة أخرى.',
+    'sales_return_pending_approval_sales_invoice' => 'يوجد مرتجع مبيعات (:salesReturnCode) في انتظار الموافقة لفاتورة المبيعات التي تحاول إضافتها. يرجى التحقق مرة أخرى.',
     'material_return_master_updated_successfully' => 'تم تحديث سيد إرجاع المواد بنجاح',
     // Purchase Return translations
     'selected_grv_is_been_added_to_draft_supplier_invoice' => 'تم إضافة GRV المحدد إلى فاتورة مورد مسودة',

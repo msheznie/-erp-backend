@@ -324,7 +324,9 @@ return [
         'salesPersonCurrencyID' => 'Sales Person Currency',
         'segmentID' => 'Segment',
         'transactionCurrencyID' => 'Currency Field',
-        'deliveryOrderDate' => 'Document Date Field'
+        'deliveryOrderDate' => 'Document Date Field',
+        'endingDate' => 'Ending Date',
+        'bigginingDate' => 'Beggining Date'
     ],
 
 ];
