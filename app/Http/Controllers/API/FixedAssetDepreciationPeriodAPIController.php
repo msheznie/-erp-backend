@@ -338,7 +338,7 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
             $sort = 'desc';
         }
         //$input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
-        $companyCurrency = \Helper::companyCurrency($input['companyID']);
+        // $companyCurrency = \Helper::companyCurrency($input['companyID']);
 
         $assetDepPeriod = FixedAssetDepreciationPeriod::with(['maincategory_by', 'financecategory_by', 'serviceline_by'])->ofDepreciation($input['depMasterAutoID']);
 

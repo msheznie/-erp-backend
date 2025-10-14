@@ -27,13 +27,13 @@ class GenerateBankLedgerPdf implements ShouldQueue
     public $outputChunkData;
     public $outputData;
     public $rootPath;
-
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -47,6 +47,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
         $this->outputChunkData = $outputChunkData;
         $this->outputData = $outputData;
         $this->rootPath = $rootPath;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -63,7 +64,8 @@ class GenerateBankLedgerPdf implements ShouldQueue
         $outputChunkCount = $this->outputChunkData;
         $output = $this->outputData;
         $rootPaths = $this->rootPath;
-
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
 
@@ -116,15 +118,31 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), $decimalPlace),
         );
 
+        // Check if Arabic language for RTL support
+        $isRTL = ($languageCode === 'ar');
+
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'), 
+            'mode' => 'utf-8', 
+            'format' => 'A4-L', 
+            'setAutoTopMargin' => 'stretch', 
+            'autoMarginPadding' => -10
+        ];
+        
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
 
         $html = view('print.report_bank_ledger', $dataArr);
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        $pdf_content = $mpdf->Output('', 'S');
 
-        $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
-
-        $fileName = 'bank_ledger_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
+        $fileName = trans('custom.bank_ledger').'_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
         $path = $rootPaths.'/'.$fileName;
 
         $result = Storage::disk('local_public')->put($path, $pdf_content);
@@ -141,7 +159,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
 
 
             $zip = new ZipArchive;
-            $fileName = $companyCode.'_'.'bank_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+            $fileName = $companyCode.'_'.trans('custom.bank_ledger_report').'_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
             if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
             {
                 foreach($files as $key => $value) {
@@ -165,7 +183,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
 
             $webPushData = [
                 'title' => $reportTitle,
-                'body' => 'Period : '.$fromDate.' - '.$toDate,
+                'body' => trans('custom.period') . ' : ' . $fromDate . ' - ' . $toDate,
                 'url' => "",
                 'path' => $zipPath,
             ];

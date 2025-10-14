@@ -173,14 +173,14 @@
     <div class="footer">
         <table style="width:100%;">
             <tr>
-                <td width="40%"><span class="font-weight-bold">Confirmed By :</span> {{ $assetTransferMaster->confirmed_by? $assetTransferMaster->confirmed_by->Ename2:'' }}
+                <td width="40%"><span class="font-weight-bold">{{ trans('custom.confirmed_by') }} :</span> {{ $assetTransferMaster->confirmed_by? $assetTransferMaster->confirmed_by->Ename2:'' }}
                 </td>
-                <td><span class="font-weight-bold">Review By :</span></td>
+                <td><span class="font-weight-bold">{{ trans('custom.review_by') }} :</span></td>
             </tr>
         </table>
         <table style="width:100%;">
             <tr>
-                <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+                <td><span class="font-weight-bold">{{ trans('custom.electronically_approved_by') }} :</span></td>
             </tr>
             <tr>
                 &nbsp;
@@ -224,7 +224,7 @@
                     @endif
                 </td>
                 <td style="width:33%;font-size: 10px;vertical-align: top;">
-                    <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                    <span style="margin-left: 50%;">{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
                 </td>
             </tr>
         </table>
@@ -240,7 +240,7 @@
                     <br>
                     <div>
                         <span style="font-size: 18px">
-                            Asset Transfer
+                            {{ trans('custom.asset_transfer') }}
                         </span>
                     </div>
                 </td>
@@ -252,7 +252,7 @@
                     <table>
                         <tr>
                             <td width="100px">
-                                <span class="font-weight-bold">Doc Code</span>
+                                <span class="font-weight-bold">{{ trans('custom.doc_code') }}</span>
                             </td>
                             <td width="10px">
                                 <span class="font-weight-bold">:</span>
@@ -263,7 +263,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Doc Date </span>
+                                <span class="font-weight-bold">{{ trans('custom.doc_date') }} </span>
                             </td>
                             <td width="10px">
                                 <span class="font-weight-bold">:</span>
@@ -276,7 +276,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Type</span>
+                                <span class="font-weight-bold">{{ trans('custom.type') }}</span>
                             </td>
                             <td width="10px">
                                 <span class="font-weight-bold">:</span>
@@ -289,7 +289,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Reference No</span>
+                                <span class="font-weight-bold">{{ trans('custom.reference_no') }}</span>
                             </td>
                             <td width="10px">
                                 <span class="font-weight-bold">:</span>
@@ -302,7 +302,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Narration</span>
+                                <span class="font-weight-bold">{{ trans('custom.narration') }}</span>
                             </td>
                             <td width="10px">
                                 <span class="font-weight-bold">:</span>
@@ -318,13 +318,13 @@
                             <span class="font-weight-bold">
                                     <h3 class="text-muted">
                                         @if($assetTransferMaster->confirmed_yn == 0 && $assetTransferMaster->approved_yn == 0)
-                                        Not Confirmed
+                                        {{ trans('custom.not_confirmed') }}
                                         @elseif($assetTransferMaster->confirmed_yn == 1 && $assetTransferMaster->approved_yn == 0 && $assetTransferMaster->timesReferred == 0)
-                                        Pending Approval
+                                        {{ trans('custom.pending_approval') }}
                                         @elseif($assetTransferMaster->confirmed_yn == 1 && $assetTransferMaster->approved_yn == 0 && $assetTransferMaster->timesReferred > 0)
-                                        Referred Back
+                                        {{ trans('custom.referred_back') }}
                                         @elseif($assetTransferMaster->confirmed_yn == 1 && ($assetTransferMaster->approved_yn == 1 || $assetTransferMaster->approved_yn == -1))
-                                        Fully Approved
+                                        {{ trans('custom.fully_approved') }}
                                         @endif
                                     </h3>
                                 </span>
@@ -341,10 +341,10 @@
                 <thead>
                     <tr class="theme-tr-head">
                         <th>#</th>
-                        <th class="text-center">Item Description</th>
-                        <th class="text-center">Comment</th>
-                        <th class="text-center">Link Asset</th>
-                        <th class="text-center">Create PR</th>
+                        <th class="text-center">{{ trans('custom.item_description') }}</th>
+                        <th class="text-center">{{ trans('custom.comment') }}</th>
+                        <th class="text-center">{{ trans('custom.link_asset') }}</th>
+                        <th class="text-center">{{ trans('custom.create_pr') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -360,10 +360,10 @@
                             @endif
                         </td>
                         <td style="text-align: center;">@if($item->pr_created_yn == 1)
-                            Yes
+                            {{ trans('custom.yes') }}
                             @endif
                             @if($item->pr_created_yn != 1)
-                            No
+                            {{ trans('custom.no') }}
                             @endif
                         </td>
                     </tr>
@@ -377,9 +377,9 @@
                 <thead>
                     <tr class="theme-tr-head">
                         <th>#</th>
-                        <th class="text-center">Asset</th>
-                        <th class="text-center">From Location</th>
-                        <th class="text-center">To Location</th>
+                        <th class="text-center">{{ trans('custom.asset') }}</th>
+                        <th class="text-center">{{ trans('custom.from_location') }}</th>
+                        <th class="text-center">{{ trans('custom.to_location') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -400,9 +400,9 @@
                 <thead>
                     <tr class="theme-tr-head">
                         <th>#</th>
-                        <th class="text-center">Asset</th>
-                        <th class="text-center">From Employee</th>
-                        <th class="text-center">To Employee</th>
+                        <th class="text-center">{{ trans('custom.asset') }}</th>
+                        <th class="text-center">{{ trans('custom.from_employee') }}</th>
+                        <th class="text-center">{{ trans('custom.to_employee') }}</th>
                     </tr>
                 </thead>
                 <tbody>

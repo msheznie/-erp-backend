@@ -1142,7 +1142,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ];
 
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
-                        $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
@@ -1184,7 +1184,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData,$excelColumnFormat) {
-                        $excel->sheet('New sheet', function ($sheet) use ($outputData,$excelColumnFormat) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);

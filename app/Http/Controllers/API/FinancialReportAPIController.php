@@ -1133,7 +1133,7 @@ class FinancialReportAPIController extends AppBaseController
             $templateName = "export_report.employee_ledger_report";
 
             return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
                     
                     // Set right-to-left for Arabic locale
@@ -4006,7 +4006,7 @@ class FinancialReportAPIController extends AppBaseController
         );
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {
-            $excel->sheet('New sheet', function ($sheet) use ($output) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output) {
                 $sheet->loadView('export_report.project_utilization_report', $output);
                 
                 // Set right-to-left for Arabic locale
@@ -4589,7 +4589,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
                 $templateName = "export_report.generalLedger.taxdetails";
-                $fileName = 'tax_details';
+                $fileName = trans('custom.tax_details');
                 $path = 'general-ledger/report/tax_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [
@@ -12696,7 +12696,7 @@ GROUP BY
         $fileName = trans('custom.finance');
 
         return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
-            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
                 

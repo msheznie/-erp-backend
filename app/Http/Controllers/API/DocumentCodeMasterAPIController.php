@@ -510,7 +510,7 @@ class DocumentCodeMasterAPIController extends AppBaseController
         try {
     
             if (isset($input['documentCodeMaster'])) {
-                $input['documentCodeMaster'] = json_decode($input['documentCodeMaster'], true);
+                // $input['documentCodeMaster'] = json_decode($input['documentCodeMaster'], true);
                 $documentCodeMaster =$input['documentCodeMaster'];
                 unset($documentCodeMaster['doc_code_numbering_sequences']);
                 unset($documentCodeMaster['document_code_transactions']);

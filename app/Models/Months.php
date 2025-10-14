@@ -10,7 +10,6 @@
  * -- REVISION HISTORY
  */
 namespace App\Models;
-
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -84,6 +83,12 @@ class Months extends Model
      */
     public function getMonthDesAttribute()
     {
+        // Check if the current path contains 'downloadBudgetUploadTemplate'
+        // If so, return original month description without translation
+        if (strpos(request()->path(), 'downloadBudgetUploadTemplate') !== false || strpos(request()->path(), 'budgetDetailsUpload') !== false) {
+            return $this->attributes['monthDes'] ?? '';
+        }
+
         $currentLanguage = app()->getLocale() ?: 'en';
         
         $translation = $this->translation($currentLanguage);

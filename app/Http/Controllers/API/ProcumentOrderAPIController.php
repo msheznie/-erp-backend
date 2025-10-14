@@ -1175,9 +1175,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError($validateAllocatedEDD['message'], 500);
             }
 
-            if ($checkQuantity > 0) {
-                return $this->sendError(trans('custom.item_should_have_minimum_qty'), 500);
-            }
+            // if ($checkQuantity > 0) {
+            //     return $this->sendError(trans('custom.item_should_have_minimum_qty'), 500);
+            // }
+
 
             //check unit cost should be greater than zero
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
@@ -5444,7 +5445,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data = array();
             }
         }
-        $fileName = 'po_employee_performance';
+        $fileName = trans('custom.po_employee_performance');
         $path = 'procurement/report/employee_performance/excel/';
         $companyMaster = Company::find($request->companySystemID);
         $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
@@ -5489,7 +5490,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+            return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
         $validator = \Validator::make($input, [
@@ -5497,7 +5498,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Unable to export excel: ' .  $validator->errors()->first());
+            return $this->sendError(trans('custom.unable_to_export_excel') . ': ' .  $validator->errors()->first());
         }
 
         $supplierID = $request['supplierID'];
@@ -5748,16 +5749,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         // return $this->sendResponse(array(), trans('custom.successfully_export'));
 
-        $doc_name = 'purchase_order';
+        $doc_name = trans('custom.purchase_order');
         $doc_name_path = 'purchase_order/';
         if($input['documentId'] == 52)
         {
-            $doc_name = 'purchase_direct_order';
+            $doc_name = trans('custom.purchase_direct_order');
             $doc_name_path = 'purchase_direct_order/';
         }
         else if($input['documentId'] == 5)
         {
-            $doc_name = 'purchase_work_order';
+            $doc_name = trans('custom.purchase_work_order');
             $doc_name_path = 'purchase_work_order/';
         }
         $companyID = isset($input['companyId']) ? $input['companyId']: null;
@@ -6406,7 +6407,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $masterData->poCancelledYN == 0 && $masterData->grvRecieved == 0 &&
             $masterData->WO_amendYN == -1 && $masterData->WO_confirmedYN != 1
         ) {
-            return $this->sendError($documentName . ' is already amended. You cannot amend again.');
+            return $this->sendError($documentName . ' ' . trans('custom.is_already_amended_cannot_amend_again'));
         }
 
         if (
@@ -6429,7 +6430,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), $documentName . ' amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), $documentName . ' ' . trans('custom.amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -6461,14 +6462,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
 
-            $message = trans('custom.logistic') . ' ' . $array['text'];
+            $message = trans('custom.logistic') . ' ' . trans('custom.' . strtolower($array['text']));
             $update_array = array(
                 'logisticsAvailable' => $array['value']
             );
         } else if ($input['type'] == 2) { //grv
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
-            $message = trans('custom.partially_grv_allowed') . ' ' . $array['text'];
+            $message = trans('custom.partially_grv_allowed') . ' ' . trans('custom.' . strtolower($array['text']));
             $update_array = array(
                 'partiallyGRVAllowed' => $array['value']
             );
@@ -7427,7 +7428,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $tracingData = [];
 
-
         if (!is_array($purchaseOrderID) || (is_array($purchaseOrderID) && sizeof($purchaseOrderID) == 1)) {
             $poID = is_array($purchaseOrderID) ? $purchaseOrderID[0] : $purchaseOrderID;
 
@@ -7469,9 +7469,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $trData = [];
                 foreach ($prIDS as $key => $value) {
-                    $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
+                    if(!empty($value))
+                    {   
+                        $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
+                    }
                 }
-
                 return $trData;
             } else {
                 $procumentOrderData = ProcumentOrder::with(['currency'])
@@ -9149,11 +9151,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.file_type_not_allowed'), 500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.max_file_size_exceeded'), 500);
             }
 
             $disk = 'local';

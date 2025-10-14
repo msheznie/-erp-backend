@@ -1,5 +1,28 @@
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <style type="text/css">
     <!--
+    @if(isset($lang) && $lang === 'ar')
+        body {
+        direction: rtl;
+        text-align: right;
+    }
+
+    .text-left {
+        text-align: right !important;
+    }
+
+    .text-right {
+        text-align: left !important;
+    }
+
+    table {
+        direction: rtl;
+    }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
     @page {
         margin: 20px 30px 220px;
     }
@@ -7,6 +30,7 @@
     #footer {
         position: fixed;
         left: 0px;
+        top: 750px;
         bottom: 10px;
         right: 0px;
         height: 0px;
@@ -82,7 +106,7 @@
     }
 
     .font-weight-bold {
-        font-weight: 700 !important;
+        font-weight: bold !important;
     }
 
     hr {
@@ -207,7 +231,7 @@
                             <img src="{{$request->companyLogo}}"
                             class="container">
                           @else
-                            image not found
+                            {{__('custom.image_not_found')}}
                           @endif
 
                     @endif
@@ -218,7 +242,7 @@
                     <div class="text-center">
 
                         <h3 class="font-weight-bold">
-                            Tax Invoice
+                            {{__('custom.tax_invoice')}}
                         </h3>
                     </div>
 
@@ -233,36 +257,36 @@
     <div class="row">
         <table style="width: 100%">
             <tr>
-                <td style="width: 50%; text-align: left;vertical-align: top;">
+                <td style="width: 50%; vertical-align: top; @if(isset($lang) && $lang === 'ar') text-align: right; @else text-align: left; @endif">
                     <b>{{$request->CompanyName}}</b><br>
                     {{$request->CompanyAddress}}<br>
-                    <b> Tel: </b> {{$request->CompanyTelephone}}<br>
-                    <b> Fax: </b> {{$request->CompanyFax}}<br>
-                    <b>VAT NO: </b>{{$request->vatRegistratonNumber}}
+                    <b> {{__('custom.tel')}}: </b> {{$request->CompanyTelephone}}<br>
+                    <b> {{__('custom.fax')}}: </b> {{$request->CompanyFax}}<br>
+                    <b>{{__('custom.vat_no')}}: </b>{{$request->vatRegistratonNumber}}
                 </td>
 
-                <td style="width: 50%; text-align: left;vertical-align: top;">
+                <td style="width: 50%; vertical-align: top; @if(isset($lang) && $lang === 'ar') text-align: right; @else text-align: left; @endif">
                     <table style="width: 100%">
                         <tr>
-                            <td><b>Invoice No </b></td>
+                            <td><b>{{__('custom.invoice_no')}} </b></td>
                             <td>: {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td><b>Invoice Date </b></td>
+                            <td><b>{{__('custom.invoice_date')}} </b></td>
                             <td>: @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Date Of Supply </b></td>
+                            <td><b>{{__('custom.date_of_supply')}} </b></td>
                             <td>: @if(!empty($request->date_of_supply))
                                     {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Name Of Customer </b></td>
+                            <td><b>{{__('custom.name_of_customer')}} </b></td>
                             <td>:@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
@@ -271,20 +295,20 @@
 
 
                         <tr>
-                            <td><b>Customer Address </b></td>
+                            <td><b>{{__('custom.customer_address')}} </b></td>
                             <td>:
                                 {{$request->customer->customerAddress1}}</td>
                         </tr>
                         <tr>
-                            <td><b>Customer Telephone </b></td>
+                            <td><b>{{__('custom.customer_telephone')}} </b></td>
                             <td>: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
                         </tr>
                         <tr>
-                            <td><b>Customer Fax </b></td>
+                            <td><b>{{__('custom.customer_fax')}} </b></td>
                             <td>: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</td>
                         </tr>
                         <tr>
-                            <td><b>Customer VATIN</b></td>
+                            <td><b>{{__('custom.customer_vatin')}}</b></td>
                             <td>:
                                 {{$request->vatNumber}}</td>
                         </tr>
@@ -299,8 +323,8 @@
     <div class="row">
         <table style="width: 100%">
             <tr>
-                <td style="width: 10%; text-align: left;vertical-align: top;"><b>Comments :</b></td>
-                <td style="width: 90%; text-align: left;">@if(!empty($request->comments))
+                <td style="width: 10%; vertical-align: top; @if(isset($lang) && $lang === 'ar') text-align: right; @else text-align: left; @endif"><b>{{__('custom.comments')}}: </b></td>
+                <td style="width: 90%; @if(isset($lang) && $lang === 'ar') text-align: right; @else text-align: left; @endif">@if(!empty($request->comments))
                         {{$request->comments}}
                     @endif
                 </td>
@@ -316,10 +340,10 @@
                 <thead>
                 <tr class="">
 
-                    <th style="text-align: center">Well</th>
-                    <th style="text-align: center">Network</th>
-                    <th style="text-align: center">SE</th>
-                    <th style="text-align: center">Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.well')}}</th>
+                    <th style="text-align: center">{{__('custom.network')}}</th>
+                    <th style="text-align: center">{{__('custom.se')}}</th>
+                    <th style="text-align: center">{{__('custom.total_amount')}}({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -349,15 +373,15 @@
                 <thead>
                 <tr class="">
                     <th style="width:1%"></th>
-                    <th style="text-align: center">Client Ref</th>
+                    <th style="text-align: center">{{__('custom.client_ref')}}</th>
                     @if($request->is_po_in_line)
-                        <th style="text-align: center">PO Line Item</th>
+                        <th style="text-align: center">{{__('custom.po_line_item')}}</th>
                     @endif
-                    <th style="text-align: center">Details</th>
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">Qty</th>
-                    <th style="text-align: center">Unit Rate</th>
-                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.details')}}</th>
+                    <th style="text-align: center">{{__('custom.uom')}}</th>
+                    <th style="text-align: center">{{__('custom.qty')}}</th>
+                    <th style="text-align: center">{{__('custom.unit_rate')}}</th>
+                    <th style="text-align: center">{{__('custom.total_amount')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -395,10 +419,10 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:1%"></th>
-                    <th style=" text-align: center">Details</th>
+                    <th style=" text-align: center">{{__('custom.details')}}</th>
 
 
-                    <th style="width:140px;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:140px;text-align: center">{{__('custom.total_amount')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
 
@@ -432,20 +456,20 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
-                    <th style="text-align: center">GL Code</th>
-                    <th style="text-align: center">GL Code Description</th>
+                    <th style="text-align: center">{{__('custom.gl_code')}}</th>
+                    <th style="text-align: center">{{__('custom.gl_code_description')}}</th>
                     @if($request->isProjectBase && $request->isPerforma == 0)
-                        <th style="text-align: center">Project</th>
+                        <th style="text-align: center">{{__('custom.project')}}</th>
                     @endif
-                    <th style="text-align: center">Segment</th>
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">QTY</th>
-                    <th style="text-align: center">Sales Price</th>
-                    <th style="text-align: center">Dis %</th>
-                    <th style="text-align: center">Discount Amount</th>
-                    <th style="text-align: center">Selling Unit Price</th>
-                    <th style="text-align: center">VAT Per Unit</th>    
-                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.segment')}}</th>
+                    <th style="text-align: center">{{__('custom.uom')}}</th>
+                    <th style="text-align: center">{{__('custom.qty')}}</th>
+                    <th style="text-align: center">{{__('custom.sales_price')}}</th>
+                    <th style="text-align: center">{{__('custom.dis_percent')}}</th>
+                    <th style="text-align: center">{{__('custom.discount_amount')}}</th>
+                    <th style="text-align: center">{{__('custom.selling_unit_price')}}</th>
+                    <th style="text-align: center">{{__('custom.vat_per_unit')}}</th>
+                    <th style="text-align: center">{{__('custom.total_amount')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -488,21 +512,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%"></th>
-                    <th style="text-align: center">Description</th>
+                    <th style="text-align: center">{{__('custom.description')}}</th>
                     @if($request->isProjectBase && $request->isPerforma == 2)
-                        <th style="text-align: center">Project</th>
+                        <th style="text-align: center">{{__('custom.project')}}</th>
                     @endif
-                    <th style="text-align: center">Part No / Ref.Number</th>
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">Quantity</th>
-                    <th style="text-align: center">Sales Price</th>
-                    <th style="text-align: center">Dis %</th>
-                    <th style="text-align: center">Discount Amount</th>
-                    <th style="text-align: center">Selling Unit Price</th>
-                    <th style="text-align: center">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="text-align: center">Taxable Rate</th>
-                    <th style="text-align: center">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.part_no_ref_number')}}</th>
+                    <th style="text-align: center">{{__('custom.uom')}}</th>
+                    <th style="text-align: center">{{__('custom.quantity')}}</th>
+                    <th style="text-align: center">{{__('custom.sales_price')}}</th>
+                    <th style="text-align: center">{{__('custom.dis_percent')}}</th>
+                    <th style="text-align: center">{{__('custom.discount_amount')}}</th>
+                    <th style="text-align: center">{{__('custom.selling_unit_price')}}</th>
+                    <th style="text-align: center">{{__('custom.taxable_amount')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.taxable_rate')}}</th>
+                    <th style="text-align: center">{{__('custom.tax')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{__('custom.total_amount')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -554,7 +578,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Subtotal (Excluding VAT)
+                            {{__('custom.subtotal_excluding_vat')}}
                         </span>
                 </td>
 
@@ -572,7 +596,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
+                            {{__('custom.total_vat')}} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
                         </span>
                 </td>
                 <td class="text-right"
@@ -586,7 +610,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total Amount Payable
+                            {{__('custom.total_amount_payable')}}
                         </span>
                 </td>
                 <td class="text-right"
@@ -600,7 +624,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total Amount Payable in word
+                            {{__('custom.total_amount_payable_in_word')}}
                         </span>
                 </td>
                 <td class="text-right"
@@ -609,11 +633,11 @@
                             class="font-weight-bold">                                
                             {{$request->amount_word}}
                             @if ($request->floatAmt > 0)
-                            and
+                            {{__('custom.and')}}
                             {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                             @endif
-                            
-                            only
+
+                            {{__('custom.only')}}
                     </span>
                 </td>
             </tr>
@@ -630,10 +654,10 @@
                     @endif
                     <table>
                         <tr>
-                            <td width="100px" colspan="2"><span class="font-weight-bold" style="text-decoration: underline;">Remittance Details  </span></td>
+                            <td width="100%" colspan="2"><span class="font-weight-bold" style="text-decoration: underline;">{{__('custom.remittance_details')}}  </span></td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Bank : </span>
+                            <td width="100%"><span class="font-weight-bold">{{__('custom.bank')}}: </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
@@ -644,7 +668,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Branch : </span>
+                            <td width="100%"><span class="font-weight-bold">{{__('custom.branch')}}: </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankBranch}}
@@ -655,7 +679,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Account No : </span>
+                            <td width="100%"><span class="font-weight-bold">{{__('custom.account_no')}}: </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}}
@@ -667,7 +691,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">SWIFT Code : </span>
+                            <td width="100%"><span class="font-weight-bold">{{__('custom.swift_code')}}: </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
@@ -686,7 +710,7 @@
 
                             <tr>
                                 <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Approved By :</span><br>
+                                    <span class="font-weight-bold">{{__('custom.approved_by')}}:</span><br>
                                     @foreach ($request->approved_by as $det)
                                         @if($det->employee)
                                             {{$det->employee->empFullName }}

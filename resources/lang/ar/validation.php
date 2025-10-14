@@ -360,7 +360,19 @@ return [
         'customerCategoryID' => 'معرف فئة العميل',
         'mainCategory' => 'الفئة الرئيسية',
         'subCategory' => 'الفئة الفرعية',
+        'purchaseOrderID' => 'معرف الطلب',
+        'type' => 'النوع',
         'customer' => 'العميل',
-
+        'transactionCurrencyID' => 'معرف العملة',
+        'customerID' => 'العميل',
+        'companyFinanceYearID' => 'السنة المالية',
+        'companyFinancePeriodID' => 'الفترة المالية',
+        'serviceLineSystemID' => 'القسم',
+        'wareHouseSystemCode' => 'المستودع',
+        'deliveryOrderDate' => 'تاريخ المستند',
+        'CurrencyCode' => 'رمز العملة',
+        'categories' => 'الفئات',
+        'subCategories' => 'الفئات الفرعية',
+        'years' => 'السنوات'
     ],
 ];

@@ -1832,17 +1832,17 @@ HAVING
         if ($invMaster) {
             $x = 0;
             foreach ($invMaster as $val) {
-                $data[$x]['PO Code'] = $val->purchaseOrderCode;
-                $data[$x]['Department'] = $val->serviceLine;
-                $data[$x]['PO Expected Delivery Date'] = $val->expectedDeliveryDate;
-                $data[$x]['PO Approved'] = $val->approvedDate;
-                $data[$x]['Item Code'] = $val->itemPrimaryCode;
-                $data[$x]['Item Description'] = $val->itemDescription;
-                $data[$x]['GL Code'] = $val->glCode;
-                $data[$x]['Supplier Name'] = $val->supplierName;
-                $data[$x]['PO Total Cost'] = round($val->poCost, $request->fractionTot);
-                $data[$x]['GRV Total Cost'] = round($val->grvCost, $request->fractionTot);
-                $data[$x]['Balance'] = round($val->balanceCost, $request->fractionTot);
+                $data[$x][trans('custom.po_code')] = $val->purchaseOrderCode;
+                $data[$x][trans('custom.department')] = $val->serviceLine;
+                $data[$x][trans('custom.po_expected_delivery_date')] = $val->expectedDeliveryDate;
+                $data[$x][trans('custom.po_approved')] = $val->approvedDate;
+                $data[$x][trans('custom.item_code')] = $val->itemPrimaryCode;
+                $data[$x][trans('custom.item_description')] = $val->itemDescription;
+                $data[$x][trans('custom.gl_code')] = $val->glCode;
+                $data[$x][trans('custom.supplier_name')] = $val->supplierName;
+                $data[$x][trans('custom.po_total_cost')] = round($val->poCost, $request->fractionTot);
+                $data[$x][trans('custom.grv_total_cost')] = round($val->grvCost, $request->fractionTot);
+                $data[$x][trans('custom.balance')] = round($val->balanceCost, $request->fractionTot);
                 $x++;
             }
         }

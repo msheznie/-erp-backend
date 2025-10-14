@@ -621,7 +621,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
  
         \Excel::create('itemTransactionHistory', function ($excel) use ($data_obj) {
 
-            $excel->sheet('Firstsheet', function ($sheet) use ($data_obj) {
+            $excel->sheet(trans('custom.itemTransactionHistory'), function ($sheet) use ($data_obj) {
                 $sheet->fromArray($data_obj);
                 $sheet->setAutoSize(true);
                 

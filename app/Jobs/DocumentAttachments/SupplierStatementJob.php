@@ -69,7 +69,7 @@ class SupplierStatementJob implements ShouldQueue
         $nowTime = time();
 
         $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-        $fileName = 'supplier_statement_' . $nowTime.$supplierID. '.pdf';
+        $fileName = trans('custom.supplier_statement') . $nowTime.$supplierID. '.pdf';
         $filePath = $path . '/' . $fileName;
 
         // Configure mPDF for landscape A4 format
@@ -147,14 +147,14 @@ class SupplierStatementJob implements ShouldQueue
                     $emailSentTo = 1;
                     $dataEmail['empEmail'] = $supplierMaster->supEmail;
 
-                    $dataEmail['companySystemID'] = $input['companySystemID'];
+                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
                     $temp = trans('custom.dear_supplier_statement_sent', [
                         'supplierName' => $supplierMaster->supplierName,
                         'companyName' => $company->CompanyName
                     ]) . $footer;
-
-                    $pdfName = realpath($path."/supplier_statement_" . $nowTime.$supplierID . ".pdf");
+                    $fileName = trans('custom.supplier_statement_' . $nowTime.$supplierID . ".pdf");
+                    $pdfName = realpath($path . "/" . $fileName );
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;

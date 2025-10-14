@@ -136,5 +136,30 @@ class DocumentCodeTransaction extends Model
         'isTypeEnable' => 'required'
     ];
 
-    
+    public function translations()
+    {
+        return $this->hasMany(DocumentMasterTranslation::class, 'documentSystemID', 'document_system_id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getTransactionNameAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+
+        return $this->attributes['transaction_name'] ?? '';
+    }
 }

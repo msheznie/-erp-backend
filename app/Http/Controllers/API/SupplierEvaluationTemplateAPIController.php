@@ -290,12 +290,12 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
         if($supplierEvaluationTemplate['is_confirmed'] == 0 && $input['is_confirmed'] == 1){
 
             if($supplierEvaluationTemplate['initial_instruction'] == null || $supplierEvaluationTemplate['user_text'] == null ){
-                return $this->sendError('Input fields in header can not be empty');
+                return $this->sendError(trans('custom.input_fields_header_empty'));
             }
 
             $commentCount = SupplierEvaluationTemplateComment::where('supplier_evaluation_template_id',$supplierEvaluationTemplate['id'])->count();
             if($commentCount == 0){
-                return $this->sendError('Please add atleast one comment in comment section');
+                return $this->sendError(trans('custom.add_atleast_one_comment'));
             }
 
             $evaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::with(['column' ,'row'])
@@ -315,7 +315,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
                             if (is_array($rowData)) {
                                 foreach ($rowData as $dataItem) {
                                     if (array_key_exists($column->column_header, $dataItem) && $dataItem[$column->column_header] === null) {
-                                        return $this->sendError('Section table text fields can not be empty');
+                                        return $this->sendError(trans('custom.section_table_text_fields_empty'));
                                     }
                                 }
                             }

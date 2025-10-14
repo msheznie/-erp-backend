@@ -139,7 +139,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
                'description' => 'required|string|max:100',
             ],
             [
-                'name.unique' => 'The template name already existing',
+                'name.unique' => trans('custom.final_return_income_template_name_already_exists'),
             ]
             );
 
@@ -281,7 +281,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
 
         $rules = [];
         $messages = [
-            'name.unique' => 'The template name already existing',
+            'name.unique' => trans('custom.final_return_income_template_name_already_exists'),
         ];
 
         if (isset($input['name']) && $input['name'] !== $finalReturnIncomeTemplate->name) {
@@ -372,7 +372,7 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             ->exists();
 
         if ($IsExits) {
-            return $this->sendError('Final Return Income Reports exist for this template');
+            return $this->sendError(trans('custom.final_return_income_reports_exist_for_template'));
         }
 
         FinalReturnIncomeTemplateDetails::where(

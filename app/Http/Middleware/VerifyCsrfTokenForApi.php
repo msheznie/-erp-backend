@@ -14,6 +14,8 @@ class VerifyCsrfTokenForApi
         $csrfEnabled = env('CSRF_ENABLED', false);
         $normalizedJson = '';
         
+        // Set precision to prevent scientific notation in JSON encoding
+        ini_set('serialize_precision', -1);
         if ($csrfEnabled) {
             if (!in_array($request->method(), ['GET', 'POST', 'PUT', 'DELETE'])) {
                 return $next($request);
@@ -94,7 +96,17 @@ class VerifyCsrfTokenForApi
             
             //body data
             $data = json_decode($request->getContent(), true) ?: '{}';
-            $normalizedJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $normalizedJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+            
+            // Convert scientific notation back to decimal format to match frontend
+            $normalizedJson = preg_replace_callback('/\b(\d+\.?\d*)e([+-]?\d+)\b/i', function($matches) {
+                $number = floatval($matches[0]);
+                // Format with enough precision and remove trailing zeros
+                $formatted = rtrim(number_format($number, 10, '.', ''), '0');
+                // Ensure we don't end with a decimal point
+                return rtrim($formatted, '.');
+            }, $normalizedJson);
+
             //params data
             $params = $request->query() ?: '{}';
             $normalizedParams = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -104,8 +116,7 @@ class VerifyCsrfTokenForApi
             
             $requestString = "{$bodyString}|{$apiPath}|{$operation}";
 
-            // \Log::info($timeExpiry);
-
+            
             $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
             
@@ -113,6 +124,7 @@ class VerifyCsrfTokenForApi
             $expectedToken = hash_hmac('sha256', $dataWithTimestamp, env('CSRF_SECRET_KEY'));
 
             if (!hash_equals($expectedToken, $csrfToken)) {
+                \Log::error($requestString);
                 return $this->sendError();
             }
         }

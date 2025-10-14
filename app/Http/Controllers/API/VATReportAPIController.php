@@ -405,13 +405,13 @@ class VATReportAPIController extends AppBaseController
         $output = $this->getVatReportQuery($input);
         if($request->reportTypeID == 1){
             $title = trans('custom.output_vat_summary');
-            $fileName = 'Output VAT Summary';
+            $fileName = trans('custom.output_vat_summary');
         } elseif($request->reportTypeID == 2){
             $title = trans('custom.input_vat_summary');
-            $fileName = 'Input VAT Summary';
+            $fileName = trans('custom.input_vat_summary');
         } else{
             $title = trans('custom.vat_summary_report');
-            $fileName = 'VAT Summary Report';
+            $fileName = trans('custom.vat_summary_report');
         }
         $path = 'general-ledger/report/vat_report/excel/';
         if (count((array)$output)>0) {

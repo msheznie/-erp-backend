@@ -457,6 +457,7 @@ class CashFlowTemplateAPIController extends AppBaseController
     public function update($id, UpdateCashFlowTemplateAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var CashFlowTemplate $cashFlowTemplate */
         $cashFlowTemplate = $this->cashFlowTemplateRepository->findWithoutFail($id);

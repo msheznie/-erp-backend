@@ -2012,7 +2012,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($request->groupByAsset == false) {
                         $headers = array();
                         foreach ($data as $element) {
-                            $headers[$element['AccountCode']][] = $element;
+                            $headers[$element[trans('custom.account_code')]][] = $element;
                         }
                         $headers = array_values($headers);
 
@@ -2027,11 +2027,11 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($request->groupByAsset == true) {
                         $headers = array();
                         foreach ($data as $element) {
-                            $headers[$element['AssetCode']][] = $element;
+                            $headers[$element[trans('custom.asset_code')]][] = $element;
                         }
                         $headers = array_values($headers);
 
-                        usort($headers, function ($a, $b) {return $a[0]['AssetID'] > $b[0]['AssetID'];});
+                        usort($headers, function ($a, $b) {return $a[0][trans('custom.asset_id')] > $b[0][trans('custom.asset_id')];});
 
                         $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
                         $templateName = "export_report.asset_wise_expenses";
@@ -2041,11 +2041,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 else{
                     $headers = array();
                     foreach ($data as $element) {
-                        $headers[$element['AccountCode']][] = $element;
+                        $headers[$element[trans('custom.account_code')]][] = $element;
                     }
                     $headers = array_values($headers);
 
-                    usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
+                    usort($headers, function ($a, $b) {return $a[0][trans('custom.chart_of_account_system_id')] > $b[0][trans('custom.chart_of_account_system_id')];});
 
                     $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
                     $templateName = "export_report.asset_expenses";
@@ -2054,7 +2054,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $name = trans('custom.finance');
 
                 return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                         
                         // Set right-to-left for Arabic locale
@@ -2077,7 +2077,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $name = trans('custom.finance');
 
                     return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                        $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                             $sheet->loadView($templateName, $reportData);
                         });
                     })->download('xlsx');

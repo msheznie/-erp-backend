@@ -183,7 +183,7 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                                                     ->exists();
                     if ($exists) {
                         $segmentCode = SegmentMaster::getSegmentCode($processedData['serviceLineSystemID']);
-                        $errorMessages[] = 'Segment ' . $segmentCode . ' is already assigned to this department';
+                        $errorMessages[] = trans('custom.segment_already_assigned_to_department', ['segmentCode' => $segmentCode]);
                         continue;
                     }
 
@@ -199,11 +199,11 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
                 
                 if (!empty($errorMessages)) {
                     DB::rollback();
-                    return $this->sendError('Some segments could not be assigned: ' . implode(', ', $errorMessages));
+                    return $this->sendError(trans('custom.segments_could_not_be_assigned', ['errorMessages' => implode(', ', $errorMessages)]));
                 }
                 
                 DB::commit();
-                return $this->sendResponse($results, count($results) . ' segment(s) assigned to department successfully');
+                return $this->sendResponse($results, trans('custom.segments_assigned_successfully', ['count' => count($results)]));
             } else {
                 // Handle single segment assignment (backward compatibility)
                 $processedData = $this->processUpdateData($input);

@@ -322,7 +322,9 @@ return [
         'receivableAutoID' => 'Receivable Account',
         'expenseAutoID' => 'Expense Account',
         'salesPersonCurrencyID' => 'Sales Person Currency',
-        'segmentID' => 'Segment'
+        'segmentID' => 'Segment',
+        'transactionCurrencyID' => 'Currency Field',
+        'deliveryOrderDate' => 'Document Date Field'
     ],
 
 ];
