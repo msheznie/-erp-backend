@@ -1275,9 +1275,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $queryResult = [];
 
         $tenderId = $request->input('tenderMasterId');
-
-        $bidSubmissionIDs = $request->input('supplierID');
-        $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
+        $isFromPrint = $request->input('isFromPrint') ?? false;
+        
+        if($isFromPrint) {
+            $supplierId = $request->get('supplierID');
+            $bidSubmissionIDs = $supplierId ? array_map('intval', explode(',', $supplierId)) : [];
+        } else {
+            $bidSubmissionIDs = $request->input('supplierID');
+            $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
+        }
 
         $tenderMaster = TenderMaster::find($tenderId);
         $technicalCount = $this->getTechnicalCount($tenderId);

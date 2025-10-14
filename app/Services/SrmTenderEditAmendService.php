@@ -63,7 +63,7 @@ class SrmTenderEditAmendService
                     'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
                     'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
                     'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
-                    'technical_eval_status'
+                    'technical_eval_status', 'timesReferred'
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => trans('srm_tender_rfx.commercial_criteria_passing_weightage'),
                     'technical_passing_weightage' => trans('srm_tender_rfx.technical_criteria_passing_weightage'),
@@ -163,7 +163,7 @@ class SrmTenderEditAmendService
                     'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
                     'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
                     'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
-                    'technical_eval_status'
+                    'technical_eval_status', 'timesReferred'
                 ],
                 'fieldDescriptions' => [
                     'title' => trans('srm_tender_rfx.title'),

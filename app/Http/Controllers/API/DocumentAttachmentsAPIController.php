@@ -26,6 +26,7 @@ use App\Models\DocumentAttachmentType;
 use App\Models\DocumentMaster;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderNegotiationArea;
 use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
@@ -42,6 +43,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\BidDocumentVerification;
 use App\Models\BidSubmissionMaster;
 use App\Models\TenderMaster;
+use App\Repositories\DocumentAttachmentsEditLogRepository;
+use App\Services\SrmDocumentModifyService;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -50,10 +53,17 @@ class DocumentAttachmentsAPIController extends AppBaseController
 {
     /** @var  DocumentAttachmentsRepository */
     private $documentAttachmentsRepository;
+    private $documentAttachmentsEditLogRepository;
+    private $srmDocumentModifyService;
 
-    public function __construct(DocumentAttachmentsRepository $documentAttachmentsRepo)
-    {
+    public function __construct(
+        DocumentAttachmentsRepository $documentAttachmentsRepo,
+        DocumentAttachmentsEditLogRepository $documentAttachmentsEditLogRepo,
+        SrmDocumentModifyService $srmDocumentModifyService
+    ){
         $this->documentAttachmentsRepository = $documentAttachmentsRepo;
+        $this->documentAttachmentsEditLogRepository = $documentAttachmentsEditLogRepo;
+        $this->srmDocumentModifyService = $srmDocumentModifyService;
     }
 
     /**
@@ -65,17 +75,36 @@ class DocumentAttachmentsAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
-        $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
-        $documentAttachments = $this->documentAttachmentsRepository->all();
+        $isFromSrmAmend = filter_var($request['isFromSrmAmend'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if(!$isFromSrmAmend){
+            $this->documentAttachmentsRepository->with('type');
+            $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
+            $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
+            $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
+            $documentAttachments = $this->documentAttachmentsRepository->all();
+        }
+        else {
+            $documentAttachments = $this->documentAttachmentsEditLogRepository->getDocumentAttachmentEditLogData($request);
+        }
+
+        $attachmentTypes = [];
+        if (isset($request['documentSystemID']) && ($request['documentSystemID'] == 1)) {
+            $attachmentTypes = $this->documentAttachmentsRepository->getDocumentAttachmentTypes($request['documentSystemID'], $request['companySystemID']);
+        }
 
         foreach ($documentAttachments as $value) {
             $url = Storage::disk(Helper::policyWiseDisk($value->companySystemID, 'public'))->temporaryUrl($value->path, Carbon::now()->addHours(3));
             $value->url = $url;
+
+            $value->isHideTypeDropdown = false;
+            if((isset($request['documentSystemID']) && $request['documentSystemID'] == 1) && !is_null($value->attachmentType)) {
+                if(($value->attachmentType && $value->attachmentType != 0) && !in_array($value->attachmentType, $attachmentTypes)){
+                    $value->isHideTypeDropdown = true;
+                }
+            }
         }
 
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully');
+        return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_retrieved_successfully_1'). $isFromSrmAmend);
     }
 
     /**
@@ -97,7 +126,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         if (!is_null($documentAttachments->path)) {
@@ -107,15 +136,16 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 : Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
 
             if (Storage::disk($disk)->exists($documentAttachments->path)) {
-                return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
+                $sanitizedFileName = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $documentAttachments->myFileName);
+                return Storage::disk($disk)->download($documentAttachments->path, $sanitizedFileName);
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
 
             /*  if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
                   return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
               } else {
-                  return $this->sendError('Attachments not found', 500);
+                  return $this->sendError(trans('custom.attachments_not_found'), 500);
               }*/
         } else {
             return $this->sendError('Attachment is not attached', 404);
@@ -130,7 +160,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         $fileName = "Desktop/upload/" . $documentAttachments->path;
@@ -194,11 +224,46 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "success" => false,
-                        "message" => "This type of file not allow to upload."
+                        "message" => trans('custom.type_not_allowed')
                     ];
                 }
                 else{
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return $this->sendError(trans('custom.type_not_allowed'), 500);
+                }
+            }
+
+            // Comprehensive file security validation for all file types
+            $file = $request->get('file');
+            if ($file && env('FILE_SECURITY_VALIDATION_ENABLED', false)) {
+                $decodeFile = base64_decode($file);
+                $mimeType = $request->get('mimeType', null);
+
+                // Check if file extension is allowed (this should block dangerous extensions)
+                if (!\App\helper\FileSecurityValidator::isExtensionAllowed($extension)) {
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            "success" => false,
+                            "message" => "File type '$extension' is not allowed for security reasons"
+                        ];
+                    }
+                    else{
+                        return $this->sendError("File type '$extension' is not allowed for security reasons", 400);
+                    }
+                }
+
+                // Validate file content for security threats (only for allowed extensions)
+                $securityValidation = \App\helper\FileSecurityValidator::validateFileContent($decodeFile, $extension, $mimeType);
+
+                if (!$securityValidation['isValid']) {
+                    if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
+                        return [
+                            "success" => false,
+                            "message" => $securityValidation['message']
+                        ];
+                    }
+                    else{
+                        return $this->sendError($securityValidation['message'], 400);
+                    }
                 }
             }
 
@@ -208,11 +273,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                         return [
                             "success" => false,
-                            "message" => "Maximum allowed file size is exceeded"
+                            "message" => trans('custom.maximum_allowed_file_size')
                         ];
                     }
                     else{
-                        return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                        return $this->sendError(trans('custom.maximum_allowed_file_size', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                     }
                 }
             }
@@ -241,9 +306,21 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $companyID = $companyMaster->CompanyID;
                 }
             }
+            $tenderDocumentSystemID = [108, 113];
+            $requestData = null;
+            if(in_array($input['documentSystemID'], $tenderDocumentSystemID)){
+                $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($input['documentSystemCode']);
+                if($requestData['enableRequestChange']){
+                    $historyData = $this->documentAttachmentsEditLogRepository->prepareNewAttachmentRecord($requestData['versionID'], $input);
+                    $documentAttachments = $this->documentAttachmentsEditLogRepository->create($historyData);
+                    $documentAttachments['attachmentID'] = $documentAttachments->amd_id;
 
-
-            $documentAttachments = $this->documentAttachmentsRepository->create($input);
+                } else {
+                    $documentAttachments = $this->documentAttachmentsRepository->create($input);
+                }
+            } else {
+                $documentAttachments = $this->documentAttachmentsRepository->create($input);
+            }
 
             $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
@@ -272,8 +349,15 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 $input['isAutoCreateDocument'] = 1;
             }
+            if(in_array($input['documentSystemID'], $tenderDocumentSystemID) && $requestData['enableRequestChange']){
+                $documentAttachments = $this->documentAttachmentsEditLogRepository->update(
+                    $input, $documentAttachments->amd_id
+                );
 
-            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            } else {
+                $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            }
+
 
             DB::commit();
 
@@ -284,18 +368,18 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+                return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_saved_successfully'));
             }
         } catch (\Exception $exception) {
             DB::rollBack();
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
                     "success" => false,
-                    "message" => "Unable to upload the attachment"
+                    "message" =>  trans('custom.unable_to_upload_the_attachment')
                 ];
             }
             else{
-                return $this->sendError('Unable to upload the attachment', 500);
+                return $this->sendError( trans('custom.unable_to_upload_the_attachment') . $exception->getLine(), 500);
             }
         }
     }
@@ -314,10 +398,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments retrieved successfully');
+        return $this->sendResponse($documentAttachments->toArray(), trans('custom.document_attachments_retrieved_successfully'));
     }
 
     /**
@@ -337,18 +421,32 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
+        $masterID             = $input['id'] ?? 0;
+        unset($input['isHideTypeDropdown']);
+        unset($input['type']);
 
-        //Update check
-        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
-            ->where('attachmentID', '!=', $id)
-            ->where('documentSystemID',$documentSystemID)
-            ->where('attachmentType',$attachmentType)
-            ->where('documentSystemCode',$documentSystemCode)
-            ->where('attachmentDescription',$attachmentDescription)
-            ->count();
+        $tenderDocumentSystemIDs = [108, 113];
+        $editOrAmend = false;
+        $requestData = null;
 
-        if($isExist >= 1){
-            return $this->sendError('Description already exists', 400);
+        if (in_array($documentSystemID, $tenderDocumentSystemIDs)) {
+            $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($documentSystemCode);
+            $editOrAmend = $requestData['enableRequestChange'] ?? false;
+        }
+
+        $isExist = $this->documentAttachmentsRepository->documentExistsValidation(
+            $attachmentType,
+            $attachmentDescription,
+            $companySystemID,
+            $documentSystemID,
+            $documentSystemCode,
+            $editOrAmend ? $requestData : null,
+            $id ?? null,
+            $editOrAmend ? $masterID : 0
+        );
+
+        if(!$isExist['success']){
+            return $this->sendError(trans('custom.description_already_exists'), 400);
         } else {
             if (isset($input['docExpirtyDate'])) {
                 if ($input['docExpirtyDate']) {
@@ -359,15 +457,19 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $input = $this->convertArrayToValue($input);
 
             /** @var DocumentAttachments $documentAttachments */
-            $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
+            $documentAttachments = $editOrAmend ?
+                $this->documentAttachmentsEditLogRepository->findWithoutFail($id) :
+                $this->documentAttachmentsRepository->findWithoutFail($id);
 
             if (empty($documentAttachments)) {
-                return $this->sendError('Document Attachments not found');
+                return $this->sendError(trans('custom.document_attachments_not_found'));
             }
 
-            $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
+            $documentAttachments = $editOrAmend ?
+                $this->documentAttachmentsEditLogRepository->update($input, $id) :
+                $this->documentAttachmentsRepository->update($input, $id);
 
-            return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
+            return $this->sendResponse($documentAttachments->toArray(), trans('custom.documentattachments_updated_successfully'));
         }
     }
 
@@ -385,7 +487,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
 
         if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
+            return $this->sendError(trans('custom.document_attachments_not_found'));
         }
 
         $attachmentDeleteData = self::deleteAttachmentData($documentAttachments);
@@ -412,7 +514,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 if ($invoice->confirmedYN == 1 || $invoice->approved == -1) {
                     return [
                         'status' => false,
-                        'message' => 'Customer invoice confirmed, you cannot delete the attachment',
+                        'message' => trans('custom.customer_invoice_confirmed_cannot_delete_attachment'),
                         'code' => 500
                     ];
                 }
@@ -446,7 +548,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
         return [
             'status' => true,
-            'message' => 'Document Attachments deleted successfully',
+            'message' => trans('custom.document_attachments_deleted_successfully'),
             'data' => $documentAttachments->attachmentID
         ];
     }
@@ -1062,7 +1164,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $output['documents'] = DocumentMaster::all();
         $output['attachmentTypes'] = DocumentAttachmentType::all();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function downloadFileSRM(Request $request)
@@ -1072,7 +1174,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         if (Storage::disk('s3SRM')->exists($input['fileName'])) {
             return Storage::disk('s3SRM')->download($input['fileName'], 'Attachment');
         } else {
-            return $this->sendError('Attachments not found', 500);
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
     public function downloadFileTender(Request $request){
@@ -1084,7 +1186,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if ($exists = Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->exists($filePath)) {
                 return Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->download($filePath, 'File');
             } else {
-                return $this->sendError('Attachments not found', 500);
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
             }
         } else {
             return $this->sendError('Attachment is not attached', 404);
@@ -1098,30 +1200,23 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentSystemID = $input['documentSystemID'];
         $documentSystemCode = $input['documentSystemCode'];
 
-        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
-            ->where('documentSystemID',$documentSystemID)
-            ->where('attachmentType',$attachmentType)
-            ->where('documentSystemCode',$documentSystemCode)
-            ->where('attachmentDescription',$attachmentDescription)
-            ->count();
-        if($isExist >= 1){
-            return ['status' => false, 'message' => 'Description already exists'];
+        $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($documentSystemCode);
+        $isExist = $this->documentAttachmentsRepository->documentExistsValidation(
+            $attachmentType, $attachmentDescription, $companySystemID, $documentSystemID, $documentSystemCode, $requestData
+        );
+
+        if(!$isExist['success']){
+            return $isExist;
         }else {
             $i = 1;
             if($attachmentType == 3){
-                $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
-                    ->where('documentSystemID',$documentSystemID)
-                    ->where('attachmentType',$attachmentType)
-                    ->where('documentSystemCode',$documentSystemCode)
-                    ->orderBy('attachmentID', 'asc')
-                    ->get();
+                $exitingAmendmentRecords = $this->documentAttachmentsRepository->getExistingDocumentAttachmentRecords(
+                    $attachmentType, $companySystemID, $documentSystemID, $documentSystemCode, $requestData
+                );
 
-                foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
-                    $request['order_number'] = $i;
-                    DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
-                    $i++;
-                }
-                $request['order_number'] = $i;
+                $request['order_number'] = $this->documentAttachmentsRepository->updateExistAttachmentOrderNumber(
+                    $exitingAmendmentRecords, $requestData['enableRequestChange']
+                );
                 return self::store($request);
             } else {
                 return self::store($request);
@@ -1151,13 +1246,15 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         $tenderId = $request['tenderId'];
+        $bidListView = $request['bidListView'] ?? null;
+        $parentId = $request['parentId'] ?? null;
         $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentSystemId = $documentType->document_type == 0 ? 108:113;
 
-        $query = DocumentAttachments::with(['bid_verify', 'document_parent'])->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType', $envelopType);
+        $query = DocumentAttachmentsRepository::getAttachmentLists($id, $documentSystemId, $envelopType, $parentId, $tenderId, $bidListView);
 
-        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+        // return $this->sendResponse($query, trans('custom.tender_masters_retrieved_successfully'));
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1194,7 +1291,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $attachmentId = $details['attachmentId'];
 
-        // return $this->sendResponse($details['tenderId'], 'Consolidated view data Successfully get');
+        // return $this->sendResponse($details['tenderId'], trans('custom.consolidated_view_data_successfully_get'));
 
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
@@ -1204,7 +1301,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
         $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
 
-        return $this->sendResponse($data, 'Consolidated view data Successfully get');
+        return $this->sendResponse($data, trans('custom.consolidated_view_data_successfully_get'));
 
     }
 
@@ -1246,7 +1343,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -1274,7 +1371,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -1308,7 +1405,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
 
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            return ['success' => true, 'message' => trans('custom.successfully_updated'), 'data' => $results];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -1396,5 +1493,23 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         return null;
+    }
+
+    public function getAttachmentPreview(Request $request){
+        $input = $request->all();
+        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['attachmentID']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError(trans('custom.document_attachments_not_found'));
+        }
+        try{
+            $getAttachment = $this->documentAttachmentsRepository->getAttachmentPreview($documentAttachments);
+            if(!$getAttachment['success']){
+                return $this->sendError($getAttachment['message'], $getAttachment['code'] ?? 404);
+            }
+            return $this->sendResponse($getAttachment['data'], $getAttachment['message'] ?? trans('custom.attachment_retrieved_successfully'));
+        } catch (\Exception $ex){
+            return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage(), 500);
+        }
     }
 }
