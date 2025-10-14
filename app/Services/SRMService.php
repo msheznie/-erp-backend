@@ -5424,10 +5424,17 @@ class SRMService
             'nonParentIdList' => [],
         ];
 
-        $basePath = $this->encryptUrl(CreateExcel::process($dataPO, $type, $fileName, $path, $reportConfig));
+        $basePath = CreateExcel::process($dataPO, $type, $fileName, $path, $reportConfig);
+        $fileContent = file_get_contents($basePath);
+        $base64File = base64_encode($fileContent);
 
-        return $basePath
-            ? ['success' => true, 'message' => 'Successfully retrieved', 'data' => $basePath]
+        return $base64File
+            ? [
+            'success' => true,
+            'message' => 'Successfully retrieved',
+            'fileName' => $fileName,
+            'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'data' => $base64File,]
             : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
     }
 
