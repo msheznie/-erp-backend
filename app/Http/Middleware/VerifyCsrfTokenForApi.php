@@ -104,8 +104,7 @@ class VerifyCsrfTokenForApi
             
             $requestString = "{$bodyString}|{$apiPath}|{$operation}";
 
-            // \Log::info($timeExpiry);
-
+            
             $encodedRequest = base64_encode($requestString);
             // return response()->json(['success' => false, 'message' => $data], 403);
             
@@ -113,6 +112,7 @@ class VerifyCsrfTokenForApi
             $expectedToken = hash_hmac('sha256', $dataWithTimestamp, env('CSRF_SECRET_KEY'));
 
             if (!hash_equals($expectedToken, $csrfToken)) {
+                \Log::error($requestString);
                 return $this->sendError();
             }
         }
