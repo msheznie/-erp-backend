@@ -9301,4 +9301,21 @@ return
     'image_not_found' => 'الصورة غير موجودة',
     'net_profit_or_loss_(as_per_profit/loss_account)' => 'صافي الربح أو الخسارة (حسب حساب الأرباح والخسائر)',
     'supplier_statement_' => 'كشف_المورد_',
-    ];
+    
+    // Budget Consumption Service Translations
+    'budget_exceeded_project' => 'تم تجاوز الميزانية للمشروع : ',
+    'budget_exceeded_gl_account' => 'تم تجاوز الميزانية لحساب دفتر الأستاذ : ',
+    'budget_exceeded_category' => 'تم تجاوز الميزانية للفئة : ',
+    'segment' => 'القطاع : ',
+    'gl_account' => 'حساب دفتر الأستاذ : ',
+    'budget_amount' => 'مبلغ الميزانية : ',
+    'document_amount' => 'مبلغ المستند : ',
+    'consumed_amount' => 'المبلغ المستهلك : ',
+    'pending_document_amount' => 'مبلغ المستند المعلق : ',
+    'total_consumed_amount' => 'إجمالي المبلغ المستهلك : ',
+    'budget_not_configured_for_gl_codes' => 'لم يتم تكوين الميزانية لأكواد دفتر الأستاذ التالية',
+    'budget_allocated_account_code_exceeding' => 'الميزانية المخصصة لرمز الحساب :account_code تتجاوز الحد المسموح. هل أنت متأكد من أنك تريد المتابعة؟',
+    'gl_codes_not_assigned_budget' => 'بعض أكواد دفتر الأستاذ غير مخصصة للميزانية مع القطاع وفترة المالية ذات الصلة',
+    'budget_check_not_set_document' => 'لم يتم تعيين فحص الميزانية لهذا المستند',
+    'budget_consumption_not_set_document' => 'لم يتم تعيين استهلاك الميزانية لهذا المستند',
+  ];
