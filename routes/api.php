@@ -1044,6 +1044,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('updateNotPostedFADepGLEntries', 'GeneralLedgerAPIController@updateNotPostedFADepGLEntries');
         Route::get('updateNotPostedBSIGLEntries', 'GeneralLedgerAPIController@updateNotPostedBSIGLEntries');
         Route::get('updateNotApprovedSegments', 'GeneralLedgerAPIController@updateNotApprovedSegments');
+
     }
 
 
