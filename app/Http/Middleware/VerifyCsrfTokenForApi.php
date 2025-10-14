@@ -94,7 +94,7 @@ class VerifyCsrfTokenForApi
             
             //body data
             $data = json_decode($request->getContent(), true) ?: '{}';
-            $normalizedJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+            $normalizedJson = $this->normalizeJsonData($data);
             //params data
             $params = $request->query() ?: '{}';
             $normalizedParams = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -129,6 +129,30 @@ class VerifyCsrfTokenForApi
         return [
             'api/v1/getConfigurationInfo',
         ];
+    }
+
+    /**
+     * Normalize JSON data to preserve decimal precision
+     */
+    private function normalizeJsonData($data)
+    {
+        if (is_array($data)) {
+            $normalized = [];
+            foreach ($data as $key => $value) {
+                $normalized[$key] = $this->normalizeJsonData($value);
+            }
+            return json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+        } elseif (is_numeric($data) && is_float($data)) {
+            // For float values, format to preserve precision without scientific notation
+            // Use sprintf to format with sufficient precision
+            $formatted = sprintf('%.10f', $data);
+            // Remove trailing zeros after decimal point
+            $formatted = rtrim($formatted, '0');
+            $formatted = rtrim($formatted, '.');
+            return $formatted;
+        } else {
+            return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+        }
     }
 
     private function portalIgnoreRoutes(): array
