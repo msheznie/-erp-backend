@@ -206,7 +206,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         if ($segment->isActive == 0) {
-            return $this->sendError('Please select a active Segment', 500);
+            return $this->sendError(trans('custom.please_select_active_segment'), 500);
         }
         $input['serviceLineCode'] = $segment->ServiceLineCode;
 
@@ -415,7 +415,7 @@ class BudgetMasterAPIController extends AppBaseController
             $checkItems = Budjetdetails::where('budgetmasterID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every budget should have at least one item', 500);
+                return $this->sendError(trans('custom.every_budget_should_have_at_least_one_item'), 500);
             }
 
             $params = array('autoID' => $id,
@@ -835,7 +835,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_gl_code_wise";
 
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
                 
                 // Set right-to-left for Arabic locale
@@ -2613,7 +2613,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_details";
 
         \Excel::create('finance', function ($excel) use ($result, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($result, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
                 
                 // Set right-to-left for Arabic locale
@@ -2811,7 +2811,7 @@ class BudgetMasterAPIController extends AppBaseController
         $templateName = "export_report.budget_summary_category_wise";
 
         \Excel::create('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($data, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
                 
                 // Set right-to-left for Arabic locale
@@ -3922,7 +3922,7 @@ class BudgetMasterAPIController extends AppBaseController
         $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($input['companySystemID'],12);
 
         if (!$cutOffUpdatePolicy) {
-            return $this->sendError("You cannot update budget cutoff period");
+            return $this->sendError(trans('custom.you_cannot_update_budget_cutoff_period'));
         }
 
         $input['cutOffPeriod'] = ($input['cutOffPeriod']) ? $input['cutOffPeriod'] : 0;
@@ -3999,7 +3999,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -4267,7 +4267,7 @@ class BudgetMasterAPIController extends AppBaseController
         $budgetMaster = BudgetMaster::find($input['id']);
 
         if (!$budgetMaster) {
-            return $this->sendError("Budget not found", 500);
+            return $this->sendError(trans('custom.budget_not_found'), 500);
         }
 
         $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
@@ -4337,14 +4337,9 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData['monthArray'] = $monthArray;
 
         return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
-                     $excel->sheet('New sheet', function($sheet) use ($reportData) {
+                     $excel->sheet(trans('custom.new_sheet'), function($sheet) use ($reportData) {
                         $sheet->loadView('export_report.budget_upload_template', $reportData);
                         
-                        // Set right-to-left for Arabic locale
-                        if (app()->getLocale() == 'ar') {
-                            $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                            $sheet->setRightToLeft(true);
-                        }
                     });
                 })->download('xlsx');
 
@@ -4373,7 +4368,7 @@ class BudgetMasterAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['documentSystemID']) || !isset($input['documentSystemID'])) {
-            return $this->sendError("Error occured while retrieving budget consumption data");
+            return $this->sendError(trans('custom.error_retrieving_budget_consumption_data'));
         }
 
         $budgetConsumedData = BudgetConsumptionService::getConsumptionData($input['documentSystemID'], $input['documentSystemCode']);
@@ -4514,7 +4509,7 @@ class BudgetMasterAPIController extends AppBaseController
         ];
 
         $templateName = "download_template.budget_template";
-        $fileName = 'budget_template';
+        $fileName = trans('custom.budget_template');
         $path = 'general-ledger/transactions/budget-template/excel/';
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
@@ -4635,7 +4630,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {
@@ -4659,11 +4654,11 @@ class BudgetMasterAPIController extends AppBaseController
 
         if (!in_array($extension, $allowedExtensions))
         {
-            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            return $this->sendError(trans('custom.file_type_not_allowed_upload_xlsx_xls'),500);
         }
 
         if ($size > 20000000) {
-            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            return $this->sendError(trans('custom.maximum_file_size_exceeded'),500);
         }
 
         $employee = \Helper::getEmployeeInfo();

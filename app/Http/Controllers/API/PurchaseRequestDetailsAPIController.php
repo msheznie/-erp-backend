@@ -1326,7 +1326,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if(isset($purchaseRequest))
         {
             PrBulkBulkItem::dispatch($input,$db);
-            return ['status' => true , 'message' => 'Items Added to Queue Please wait some minutes to process'];
+            return ['status' => true , 'message' => trans('custom.items_added_to_queue')];
         }
         else
         {
@@ -1457,7 +1457,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
 
-            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.purchaseRequestHistory'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 $sheet->setAutoSize(true);
                 

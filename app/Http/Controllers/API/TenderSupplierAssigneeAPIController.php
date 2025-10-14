@@ -466,7 +466,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                     }
                 }
-                    DB::commit(); 
+                DB::commit();
             } else {
                 $isCreated = $this->registrationLinkRepository->save(request()->merge([
                     'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companySystemId,
@@ -476,9 +476,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 if ($isCreated['status'] == true) {
                     $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 2, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
-                        ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]); 
-                        DB::commit();
-                }  
+                        ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
+                    DB::commit();
+                }
             }
             return $this->sendResponse([], trans('srm_tender_rfx.invitation_resent_successfully'));
         } catch (\Exception $exception) {
@@ -552,15 +552,15 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
 
     }
-    public function getNotSentEmail(Request $request){ 
+    public function getNotSentEmail(Request $request){
         $input = $request->all();
         $tenderId = $input['tenderId'];
         $companySystemId = $input['companyId'];
         $data = TenderSupplierAssignee::with(['supplierAssigned'])
-        ->where('tender_master_id', $tenderId)
-        ->where('company_id', $companySystemId)
-        ->where('mail_sent', 0)
-        ->get();
+            ->where('tender_master_id', $tenderId)
+            ->where('company_id', $companySystemId)
+            ->where('mail_sent', 0)
+            ->get();
         return $data;
     }
     public function deleteAllSupplierAssign(Request $request)

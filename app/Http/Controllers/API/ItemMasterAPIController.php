@@ -327,7 +327,7 @@ class ItemMasterAPIController extends AppBaseController
         );
 
 
-        $fileName = 'item_master';
+        $fileName = trans('custom.item_master');
         $path = 'system/item_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);

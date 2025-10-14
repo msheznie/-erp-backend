@@ -547,7 +547,7 @@ class CompanyDepartmentAPIController extends AppBaseController
             'company_code' => $companyCode,
         );
 
-        $fileName = 'department_master';
+        $fileName = trans('custom.department_master');
         $path = 'system/department_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);

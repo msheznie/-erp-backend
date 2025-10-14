@@ -1,6 +1,7 @@
 # Changelog
 
 
+
 ## [10.86.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.85.0...v10.86.0) (2025-09-26)
 
 
@@ -23,6 +24,7 @@
 
 * **Employee Designation:** EA | Setup for Designation Update Notification in Employee Master [GHR-6977] ([#8719](https://github.com/pbsgears/Gears_BackEnd/issues/8719)) ([5968897](https://github.com/pbsgears/Gears_BackEnd/commit/596889712e413822c1d3cc7b57ca682fcfbf6c7e))
 
+
 ## [10.83.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.82.0...v10.83.0) (2025-09-11)
 
 
@@ -38,12 +40,14 @@
 
 * **Commercial Bid Opening:** Commercial bid records are visible before approval of bid opening [GSUP-4064] ([#8651](https://github.com/pbsgears/Gears_BackEnd/issues/8651)) ([5b26359](https://github.com/pbsgears/Gears_BackEnd/commit/5b263593ecfced44f76e120d170af022509e88b6))
 
+
 ## [10.82.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.1...v10.82.0) (2025-09-07)
 
 
 ### Features
 
 * **treasury management:** b2B file format double quotation mark replaced with empty [GCP-11669] ([#8685](https://github.com/pbsgears/Gears_BackEnd/issues/8685)) ([b3ae859](https://github.com/pbsgears/Gears_BackEnd/commit/b3ae8597d274273bf73bc19e74af35a023db43e1))
+
 
 ## [10.81.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.0...v10.81.1) (2025-09-01)
 

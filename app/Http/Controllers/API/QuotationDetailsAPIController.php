@@ -1096,7 +1096,7 @@ WHERE
             // Dispatch job for bulk item addition
             \App\Jobs\QuotationAddMultipleItemsJob::dispatch($db, $input);
 
-            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            return $this->sendResponse('', trans('custom.items_added_to_queue'));
         }
 
         // Handle individual items

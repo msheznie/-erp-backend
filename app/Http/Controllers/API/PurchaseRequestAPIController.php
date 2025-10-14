@@ -1373,7 +1373,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_is_not_active_please_select_an_active_segment'));
         }
 
         $policy = 1;
@@ -1750,7 +1750,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->first();
 
                 if (empty($financeItemCategorySubAssigned)) {
-                    $errors[$i] = $input['itemCode']." - Finance category not assigned for the selected item";
+                    $errors[$i] = $input['itemCode']." - ".trans('custom.finance_category_not_assigned');
                     continue;
                 }
 
@@ -1762,7 +1762,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         })
                         ->first();
                     if ($alreadyAdded) {
-                        $errors[$i] = $input['itemCode']." - Selected item is already added. Please check again";
+                        $errors[$i] = $input['itemCode']." - ".trans('custom.selected_item_already_added');
 
                         continue;
                     }
@@ -1774,7 +1774,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 if ($item->financeCategoryMaster == 3) {
                     $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
                     if (!$assetCategory) {
-                        $errors[$i] = $input['itemCode']." - Asset category not assigned for the selected item";
+                        $errors[$i] = $input['itemCode']." - ".trans('custom.asset_category_not_assigned');
                         continue;
                     }
                     $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
@@ -1795,7 +1795,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                     if ($policy == 0) {
                         if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                            $errors[$i] = $input['itemCode']." - Category is not found";
+                            $errors[$i] = $input['itemCode']." - ".trans('custom.category_is_not_found');
                             continue;
                         }
 
@@ -1806,7 +1806,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                         if ($pRDetailExistSameItem) {
                             if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                $errors[$i] = $input['itemCode']." - You cannot add different category item";
+                                $errors[$i] = $input['itemCode']." - ".trans('custom.cannot_add_different_category_item');
                                 continue;
                             }
                         }
@@ -2031,7 +2031,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (!empty($input['internalNotes']) && strlen($input['internalNotes']) > 250) {
-            return $this->sendError('Internal notes should be less than or equal to 250 characters', 500);
+            return $this->sendError(trans('custom.internal_notes_should_be_less_than_or_equal_to_250_characters'), 500);
         }
 
         $input['modifiedPc'] = gethostname();
@@ -2086,7 +2086,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->count();
 
             if ($checkItems == 0) {
-                return $this->sendError('Every request should have at least one item', 500);
+                return $this->sendError(trans('custom.every_request_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID', $id)
@@ -2095,7 +2095,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_requested'), 500);
             }
 
             $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->whereNull('altUnitValue')->count();
@@ -2106,7 +2106,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
       
             if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
-                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
+                return $this->sendError(trans('custom.every_alternative_uom_should_have_alternative_uom_qty'), 500);
             }
 
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
@@ -2149,7 +2149,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($purchaseRequest->toArray(), 'PurchaseRequest updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($purchaseRequest->toArray(), trans('custom.purchase_request_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**
@@ -2566,8 +2566,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
-        $subject = $cancelDocNameSubject . ' is closed';
+        $body = '<p>' . $cancelDocNameBody . ' ' . trans('custom.is_manually_closed_due_to_below_reason') . '</p><p>' . trans('custom.comment') . ' : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' ' . trans('custom.is_closed');
 
         if ($purchaseRequest->PRConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
@@ -2677,7 +2677,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $array = array('request' => $purchaseRequest);
 
         if($isFromPortal){
-            return $this->sendResponse($array, 'Purchase Request print data');
+            return $this->sendResponse($array, trans('custom.purchase_request_print_data'));
         }
 
         $time = strtotime("now");
@@ -3089,7 +3089,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $output['is_limit'] =  count($result) > 10?true:false;
         $output['count'] =  count($result);
 
-        return $this->sendResponse($output,'Success');
+        return $this->sendResponse($output, trans('custom.success'));
     }
 
     public function getPurchaseRequestTotal(Request $request)
@@ -3149,7 +3149,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     "status" => true,
                     "data" => $fetchDetails,
                     "policy" => true,
-                    "message" =>  "PR / PO available for these items"
+                    "message" =>  trans('custom.pr_po_available_for_these_items')
                 ];
                 return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
             }else {
@@ -3159,7 +3159,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         "policy" => true,
                         "po" => $checkPOPending,
                         "data" => $fetchDetails,
-                        "message" => "PR / PO available for these items"
+                        "message" => trans('custom.pr_po_available_for_these_items')
                     ];
                     return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
     
@@ -3210,7 +3210,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $sorted_mrDatas =  $mrDatas->sortBy('RequestID');
 
         $filtered = $sorted_mrDatas->filter(function ($value, $key) {
-         return $value->materialIssueStatusValue == trans('custom.pending');
+         return $value->materialIssueStatusValue == "Pending";
         });
 
         $filtered->all();
@@ -3250,15 +3250,15 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['autoID'])) {
-            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_system_id_is_missing')];
         }
 
         if (!isset($input['company'])) {
-            return ['success' => false, 'message' => 'Parameter company is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_company_is_missing')];
         }
 
         if (!isset($input['document'])) {
-            return ['success' => false, 'message' => 'Parameter document is missing'];
+            return ['success' => false, 'message' => trans('custom.parameter_document_is_missing')];
         }
 
         $params =  array(
@@ -3290,7 +3290,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if(isset($total_requested_qnty)) {
             if($requestedQnty >  $total_requested_qnty->sum) {
-                return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
+                return  $this->sendError(trans('custom.requested_quantity_can_not_be_greater_than_materiel_requested_quantity'));
             }
         }
 
@@ -3383,7 +3383,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->get();
         if(count($pulledDetails) > 0) {
-            return $this->sendResponse(true, 'Data found!');
+            return $this->sendResponse(true, trans('custom.data_found'));
         }else {
             return $this->sendResponse(false, trans('custom.data_not_found_1'));
         }
@@ -3671,7 +3671,7 @@ class PurchaseRequestAPIController extends AppBaseController
         try{
             $notifyPR = $this->purchaseRequestRepository->notifyPRFinancialYear($companySystemID);
             if(!$notifyPR['success']){
-                return $this->sendError($notifyPR['message'] ?? 'An error occurred while retrieving notification message');
+                return $this->sendError($notifyPR['message'] ?? trans('custom.an_error_occurred_while_retrieving_notification_message'));
             }
             return $this->sendResponse($notifyPR['data'], $notifyPR['message']);
         } catch (\Exception $ex) {

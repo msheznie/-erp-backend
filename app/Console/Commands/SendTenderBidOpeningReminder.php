@@ -42,12 +42,11 @@ class SendTenderBidOpeningReminder extends Command
     {
         //Log::useFiles( CommonJobService::get_specific_log_file('tender-bid') );
 
-
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             return false;
         }
-        Log::info($tenants);
+
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
             SendNotificationReminderJob::dispatch($tenantDb);

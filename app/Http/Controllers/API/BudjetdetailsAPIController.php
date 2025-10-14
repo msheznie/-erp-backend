@@ -701,7 +701,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
         \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
                 
                 // Set right-to-left for Arabic locale
@@ -710,7 +710,7 @@ class BudjetdetailsAPIController extends AppBaseController
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('csv');
+        })->download('xlsx');
 
 //        return $this->sendResponse(array(), trans('custom.success_export'));
        return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
@@ -825,11 +825,11 @@ class BudjetdetailsAPIController extends AppBaseController
 
             if (!in_array($extension, $allowedExtensions))
             {
-                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+                return $this->sendError(trans('custom.file_type_not_allowed_upload_xlsx_xls'),500);
             }
 
             if ($size > 20000000) {
-                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+                return $this->sendError(trans('custom.maximum_file_size_exceeded'),500);
             }
 
             $disk = 'local';
@@ -850,7 +850,7 @@ class BudjetdetailsAPIController extends AppBaseController
             }
 
             if (!$validateExcel) {
-                return $this->sendError('Excel is not valid, template deafult fields are modified', 500);
+                return $this->sendError(trans('custom.excel_is_not_valid_template_fields_modified'), 500);
             }
 
             $selectArray = [];

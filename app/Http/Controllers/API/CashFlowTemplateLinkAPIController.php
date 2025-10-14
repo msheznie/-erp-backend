@@ -113,7 +113,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
 
         $validator = \Validator::make($request->all(), [
             'glAutoID' => 'required'
-        ],[ 'glAutoID.required' => 'Please select a GL code' ]);
+        ],[ 'glAutoID.required' => trans('custom.please_select_a_gl_code') ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -135,7 +135,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
             }
             $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_add_gl_codes_as_it_is_already_assigned'), 500, $confirm_error);
             } else {
                 foreach ($input['glAutoID'] as $key => $val) {
                     if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {

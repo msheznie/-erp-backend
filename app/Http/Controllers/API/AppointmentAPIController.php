@@ -424,7 +424,7 @@ class AppointmentAPIController extends AppBaseController
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
-                'documentSystemID' => $input['document_system_id'],
+            'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']
@@ -442,7 +442,7 @@ class AppointmentAPIController extends AppBaseController
     public function rejectCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-    
+
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -498,7 +498,7 @@ class AppointmentAPIController extends AppBaseController
 
         return \DataTables::of($appointmentDetail)
             ->order(function ($query) use ($input) {
-               if (request()->has('order')) {
+                if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('attachmentID', 'asc');
                     }
@@ -515,17 +515,17 @@ class AppointmentAPIController extends AppBaseController
         $input = $request->all();
 
         $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
-        ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
-        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
-        ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
-        ->get();
+            ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
+            ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
+            ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
+            ->get();
 
         $is_valid = true;
         $text = trans('srm_supplier_management.approval_failed_please_check_the_below_details');
         $msg = $text. "<br>";;
         foreach($appointments as $detail)
         {
-          
+
 
             if($detail->balance_qty < $detail->planned_qty)
             {

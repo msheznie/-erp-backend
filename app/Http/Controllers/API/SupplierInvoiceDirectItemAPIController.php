@@ -566,7 +566,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
             SupplierInvoiceAddBulkItemJob::dispatch($db, $input);
 
-            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+            return $this->sendResponse('', trans('custom.items_added_to_queue'));
         }
         else {
             DB::beginTransaction();

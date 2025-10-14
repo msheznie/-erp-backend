@@ -250,10 +250,10 @@ class ERPAssetTransfer extends Model
     public function getTransferTypeAttribute(): string
     {
         switch ($this->attributes['type']) {
-            case 1: return 'Request Based - Employee';
-            case 2: return 'Direct to Location';
-            case 3: return 'Direct to Employee';
-            case 4: return 'Request Based - Department';
+            case 1: return trans('custom.transfer_type_request_based_employee');
+            case 2: return trans('custom.transfer_type_direct_to_location');
+            case 3: return trans('custom.transfer_type_direct_to_employee');
+            case 4: return trans('custom.transfer_type_request_based_department');
             default: return '';
 
         }

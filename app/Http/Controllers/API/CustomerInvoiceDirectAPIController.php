@@ -2933,7 +2933,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -2962,7 +2962,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -2987,7 +2987,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3013,7 +3013,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3039,7 +3039,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3056,16 +3056,36 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             
             if($type == 1)
             {
+
+                $lang = $request->get('lang', 'en');
+                $array = array(
+                    'type' => $type,
+                    'request' => $customerInvoice,
+                    'secondaryBankAccount' => $secondaryBankAccount,
+                    'lang' => $lang
+                );
+                $isRTL = ($lang === 'ar');
+                $mpdfConfig = [
+                    'tempDir' => public_path('tmp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4-L',
+                    'setAutoTopMargin' => 'stretch',
+                    'autoMarginPadding' => -10
+                ];
+                if ($isRTL) {
+                    $mpdfConfig['direction'] = 'rtl';
+                }
                 $html = view('print.customer_invoice_tax', $array);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-    
-                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
             }
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3090,7 +3110,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3120,7 +3140,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3146,7 +3166,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_with_po_detail', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3172,7 +3192,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3197,7 +3217,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3226,7 +3246,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale
@@ -3254,7 +3274,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
                         
                         // Set right-to-left for Arabic locale

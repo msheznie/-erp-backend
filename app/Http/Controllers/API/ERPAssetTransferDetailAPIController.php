@@ -502,10 +502,21 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'asset_transfer.blade' . $id . '_' . $time . '.pdf';
         $html = view('print.asset_transfer', $transferDetails);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ]);
+        
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function getAssetTransfer($id, $companyID)

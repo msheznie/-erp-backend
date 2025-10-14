@@ -3574,7 +3574,7 @@ WHERE
 
         return \DataTables::of($output)
             ->editColumn('internalNotes', function($row) {
-                return $row->internalNotes;
+                return isset($row->internalNotes) ? $row->internalNotes : '-';
             })
             ->rawColumns(['internalNotes', 'Actions'])
             ->addColumn('Actions', 'Actions', "Actions")

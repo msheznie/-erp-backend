@@ -1098,6 +1098,14 @@ class PaymentBankTransferAPIController extends AppBaseController
                 // $sheet->setAutoSize(true);
                 //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
+
+                if (app()->getLocale() == 'ar') {
+                    $sheet->setRightToLeft(true);
+                    $sheet->getStyle('A1:Z1000')
+                          ->getAlignment()
+                          ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                }
+
                 //$sheet->setWidth('A', 50);
             });
             //$lastrow = $excel->getActiveSheet()->getHighestRow();

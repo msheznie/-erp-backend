@@ -453,7 +453,7 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
          \Excel::create('items_by_warehouse', function ($excel) use ($data) {
-            $excel->sheet('Items by warehouse', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.items_by_warehouse'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 

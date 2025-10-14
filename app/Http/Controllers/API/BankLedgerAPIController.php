@@ -2853,6 +2853,7 @@ class BankLedgerAPIController extends AppBaseController
 
     public function generateBankLedgerReportPDF(Request $request)
     {
+        $languageCode = app()->getLocale() ?: 'en';
         ini_set('max_execution_time', 1800);
         ini_set('memory_limit', -1);
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -2860,7 +2861,7 @@ class BankLedgerAPIController extends AppBaseController
         $db = isset($request->db) ? $request->db : ""; 
 
         $employeeID = \Helper::getEmployeeSystemID();
-        BankLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
+        BankLedgerPdfJob::dispatch($db, $request, [$employeeID], $languageCode)->onQueue('reporting');
 
         return $this->sendResponse([], trans('custom.bank_ledger_PDF_report_has_been_sent_to_queue'));
     }

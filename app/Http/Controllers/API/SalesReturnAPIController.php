@@ -414,11 +414,11 @@ class SalesReturnAPIController extends AppBaseController
                 $customer = CustomerMaster::find($input['customerID']);
 
                 if(!$customer->custGLAccountSystemID){
-                    return $this->sendError('GL account is not configured for this customer',500);
+                    return $this->sendError(trans('custom.gl_account_not_configured_for_this_customer'),500);
                 }
 
                 if(!$customer->custUnbilledAccountSystemID){
-                    return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+                    return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'),500);
                 }
 
                 $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
@@ -436,7 +436,7 @@ class SalesReturnAPIController extends AppBaseController
                 // check document date between financial period
                 if (($input['salesReturnDate'] >= $input['FYPeriodDateFrom']) && ($input['salesReturnDate'] <= $input['FYPeriodDateTo'])) {
                 } else {
-                    return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+                    return $this->sendError(trans('custom.document_date_should_be_between_financial_period'), 500);
                 }
 
                 $messages = [
@@ -476,7 +476,7 @@ class SalesReturnAPIController extends AppBaseController
                 // check customer master unbilled gl account configured
                 $customer = CustomerMaster::find($input['customerID']);
                 if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
-                    return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
+                    return $this->sendError(trans('custom.unbilled_receivable_account_not_configured_for_this_customer'), 500);
                 }
                 $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
                 $input['custGLAccountCode'] = $customer->custGLaccount;
@@ -525,7 +525,7 @@ class SalesReturnAPIController extends AppBaseController
 
                     $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$item->reasonGLCode)->where('companySystemID',$salesReturn->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
                     if(empty($chartOfAccountAssigned) && $item->reasonGLCode != null && $item->isPostItemLedger == 0 && $item->reasonCode != null){
-                        return $this->sendError($item->itemPrimaryCode.'-'.'Reason Code Master GL Code is not assigned to the company ', 500);
+                        return $this->sendError($item->itemPrimaryCode.'-'.trans('custom.reason_code_master_gl_code_not_assigned_to_company'), 500);
                     }
           
      
@@ -589,7 +589,7 @@ class SalesReturnAPIController extends AppBaseController
 
 
                     if ($updateItem->unitTransactionAmount < 0) {
-                        return $this->sendError('Item must not have negative cost', 500);
+                        return $this->sendError(trans('custom.item_must_not_have_negative_cost'), 500);
                     }
                 }
 

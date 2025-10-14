@@ -20,12 +20,13 @@ class BankLedgerPdfJob implements ShouldQueue
     public $dispatch_db;
     public $requestData;
     public $userIds;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $userId)
+    public function __construct($dispatch_db, $request, $userId, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -35,6 +36,7 @@ class BankLedgerPdfJob implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
         $this->userIds = $userId;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -50,7 +52,8 @@ class BankLedgerPdfJob implements ShouldQueue
         $request = $this->requestData;
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
-
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         $currentDate = strtotime(date("Y-m-d H:i:s"));
         $root = "bank-ledger-pdf/".$currentDate;
 
@@ -69,7 +72,7 @@ class BankLedgerPdfJob implements ShouldQueue
                 }
             }
             
-            GenerateBankLedgerPdf::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root)->onQueue('single');
+            GenerateBankLedgerPdf::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root, $this->languageCode)->onQueue('single');
             $reportCount++;
         }
     }

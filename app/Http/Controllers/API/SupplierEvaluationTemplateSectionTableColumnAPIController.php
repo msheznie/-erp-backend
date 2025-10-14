@@ -259,7 +259,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
             } else {
                 if($scoreColumnCount > 0){
-                    return $this->sendError('Auto increment column can not be multiple', 500);                                                
+                    return $this->sendError(trans('custom.auto_increment_column_can_not_be_multiple'), 500);                                                
                 }
             }
 
@@ -348,7 +348,7 @@ class SupplierEvaluationTemplateSectionTableColumnAPIController extends AppBaseC
 
         $supplierEvaluationTemplateSectionTable = SupplierEvaluationTemplateSectionTable::where('id' ,$supplierEvaluationTemplateSectionTableColumn['table_id'])->first();
         if(isset($supplierEvaluationTemplateSectionTable->table_column) && $supplierEvaluationTemplateSectionTable->table_column == 1){
-            return $this->sendError('Can not delete. Minimum 1 column should be in the table');
+            return $this->sendError(trans('custom.can_not_delete_minimum_1_column_should_be_in_the_table'));
         }
 
         $supplierEvaluationTemplateSectionTableColumn->delete();

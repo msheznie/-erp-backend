@@ -126,7 +126,7 @@ class BankMemoSupplierAPIController extends AppBaseController
         }
 
          \Excel::create('supplier_currency_memos', function ($excel) use ($data) {
-            $excel->sheet('Supplier Currency Memos', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.supplier_currency_memos'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
 

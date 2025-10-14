@@ -133,7 +133,7 @@ class SalesPersonTargetAPIController extends AppBaseController
         }
 
         if ($input["percentage"] > 100) {
-            return $this->sendError('Percentage % should be between 0 - 100');
+            return $this->sendError(trans('custom.sales_person_target_percentage_validation'));
         }
 
         if ($input["toTargetAmount"] <= $input["fromTargetAmount"]) {
@@ -339,7 +339,7 @@ class SalesPersonTargetAPIController extends AppBaseController
             $lastValue = ($checkTaxExist->toTargetAmount + 1);
         }
 
-        return $this->sendResponse($lastValue, 'data retrived');
+        return $this->sendResponse($lastValue, trans('custom.sales_person_target_data_retrieved'));
 
     }
 

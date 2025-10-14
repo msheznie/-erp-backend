@@ -242,7 +242,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         \Excel::create('purchaseHistory', function ($excel) use ($data) {
-            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.purchaseHistory'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 $sheet->setAutoSize(true);
                 
@@ -1773,7 +1773,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $purchaseRequest = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->update($data);
                 PoAddBulkItemJob::dispatch($db, $input);
 
-                return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+                return $this->sendResponse('', trans('custom.items_added_to_queue'));
             } else {
                 DB::beginTransaction();
                 try {
@@ -1815,7 +1815,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])->update($data);
                 DeliveryOrderAddMutipleItemsJob::dispatch($db, $input);
 
-                return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+                return $this->sendResponse('', trans('custom.items_added_to_queue'));
             }else {
                 DB::beginTransaction();
                 try {

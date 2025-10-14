@@ -67,7 +67,7 @@ class EitherAuthAPIorKeyClock
                     'status' => 401,
                     'message' => 'Unauthenticated',
                 ],
-                'message' => 'Session expired! Please login again'
+                'message' => trans('custom.session_expired')
             ], 401
         );
     }

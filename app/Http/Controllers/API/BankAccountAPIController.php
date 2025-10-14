@@ -561,7 +561,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         \Excel::create('bank_accounts', function ($excel) use ($data) {
-            $excel->sheet('Bank Accounts', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.bank_accounts_excel_tab'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 
