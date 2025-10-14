@@ -57,6 +57,7 @@ class BudgetDetailComment extends Model
 
 
     public $fillable = [
+        'parentId',
         'budgetDetailID',
         'comment',
         'created_by'
@@ -69,6 +70,7 @@ class BudgetDetailComment extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'parentId' => 'integer',
         'budgetDetailID' => 'integer',
         'comment' => 'string',
         'created_by' => 'integer'
@@ -86,6 +88,11 @@ class BudgetDetailComment extends Model
     public function created_by_emp()
     {
         return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo('App\Models\BudgetDetailComment', 'parentId', 'id');
     }
 
 }
