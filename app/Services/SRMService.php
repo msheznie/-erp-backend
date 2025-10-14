@@ -5365,18 +5365,21 @@ class SRMService
                 $prebidConfig['prebid_data'] = $dataPrebid;
                 $prebidConfig['parentIdList'] = $parentIdArr;
                 $prebidConfig['nonParentIdList'] = $nonParentIdArr;
-                $basePath = $this->encryptUrl(CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig));
+                $basePath = CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig);
+                $fileContent = file_get_contents($basePath);
+                $base64File = base64_encode($fileContent);
 
-                if($basePath == '')
-                {
-                    return ['success' => false, 'data' => '', 'message' => 'Unable to export excel'];
-                } else {
-                    return [
+                $companyCode = isset($prebidConfig['company_code'])?$prebidConfig['company_code']:'common';
+                $full_name = $companyCode.'_'.$fileNamePreBid.'_'.strtotime(date("Y-m-d H:i:s"));
+
+                return $base64File
+                    ? [
                         'success' => true,
                         'message' => 'Successfully retrieved',
-                        'data' =>  $basePath
-                    ];
-                }
+                        'fileName' => $full_name,
+                        'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'data' => $base64File,]
+                    : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
             default:
                 return ['success' => false, 'data' => '', 'message' => 'No report ID found'];
         }
@@ -5424,6 +5427,9 @@ class SRMService
             'nonParentIdList' => [],
         ];
 
+        $companyCode = isset($reportConfig['company_code'])?$reportConfig['company_code']:'common';
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s"));
+
         $basePath = CreateExcel::process($dataPO, $type, $fileName, $path, $reportConfig);
         $fileContent = file_get_contents($basePath);
         $base64File = base64_encode($fileContent);
@@ -5432,7 +5438,7 @@ class SRMService
             ? [
             'success' => true,
             'message' => 'Successfully retrieved',
-            'fileName' => $fileName,
+            'fileName' => $full_name,
             'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'data' => $base64File,]
             : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
@@ -6861,10 +6867,20 @@ class SRMService
             'nonParentIdList' => [],
         ];
 
-        $basePath = $this->encryptUrl(CreateExcel::process($dataInvoice, $type, $fileName, $path, $reportConfig));
+        $companyCode = isset($reportConfig['company_code'])?$reportConfig['company_code']:'common';
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s"));
 
-        return $basePath
-            ? ['success' => true, 'message' => 'Successfully retrieved', 'data' => $basePath]
+        $basePath = CreateExcel::process($dataInvoice, $type, $fileName, $path, $reportConfig);
+        $fileContent = file_get_contents($basePath);
+        $base64File = base64_encode($fileContent);
+
+        return $base64File
+            ? [
+                'success' => true,
+                'message' => 'Successfully retrieved',
+                'fileName' => $full_name,
+                'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'data' => $base64File,]
             : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
     }
 
