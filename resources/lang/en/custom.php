@@ -9406,4 +9406,21 @@ return
     'image_not_found' => 'image not found',
     'net_profit_or_loss_(as_per_profit/loss_account)' => 'Net profit or loss (as per Profit/Loss account)',
     'supplier_statement_' => 'supplier_statement_',
+    
+    // Budget Consumption Service Translations
+    'budget_exceeded_project' => 'Budget Exceeded Project : ',
+    'budget_exceeded_gl_account' => 'Budget Exceeded GL Account : ',
+    'budget_exceeded_category' => 'Budget Exceeded Category : ',
+    'segment' => 'Segment : ',
+    'gl_account' => 'GL Account : ',
+    'budget_amount' => 'Budget Amount : ',
+    'document_amount' => 'Document Amount : ',
+    'consumed_amount' => 'Consumed Amount : ',
+    'pending_document_amount' => 'Pending Document Amount : ',
+    'total_consumed_amount' => 'Total Consumed Amount : ',
+    'budget_not_configured_for_gl_codes' => 'Budget not configured for below GL codes',
+    'budget_allocated_account_code_exceeding' => 'The budget allocated to account code :account_code is exceeding. Are you sure you want to proceed ?',
+    'gl_codes_not_assigned_budget' => 'Some GL codes are not assigned for budget with relevant segment and finance period',
+    'budget_check_not_set_document' => 'Budget check is not set for this document',
+    'budget_consumption_not_set_document' => 'Budget consumption is not set for this document',
   ];
