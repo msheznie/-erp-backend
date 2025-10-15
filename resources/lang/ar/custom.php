@@ -9397,4 +9397,27 @@ return
     // Email body translations
     'email_status_label' => 'الحالة :',
     'email_comment_label' => 'التعليق :',
+    
+    // Excel sheet translations
+    'excel_sheet_name' => 'ورقة',
+    
+    // Excel column headers
+    'excel_company_id' => 'معرف الشركة',
+    'excel_order_details' => 'تفاصيل الطلب',
+    'excel_item_code' => 'رمز العنصر',
+    'excel_pr_number' => 'رقم طلب الشراء',
+    'excel_logistics_details' => 'تفاصيل اللوجستيات',
+    'excel_category' => 'الفئة',
+    'excel_addon_details' => 'تفاصيل الإضافات',
+    
+    // Excel file names
+    'excel_po_details_export' => 'تصدير_تفاصيل_أوامر_الشراء',
+    'excel_pr_details_export' => 'تصدير_تفاصيل_طلبات_الشراء',
+    'excel_po_detail_export' => 'تصدير_تفاصيل_أوامر_الشراء',
+    
+    // Shift Details Controller translations
+    'inventory_availability' => 'توفر المخزون',
+    
+    // Export error messages
+    'unable_to_export_excel' => 'غير قادر على تصدير إكسل',
   ];

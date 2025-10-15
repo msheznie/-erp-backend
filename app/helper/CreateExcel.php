@@ -313,7 +313,7 @@ class CreateExcel
 
     public static function processDetailExport($data, $companyCode) {
         $excel_content = \Excel::create('po_details_export', function($excel) use ($data) {
-            $excel->sheet('Sheet1', function($sheet) use ($data) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
                 $sheet->setStyle([
                     'font' => [
                         'name' => 'Calibri',
@@ -409,7 +409,7 @@ class CreateExcel
         })->string('xlsx');
 
         $disk = 's3';
-        $fileName = 'po_detail_export';
+        $fileName = trans('custom.excel_po_detail_export');
         $path_dir='procurement/purchase_order/excel/';
         $type='xlsx';
 
@@ -706,7 +706,7 @@ class CreateExcel
     public static function processPRDetailExport($data,$companyCode) 
     {
         $excel_content = \Excel::create('pr_details_export', function($excel) use ($data) {
-            $excel->sheet('Sheet1', function($sheet) use ($data) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
                 $sheet->setStyle([
                     'font' => [
                         'name' => 'Calibri',

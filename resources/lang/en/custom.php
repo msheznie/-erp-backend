@@ -9502,4 +9502,27 @@ return
     // Email body translations
     'email_status_label' => 'Status :',
     'email_comment_label' => 'Comment :',
+    
+    // Excel sheet translations
+    'excel_sheet_name' => 'Sheet1',
+    
+    // Excel column headers
+    'excel_company_id' => 'company id',
+    'excel_order_details' => 'order details',
+    'excel_item_code' => 'item code',
+    'excel_pr_number' => 'pr number',
+    'excel_logistics_details' => 'logistics details',
+    'excel_category' => 'category',
+    'excel_addon_details' => 'addon details',
+    
+    // Excel file names
+    'excel_po_details_export' => 'po_details_export',
+    'excel_pr_details_export' => 'pr_details_export',
+    'excel_po_detail_export' => 'po_detail_export',
+    
+    // Shift Details Controller translations
+    'inventory_availability' => 'Inventory Availability',
+    
+    // Export error messages
+    'unable_to_export_excel' => 'Unable to export excel',
   ];
