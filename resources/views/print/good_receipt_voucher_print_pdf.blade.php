@@ -332,10 +332,10 @@
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td>{{$det->itemDescription}}</td>
                     <td>{{$det->supplierPartNumber}}</td>
-                    <td class="text-right">{{!is_null($item->unit->displayRoundOff) ? number_format($det->noQty, $item->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '') }}</td>
-                    <td class="text-right">{{!is_null($item->unit->displayRoundOff) ? number_format($det->unitCost, $item->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
-                    <td class="text-right">{{!is_null($item->unit->displayRoundOff) ? number_format($det->discountAmount, $item->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
-                    <td class="text-right">{{!is_null($item->unit->displayRoundOff) ? number_format($det->netAmount, $item->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
+                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->noQty, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '') }}</td>
+                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->unitCost, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
+                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->discountAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
+                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->netAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
