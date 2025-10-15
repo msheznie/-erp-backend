@@ -379,6 +379,7 @@ return [
         'items' => 'المواد',
         'description' => 'الوصف',
         'chartOfAccountSerialLength' => 'طول تسلسل دليل الحسابات',
-        'reportID' => 'معرّف التقرير'
+        'reportID' => 'معرّف التقرير',
+        'employeeSystemID' => 'معرّف نظام الموظف'
     ],
 ];
