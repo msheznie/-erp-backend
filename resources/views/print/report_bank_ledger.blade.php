@@ -122,7 +122,7 @@
     }
 
 </style>
-<div class="footer">
+<!-- <div class="footer">
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
@@ -133,7 +133,7 @@
             </td>
         </tr>
     </table>
-</div>
+</div> -->
 <div class="header">
     <table style="width:100%;">
         <tr>
