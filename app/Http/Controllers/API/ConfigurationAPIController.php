@@ -21,9 +21,11 @@ class ConfigurationAPIController extends AppBaseController
 
     public function getConfigurationInfo(Request $request){
 
-        $isLang = 0;
+        $isLang = 1;
         $environment = 'Local';
         $version = $this->getVersion();
+        $serverTime = time();
+        $customRoute = env('MASK_ROUTE_PARAMS', false);
         if (env('IS_MULTI_TENANCY', false)) {
 
 
@@ -56,9 +58,9 @@ class ConfigurationAPIController extends AppBaseController
             }
         }
 
-        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version, 'serverTime' => $serverTime, 'customRoute' => $customRoute);
 
-        return $this->sendResponse($configuration, 'Configurations retrieved successfully');
+        return $this->sendResponse($configuration, trans('custom.configurations_retrieved_successfully'));
 
     }
 

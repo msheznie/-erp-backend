@@ -6,53 +6,53 @@
         <tr>
             <td colspan="2"></td>
             @if($reportType == 1)
-                <h1>Employee expense register</h1>
+                <h1>{{ trans('custom.employee_expense_register') }}</h1>
             @elseif($reportType == 2)
-                <h1>Assets expense register</h1>
+                <h1>{{ trans('custom.assets_expense_register') }}</h1>
             @else
-                <h1>Segment expense register</h1>
+                <h1>{{ trans('custom.segment_expense_register') }}</h1>
             @endif
         </tr>
         <tr></tr>
-        <tr style="font-weight: bold">
-            <td>Report Filter</td>
-            <td>Start Date : {{ $fromDate }} </td>
-            <td>End Date :  {{ $toDate }}</td>
-            <td>Type :
+        <tr style="font-weight: bold"></tr>
+            <td>{{ trans('custom.report_filter') }}</td>
+            <td>{{ trans('custom.start_date') }} : {{ $fromDate }} </td>
+            <td>{{ trans('custom.end_date') }} :  {{ $toDate }}</td>
+            <td>{{ trans('custom.type') }} :
                 @if($reportType == 1)
-                    Employee
+                    {{ trans('custom.employee') }}
                 @elseif($reportType == 2)
-                    Assets
+                    {{ trans('custom.assets') }}
                 @else
-                    Segments
+                    {{ trans('custom.segments') }}
                 @endif
             </td>
 
             @if($reportType == 2)
-                <td>Assets : {{$selectedAssets ?? 'Not Selected'}}</td>
+                <td>{{ trans('custom.assets') }} : {{$selectedAssets ?? trans('custom.not_selected') }}</td>
             @endif
 
             @if($reportType == 3)
-                <td>Segments : {{$selectedSegments ?? 'Not Selected'}} </td>
+                <td>{{ trans('custom.segments') }} : {{$selectedSegments ?? trans('custom.not_selected') }} </td>
             @endif
             <td>
 
                 @if($reportType == 2)
-                    <span>Group By Asset :
+                    <span>{{ trans('custom.group_by_asset') }} :
                         @if(empty($groupBy))
-                            NO
+                            {{ trans('custom.no') }}
                         @else
-                            YES
+                            {{ trans('custom.yes') }}
                         @endif
                     </span>
                 @endif
 
                 @if($reportType == 3)
-                        <span>Group By Segment :
+                        <span>{{ trans('custom.group_by_segment') }} :
                             @if(empty($groupBy))
-                                NO
+                                {{ trans('custom.no') }}
                             @else
-                                YES
+                                {{ trans('custom.yes') }}
                             @endif
                         </span>
                 @endif
@@ -62,33 +62,33 @@
         </tr>
         <tr></tr>
         <tr>
-            <th class="text-center">Issue Code</th>
-            <th class="text-center">Issue Date</th>
-            <th class="text-center">Request No</th>
-            <th class="text-center">Item Code</th>
-            <th class="text-center">Item Description</th>
-            <th class="text-center">UOM</th>
-            <th class="text-center">Issued Qty</th>
+            <th class="text-center">{{ trans('custom.issue_code') }}</th>
+            <th class="text-center">{{ trans('custom.issue_date') }}</th>
+            <th class="text-center">{{ trans('custom.request_no') }}</th>
+            <th class="text-center">{{ trans('custom.item_code') }}</th>
+            <th class="text-center">{{ trans('custom.item_description') }}</th>
+            <th class="text-center">{{ trans('custom.uom') }}</th>
+            <th class="text-center">{{ trans('custom.issued_qty') }}</th>
             @if($reportType == 1 || $reportType == 2)
-                <th class="text-center">Issued To - @if($reportType == 2) Asset Code @else Item Code @endif</th>
-                <th class="text-center">Issued To - @if($reportType == 2) Asset Description @else Item Description @endif</th>
+                <th class="text-center">{{ trans('custom.issued_to') }} - @if($reportType == 2) {{ trans('custom.asset_code') }} @else {{ trans('custom.item_code') }} @endif</th>
+                <th class="text-center">{{ trans('custom.issued_to') }} - @if($reportType == 2) {{ trans('custom.asset_description') }} @else {{ trans('custom.item_description') }} @endif</th>
             @else
-                <th class="text-center">Segment</th>
+                <th class="text-center">{{ trans('custom.segment') }}</th>
             @endif
-            <th class="text-center">Qty</th>
-            <th class="text-center">Cost</th>
-            <th class="text-center">Amount</th>
+            <th class="text-center">{{ trans('custom.qty') }}</th>
+            <th class="text-center">{{ trans('custom.cost') }}</th>
+            <th class="text-center">{{ trans('custom.amount') }}</th>
         </tr>
         </thead>
         <tbody>
             @foreach($reportData->groupedResults as $key => $groupedData)
                 <tr>
                     @if(empty($groupByAsset))
-                        <td colspan="11">Item Code : {{$key}}</td>
+                        <td colspan="11">{{ trans('custom.item_code') }} : {{$key}}</td>
                     @elseif($groupByAsset && $reportType == 2)
-                        <td colspan="11">Asset Code : {{$groupedData[0]->expenseAllocations[0]->empID ?? NULL}}</td>
+                        <td colspan="11">{{ trans('custom.asset_code') }} : {{$groupedData[0]->expenseAllocations[0]->empID ?? NULL}}</td>
                     @else
-                        <td colspan="11">Segment : {{$groupedData[0]->expenseAllocations[0]->empID ?? NULL}}</td>
+                        <td colspan="11">{{ trans('custom.segment') }} : {{$groupedData[0]->expenseAllocations[0]->empID ?? NULL}}</td>
                     @endif
                 </tr>
 

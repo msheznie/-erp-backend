@@ -76,7 +76,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
         $this->quotationMasterVersionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $quotationMasterVersions = $this->quotationMasterVersionRepository->all();
 
-        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Versions retrieved successfully');
+        return $this->sendResponse($quotationMasterVersions->toArray(), trans('custom.quotation_master_versions_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
 
         $quotationMasterVersions = $this->quotationMasterVersionRepository->create($input);
 
-        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Version saved successfully');
+        return $this->sendResponse($quotationMasterVersions->toArray(), trans('custom.quotation_master_version_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class QuotationMasterVersionAPIController extends AppBaseController
         $quotationMasterVersion = $this->quotationMasterVersionRepository->with(['confirmed_by', 'created_by'])->findWithoutFail($id);
 
         if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+            return $this->sendError(trans('custom.quotation_master_version_not_found'));
         }
 
-        return $this->sendResponse($quotationMasterVersion->toArray(), 'Quotation Master Version retrieved successfully');
+        return $this->sendResponse($quotationMasterVersion->toArray(), trans('custom.quotation_master_version_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class QuotationMasterVersionAPIController extends AppBaseController
         $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
 
         if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+            return $this->sendError(trans('custom.quotation_master_version_not_found'));
         }
 
         $quotationMasterVersion = $this->quotationMasterVersionRepository->update($input, $id);
 
-        return $this->sendResponse($quotationMasterVersion->toArray(), 'QuotationMasterVersion updated successfully');
+        return $this->sendResponse($quotationMasterVersion->toArray(), trans('custom.quotationmasterversion_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class QuotationMasterVersionAPIController extends AppBaseController
         $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
 
         if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+            return $this->sendError(trans('custom.quotation_master_version_not_found'));
         }
 
         $quotationMasterVersion->delete();
 
-        return $this->sendResponse($id, 'Quotation Master Version deleted successfully');
+        return $this->sendResponse($id, trans('custom.quotation_master_version_deleted_successfully'));
     }
 
     public function getSalesQuotationRevisionHistory(Request $request){

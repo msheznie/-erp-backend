@@ -65,7 +65,7 @@ class SMEDocumentCodeMasterAPIController extends AppBaseController
         $this->sMEDocumentCodeMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEDocumentCodeMasters = $this->sMEDocumentCodeMasterRepository->all();
 
-        return $this->sendResponse($sMEDocumentCodeMasters->toArray(), 'S M E Document Code Masters retrieved successfully');
+        return $this->sendResponse($sMEDocumentCodeMasters->toArray(), trans('custom.s_m_e_document_code_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEDocumentCodeMasterAPIController extends AppBaseController
 
         $sMEDocumentCodeMaster = $this->sMEDocumentCodeMasterRepository->create($input);
 
-        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), 'S M E Document Code Master saved successfully');
+        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), trans('custom.s_m_e_document_code_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEDocumentCodeMasterAPIController extends AppBaseController
         $sMEDocumentCodeMaster = $this->sMEDocumentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodeMaster)) {
-            return $this->sendError('S M E Document Code Master not found');
+            return $this->sendError(trans('custom.s_m_e_document_code_master_not_found'));
         }
 
-        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), 'S M E Document Code Master retrieved successfully');
+        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), trans('custom.s_m_e_document_code_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEDocumentCodeMasterAPIController extends AppBaseController
         $sMEDocumentCodeMaster = $this->sMEDocumentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodeMaster)) {
-            return $this->sendError('S M E Document Code Master not found');
+            return $this->sendError(trans('custom.s_m_e_document_code_master_not_found'));
         }
 
         $sMEDocumentCodeMaster = $this->sMEDocumentCodeMasterRepository->update($input, $id);
 
-        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), 'SMEDocumentCodeMaster updated successfully');
+        return $this->sendResponse($sMEDocumentCodeMaster->toArray(), trans('custom.smedocumentcodemaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEDocumentCodeMasterAPIController extends AppBaseController
         $sMEDocumentCodeMaster = $this->sMEDocumentCodeMasterRepository->findWithoutFail($id);
 
         if (empty($sMEDocumentCodeMaster)) {
-            return $this->sendError('S M E Document Code Master not found');
+            return $this->sendError(trans('custom.s_m_e_document_code_master_not_found'));
         }
 
         $sMEDocumentCodeMaster->delete();

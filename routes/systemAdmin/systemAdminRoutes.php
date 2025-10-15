@@ -484,6 +484,7 @@ Route::resource('company-department-employees', 'CompanyDepartmentEmployeeAPICon
 
 // Department Segment Routes
 Route::post('getAllDepartmentSegments', 'CompanyDepartmentSegmentAPIController@getAllDepartmentSegments')->name('Get all department segments');
+Route::post('getAllDepartmentSegmentsFormData', 'CompanyDepartmentSegmentAPIController@getAllDepartmentSegmentsFormData')->name('Get all department segments form data');
 Route::get('getDepartmentSegmentFormData', 'CompanyDepartmentSegmentAPIController@getDepartmentSegmentFormData')->name('Get department segment form data');
 Route::resource('company-department-segments', 'CompanyDepartmentSegmentAPIController', ['names' => 'Company department segments']);
 

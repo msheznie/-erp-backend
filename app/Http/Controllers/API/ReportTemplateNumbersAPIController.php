@@ -65,7 +65,7 @@ class ReportTemplateNumbersAPIController extends AppBaseController
         $this->reportTemplateNumbersRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->all();
 
-        return $this->sendResponse($reportTemplateNumbers->toArray(), 'Report Template Numbers retrieved successfully');
+        return $this->sendResponse($reportTemplateNumbers->toArray(), trans('custom.report_template_numbers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ReportTemplateNumbersAPIController extends AppBaseController
 
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->create($input);
 
-        return $this->sendResponse($reportTemplateNumbers->toArray(), 'Report Template Numbers saved successfully');
+        return $this->sendResponse($reportTemplateNumbers->toArray(), trans('custom.report_template_numbers_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ReportTemplateNumbersAPIController extends AppBaseController
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->findWithoutFail($id);
 
         if (empty($reportTemplateNumbers)) {
-            return $this->sendError('Report Template Numbers not found');
+            return $this->sendError(trans('custom.report_template_numbers_not_found'));
         }
 
-        return $this->sendResponse($reportTemplateNumbers->toArray(), 'Report Template Numbers retrieved successfully');
+        return $this->sendResponse($reportTemplateNumbers->toArray(), trans('custom.report_template_numbers_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ReportTemplateNumbersAPIController extends AppBaseController
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->findWithoutFail($id);
 
         if (empty($reportTemplateNumbers)) {
-            return $this->sendError('Report Template Numbers not found');
+            return $this->sendError(trans('custom.report_template_numbers_not_found'));
         }
 
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->update($input, $id);
 
-        return $this->sendResponse($reportTemplateNumbers->toArray(), 'ReportTemplateNumbers updated successfully');
+        return $this->sendResponse($reportTemplateNumbers->toArray(), trans('custom.reporttemplatenumbers_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ReportTemplateNumbersAPIController extends AppBaseController
         $reportTemplateNumbers = $this->reportTemplateNumbersRepository->findWithoutFail($id);
 
         if (empty($reportTemplateNumbers)) {
-            return $this->sendError('Report Template Numbers not found');
+            return $this->sendError(trans('custom.report_template_numbers_not_found'));
         }
 
         $reportTemplateNumbers->delete();
 
-        return $this->sendResponse($id, 'Report Template Numbers deleted successfully');
+        return $this->sendResponse($id, trans('custom.report_template_numbers_deleted_successfully'));
     }
 }

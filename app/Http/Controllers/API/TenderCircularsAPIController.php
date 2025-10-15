@@ -327,12 +327,12 @@ class TenderCircularsAPIController extends AppBaseController
             ->first();
 
         if($editOrAmend && $requestType == 'Amend')
-        {        
+        {
             if(!isset($input['attachment_id'])){
                 return ['success' => false, 'message' => trans('srm_tender_rfx.amendment_is_required')];
-            } 
+            }
         }
-   
+
         if(isset($input['attachment_id' ])){
             $attachmentList = $input['attachment_id'];
         }
@@ -542,7 +542,7 @@ class TenderCircularsAPIController extends AppBaseController
                         $supplier->supplier_registration_link->email;
 
                     $emailFormatted = email::emailAddressFormat($email);
-                    
+
                     $dataEmail['companySystemID'] = $request->input('company_id');
                     $dataEmail['alertMessage'] = $documentName . " Circular";
                     $dataEmail['empEmail'] = $emailFormatted;

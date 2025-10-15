@@ -30,6 +30,7 @@ class InsurancePolicyType extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'insurancePolicyTypesID';
+    protected $appends = ['policyDescription'];
 
 
     public $fillable = [
@@ -55,5 +56,40 @@ class InsurancePolicyType extends Model
         
     ];
 
+    /**
+     * Relationship to InsurancePolicyTypeLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(InsurancePolicyTypeLanguage::class, 'insurancePolicyTypesID', 'insurancePolicyTypesID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated policy description
+     */
+    public function getPolicyDescriptionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->policyDescription) {
+            return $translation->policyDescription;
+        }
+        
+        return $this->attributes['policyDescription'] ?? '';
+    }
     
 }

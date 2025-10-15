@@ -296,7 +296,7 @@ class TenderMainWorksAPIController extends AppBaseController
     public function addMainWorks(Request $request)
     {
         $input = $request->all();
-      
+
         $input = $this->convertArrayToSelectedValue($request->all(), array('item'));
         $employee = \Helper::getEmployeeInfo();
         //$priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();

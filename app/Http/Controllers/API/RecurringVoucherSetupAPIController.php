@@ -91,7 +91,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $this->recurringVoucherSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
         $recurringVoucherSetups = $this->recurringVoucherSetupRepository->all();
 
-        return $this->sendResponse($recurringVoucherSetups->toArray(), 'Recurring Voucher Setups retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetups->toArray(), trans('custom.recurring_voucher_setups_retrieved_successfully'));
     }
 
     /**
@@ -178,11 +178,11 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if(!$company)
-            return $this->sendError('Company Details not found');
+            return $this->sendError(trans('custom.company_details_not_found'));
 
 
         if(!isset($input['companyFinanceYearID']))
-            return $this->sendError('Company Finance Year not found');
+            return $this->sendError(trans('custom.company_finance_year_not_found'));
 
 
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->where('companySystemID', $input['companySystemID'])->first();
@@ -211,7 +211,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $recurringVoucher = $this->recurringVoucherSetupRepository->create($input);
 
-        return $this->sendResponse($recurringVoucher->toArray(), 'Recurring voucher created successfully');
+        return $this->sendResponse($recurringVoucher->toArray(), trans('custom.recurring_voucher_created_successfully'));
     }
 
     /**
@@ -259,10 +259,10 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $recurringVoucherSetup = $this->recurringVoucherSetupRepository->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency'])->findWithoutFail($id);
 
         if (empty($recurringVoucherSetup)) {
-            return $this->sendError('Recurring Voucher Setup not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_not_found'));
         }
 
-        return $this->sendResponse($recurringVoucherSetup->toArray(), 'Recurring Voucher Setup retrieved successfully');
+        return $this->sendResponse($recurringVoucherSetup->toArray(), trans('custom.recurring_voucher_setup_retrieved_successfully'));
     }
 
     /**
@@ -329,7 +329,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $rrvMaster = $this->recurringVoucherSetupRepository->findWithoutFail($id);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('RRV Master not found');
+            return $this->sendError(trans('custom.rrv_master_not_found'));
         }
 
         $rrvConfirmedYN = $input['confirmedYN'];
@@ -398,20 +398,20 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                     }
                 }
 
-                return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
+                return $this->sendError(trans('custom.chart_of_accounts_inactive_update_active', ['accounts' => $msg]),500,['type' => 'ca_inactive']);
 
             }
 
             $rrvDetails = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->get();
             if (count($rrvDetails) == 0) {
-                return $this->sendError('Recurring Voucher should have at least one item', 500);
+                return $this->sendError(trans('custom.recurring_voucher_should_have_at_least_one_item'), 500);
             }
 
             foreach ($rrvDetails as $item) {
                 $updateItem = RecurringVoucherSetupDetail::find($item['rrvDetailAutoId']);
 
                 if (($updateItem->serviceLineSystemID == 0) && is_null($updateItem->serviceLineCode)) {
-                    return $this->sendError("Cannot confirm. Segment is not updated", 500);
+                    return $this->sendError(trans('custom.cannot_confirm_segment_not_updated'), 500);
                 }
             }
 
@@ -420,7 +420,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                 ->where('creditAmount', '<=', 0)
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+                return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
             }
 
             $rrvDetailDebitSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('debitAmount');
@@ -428,7 +428,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $rrvDetailCreditSum = RecurringVoucherSetupDetail::where('recurringVoucherAutoId', $id)->sum('creditAmount');
 
             if (round($rrvDetailDebitSum, $currencyDecimalPlace) != round($rrvDetailCreditSum, $currencyDecimalPlace)) {
-                return $this->sendError('Debit amount total and credit amount total is not matching', 500);
+                return $this->sendError(trans('custom.debit_amount_total_credit_amount_total_not_matching'), 500);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -465,10 +465,10 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $rrvMaster = $this->recurringVoucherSetupRepository->update($input, $id);
 
         if ($rrvConfirmedYN == 1 && $prevRrvConfirmedYN == 0) {
-            return $this->sendResponse($rrvMaster->toArray(), 'Recurring Voucher confirmed successfully');
+            return $this->sendResponse($rrvMaster->toArray(), trans('custom.recurring_voucher_confirmed_successfully'));
         }
 
-        return $this->sendResponse($rrvMaster->toArray(), 'Recurring Voucher updated successfully');
+        return $this->sendResponse($rrvMaster->toArray(), trans('custom.recurring_voucher_updated_successfully'));
     }
 
     /**
@@ -516,12 +516,12 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $recurringVoucherSetup = $this->recurringVoucherSetupRepository->findWithoutFail($id);
 
         if (empty($recurringVoucherSetup)) {
-            return $this->sendError('Recurring Voucher Setup not found');
+            return $this->sendError(trans('custom.recurring_voucher_setup_not_found'));
         }
 
         $recurringVoucherSetup->delete();
 
-        return $this->sendSuccess('Recurring Voucher Setup deleted successfully');
+        return $this->sendSuccess(trans('custom.recurring_voucher_setup_deleted_successfully'));
     }
 
     public function getRecurringVoucherMasterFormData(Request $request)
@@ -562,7 +562,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getRecurringVoucherMasterView(Request $request)
@@ -604,7 +604,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($rrvMasterData)) {
-            return $this->sendError('Rrv Master not found');
+            return $this->sendError(trans('custom.rrv_master_not_found_1'));
         }
 
         $companyId = $rrvMasterData->companySystemID;
@@ -615,16 +615,17 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $rrvMasterData['isProject_base'] = $isProject_base;
 
-        return $this->sendResponse($rrvMasterData, 'Rrv Master retrieved successfully');
+        return $this->sendResponse($rrvMasterData, trans('custom.rrv_master_retrieved_successfully'));
     }
 
     public function printRecurringVoucher(Request $request)
     {
         $id = $request->get('recurringVoucherAutoId');
+        $lang = $request->get('lang', 'en'); // Added to capture language
 
         $rrvMasterData = RecurringVoucherSetup::find($id);
         if (empty($rrvMasterData)) {
-            return $this->sendError('RRV Master not found');
+            return $this->sendError(trans('custom.rrv_master_not_found'));
         }
 
         $rrvMasterDataLine = RecurringVoucherSetup::where('recurringVoucherAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
@@ -635,7 +636,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         }])->first();
 
         if (empty($rrvMasterDataLine)) {
-            return $this->sendError('RRV Master not found');
+            return $this->sendError(trans('custom.rrv_master_not_found'));
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($rrvMasterDataLine->companySystemID, $rrvMasterDataLine->documentSystemID);
@@ -662,16 +663,39 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             'transDecimal' => $transDecimal,
             'debitTotal' => $debitTotal,
             'isProject_base' => $isProject_base,
-            'creditTotal' => $creditTotal
+            'creditTotal' => $creditTotal,
+            'lang' => $lang // Pass lang to view
         );
 
         $time = strtotime("now");
         $fileName = 'recurring_voucher_' . $id . '_' . $time . '.pdf';
-        $html = view('print.recurring_voucher', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.recurring_voucher', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printRecurringVoucher: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
     }
 
     public function getRecurringVoucherMasterApproval(Request $request)
@@ -854,7 +878,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             }
         }
         else{
-            return $this->sendError("The financial period for the year ({$endDate->year}) has not been created.");
+            return $this->sendError(trans('custom.financial_period_year_not_created', ['year' => $endDate->year]));
         }
     }
 
@@ -880,23 +904,29 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $rrvMaster = RecurringVoucherSetup::find($id);
 
         if (empty($rrvMaster)) {
-            return $this->sendError('Recurring voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found_1'));
         }
 
         if(count($rrvMaster->schedules()->where('isInProccess',1)->get()) > 0)
-            return $this->sendError('There is a schedule on proccess for this recurring voucher');
+            return $this->sendError(trans('custom.schedule_on_process_recurring_voucher'));
 
         if ($rrvMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this recurring voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_recurring_vou'));
         }
 
         $rrvSetupScheduleStates = RecurringVoucherSetupSchedule::where('recurringVoucherAutoId',$rrvMaster->recurringVoucherAutoId)->where('rrvGeneratedYN',1)->exists();
         if($rrvSetupScheduleStates){
-            return $this->sendError('You cannot return back to amend this recurring voucher, recurring jv has already been generated.');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_recurring_vou_1'));
         }
 
-        $emailBody = '<p>' . $rrvMaster->RRVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $rrvMaster->RRVcode . ' has been return back to amend';
+        $emailBody = __('email.recurring_voucher_returned_to_amend_body', [
+            'rrvCode' => $rrvMaster->RRVcode,
+            'empName' => $employee->empName,
+            'returnComment' => $input['returnComment']
+        ]);
+        $emailSubject = __('email.recurring_voucher_returned_to_amend', [
+            'rrvCode' => $rrvMaster->RRVcode
+        ]);
 
         DB::beginTransaction();
         try {
@@ -968,10 +998,10 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             $rrvMaster->refferedBackYN = 0;
             $rrvMaster->save();
 
-            AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($rrvMaster->documentSystemID,$id,$input['returnComment'],trans('custom.returned_back_to_amend'));
 
             DB::commit();
-            return $this->sendResponse($rrvMaster->toArray(), 'Recurring voucher amend saved successfully');
+            return $this->sendResponse($rrvMaster->toArray(), trans('custom.recurring_voucher_amend_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -987,19 +1017,19 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $rrvMasterData = RecurringVoucherSetup::find($rrvMasterAutoId);
         $emails = array();
         if (empty($rrvMasterData)) {
-            return $this->sendError('Recurring Voucher not found');
+            return $this->sendError(trans('custom.recurring_voucher_not_found'));
         }
 
         if ($rrvMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this recurring voucher it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_recurring_voucher_it_is_alr_1'));
         }
 
         if ($rrvMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this recurring voucher it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_recurring_voucher_it_is_alr'));
         }
 
         if ($rrvMasterData->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this recurring voucher, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_recurring_voucher_it_is_not'));
         }
 
         // updating fields
@@ -1018,9 +1048,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $rrvMasterData->bookingInvCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $rrvMasterData->bookingInvCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $rrvMasterData->companySystemID)
             ->where('documentSystemCode', $rrvMasterData->bookingSuppMasInvAutoID)
@@ -1035,7 +1070,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1077,6 +1112,6 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($rrvMasterData->documentSystemID,$rrvMasterAutoId,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($rrvMasterData->toArray(), 'RRV reopened successfully');
+        return $this->sendResponse($rrvMasterData->toArray(), trans('custom.rrv_reopened_successfully'));
     }
 }

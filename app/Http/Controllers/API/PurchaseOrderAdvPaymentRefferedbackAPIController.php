@@ -75,7 +75,7 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
         $this->purchaseOrderAdvPaymentRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseOrderAdvPaymentRefferedbacks = $this->purchaseOrderAdvPaymentRefferedbackRepository->all();
 
-        return $this->sendResponse($purchaseOrderAdvPaymentRefferedbacks->toArray(), 'Purchase Order Adv Payment Refferedbacks retrieved successfully');
+        return $this->sendResponse($purchaseOrderAdvPaymentRefferedbacks->toArray(), trans('custom.purchase_order_adv_payment_refferedbacks_retrieved'));
     }
 
     /**
@@ -122,7 +122,7 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
 
         $purchaseOrderAdvPaymentRefferedbacks = $this->purchaseOrderAdvPaymentRefferedbackRepository->create($input);
 
-        return $this->sendResponse($purchaseOrderAdvPaymentRefferedbacks->toArray(), 'Purchase Order Adv Payment Refferedback saved successfully');
+        return $this->sendResponse($purchaseOrderAdvPaymentRefferedbacks->toArray(), trans('custom.purchase_order_adv_payment_refferedback_saved_succ'));
     }
 
     /**
@@ -169,10 +169,10 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
         $purchaseOrderAdvPaymentRefferedback = $this->purchaseOrderAdvPaymentRefferedbackRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderAdvPaymentRefferedback)) {
-            return $this->sendError('Purchase Order Adv Payment Refferedback not found');
+            return $this->sendError(trans('custom.purchase_order_adv_payment_refferedback_not_found'));
         }
 
-        return $this->sendResponse($purchaseOrderAdvPaymentRefferedback->toArray(), 'Purchase Order Adv Payment Refferedback retrieved successfully');
+        return $this->sendResponse($purchaseOrderAdvPaymentRefferedback->toArray(), trans('custom.purchase_order_adv_payment_refferedback_retrieved_'));
     }
 
     /**
@@ -229,12 +229,12 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
         $purchaseOrderAdvPaymentRefferedback = $this->purchaseOrderAdvPaymentRefferedbackRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderAdvPaymentRefferedback)) {
-            return $this->sendError('Purchase Order Adv Payment Refferedback not found');
+            return $this->sendError(trans('custom.purchase_order_adv_payment_refferedback_not_found'));
         }
 
         $purchaseOrderAdvPaymentRefferedback = $this->purchaseOrderAdvPaymentRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderAdvPaymentRefferedback->toArray(), 'PurchaseOrderAdvPaymentRefferedback updated successfully');
+        return $this->sendResponse($purchaseOrderAdvPaymentRefferedback->toArray(), trans('custom.purchaseorderadvpaymentrefferedback_updated_succes'));
     }
 
     /**
@@ -281,12 +281,12 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
         $purchaseOrderAdvPaymentRefferedback = $this->purchaseOrderAdvPaymentRefferedbackRepository->findWithoutFail($id);
 
         if (empty($purchaseOrderAdvPaymentRefferedback)) {
-            return $this->sendError('Purchase Order Adv Payment Refferedback not found');
+            return $this->sendError(trans('custom.purchase_order_adv_payment_refferedback_not_found'));
         }
 
         $purchaseOrderAdvPaymentRefferedback->delete();
 
-        return $this->sendResponse($id, 'Purchase Order Adv Payment Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_order_adv_payment_refferedback_deleted_su'));
     }
 
 
@@ -305,6 +305,6 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
             ->with(['currency', 'supplier_by' => function ($query) {
             }])->get();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.data_retrieved_successfully'));
     }
 }

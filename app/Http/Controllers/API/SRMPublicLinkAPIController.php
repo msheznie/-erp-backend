@@ -300,14 +300,14 @@ class SRMPublicLinkAPIController extends AppBaseController
 
     public function getPublicSupplierLinkData(Request $request)
     {
-       try
-       {
+        try
+        {
             return $this->sRMPublicLinkRepository->getPublicLinkSupplierData($request);
-       }
-       catch (Exception $e)
-       {
-           return $this->sendError('An error occurred while retrieving data.');
-       }
+        }
+        catch (Exception $e)
+        {
+            return $this->sendError('An error occurred while retrieving data.');
+        }
     }
 
     public function saveSupplierPublicLink(SrmPublicLinkRequest $request)
@@ -315,12 +315,12 @@ class SRMPublicLinkAPIController extends AppBaseController
         $request->validated();
         try
         {
-             $this->sRMPublicLinkRepository->saveSupplierPublicLink($request);
+            $this->sRMPublicLinkRepository->saveSupplierPublicLink($request);
             return $this->sendResponse([],trans('srm_supplier_master.link_successfully_created'));
         }
         catch (Exception $e)
-       {
-           return $this->sendError($e->getMessage());
-       }
+        {
+            return $this->sendError($e->getMessage());
+        }
     }
 }

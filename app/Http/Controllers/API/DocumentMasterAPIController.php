@@ -49,7 +49,7 @@ class DocumentMasterAPIController extends AppBaseController
         $this->documentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentMasters = $this->documentMasterRepository->all();
 
-        return $this->sendResponse($documentMasters->toArray(), 'Document Masters retrieved successfully');
+        return $this->sendResponse($documentMasters->toArray(), trans('custom.document_masters_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class DocumentMasterAPIController extends AppBaseController
 
         $documentMasters = $this->documentMasterRepository->create($input);
 
-        return $this->sendResponse($documentMasters->toArray(), 'Document Master saved successfully');
+        return $this->sendResponse($documentMasters->toArray(), trans('custom.document_master_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class DocumentMasterAPIController extends AppBaseController
         $documentMaster = $this->documentMasterRepository->findWithoutFail($id);
 
         if (empty($documentMaster)) {
-            return $this->sendError('Document Master not found');
+            return $this->sendError(trans('custom.document_master_not_found'));
         }
 
-        return $this->sendResponse($documentMaster->toArray(), 'Document Master retrieved successfully');
+        return $this->sendResponse($documentMaster->toArray(), trans('custom.document_master_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class DocumentMasterAPIController extends AppBaseController
         $documentMaster = $this->documentMasterRepository->findWithoutFail($id);
 
         if (empty($documentMaster)) {
-            return $this->sendError('Document Master not found');
+            return $this->sendError(trans('custom.document_master_not_found'));
         }
 
         $documentMaster = $this->documentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($documentMaster->toArray(), 'DocumentMaster updated successfully');
+        return $this->sendResponse($documentMaster->toArray(), trans('custom.documentmaster_updated_successfully'));
     }
 
     /**
@@ -128,18 +128,18 @@ class DocumentMasterAPIController extends AppBaseController
         $documentMaster = $this->documentMasterRepository->findWithoutFail($id);
 
         if (empty($documentMaster)) {
-            return $this->sendError('Document Master not found');
+            return $this->sendError(trans('custom.document_master_not_found'));
         }
 
         $documentMaster->delete();
 
-        return $this->sendResponse($id, 'Document Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_master_deleted_successfully'));
     }
 
     public function getAllDocuments()
     {
         $document = \Helper::getAllDocuments();
-        return $this->sendResponse($document, 'record retrieved successfully');
+        return $this->sendResponse($document, trans('custom.record_retrieved_successfully'));
     }
 
     public function getAllApprovalDocuments()
@@ -149,6 +149,6 @@ class DocumentMasterAPIController extends AppBaseController
                                   ->whereIn('documentSystemID', [1, 2, 3, 4, 11, 15, 19, 20, 21, 67, 68, 17, 23, 22, 41, 103, 46, 65, 102, 8, 9, 12,24, 7, 13, 10, 97, 71, 87, 62, 64, 66, 96, 56,57,58,59,117,118,107,108,113,119, 132])
                                   ->get()
                                   ->toArray();
-        return $this->sendResponse($document, 'record retrieved successfully');
+        return $this->sendResponse($document, trans('custom.record_retrieved_successfully'));
     }
 }

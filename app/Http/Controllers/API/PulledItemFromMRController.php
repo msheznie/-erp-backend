@@ -138,7 +138,7 @@ class PulledItemFromMRController extends AppBaseController
             DB::commit();
         if($purchaseRequestDetails) {
             $data = $this->erpPulledMRDetailsRepository->create($input);
-            return $this->sendResponse($data->toArray(), 'Item added successfully');
+            return $this->sendResponse($data->toArray(), trans('custom.item_added_successfully'));
         }else {
             return $this->sendError($purchaseRequestDetails['message']);
         }
@@ -212,9 +212,9 @@ class PulledItemFromMRController extends AppBaseController
         if(!empty($data)) {
             PurchaseRequestDetails::where('purchaseRequestID',$input['purcahseRequestID'])->where('itemCode',$input['itemCodeSystem'])->delete();
             $data->delete();
-            return $this->sendResponse($input, 'Data removed successfully');
+            return $this->sendResponse($input, trans('custom.data_removed_successfully'));
         }else{
-            return $this->sendError('Data not found');
+            return $this->sendError(trans('custom.data_not_found'));
         }
     }
 
@@ -301,7 +301,7 @@ class PulledItemFromMRController extends AppBaseController
                     $data['quantityInHand'] = $quantityInHand;
         }
                    
-        return $this->sendResponse($datas, 'Data retreived successfully');
+        return $this->sendResponse($datas, trans('custom.data_retreived_successfully'));
 
     }
 

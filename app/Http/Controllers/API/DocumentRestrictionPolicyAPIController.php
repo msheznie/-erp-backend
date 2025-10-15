@@ -74,7 +74,7 @@ class DocumentRestrictionPolicyAPIController extends AppBaseController
         $this->documentRestrictionPolicyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentRestrictionPolicies = $this->documentRestrictionPolicyRepository->all();
 
-        return $this->sendResponse($documentRestrictionPolicies->toArray(), 'Document Restriction Policies retrieved successfully');
+        return $this->sendResponse($documentRestrictionPolicies->toArray(), trans('custom.document_restriction_policies_retrieved_successful'));
     }
 
     /**
@@ -121,7 +121,7 @@ class DocumentRestrictionPolicyAPIController extends AppBaseController
 
         $documentRestrictionPolicies = $this->documentRestrictionPolicyRepository->create($input);
 
-        return $this->sendResponse($documentRestrictionPolicies->toArray(), 'Document Restriction Policy saved successfully');
+        return $this->sendResponse($documentRestrictionPolicies->toArray(), trans('custom.document_restriction_policy_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class DocumentRestrictionPolicyAPIController extends AppBaseController
         $documentRestrictionPolicy = $this->documentRestrictionPolicyRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionPolicy)) {
-            return $this->sendError('Document Restriction Policy not found');
+            return $this->sendError(trans('custom.document_restriction_policy_not_found'));
         }
 
-        return $this->sendResponse($documentRestrictionPolicy->toArray(), 'Document Restriction Policy retrieved successfully');
+        return $this->sendResponse($documentRestrictionPolicy->toArray(), trans('custom.document_restriction_policy_retrieved_successfully'));
     }
 
     /**
@@ -228,12 +228,12 @@ class DocumentRestrictionPolicyAPIController extends AppBaseController
         $documentRestrictionPolicy = $this->documentRestrictionPolicyRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionPolicy)) {
-            return $this->sendError('Document Restriction Policy not found');
+            return $this->sendError(trans('custom.document_restriction_policy_not_found'));
         }
 
         $documentRestrictionPolicy = $this->documentRestrictionPolicyRepository->update($input, $id);
 
-        return $this->sendResponse($documentRestrictionPolicy->toArray(), 'DocumentRestrictionPolicy updated successfully');
+        return $this->sendResponse($documentRestrictionPolicy->toArray(), trans('custom.documentrestrictionpolicy_updated_successfully'));
     }
 
     /**
@@ -280,11 +280,11 @@ class DocumentRestrictionPolicyAPIController extends AppBaseController
         $documentRestrictionPolicy = $this->documentRestrictionPolicyRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionPolicy)) {
-            return $this->sendError('Document Restriction Policy not found');
+            return $this->sendError(trans('custom.document_restriction_policy_not_found'));
         }
 
         $documentRestrictionPolicy->delete();
 
-        return $this->sendResponse($id, 'Document Restriction Policy deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_restriction_policy_deleted_successfully'));
     }
 }

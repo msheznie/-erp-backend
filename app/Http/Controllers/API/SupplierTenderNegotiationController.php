@@ -61,7 +61,7 @@ class SupplierTenderNegotiationController extends AppBaseController
             return $this->sendError("Cannot add Supplier to Negotiation", 500);
         }
         
-        return $this->sendResponse($supplierTenderNegotiation, 'Supplier added successfully');
+        return $this->sendResponse($supplierTenderNegotiation, trans('custom.supplier_added_successfully'));
 
 
     }
@@ -143,7 +143,7 @@ class SupplierTenderNegotiationController extends AppBaseController
 
     public function getTenderNegotiatedSupplierIds(Request $request) {
         $data = $this->supplierTenderNegotiationRepository->select('suppliermaster_id','tender_negotiation_id','srm_bid_submission_master_id','bidSubmissionCode')->where('tender_negotiation_id',$request['tenderNegotiationID'])->get();
-        return $this->sendResponse($data ,'Data retrieved successfully');
+        return $this->sendResponse($data ,trans('custom.data_retrieved_successfully'));
     }
 
     public function addAllSuppliersToNegotiation(Request $request) {
@@ -174,7 +174,7 @@ class SupplierTenderNegotiationController extends AppBaseController
     
             }
 
-            return $this->sendResponse($data ,'All Suppliers Added Successfully');
+            return $this->sendResponse($data ,trans('custom.all_suppliers_added_successfully'));
 
         }else {
             return $this->sendError("Sorry, Cannot add suppliers", 500);
@@ -189,7 +189,7 @@ class SupplierTenderNegotiationController extends AppBaseController
         $input = $request->all();
         $deleteAllRecords = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationID'])->delete();
         if($deleteAllRecords) {
-            return $this->sendResponse($deleteAllRecords ,'All Suppliers deleted Successfully');
+            return $this->sendResponse($deleteAllRecords ,trans('custom.all_suppliers_deleted_successfully'));
         }else {
             return $this->sendError("Sorry, Can't delete suppliers", 500);
         }

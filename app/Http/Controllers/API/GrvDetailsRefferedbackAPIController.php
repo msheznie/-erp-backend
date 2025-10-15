@@ -76,7 +76,7 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
         $this->grvDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $grvDetailsRefferedbacks = $this->grvDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($grvDetailsRefferedbacks->toArray(), 'Grv Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($grvDetailsRefferedbacks->toArray(), trans('custom.grv_details_refferedbacks_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
 
         $grvDetailsRefferedbacks = $this->grvDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($grvDetailsRefferedbacks->toArray(), 'Grv Details Refferedback saved successfully');
+        return $this->sendResponse($grvDetailsRefferedbacks->toArray(), trans('custom.grv_details_refferedback_saved_successfully'));
     }
 
     /**
@@ -170,10 +170,10 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
         $grvDetailsRefferedback = $this->grvDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($grvDetailsRefferedback)) {
-            return $this->sendError('Grv Details Refferedback not found');
+            return $this->sendError(trans('custom.grv_details_refferedback_not_found'));
         }
 
-        return $this->sendResponse($grvDetailsRefferedback->toArray(), 'Grv Details Refferedback retrieved successfully');
+        return $this->sendResponse($grvDetailsRefferedback->toArray(), trans('custom.grv_details_refferedback_retrieved_successfully'));
     }
 
     /**
@@ -230,12 +230,12 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
         $grvDetailsRefferedback = $this->grvDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($grvDetailsRefferedback)) {
-            return $this->sendError('Grv Details Refferedback not found');
+            return $this->sendError(trans('custom.grv_details_refferedback_not_found'));
         }
 
         $grvDetailsRefferedback = $this->grvDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($grvDetailsRefferedback->toArray(), 'GrvDetailsRefferedback updated successfully');
+        return $this->sendResponse($grvDetailsRefferedback->toArray(), trans('custom.grvdetailsrefferedback_updated_successfully'));
     }
 
     /**
@@ -282,12 +282,12 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
         $grvDetailsRefferedback = $this->grvDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($grvDetailsRefferedback)) {
-            return $this->sendError('Grv Details Refferedback not found');
+            return $this->sendError(trans('custom.grv_details_refferedback_not_found'));
         }
 
         $grvDetailsRefferedback->delete();
 
-        return $this->sendResponse($id, 'Grv Details Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.grv_details_refferedback_deleted_successfully'));
     }
 
     public function getGRVDetailsAmendHistory(Request $request)
@@ -301,7 +301,7 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
             ->with(['unit','po_master'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Grv Details Refferedback retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.grv_details_refferedback_retrieved_successfully'));
     }
 
     public function getGRVDetailsReversalHistory(Request $request)
@@ -317,6 +317,6 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
             ->with(['unit','po_master'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Grv Details Refferedback retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.grv_details_refferedback_retrieved_successfully'));
     }
 }

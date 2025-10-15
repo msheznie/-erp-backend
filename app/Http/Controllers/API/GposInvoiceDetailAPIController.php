@@ -75,7 +75,7 @@ class GposInvoiceDetailAPIController extends AppBaseController
         $this->gposInvoiceDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gposInvoiceDetails = $this->gposInvoiceDetailRepository->all();
 
-        return $this->sendResponse($gposInvoiceDetails->toArray(), 'Gpos Invoice Details retrieved successfully');
+        return $this->sendResponse($gposInvoiceDetails->toArray(), trans('custom.gpos_invoice_details_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class GposInvoiceDetailAPIController extends AppBaseController
 
         $gposInvoiceDetails = $this->gposInvoiceDetailRepository->create($input);
 
-        return $this->sendResponse($gposInvoiceDetails->toArray(), 'Gpos Invoice Detail saved successfully');
+        return $this->sendResponse($gposInvoiceDetails->toArray(), trans('custom.gpos_invoice_detail_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class GposInvoiceDetailAPIController extends AppBaseController
         $gposInvoiceDetail = $this->gposInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($gposInvoiceDetail)) {
-            return $this->sendError('Gpos Invoice Detail not found');
+            return $this->sendError(trans('custom.gpos_invoice_detail_not_found'));
         }
 
-        return $this->sendResponse($gposInvoiceDetail->toArray(), 'Gpos Invoice Detail retrieved successfully');
+        return $this->sendResponse($gposInvoiceDetail->toArray(), trans('custom.gpos_invoice_detail_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class GposInvoiceDetailAPIController extends AppBaseController
         $gposInvoiceDetail = $this->gposInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($gposInvoiceDetail)) {
-            return $this->sendError('Gpos Invoice Detail not found');
+            return $this->sendError(trans('custom.gpos_invoice_detail_not_found'));
         }
 
         $gposInvoiceDetail = $this->gposInvoiceDetailRepository->update($input, $id);
 
-        return $this->sendResponse($gposInvoiceDetail->toArray(), 'GposInvoiceDetail updated successfully');
+        return $this->sendResponse($gposInvoiceDetail->toArray(), trans('custom.gposinvoicedetail_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class GposInvoiceDetailAPIController extends AppBaseController
         $gposInvoiceDetail = $this->gposInvoiceDetailRepository->findWithoutFail($id);
 
         if (empty($gposInvoiceDetail)) {
-            return $this->sendError('Gpos Invoice Detail not found');
+            return $this->sendError(trans('custom.gpos_invoice_detail_not_found'));
         }
 
         $gposInvoiceDetail->delete();
 
-        return $this->sendResponse($id, 'Gpos Invoice Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.gpos_invoice_detail_deleted_successfully'));
     }
 }

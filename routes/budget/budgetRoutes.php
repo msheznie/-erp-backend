@@ -19,6 +19,7 @@ Route::post('getAllBudgetTemplates', 'BudgetTemplateAPIController@getAllBudgetTe
 Route::get('getBudgetTemplateFormData', 'BudgetTemplateAPIController@getBudgetTemplateFormData')->name('Get budget template form data');
 Route::get('getBudgetTemplatesByType/{type}', 'BudgetTemplateAPIController@getBudgetTemplatesByType')->name('Get budget templates by type');
 Route::post('exportBudgetTemplates', 'BudgetTemplateAPIController@exportBudgetTemplates')->name('Export budget templates');
+Route::post('getSegmentOptionsByBudgetTemplate', 'BudgetTemplateAPIController@getSegmentOptionsByBudgetTemplate')->name('Get segments by budget template');
 
 // Budget Template Pre Columns routes
 Route::get('budget_template_pre_columns/grouped', 'BudgetTemplatePreColumnAPIController@getAvailableColumnsGrouped')->name('Get available columns grouped');
@@ -45,6 +46,8 @@ Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
+Route::post('deleteTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@deleteTimeExtensionRequest')->name('Delete time extension request');
+Route::post('acceptTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@acceptTimeExtensionRequest')->name('Accept time extension request');
 Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPIController@generateTimeExtensionRequestCode')->name('Generate time extension request code');
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');

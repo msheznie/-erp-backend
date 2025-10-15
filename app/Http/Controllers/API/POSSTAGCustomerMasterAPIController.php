@@ -65,7 +65,7 @@ class POSSTAGCustomerMasterAPIController extends AppBaseController
         $this->pOSSTAGCustomerMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSTAGCustomerMasters = $this->pOSSTAGCustomerMasterRepository->all();
 
-        return $this->sendResponse($pOSSTAGCustomerMasters->toArray(), 'P O S S T A G Customer Masters retrieved successfully');
+        return $this->sendResponse($pOSSTAGCustomerMasters->toArray(), trans('custom.p_o_s_s_t_a_g_customer_masters_retrieved_successfu'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSTAGCustomerMasterAPIController extends AppBaseController
 
         $pOSSTAGCustomerMaster = $this->pOSSTAGCustomerMasterRepository->create($input);
 
-        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), 'P O S S T A G Customer Master saved successfully');
+        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), trans('custom.p_o_s_s_t_a_g_customer_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSTAGCustomerMasterAPIController extends AppBaseController
         $pOSSTAGCustomerMaster = $this->pOSSTAGCustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGCustomerMaster)) {
-            return $this->sendError('P O S S T A G Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_customer_master_not_found'));
         }
 
-        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), 'P O S S T A G Customer Master retrieved successfully');
+        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), trans('custom.p_o_s_s_t_a_g_customer_master_retrieved_successful'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSTAGCustomerMasterAPIController extends AppBaseController
         $pOSSTAGCustomerMaster = $this->pOSSTAGCustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGCustomerMaster)) {
-            return $this->sendError('P O S S T A G Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_customer_master_not_found'));
         }
 
         $pOSSTAGCustomerMaster = $this->pOSSTAGCustomerMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), 'POSSTAGCustomerMaster updated successfully');
+        return $this->sendResponse($pOSSTAGCustomerMaster->toArray(), trans('custom.posstagcustomermaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSTAGCustomerMasterAPIController extends AppBaseController
         $pOSSTAGCustomerMaster = $this->pOSSTAGCustomerMasterRepository->findWithoutFail($id);
 
         if (empty($pOSSTAGCustomerMaster)) {
-            return $this->sendError('P O S S T A G Customer Master not found');
+            return $this->sendError(trans('custom.p_o_s_s_t_a_g_customer_master_not_found'));
         }
 
         $pOSSTAGCustomerMaster->delete();

@@ -351,8 +351,8 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
-        } 
-        
+        }
+
         $employeeId = Helper::getEmployeeSystemID();
         $response = $input['comments'];
         $id = $input['id'];
@@ -410,12 +410,12 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         if (empty($tenderPreBidClarification)) {
             return $this->sendError(trans('srm_faq.not_found'));
-        } 
+        }
 
         $isLastSupplierResponse = TenderBidClarifications::select('id')
             ->where('tender_master_id', $tenderMasterId)
-            ->where('parent_id', $masterResponseId) 
-            ->where('posted_by_type', 0) 
+            ->where('parent_id', $masterResponseId)
+            ->where('posted_by_type', 0)
             ->orderBy('id', 'desc')
             ->first();
 
@@ -578,9 +578,9 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $attachments = $bidClarification->attachment;
             if($attachments) {
                 foreach ($attachments as $attachment) {
-                if ($attachment) {
-                    $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
-                }
+                    if ($attachment) {
+                        $clarificationText .= "<span style='font-size: 12px;font-weight: bold;'>$attachment->originalFileName</span><br />";
+                    }
                     $file[$attachment->originalFileName] = Helper::getFileUrlFromS3($attachment->path);
                 }
             }
@@ -619,14 +619,14 @@ class TenderBidClarificationsAPIController extends AppBaseController
             return response()->json(['message' => $errorMessage,], 422);
         } else {
             foreach ($emailString as $email){
-            $forwardEmail = email::emailAddressFormat($email);
-            $dataEmail['companySystemID'] = $companyId;
-            $dataEmail['alertMessage'] = "Pre Bid Clarification";
-            $dataEmail['empEmail'] = $forwardEmail;
-            $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
-            $dataEmail['emailAlertMessage'] = $body;
-            $dataEmail['attachmentList'] = $file;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+                $forwardEmail = email::emailAddressFormat($email);
+                $dataEmail['companySystemID'] = $companyId;
+                $dataEmail['alertMessage'] = "Pre Bid Clarification";
+                $dataEmail['empEmail'] = $forwardEmail;
+                $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
+                $dataEmail['emailAlertMessage'] = $body;
+                $dataEmail['attachmentList'] = $file;
+                $sendEmail = \Email::sendEmailErp($dataEmail);
             }
         }
         return ['success' => true, 'message' => trans('srm_faq.emails_sent_successfully')];

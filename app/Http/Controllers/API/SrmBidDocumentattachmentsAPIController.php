@@ -311,106 +311,106 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            
-        $input = $request->all();
-        $attachmentDescription = $input['attachmentDescription'];
-        $companySystemID = $input['companySystemID'];
-        $documentSystemID = $input['documentSystemID'];
-        $documentSystemCode = $input['documentSystemCode'];
 
-        $isExist = SrmBidDocumentattachments::where('companySystemID',$companySystemID)
-        ->where('documentSystemID',$documentSystemID)
-        ->where('documentSystemCode',$documentSystemCode)
-        ->where('attachmentDescription',$attachmentDescription)
-        ->count(); 
-        if($isExist >= 1){ 
-           return ['status' => false, 'message' => trans('srm_ranking.document_attachments_saved_successfully')];
-        }else {
-            
+            $input = $request->all();
+            $attachmentDescription = $input['attachmentDescription'];
+            $companySystemID = $input['companySystemID'];
+            $documentSystemID = $input['documentSystemID'];
+            $documentSystemCode = $input['documentSystemCode'];
 
-            $extension = $input['fileType'];
-
-            $blockExtensions = [
-                'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
-                'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
-                'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
-                'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
-                'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
-                'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
-                'xbap', 'xnk', 'php'
-            ];
-
-            if (in_array($extension, $blockExtensions)) {
-                return $this->sendError(trans('srm_bid.max_file_type_not_allowed'), 500);
-            }
+            $isExist = SrmBidDocumentattachments::where('companySystemID',$companySystemID)
+                ->where('documentSystemID',$documentSystemID)
+                ->where('documentSystemCode',$documentSystemCode)
+                ->where('attachmentDescription',$attachmentDescription)
+                ->count();
+            if($isExist >= 1){
+                return ['status' => false, 'message' => trans('srm_ranking.document_attachments_saved_successfully')];
+            }else {
 
 
-            if (isset($input['sizeInKbs'])) {
-                if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                $extension = $input['fileType'];
+
+                $blockExtensions = [
+                    'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+                    'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+                    'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+                    'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+                    'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+                    'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+                    'xbap', 'xnk', 'php'
+                ];
+
+                if (in_array($extension, $blockExtensions)) {
+                    return $this->sendError(trans('srm_bid.max_file_type_not_allowed'), 500);
                 }
-            }
-       
-            $input = $this->convertArrayToValue($input);
-            if (isset($input['documentSystemID'])) {
 
-                $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-                if ($documentMaster) {
-                    $input['documentID'] = $documentMaster->documentID;
+
+                if (isset($input['sizeInKbs'])) {
+                    if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                        return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    }
                 }
-            }
 
-            $companyID = "";
-            if (isset($input['companySystemID'])) {
+                $input = $this->convertArrayToValue($input);
+                if (isset($input['documentSystemID'])) {
 
-                $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
-
-                if ($companyMaster) {
-                    $input['companyID'] = $companyMaster->CompanyID;
-                    $companyID = $companyMaster->CompanyID;
+                    $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+                    if ($documentMaster) {
+                        $input['documentID'] = $documentMaster->documentID;
+                    }
                 }
+
+                $companyID = "";
+                if (isset($input['companySystemID'])) {
+
+                    $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
+
+                    if ($companyMaster) {
+                        $input['companyID'] = $companyMaster->CompanyID;
+                        $companyID = $companyMaster->CompanyID;
+                    }
+                }
+
+
+
+                $input['tender_id'] = $documentSystemCode;
+                $documentAttachments = $this->srmBidDocumentattachmentsRepository->create($input);
+
+                $file = $request->request->get('file');
+                $decodeFile = base64_decode($file);
+
+                $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->id . '.' . $extension;
+
+                if ($documentAttachments->documentID == 'PRN') {
+                    $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
+                }
+
+
+                if (Helper::checkPolicy($input['companySystemID'], 50)) {
+                    $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+                } else {
+                    $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+                }
+
+                Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+
+                $input['isUploaded'] = 1;
+                $input['path'] = $path;
+
+
+                $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
+                DB::commit();
+                Log::info(app()->getLocale());
+                return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
             }
 
-
-       
-            $input['tender_id'] = $documentSystemCode;
-            $documentAttachments = $this->srmBidDocumentattachmentsRepository->create($input);
-
-            $file = $request->request->get('file');
-            $decodeFile = base64_decode($file);
-
-            $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->id . '.' . $extension;
-
-            if ($documentAttachments->documentID == 'PRN') {
-                $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
-            }
-
-
-            if (Helper::checkPolicy($input['companySystemID'], 50)) {
-                $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-            } else {
-                $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-            }
-
-            Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
-
-            $input['isUploaded'] = 1;
-            $input['path'] = $path;
-        
-
-            $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
-            DB::commit();
-            Log::info(app()->getLocale());
-            return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
-        }
-            
 
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError(trans('srm_ranking.unable_to_upload_the_attachment'), 500);
         }
 
-      
+
     }
 
 

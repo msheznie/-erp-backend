@@ -41,7 +41,7 @@ class VatReturnFillingCategory extends Model
     const CREATED_AT = null;
     const UPDATED_AT = null;
 
-
+    protected $appends = ['category'];
 
 
     public $fillable = [
@@ -73,5 +73,27 @@ class VatReturnFillingCategory extends Model
         
     ];
 
-    
+
+    public function translations()
+    {
+        return $this->hasMany(VatReturnFillingCategoryLanguage::class, 'returnFillingCategoryID', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getCategoryAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['category'] ?? '';
+    }
 }

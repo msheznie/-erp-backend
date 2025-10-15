@@ -33,7 +33,7 @@ class ExportPRDetailExcel
 
     private function sendNotification($basePath) {
         $webPushData = [
-            'title' => "Purchase Request Detailed Excel has been generated",
+            'title' => "purchase_request_detailed_excel_generated",
             'body' => '',
             'url' => "",
             'path' => $basePath,

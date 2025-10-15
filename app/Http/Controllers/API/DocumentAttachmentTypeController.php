@@ -64,7 +64,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         }
 
         $attachmentTypeExist = TenderDocumentTypes::select('id', 'document_type')
-                ->where('document_type', '=', $input['document_type'])->first();
+            ->where('document_type', '=', $input['document_type'])->first();
 
         if (!empty($attachmentTypeExist)) {
             return $this->sendError(trans('srm_masters.document_type_already_exists', [

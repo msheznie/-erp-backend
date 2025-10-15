@@ -65,7 +65,7 @@ class UnbilledGRVAPIController extends AppBaseController
         $this->unbilledGRVRepository->pushCriteria(new LimitOffsetCriteria($request));
         $unbilledGRVs = $this->unbilledGRVRepository->all();
 
-        return $this->sendResponse($unbilledGRVs->toArray(), 'Unbilled G R Vs retrieved successfully');
+        return $this->sendResponse($unbilledGRVs->toArray(), trans('custom.unbilled_g_r_vs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class UnbilledGRVAPIController extends AppBaseController
 
         $unbilledGRVs = $this->unbilledGRVRepository->create($input);
 
-        return $this->sendResponse($unbilledGRVs->toArray(), 'Unbilled G R V saved successfully');
+        return $this->sendResponse($unbilledGRVs->toArray(), trans('custom.unbilled_g_r_v_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class UnbilledGRVAPIController extends AppBaseController
         $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
         if (empty($unbilledGRV)) {
-            return $this->sendError('Unbilled G R V not found');
+            return $this->sendError(trans('custom.unbilled_g_r_v_not_found'));
         }
 
-        return $this->sendResponse($unbilledGRV->toArray(), 'Unbilled G R V retrieved successfully');
+        return $this->sendResponse($unbilledGRV->toArray(), trans('custom.unbilled_g_r_v_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class UnbilledGRVAPIController extends AppBaseController
         $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
         if (empty($unbilledGRV)) {
-            return $this->sendError('Unbilled G R V not found');
+            return $this->sendError(trans('custom.unbilled_g_r_v_not_found'));
         }
 
         $unbilledGRV = $this->unbilledGRVRepository->update($input, $id);
 
-        return $this->sendResponse($unbilledGRV->toArray(), 'UnbilledGRV updated successfully');
+        return $this->sendResponse($unbilledGRV->toArray(), trans('custom.unbilledgrv_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class UnbilledGRVAPIController extends AppBaseController
         $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
         if (empty($unbilledGRV)) {
-            return $this->sendError('Unbilled G R V not found');
+            return $this->sendError(trans('custom.unbilled_g_r_v_not_found'));
         }
 
         $unbilledGRV->delete();
 
-        return $this->sendResponse($id, 'Unbilled G R V deleted successfully');
+        return $this->sendResponse($id, trans('custom.unbilled_g_r_v_deleted_successfully'));
     }
 }

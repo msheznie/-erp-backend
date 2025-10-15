@@ -65,7 +65,7 @@ class EvaluationTypeAPIController extends AppBaseController
         $this->evaluationTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $evaluationTypes = $this->evaluationTypeRepository->all();
 
-        return $this->sendResponse($evaluationTypes->toArray(), 'Evaluation Types retrieved successfully');
+        return $this->sendResponse($evaluationTypes->toArray(), trans('custom.evaluation_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EvaluationTypeAPIController extends AppBaseController
 
         $evaluationType = $this->evaluationTypeRepository->create($input);
 
-        return $this->sendResponse($evaluationType->toArray(), 'Evaluation Type saved successfully');
+        return $this->sendResponse($evaluationType->toArray(), trans('custom.evaluation_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EvaluationTypeAPIController extends AppBaseController
         $evaluationType = $this->evaluationTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationType)) {
-            return $this->sendError('Evaluation Type not found');
+            return $this->sendError(trans('custom.evaluation_type_not_found'));
         }
 
-        return $this->sendResponse($evaluationType->toArray(), 'Evaluation Type retrieved successfully');
+        return $this->sendResponse($evaluationType->toArray(), trans('custom.evaluation_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EvaluationTypeAPIController extends AppBaseController
         $evaluationType = $this->evaluationTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationType)) {
-            return $this->sendError('Evaluation Type not found');
+            return $this->sendError(trans('custom.evaluation_type_not_found'));
         }
 
         $evaluationType = $this->evaluationTypeRepository->update($input, $id);
 
-        return $this->sendResponse($evaluationType->toArray(), 'EvaluationType updated successfully');
+        return $this->sendResponse($evaluationType->toArray(), trans('custom.evaluationtype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EvaluationTypeAPIController extends AppBaseController
         $evaluationType = $this->evaluationTypeRepository->findWithoutFail($id);
 
         if (empty($evaluationType)) {
-            return $this->sendError('Evaluation Type not found');
+            return $this->sendError(trans('custom.evaluation_type_not_found'));
         }
 
         $evaluationType->delete();

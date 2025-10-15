@@ -59,5 +59,35 @@ class SupplierContactType extends Model
         
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['supplierContactDescription'];
+
+    /**
+     * Get the supplier contact description based on current language.
+     *
+     * @return string
+     */
+    public function getSupplierContactDescriptionAttribute()
+    {
+        $languageCode = app()->getLocale();
+
+        $translation = $this->translations()
+            ->where('languageCode', $languageCode)
+            ->first();
+
+        return $translation ? $translation->supplierContactDescription : $this->attributes['supplierContactDescription'];
+    }
+
+    /**
+     * Get the translations for the supplier contact type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(SupplierContactTypeTranslation::class, 'supplierContactTypeID', 'supplierContactTypeID');
+    }
     
 }

@@ -65,7 +65,7 @@ class ModuleAssignedAPIController extends AppBaseController
         $this->moduleAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $moduleAssigneds = $this->moduleAssignedRepository->all();
 
-        return $this->sendResponse($moduleAssigneds->toArray(), 'Module Assigneds retrieved successfully');
+        return $this->sendResponse($moduleAssigneds->toArray(), trans('custom.module_assigneds_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ModuleAssignedAPIController extends AppBaseController
 
         $moduleAssigned = $this->moduleAssignedRepository->create($input);
 
-        return $this->sendResponse($moduleAssigned->toArray(), 'Module Assigned saved successfully');
+        return $this->sendResponse($moduleAssigned->toArray(), trans('custom.module_assigned_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ModuleAssignedAPIController extends AppBaseController
         $moduleAssigned = $this->moduleAssignedRepository->findWithoutFail($id);
 
         if (empty($moduleAssigned)) {
-            return $this->sendError('Module Assigned not found');
+            return $this->sendError(trans('custom.module_assigned_not_found'));
         }
 
-        return $this->sendResponse($moduleAssigned->toArray(), 'Module Assigned retrieved successfully');
+        return $this->sendResponse($moduleAssigned->toArray(), trans('custom.module_assigned_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ModuleAssignedAPIController extends AppBaseController
         $moduleAssigned = $this->moduleAssignedRepository->findWithoutFail($id);
 
         if (empty($moduleAssigned)) {
-            return $this->sendError('Module Assigned not found');
+            return $this->sendError(trans('custom.module_assigned_not_found'));
         }
 
         $moduleAssigned = $this->moduleAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($moduleAssigned->toArray(), 'ModuleAssigned updated successfully');
+        return $this->sendResponse($moduleAssigned->toArray(), trans('custom.moduleassigned_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class ModuleAssignedAPIController extends AppBaseController
         $moduleAssigned = $this->moduleAssignedRepository->findWithoutFail($id);
 
         if (empty($moduleAssigned)) {
-            return $this->sendError('Module Assigned not found');
+            return $this->sendError(trans('custom.module_assigned_not_found'));
         }
 
         $moduleAssigned->delete();

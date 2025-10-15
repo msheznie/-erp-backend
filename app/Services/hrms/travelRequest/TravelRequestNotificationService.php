@@ -67,7 +67,7 @@ class TravelRequestNotificationService
                 $temp = '<p>Dear ' . $val['employee']['empFullName'] . ', <br /></p><p> Please find the attached document
             '.$this->documentCode.' for your further arrangements and action.</p>';
                 $dataEmail['emailAlertMessage'] = $temp;
-                $dataEmail['alertMessage'] = 'Travel Request - '.$this->documentCode.'';
+                $dataEmail['alertMessage'] = trans('email.travel_request_alert', ['documentCode' => $this->documentCode]);
                 $sendEmail = \Email::sendEmailErp($dataEmail);
                 if (!$sendEmail["success"]) {
                     $msg = "Travel request notification not sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";

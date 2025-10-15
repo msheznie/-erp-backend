@@ -65,7 +65,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
         $this->bankReconciliationRulesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->all();
 
-        return $this->sendResponse($bankReconciliationRules->toArray(), 'Bank Reconciliation Rules retrieved successfully');
+        return $this->sendResponse($bankReconciliationRules->toArray(), trans('custom.bank_reconciliation_rules_retrieved_successfully'));
     }
 
     /**
@@ -119,7 +119,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
 
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->create($input);
 
-        return $this->sendResponse($bankReconciliationRules->toArray(), 'Bank Reconciliation Rules saved successfully');
+        return $this->sendResponse($bankReconciliationRules->toArray(), trans('custom.bank_reconciliation_rules_saved_successfully'));
     }
 
     /**
@@ -167,10 +167,10 @@ class BankReconciliationRulesAPIController extends AppBaseController
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationRules)) {
-            return $this->sendError('Bank Reconciliation Rules not found');
+            return $this->sendError(trans('custom.bank_reconciliation_rules_not_found'));
         }
 
-        return $this->sendResponse($bankReconciliationRules->toArray(), 'Bank Reconciliation Rules retrieved successfully');
+        return $this->sendResponse($bankReconciliationRules->toArray(), trans('custom.bank_reconciliation_rules_retrieved_successfully'));
     }
 
     /**
@@ -237,7 +237,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationRules)) {
-            return $this->sendError('Bank Reconciliation Rules not found');
+            return $this->sendError(trans('custom.bank_reconciliation_rules_not_found'));
         }
 
         $input['isMatchAmount'] = $input['isMatchAmount'] ?? 0;
@@ -248,7 +248,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
 
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliationRules->toArray(), 'BankReconciliationRules updated successfully');
+        return $this->sendResponse($bankReconciliationRules->toArray(), trans('custom.bankreconciliationrules_updated_successfully'));
     }
 
     /**
@@ -296,7 +296,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationRules)) {
-            return $this->sendError('Bank Reconciliation Rules not found');
+            return $this->sendError(trans('custom.bank_reconciliation_rules_not_found'));
         }
 
         $isMatchingInProgress = BankStatementMaster::where('bankAccountAutoId', $bankReconciliationRules->bankAccountAutoID)
@@ -308,7 +308,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
         }
         $bankReconciliationRules->delete();
 
-        return $this->sendResponse($id, 'Bank Reconciliation Rule deleted successfully');
+        return $this->sendResponse($id, trans('custom.bank_reconciliation_rule_deleted_successfully'));
     }
 
     public function getBankStatementUploadRules(Request $request)
@@ -357,7 +357,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
         }
 
         $matchingRuleDetail = $this->bankReconciliationRulesRepository->findWhere(['ruleId' => $input['ruleId']])->first();
-        return $this->sendResponse($matchingRuleDetail, 'Rule details retrieved successfully');
+        return $this->sendResponse($matchingRuleDetail, trans('custom.rule_details_retrieved_successfully'));
     }
 
     public function updateDefaultRule(Request $request)
@@ -374,7 +374,7 @@ class BankReconciliationRulesAPIController extends AppBaseController
 
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->findWithoutFail($ruleId);
         if (empty($bankReconciliationRules)) {
-            return $this->sendError('Bank Reconciliation Rules not found');
+            return $this->sendError(trans('custom.bank_reconciliation_rules_not_found'));
         }
 
         $matchingInProgress = BankStatementMaster::where('bankAccountAutoID', $bankReconciliationRules->bankAccountAutoID)
@@ -397,10 +397,10 @@ class BankReconciliationRulesAPIController extends AppBaseController
                ])->first();
 
            if($alreadyExist) {
-               return $this->sendError('A default rule already exists for same transaction type and matching type');
+               return $this->sendError(trans('custom.a_default_rule_already_exists_for_same_transaction'));
            }
         }
         $bankReconciliationRules = $this->bankReconciliationRulesRepository->update($isDefault, $ruleId);
-        return $this->sendResponse($bankReconciliationRules->toArray(), 'Default status updated successfully');
+        return $this->sendResponse($bankReconciliationRules->toArray(), trans('custom.default_status_updated_successfully'));
     }
 }

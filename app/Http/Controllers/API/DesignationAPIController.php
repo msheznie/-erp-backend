@@ -65,7 +65,7 @@ class DesignationAPIController extends AppBaseController
         $this->designationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $designations = $this->designationRepository->all();
 
-        return $this->sendResponse($designations->toArray(), 'Designations retrieved successfully');
+        return $this->sendResponse($designations->toArray(), trans('custom.designations_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DesignationAPIController extends AppBaseController
 
         $designations = $this->designationRepository->create($input);
 
-        return $this->sendResponse($designations->toArray(), 'Designation saved successfully');
+        return $this->sendResponse($designations->toArray(), trans('custom.designation_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class DesignationAPIController extends AppBaseController
         $designation = $this->designationRepository->findWithoutFail($id);
 
         if (empty($designation)) {
-            return $this->sendError('Designation not found');
+            return $this->sendError(trans('custom.designation_not_found'));
         }
 
-        return $this->sendResponse($designation->toArray(), 'Designation retrieved successfully');
+        return $this->sendResponse($designation->toArray(), trans('custom.designation_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class DesignationAPIController extends AppBaseController
         $designation = $this->designationRepository->findWithoutFail($id);
 
         if (empty($designation)) {
-            return $this->sendError('Designation not found');
+            return $this->sendError(trans('custom.designation_not_found'));
         }
 
         $designation = $this->designationRepository->update($input, $id);
 
-        return $this->sendResponse($designation->toArray(), 'Designation updated successfully');
+        return $this->sendResponse($designation->toArray(), trans('custom.designation_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class DesignationAPIController extends AppBaseController
         $designation = $this->designationRepository->findWithoutFail($id);
 
         if (empty($designation)) {
-            return $this->sendError('Designation not found');
+            return $this->sendError(trans('custom.designation_not_found'));
         }
 
         $designation->delete();
 
-        return $this->sendResponse($id, 'Designation deleted successfully');
+        return $this->sendResponse($id, trans('custom.designation_deleted_successfully'));
     }
 }

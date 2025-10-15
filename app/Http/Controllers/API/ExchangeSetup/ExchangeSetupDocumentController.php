@@ -35,7 +35,7 @@ class ExchangeSetupDocumentController extends AppBaseController
                'isActive' => (Boolean) $exchangeSetupDocument->isActive
            ];
         });
-       return $this->sendResponse($data,'Data reterived successfully!');
+       return $this->sendResponse($data,trans('custom.data_reterived_successfully_2'));
     }
 
     public function getTypesOfDocument(Request $request,int $id)
@@ -49,7 +49,7 @@ class ExchangeSetupDocumentController extends AppBaseController
        $documentTypes = $exchangeDocument->types;
        $data = $this->exchangSetupConfigurationService->mapTypesWithExchangeSetupConfig($documentTypes);
 
-       return $this->sendResponse($data,'Document Types Reterived Successfully!');
+       return $this->sendResponse($data,trans('custom.document_types_reterived_successfully'));
     }
 
     public function updateDocumentExchangeRate(Request $request)
@@ -135,6 +135,6 @@ class ExchangeSetupDocumentController extends AppBaseController
         $documentTypes = $exchangeDocument->types;
         $data = $this->exchangSetupConfigurationService->mapTypesWithExchangeSetupConfig($documentTypes,$companySystemId);
 
-        return $this->sendResponse($data,'Document Types Reterived Successfully!');
+        return $this->sendResponse($data,trans('custom.document_types_reterived_successfully'));
     }
 }

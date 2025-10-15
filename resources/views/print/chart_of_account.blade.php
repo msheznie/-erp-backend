@@ -1,7 +1,29 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>Chart Of Account</title>
+    <title>{{ __('custom.chart_of_account') }}</title>
     <style>
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         @page {
             margin-left: 30px;
             margin-right: 30px;
@@ -94,7 +116,7 @@
 
                 <span style="font-size: 24px;font-weight: 400"> {{ $chartOfAccount->primaryCompany?$chartOfAccount->primaryCompany->CompanyName:'' }}</span>
                 <br><br>
-                <span style="font-weight: bold"> Account Code: {{$chartOfAccount->AccountCode}}</span>
+                <span style="font-weight: bold"> {{ __('custom.account_code') }}: {{$chartOfAccount->AccountCode}}</span>
                 <br>
             </td>
         </tr>
@@ -105,7 +127,7 @@
         <tr style="width: 100%">
             <td style="text-align: left; font-weight: bold">
                 <div>
-                    <span style="font-size: 18px">Chart Of Account</span>
+                    <span style="font-size: 18px">{{ __('custom.chart_of_account') }}</span>
                 </div>
             </td>
         </tr>
@@ -117,7 +139,7 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Primary Company</span>
+                            <span style="font-weight:bold;">{{ __('custom.primary_company') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -128,7 +150,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Account Code</span>
+                            <span style="font-weight:bold;">{{ __('custom.account_code') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -139,7 +161,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Account Description</span>
+                            <span style="font-weight:bold;">{{ __('custom.account_description') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -150,7 +172,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Category</span>
+                            <span style="font-weight:bold;">{{ __('custom.category') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -161,7 +183,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Control Account</span>
+                            <span style="font-weight:bold;">{{ __('custom.control_account') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -172,22 +194,22 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Control Account YN</span>
+                            <span style="font-weight:bold;">{{ __('custom.control_account_yn') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($chartOfAccount->controllAccountYN == 1)
-                                Yes
+                                {{ __('custom.yes') }}
                             @else
-                                No
+                                {{ __('custom.no') }}
                             @endif
                         </td>
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Default Template Category</span>
+                            <span style="font-weight:bold;">{{ __('custom.default_template_category') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -198,7 +220,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Confirmed By</span>
+                            <span style="font-weight:bold;">{{ __('custom.confirmed_by') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -209,7 +231,7 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Confirmed Date</span>
+                            <span style="font-weight:bold;">{{ __('custom.confirmed_date') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -224,37 +246,37 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Is Active</span>
+                            <span style="font-weight:bold;">{{ __('custom.is_active') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($chartOfAccount->isActive == 1)
-                                Yes
+                                {{ __('custom.yes') }}
                             @else
-                                No
+                                {{ __('custom.no') }}
                             @endif
                         </td>
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Is Bank</span>
+                            <span style="font-weight:bold;">{{ __('custom.is_bank') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($chartOfAccount->isBank == 1)
-                                Yes
+                                {{ __('custom.yes') }}
                             @else
-                                No
+                                {{ __('custom.no') }}
                             @endif
                         </td>
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Allocation Type</span>
+                            <span style="font-weight:bold;">{{ __('custom.allocation_type') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -265,16 +287,16 @@
                     </tr>
                     <tr>
                         <td width="150px">
-                            <span style="font-weight:bold;">Related Party YN</span>
+                            <span style="font-weight:bold;">{{ trans('custom.related_party_yn') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($chartOfAccount->relatedPartyYN == 1)
-                                Yes
+                                {{ __('custom.yes') }}
                             @else
-                                No
+                                {{ __('custom.no') }}
                             @endif
                         </td>
                     </tr>
@@ -303,7 +325,7 @@
                                         font-weight: 500;
                                         line-height: 1.2;
                                         color: inherit;">
-                                Confirmed & Not Approved <br> Draft Copy
+                                {{ __('custom.confirmed_not_approved') }} <br> {{ __('custom.draft_copy') }}
                             </h3>
                         </span>
             </td>

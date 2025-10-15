@@ -61,7 +61,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $this->poPaymentTermsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poPaymentTerms = $this->poPaymentTermsRepository->all();
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms retrieved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -99,7 +99,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
@@ -123,7 +123,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms saved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_saved_successfully'));
     }
 
     /**
@@ -140,10 +140,10 @@ class PoPaymentTermsAPIController extends AppBaseController
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms retrieved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -171,13 +171,13 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
@@ -198,7 +198,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             {
                 if(!empty($purchaseOrder->paymentTerms_by->sum('comPercentage')) && (round($purchaseOrder->paymentTerms_by->sum('comPercentage'),$supplierCurrencyDecimalPlace)) > 100)
                 {
-                    return $this->sendError('Po Payment Terms total percentage cannot be greater than 100',500,['type' => 2]);
+                    return $this->sendError(trans('custom.po_payment_terms_total_percentage_cannot_be_greate'),500,['type' => 2]);
                 }
             }
 
@@ -252,7 +252,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
 
@@ -269,7 +269,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $input['comAmount'] = ($input['poAmount'] / 100) * $input['comPercentage'];
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'PoPaymentTerms updated successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.popaymentterms_updated_successfully'));
     }
 
     /**
@@ -285,14 +285,14 @@ class PoPaymentTermsAPIController extends AppBaseController
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $poPaymentTerms->delete();
 
         $deleteAdvancePayment = PoAdvancePayment::where('poTermID', $id)->delete();
 
-        return $this->sendResponse($id, 'Po Payment Terms deleted successfully');
+        return $this->sendResponse($id, trans('custom.po_payment_terms_deleted_successfully'));
     }
 
     public function getProcumentOrderPaymentTerms(Request $request)
@@ -304,7 +304,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 
-        return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($poAdvancePaymentType->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getProcumentOrderPaymentTermConfigs(Request $request)
@@ -354,7 +354,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), 'Payment terms and conditions retrieved successfully');
+        return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), trans('custom.payment_terms_and_conditions_retrieved_successfull'));
     }
 
     public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign) {
@@ -383,7 +383,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $purchaseOrder->update(
@@ -462,7 +462,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($purchaseOrder, 'Data retrieved successfully');
+        return $this->sendResponse($purchaseOrder, trans('custom.data_retrieved_successfully'));
 
     }
 

@@ -49,7 +49,7 @@ class suppliernatureAPIController extends AppBaseController
         $this->suppliernatureRepository->pushCriteria(new LimitOffsetCriteria($request));
         $suppliernatures = $this->suppliernatureRepository->all();
 
-        return $this->sendResponse($suppliernatures->toArray(), 'Suppliernatures retrieved successfully');
+        return $this->sendResponse($suppliernatures->toArray(), trans('custom.suppliernatures_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class suppliernatureAPIController extends AppBaseController
 
         $suppliernatures = $this->suppliernatureRepository->create($input);
 
-        return $this->sendResponse($suppliernatures->toArray(), 'Suppliernature saved successfully');
+        return $this->sendResponse($suppliernatures->toArray(), trans('custom.suppliernature_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class suppliernatureAPIController extends AppBaseController
         $suppliernature = $this->suppliernatureRepository->findWithoutFail($id);
 
         if (empty($suppliernature)) {
-            return $this->sendError('Suppliernature not found');
+            return $this->sendError(trans('custom.suppliernature_not_found'));
         }
 
-        return $this->sendResponse($suppliernature->toArray(), 'Suppliernature retrieved successfully');
+        return $this->sendResponse($suppliernature->toArray(), trans('custom.suppliernature_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class suppliernatureAPIController extends AppBaseController
         $suppliernature = $this->suppliernatureRepository->findWithoutFail($id);
 
         if (empty($suppliernature)) {
-            return $this->sendError('Suppliernature not found');
+            return $this->sendError(trans('custom.suppliernature_not_found'));
         }
 
         $suppliernature = $this->suppliernatureRepository->update($input, $id);
 
-        return $this->sendResponse($suppliernature->toArray(), 'suppliernature updated successfully');
+        return $this->sendResponse($suppliernature->toArray(), trans('custom.suppliernature_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class suppliernatureAPIController extends AppBaseController
         $suppliernature = $this->suppliernatureRepository->findWithoutFail($id);
 
         if (empty($suppliernature)) {
-            return $this->sendError('Suppliernature not found');
+            return $this->sendError(trans('custom.suppliernature_not_found'));
         }
 
         $suppliernature->delete();
 
-        return $this->sendResponse($id, 'Suppliernature deleted successfully');
+        return $this->sendResponse($id, trans('custom.suppliernature_deleted_successfully'));
     }
 }

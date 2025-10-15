@@ -56,6 +56,6 @@ class SendEmail implements ShouldQueue
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
-        Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content));
+        Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content, '', [], '#C23C32', 'GEARS', 'GEARS', app()->getLocale()));
     }
 }

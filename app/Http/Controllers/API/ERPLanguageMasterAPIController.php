@@ -67,7 +67,7 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $this->eRPLanguageMasterRepository->pushCriteria(new RequestCriteria($request));
         $this->eRPLanguageMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $eRPLanguageMasters = $this->eRPLanguageMasterRepository->select(['languageShortCode','isActive','icon','languageID'])->where('isActive',1)->get();
-        return $this->sendResponse($eRPLanguageMasters->toArray(), 'Languages retrieved successfully');
+        return $this->sendResponse($eRPLanguageMasters->toArray(), trans('custom.languages_retrieved_successfully'));
     }
 
     /**
@@ -121,7 +121,7 @@ class ERPLanguageMasterAPIController extends AppBaseController
 
         $eRPLanguageMaster = $this->eRPLanguageMasterRepository->create($input);
 
-        return $this->sendResponse($eRPLanguageMaster->toArray(), 'Language Master saved successfully');
+        return $this->sendResponse($eRPLanguageMaster->toArray(), trans('custom.language_master_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
 
         if (empty($eRPLanguageMaster)) {
-            return $this->sendError('E R P Language Master not found');
+            return $this->sendError(trans('custom.e_r_p_language_master_not_found'));
         }
 
-        return $this->sendResponse($eRPLanguageMaster->toArray(), 'E R P Language Master retrieved successfully');
+        return $this->sendResponse($eRPLanguageMaster->toArray(), trans('custom.e_r_p_language_master_retrieved_successfully'));
     }
 
     /**
@@ -238,12 +238,12 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
 
         if (empty($eRPLanguageMaster)) {
-            return $this->sendError('E R P Language Master not found');
+            return $this->sendError(trans('custom.e_r_p_language_master_not_found'));
         }
 
         $eRPLanguageMaster = $this->eRPLanguageMasterRepository->update($input, $id);
 
-        return $this->sendResponse($eRPLanguageMaster->toArray(), 'ERPLanguageMaster updated successfully');
+        return $this->sendResponse($eRPLanguageMaster->toArray(), trans('custom.erplanguagemaster_updated_successfully'));
     }
 
     /**
@@ -291,7 +291,7 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
 
         if (empty($eRPLanguageMaster)) {
-            return $this->sendError('E R P Language Master not found');
+            return $this->sendError(trans('custom.e_r_p_language_master_not_found'));
         }
 
         $eRPLanguageMaster->delete();
@@ -306,12 +306,12 @@ class ERPLanguageMasterAPIController extends AppBaseController
         if($this->checkRecordExists($input)) {
             $data = $this->updateRecord($input);
             if(!$data) {
-                return $this->sendError('Cannot update data');
+                return $this->sendError(trans('custom.cannot_update_data'));
             }
-            return $this->sendResponse($data->toArray(), 'Language updated successfully');
+            return $this->sendResponse($data->toArray(), trans('custom.language_updated_successfully'));
         }else {
             $createRecord = EmployeeLanguage::create($input);
-            return $this->sendResponse($createRecord->toArray(), 'Language saved successfully');
+            return $this->sendResponse($createRecord->toArray(), trans('custom.language_saved_successfully'));
 
         }
 

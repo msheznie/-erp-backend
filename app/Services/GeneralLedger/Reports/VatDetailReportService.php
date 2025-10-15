@@ -174,7 +174,7 @@ class VatDetailReportService
 
            if($input['reportTypeID'] == 3) {
             $objLastVatDetailReport = new VatDetailReport();
-            $objLastVatDetailReport->setVatRate("Total");
+            $objLastVatDetailReport->setVatRate(trans('custom.total'));
             $objLastVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountLocalTotal, $transdecimalPlace)));
@@ -183,7 +183,7 @@ class VatDetailReportService
         }
         if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
             $objLastVatDetailReport = new DetailsOfInwardSupplyReport();
-            $objLastVatDetailReport->setVatRate("Total");
+            $objLastVatDetailReport->setVatRate(trans('custom.total'));
             $objLastVatDetailReport->setValueExculdingInDocumentCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setVatInDocumentCurrency(CurrencyService::convertNumberFormatToNumber(number_format($VATAmountTotal, $transdecimalPlace)));
             $objLastVatDetailReport->setValueExculdingInLocalCurency(CurrencyService::convertNumberFormatToNumber(number_format($taxableAmountLocalTotal, $transdecimalPlace)));

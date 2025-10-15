@@ -64,7 +64,7 @@ class B2BSubmissionFileDetailAPIController extends AppBaseController
         $this->b2BSubmissionFileDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $b2BSubmissionFileDetails = $this->b2BSubmissionFileDetailRepository->all();
 
-        return $this->sendResponse($b2BSubmissionFileDetails->toArray(), 'B2 B Submission File Details retrieved successfully');
+        return $this->sendResponse($b2BSubmissionFileDetails->toArray(), trans('custom.b2_b_submission_file_details_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class B2BSubmissionFileDetailAPIController extends AppBaseController
 
         $b2BSubmissionFileDetail = $this->b2BSubmissionFileDetailRepository->create($input);
 
-        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), 'B2 B Submission File Detail saved successfully');
+        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), trans('custom.b2_b_submission_file_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class B2BSubmissionFileDetailAPIController extends AppBaseController
         $b2BSubmissionFileDetail = $this->b2BSubmissionFileDetailRepository->findWithoutFail($id);
 
         if (empty($b2BSubmissionFileDetail)) {
-            return $this->sendError('B2 B Submission File Detail not found');
+            return $this->sendError(trans('custom.b2_b_submission_file_detail_not_found'));
         }
 
-        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), 'B2 B Submission File Detail retrieved successfully');
+        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), trans('custom.b2_b_submission_file_detail_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class B2BSubmissionFileDetailAPIController extends AppBaseController
         $b2BSubmissionFileDetail = $this->b2BSubmissionFileDetailRepository->findWithoutFail($id);
 
         if (empty($b2BSubmissionFileDetail)) {
-            return $this->sendError('B2 B Submission File Detail not found');
+            return $this->sendError(trans('custom.b2_b_submission_file_detail_not_found'));
         }
 
         $b2BSubmissionFileDetail = $this->b2BSubmissionFileDetailRepository->update($input, $id);
 
-        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), 'B2BSubmissionFileDetail updated successfully');
+        return $this->sendResponse($b2BSubmissionFileDetail->toArray(), trans('custom.b2bsubmissionfiledetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class B2BSubmissionFileDetailAPIController extends AppBaseController
         $b2BSubmissionFileDetail = $this->b2BSubmissionFileDetailRepository->findWithoutFail($id);
 
         if (empty($b2BSubmissionFileDetail)) {
-            return $this->sendError('B2 B Submission File Detail not found');
+            return $this->sendError(trans('custom.b2_b_submission_file_detail_not_found'));
         }
 
         $b2BSubmissionFileDetail->delete();

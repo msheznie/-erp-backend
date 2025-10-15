@@ -65,7 +65,7 @@ class MaritialStatusAPIController extends AppBaseController
         $this->maritialStatusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $maritialStatuses = $this->maritialStatusRepository->all();
 
-        return $this->sendResponse($maritialStatuses->toArray(), 'Maritial Statuses retrieved successfully');
+        return $this->sendResponse($maritialStatuses->toArray(), trans('custom.maritial_statuses_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class MaritialStatusAPIController extends AppBaseController
 
         $maritialStatus = $this->maritialStatusRepository->create($input);
 
-        return $this->sendResponse($maritialStatus->toArray(), 'Maritial Status saved successfully');
+        return $this->sendResponse($maritialStatus->toArray(), trans('custom.maritial_status_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class MaritialStatusAPIController extends AppBaseController
         $maritialStatus = $this->maritialStatusRepository->findWithoutFail($id);
 
         if (empty($maritialStatus)) {
-            return $this->sendError('Maritial Status not found');
+            return $this->sendError(trans('custom.maritial_status_not_found'));
         }
 
-        return $this->sendResponse($maritialStatus->toArray(), 'Maritial Status retrieved successfully');
+        return $this->sendResponse($maritialStatus->toArray(), trans('custom.maritial_status_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class MaritialStatusAPIController extends AppBaseController
         $maritialStatus = $this->maritialStatusRepository->findWithoutFail($id);
 
         if (empty($maritialStatus)) {
-            return $this->sendError('Maritial Status not found');
+            return $this->sendError(trans('custom.maritial_status_not_found'));
         }
 
         $maritialStatus = $this->maritialStatusRepository->update($input, $id);
 
-        return $this->sendResponse($maritialStatus->toArray(), 'MaritialStatus updated successfully');
+        return $this->sendResponse($maritialStatus->toArray(), trans('custom.maritialstatus_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class MaritialStatusAPIController extends AppBaseController
         $maritialStatus = $this->maritialStatusRepository->findWithoutFail($id);
 
         if (empty($maritialStatus)) {
-            return $this->sendError('Maritial Status not found');
+            return $this->sendError(trans('custom.maritial_status_not_found'));
         }
 
         $maritialStatus->delete();
 
-        return $this->sendResponse($id, 'Maritial Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.maritial_status_deleted_successfully'));
     }
 }

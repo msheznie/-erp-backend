@@ -65,7 +65,7 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
         $this->budgetMasterRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetMasterRefferedHistories = $this->budgetMasterRefferedHistoryRepository->all();
 
-        return $this->sendResponse($budgetMasterRefferedHistories->toArray(), 'Budget Master Reffered Histories retrieved successfully');
+        return $this->sendResponse($budgetMasterRefferedHistories->toArray(), trans('custom.budget_master_reffered_histories_retrieved_success'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
 
         $budgetMasterRefferedHistory = $this->budgetMasterRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), 'Budget Master Reffered History saved successfully');
+        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), trans('custom.budget_master_reffered_history_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
         $budgetMasterRefferedHistory = $this->budgetMasterRefferedHistoryRepository->with(['confirmed_by','segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($id);
 
         if (empty($budgetMasterRefferedHistory)) {
-            return $this->sendError('Budget Master Reffered History not found');
+            return $this->sendError(trans('custom.budget_master_reffered_history_not_found'));
         }
 
-        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), 'Budget Master Reffered History retrieved successfully');
+        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), trans('custom.budget_master_reffered_history_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
         $budgetMasterRefferedHistory = $this->budgetMasterRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetMasterRefferedHistory)) {
-            return $this->sendError('Budget Master Reffered History not found');
+            return $this->sendError(trans('custom.budget_master_reffered_history_not_found'));
         }
 
         $budgetMasterRefferedHistory = $this->budgetMasterRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), 'BudgetMasterRefferedHistory updated successfully');
+        return $this->sendResponse($budgetMasterRefferedHistory->toArray(), trans('custom.budgetmasterrefferedhistory_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
         $budgetMasterRefferedHistory = $this->budgetMasterRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($budgetMasterRefferedHistory)) {
-            return $this->sendError('Budget Master Reffered History not found');
+            return $this->sendError(trans('custom.budget_master_reffered_history_not_found'));
         }
 
         $budgetMasterRefferedHistory->delete();
@@ -288,6 +288,6 @@ class BudgetMasterRefferedHistoryAPIController extends AppBaseController
             ->with(['segment_by', 'template_master', 'finance_year_by'])
             ->get();
 
-        return $this->sendResponse($budgetMasterRefferedHistory, 'Budget retrieved successfully');
+        return $this->sendResponse($budgetMasterRefferedHistory, trans('custom.budget_retrieved_successfully'));
     }
 }
