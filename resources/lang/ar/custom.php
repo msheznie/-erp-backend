@@ -9340,5 +9340,61 @@ return
     'gl_codes_not_assigned_budget' => 'بعض أكواد دفتر الأستاذ غير مخصصة للميزانية مع القطاع وفترة المالية ذات الصلة',
     'budget_check_not_set_document' => 'لم يتم تعيين فحص الميزانية لهذا المستند',
     'budget_consumption_not_set_document' => 'لم يتم تعيين استهلاك الميزانية لهذا المستند',
-    'warehouse_required' => 'حقل المستودع مطلوب'
+    'warehouse_required' => 'حقل المستودع مطلوب',
+    
+    // Payment Terms Translations
+    'payment_terms' => 'شروط الدفع',
+    'delivery_terms' => 'شروط التسليم',
+    'delivery_shipping' => 'التسليم والشحن',
+    'penalty_terms' => 'شروط الجزاءات',
+    'product_service_specifications' => 'مواصفات المنتج/الخدمة',
+    'price_and_currency' => 'السعر والعملة',
+    'taxes_and_fees' => 'الضرائب والرسوم',
+    'warranties_and_guarantees' => 'الضمانات والكفالات',
+    'cancellation_and_returns' => 'الإلغاء والإرجاع',
+    'limitation_of_liability' => 'تحديد المسؤولية',
+    'confidentiality' => 'السرية',
+    'governing_law' => 'القانون الحاكم',
+    'dispute_resolution' => 'حل النزاعات',
+    'termination' => 'الإنهاء',
+    'insurance' => 'التأمين',
+    'indemnity' => 'التعويض',
+    
+    // Procurement Order Service translations
+    'item_qty_not_updated' => 'لم يتم تحديث كمية العنصر لصف إكسل: :row',
+    'quantity_numeric_required' => 'يجب أن تكون الكمية قيمة رقمية لصف إكسل: :row',
+    'quantity_positive_required' => 'يجب أن تكون الكمية قيمة موجبة لصف إكسل: :row',
+    'unit_cost_not_updated' => 'لم يتم تحديث تكلفة الوحدة لصف إكسل: :row',
+    'unit_cost_numeric_required' => 'يجب أن تكون تكلفة الوحدة قيمة رقمية لصف إكسل: :row',
+    'unit_cost_positive_required' => 'يجب أن تكون تكلفة الوحدة قيمة موجبة لصف إكسل: :row',
+    'discount_percentage_range' => 'يجب أن تكون قيمة نسبة الخصم بين 0 - 100 لصف إكسل: :row',
+    'discount_percentage_numeric' => 'يجب أن تكون نسبة الخصم قيمة رقمية لصف إكسل: :row',
+    'vat_percentage_range' => 'يجب أن تكون قيمة نسبة ضريبة القيمة المضافة بين 0 - 100 لصف إكسل: :row',
+    'vat_percentage_numeric' => 'يجب أن تكون نسبة ضريبة القيمة المضافة قيمة رقمية لصف إكسل: :row',
+    'project_code_not_match' => 'رمز المشروع لا يتطابق مع النظام لصف إكسل: :row',
+    'item_code_not_updated' => 'لم يتم تحديث رمز العنصر لصف إكسل: :row',
+    'item_type_purchase_required' => 'يجب أن تكون العناصر المضافة من نوع الشراء أو الشراء والبيع فقط لصف إكسل: :row',
+    'item_code_not_match' => 'رمز العنصر لا يتطابق مع النظام لصف إكسل: :row',
+    'item_already_allocated' => 'تم تخصيص العنصر بالفعل للقطاع المحدد',
+    'add_multiple_items_end' => 'انتهاء إضافة عناصر متعددة',
+    
+    // Purchase Order Status Controller translations
+    'something_went_wrong_contact_admin' => 'حدث خطأ ما. يرجى الاتصال بمدير النظام',
+    'unable_to_edit_status' => 'لا يمكنك تعديل هذا الحالة',
+    'unable_to_delete_status' => 'لا يمكنك حذف هذا الحالة',
+    'unable_to_send_emails' => 'لا يمكنك إرسال رسائل البريد الإلكتروني',
+    'email_body_status_updated' => 'تم تحديثه بحالة جديدة بواسطة',
+    'email_subject_status_updated' => 'تم تحديثه بحالة جديدة',
+    'grv_not_received' => 'لم يتم الاستلام',
+    'grv_partially_received' => 'تم الاستلام جزئياً',
+    'validation_valid' => 'صحيح',
+    
+    // PO Payment Terms Controller translations
+    'at_least_one_item_required' => 'يجب إضافة عنصر واحد على الأقل لإنشاء شروط الدفع',
+    'payment_in' => 'دفع داخلي',
+    'advance_payment' => 'دفعة مقدمة',
+    
+    // Email body translations
+    'email_status_label' => 'الحالة :',
+    'email_comment_label' => 'التعليق :',
   ];

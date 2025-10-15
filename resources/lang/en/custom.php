@@ -9445,5 +9445,61 @@ return
     'gl_codes_not_assigned_budget' => 'Some GL codes are not assigned for budget with relevant segment and finance period',
     'budget_check_not_set_document' => 'Budget check is not set for this document',
     'budget_consumption_not_set_document' => 'Budget consumption is not set for this document',
-    'warehouse_required' => 'The warehouse field is required'
+    'warehouse_required' => 'The warehouse field is required',
+    
+    // Payment Terms Translations
+    'payment_terms' => 'Payment Terms',
+    'delivery_terms' => 'Delivery Terms',
+    'delivery_shipping' => 'Delivery & shipping',
+    'penalty_terms' => 'Penalty Terms',
+    'product_service_specifications' => 'Product/Service Specifications',
+    'price_and_currency' => 'Price and Currency',
+    'taxes_and_fees' => 'Taxes and Fees',
+    'warranties_and_guarantees' => 'Warranties and Guarantees',
+    'cancellation_and_returns' => 'Cancellation and Returns',
+    'limitation_of_liability' => 'Limitation of Liability',
+    'confidentiality' => 'Confidentiality',
+    'governing_law' => 'Governing Law',
+    'dispute_resolution' => 'Dispute Resolution',
+    'termination' => 'Termination',
+    'insurance' => 'Insurance',
+    'indemnity' => 'Indemnity',
+    
+    // Procurement Order Service translations
+    'item_qty_not_updated' => 'The item Qty has not been updated for Excel row: :row',
+    'quantity_numeric_required' => 'The quantity should be a numeric value for Excel row: :row',
+    'quantity_positive_required' => 'The quantity should be a positive value for Excel row: :row',
+    'unit_cost_not_updated' => 'The Unit Cost has not been updated for Excel row: :row',
+    'unit_cost_numeric_required' => 'The Unit cost should be a numeric value for Excel row: :row',
+    'unit_cost_positive_required' => 'The Unit cost should be a positive value for Excel row: :row',
+    'discount_percentage_range' => 'The Dis Percentage value should be between 0 - 100 for Excel row: :row',
+    'discount_percentage_numeric' => 'The Dis Percentage should be a numeric value for Excel row: :row',
+    'vat_percentage_range' => 'The VAT Percentage value should be between 0 - 100 for Excel row: :row',
+    'vat_percentage_numeric' => 'The VAT Percentage should be a numeric value for Excel row: :row',
+    'project_code_not_match' => 'The Project Code not match with system for Excel row: :row',
+    'item_code_not_updated' => 'The item code has not been updated for Excel row: :row',
+    'item_type_purchase_required' => 'The inventory items added should only be of Item Type: Purchase or Purchase & Sales for Excel row: :row',
+    'item_code_not_match' => 'The item code does not match with a system for Excel row: :row',
+    'item_already_allocated' => 'Item already allocated for selected segment',
+    'add_multiple_items_end' => 'Add Multiple Items End',
+    
+    // Purchase Order Status Controller translations
+    'something_went_wrong_contact_admin' => 'Something went wrong. Please contact system administrator',
+    'unable_to_edit_status' => 'You unable to edit this status',
+    'unable_to_delete_status' => 'You unable to delete this status',
+    'unable_to_send_emails' => 'You unable to send emails',
+    'email_body_status_updated' => 'is updated with a new status by',
+    'email_subject_status_updated' => 'is updated with a new status',
+    'grv_not_received' => 'Not Received',
+    'grv_partially_received' => 'Partially Received',
+    'validation_valid' => 'valid',
+    
+    // PO Payment Terms Controller translations
+    'at_least_one_item_required' => 'At least one item should added to create payment term',
+    'payment_in' => 'Payment In',
+    'advance_payment' => 'Advance Payment',
+    
+    // Email body translations
+    'email_status_label' => 'Status :',
+    'email_comment_label' => 'Comment :',
   ];
