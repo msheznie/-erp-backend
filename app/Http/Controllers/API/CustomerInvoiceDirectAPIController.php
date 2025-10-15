@@ -2911,9 +2911,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
-        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
-        $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
-        $fileName_xls = 'customer_invoice_' . $id . '_' . $time;
+        $fileName = trans('custom.customer_invoice_') . $id . '_' . $time . '.pdf';
+        $fileName_csv =  trans('custom.customer_invoice_') . $id . '_' . $time . '.csv';
+        $fileName_xls = trans('custom.customer_invoice_') . $id . '_' . $time;
 
      
 
