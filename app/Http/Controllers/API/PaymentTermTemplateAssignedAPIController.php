@@ -129,7 +129,10 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             $existingAssignment = PaymentTermTemplateAssigned::where('supplierID', $supplier['id'])->first();
 
             if ($existingAssignment) {
-                $errorMsg[] = $existingAssignment->supplier->supplierName . ' has already been assigned to ' . $existingAssignment->template->templateName;
+                $errorMsg[] = trans('custom.supplier_already_assigned_to_template', [
+                    'supplier' => $existingAssignment->supplier->supplierName,
+                    'template' => $existingAssignment->template->templateName
+                ]);;
             } else {
                 $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->create([
                     'templateID' => $input['templateID'],
@@ -142,7 +145,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         }
 
         if (!empty($errorMsg)) {
-            return $this->sendError("The following suppliers have already been assigned to a template.", 500, $errorMsg);
+            return $this->sendError(trans('custom.suppliers_already_assigned'), 500, $errorMsg);
         }
 
         return $this->sendResponse($assignSuppliers, trans('custom.payment_term_template_assigned_successfully'));

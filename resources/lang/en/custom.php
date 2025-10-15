@@ -9522,7 +9522,8 @@ return
     
     // Shift Details Controller translations
     'inventory_availability' => 'Inventory Availability',
-    
-    // Export error messages
-    'unable_to_export_excel' => 'Unable to export excel',
+
+    'asset_verification_updated_successfully' => 'Asset verification updated successfully',
+    'suppliers_already_assigned' => 'The following suppliers have already been assigned to a template.',
+    'supplier_already_assigned_to_template' => ':supplier has already been assigned to :template.'
   ];

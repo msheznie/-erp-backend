@@ -9417,7 +9417,8 @@ return
     
     // Shift Details Controller translations
     'inventory_availability' => 'توفر المخزون',
-    
-    // Export error messages
-    'unable_to_export_excel' => 'غير قادر على تصدير إكسل',
+
+    'asset_verification_updated_successfully' => 'تم تحديث التحقق من الأصول بنجاح',
+    'suppliers_already_assigned' => 'تم تعيين الموردين التاليين إلى نموذج بالفعل.',
+    'supplier_already_assigned_to_template' => 'تم تعيين المورد :supplier إلى النموذج :template بالفعل.'
   ];
