@@ -69,7 +69,7 @@ class UserService
             $headers = [
                 'content-type' => 'application/json',
                 'auth-key' => $this->apiExternalKey,
-                'menu-id' => 'defualt'
+                'menu-id' => 'default'
             ];
 
             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -226,7 +226,7 @@ class UserService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->userData['id'] = $this->masterUuId;
+            $this->userData['Id'] = $this->masterUuId;
         }
     }
 
