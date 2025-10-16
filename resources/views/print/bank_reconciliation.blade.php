@@ -439,7 +439,7 @@
                     <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.book_balance') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b data-type="number">{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number" class="number-contnt">{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
