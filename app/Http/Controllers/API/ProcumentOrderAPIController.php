@@ -6462,14 +6462,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
 
-            $message = trans('custom.logistic') . ' ' . trans('custom.' . strtolower($array['text']));
+            $message = trans('custom.logistic') . ' ' . $array['text'];
             $update_array = array(
                 'logisticsAvailable' => $array['value']
             );
         } else if ($input['type'] == 2) { //grv
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
-            $message = trans('custom.partially_grv_allowed') . ' ' . trans('custom.' . strtolower($array['text']));
+            $message = trans('custom.partially_grv_allowed') . ' ' . $array['text'];
             $update_array = array(
                 'partiallyGRVAllowed' => $array['value']
             );
