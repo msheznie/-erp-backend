@@ -221,4 +221,32 @@ class FinalReturnIncomeTemplateColumns extends Model
     {
         return $this->hasMany(FinalReturnIncomeReportDetailValues::class, 'column_id', 'id');
     }
+
+    public function getDescriptionAttribute($value) 
+    { 
+        $languageCode = app()->getLocale() ?: 'en';
+        if (strpos($value, 'custom.') === 0) 
+        { 
+            return trans($value, [], $languageCode); 
+        } 
+
+        $snakeCase = strtolower(str_replace(' ', '_', $value)); 
+        $translationKey = 'custom.' . $snakeCase; 
+        $translationResult = trans($translationKey, [], $languageCode); 
+
+        if ($translationResult !== $translationKey) 
+        { 
+            return $translationResult; 
+        } 
+    
+    
+            return $value; 
+        
+    } 
+        
+    public function toArray() {
+
+        $array = parent::toArray();
+        $array['description'] = $this->description; return $array;
+    }
 }
