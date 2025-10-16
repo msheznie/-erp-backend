@@ -376,6 +376,10 @@ return [
         'years' => 'السنوات',
         'endingDate' => 'تاريخ الانتهاء',
         'bigginingDate' => 'تاريخ البداية',
-        'items' => 'المواد'
+        'items' => 'المواد',
+        'description' => 'الوصف',
+        'chartOfAccountSerialLength' => 'طول تسلسل دليل الحسابات',
+        'reportID' => 'معرّف التقرير',
+        'employeeSystemID' => 'معرّف نظام الموظف'
     ],
 ];
