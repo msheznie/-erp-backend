@@ -9441,4 +9441,10 @@ return
     'row_no.' => 'رقم الصف',
     'taxable_income/_deduction/_tax_due' => 'الدخل المضاف/ الخصم/ الضريبة',
     'amount' => 'المبلغ',
+    'dep_percent' => 'نسبة الإهلاك',
+    'cost_unit_asset' => 'وحدة التكلفة',
+    'cost_unit_rpt' => 'وحدة التكلفة (تقرير)',
+    'dep_amount_local' => 'قيمة الإهلاك المحلية',
+    'dep_amount_rpt' => 'قيمة الإهلاك (تقرير)',
+    'asset_depreciation' => 'إهلاك_الأصول'
   ];

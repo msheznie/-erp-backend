@@ -355,26 +355,25 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         if ($outputSUM) {
             $x = 0;
             foreach ($outputSUM as $val) {
-                $data[$x]['FA Code'] = $val->faCode;
-                $data[$x]['Asset Description'] = $val->assetDescription;
-                $data[$x]['Department'] = $val->serviceline_by? $val->serviceline_by->ServiceLineDes : '';
-                $data[$x]['Finance Category'] = $val->financecategory_by? $val->financecategory_by->financeCatDescription : '';
-                $data[$x]['Category'] = $val->maincategory_by? $val->maincategory_by->catDescription : '';
-                $data[$x]['Dep Percent'] = $val->depPercent;
-                $data[$x]['Cost Unit'] = number_format($val->COSTUNIT, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
-                $data[$x]['Cost Unit Rpt'] = number_format($val->costUnitRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
-                $data[$x]['Dep Amount Local'] = number_format($val->depAmountLocal, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
-                $data[$x]['Dep Amount Rpt'] = number_format($val->depAmountRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
+                $data[$x][trans('custom.fa_code')] = $val->faCode;
+                $data[$x][trans('custom.asset_description')] = $val->assetDescription;
+                $data[$x][trans('custom.department')] = $val->serviceline_by? $val->serviceline_by->ServiceLineDes : '';
+                $data[$x][trans('custom.finance_category')] = $val->financecategory_by? $val->financecategory_by->financeCatDescription : '';
+                $data[$x][trans('custom.category')] = $val->maincategory_by? $val->maincategory_by->catDescription : '';
+                $data[$x][trans('custom.dep_percent')] = $val->depPercent;
+                $data[$x][trans('custom.cost_unit_asset')] = number_format($val->COSTUNIT, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
+                $data[$x][trans('custom.cost_unit_rpt')] = number_format($val->costUnitRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
+                $data[$x][trans('custom.dep_amount_local')] = number_format($val->depAmountLocal, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
+                $data[$x][trans('custom.dep_amount_rpt')] = number_format($val->depAmountRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
                 $x++;
             }
         } else {
             $data = array();
         }
          \Excel::create('asset_depreciation', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet(trans('custom.asset_depreciation'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                 
                 // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
@@ -382,9 +381,7 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
                     $sheet->setRightToLeft(true);
                 }
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        })->download('xls');
 
         return $this->sendResponse(array(), trans('custom.success_export'));
     }

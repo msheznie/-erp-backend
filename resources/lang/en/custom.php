@@ -9545,5 +9545,11 @@ return
     'appendix' => 'Appendix',
     'row_no.' => 'Row No.',
     'taxable_income/_deduction/_tax_due' => 'Taxable Income/ Deduction/ Tax Due',
-    'amount' => 'Amount'
+    'amount' => 'Amount',
+    'dep_percent' => 'Dep Percent',
+    'cost_unit_asset' => 'Cost Unit',
+    'cost_unit_rpt' => 'Cost Unit Rpt',
+    'dep_amount_local' => 'Dep Amount Local',
+    'dep_amount_rpt' => 'Dep Amount Rpt',
+    'asset_depreciation' => 'asset_depreciation'
   ];
