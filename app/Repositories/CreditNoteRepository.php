@@ -107,7 +107,10 @@ class CreditNoteRepository extends BaseRepository
             ->leftjoin('employees', 'erp_creditnote.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('erp_projectmaster', 'erp_creditnote.projectID', '=', 'erp_projectmaster.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_creditnote.customerID')
-            ->leftjoin('document_system_mapping', 'document_system_mapping.documentId', '=', 'erp_creditnote.creditNoteAutoID')
+            ->leftJoin('document_system_mapping', function ($join) {
+                $join->on('document_system_mapping.documentId', '=', 'erp_creditnote.creditNoteAutoID')
+                    ->where('document_system_mapping.documentSystemId', '=', 19);
+            })
             ->where('erp_creditnote.companySystemID', $input['companyId'])
             ->where('erp_creditnote.documentSystemID', $input['documentId']);
 

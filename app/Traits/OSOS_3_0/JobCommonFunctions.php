@@ -55,23 +55,23 @@ trait JobCommonFunctions{
         switch ($funcName) {
             case 'location':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Locations/{$this->masterUuId}"
-                    : 'hrm/api/Locations';
+                    ? "v2/api/locations/{$this->masterUuId}"
+                    : 'v2/api/locations';
                 break;
             case 'designation':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Designations/{$this->masterUuId}"
-                    : 'hrm/api/Designations';
+                    ? "v2/api/designations/{$this->masterUuId}"
+                    : 'v2/api/designations';
                 break;
             case 'department':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Department/{$this->masterUuId}"
-                    : 'hrm/api/Department';
+                    ? "v2/api/departments/{$this->masterUuId}"
+                    : 'v2/api/departments';
                 break;
             case 'employee':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "hrm/api/Employee/{$this->masterUuId}"
-                    : 'hrm/api/Employee';
+                    ? "v2/api/employees/{$this->masterUuId}"
+                    : 'v2/api/employees';
                 break;
             case 'user':
                 $this->url = ($this->postType === 'DELETE')

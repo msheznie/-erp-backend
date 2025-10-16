@@ -1,6 +1,22 @@
 # Changelog
 
 
+## [10.87.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.1...v10.87.0) (2025-10-11)
+
+
+### Features
+
+* **Data Synchronization:** HRMS | OSOS 3.0 | Support OBP Endpoint Version Upgrade – New Tenant Integration & API Payload Updates [GHR-6075] ([#9011](https://github.com/pbsgears/Gears_BackEnd/issues/9011)) ([28152aa](https://github.com/pbsgears/Gears_BackEnd/commit/28152aa41d114a7b003013892cc5aaa24a41ba1c))
+* **OSOS 3.0:** Improvements in Data Synchronization (Status field and menu-id value) [GHR-7833] ([2a0a05d](https://github.com/pbsgears/Gears_BackEnd/commit/2a0a05d6757a35be71e8bcc60a8fd6714e730130))
+* **OSOS 3.0:** Improvements in Data Synchronization (Status field and menu-id value) [GHR-7833] ([ce736f5](https://github.com/pbsgears/Gears_BackEnd/commit/ce736f5467152375a81bc963056c2674e03e7eed))
+
+## [10.86.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.0...v10.86.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* decrease token expire to 12h [GCP-15714] ([#9059](https://github.com/pbsgears/Gears_BackEnd/issues/9059)) ([ef23819](https://github.com/pbsgears/Gears_BackEnd/commit/ef238197415a35c1fbacd147ed2056974d760d19))
+
 ## [10.86.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.85.0...v10.86.0) (2025-09-26)
 
 
