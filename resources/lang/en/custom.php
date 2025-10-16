@@ -9551,5 +9551,9 @@ return
     'cost_unit_rpt' => 'Cost Unit Rpt',
     'dep_amount_local' => 'Dep Amount Local',
     'dep_amount_rpt' => 'Dep Amount Rpt',
-    'asset_depreciation' => 'asset_depreciation'
+    'asset_depreciation' => 'asset_depreciation',
+    
+    // Status translations
+    'deactivated' => 'Deactivated',
+    'activated' => 'Activated',
   ];

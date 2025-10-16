@@ -159,13 +159,13 @@ class ProcumentOrderRepository extends BaseRepository
         if($value == -1){
              return [
                 'value'=>0,
-                'text'=>'Deactivated'
+                'text'=>trans('custom.deactivated')
                 ];
 
         }elseif ($value == 0) {
             return [
                 'value'=>-1,
-                'text'=>'Activated'
+                'text'=>trans('custom.activated')
             ];
         }
 
