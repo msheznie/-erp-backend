@@ -586,7 +586,7 @@ class QuotationMasterAPIController extends AppBaseController
                 ->count();
 
             if ($qoDetailExist == 0) {
-                return $this->sendError(trans('custom.sales') . ' ' . trans('custom.'.$tempName) . ' ' . trans('custom.cannot_be_confirmed_without_any_details'));
+                return $this->sendError(trans('custom.sales') . ' ' . $tempName . ' ' . trans('custom.cannot_be_confirmed_without_any_details'));
             }
 
             $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
