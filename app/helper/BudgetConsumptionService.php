@@ -54,9 +54,13 @@ class BudgetConsumptionService
 	    	$checkBudgetBasedOnGLPolicy = true;
 	    }
 
-		if ($budgetData['status']) {
-			if (sizeof($budgetData['data']) > 0) {
-				$userMessageE = "";
+				if ($budgetData['status']) {
+					if (sizeof($budgetData['data']) > 0) {
+						$userMessageE = "";
+						// Apply RTL wrapper for Arabic language
+						if (app()->getLocale() == 'ar') {
+							$userMessageE = '<div dir="rtl" style="direction: rtl; text-align: center;">';
+						}
 				$isDefinedBehaviour = false;
 				foreach ($budgetData['data'] as $key => $value) {
 
@@ -122,6 +126,10 @@ class BudgetConsumptionService
                         $userMessageE .= "<br>";
                         $userMessageE .= __('custom.total_consumed_amount') . round($totalConsumedAmount, $currencyDecimal);
 					}
+				}
+				// Close RTL wrapper for Arabic language
+				if (app()->getLocale() == 'ar') {
+					$userMessageE .= '</div>';
 				}
 				$isValidateMsg = false;
 				$validateMessageE = "";

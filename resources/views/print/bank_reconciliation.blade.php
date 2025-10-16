@@ -179,6 +179,14 @@
         .content {
             margin-bottom: 45px;
         }
+
+        [data-type="number"],
+        [data-numeric="true"] {
+        direction: ltr !important;
+        unicode-bidi: isolate;
+        }
+
+
     </style>
 </head>
 <body>
@@ -332,7 +340,7 @@
                 {{ __('custom.bank_balance') }}
             </td>
             <td width="50%" class="text-right">
-                <b>{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
+                <b data-type="number">{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
             </td>
         </tr>
     </table>
@@ -359,7 +367,7 @@
                     <td>{{$item->documentCode}}</td>
                     <td>{{$item->payeeName}}</td>
                     <td style="width: 80px;">{{$item->documentChequeNo}}</td>
-                    <td class="text-right">{{number_format(($item->payAmountBank * -1),$decimalPlaces)}}</td>
+                    <td class="text-right" data-type="number">{{number_format(($item->payAmountBank * -1),$decimalPlaces)}}</td>
                     <td></td>
                 </tr>
             @endforeach
@@ -375,7 +383,7 @@
                     <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number">{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
@@ -402,7 +410,7 @@
                     <td>{{$item->documentCode}}</td>
                     <td>{{$item->payeeName}}</td>
                     <td style="width: 80px;">{{$item->documentChequeNo}}</td>
-                    <td class="text-right">{{number_format(($item->payAmountBank),$decimalPlaces)}}</td>
+                    <td class="text-right" data-type="number">{{number_format(($item->payAmountBank),$decimalPlaces)}}</td>
                     <td></td>
                 </tr>
             @endforeach
@@ -418,7 +426,7 @@
                     <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number">{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
             <tr>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
@@ -432,7 +440,7 @@
                     <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.book_balance') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number">{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
