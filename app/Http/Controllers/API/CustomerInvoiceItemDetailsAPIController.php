@@ -1510,7 +1510,7 @@ WHERE
                             ->first();
 
                         if (!empty($checkWhether)) {
-                            return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['order_code' => $checkWhether->deliveryOrderCode, 'item_code' => $row['itemSystemCode']]), 500);
+                            return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhether->deliveryOrderCode, 'item_code' => $row['itemSystemCode']]), 500);
                         }
 
 
@@ -1621,7 +1621,7 @@ WHERE
                                 ->first();
                             /* approved=0*/
                             if (!empty($checkWhether)) {
-                                return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['invoice_code' => $checkWhether->bookingInvCode]), 500);
+                                return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhether->bookingInvCode]), 500);
                             }
 
                         }        
