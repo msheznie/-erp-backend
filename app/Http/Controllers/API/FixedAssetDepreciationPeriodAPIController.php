@@ -352,7 +352,9 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         }
 
         $outputSUM = $assetDepPeriod->get();
-        if ($outputSUM) {
+        $data = [];
+
+        if ($outputSUM && count($outputSUM) > 0) {
             $x = 0;
             foreach ($outputSUM as $val) {
                 $data[$x][trans('custom.fa_code')] = $val->faCode;
@@ -367,8 +369,23 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
                 $data[$x][trans('custom.dep_amount_rpt')] = number_format($val->depAmountRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
                 $x++;
             }
-        } else {
-            $data = array();
+
+            foreach ($data as &$row) {
+                foreach ($row as &$cell) {
+                    if (is_string($cell)) {
+                        $trimmed = trim($cell);
+                        // Escape formula-like values
+                        if (strpos($trimmed, '=') === 0) {
+                            $cell = "'" . $cell;
+                        }
+                        // Replace single dash with empty
+                        if ($trimmed === '-') {
+                            $cell = '';
+                        }
+                    }
+                }
+            }
+            unset($row, $cell);
         }
          \Excel::create('asset_depreciation', function ($excel) use ($data) {
             $excel->sheet(trans('custom.asset_depreciation'), function ($sheet) use ($data) {
