@@ -586,7 +586,7 @@ class QuotationMasterAPIController extends AppBaseController
                 ->count();
 
             if ($qoDetailExist == 0) {
-                return $this->sendError(trans('custom.sales') . ' ' . trans('custom.'.$tempName) . ' ' . trans('custom.cannot_be_confirmed_without_any_details'));
+                return $this->sendError(trans('custom.sales') . ' ' . $tempName . ' ' . trans('custom.cannot_be_confirmed_without_any_details'));
             }
 
             $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
@@ -1130,11 +1130,12 @@ class QuotationMasterAPIController extends AppBaseController
             'mode' => 'utf-8', 
             'format' => 'A4', 
             'setAutoTopMargin' => 'stretch', 
+            'setAutoBottomMargin' => 'stretch',
             'autoMarginPadding' => -10,
             'margin_left' => 15,
             'margin_right' => 15,
             'margin_top' => 16,
-            'margin_bottom' => 16,
+            'margin_bottom' => 50,  // Increased to accommodate footer content
             'margin_header' => 9,
             'margin_footer' => 9
         ];
@@ -1144,9 +1145,11 @@ class QuotationMasterAPIController extends AppBaseController
         }
         
         $html = view('print.sales_quotation', $order);
+        $footerHtml = view('print.sales_quotation_footer', $order);
+        
         $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('P');
-        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($footerHtml);
         
         try {
             $mpdf->WriteHTML($html);
@@ -1320,7 +1323,7 @@ class QuotationMasterAPIController extends AppBaseController
         $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinSO = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->exists();
-        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
+        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?trans('custom.sales_order'):trans('custom.quotation');
 
         if($existsinCI || $quotationMasterData->isInDOorCI == 2){
             return $this->sendError(trans('custom.document_added_to_customer_invoice', ['type' => $quotOrSales]),500);

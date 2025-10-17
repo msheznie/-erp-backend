@@ -151,7 +151,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                           ->where('companySystemID', $input['companySystemID'])
                                                           ->first();
             if ($checkPrefixDuplicate) {
-                return $this->sendError("Prefix already exists.", 500);
+                return $this->sendError(trans('custom.prefix_already_exists'), 500);
             }
 
             $company = Company::find($input['companySystemID']);
@@ -280,7 +280,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         if (isset($input['itemType']) && ($input['itemType'] == 2 || $input['itemType'] == 1)) {
             if ($input['serialLength'] == 0) {
-                return $this->sendError("Serial Number length cannot be zero.", 500);
+                return $this->sendError(trans('custom.serial_number_length_cannot_be_zero'), 500);
             }
             $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
                                                           ->where('detID', '!=', $input['detID'])
@@ -288,7 +288,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                           ->where('companySystemID', $input['companySystemID'])
                                                           ->first();
             if ($checkPrefixDuplicate) {
-                return $this->sendError("Prefix already exists.", 500);
+                return $this->sendError(trans('custom.prefix_already_exists'), 500);
             }
         }
 
@@ -304,7 +304,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $masterData = ReportTemplateDetails::find($reportTemplateDetails->masterID);
 
             if (floatval($masterData->serialLength) >= floatval($input['serialLength'])) {
-                return $this->sendError("Prefix length cannot be less than or equal to it's parent category length.", 500);
+                return $this->sendError(trans('custom.prefix_length_cannot_be_less_than_or_equal_to_it'), 500);
             }
         }
 
@@ -674,7 +674,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                         $input['serialLength'] = $val['serialLength'];
 
                         if ($val['serialLength'] == 0) {
-                            return $this->sendError("Serial Number length cannot be zero.", 500);
+                            return $this->sendError(trans('custom.serial_number_length_cannot_be_zero'), 500);
                         }
 
                         $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $val['prefix'])

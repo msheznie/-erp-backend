@@ -216,65 +216,65 @@ class ExportPODetailExcel {
 
     private function mainHeader($localCurrencyCode = '', $reportingCurrencyCode = '') {
         $this->data[] = [
-            '#' => trans('custom.hash'),
-            'Company ID' => trans('custom.company_id'),
-            'Company Name' => trans('custom.company_name'),
-            'Order Code' => trans('custom.order_code'),
-            'Segment' => trans('custom.segment'),
-            'Created at' => trans('custom.created_at'),
-            'Created By' => trans('custom.created_by'),
-            'Category' => trans('custom.category'),
-            'Narration' => trans('custom.narration'),
-            'Supplier Code' => trans('custom.supplier_code'),
-            'Supplier Name' => trans('custom.supplier_name'),
-            'Credit Period' => trans('custom.credit_period'),
-            'Supplier Country' => trans('custom.supplier_country'),
-            'Expected Delivery Date' => trans('custom.expected_delivery_date'),
-            'Delivery Terms' => trans('custom.delivery_terms'),
-            'Penalty Terms' => trans('custom.penalty_terms'),
-            'Confirmed Status' => trans('custom.confirmed_status'),
-            'Confirmed Date' => trans('custom.confirmed_date'),
-            'Confirmed By' => trans('custom.confirmed_by'),
-            'Approved Status' => trans('custom.approved_status'),
-            'Approved Date' => trans('custom.approved_date'),
-            'Transaction Currency' => trans('custom.transaction_currency'),
-            'Transaction Amount' => trans('custom.transaction_amount'),
-            'Local Amount' => trans('custom.local_amount') . ($localCurrencyCode ? " ({$localCurrencyCode})" : ''),
-            'Reporting Amount' => trans('custom.reporting_amount') . ($reportingCurrencyCode ? " ({$reportingCurrencyCode})" : ''),
-            'Advance Payment Available' => trans('custom.advance_payment_available'),
-            'Total Advance Payment Amount' => trans('custom.total_advance_payment_amount'),
+            trans('custom.hash') => trans('custom.hash'),
+            trans('custom.company_id') => trans('custom.company_id'),
+            trans('custom.company_name') => trans('custom.company_name'),
+            trans('custom.order_code') => trans('custom.order_code'),
+            trans('custom.segment') => trans('custom.segment'),
+            trans('custom.created_at') => trans('custom.created_at'),
+            trans('custom.created_by') => trans('custom.created_by'),
+            trans('custom.category') => trans('custom.category'),
+            trans('custom.narration') => trans('custom.narration'),
+            trans('custom.supplier_code') => trans('custom.supplier_code'),
+            trans('custom.supplier_name') => trans('custom.supplier_name'),
+            trans('custom.credit_period') => trans('custom.credit_period'),
+            trans('custom.supplier_country') => trans('custom.supplier_country'),
+            trans('custom.expected_delivery_date') => trans('custom.expected_delivery_date'),
+            trans('custom.delivery_terms') => trans('custom.delivery_terms'),
+            trans('custom.penalty_terms') => trans('custom.penalty_terms'),
+            trans('custom.confirmed_status') => trans('custom.confirmed_status'),
+            trans('custom.confirmed_date') => trans('custom.confirmed_date'),
+            trans('custom.confirmed_by') => trans('custom.confirmed_by'),
+            trans('custom.approved_status') => trans('custom.approved_status'),
+            trans('custom.approved_date') => trans('custom.approved_date'),
+            trans('custom.transaction_currency') => trans('custom.transaction_currency'),
+            trans('custom.transaction_amount') => trans('custom.transaction_amount'),
+            trans('custom.local_amount') . ($localCurrencyCode ? " ({$localCurrencyCode})" : '') => trans('custom.local_amount') . ($localCurrencyCode ? " ({$localCurrencyCode})" : ''),
+            trans('custom.reporting_amount') . ($reportingCurrencyCode ? " ({$reportingCurrencyCode})" : '') => trans('custom.reporting_amount') . ($reportingCurrencyCode ? " ({$reportingCurrencyCode})" : ''),
+            trans('custom.advance_payment_available') => trans('custom.advance_payment_available'),
+            trans('custom.total_advance_payment_amount') => trans('custom.total_advance_payment_amount'),
         ];
     }
 
     private function headerDetails($val, $counter) {
         $this->data[] = [
-            '#' => $counter,
-            'Company ID' => $val->companyID,
-            'Company Name' => optional($val->company)->CompanyName,
-            'Order Code' => $val->purchaseOrderCode,
-            'Segment' => optional($val->segment)->ServiceLineDes,
-            'Created at' => \Helper::dateFormat($val->createdDateTime),
-            'Created By' => optional($val->created_by)->empName,
-            'Category' => optional($val->fcategory)->categoryDescription ?? trans('custom.other'),
-            'Narration' => $val->narration ?: '-',
-            'Supplier Code' => $val->supplierPrimaryCode,
-            'Supplier Name' => $val->supplierName,
-            'Credit Period' => $val->creditPeriod,
-            'Supplier Country' => optional($val->supplier->country)->countryName,
-            'Expected Delivery Date' => \Helper::dateFormat($val->expectedDeliveryDate),
-            'Delivery Terms' => $val->deliveryTerms,
-            'Penalty Terms' => $val->panaltyTerms,
-            'Confirmed Status' => $val->poConfirmedYN == 1 ? trans('custom.yes') : trans('custom.no'),
-            'Confirmed Date' => \Helper::dateFormat($val->poConfirmedDate),
-            'Confirmed By' => $val->poConfirmedByName,
-            'Approved Status' => $val->approved == -1 ? trans('custom.yes') : trans('custom.no'),
-            'Approved Date' => \Helper::dateFormat($val->approvedDate),
-            'Transaction Currency' => optional($val->currency)->CurrencyCode,
-            'Transaction Amount' => $val->poTotalSupplierTransactionCurrency,
-            'Local Amount' => $val->poTotalLocalCurrency,
-            'Reporting Amount' => $val->poTotalComRptCurrency,
-            'Advance Payment Available' => $val->advance_summary ? trans('custom.yes') : trans('custom.no'),
-            'Total Advance Payment Amount' => $val->advance_summary ? $val->advance_summary->advanceSum : 0
+            trans('custom.hash') => $counter,
+            trans('custom.company_id') => $val->companyID,
+            trans('custom.company_name') => optional($val->company)->CompanyName,
+            trans('custom.order_code') => $val->purchaseOrderCode,
+            trans('custom.segment') => optional($val->segment)->ServiceLineDes,
+            trans('custom.created_at') => \Helper::dateFormat($val->createdDateTime),
+            trans('custom.created_by') => optional($val->created_by)->empName,
+            trans('custom.category') => optional($val->fcategory)->categoryDescription ?? trans('custom.other'),
+            trans('custom.narration') => $val->narration ?: '-',
+            trans('custom.supplier_code') => $val->supplierPrimaryCode,
+            trans('custom.supplier_name') => $val->supplierName,
+            trans('custom.credit_period') => $val->creditPeriod,
+            trans('custom.supplier_country') => optional($val->supplier->country)->countryName,
+            trans('custom.expected_delivery_date') => \Helper::dateFormat($val->expectedDeliveryDate),
+            trans('custom.delivery_terms') => $val->deliveryTerms,
+            trans('custom.penalty_terms') => $val->panaltyTerms,
+            trans('custom.confirmed_status') => $val->poConfirmedYN == 1 ? trans('custom.yes') : trans('custom.no'),
+            trans('custom.confirmed_date') => \Helper::dateFormat($val->poConfirmedDate),
+            trans('custom.confirmed_by') => $val->poConfirmedByName,
+            trans('custom.approved_status') => $val->approved == -1 ? trans('custom.yes') : trans('custom.no'),
+            trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+            trans('custom.transaction_currency') => optional($val->currency)->CurrencyCode,
+            trans('custom.transaction_amount') => $val->poTotalSupplierTransactionCurrency,
+            trans('custom.local_amount') => $val->poTotalLocalCurrency,
+            trans('custom.reporting_amount') => $val->poTotalComRptCurrency,
+            trans('custom.advance_payment_available') => $val->advance_summary ? trans('custom.yes') : trans('custom.no'),
+            trans('custom.total_advance_payment_amount') => $val->advance_summary ? $val->advance_summary->advanceSum : 0
         ];
     }
 
@@ -283,46 +283,46 @@ class ExportPODetailExcel {
             $hasPR = $this->checkRequest($val);
 
             $headerOne [''] = '';
-            $headerOne ['Order Details'] = trans('custom.order_details');
+            $headerOne [trans('custom.order_details')] = trans('custom.order_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            if ($hasPR) $header['PR Number'] = trans('custom.pr_number');
-            $header['item Code'] = trans('custom.item_code');
-            $header['item Description'] = trans('custom.item_description');
-            $header['comments'] = trans('custom.comments');
-            if ($hasPR) $header['PR QTY'] = trans('custom.pr_qty');
-            $header['UOM'] = trans('custom.uom');
-            $header['No qty'] = trans('custom.no_qty');
-            $header['Unit Cost'] = trans('custom.unit_cost');
-            $header['Dis %'] = trans('custom.discount_percentage');
-            $header['Discount'] = trans('custom.discount');
-            $header['VAT %'] = trans('custom.vat_percentage');
-            $header['VAT Amount'] = trans('custom.vat_amount');
-            $header['Net Amount'] = trans('custom.net_amount');
+            if ($hasPR) $header[trans('custom.pr_number')] = trans('custom.pr_number');
+            $header[trans('custom.item_code')] = trans('custom.item_code');
+            $header[trans('custom.item_description')] = trans('custom.item_description');
+            $header[trans('custom.comments')] = trans('custom.comments');
+            if ($hasPR) $header[trans('custom.pr_qty')] = trans('custom.pr_qty');
+            $header[trans('custom.uom')] = trans('custom.uom');
+            $header[trans('custom.no_qty')] = trans('custom.no_qty');
+            $header[trans('custom.unit_cost')] = trans('custom.unit_cost');
+            $header[trans('custom.discount_percentage')] = trans('custom.discount_percentage');
+            $header[trans('custom.discount')] = trans('custom.discount');
+            $header[trans('custom.vat_percentage')] = trans('custom.vat_percentage');
+            $header[trans('custom.vat_amount')] = trans('custom.vat_amount');
+            $header[trans('custom.net_amount')] = trans('custom.net_amount');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
                 $row = [];
                 $row [''] = '';
                 if ($hasPR) {
-                    $row['PR Number'] = $detail->requestDetail->purchase_request->purchaseRequestCode ?? '';
+                    $row[trans('custom.pr_number')] = $detail->requestDetail->purchase_request->purchaseRequestCode ?? '';
                 }
-                $row['item Code'] = $detail->itemPrimaryCode ?? '';
-                $row['item Description'] = $detail->itemDescription ?? '';
-                $row['comments'] = $detail->comment ?? '';
+                $row[trans('custom.item_code')] = $detail->itemPrimaryCode ?? '';
+                $row[trans('custom.item_description')] = $detail->itemDescription ?? '';
+                $row[trans('custom.comments')] = $detail->comment ?? '';
                 if ($hasPR) {
-                    $row['PR QTY'] = $detail->requestDetail->quantityRequested ?? '';
+                    $row[trans('custom.pr_qty')] = $detail->requestDetail->quantityRequested ?? '';
                 }
-                $row['UOM'] = $detail->unit->UnitDes ?? '';
-                $row['No qty'] = $detail->noQty ?? '';
-                $row['Unit Cost'] = $detail->unitCost ?? '';
-                $row['Dis %'] = $detail->discountPercentage ?? '';
-                $row['Discount'] = $detail->discountAmount ?? '';
-                $row['VAT %'] = $detail->VATPercentage ?? '';
-                $row['VAT Amount'] = $detail->VATAmount ?? '';
-                $row['Net Amount'] = $detail->netAmount ?? '';
+                $row[trans('custom.uom')] = $detail->unit->UnitDes ?? '';
+                $row[trans('custom.no_qty')] = $detail->noQty ?? '';
+                $row[trans('custom.unit_cost')] = $detail->unitCost ?? '';
+                $row[trans('custom.discount_percentage')] = $detail->discountPercentage ?? '';
+                $row[trans('custom.discount')] = $detail->discountAmount ?? '';
+                $row[trans('custom.vat_percentage')] = $detail->VATPercentage ?? '';
+                $row[trans('custom.vat_amount')] = $detail->VATAmount ?? '';
+                $row[trans('custom.net_amount')] = $detail->netAmount ?? '';
                 $this->data[] = $row;
             }
             $this->data[] = [];
@@ -332,40 +332,40 @@ class ExportPODetailExcel {
     private function logisticDetails($val) {
         if (!empty($val) && count($val) > 0) {
             $headerOne [''] = '';
-            $headerOne ['Logistics Details'] = trans('custom.logistics_details');
+            $headerOne [trans('custom.logistics_details')] = trans('custom.logistics_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            $header['Category'] = trans('custom.category');
-            $header['Supplier Code'] = trans('custom.supplier_code');
-            $header['Supplier Name'] = trans('custom.supplier_name');
-            $header['GRV Code'] = trans('custom.grv_code');
-            $header['Currency'] = trans('custom.currency');
-            $header['Amount'] = trans('custom.amount');
-            $header['Local Amount'] = trans('custom.local_amount');
-            $header['Reporting Amount'] = trans('custom.reporting_amount');
-            $header['Add VAT On PO'] = trans('custom.add_vat_on_po');
-            $header['VAT Percentage'] = trans('custom.vat_percentage');
-            $header['VAT Amount'] = trans('custom.vat_amount');
-            $header['VAT Sub Category'] = trans('custom.vat_sub_category');
+            $header[trans('custom.category')] = trans('custom.category');
+            $header[trans('custom.supplier_code')] = trans('custom.supplier_code');
+            $header[trans('custom.supplier_name')] = trans('custom.supplier_name');
+            $header[trans('custom.grv_code')] = trans('custom.grv_code');
+            $header[trans('custom.currency')] = trans('custom.currency');
+            $header[trans('custom.amount')] = trans('custom.amount');
+            $header[trans('custom.local_amount')] = trans('custom.local_amount');
+            $header[trans('custom.reporting_amount')] = trans('custom.reporting_amount');
+            $header[trans('custom.add_vat_on_po')] = trans('custom.add_vat_on_po');
+            $header[trans('custom.vat_percentage')] = trans('custom.vat_percentage');
+            $header[trans('custom.vat_amount')] = trans('custom.vat_amount');
+            $header[trans('custom.vat_sub_category')] = trans('custom.vat_sub_category');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
                 $row = [];
                 $row [''] = '';
-                $row['Category'] = $detail->category_by->costCatDes ?? '';
-                $row['Supplier Code'] = $detail->SupplierPrimaryCode ?? '';
-                $row['Supplier Name'] = $detail->supplier_by->supplierName ?? '';
-                $row['GRV Code'] = $detail->grv_by->grvPrimaryCode ?? '';
-                $row['Currency'] = $detail->currency->CurrencyCode ?? '';
-                $row['Amount'] = $detail->reqAmount ?? '';
-                $row['Local Amount'] = $detail->reqAmountInPOLocalCur ?? '';
-                $row['Reporting Amount'] = $detail->reqAmountInPORptCur ?? '';
-                $row['Add VAT On PO'] = ($detail->addVatOnPO ?? false) ? trans('custom.yes') : trans('custom.no');
-                $row['VAT Percentage'] = $detail->VATPercentage ?? '';
-                $row['VAT Amount'] = $detail->VATAmount ?? '';
-                $row['VAT Sub Category'] = $detail->vat_sub_category->subCategoryDescription ?? '';
+                $row[trans('custom.category')] = $detail->category_by->costCatDes ?? '';
+                $row[trans('custom.supplier_code')] = $detail->SupplierPrimaryCode ?? '';
+                $row[trans('custom.supplier_name')] = $detail->supplier_by->supplierName ?? '';
+                $row[trans('custom.grv_code')] = $detail->grv_by->grvPrimaryCode ?? '';
+                $row[trans('custom.currency')] = $detail->currency->CurrencyCode ?? '';
+                $row[trans('custom.amount')] = $detail->reqAmount ?? '';
+                $row[trans('custom.local_amount')] = $detail->reqAmountInPOLocalCur ?? '';
+                $row[trans('custom.reporting_amount')] = $detail->reqAmountInPORptCur ?? '';
+                $row[trans('custom.add_vat_on_po')] = ($detail->addVatOnPO ?? false) ? trans('custom.yes') : trans('custom.no');
+                $row[trans('custom.vat_percentage')] = $detail->VATPercentage ?? '';
+                $row[trans('custom.vat_amount')] = $detail->VATAmount ?? '';
+                $row[trans('custom.vat_sub_category')] = $detail->vat_sub_category->subCategoryDescription ?? '';
                 $this->data[] = $row;
             }
             $this->data[] = [];
@@ -375,20 +375,20 @@ class ExportPODetailExcel {
     private function addonDetails($val) {
         if (!empty($val) && count($val) > 0) {
             $headerOne [''] = '';
-            $headerOne ['Addon Details'] = trans('custom.addon_details');
+            $headerOne [trans('custom.addon_details')] = trans('custom.addon_details');
 
             $this->data[] = $headerOne;
             $header = [];
             $header[''] = '';
-            $header['Category'] = trans('custom.category');
-            $header['Amount'] = trans('custom.amount');
+            $header[trans('custom.category')] = trans('custom.category');
+            $header[trans('custom.amount')] = trans('custom.amount');
             $this->data[] = $header;
 
             foreach ($val as $detail) {
                 $row = [];
                 $row [''] = '';
-                $row['Category'] = $detail->category->costCatDes ?? '';
-                $row['Amount'] = $detail->amount ?? '';
+                $row[trans('custom.category')] = $detail->category->costCatDes ?? '';
+                $row[trans('custom.amount')] = $detail->amount ?? '';
                 $this->data[] = $row;
             }
             $this->data[] = [];

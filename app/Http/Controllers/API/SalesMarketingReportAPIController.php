@@ -104,7 +104,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'customers' => 'required',
                     'wareHouse' => 'required',
                 ],
-                    ['wareHouse.required' => 'The warehouse field is required']
+                    ['wareHouse.required' => trans('custom.warehouse_required')]
                 );
 
                 if ($validator->fails()) {

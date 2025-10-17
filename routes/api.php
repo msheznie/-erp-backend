@@ -954,7 +954,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::get('pdf/stream/{signature}', 'SignedPdfController@streamPdf')->where('signature', '[A-Za-z0-9_-]+');
             });
         });
-        
+
         Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
         Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
         Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');

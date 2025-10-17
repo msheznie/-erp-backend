@@ -745,7 +745,7 @@ WHERE
                 ->first();
 
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                return $this->sendError(trans('custom.selected_item_already_added'), 500);
             }
         }
 
@@ -771,7 +771,7 @@ WHERE
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No items selected to add.");
+            return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
         foreach ($input['detailTable'] as $newValidation) {
@@ -795,7 +795,7 @@ WHERE
             $remaingQty = $newValidation['requestedQty'] - $newValidation['soTakenQty'];
 
             if ($remaingQty < $newValidation['noQty']) {
-                return $this->sendError("SO Qty cannot be greater than SO balance Qty");
+                return $this->sendError(trans('custom.so_qty_cannot_be_greater_than_balance'));
             }
         }
 
@@ -824,7 +824,7 @@ WHERE
                     if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         foreach ($QuoDetailExist as $row) {
-                            $itemDrt = $row['itemSystemCode'] . " already exist";
+                            $itemDrt = $row['itemSystemCode'] . " " . trans('custom.item_already_exist');
                             $itemExistArray[] = [$itemDrt];
                         }
                     }
@@ -1042,7 +1042,7 @@ WHERE
             ->exists();
 
         if (!$hasSalesCategory) {
-            return $this->sendError('This item is not configured for sales.');
+            return $this->sendError(trans('custom.item_not_configured_for_sales'));
         }
 
         // Check if fixed asset (category 3) - not allowed in quotations
@@ -1057,7 +1057,7 @@ WHERE
             ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance category not assigned for the selected item.');
+            return $this->sendError(trans('custom.finance_category_not_assigned'));
         }
 
         return $this->sendResponse(['status' => true], 'Item validation successful');
@@ -1170,12 +1170,12 @@ WHERE
             ->first();
 
         if (!empty($itemExist)) {
-            return ['status' => false, 'message' => 'Item already exists in quotation'];
+            return ['status' => false, 'message' => trans('custom.item_already_exists_in_quotation')];
         }
 
         // Check if fixed asset
         if ($item->financeCategoryMaster == 3) {
-            return ['status' => false, 'message' => 'Fixed assets cannot be added to quotations'];
+            return ['status' => false, 'message' => trans('custom.fixed_assets_cannot_be_added_to_quotations')];
         }
 
         // Check sales category type
@@ -1184,7 +1184,7 @@ WHERE
             ->exists();
 
         if (!$hasSalesCategory) {
-            return ['status' => false, 'message' => 'Item not configured for sales'];
+            return ['status' => false, 'message' => trans('custom.item_not_configured_for_sales_validation')];
         }
 
         return ['status' => true];

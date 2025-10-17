@@ -1438,7 +1438,7 @@ WHERE
         if($companyFinancePeriod && $finacialYear) {
             return ['finacialYear' => $finacialYear[0],'companyFinancePeriod' => $companyFinancePeriod[0]];
         }else {
-            return $this->sendError("Financial year or Financial Period not found for this department.",500);
+            return $this->sendError(trans('custom.financial_year_period_not_found'), 500);
         }
 
     }
@@ -1486,7 +1486,7 @@ WHERE
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.material_issue_pending_approval_so', ['issue_code' => $checkWhetherItemIssueMaster->itemIssueCode]), 500);
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -1513,7 +1513,7 @@ WHERE
             /* approved=0*/
 
             if (!empty($checkWhetherStockTransfer)) {
-                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.stock_transfer_pending_approval', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
             }
 
             $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
@@ -1539,7 +1539,7 @@ WHERE
             /* approved=0*/
 
             if (!empty($checkWhetherInvoice)) {
-                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
             }
         //         // check in delivery order
         // $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
@@ -1581,7 +1581,7 @@ WHERE
                 ->first();
 
             if (!empty($checkWhetherPR)) {
-                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError(trans('custom.purchase_return_pending_approval', ['code' => $checkWhetherPR->purchaseReturnCode]), 500);
             }
 
         return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], trans('custom.details_retrieved_successfully'));

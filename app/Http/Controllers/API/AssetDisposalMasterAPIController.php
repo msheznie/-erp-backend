@@ -956,6 +956,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'erp_fa_asset_disposaltypes.typeDescription',
+                'erp_fa_asset_disposaltypes_translation.typeDescription as typeDescriptionAr',
                 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -978,6 +979,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('erp_fa_asset_disposaltypes', 'disposalTypesID', 'disposalType')
+            ->leftJoin('erp_fa_asset_disposaltypes_translation', function ($query) {
+                $query->on('erp_fa_asset_disposaltypes.disposalTypesID', '=', 'erp_fa_asset_disposaltypes_translation.disposalTypesID')
+                    ->where('erp_fa_asset_disposaltypes_translation.languageCode', '=', 'ar');
+            })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [41])
             ->where('erp_documentapproved.companySystemID', $companyId);
@@ -1036,6 +1041,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'erp_fa_asset_disposaltypes.typeDescription',
+                'erp_fa_asset_disposaltypes_translation.typeDescription as typeDescriptionAr',
                 'documentSystemCode')
             ->join('erp_fa_asset_disposalmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'assetdisposalMasterAutoID')
@@ -1045,6 +1051,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('erp_fa_asset_disposaltypes', 'disposalTypesID', 'disposalType')
+            ->leftJoin('erp_fa_asset_disposaltypes_translation', function ($query) {
+                $query->on('erp_fa_asset_disposaltypes.disposalTypesID', '=', 'erp_fa_asset_disposaltypes_translation.disposalTypesID')
+                    ->where('erp_fa_asset_disposaltypes_translation.languageCode', '=', 'ar');
+            })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [41])
             ->where('erp_documentapproved.companySystemID', $companyId)

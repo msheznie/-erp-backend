@@ -1,4 +1,28 @@
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
+<head>
 <style type="text/css">
+    @if(isset($lang) && $lang === 'ar')
+        body {
+        direction: rtl;
+        text-align: right;
+    }
+
+    .text-left {
+        text-align: right !important;
+    }
+
+    .text-right {
+        text-align: left !important;
+    }
+
+    table {
+        direction: rtl;
+    }
+
+    .table th, .table td {
+        text-align: right;
+    }
+    @endif
     <!--
     @page {
         margin-left: 5%;
@@ -161,6 +185,8 @@
 
 
 </style>
+</head>
+<body>
 <div class="content">
     <div class="row">
         <table style="width:100%">
@@ -177,7 +203,7 @@
                         <tr>
                             <td>
                                 <h3 class="font-weight-bold" style="text-align: center; font-size: 14px">
-                                    Advance Payment Request <br>
+                                    {{ __('custom.advance_payment_request') }} <br>
                                     @if ($podata->company)
                                         {{$podata->company->CompanyName}}
                                     @endif
@@ -194,12 +220,12 @@
             <td width="60%">
                 <table style="width:100%">
                     <tr>
-                        <td width="20%"><span class="titlebolt">Po Code</span></td>
+                        <td width="20%"><span class="titlebolt">{{ __('custom.po_code') }}</span></td>
                         <td width="10%"><span class="titlebolt">:</span></td>
                         <td width="70%"><span class="titlebolt">
                             @if ($podata->poCode)
-                                {{$podata->poCode}}
-                            @endif
+                                    {{$podata->poCode}}
+                                @endif
                             </span>
                         </td>
                     </tr>
@@ -208,7 +234,7 @@
             <td width="40%">
                 <table style="width:100%">
                     <tr>
-                        <td width="26%"><span class="titlebolt">Req. Date </span></td>
+                        <td width="26%"><span class="titlebolt">{{ __('custom.req_date') }} </span></td>
                         <td width="4%"><span class="titlebolt">:</span></td>
                         <td width="70%"><span class="titlebolt">{{ \App\helper\Helper::dateFormat($podata->reqDate)}}</span></td>
                     </tr>
@@ -218,14 +244,14 @@
     </table>
     <table style="width:43%">
         <tr>
-            <td width="28%"><span class="titlebolt">Doc Control #</span></td>
+            <td width="28%"><span class="titlebolt">{{ __('custom.doc_control') }}</span></td>
             <td width="15%"><span class="titlebolt">:</span></td>
             <td width="60%"><span class="titlebolt">{{$docRef}}</span></td>
         </tr>
     </table>
     <table style="width:100%">
         <tr >
-            <td height="20" width="14%"><span class="title">Supplier</span></td>
+            <td height="20" width="14%"><span class="title">{{ __('custom.supplier') }}</span></td>
             <td width="3%"><span class="title">:</span></td>
             <td width="83%"> &nbsp;
                 @if ($podata->supplier_by)
@@ -234,7 +260,7 @@
             </td>
         </tr>
         <tr>
-            <td height="20" width="14%"><span class="title">Narration </span></td>
+            <td height="20" width="14%"><span class="title">{{ __('custom.narration') }} </span></td>
             <td width="3%"><span class="title">:</span></td>
             <td width="83%"><span class="title"> &nbsp;
                     @if ($podata->narration)
@@ -244,7 +270,7 @@
             </td>
         </tr>
         <tr>
-            <td height="20" width="14%"><span class="titlebolt">Amount</span></td>
+            <td height="20" width="14%"><span class="titlebolt">{{ __('custom.amount') }}</span></td>
             <td width="3%"><span class="titlebolt">:</span></td>
             <td width="83%"><span class="titlebolt"> &nbsp;
                     @if ($podata->currency)
@@ -271,3 +297,4 @@
             </tr>
         </table>--}}
 </div>
+</body>

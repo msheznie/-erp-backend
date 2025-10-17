@@ -12,6 +12,11 @@
             text-align: right !important;
         }
         
+        .total-label-left {
+            text-align: left !important;
+            direction: ltr !important;
+        }
+        
         .text-right {
             text-align: left !important;
         }
@@ -82,7 +87,7 @@
         }
 
         tr td {
-            padding: 5px;
+            padding: 3px;
         }
 
         .table thead th {
@@ -174,12 +179,20 @@
         .content {
             margin-bottom: 45px;
         }
+
+        .number-contnt {
+        direction: ltr !important;
+        unicode-bidi: isolate;
+        }
+
+
     </style>
 </head>
 <body>
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
+    <div class="text-right" style="font-size: 10px">{{\App\helper\Helper::dateFormat($date) }}</div>
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
@@ -326,7 +339,7 @@
                 {{ __('custom.bank_balance') }}
             </td>
             <td width="50%" class="text-right">
-                <b>{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
+                <b data-type="number" class="number-contnt">{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
             </td>
         </tr>
     </table>
@@ -336,13 +349,13 @@
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-                <th></th>
-                <th class="text-left">{{ __('custom.document_date') }}</th>
-                <th class="text-left">{{ __('custom.document_code') }}</th>
-                <th class="text-left">{{ __('custom.payee_name') }}</th>
-                <th class="text-left">{{ __('custom.cheque_no') }}</th>
-                <th class="text-right">{{ __('custom.amount') }}</th>
-                <th class="text-left"></th>
+                <th style="width: 30px;"></th>
+                <th class="text-left" style="width: 100px;">{{ __('custom.document_date') }}</th>
+                <th class="text-left" style="width: 150px;">{{ __('custom.document_code') }}</th>
+                <th class="text-left" style="width: 200px;">{{ __('custom.payee_name') }}</th>
+                <th class="text-left" style="width: 80px;">{{ __('custom.cheque_no') }}</th>
+                <th class="text-right" style="width: 120px;">{{ __('custom.amount') }}</th>
+                <th class="text-left" style="width: 30px;"></th>
             </tr>
             </thead>
             <tbody>
@@ -352,8 +365,8 @@
                     <td> {{ \App\helper\Helper::dateFormat($item->documentDate)}}</td>
                     <td>{{$item->documentCode}}</td>
                     <td>{{$item->payeeName}}</td>
-                    <td>{{$item->documentChequeNo}}</td>
-                    <td class="text-right">{{number_format(($item->payAmountBank * -1),$decimalPlaces)}}</td>
+                    <td style="width: 80px;">{{$item->documentChequeNo}}</td>
+                    <td class="text-right number-contnt" data-type="number">{{number_format(($item->payAmountBank * -1),$decimalPlaces)}}</td>
                     <td></td>
                 </tr>
             @endforeach
@@ -363,13 +376,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @if(isset($lang) && $lang === 'ar')
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                    <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                 @else
-                    <td class="text-right"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total_uncleared_receipts') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
+                <td class="text-right"><b class="number-contnt">{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
@@ -379,13 +392,13 @@
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-                <th></th>
-                <th class="text-left">{{ __('custom.document_date') }}</th>
-                <th class="text-left">{{ __('custom.document_code') }}</th>
-                <th class="text-left">{{ __('custom.payee_name') }}</th>
-                <th class="text-left">{{ __('custom.cheque_no') }}</th>
-                <th class="text-right">{{ __('custom.amount') }}</th>
-                <th class="text-left"></th>
+                <th style="width: 30px;"></th>
+                <th class="text-left" style="width: 100px;">{{ __('custom.document_date') }}</th>
+                <th class="text-left" style="width: 150px;">{{ __('custom.document_code') }}</th>
+                <th class="text-left" style="width: 200px;">{{ __('custom.payee_name') }}</th>
+                <th class="text-left" style="width: 80px;">{{ __('custom.cheque_no') }}</th>
+                <th class="text-right" style="width: 120px;">{{ __('custom.amount') }}</th>
+                <th class="text-left" style="width: 30px;"></th>
             </tr>
             </thead>
             <tbody>
@@ -395,8 +408,8 @@
                     <td> {{ \App\helper\Helper::dateFormat($item->documentDate)}}</td>
                     <td>{{$item->documentCode}}</td>
                     <td>{{$item->payeeName}}</td>
-                    <td>{{$item->documentChequeNo}}</td>
-                    <td class="text-right">{{number_format(($item->payAmountBank),$decimalPlaces)}}</td>
+                    <td style="width: 80px;">{{$item->documentChequeNo}}</td>
+                    <td class="text-right number-contnt" data-type="number">{{number_format(($item->payAmountBank),$decimalPlaces)}}</td>
                     <td></td>
                 </tr>
             @endforeach
@@ -406,13 +419,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @if(isset($lang) && $lang === 'ar')
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                    <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                 @else
-                    <td class="text-right"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.total') }} {{ __('custom.uncleared_payments') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number" class="number-contnt">{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
             </tr>
             <tr>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
@@ -420,13 +433,13 @@
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @if(isset($lang) && $lang === 'ar')
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.book_balance') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
-                    <td class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
                 @else
-                    <td class="text-right"><b>{{ __('custom.book_balance') }}</b></td>
+                    <td class="total-label-left" style="text-align: left !important; direction: ltr !important;"><b>{{ __('custom.book_balance') }}</b></td>
                     <td class="text-right" style="border-bottom: 1px solid #333 !important;"></td>
                 @endif
-                <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
+                <td class="text-right"><b data-type="number" class="number-contnt">{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
             </tr>
             </tbody>
         </table>
