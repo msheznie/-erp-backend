@@ -378,7 +378,7 @@ ORDER BY
         }
 
         if (is_null($checkCategory->itemSystemCode)) {
-            return $this->sendError('Please assign a service item to selected logistic category');    
+            return $this->sendError(trans('custom.please_assign_a_service_item_to_selected_logistic_category'));    
         }
 
         $checkAssignedStatus = ItemAssigned::where('companySystemID', $purchaseOrder->companySystemID)
@@ -387,7 +387,7 @@ ORDER BY
                                             ->first();
 
         if (!$checkAssignedStatus) {
-            return $this->sendError('Item linked with this logistic category is not assigned to the company');    
+            return $this->sendError(trans('custom.item_linked_with_this_logistic_category_is_not_assigned_to_the_company'));    
         }
 
 
@@ -551,7 +551,7 @@ ORDER BY
     public function getPoLogisticPrintPDF(Request $request)
     {
         $id = $request->get('id');
-
+        $lang = $request->get('lang', 'en');
         $typeID = $request->get('typeID');
 
         if ($typeID == 1) {
@@ -596,19 +596,42 @@ ORDER BY
             $decimal = $currencyDecimal['DecimalPlaces'];
         }
 
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape format
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ];
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
 
         $order = array(
             'podata' => $PoAdvancePaymentData,
             'docRef' => $newRefDocNew,
-            'numberFormatting' => $decimal
+            'numberFormatting' => $decimal,
+            'lang' => $lang
         );
 
         $html = view('print.po_logistic_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $time = strtotime("now");
+        $fileName = 'document' . $id . '_' . $time . '.pdf';
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in pvSupplierPrint: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
     }
 
 
