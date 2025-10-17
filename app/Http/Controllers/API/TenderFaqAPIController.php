@@ -283,7 +283,7 @@ class TenderFaqAPIController extends AppBaseController
         return $this->sendSuccess(trans('srm_rfq.tender_faq_deleted_successfully'));
     }
     public function createFaq(Request $request)
-    { 
+    {
         $input = $this->convertArrayToSelectedValue($request->all(), array('tender_master_id'));
         //$input =$request->all();
         $date_time = Carbon::now();
@@ -308,7 +308,7 @@ class TenderFaqAPIController extends AppBaseController
             } else {
                 $result = TenderFaq::create($data);
             }
-            
+
             if ($result) {
                 DB::commit();
                 return ['success' => true, 'message' => trans('srm_faq.successfully_saved'), 'data' => $result];
@@ -347,7 +347,7 @@ class TenderFaqAPIController extends AppBaseController
             ->where('id', $id)
             ->first();
     }
-    public function deleteFaq(Request $request){ 
+    public function deleteFaq(Request $request){
         $input = $request->all();
         $id = $input['id'];
 
@@ -355,7 +355,7 @@ class TenderFaqAPIController extends AppBaseController
 
         if (empty($tenderFaq)) {
             return $this->sendError(trans('srm_faq.g'));
-        } 
+        }
         $tenderFaq->delete();
         return $this->sendResponse($id,trans('srm_faq.tender_faq_deleted'));
     }

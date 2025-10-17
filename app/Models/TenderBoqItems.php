@@ -155,8 +155,11 @@ class TenderBoqItems extends Model
     public static function getTenderBoqItemList($main_work_id){
         return self::where('main_work_id', $main_work_id)->get();
     }
-    public static function checkItemNameExists($itemName, $amd_mainWorkID){
+    public static function checkItemNameExists($itemName, $amd_mainWorkID, $id = 0){
         return self::where('item_name',$itemName)
+            ->when($id > 0, function ($q) use ($id) {
+                $q->where('id', '!=', $id);
+            })
             ->where('main_work_id', $amd_mainWorkID)->first();
     }
     public static function checkPRAlreadyAdded($tender_id, $purchaseRequestIDToCheck, $main_work_id){

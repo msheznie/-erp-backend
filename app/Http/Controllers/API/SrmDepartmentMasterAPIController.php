@@ -390,8 +390,8 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::where('id', $input['id'])->update($input);
 
         if($srmDepartmentMaster){
-                return ['success' => true, 'message' => trans('srm_masters.department_updated_successfully')];
-            } else {
+            return ['success' => true, 'message' => trans('srm_masters.department_updated_successfully')];
+        } else {
             return ['success' => false, 'message' => trans('srm_masters.unexpected_error')];
         }
 

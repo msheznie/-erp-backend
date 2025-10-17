@@ -74,7 +74,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
         $this->documentModifyRequestRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentModifyRequests = $this->documentModifyRequestRepository->all();
 
-        return $this->sendResponse($documentModifyRequests->toArray(), trans('custom.document_modify_requests_retrieved_successfully'));
+        return $this->sendResponse($documentModifyRequests->toArray(), 'Document Modify Requests retrieved successfully');
     }
 
     /**
@@ -128,7 +128,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
         $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
 
-        return $this->sendResponse($documentModifyRequest->toArray(), trans('custom.document_modify_request_saved_successfully'));
+        return $this->sendResponse($documentModifyRequest->toArray(), 'Document Modify Request saved successfully');
     }
 
     /**
@@ -176,10 +176,10 @@ class DocumentModifyRequestAPIController extends AppBaseController
         $documentModifyRequest = $this->documentModifyRequestRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequest)) {
-            return $this->sendError(trans('custom.document_modify_request_not_found'));
+            return $this->sendError('Document Modify Request not found');
         }
 
-        return $this->sendResponse($documentModifyRequest->toArray(), trans('custom.document_modify_request_retrieved_successfully'));
+        return $this->sendResponse($documentModifyRequest->toArray(), 'Document Modify Request retrieved successfully');
     }
 
     /**
@@ -245,12 +245,12 @@ class DocumentModifyRequestAPIController extends AppBaseController
         $documentModifyRequest = $this->documentModifyRequestRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequest)) {
-            return $this->sendError(trans('custom.document_modify_request_not_found'));
+            return $this->sendError('Document Modify Request not found');
         }
 
         $documentModifyRequest = $this->documentModifyRequestRepository->update($input, $id);
 
-        return $this->sendResponse($documentModifyRequest->toArray(), trans('custom.documentmodifyrequest_updated_successfully'));
+        return $this->sendResponse($documentModifyRequest->toArray(), 'DocumentModifyRequest updated successfully');
     }
 
     /**
@@ -298,7 +298,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
         $documentModifyRequest = $this->documentModifyRequestRepository->findWithoutFail($id);
 
         if (empty($documentModifyRequest)) {
-            return $this->sendError(trans('custom.document_modify_request_not_found'));
+            return $this->sendError('Document Modify Request not found');
         }
 
         $documentModifyRequest->delete();
@@ -331,7 +331,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 return $this->sendError($response['message'], 500);
             }
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage(), 500);
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $e->getMessage()]), 500);
         }
     }
     public function getEditOrAmendHistory(Request $request)
@@ -341,9 +341,9 @@ class DocumentModifyRequestAPIController extends AppBaseController
             if(!$response['success']) {
                 return $this->sendError($response['message']);
             }
-            return $this->sendResponse($response['data'], trans('custom.data_retrieved_successfully'));
+            return $this->sendResponse($response['data'], 'Data retrieved successfully');
         } catch (\Exception $exception) {
-            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
+            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
         }
     }
 }
