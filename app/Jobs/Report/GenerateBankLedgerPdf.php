@@ -127,7 +127,12 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'mode' => 'utf-8', 
             'format' => 'A4-L', 
             'setAutoTopMargin' => 'stretch', 
-            'autoMarginPadding' => -10
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 15,
+            'margin_bottom' => 0,
+            'margin_header' => 9,
+            'margin_footer' => 9
         ];
         
         if ($isRTL) {
@@ -139,6 +144,12 @@ class GenerateBankLedgerPdf implements ShouldQueue
         $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter('<table style="width: 100%; font-size: 10px;">
+        <tr>
+            <td style="text-align: left; width: 50%;">' . trans('custom.printed_date') . ' : ' . date("d-M-y", strtotime(now())) . '</td>
+            <td style="text-align: right; width: 50%;">' . trans('custom.page') . ' {PAGENO}</td>
+        </tr>
+        </table>');
         $mpdf->WriteHTML($html);
         $pdf_content = $mpdf->Output('', 'S');
 

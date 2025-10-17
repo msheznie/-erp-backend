@@ -373,6 +373,14 @@ return [
         'CurrencyCode' => 'رمز العملة',
         'categories' => 'الفئات',
         'subCategories' => 'الفئات الفرعية',
-        'years' => 'السنوات'
+        'years' => 'السنوات',
+        'endingDate' => 'تاريخ الانتهاء',
+        'bigginingDate' => 'تاريخ البداية',
+        'items' => 'المواد',
+        'description' => 'الوصف',
+        'chartOfAccountSerialLength' => 'طول تسلسل دليل الحسابات',
+        'reportID' => 'معرّف التقرير',
+        'employeeSystemID' => 'معرّف نظام الموظف',
+        'columnID' => 'معرف العمود'
     ],
 ];

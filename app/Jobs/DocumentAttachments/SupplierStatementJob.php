@@ -154,7 +154,7 @@ class SupplierStatementJob implements ShouldQueue
                         'companyName' => $company->CompanyName
                     ]) . $footer;
                     $fileName = trans('custom.supplier_statement_' . $nowTime.$supplierID . ".pdf");
-                    $pdfName = realpath($path . "/" . $fileName );
+                    $pdfName = realpath($filePath);
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;

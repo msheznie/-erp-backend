@@ -3,6 +3,19 @@
 return 
     [
     'default' => 'Default',
+    'so_qty_cannot_be_greater_than_balance' => 'SO Qty cannot be greater than SO balance Qty',
+    'selected_item_already_added' => 'Selected item is already added. Please check again',
+    'no_items_selected_to_add' => 'No items selected to add.',
+    'item_not_configured_for_sales' => 'This item is not configured for sales.',
+    'finance_category_not_assigned' => 'Finance category not assigned for the selected item.',
+    'item_already_exist' => 'already exist',
+    'item_already_exists_in_quotation' => 'Item already exists in quotation',
+    'fixed_assets_cannot_be_added_to_quotations' => 'Fixed assets cannot be added to quotations',
+    'item_not_configured_for_sales_validation' => 'Item not configured for sales',
+    'financial_year_period_not_found' => 'Financial year or Financial Period not found for this department.',
+    'material_issue_pending_approval_so' => 'There is a Materiel Issue (:issue_code) pending for approval for the item you are trying to add. Please check again.',
+    'item_updated_successfully' => 'Item updated successfully',
+    'item_is_already_added' => 'is already added',
     'advance_payment_available' => 'Advance Payment Available',
     'total_advance_payment_amount' => 'Total Advance Payment Amount',
     'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
@@ -3028,6 +3041,8 @@ return
     'login_failed_the_user_is_discharged_please_contact_admin' => 'Login failed! The user is discharged. Please contact admin',
     'login_failed_the_user_is_not_activated_please_contact_admin' => 'Login failed! The user is not activated. Please contact admin.',
     'logistic_category_not_found' => 'Logistic category not found',
+    'please_assign_a_service_item_to_selected_logistic_category' => 'Please assign a service item to selected logistic category',
+    'item_linked_with_this_logistic_category_is_not_assigned_to_the_company' => 'Item linked with this logistic category is not assigned to the company',
     'logistic_deleted_successfully' => 'Logistic deleted successfully',
     'logistic_details_added_successfully' => 'Logistic Details added successfully',
     'logistic_details_deleted_successfully' => 'Logistic Details deleted successfully',
@@ -3916,6 +3931,7 @@ return
     'po_category_retrieved_successfully' => 'Po Category retrieved successfully',
     'po_category_saved_successfully' => 'Po Category saved successfully',
     'po_code' => 'PO Code',
+    'doc_control' => 'Doc Control #',
     'po_cutoff_job_data_not_found' => 'Po Cutoff Job Data not found',
     'po_cutoff_job_data_retrieved_successfully' => 'Po Cutoff Job Data retrieved successfully',
     'po_cutoff_job_data_saved_successfully' => 'Po Cutoff Job Data saved successfully',
@@ -8296,6 +8312,10 @@ return
     'every_return_should_have_at_least_one_item' => 'Every return should have at least one item',
     'unit_cost_should_be_greater_than_zero_for_every_items' => 'Unit Cost should be greater than 0 for every items',
     'return_quantity_should_not_be_greater_than_issues_quantity' => 'Return quantity should not be greater than issues quantity. Please check again.',
+    'return_quantity_field_required' => 'Return quantity field is required.',
+    'return_quantity_greater_than_zero' => 'Return Quantity should be greater than zero',
+    'sales_return_pending_approval' => 'There is a Sales Return (:salesReturnCode) pending for approval for the Delivery Order you are trying to add. Please check again.',
+    'sales_return_pending_approval_sales_invoice' => 'There is a Sales Return (:salesReturnCode) pending for approval for the Sales Invoice you are trying to add. Please check again.',
     'material_return_master_updated_successfully' => 'Material Return Master Updated Successfully',
     // Purchase Return translations
     'selected_grv_is_been_added_to_draft_supplier_invoice' => 'Selected GRV is been added to a draft supplier invoice',
@@ -9406,4 +9426,159 @@ return
     'image_not_found' => 'image not found',
     'net_profit_or_loss_(as_per_profit/loss_account)' => 'Net profit or loss (as per Profit/Loss account)',
     'supplier_statement_' => 'supplier_statement_',
+    
+    // Budget Consumption Service Translations
+    'budget_exceeded_project' => 'Budget Exceeded Project : ',
+    'budget_exceeded_gl_account' => 'Budget Exceeded GL Account : ',
+    'budget_exceeded_category' => 'Budget Exceeded Category : ',
+    'segment' => 'Segment : ',
+    'gl_account' => 'GL Account : ',
+    'budget_amount' => 'Budget Amount : ',
+    'document_amount' => 'Document Amount : ',
+    'consumed_amount' => 'Consumed Amount : ',
+    'pending_document_amount' => 'Pending Document Amount : ',
+    'total_consumed_amount' => 'Total Consumed Amount : ',
+    'budget_not_configured_for_gl_codes' => 'Budget not configured for below GL codes',
+    'budget_allocated_account_code_exceeding' => 'The budget allocated to account code :account_code is exceeding. Are you sure you want to proceed ?',
+    'gl_codes_not_assigned_budget' => 'Some GL codes are not assigned for budget with relevant segment and finance period',
+    'budget_check_not_set_document' => 'Budget check is not set for this document',
+    'budget_consumption_not_set_document' => 'Budget consumption is not set for this document',
+    'warehouse_required' => 'The warehouse field is required',
+    
+    // Payment Terms Translations
+    'payment_terms' => 'Payment Terms',
+    'delivery_terms' => 'Delivery Terms',
+    'delivery_shipping' => 'Delivery & shipping',
+    'penalty_terms' => 'Penalty Terms',
+    'product_service_specifications' => 'Product/Service Specifications',
+    'price_and_currency' => 'Price and Currency',
+    'taxes_and_fees' => 'Taxes and Fees',
+    'warranties_and_guarantees' => 'Warranties and Guarantees',
+    'cancellation_and_returns' => 'Cancellation and Returns',
+    'limitation_of_liability' => 'Limitation of Liability',
+    'confidentiality' => 'Confidentiality',
+    'governing_law' => 'Governing Law',
+    'dispute_resolution' => 'Dispute Resolution',
+    'termination' => 'Termination',
+    'insurance' => 'Insurance',
+    'indemnity' => 'Indemnity',
+    
+    // Procurement Order Service translations
+    'item_qty_not_updated' => 'The item Qty has not been updated for Excel row: :row',
+    'quantity_numeric_required' => 'The quantity should be a numeric value for Excel row: :row',
+    'quantity_positive_required' => 'The quantity should be a positive value for Excel row: :row',
+    'unit_cost_not_updated' => 'The Unit Cost has not been updated for Excel row: :row',
+    'unit_cost_numeric_required' => 'The Unit cost should be a numeric value for Excel row: :row',
+    'unit_cost_positive_required' => 'The Unit cost should be a positive value for Excel row: :row',
+    'discount_percentage_range' => 'The Dis Percentage value should be between 0 - 100 for Excel row: :row',
+    'discount_percentage_numeric' => 'The Dis Percentage should be a numeric value for Excel row: :row',
+    'vat_percentage_range' => 'The VAT Percentage value should be between 0 - 100 for Excel row: :row',
+    'vat_percentage_numeric' => 'The VAT Percentage should be a numeric value for Excel row: :row',
+    'project_code_not_match' => 'The Project Code not match with system for Excel row: :row',
+    'item_code_not_updated' => 'The item code has not been updated for Excel row: :row',
+    'item_type_purchase_required' => 'The inventory items added should only be of Item Type: Purchase or Purchase & Sales for Excel row: :row',
+    'item_code_not_match' => 'The item code does not match with a system for Excel row: :row',
+    'item_already_allocated' => 'Item already allocated for selected segment',
+    'add_multiple_items_end' => 'Add Multiple Items End',
+    
+    // Purchase Order Status Controller translations
+    'something_went_wrong_contact_admin' => 'Something went wrong. Please contact system administrator',
+    'unable_to_edit_status' => 'You unable to edit this status',
+    'unable_to_delete_status' => 'You unable to delete this status',
+    'unable_to_send_emails' => 'You unable to send emails',
+    'email_body_status_updated' => 'is updated with a new status by',
+    'email_subject_status_updated' => 'is updated with a new status',
+    'grv_not_received' => 'Not Received',
+    'grv_partially_received' => 'Partially Received',
+    'validation_valid' => 'valid',
+    
+    // PO Payment Terms Controller translations
+    'at_least_one_item_required' => 'At least one item should added to create payment term',
+    'payment_in' => 'Payment In',
+    'advance_payment' => 'Advance Payment',
+    
+    // Email body translations
+    'email_status_label' => 'Status :',
+    'email_comment_label' => 'Comment :',
+    
+    // Excel sheet translations
+    'excel_sheet_name' => 'Sheet1',
+    
+    // Excel column headers
+    'excel_company_id' => 'company id',
+    'excel_order_details' => 'order details',
+    'excel_item_code' => 'item code',
+    'excel_pr_number' => 'pr number',
+    'excel_logistics_details' => 'logistics details',
+    'excel_category' => 'category',
+    'excel_addon_details' => 'addon details',
+    
+    // Excel file names
+    'excel_po_details_export' => 'po_details_export',
+    'excel_pr_details_export' => 'pr_details_export',
+    'excel_po_detail_export' => 'po_detail_export',
+    
+    // Shift Details Controller translations
+    'inventory_availability' => 'Inventory Availability',
+
+    'asset_verification_updated_successfully' => 'Asset verification updated successfully',
+    'suppliers_already_assigned' => 'The following suppliers have already been assigned to a template.',
+    'supplier_already_assigned_to_template' => ':supplier has already been assigned to :template.',
+    'tax_invoice' => 'Tax Invoice',
+    'invoice_no' => 'Invoice No',
+    'invoice_date' => 'Invoice Date',
+    'name_of_customer' => 'Name Of Customer',
+    'vat_no' => 'VAT No',
+    'bank_details' => 'Bank Details',
+    'branch' => 'Branch',
+    'account_no' => 'Account No',
+    'swift_code' => 'SWIFT Code',
+    'prepared_by' => 'Prepared By',
+    'approved_by' => 'Approved By',
+    'total_amount_payable' => 'Total Amount Payable',
+    'customer_invoice_' => 'customer_invoice_',
+    'subtotal' => 'Subtotal',
+    'excluding_vat' => 'Excluding VAT',
+    'total_vat' => 'Total VAT',
+    'total_amount_payable' => 'Total Amount Payable',
+    'bank_details' => 'Bank Details',
+    'branch' => 'Branch',
+    'account_no' => 'Account No',
+    'swift_code' => 'SWIFT Code',
+    'appendix' => 'Appendix',
+    'row_no.' => 'Row No.',
+    'taxable_income/_deduction/_tax_due' => 'Taxable Income/ Deduction/ Tax Due',
+    'amount' => 'Amount',
+    'dep_percent' => 'Dep Percent',
+    'cost_unit_asset' => 'Cost Unit',
+    'cost_unit_rpt' => 'Cost Unit Rpt',
+    'dep_amount_local' => 'Dep Amount Local',
+    'dep_amount_rpt' => 'Dep Amount Rpt',
+    'asset_depreciation' => 'asset_depreciation',
+    
+    // Status translations
+    'deactivated' => 'Deactivated',
+    'activated' => 'Activated',
+    
+    // Export error messages
+    'unable_to_export_excel' => 'Unable to export excel',
+    // Excel export file names
+    'pr_detail_export' => 'PR_detail_export',
+    
+    // Excel column headers
+    'excel_company_id' => 'company id',
+    'excel_order_details' => 'order details',
+    'excel_item_code' => 'item code',
+    'excel_pr_number' => 'pr number',
+    'excel_logistics_details' => 'logistics details',
+    'excel_category' => 'category',
+    'excel_addon_details' => 'addon details',
+    
+    // Notification translations
+    'purchase_order_detailed_excel_generated' => 'Purchase Order Detailed Excel Generated',
+    'excel_generation_completed' => 'Excel generation completed successfully',
+    
+    // Status translations
+    'deactivated' => 'Deactivated',
+    'activated' => 'Activated',
   ];

@@ -365,7 +365,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $id = $request->get('id');
         $type = $request->get('type');
         $employee = \Helper::getEmployeeInfo();
-        $errorMessage = "Something went wrong. Please contact system administrator";
+        $errorMessage = trans('custom.something_went_wrong_contact_admin');
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
@@ -377,11 +377,11 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
 
             if ($type == 1) {
-                $errorMessage = "You unable to edit this status";
+                $errorMessage = trans('custom.unable_to_edit_status');
             } else if ($type == 2) {
-                $errorMessage = "You unable to delete this status";
+                $errorMessage = trans('custom.unable_to_delete_status');
             } else if ($type == 3) {
-                $errorMessage = "You unable to send emails";
+                $errorMessage = trans('custom.unable_to_send_emails');
             }
 
             return $this->sendError($errorMessage, 500);
@@ -404,7 +404,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $id = $request->get('POStatusID');
         $type = $request->get('type');
         $employee = \Helper::getEmployeeInfo();
-        $errorMessage = "Something went wrong. Please contact system administrator";
+        $errorMessage = trans('custom.something_went_wrong_contact_admin');
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
@@ -416,11 +416,11 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
 
             if ($type == 1) {
-                $errorMessage = "You unable to edit this status";
+                $errorMessage = trans('custom.unable_to_edit_status');
             } else if ($type == 2) {
-                $errorMessage = "You unable to delete this status";
+                $errorMessage = trans('custom.unable_to_delete_status');
             } else if ($type == 3) {
-                $errorMessage = "You unable to send emails";
+                $errorMessage = trans('custom.unable_to_send_emails');
             }
 
             return $this->sendError($errorMessage, 500);
@@ -440,8 +440,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $emailBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
         $emailSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
-        $body = '<p>' . $emailBody . '  is updated with a new status by ' . $purchaseOrderStatus->updatedByEmpName . '.</p><p>Status : ' . $statusCategory->description . '</p><p>Comment : ' . $purchaseOrderStatus->comments . '</p>';
-        $subject = $emailSubject . ' is updated with a new status';
+        $body = '<p>' . $emailBody . '  ' . trans('custom.email_body_status_updated') . ' ' . $purchaseOrderStatus->updatedByEmpName . '.</p><p>' . trans('custom.email_status_label') . ' ' . $statusCategory->description . '</p><p>' . trans('custom.email_comment_label') . ' ' . $purchaseOrderStatus->comments . '</p>';
+        $subject = $emailSubject . ' ' . trans('custom.email_subject_status_updated');
 
         if ($purchaseOrder->poConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
@@ -609,7 +609,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse([], 'valid');
+        return $this->sendResponse([], trans('custom.validation_valid'));
     }
 
     /**
@@ -758,10 +758,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             }
 
             if($val->grvRecieved == 0){
-                $grvStatus = "Not Received";
+                $grvStatus = trans('custom.grv_not_received');
             }
             else if($val->grvRecieved == 1){
-                $grvStatus = "Partially Received";
+                $grvStatus = trans('custom.grv_partially_received');
             }
 
 

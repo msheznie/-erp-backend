@@ -20,6 +20,7 @@ use App\Models\PoPaymentTerms;
 use App\Models\PaymentTermTemplateAssigned;
 use App\Models\PaymentTermConfig;
 use App\Models\PaymentTermTemplate;
+use App\Models\PoWisePaymentTermConfig;
 use App\Models\SupplierMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -92,7 +93,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($prDetailExist)) {
-            return $this->sendError('At least one item should added to create payment term');
+            return $this->sendError(trans('custom.at_least_one_item_required'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
@@ -116,9 +117,9 @@ class PoPaymentTermsAPIController extends AppBaseController
         }
 
         if ($input['LCPaymentYN'] == 1) {
-            $input['paymentTemDes'] = 'Payment In';
+            $input['paymentTemDes'] = trans('custom.payment_in');
         } else if ($input['LCPaymentYN'] == 2) {
-            $input['paymentTemDes'] = 'Advance Payment';
+            $input['paymentTemDes'] = trans('custom.advance_payment');
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
@@ -316,7 +317,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
         $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
 
-        $approvedPoConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)
+        $approvedPoConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)
             ->where(function ($query) {
                 $query->where('isApproved', true)
                     ->orWhere('isRejected', true);
@@ -329,28 +330,28 @@ class PoPaymentTermsAPIController extends AppBaseController
         }
         else if ($assignedTemplateId != null && $isActiveTemplate)
         {
-            $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
+            $poAssignedTemplateConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
             if (!$poAssignedTemplateConfigs) {
                 $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
                 $isDefaultAssign = false;
                 $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
             }
-            $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
+            $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
         } else
         {
-            $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
+            $poDefaultConfigUpdate = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
             if ($poDefaultConfigUpdate) {
-                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
+                $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
                     ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
             } else {
                 $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
-                $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
+                $poDefaultTemplateConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
                 if (!$poDefaultTemplateConfigs) {
                     $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
                     $isDefaultAssign = true;
                     $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
                 }
-                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
+                $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
             }
         }
 

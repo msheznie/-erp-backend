@@ -694,14 +694,14 @@ class ShiftDetailsAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'Inventory Availability';
+        $fileName = trans('custom.inventory_availability');
         $path = 'pos/sales_transaction/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
-            return $this->sendError('Unable to export excel');
+            return $this->sendError(trans('custom.unable_to_export_excel'));
         }
         else
         {

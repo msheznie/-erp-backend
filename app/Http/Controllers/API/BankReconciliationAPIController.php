@@ -721,7 +721,7 @@ class BankReconciliationAPIController extends AppBaseController
                 'erp_bankrecmaster.*',
                 'employees.empName As created_emp',
                 'erp_bankaccount.AccountNo As AccountNo',
-                'months.monthDes As monthDes',
+                'months_languages.monthDes As monthDes',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
@@ -747,6 +747,10 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('months', 'month', 'months.monthID')
+            ->leftJoin('months_languages', function ($query) {
+                $query->on('months.monthID', '=', 'months_languages.monthID')
+                    ->where('months_languages.languageCode', app()->getLocale() ?: 'en');
+            })
             ->leftJoin('erp_bankaccount', 'erp_bankrecmaster.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [62])
@@ -803,7 +807,7 @@ class BankReconciliationAPIController extends AppBaseController
                 'erp_bankrecmaster.*',
                 'employees.empName As created_emp',
                 'erp_bankaccount.AccountNo As AccountNo',
-                'months.monthDes As monthDes',
+                'months_languages.monthDes As monthDes',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
@@ -816,6 +820,10 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('months', 'month', 'months.monthID')
+            ->leftJoin('months_languages', function ($query) {
+                $query->on('months.monthID', '=', 'months_languages.monthID')
+                    ->where('months_languages.languageCode', app()->getLocale() ?: 'en');
+            })
             ->leftJoin('erp_bankaccount', 'erp_bankrecmaster.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [62])

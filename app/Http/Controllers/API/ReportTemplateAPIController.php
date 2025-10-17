@@ -144,7 +144,7 @@ class ReportTemplateAPIController extends AppBaseController
 
 
             if (isset($input['chartOfAccountSerialLength']) && ($input['chartOfAccountSerialLength'] < 0 || $input['chartOfAccountSerialLength'] == 0 || $input['chartOfAccountSerialLength'] == null)) {
-                return $this->sendError('Serial Length should be greater than zero', 500);
+                return $this->sendError(trans('custom.serial_length_should_be_greater_than_zero'), 500);
             }
 
             $company = Company::find($input['companySystemID']);

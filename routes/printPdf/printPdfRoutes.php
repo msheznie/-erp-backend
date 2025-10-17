@@ -28,6 +28,7 @@
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
     Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
     Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
+    Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
             Route::get('printEvaluationTemplate', 'SupplierEvaluationTemplateAPIController@printEvaluationTemplate');
@@ -38,8 +39,6 @@
     });
 });
 
-
-Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 
 

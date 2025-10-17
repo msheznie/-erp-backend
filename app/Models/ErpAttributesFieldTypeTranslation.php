@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="DocumentCodeFormat",
+ *      schema="ErpAttributesFieldTypeTranslation",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,26 +17,26 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
+ *          property="fieldTypeId",
+ *          description="fieldTypeId",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="languageCode",
+ *          description="languageCode",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="string"
+ *      ),
+ *      @OA\Property(
  *          property="description",
  *          description="description",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
- *      ),
- *      @OA\Property(
- *          property="column_name",
- *          description="column_name",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="is_active",
- *          description="is_active",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="integer",
- *          format="int32"
  *      ),
  *      @OA\Property(
  *          property="created_at",
@@ -56,20 +56,21 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DocumentCodeFormat extends Model
+class ErpAttributesFieldTypeTranslation extends Model
 {
 
-    public $table = 'document_code_format';
+    public $table = 'erp_attributes_field_type_translation';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $appends = ['description'];
+
+
 
     public $fillable = [
-        'description',
-        'column_name',
-        'is_active'
+        'fieldTypeId',
+        'languageCode',
+        'description'
     ];
 
     /**
@@ -79,9 +80,9 @@ class DocumentCodeFormat extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'description' => 'string',
-        'column_name' => 'string',
-        'is_active' => 'integer'
+        'fieldTypeId' => 'integer',
+        'languageCode' => 'string',
+        'description' => 'string'
     ];
 
     /**
@@ -90,35 +91,10 @@ class DocumentCodeFormat extends Model
      * @var array
      */
     public static $rules = [
-        'description' => 'required',
-        'column_name' => 'required',
-        'is_active' => 'required'
+        'fieldTypeId' => 'required',
+        'languageCode' => 'required',
+        'description' => 'required'
     ];
 
-    public function translations()
-    {
-        return $this->hasMany(DocumentCodeFormatTranslation::class, 'document_code_format_id', 'id');
-    }
-
-    public function translation($languageCode = null)
-    {
-        if (!$languageCode) {
-            $languageCode = app()->getLocale() ?: 'en';
-        }
-        
-        return $this->translations()->where('languageCode', $languageCode)->first();
-    }
-
-    public function getDescriptionAttribute($value)
-    {
-        $currentLanguage = app()->getLocale() ?: 'en';
-        
-        $translation = $this->translation($currentLanguage);
-        
-        if ($translation && $translation->description) {
-            return $translation->description;
-        }
-
-        return $this->attributes['description'] ?? '';
-    }
+    
 }

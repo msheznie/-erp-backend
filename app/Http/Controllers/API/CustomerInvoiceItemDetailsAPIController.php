@@ -268,7 +268,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         $input = array();
         $input['comments'] = $comments;
-        $message = "Item updated successfully";
+        $message = trans('custom.item_updated_successfully');
 
         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
 
@@ -630,7 +630,7 @@ WHERE
                 {
                     if (!empty($doDetailExist)) {
                         foreach ($doDetailExist as $row) {
-                            $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                            $itemDrt = $row['itemPrimaryCode'] . " " . trans('custom.item_is_already_added');
                             $itemExistArray[] = [$itemDrt];
                         }
                     }
@@ -973,7 +973,7 @@ WHERE
                     {
                         if (!empty($doDetailExist)) {
                             foreach ($doDetailExist as $row) {
-                                $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                                $itemDrt = $row['itemPrimaryCode'] . " " . trans('custom.item_is_already_added');
                                 $itemExistArray[] = [$itemDrt];
                             }
                         }
@@ -1510,7 +1510,7 @@ WHERE
                             ->first();
 
                         if (!empty($checkWhether)) {
-                            return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                            return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhether->deliveryOrderCode, 'item_code' => $row['itemSystemCode']]), 500);
                         }
 
 
@@ -1621,7 +1621,7 @@ WHERE
                                 ->first();
                             /* approved=0*/
                             if (!empty($checkWhether)) {
-                                return $this->sendError("There is a Customer Invoice (" . $checkWhether->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                                return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhether->bookingInvCode]), 500);
                             }
 
                         }        
