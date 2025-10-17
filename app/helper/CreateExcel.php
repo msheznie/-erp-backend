@@ -323,13 +323,13 @@ class CreateExcel
 
                 $rowNum = 1;
                 $knownHeaders = [
-                    'company id',
-                    'order details',
-                    'item code',
-                    'pr number',
-                    'logistics details',
-                    'category',
-                    'addon details',
+                    trans('custom.excel_company_id'),
+                    trans('custom.excel_order_details'),
+                    trans('custom.excel_item_code'),
+                    trans('custom.excel_pr_number'),
+                    trans('custom.excel_logistics_details'),
+                    trans('custom.excel_category'),
+                    trans('custom.excel_addon_details'),
                 ];
 
                 $columnWidths = [
@@ -772,7 +772,7 @@ class CreateExcel
         })->string('xlsx');
 
         $disk = 's3';
-        $fileName = 'PR_detail_export';
+        $fileName = trans('custom.pr_detail_export');
         $path_dir='procurement/purchase_order/excel/';
         $type='xlsx';
 

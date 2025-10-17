@@ -9559,4 +9559,26 @@ return
     // Status translations
     'deactivated' => 'Deactivated',
     'activated' => 'Activated',
+    
+    // Export error messages
+    'unable_to_export_excel' => 'Unable to export excel',
+    // Excel export file names
+    'pr_detail_export' => 'PR_detail_export',
+    
+    // Excel column headers
+    'excel_company_id' => 'company id',
+    'excel_order_details' => 'order details',
+    'excel_item_code' => 'item code',
+    'excel_pr_number' => 'pr number',
+    'excel_logistics_details' => 'logistics details',
+    'excel_category' => 'category',
+    'excel_addon_details' => 'addon details',
+    
+    // Notification translations
+    'purchase_order_detailed_excel_generated' => 'Purchase Order Detailed Excel Generated',
+    'excel_generation_completed' => 'Excel generation completed successfully',
+    
+    // Status translations
+    'deactivated' => 'Deactivated',
+    'activated' => 'Activated',
   ];

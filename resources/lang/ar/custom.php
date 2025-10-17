@@ -9454,4 +9454,26 @@ return
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
+    
+    // Export error messages
+    'unable_to_export_excel' => 'غير قادر على تصدير إكسل',
+    // Excel export file names
+    'pr_detail_export' => 'تصدير_تفاصيل_طلب_الشراء',
+    
+    // Excel column headers
+    'excel_company_id' => 'معرف الشركة',
+    'excel_order_details' => 'تفاصيل الطلب',
+    'excel_item_code' => 'رمز العنصر',
+    'excel_pr_number' => 'رقم طلب الشراء',
+    'excel_logistics_details' => 'تفاصيل اللوجستيات',
+    'excel_category' => 'الفئة',
+    'excel_addon_details' => 'تفاصيل الإضافات',
+    
+    // Notification translations
+    'purchase_order_detailed_excel_generated' => 'تم إنشاء إكسل تفاصيل أمر الشراء',
+    'excel_generation_completed' => 'تم إنشاء ملف الإكسل بنجاح',
+    
+    // Status translations
+    'deactivated' => 'معطل',
+    'activated' => 'مفعل',
   ];
