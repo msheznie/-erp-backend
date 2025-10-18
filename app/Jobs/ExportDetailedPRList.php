@@ -19,12 +19,13 @@ class ExportDetailedPRList implements ShouldQueue
     public $dispatch_db;
     public $userId;
     public $code;
+    public $lang;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $input,$userId,$code)
+    public function __construct($dispatch_db, $input,$userId,$code,$lang = 'en')
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -41,6 +42,7 @@ class ExportDetailedPRList implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->userId = $userId;
         $this->code = $code;
+        $this->lang = $lang;
     }
 
     /**
@@ -54,7 +56,7 @@ class ExportDetailedPRList implements ShouldQueue
         CommonJobService::db_switch($db);
 
         try {
-            (new ExportPRDetailExcel($this->data,$this->userId,$this->code))->export();
+            (new ExportPRDetailExcel($this->data,$this->userId,$this->code,$this->lang))->export();
         } catch (\Exception $e) {
             Log::error('Export failed.', [
                 'message' => $e->getMessage(),
