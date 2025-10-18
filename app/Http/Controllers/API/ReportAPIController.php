@@ -1271,7 +1271,7 @@ class ReportAPIController extends AppBaseController
     public function exportExcelSavingReport(Request $request)
     {
         $input = $request->all();
-        $type = $request->type;
+        $type = 'xlsx';
         $output = $this->getSavingReportData($input);
         if ($output) {
             $x = 0;
@@ -1344,7 +1344,7 @@ class ReportAPIController extends AppBaseController
         $detail_array = array(
             'company_code'=>$companyCode,
         );
-        $doc_name = 'saving_report';
+        $doc_name = trans('exportExcelFile.saving_report');
         $path = 'procurement/report/saving_report/excel/';
         $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 

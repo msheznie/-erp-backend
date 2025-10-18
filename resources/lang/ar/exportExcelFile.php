@@ -58,5 +58,6 @@ return [
     'budget_master' => 'الميزانية_الرئيسية',
     'budget_transfer' => 'تحويل_الميزانية',
 
-    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل'
+    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل',
+    'saving_report' => 'تقرير_التوفير'
 ];
