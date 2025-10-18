@@ -106,7 +106,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->where('poID', $input['poID'])
             ->first();
         if (empty($input['comAmount']) || $input['comAmount'] == 0) {
-            return $this->sendError('Amount should be greater than 0');
+            return $this->sendError(trans('custom.po_advance_payment_amount_should_be_greater_than_zero'));
         }
 
         //check record all ready exist
@@ -115,7 +115,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->first();
 
         if (!empty($poTermExist)) {
-            return $this->sendError('Advance Payment all ready requested');
+            return $this->sendError(trans('custom.po_advance_payment_already_requested'));
         }
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
@@ -235,7 +235,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
                 $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
                 if ($grv) {
                     if ($grv["grvConfirmedYN"]) {
-                        return $this->sendError('Selected logistic charge is linked to GRV ' . $grv["grvPrimaryCode"]);
+                        return $this->sendError(trans('custom.po_advance_payment_logistic_charge_linked_to_grv', ['grv_code' => $grv["grvPrimaryCode"]]));
                     }
                 }
             }
@@ -538,7 +538,7 @@ ORDER BY
             $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
             if ($grv) {
                 if ($grv["grvConfirmedYN"]) {
-                    return $this->sendError('Selected logistic charge is linked to GRV ' . $grv["grvPrimaryCode"]);
+                    return $this->sendError(trans('custom.po_advance_payment_logistic_charge_linked_to_grv', ['grv_code' => $grv["grvPrimaryCode"]]));
                 }
             }
         }
@@ -926,7 +926,7 @@ ORDER BY
 
             if($basePath == '')
             {
-                 return $this->sendError('Unable to export excel');
+                 return $this->sendError(trans('custom.po_advance_payment_unable_to_export_excel'));
             }
             else
             {
