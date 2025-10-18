@@ -5472,7 +5472,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if(isset($input['stat']) && $input['stat']) {
             $db = $input['db'] ?? "";
-            ExportDetailedPoList::dispatch($db, $request->all());
+
+            $userLang = app()->getLocale() ? app()->getLocale() : 'en';
+            
+            ExportDetailedPoList::dispatch($db, $request->all(), $userLang);
 
             return $this->sendResponse('', trans('custom.po_detailed_report_export_progress'));
         }
@@ -9174,6 +9177,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            if(empty($uniqueData)) {
+                return $this->sendError(trans('custom.no_data_found_in_the_excel_file'), 500);
+            }
 
             $validateHeaderCode = false;
             $totalItemCount = 0;

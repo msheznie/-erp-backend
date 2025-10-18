@@ -9480,4 +9480,6 @@ return
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
+
+    'no_data_found_in_the_excel_file' => 'لم يتم العثور على بيانات في ملف الإكسل',
   ];

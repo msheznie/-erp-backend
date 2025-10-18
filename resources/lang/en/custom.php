@@ -9585,4 +9585,6 @@ return
     // Status translations
     'deactivated' => 'Deactivated',
     'activated' => 'Activated',
+
+    'no_data_found_in_the_excel_file' => 'No data found in the excel file',
   ];
