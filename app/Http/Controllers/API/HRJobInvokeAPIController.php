@@ -9,6 +9,7 @@ use App\Jobs\AttendanceDayEndPullingInitiate;
 use App\Jobs\BirthdayWishInitiate;
 use App\Jobs\EmpDesignationUpdateNotificationJob;
 use App\Jobs\LeaveAccrualInitiate;
+use App\Services\hrms\attendance\ShiftScheduleUnconfirmedAttendancePuller;
 use App\Services\hrms\attendance\SMAttendanceCrossDayPullingService;
 use App\Services\hrms\attendance\SMAttendancePullingService;
 use App\Services\hrms\modules\HrModuleAssignService;
@@ -399,5 +400,52 @@ class HRJobInvokeAPIController extends AppBaseController
         EmpDesignationUpdateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails);
 
         return $this->sendResponse([], 'Employee designation update notification scenario added to queue');
+    }
+
+    function unConfirmedAttendancePull(Request $request){
+
+        DB::beginTransaction();
+        try{
+            $input = $request->all();
+            $this->validateUnConfirmAttendance($input);
+            $data = [
+                'tenantId' => $input['tenantId'], 'companyId' => $input['companyId'],
+                'attendanceData' => $input['attendanceData'], 'shiftData' => $input['shiftData']
+            ];
+
+            $dbName = CommonJobService::get_tenant_db($input['tenantId']);
+            CommonJobService::db_switch($dbName);
+            $job = new ShiftScheduleUnconfirmedAttendancePuller($data);
+            $resp = $job->pullData();
+
+            if($resp['status']){
+                DB::commit();
+                return $this->sendResponse([], __('custom.data_pulled_successfully'));
+            }
+            DB::rollBack();
+            return $this->sendError(__('custom.error_in_shift_schedule_unconfirmed_attendance_pulling'),500);
+
+        }catch (\Exception $e){
+            DB::rollBack();
+            return $this->sendError($e->getMessage(),500);
+        }
+    }
+
+    function validateUnConfirmAttendance($input){
+        if(!isset($input['tenantId'])){
+            throw new Exception(__('custom.tenant_id_required'));
+        }
+
+        if(!isset($input['companyId'])){
+            throw new Exception(__('custom.company_id_required'));
+        }
+
+        if(!isset($input['attendanceData'])){
+            throw new Exception(__('custom.attendance_data_required'));
+        }
+
+        if(!isset($input['shiftData'])){
+            throw new Exception(__('custom.shift_data_required'));
+        }
     }
 }

@@ -11,6 +11,7 @@ use App\Services\hrms\attendance\computation\SMRotaShiftDayComputation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class SMAttendancePullingService{
 
@@ -28,10 +29,16 @@ class SMAttendancePullingService{
     private $pulledVia;
     private $chunkSize;
     private $weekendColumn;
+    private $isFromShift;
+    private $empIdList;
 
-    public function __construct($companyId, $pullingDate, $isClockOutPulling)
+    public function __construct($companyId, $pullingDate, $isClockOutPulling, $isFromShift = false, $empIdList = [])
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
+        $this->isFromShift = $isFromShift;
+        if(!$this->isFromShift){
+            Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
+        }
+
 
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
@@ -41,12 +48,14 @@ class SMAttendancePullingService{
 
         $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;
         $this->chunkSize = 200;
-
+        $this->empIdList = $empIdList;
     }
 
     function execute(){
 
-        $this->insertToLogTb('execution started');
+        if(!$this->isFromShift){
+            $this->insertToLogTb('execution started');
+        }
 
         DB::beginTransaction();
 
@@ -74,8 +83,10 @@ class SMAttendancePullingService{
             $this->step5();
 
             DB::commit();
+            if(!$this->isFromShift){
+                Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
+            }
 
-            Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
             return true;
 
         }
@@ -87,8 +98,12 @@ class SMAttendancePullingService{
             $msg .= "message : ".$ex->getMessage()."\n";;
             $msg .= "file : ".$ex->getFile()."\n";;
             $msg .= "line no : ".$ex->getLine()."\n";;
+            if(!$this->isFromShift){
+                Log::error($msg);
+            }else{
+                throw new Exception($msg);
+            }
 
-            Log::error($msg);
             return false;
         }
 
@@ -142,8 +157,13 @@ class SMAttendancePullingService{
 
             $this->tempData = $tempAttData;
             if (empty($this->tempData)) {
-                Log::error('No records found for pulling step-1 and chunk-'.$i.' '.$this->log_suffix(__LINE__));
-                continue;
+                if(!$this->isFromShift){
+                    Log::error('No records found for pulling step-1 and chunk-'.$i.' '.$this->log_suffix(__LINE__));
+                    continue;
+                }else{
+                    DB::rollBack();
+                    throw new Exception(__('custom.no_records_found_for_pulling_step', ['chunk' => $i]));
+                }
             }
 
             $this->insertToTempTb();
@@ -155,7 +175,7 @@ class SMAttendancePullingService{
 
     public function getEmpIdList()
     {
-        return SrpEmployeeDetails::select('EIdNo')
+        $query = SrpEmployeeDetails::select('EIdNo')
             ->where('Erp_companyID', $this->companyId)
             ->where('isDischarged', 0)
             ->where(function ($query) {
@@ -163,36 +183,50 @@ class SMAttendancePullingService{
                     ->orWhere('dischargedDate', '<=', $this->pullingDate);
             })
             ->where('isSystemAdmin', 0)
-            ->where('empConfirmedYN', 1)
-            ->pluck('EIdNo')
-            ->toArray();
+            ->where('empConfirmedYN', 1);
+
+            if($this->isFromShift && !empty($this->empIdList)){
+                $query->whereIn('EIdNo', $this->empIdList);
+            }
+            return $query->pluck('EIdNo')->toArray();
     }
 
     function updateEmpIdList(){
-
-        $q = "SELECT t.autoID, t.emp_id as attEmpId, l.empID as mEmpId
-        FROM srp_erp_pay_empattendancetemptable AS t
-        JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
-        WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->pullingDate}' 
-        AND (t.emp_id = 0 OR t.emp_id IS NULL)
-        AND NOT EXISTS (
-            SELECT * FROM srp_erp_pay_empattendancereview AS r
-            WHERE r.companyID = {$this->companyId} AND r.attendanceDate = t.attDate AND r.empID = l.empID 
-        )";
-
-        DB::table(DB::raw("($q) as tempTable"))
-            ->orderBy('autoID')
-            ->chunk($this->chunkSize, function ($tempAttData) {
-                if (empty($tempAttData)) {
-                    return true;
-                }
-                foreach ($tempAttData as $row) {
-                    DB::table('srp_erp_pay_empattendancetemptable')
-                        ->where('autoID', $row->autoID)
-                        ->update(['emp_id' => $row->mEmpId]);
-                }
+        $query = DB::table('srp_erp_pay_empattendancetemptable as t')
+            ->join('srp_erp_empattendancelocation as l', function($join) {
+                $join->on('l.deviceID', '=', 't.device_id')
+                     ->on('t.empMachineID', '=', 'l.empMachineID');
+            })
+            ->select('t.autoID', 't.emp_id as attEmpId', 'l.empID as mEmpId')
+            ->where('t.companyID', $this->companyId)
+            ->where('t.attDate', $this->pullingDate)
+            ->where(function($query) {
+                $query->where('t.emp_id', 0)
+                      ->orWhereNull('t.emp_id');
+            })
+            ->whereNotExists(function($query) {
+                $query->select(DB::raw(1))
+                      ->from('srp_erp_pay_empattendancereview as r')
+                      ->where('r.companyID', $this->companyId)
+                      ->where('r.attendanceDate', $this->pullingDate)
+                      ->whereColumn('r.empID', 'l.empID');
             });
-
+    
+        if($this->isFromShift && !empty($this->empIdList)){
+            $query->whereIn('l.empID', $this->empIdList);
+        }
+    
+        $query->orderBy('autoID')
+              ->chunk($this->chunkSize, function ($tempAttData) {
+                  if (empty($tempAttData)) {
+                      return true;
+                  }
+                  foreach ($tempAttData as $row) {
+                      DB::table('srp_erp_pay_empattendancetemptable')
+                          ->where('autoID', $row->autoID)
+                          ->update(['emp_id' => $row->mEmpId]);
+                  }
+              });
     }
 
     function insertToTempTb(){
@@ -349,9 +383,13 @@ class SMAttendancePullingService{
         $this->attData = DB::select($q);
 
         if(empty($this->attData)){
-            $this->insertToLogTb('No records found for pulling step-3');
-            Log::error('No records found for pulling step-3'.$this->log_suffix(__LINE__));
-            return false;
+            if(!$this->isFromShift){
+                $this->insertToLogTb('No records found for pulling step-3');
+                Log::error('No records found for pulling step-3'.$this->log_suffix(__LINE__));
+                return false;
+            }else{
+                throw new Exception(__('custom.no_records_found_for_pulling_step_3'));
+            }
         }
 
         return true;
@@ -442,12 +480,13 @@ class SMAttendancePullingService{
 
             $obj = null;
         }
+        if(!$this->isFromShift){
+            $this->insertToLogTb([
+                'about to insert'=> array_column($this->data, 'empID')
+            ]);
 
-        $this->insertToLogTb([
-            'about to insert'=> array_column($this->data, 'empID')
-        ]);
-
-        Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
+            Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
+        }
 
         unset($this->attData);
 
@@ -460,8 +499,12 @@ class SMAttendancePullingService{
 
 
         if (empty($this->data)) {
-            Log::error('No records found for pulling step-5'.$this->log_suffix(__LINE__));
-            return false;
+            if(!$this->isFromShift){
+                Log::error('No records found for pulling step-5'.$this->log_suffix(__LINE__));
+                return false;
+            }else{
+                throw new Exception(__('custom.no_records_found_for_pulling_step_5'));
+            }
         }
 
         DB::table('srp_erp_pay_empattendancereview')->insert($this->data);

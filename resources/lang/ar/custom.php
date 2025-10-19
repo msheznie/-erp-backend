@@ -602,5 +602,17 @@ return [
     'description_string' => 'The description must be a string AR',
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
+    'no_records_found_for_pulling_step' => 'لم يتم العثور على سجلات لخطوة السحب الأولى والجزء-:chunk',
+    'no_records_found_for_pulling_step_3' => 'لم يتم العثور على سجلات لخطوة السحب الثالثة',
+    'no_records_found_for_pulling_step_5' => 'لم يتم العثور على سجلات لخطوة السحب الخامسة',
+    'tenant_id_required' => 'معرف المستأجر مطلوب',
+    'company_id_required' => 'معرف الشركة مطلوب',
+    'attendance_data_required' => 'بيانات الحضور مطلوبة',
+    'shift_data_required' => 'بيانات الوردية مطلوبة',
+    'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'خطأ في سحب حضور الوردية غير المؤكد',
+    'no_dates_found_for_shift_schedule_pulling' => 'لم يتم العثور على تواريخ للمتابعة في سحب حضور الوردية غير المؤكد',
+    'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
+    'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
+    'data_pulled_successfully' => 'تم سحب البيانات بنجاح'
 ];
