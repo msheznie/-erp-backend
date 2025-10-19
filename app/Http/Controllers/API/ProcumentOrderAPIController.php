@@ -6132,7 +6132,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
         $company_name = $companyMaster->CompanyName;
         $cur = null;
-        $fileName = 'po_to_payment';
+        $fileName = __('custom.po_to_payment_report');
         $doc_name_path = 'po_to_payment/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
         $report = new PoToPaymentReport();
