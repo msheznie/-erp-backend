@@ -21,6 +21,7 @@ use App\Models\ItemMaster;
 use App\Models\Months;
 use App\Models\Revision;
 use App\Models\SegmentMaster;
+use App\Models\CompanyBudgetPlanning;
 use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Services\ChartOfAccountService;
@@ -197,7 +198,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         try {
 
-            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
+            if($request->input('type') != 'company_budget_planning') {
+                $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
                 'budgetDelegateAccessDetails',
@@ -309,6 +311,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $item->isEnable = $isEnable;
                 return $item;
             });
+            }
+            else {
+                $data = [];
+                $total = 0;
+            }
+
+            
 
             return response()->json([
                 'data' => $data,
@@ -1079,5 +1088,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $budgetPlanningId);
         
         return $this->sendResponse($chartOfAccountSystemIDs, 'Chart of accounts retrieved successfully');
+    }
+
+    public function getDepartmentBudgetPlanningStatusesByCompany(Request $request)
+    {
+        $input = $request->all();
+
+        
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+
+        $query = DepartmentBudgetPlanning::with('department.hod.employee')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        return \DataTables::of($query)
+            ->addIndexColumn()
+            ->make(true);
+
     }
 }

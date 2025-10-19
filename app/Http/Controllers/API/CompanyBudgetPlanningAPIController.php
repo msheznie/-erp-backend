@@ -18,6 +18,8 @@ use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\DepartmentUserBudgetControl;
+use App\Models\DeptBudgetPlanningTimeRequest;
+use App\Models\Revision;
 use App\Models\WorkflowConfiguration;
 use App\Repositories\CompanyBudgetPlanningRepository;
 use App\Services\BudgetPermissionService;
@@ -247,6 +249,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
+        $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
+        $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
         if (empty($companyBudgetPlanning)) {
             return $this->sendError('Company Budget Planning not found');
         }
@@ -646,6 +650,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
+                      
                 } else {
                     $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
                         ->where('isHOD', 1)
@@ -686,11 +691,15 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
 
+
                     }
                     
 
                 }
 
+                if(isset($input['sltCompanyBudgetPlan'])) {
+                    $data->where('companyBudgetPlanningID', $input['sltCompanyBudgetPlan']);
+                }
                 if (array_key_exists('department', $input)) {
                     if (!is_null($request['department'])) {
                         $department = (array)$request['department'];
@@ -1116,6 +1125,176 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             return $this->sendError('Error processing delegate access: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get revisions by company budget planning ID, grouped by department
+     *
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/getRevisionsByCompanyBudget",
+     *      summary="getRevisionsByCompanyBudget",
+     *      tags={"CompanyBudgetPlanning"},
+     *      description="Get revisions by company budget planning ID, grouped by department",
+     *      @OA\Parameter(
+     *          name="companyBudgetId",
+     *          description="Company Budget Planning ID",
+     *          required=true,
+     *          in="query",
+     *          @OA\Schema(type="integer")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="object"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function getRevisionsByCompanyBudget(Request $request)
+    {
+        try {
+            $companyBudgetId = $request->get('companyBudgetId');
+            
+            if (!$companyBudgetId) {
+                return $this->sendError('Company Budget ID is required', 400);
+            }
+
+            $revisions = Revision::with([
+                'budgetPlanning.department.hod.employee',
+                'budgetPlanning',
+                'attachments',
+                'createdBy'
+            ])
+            ->whereHas('budgetPlanning', function ($query) use ($companyBudgetId) {
+                $query->where('companyBudgetPlanningID', $companyBudgetId);
+            });
+
+            return \DataTables::of($revisions)
+                ->addColumn('department', function ($revision) {
+                    $department = $revision->budgetPlanning->department ?? null;
+                    return $department ? $department->departmentCode : 'N/A';
+                })
+                ->addColumn('hod', function ($revision) {
+                    $department = $revision->budgetPlanning->department ?? null;
+                    if ($department && $department->hod && $department->hod->employee) {
+                        return $department->hod->employee->empFullName;
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('statusText', function ($revision) {
+                    return $revision->revision_status_text;
+                })
+                ->addColumn('reviewBy', function ($revision) {
+                    return $revision->createdBy ? $revision->createdBy->empFullName : 'N/A';
+                })
+                ->addColumn('reviewComment', function ($revision) {
+                    return $revision->reviewComments;
+                })
+                ->addColumn('sendDateAndTime', function ($revision) {
+                    return $revision->sentDateTime ? $revision->sentDateTime->format('d/m/Y H:i') : null;
+                })
+                ->addColumn('attachment_count', function ($revision) {
+                    return $revision->attachments->count();
+                })
+                ->addColumn('reopenFields', function ($revision) {
+                    return $revision->reopenEditableSection;
+                })
+                ->addColumn('revisionCount', function ($revision) {
+                    return $revision->count();
+                })
+                ->addColumn('revisionTypeText', function ($revision) {
+                    return $revision->revision_type_text;
+                })
+                ->addColumn('submittedDate', function ($revision) {
+                    return $revision->submittedDate ? $revision->submittedDate->format('d/m/Y') : null;
+                })
+                ->addColumn('completionComments', function ($revision) {
+                    return $revision->completionComments;
+                })
+                ->addColumn('completedDateTime', function ($revision) {
+                    return $revision->completedDateTime ? $revision->completedDateTime->format('d/m/Y H:i') : null;
+                })
+                ->make(true);
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving revisions: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get time extension requests by company budget planning ID
+     *
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/getTimeExtensionRequestsByCompanyBudget",
+     *      summary="getTimeExtensionRequestsByCompanyBudget",
+     *      tags={"CompanyBudgetPlanning"},
+     *      description="Get time extension requests by company budget planning ID",
+     *      @OA\Parameter(
+     *          name="companyBudgetId",
+     *          description="Company Budget Planning ID",
+     *          required=true,
+     *          in="query",
+     *          @OA\Schema(type="integer")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="object"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function getTimeExtensionRequestsByCompanyBudget(Request $request)
+    {
+        try {
+            $companyBudgetId = $request->get('companyBudgetPlanningId');
+            if (!$companyBudgetId) {
+                return $this->sendError('Company Budget ID is required', 400);
+            }
+
+            $timeExtensionRequests = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning.department.hod.employee')
+            ->whereHas('departmentBudgetPlanning', function ($query) use ($companyBudgetId) {
+                $query->where('companyBudgetPlanningID', $companyBudgetId);
+            });
+           
+            return \DataTables::of($timeExtensionRequests)
+                ->make(true);
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving time extension requests: ' . $e->getMessage(), 500);
         }
     }
 }

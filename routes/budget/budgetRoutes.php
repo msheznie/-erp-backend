@@ -52,6 +52,8 @@ Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPICont
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');
 Route::post('getReversions', 'RevisionAPIController@getRevisions')->name('Get reversions');
+Route::get('getRevisionsByCompanyBudget', 'CompanyBudgetPlanningAPIController@getRevisionsByCompanyBudget')->name('Get revisions by company budget');
+Route::post('getTimeExtensionRequestsByCompanyBudget', 'CompanyBudgetPlanningAPIController@getTimeExtensionRequestsByCompanyBudget')->name('Get time extension requests by company budget');
 Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIController@getOptionsForSelectedUnit')->name('Get options for selected unit');
 
 // Revision Routes
@@ -70,6 +72,7 @@ Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlann
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
 Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount');
+Route::post('getDepartmentBudgetPlanningStatusesByCompany', 'DepartmentBudgetPlanningDetailAPIController@getDepartmentBudgetPlanningStatusesByCompany')->name('Get department budget planning details by company');
 
 // Budget Delegate Access Routes
 Route::post('getDelegateAccessRecords', 'BudgetDelegateAPIController@getDelegateAccessRecords')->name('Get delegate access records');
