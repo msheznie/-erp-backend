@@ -4755,7 +4755,7 @@ class FinancialReportAPIController extends AppBaseController
                 );
 
                 $templateName = "export_report.generalLedger.rtd_details";
-                $fileName = 'Tax Deductibility';
+                $fileName = trans('exportExcelFile.tax_deductibility');
                 $path = 'general-ledger/report/rtd_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [

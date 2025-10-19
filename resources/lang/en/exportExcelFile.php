@@ -59,5 +59,6 @@ return [
     'budget_transfer' => 'budget_transfer',
 
     'customer_recipt_voucher' => 'customer_recipt_voucher',
-    'saving_report' => 'saving_report'
+    'saving_report' => 'saving_report',
+    'tax_deductibility' => 'tax_deductibility'
 ];

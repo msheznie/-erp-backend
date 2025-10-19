@@ -59,5 +59,6 @@ return [
     'budget_transfer' => 'تحويل_الميزانية',
 
     'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل',
-    'saving_report' => 'تقرير_التوفير'
+    'saving_report' => 'تقرير_التوفير',
+    'tax_deductibility' => 'تقرير_الخصم_الضريبي'
 ];
