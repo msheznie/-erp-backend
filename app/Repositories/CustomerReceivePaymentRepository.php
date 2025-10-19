@@ -131,7 +131,10 @@ class CustomerReceivePaymentRepository extends BaseRepository
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('employees AS payee', 'erp_customerreceivepayment.PayeeEmpID', '=', 'payee.employeeSystemID')
             ->leftjoin('erp_projectmaster', 'erp_customerreceivepayment.projectID', '=', 'erp_projectmaster.id')
-            ->leftjoin('document_system_mapping', 'erp_customerreceivepayment.custReceivePaymentAutoID', '=', 'document_system_mapping.documentId')
+            ->leftJoin('document_system_mapping', function ($join) {
+                $join->on('erp_customerreceivepayment.custReceivePaymentAutoID', '=', 'document_system_mapping.documentId')
+                    ->where('document_system_mapping.documentSystemId', '=', 21);
+            })
             ->leftjoin('third_party_systems', 'document_system_mapping.thirdPartySystemId', '=', 'third_party_systems.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
             ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
