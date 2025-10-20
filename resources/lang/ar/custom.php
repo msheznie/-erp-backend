@@ -9492,9 +9492,17 @@ return
 
     // Match document master
     'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
+   
     'advance_payment_amount_more_than_document' => 'مبلغ الدفعة المقدمة أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
     'no_active_finance_year_found' => 'لم يتم العثور على سنة مالية نشطة',
     'matching_type_found' => 'تم العثور على نوع مطابقة',
     'invoice_without_vat_matching_receipt_with_vat' => 'يتم مطابقة فاتورة بدون ضريبة القيمة المضافة مع إيصال مع ضريبة القيمة المضافة. سيؤدي هذا إلى إلغاء إدخالات ضريبة القيمة المضافة إلى الصفر. هل أنت متأكد من أنك تريد المتابعة؟',
     'document_not_canceled_try_again' => 'لم يتم إلغاء المستند، حاول مرة أخرى',
+
+     // Inventory batch messages
+     'batch_has_been_sold' => 'تم بيع الدفعة.',
+     'batch_qty_greater_than_remaining' => 'لا يمكن أن تكون كمية الدفعة أكبر من الكمية المتبقية.',
+     'out_qty_greater_than_issue_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من كمية الإصدار',
+     'out_qty_greater_than_remaining_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من الكمية المتبقية',
+     'batch_code_allowed_chars' => 'يمكن أن يحتوي رمز الدفعة على / و - فقط كأحرف خاصة',
   ];
