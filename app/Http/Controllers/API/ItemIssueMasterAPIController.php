@@ -2630,7 +2630,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
         ];
 
-        $fileName = 'material_issue_register';
+        $fileName = trans('exportExcelFile.material_issue_register');
         $path = 'inventory/report/material_issue_register/excel/';
         $type = "xls";
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);

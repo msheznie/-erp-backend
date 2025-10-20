@@ -60,5 +60,6 @@ return [
 
     'customer_recipt_voucher' => 'customer_recipt_voucher',
     'saving_report' => 'saving_report',
-    'tax_deductibility' => 'tax_deductibility'
+    'tax_deductibility' => 'tax_deductibility',
+    'material_issue_register' => 'material_issue_register'
 ];
