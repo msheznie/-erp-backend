@@ -9594,6 +9594,8 @@ return
     'auto_generated_email_footer' => 'This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.',
     'dear_customer_ledger_sent' => 'Dear :customerName,<p> Customer ledger report has been sent from :companyName',
     'customer_ledger_report_from' => 'Customer ledger report from :companyName',
+    'dear_customer_statement_sent' => 'Dear :customerName,<p> Customer statement report has been sent from :companyName',
+    'customer_statement_report_from' => 'Customer statement report from :companyName',
 
     // Match document master
     'debit_note_amount_more_than_document' => 'Debit note amount is more than document value, please check again',
@@ -9613,5 +9615,7 @@ return
     'file_not_selected' => 'File not selected',
     'supplier_po_invoice' => 'Supplier PO Invoice',
     'supplier_direct_invoice' => 'Supplier Direct Invoice',
-    'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item'
+    'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item',
+
+    'customer_statement' => 'Customer Statement'
   ];
