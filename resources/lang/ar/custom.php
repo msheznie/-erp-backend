@@ -7177,7 +7177,7 @@ return
 
     // PO to Payment Report Title
     'po_to_payment_report' => 'تقرير من أمر الشراء إلى الدفع',
-    'pr_to_grv_report' => 'تقرير من طلب الشراء إلى إيصال استلام البضائع',
+    'pr_to_grv_report' => 'تقرير طلب الشراء إلى إيصال',
     'pr_to_grv_path' => 'pr_to_grv',
 
     // Accounts Receivable Report Translations
