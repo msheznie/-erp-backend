@@ -2730,7 +2730,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
     {
         $input = $request->all();
         $db = isset($request->db) ? $request->db : "";
-        SentCustomerLedger::dispatch($input, $db);
+        $languageCode = app()->getLocale() ?: 'en';
+        SentCustomerLedger::dispatch($input, $db, $languageCode);
         return $this->sendResponse([], 'Customer ledger report sent to queue');
     }
 
