@@ -2635,7 +2635,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
     public function sentCustomerStatement(Request $request)
     {
         $input = $request->all();
-
+        $languageCode = app()->getLocale() ?: 'en';
         if (isset($input['customers']) && count($input['customers']) != 1 && $request->reportTypeID == 'CBS') {
             return $this->sendError(trans('custom.customer_statement_cannot_be_sent_to_multiple_customers'),500);
         }
@@ -2667,7 +2667,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             if ($emailSentTo == 0) {
                 return $this->sendResponse($emailSentTo, trans('custom.customer_email_is_not_updated_report_is_not_sent'));
             } else {
-                CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
+                CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID, $languageCode);
                 return $this->sendResponse($emailSentTo, 'Customer statement report sent');
             }
         }
@@ -2678,6 +2678,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
     {
        $html = $this->customerStatementExportPdf($request, true);
        $customers = $request->customers;
+       $languageCode = app()->getLocale() ?: 'en';
        $customerSystemCodes = collect($customers)->pluck(['customerCodeSystem']);
         $data =  array();
        foreach ($customerSystemCodes as $customerSystemCode)
@@ -2717,7 +2718,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                $data['toDate'] = $reportDataCopy['toDate'];
                $data['reportData'] = $reportDataCopy['reportData'];
                $data['currencyDecimalPlace'] = $reportDataCopy['currencyDecimalPlace'];
-               CustomerStatementJob::dispatch($request->db, $data, $customerSystemCode, $input['companySystemID'], $request->reportTypeID);
+               CustomerStatementJob::dispatch($request->db, $data, $customerSystemCode, $input['companySystemID'], $request->reportTypeID, $languageCode);
 
            }
        }

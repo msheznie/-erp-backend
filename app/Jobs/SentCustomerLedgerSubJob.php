@@ -58,6 +58,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
 
         $customerMaster = CustomerMaster::find($customerCodeSystem);
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)->get();
+        $languageCode = app()->getLocale() ?: 'en';
         if (!$fetchCusEmail->isEmpty()) {
             $reportTypeID = $input['reportTypeID'];
             $baseController = app()->make(AppBaseController::class);
@@ -83,7 +84,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                             'fetchCusEmail' => $fetchCusEmail->toArray(),
                             'customerName' => $customerMaster->CustomerName
                         );
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray, $languageCode);
                         $reportCount++;
                     }
                 } else {
@@ -107,7 +108,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                             'fetchCusEmail' => $fetchCusEmail->toArray(),
                             'customerName' => $customerMaster->CustomerName
                         );
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray, $languageCode);
                         $reportCount++;
                     }
                 } else {
