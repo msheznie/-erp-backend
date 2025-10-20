@@ -2588,7 +2588,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $toDate = (new Carbon($request->toDate))->format('Y-m-d');
         $groupBy = $request->groupByAsset;
        
-        $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+        $companyCode = isset($company->CompanyID)?$company->CompanyID: trans('custom.common');
 
 
         $selectedAssets  = $request->assets;
