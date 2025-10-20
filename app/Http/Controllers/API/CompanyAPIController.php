@@ -838,7 +838,7 @@ class CompanyAPIController extends AppBaseController
             }
             if(!isset($digitalStampUpload))
             {
-                return $this->sendError('File not selected.', 500);
+                return $this->sendError(trans('custom.file_not_selected'), 500);
     
             }
             return $this->sendResponse($digitalStampUpload, trans('custom.digital_stamp_uploaded_successfully'));

@@ -9610,4 +9610,8 @@ return
      'out_qty_greater_than_issue_qty' => 'Out quantity cannot be greater than issue quantity',
      'out_qty_greater_than_remaining_qty' => 'Out quantity cannot be greater than remaining quantity',
      'batch_code_allowed_chars' => 'Batch code can contain only / and - in special character',
+    'file_not_selected' => 'File not selected',
+    'supplier_po_invoice' => 'Supplier PO Invoice',
+    'supplier_direct_invoice' => 'Supplier Direct Invoice',
+    'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item'
   ];

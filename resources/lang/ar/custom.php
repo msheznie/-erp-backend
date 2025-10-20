@@ -9505,4 +9505,8 @@ return
      'out_qty_greater_than_issue_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من كمية الإصدار',
      'out_qty_greater_than_remaining_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من الكمية المتبقية',
      'batch_code_allowed_chars' => 'يمكن أن يحتوي رمز الدفعة على / و - فقط كأحرف خاصة',
+    'file_not_selected' => 'لم يتم اختيار ملف',
+    'supplier_po_invoice' => 'فاتورة طلب شراء المورد',
+    'supplier_direct_invoice' => 'فاتورة المورد المباشرة',
+    'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل'
   ];
