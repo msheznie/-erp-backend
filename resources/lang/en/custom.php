@@ -7269,6 +7269,8 @@ return
 
     // PO to Payment Report Title
     'po_to_payment_report' => 'PO to Payment Report',
+    'pr_to_grv_report' => 'PR to GRV Report',
+    'pr_to_grv_path' => 'pr_to_grv',
 
     // Accounts Receivable Report Translations
     'customer_balance_statement' => 'Customer Balance Statement',
