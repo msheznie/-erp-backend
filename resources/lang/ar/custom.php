@@ -9489,6 +9489,8 @@ return
     'auto_generated_email_footer' => 'هذا بريد إلكتروني مُولد تلقائياً. يرجى عدم الرد على هذا البريد الإلكتروني لأننا لا نراقب هذا البريد الوارد.',
     'dear_customer_ledger_sent' => 'عزيزي :customerName،<p> تم إرسال تقرير دفتر العملاء من :companyName',
     'customer_ledger_report_from' => 'تقرير دفتر العملاء من :companyName',
+    'dear_customer_statement_sent' => 'عزيزي :customerName،<p> تم إرسال تقرير كشف حساب العميل من :companyName',
+    'customer_statement_report_from' => 'تقرير كشف حساب العميل من :companyName',
 
     // Match document master
     'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
@@ -9508,5 +9510,7 @@ return
     'file_not_selected' => 'لم يتم اختيار ملف',
     'supplier_po_invoice' => 'فاتورة طلب شراء المورد',
     'supplier_direct_invoice' => 'فاتورة المورد المباشرة',
-    'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل'
+    'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل',
+
+    'customer_statement' => 'كشف حساب العميل'
   ];

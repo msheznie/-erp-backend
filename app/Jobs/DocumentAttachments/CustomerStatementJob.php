@@ -27,6 +27,7 @@ class CustomerStatementJob implements ShouldQueue
     public $customerCodeSystem;
     public $input;
     public $reportTypeID;
+    public $languageCode;
     private $tag = "payment-released-to-supplier";
 
     /**
@@ -34,7 +35,7 @@ class CustomerStatementJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dispatch_db, $dataArr, $customerCodeSystem, $input, $reportTypeID)
+    public function __construct($dispatch_db, $dataArr, $customerCodeSystem, $input, $reportTypeID, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -46,6 +47,7 @@ class CustomerStatementJob implements ShouldQueue
         $this->customerCodeSystem = $customerCodeSystem;
         $this->input = $input;
         $this->reportTypeID = $reportTypeID;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -59,18 +61,22 @@ class CustomerStatementJob implements ShouldQueue
         $db = $this->dispatch_db;
         $customerCodeSystem = $this->customerCodeSystem;
         $companySystemID = $this->input;
-
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
         if ($this->reportTypeID == 'CSA') {
             $html = view('print.customer_statement_of_account_pdf', $htmlData);
+            $htmlHeader = view('print.customer_statement_of_account_header', $htmlData);
+            $htmlFooter = view('print.customer_statement_of_account_footer', $htmlData);
         } elseif ($this->reportTypeID == 'CBS') {
             $html = view('print.customer_balance_statement', $htmlData);
+            $htmlHeader = view('print.customer_balance_statement_header', $htmlData);
+            $htmlFooter = view('print.customer_balance_statement_footer', $htmlData);
         }
 
-        $pdf = \App::make('dompdf.wrapper');
         $path = public_path().'/uploads/emailAttachment';
 
         if (!file_exists($path)) {
@@ -78,7 +84,64 @@ class CustomerStatementJob implements ShouldQueue
         }
         $nowTime = time();
 
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/customer_statement_' . $nowTime.$customerCodeSystem . '.pdf');
+        $isRTL = ($languageCode === 'ar');
+        $mpdfConfig = [
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 40,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ];
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+
+        $fileName = trans('custom.customer_statement') . $nowTime.$customerCodeSystem . '.pdf';
+        $filePath = $path . '/' . $fileName;
+
+        try {
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            if (isset($htmlHeader)) {
+                $mpdf->SetHTMLHeader($htmlHeader);
+            }
+            if (isset($htmlFooter)) {
+                $mpdf->SetHTMLFooter($htmlFooter);
+            }
+            $mpdf->AddPage('L');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            // Clean HTML to prevent mPDF CSS issues
+            $html = $this->cleanHtmlForMpdf($html);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output($filePath, 'F');
+        } catch (\Exception $e) {
+            // Fallback: simpler config without margins
+            $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+            if ($isRTL) {
+                $fallbackConfig['direction'] = 'rtl';
+            }
+            try {
+                $mpdf = new \Mpdf\Mpdf($fallbackConfig);
+                if (isset($htmlHeader)) {
+                    $mpdf->SetHTMLHeader($htmlHeader);
+                }
+                if (isset($htmlFooter)) {
+                    $mpdf->SetHTMLFooter($htmlFooter);
+                }
+                $mpdf->AddPage('L');
+                $html = $this->cleanHtmlForMpdf($html);
+                $mpdf->WriteHTML($html);
+                $mpdf->Output($filePath, 'F');
+            } catch (\Exception $e2) {
+                Log::error('mPDF Error in CustomerStatementJob: ' . $e2->getMessage());
+                return;
+            }
+        }
 
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
@@ -89,9 +152,8 @@ class CustomerStatementJob implements ShouldQueue
         $company = Company::where('companySystemID', $companySystemID)->first();
         $emailSentTo = 0;
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
+        $footer = "<font size='1.5'><i><p><br><br><br>" . trans('custom.save_paper_think_before_print') .
+            "<br>" . trans('custom.auto_generated_email_footer') . "</font>";
         
         if ($fetchCusEmail) {
             foreach ($fetchCusEmail as $row) {
@@ -101,13 +163,13 @@ class CustomerStatementJob implements ShouldQueue
 
                     $dataEmail['companySystemID'] = $companySystemID;
 
-                    $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer statement report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = trans('custom.dear_customer_statement_sent', ['customerName' => $customerMaster->CustomerName, 'companyName' => $company->CompanyName]) . $footer;
 
-                    $pdfName = realpath($path."/customer_statement_" . $nowTime.$customerCodeSystem . ".pdf");
+                    $pdfName = realpath($filePath);
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Customer statement report from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = trans('custom.customer_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
@@ -117,5 +179,18 @@ class CustomerStatementJob implements ShouldQueue
                 }
             }
         }
+    }
+    private function cleanHtmlForMpdf($html)
+    {
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*0\.1\)/', '#000000', $html);
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/', '#$1$2$3', $html);
+        $html = preg_replace('/rgb\((\d+),\s*(\d+),\s*(\d+)\)/', '#$1$2$3', $html);
+        $html = preg_replace('/\s*!important\s*/', '', $html);
+        $html = str_replace('border-top: 1px solid #0000001', 'border-top: 1px solid #000000', $html);
+        $html = preg_replace('/opacity\s*:\s*[\d.]+\s*;?/', '', $html);
+        $html = preg_replace('/transform[^;]*;?/', '', $html);
+        $html = preg_replace('/transform-origin[^;]*;?/', '', $html);
+        $html = preg_replace('/font-family:\s*[^;]*apple-system[^;]*;?/', 'font-family: Arial, sans-serif;', $html);
+        return $html;
     }
 }
