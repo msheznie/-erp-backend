@@ -63,5 +63,6 @@ return [
     'tax_deductibility' => 'tax_deductibility',
     'material_issue_register' => 'material_issue_register',
     'items_by_company' => 'items_by_company',
-    'items_by_warehouse' => 'items_by_warehouse'
+    'items_by_warehouse' => 'items_by_warehouse',
+    'stock-count' => 'stock-count'
 ];
