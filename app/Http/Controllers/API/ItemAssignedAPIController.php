@@ -356,7 +356,7 @@ class ItemAssignedAPIController extends AppBaseController
             'company_code'=>$companyCode,
             );
 
-        $fileName = 'items_by_company';
+        $fileName = trans('exportExcelFile.items_by_company');
         $path = 'inventory/master/items_by_company/excel/';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
