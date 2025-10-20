@@ -9484,4 +9484,17 @@ return
     'activated' => 'مفعل',
 
     'no_data_found_in_the_excel_file' => 'لم يتم العثور على بيانات في ملف الإكسل',
+
+    // Customer Ledger Email Body
+    'auto_generated_email_footer' => 'هذا بريد إلكتروني مُولد تلقائياً. يرجى عدم الرد على هذا البريد الإلكتروني لأننا لا نراقب هذا البريد الوارد.',
+    'dear_customer_ledger_sent' => 'عزيزي :customerName،<p> تم إرسال تقرير دفتر العملاء من :companyName',
+    'customer_ledger_report_from' => 'تقرير دفتر العملاء من :companyName',
+
+    // Match document master
+    'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
+    'advance_payment_amount_more_than_document' => 'مبلغ الدفعة المقدمة أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
+    'no_active_finance_year_found' => 'لم يتم العثور على سنة مالية نشطة',
+    'matching_type_found' => 'تم العثور على نوع مطابقة',
+    'invoice_without_vat_matching_receipt_with_vat' => 'يتم مطابقة فاتورة بدون ضريبة القيمة المضافة مع إيصال مع ضريبة القيمة المضافة. سيؤدي هذا إلى إلغاء إدخالات ضريبة القيمة المضافة إلى الصفر. هل أنت متأكد من أنك تريد المتابعة؟',
+    'document_not_canceled_try_again' => 'لم يتم إلغاء المستند، حاول مرة أخرى',
   ];

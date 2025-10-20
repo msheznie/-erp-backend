@@ -137,9 +137,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
-            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                "monitoring this inbox.</font>";
+            $footer = "<font size='1.5'><i><p><br><br><br>" . trans('custom.save_paper_think_before_print') .
+                "<br>" . trans('custom.auto_generated_email_footer') . "</font>";
 
             $emailSentTo = 0;
             foreach ($fetchCusEmail as $row) {
@@ -148,11 +147,11 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $dataEmail['empEmail'] = $row['contactPersonEmail'];
                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                    $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = trans('custom.dear_customer_ledger_sent', ['customerName' => $customerName, 'companyName' => $company->CompanyName]) . $footer;
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $zipFilePath;
-                    $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = trans('custom.customer_ledger_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {

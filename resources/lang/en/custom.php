@@ -9589,4 +9589,17 @@ return
     'activated' => 'Activated',
 
     'no_data_found_in_the_excel_file' => 'No data found in the excel file',
+
+    // Customer Ledger Email Body
+    'auto_generated_email_footer' => 'This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.',
+    'dear_customer_ledger_sent' => 'Dear :customerName,<p> Customer ledger report has been sent from :companyName',
+    'customer_ledger_report_from' => 'Customer ledger report from :companyName',
+
+    // Match document master
+    'debit_note_amount_more_than_document' => 'Debit note amount is more than document value, please check again',
+    'advance_payment_amount_more_than_document' => 'Advance payment amount is more than document value, please check again',
+    'no_active_finance_year_found' => 'No Active Finance Year Found',
+    'matching_type_found' => 'Matching Type Found',
+    'invoice_without_vat_matching_receipt_with_vat' => 'Invoice without VAT is being matched with reciept with VAT.This will nullify the VAT entries to zero.Are you sure you want to proceed ?',
+    'document_not_canceled_try_again' => 'Document not canceled, try again',
   ];
